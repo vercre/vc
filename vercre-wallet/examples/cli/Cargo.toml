@@ -1,0 +1,21 @@
+[package]
+authors.workspace = true
+edition.workspace = true
+name = "cli"
+rust-version.workspace = true
+version.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+anyhow = "1.0.79"
+async-std = { version = "1.12.0", features = ["attributes", "std"] }
+# async-task-group = "0.2.1"
+clap = { version = "4.4.18", features = ["derive"] }
+crossbeam-channel = "0.5.11"
+futures = "0.3"
+# serde = "1.0.196"
+surf = "2.3.2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+vercre-core.workspace = true
+vercre-wallet.workspace = true

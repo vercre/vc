@@ -1,0 +1,137 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  # schedule: [cron: "40 1 * * *"]
+
+permissions:
+  contents: read
+
+env:
+  RUSTFLAGS: -Dwarnings
+
+jobs:
+  test:
+    name: Test suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: taiki-e/install-action@nextest
+      - run: cargo nextest run
+
+  # windows:
+  #   name: Test suite (windows)
+  #   runs-on: windows-latest
+  #   timeout-minutes: 45
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@nightly
+  #     - uses: taiki-e/install-action@nextest
+  #     - run: cargo nextest run
+  #     # - run: cargo test -- --skip ui --exact
+
+  test-doc:
+    name: Test docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - run: cargo test --doc
+
+  # stable:
+  #   name: Rust ${{matrix.rust}}
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       rust: [stable, beta]
+  #   timeout-minutes: 45
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@master
+  #       with:
+  #         toolchain: ${{matrix.rust}}
+  #     - run: cargo build
+
+  # nightly:
+  #   name: Rust nightly ${{matrix.os == 'windows' && '(windows)' || ''}}
+  #   runs-on: ${{matrix.os}}-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [ubuntu, windows]
+  #   timeout-minutes: 45
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@nightly
+  #     - run: cargo build
+  #     - run: cargo test
+  #       if: matrix.os != 'windows'
+  #     - run: cargo check --tests
+  #       env:
+  #         RUSTFLAGS: --cfg exhaustive ${{env.RUSTFLAGS}}
+  #       if: matrix.os != 'windows'
+
+  # minimal:
+  #   name: Minimal versions
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 45
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@nightly
+  #     - run: cargo generate-lockfile -Z minimal-versions
+  #     - run: cargo check --locked --workspace
+
+  # doc:
+  #   name: Documentation
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 45
+  #   env:
+  #     RUSTDOCFLAGS: -Dwarnings
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@nightly
+  #     - uses: dtolnay/install@cargo-docs-rs
+  #     - run: cargo docs-rs -p vercre
+  #     - run: cargo docs-rs -p vercre_vci
+  #     - run: cargo docs-rs -p vercre_core
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@clippy
+      - run: cargo clippy -- -Dclippy::all -Dclippy::pedantic
+
+  # miri:
+  #   name: Miri
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 45
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@miri
+  #     - run: cargo miri setup
+  #     - run: cd vercre && cargo miri test --features derive,rc,unstable
+  #       env:
+  #         MIRIFLAGS: -Zmiri-strict-provenance
+  #     - run: cd test_suite && cargo miri test --features unstable
+  #       env:
+  #         MIRIFLAGS: -Zmiri-strict-provenance
+
+  outdated:
+    name: Outdated
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/install@cargo-outdated
+      - run: cargo outdated --workspace --exit-code 1

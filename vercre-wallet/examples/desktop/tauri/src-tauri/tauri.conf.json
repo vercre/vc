@@ -1,0 +1,53 @@
+{
+  "productName": "Wallet",
+  "version": "0.1.0",
+  "identifier": "io.credibil.wallet",
+  "app": {
+    "macOSPrivateApi": false,
+    "security": {
+      "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost"
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "height": 600,
+        "resizable": true,
+        "title": "Credibil Wallet",
+        "width": 800
+      }
+    ],
+    "withGlobalTauri": true
+  },
+  "build": {
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist",
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build"
+  },
+  "bundle": {
+    "active": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "iOS": {
+      "developmentTeam": "Credibil"
+    },
+    "macOS": {
+      "minimumSystemVersion": "10.13"
+    },
+    "targets": "all"
+  },
+  "plugins": {
+    "deep-link": {
+      "domains": [
+        {
+          "host": "openid-vc"
+        }
+      ]
+    }
+  }
+}

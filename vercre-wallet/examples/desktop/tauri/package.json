@@ -1,0 +1,49 @@
+{
+  "name": "wallet",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "lint": "eslint ./src",
+    "types": "pnpm link ../types/gen/typescript"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
+    "@fontsource/roboto": "^5.0.8",
+    "@mui/icons-material": "^5.15.10",
+    "@mui/material": "^5.15.10",
+    "@tauri-apps/api": "2.0.0-beta.0",
+    "@tauri-apps/plugin-deep-link": "2.0.0-beta.0",
+    "@tauri-apps/plugin-shell": "2.0.0-beta.0",
+    "@tauri-apps/plugin-store": "2.0.0-beta.0",
+    "globals": "^13.24.0",
+    "jwt-decode": "^3.1.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "shared_types": "link:../types/gen/typescript",
+    "tauri-plugin-log-api": "github:tauri-apps/tauri-plugin-log"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.0.0-beta.1",
+    "@types/node": "^20.11.17",
+    "@types/react": "^18.2.55",
+    "@types/react-dom": "^18.2.19",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.56.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsx-a11y": "^6.8.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "internal-ip": "^8.0.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.1"
+  }
+}

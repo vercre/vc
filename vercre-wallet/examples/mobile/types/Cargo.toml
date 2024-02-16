@@ -1,0 +1,16 @@
+
+[package]
+authors.workspace = true
+edition.workspace = true
+name = "mobile-types"
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+
+[build-dependencies]
+# vercre-wallet = { workspace = true, features = ["typegen"] }
+vercre-wallet = { path = "../../../../vercre-wallet", features = ["typegen"] }
+
+[target]
+

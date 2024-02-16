@@ -1,0 +1,16 @@
+---
+source: vercre-vci/src/endpoint/batch.rs
+assertion_line: 690
+expression: state
+---
+credential_issuer: "http://credibil.io"
+expires_at: "[expires_at]"
+credentials:
+  - EmployeeID_JWT
+holder_id: normal_user
+token:
+  access_token: ABCDEF
+  token_type: Bearer
+  c_nonce: "[c_nonce]"
+  c_nonce_expires_at: "[c_nonce_expires_at]"
+

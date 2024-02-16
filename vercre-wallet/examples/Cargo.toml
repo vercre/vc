@@ -1,0 +1,18 @@
+[workspace]
+members = ["desktop/tauri/src-tauri", "desktop/types", "mobile/types"]
+default-members = [ "desktop/types", "mobile/types"]
+resolver = "2"
+
+[workspace.package]
+authors = ["Vercre"]
+edition = "2021"
+keywords = ["wallet"]
+rust-version = "1.72"
+version = "0.1.0"
+
+[workspace.dependencies]
+vercre-core = { path = "../../vercre-core" }
+vercre-wallet = { path = "../../vercre-wallet" }
+
+[workspace.metadata.bin]
+cargo-xcode = { version = "=1.7.0" }

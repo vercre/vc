@@ -1,0 +1,20 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "./Cargo.toml",
+        "./vercre-wallet/examples/Cargo.toml"
+    ],
+    "rust-analyzer.cargo.features": [
+        // "typegen",
+    ],
+    "todo-tree.tree.showBadges": true,
+    // See https://github.com/vadimcn/codelldb/blob/v1.10.0/MANUAL.md
+    "lldb.launch.envFile": "${workspaceFolder}/.env",
+    "lldb.launch.env": {
+        "INSTA_WORKSPACE_ROOT": "${workspaceFolder}",
+    },
+    "eslint.workingDirectories": [
+        {
+            "pattern": "./vercre-wallet/examples/desktop/tauri/*/"
+        }
+    ]
+}

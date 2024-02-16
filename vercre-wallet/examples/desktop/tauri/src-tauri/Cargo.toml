@@ -1,0 +1,48 @@
+[package]
+authors.workspace = true
+edition.workspace = true
+name = "desktop"
+rust-version.workspace = true
+version.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib", "staticlib"]
+name = "tauri_lib"
+
+[dependencies]
+anyhow = "1.0.79"
+base64ct = { version = "1.6.0", default-features = false, features = ["std"] }
+http = "1.0.0"
+iota_stronghold = "2.0.0"
+# k256 = { version = "0.13.3", features = ["jwk"] }
+lazy_static = "1.4.0"
+log = "^0.4.20"
+reqwest = { version = "0.11.24", features = ["json"] }
+rust-argon2 = "2.1.0"
+serde = "1.0.196"
+serde_json = "1.0.113"
+tauri = { version = "2.0.0-beta.2", features = ["test"] }
+tauri-plugin-deep-link = "2.0.0-beta.0"
+tauri-plugin-http = "2.0.0-beta.0"
+tauri-plugin-log = "2.0.0-beta.0"
+tauri-plugin-shell = "2.0.0-beta.0"
+tauri-plugin-store = "2.0.0-beta.0"
+# tauri-plugin-stronghold = "2.0.0-beta.0"
+thiserror = "1.0.57"
+vercre-wallet.workspace = true
+zeroize = { version = "1", features = ["zeroize_derive"] }
+
+[dev-dependencies]
+assert_let_bind = "0.1.1"
+tokio = { version = "1.36.0", default-features = false, features = ["fs", "macros", "rt"] }
+
+[build-dependencies]
+tauri-build = { version = "2.0.0-beta.1", features = [] }
+
+[features]
+# by default Tauri runs in production mode
+# when `tauri dev` runs it is executed with `cargo run --no-default-features` if `devPath` is an URL
+default = ["custom-protocol"]
+# this feature is used for production builds or when `devPath` points to the filesystem
+# DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]

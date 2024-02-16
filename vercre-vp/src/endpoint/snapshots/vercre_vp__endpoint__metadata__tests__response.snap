@@ -1,0 +1,25 @@
+---
+source: vercre-vp/src/endpoint/metadata.rs
+assertion_line: 100
+expression: response
+---
+client_id: "http://credibil.io"
+redirect_uris:
+  - "http://localhost:3000/callback"
+grant_types:
+  - authorization_code
+response_types:
+  - vp_token
+  - id_token vp_token
+vp_formats:
+  jwt_vc_json:
+    alg:
+      - ES256K
+    proof_type:
+      - JsonWebSignature2020
+  jwt_vp_json:
+    alg:
+      - ES256K
+    proof_type:
+      - JsonWebSignature2020
+

@@ -1,0 +1,70 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Issuer",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=http-issuer"
+                ],
+                "filter": {
+                    "name": "http",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceRoot}/vercre-vci",
+            // "envFile": "${workspaceRoot}/.env"
+        },
+        {
+            "name": "Verifier",
+            "type": "lldb",
+            "request": "launch",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=http-verifier"
+                ],
+                "filter": {
+                    "name": "http",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceRoot}/vercre-vp",
+            // "envFile": "${workspaceRoot}/.env"
+        },
+        {
+            // Debug plain Rust backend
+            "name": "Tauri",
+            "type": "lldb",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/vercre-wallet/examples/desktop/tauri",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--manifest-path=${workspaceFolder}/vercre-wallet/examples/desktop/tauri/src-tauri/Cargo.toml",
+                    "--no-default-features"
+                ]
+            },
+            "preLaunchTask": "tauri:vite",
+            "postDebugTask": "tauri:kill",
+        },
+        {
+            // Debug using the MacOS bundle
+            "name": "Tauri Deep Link",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/vercre-wallet/examples/target/debug/bundle/macos/Wallet.app",
+            "cwd": "${workspaceFolder}/vercre-wallet/examples/desktop/tauri",
+            "preLaunchTask": "tauri:prelaunch",
+            "postDebugTask": "tauri:kill",
+        }
+    ]
+}

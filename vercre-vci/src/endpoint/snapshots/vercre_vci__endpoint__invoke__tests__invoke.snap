@@ -1,0 +1,18 @@
+---
+source: vercre-vci/src/endpoint/invoke.rs
+assertion_line: 274
+expression: response
+---
+credential_offer:
+  credential_issuer: "http://credibil.io"
+  credentials:
+    - EmployeeID_JWT
+  grants:
+    authorization_code: ~
+    "urn:ietf:params:oauth:grant-type:pre-authorized_code":
+      pre-authorized_code: "[pre-authorized_code]"
+      user_pin_required: true
+      interval: ~
+      authorization_server: ~
+user_pin: "[user_pin]"
+

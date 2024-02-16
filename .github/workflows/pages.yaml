@@ -1,0 +1,65 @@
+name: pages
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUSTFLAGS: "-D warnings"
+  RUSTUP_MAX_RETRIES: 10
+  SCCACHE_GHA_ENABLED: "true"
+  RUSTC_WRAPPER: "sccache"
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+      pages: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.3
+
+      - name: Setup mdBook
+        uses: jontze/action-mdbook@v2
+        with:
+          token: ${{secrets.GITHUB_TOKEN}}
+          use-linkcheck: true
+          use-admonish: true
+
+      # - name: Build docs
+      #   run: cargo doc --all --no-deps
+
+      # - name: Move outputs
+      #   run: |
+      #     set -e
+      #     mkdir ./public
+      #     mv ./target/doc ./public/master_api_docs
+      #     mv ./docs/book/html/* ./public/
+
+      - name: Build book
+        working-directory: docs
+        run: mdbook build
+
+      - name: Upload
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs/book/html
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

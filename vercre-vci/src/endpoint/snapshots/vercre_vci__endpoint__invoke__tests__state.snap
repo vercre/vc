@@ -1,0 +1,14 @@
+---
+source: vercre-vci/src/endpoint/invoke.rs
+assertion_line: 291
+expression: state
+---
+credential_issuer: "http://credibil.io"
+expires_at: "[expires_at]"
+credentials:
+  - EmployeeID_JWT
+holder_id: normal_user
+callback_id: "1234"
+auth:
+  user_pin: "[user_pin]"
+

@@ -1,0 +1,8 @@
+---
+source: vercre-wallet/src/presentation.rs
+assertion_line: 293
+expression: app.view(&model)
+---
+credentials: []
+status: Inactive
+

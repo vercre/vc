@@ -1,0 +1,66 @@
+---
+source: vercre-vci/src/endpoint/metadata.rs
+assertion_line: 92
+expression: response
+---
+credential_issuer: "http://credibil.io"
+credential_endpoint: "http://credibil.io/credential"
+batch_credential_endpoint: "http://credibil.io/batch_credential"
+deferred_credential_endpoint: "http://credibil.io/deferred_credential"
+credential_response_encryption_alg_values_supported:
+  - ECDH-ES
+credential_response_encryption_enc_values_supported:
+  - A256GCM
+require_credential_response_encryption: false
+credential_identifiers_supported: true
+display:
+  name: Credibil
+  locale: en-NZ
+credentials_supported:
+  EmployeeID_JWT:
+    format: jwt_vc_json
+    scope: EmployeeIDCredential
+    cryptographic_binding_methods_supported:
+      - "did:jwk"
+      - "did:ion"
+    cryptographic_suites_supported:
+      - ES256K
+      - EdDSA
+    proof_types_supported:
+      - jwt
+    display:
+      - name: Employee ID
+        locale: en-NZ
+        logo:
+          url: "https://credibil.github.io/assets/credibil-logo-reversed.png"
+          alt_text: Credibil Logo
+        description: Credibil employee ID credential
+        background_color: "#323ed2"
+        text_color: "#ffffff"
+    credential_definition:
+      "@context":
+        - "https://www.w3.org/2018/credentials/v1"
+        - "https://www.w3.org/2018/credentials/examples/v1"
+      type:
+        - VerifiableCredential
+        - EmployeeIDCredential
+      credentialSubject:
+        email:
+          mandatory: true
+          value_type: string
+          display:
+            - name: Email
+              locale: en-NZ
+        familyName:
+          mandatory: true
+          value_type: string
+          display:
+            - name: Family name
+              locale: en-NZ
+        givenName:
+          mandatory: true
+          value_type: string
+          display:
+            - name: Given name
+              locale: en-NZ
+
