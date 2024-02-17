@@ -1,8 +1,8 @@
 # Summary
 
-[Overview](overview.md)
+[Overview](./overview.md)
 
-[Motivation](motivation.md)
+[Motivation](./motivation.md)
 
 # Getting Started
 
