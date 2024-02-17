@@ -10,9 +10,9 @@
 
 # Development Guide
 
-- [Issuance]()
+- [Issuance](./issuance/index.md)
 
-- [Presentation]()
+- [Presentation](./presentation/index.md)
 
 - [Chapter 1](./chapter_1/index.md)
   - [Sub-chapter](./chapter_1/sub_chapter.md)
