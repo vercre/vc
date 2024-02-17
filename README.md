@@ -1,6 +1,6 @@
 # Vercre
 
-Client (wallet) and server libraries for use in implementing `OpenID` Verifiable Data solutions.
+Client (wallet) and server libraries for use in `OpenID` Verifiable Data solutions.
 
 > [!CAUTION]
 >
