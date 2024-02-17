@@ -1,7 +1,8 @@
 [package]
-description = "OpenID compliant SSI vercre-wallet"
+description = "OpenID compliant Verifiable Credential wallet"
+license = "MIT OR Apache-2.0"
 name = "vercre-wallet"
-repository = "https://github.com/vercre/vercre/vercre-wallet"
+readme = "README.md"
 
 authors.workspace = true
 categories.workspace = true
@@ -10,8 +11,8 @@ edition.workspace = true
 exclude.workspace = true
 homepage.workspace = true
 keywords.workspace = true
-licence.workspace = true
-readme = "README.md"
+repository.workspace = true
+# licence.workspace = true
 rust-version.workspace = true
 version.workspace = true
 
