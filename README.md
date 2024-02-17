@@ -1,6 +1,6 @@
 # Vercre
 
-Client (wallet) and server libraries for use in `OpenID` Verifiable Data solutions.
+Issuance, Wallet, and Verification libraries for use in `OpenID` Verifiable Data solutions.
 
 > [!CAUTION]
 >
@@ -33,11 +33,9 @@ Additionally, end to end client examples can be found in each crate's `/tests` d
 
 ## Additional
 
-<!-- [![Crates.io Status](https://img.shields.io/crates/v/oxide-auth.svg)](https://crates.io/crates/oxide-auth) -->
-<!-- [![Docs.rs Status](https://docs.rs/vercre/badge.svg)](https://docs.rs/vercre/) -->
+[![ci](https://github.com/vercre/vercre/actions/workflows/ci.yaml/badge.svg)](https://github.com/vercre/vercre/actions/workflows/ci.yaml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE-MIT)
 [![License](https://img.shields.io/badge/license-Apache-blue.svg)](./LICENSE-APACHE)
-<!-- [![CI Status](https://api.cirrus-ci.com/github/HeroicKatora/oxide-auth.svg)](https://cirrus-ci.com/github/HeroicKatora/oxide-auth) -->
 
 <!-- The [changelog][CHANGES] is used to record a summary of changes between releases. A more granular
 record of changes can be found in the commit history. -->
