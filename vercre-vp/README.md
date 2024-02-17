@@ -1,6 +1,6 @@
 # OpenID for Verifiable Presentations
 
-An API for the issuance of Verifiable Credentials based on the [OpenID for Verifiable Presentations] specification.
+An API for requesting and processing Verifiable Presentations based on the [OpenID for Verifiable Presentations] specification.
 
 > [!CAUTION]
 >

@@ -8,8 +8,6 @@ Issuance, Wallet, and Verification libraries for use in `OpenID` Verifiable Data
 >
 > The code in this repository is experimental and under active development. The examples work, albeit for a narrow range of use cases, so have a play. We welcome feedback and contributions.
 
-[![CI](https://github.com/vercre/vercre/actions/workflows/ci.yaml/badge.svg)](https://github.com/vercre/vercre/actions/workflows/ci.yaml)
-
 ## OpenID for Verifiable Data
 
 This repository provides rudimentary implementations of [OpenID for Verifiable Credential Issuance] and [OpenID for Verifiable Presentations] specifications with an initial focus on meeting requirements in the [JWT VC Issuance] and [JWT VC Presentation] Profiles.
