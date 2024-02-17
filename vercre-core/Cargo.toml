@@ -1,16 +1,15 @@
 [package]
-description = "OpenID Data Model"
-license = "MIT OR Apache-2.0"
-name = "vercre-core"
-readme = "README.md"
-
 authors.workspace = true
 categories.workspace = true
+description = "OpenID Data Model"
 documentation.workspace = true
 edition.workspace = true
 exclude.workspace = true
 homepage.workspace = true
 keywords.workspace = true
+license = "MIT OR Apache-2.0"
+name = "vercre-core"
+readme = "README.md"
 repository.workspace = true
 # licence.workspace = true
 rust-version.workspace = true
