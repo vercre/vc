@@ -2,6 +2,8 @@
 
 While decentralized identity and Verifiable Credentials have been around for several years, integrating these technologies into existing identity systems has not been without its challenges.
 
+[elaborate on this assertion]
+
 The introduction of the OpenID for [Verifiable Credentials Issuance](<https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html>) and [Verifiable Presentations](<https://openid.net/specs/openid-4-verifiable-presentations-1_0.html>) standards provides a straightforward approach to issuing, holding, and verifying credentials.
 
 ## Our Contribution
