@@ -1,17 +1,16 @@
 [package]
-description = "OpenID Data Model"
-name = "vercre-core"
-repository = "https://github.com/vercre/vercre/vercre-core"
-
 authors.workspace = true
 categories.workspace = true
+description = "OpenID Data Model"
 documentation.workspace = true
 edition.workspace = true
 exclude.workspace = true
 homepage.workspace = true
 keywords.workspace = true
 licence.workspace = true
-readme = "README.md"
+name = "vercre-core"
+readme.workspace = true
+repository = "https://github.com/vercre/vercre/vercre-core"
 rust-version.workspace = true
 version.workspace = true
 
