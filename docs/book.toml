@@ -19,7 +19,7 @@ additional-css = ["./mdbook-admonish.css"]
 cname = "vercre.io"
 edit-url-template = "https://github.com/vercre/vercre/edit/main/docs/{path}"
 git-repository-url = "https://github.com/vercre/vercre/"
-site-url = "/"
+# site-url = "/"
 
 # [output.html.redirect]
 # "getting_started/android.html" = "./Android/android.html"

@@ -1,13 +1,12 @@
 # Summary
 
-[Overview](./overview.md)
+[Overview](overview.md)
 
-[Motivation](./motivation.md)
+[Motivation](motivation.md)
 
 # Getting Started
 
 - [Shared core and types](./getting_started/core.md)
-- [Mermaid](./getting_started/mermaid.md)
 
 # Development Guide
 
