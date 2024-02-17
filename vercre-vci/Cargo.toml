@@ -8,10 +8,12 @@ categories.workspace = true
 documentation.workspace = true
 edition.workspace = true
 exclude.workspace = true
+homepage.workspace = true
 keywords.workspace = true
+licence.workspace = true
+readme = "README.md"
 rust-version.workspace = true
 version.workspace = true
-# licence.workspace = true
 
 [lib]
 bench = false

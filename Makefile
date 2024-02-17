@@ -42,4 +42,7 @@ unused:
 dev:
 	@cargo run
 
-.PHONY: build gen clean test docs test-doc fmt fmt-check lint unused
+pub:
+	@cargo publish --dry-run vercre-core
+
+.PHONY: build gen clean test docs test-doc fmt fmt-check lint unused pub
