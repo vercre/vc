@@ -6,9 +6,9 @@ Each top-level library is intended to as near feature complete as possible, requ
 
 The three primary libraries are:
 
-- [`vercre-wallet`](../vercre-wallet/) — greatly simplifies building cross-platform wallets.
-- [`vercre-vci`](../vercre-vci/) — for building credential issuance APIs.
-- [`vercre-vp`](../vercre-vp/) — for building verifiable presentation APIs.
+- [`vercre-wallet`](<https://github.com/vercre/vercre/tree/main/vercre-wallet/>) — greatly simplifies building cross-platform wallets.
+- [`vercre-vci`](<https://github.com/vercre/vercre/tree/main/vercre-vci/>) — for building credential issuance APIs.
+- [`vercre-vp`](<https://github.com/vercre/vercre/tree/main/vercre-vp/>) — for building verifiable presentation APIs.
 
 ## Implementation
 
