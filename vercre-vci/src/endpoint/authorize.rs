@@ -114,8 +114,8 @@ where
         let issuer_meta = Issuer::metadata(&self.provider, &request.credential_issuer).await?;
 
         // resolve scope and authorization_details to credential identifiers
-        let mut identifiers = resolve_scope(&request, &issuer_meta)?;
-        let authorization_details = resolve_authzn(&request, &issuer_meta)?;
+        let mut identifiers = scope_identifiers(&request, &issuer_meta)?;
+        let authorization_details = authzn_identifiers(&request, &issuer_meta)?;
 
         // // remove credential_identifiers if not supported for this issuer
         // if !issuer_meta.credential_identifiers_supported.unwrap_or_default() {
@@ -165,6 +165,7 @@ impl super::Context for Context {
             err!(Err::InvalidClient, "Invalid client_id");
         };
         let server_meta = Server::metadata(provider, &request.credential_issuer).await?;
+        let issuer_meta = Issuer::metadata(provider, &request.credential_issuer).await?;
 
         // 'authorization_code' grant_type allowed (client and server)?
         let client_grant_types = client_meta.grant_types.unwrap_or_default();
@@ -191,9 +192,14 @@ impl super::Context for Context {
 
         // authorization_details (basic type validation)
         if let Some(authorization_details) = &request.authorization_details {
+            let supported = issuer_meta.credential_identifiers_supported.unwrap_or_default();
+
             for auth_det in authorization_details {
                 if auth_det.type_ != "openid_credential" {
                     err!(Err::InvalidRequest, "Invalid authorization_details type");
+                }
+                if !supported && auth_det.credential_identifiers.is_some() {
+                    err!(Err::InvalidRequest, "credential_identifiers not supported");
                 }
             }
         }
@@ -300,10 +306,10 @@ impl super::Context for Context {
 // resolve credentials specified in authorization_details to supported
 // credential identifiers
 #[instrument]
-fn resolve_authzn(
+fn authzn_identifiers(
     req: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
 ) -> Result<Vec<AuthorizationDetail>> {
-    trace!("resolve_authzn");
+    trace!("authzn_identifiers");
 
     let Some(mut auth_dets) = req.authorization_details.clone() else {
         return Ok(vec![]);
@@ -329,10 +335,10 @@ fn resolve_authzn(
 }
 
 #[instrument]
-fn resolve_scope(
+fn scope_identifiers(
     request: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
 ) -> Result<Vec<String>> {
-    trace!("resolve_scope");
+    trace!("scope_identifiers");
 
     let Some(scope) = &request.scope else {
         return Ok(vec![]);
