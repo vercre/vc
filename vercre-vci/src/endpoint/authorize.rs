@@ -116,6 +116,14 @@ where
         // resolve scope and authorization_details to credential identifiers
         let mut identifiers = resolve_scope(&request, &issuer_meta)?;
         let authorization_details = resolve_authzn(&request, &issuer_meta)?;
+
+        // // remove credential_identifiers if not supported for this issuer
+        // if !issuer_meta.credential_identifiers_supported.unwrap_or_default() {
+        //     for det in &mut authorization_details {
+        //         det.credential_identifiers = None;
+        //     }
+        // }
+
         for det in &authorization_details {
             identifiers.extend(det.credential_identifiers.clone().unwrap_or_default());
         }

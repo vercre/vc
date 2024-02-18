@@ -12,12 +12,11 @@ use vercre_core::{err, Callback, Client, Holder, Issuer, Result, Server, Signer,
 use super::Endpoint;
 use crate::state::State;
 
-/// Registration request handler.
 impl<P> Endpoint<P>
 where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
 {
-    /// Register client.
+    /// Registration request handler.
     ///
     /// # Errors
     ///

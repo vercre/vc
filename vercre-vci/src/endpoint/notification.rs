@@ -1,27 +1,26 @@
-//! # Metadata Endpoint
+//! # Notification Endpoint
 //!
-//! The Credential Issuer Metadata contains information on the Credential Issuer's
-//! technical capabilities, supported Credentials, and (internationalized) display
-//! information.
+//! This endpoint is used by the Wallet to notify the Credential Issuer of certain
+//! events for issued Credentials. These events enable the Credential Issuer to take
+//! subsequent actions after issuance. The Credential Issuer needs to return one or
+//! more notification_id parameters in the Credential Response or the Batch Credential
+//! Response for the Wallet to be able to use this Endpoint. Support for this endpoint
+//! is OPTIONAL. The Issuer cannot assume that a notification will be sent for every
+//! issued credential since the use of this Endpoint is not mandatory for the Wallet.
 //!
-//! The Credential Issuer's configuration can be retrieved using the Credential Issuer
-//! Identifier.
+//! The Wallet MUST present to the Notification Endpoint a valid Access Token issued at
+//! the Token Endpoint as defined in Section 6.
 //!
-//! Credential Issuers publishing metadata MUST make a JSON document available at the
-//! path formed by concatenating the string `/.well-known/openid-credential-issuer` to
-//! the Credential Issuer Identifier. If the Credential Issuer value contains a path
-//! component, any terminating / MUST be removed before appending
-//! `/.well-known/openid-credential-issuer`.
+//! A Credential Issuer that requires a request to the Notification Endpoint MUST
+//! ensure the Access Token issued by the Authorization Server is valid at the
+//! Notification Endpoint.
 //!
-//! The language(s) in HTTP Accept-Language and Content-Language Headers MUST use the values defined in [RFC3066].
-//!
-//! Below is a non-normative example of a Credential Issuer Metadata request:
-//!
-//! ```http
-//! GET /.well-known/openid-credential-issuer HTTP/1.1
-//!     Host: server.example.com
-//!     Accept-Language: fr-ch, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5
-//! ```
+//! The notification from the Wallet is idempotent. When the Credential Issuer
+//! receives multiple identical calls from the Wallet for the same `notification_id`,
+//! it returns success. Due to the network errors, there are no guarantees that a
+//! Credential Issuer will receive a notification within a certain time period or at
+//! all.
+
 
 use tracing::{instrument, trace};
 use vercre_core::vci::{MetadataRequest, MetadataResponse};
@@ -29,17 +28,18 @@ use vercre_core::{Callback, Client, Holder, Issuer, Result, Server, Signer, Stat
 
 use super::Endpoint;
 
+/// Metadata request handler.
 impl<P> Endpoint<P>
 where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
 {
-    /// Metadata request handler.
+    /// Request Issuer metadata.
     ///
     /// # Errors
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
-    pub async fn metadata(&self, request: impl Into<MetadataRequest>) -> Result<MetadataResponse> {
+    pub async fn notification(&self, request: impl Into<MetadataRequest>) -> Result<MetadataResponse> {
         let request = request.into();
         self.handle_request(request, Context {}).await
     }
