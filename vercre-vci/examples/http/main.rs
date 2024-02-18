@@ -28,11 +28,9 @@ use vercre_vci::endpoint::{
     InvokeRequest, InvokeResponse, MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,
 };
 
-
 lazy_static::lazy_static! {
     static ref AUTHORIZED: RwLock<HashMap<String, AuthorizationRequest>> = RwLock::new(HashMap::new());
 }
-
 
 #[tokio::main]
 async fn main() {
@@ -63,8 +61,7 @@ async fn main() {
 async fn invoke(
     State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     Json(mut req): Json<InvokeRequest>,
-) -> AxResult<InvokeResponse>
-{
+) -> AxResult<InvokeResponse> {
     req.credential_issuer = format!("http://{}", host);
     endpoint.invoke(req).await.into()
 }
@@ -138,8 +135,7 @@ struct LoginRequest {
 
 #[axum::debug_handler]
 async fn login(
-     TypedHeader(host): TypedHeader<Host>,
-    Form(req): Form<LoginRequest>,
+    TypedHeader(host): TypedHeader<Host>, Form(req): Form<LoginRequest>,
 ) -> impl IntoResponse {
     // check username and password
     if req.username != "normal_user" {

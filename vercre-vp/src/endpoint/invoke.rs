@@ -16,10 +16,19 @@
 //!
 //! ```json
 //! {
-//!     "credentials": [
-//!         {"type": ["VerifiableCredential", "EmployeeIDCredential"]},
-//!         {"type": ["VerifiableCredential", "CitizenshipCredential"]}
-//!    ],
+//!     "purpose": "To verify employment",
+//!     "input_descriptors": [{
+//!         "id": "employment",
+//!         "constraints": {
+//!             "fields": [{
+//!                 "path":["$.type"],
+//!                 "filter": {
+//!                     "type": "string",
+//!                     "const": "EmployeeIDCredential"
+//!                 }
+//!             }]
+//!         }
+//!     }],
 //!     "device_flow": "CrossDevice"
 //! }
 //! ```
@@ -42,11 +51,8 @@ use std::fmt::Debug;
 use tracing::{instrument, trace};
 use uuid::Uuid;
 use vercre_core::error::Err;
-use vercre_core::metadata::CredentialDefinition;
 use vercre_core::vp::{DeviceFlow, InvokeRequest, InvokeResponse, RequestObject};
-use vercre_core::w3c::vp::{
-    Constraints, Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition,
-};
+use vercre_core::w3c::vp::{Format, PresentationDefinition};
 use vercre_core::{err, gen, Algorithm, Callback, Client, Result, Signer, StateManager};
 
 use super::Endpoint;
@@ -115,7 +121,7 @@ impl super::Context for Context {
     {
         trace!("Context::verify");
 
-        if request.credentials.is_empty() {
+        if request.input_descriptors.is_empty() {
             err!(Err::InvalidRequest, "No credentials specified");
         }
         Ok(self)
@@ -128,8 +134,19 @@ impl super::Context for Context {
     {
         trace!("Context::process");
 
-        // generate presentation_definition
-        let def = self.build_def(&request.credentials);
+        // TODO: build dynamically...
+        let fmt = Format {
+            alg: Some(vec![Algorithm::EdDSA.to_string()]),
+            proof_type: None,
+        };
+
+        let pres_def = PresentationDefinition {
+            id: Uuid::new_v4().to_string(),
+            purpose: Some(request.purpose.clone()),
+            input_descriptors: request.input_descriptors.clone(),
+            format: Some(HashMap::from([("jwt_vc".to_string(), fmt)])),
+            name: None,
+        };
         let state_key = gen::state_key();
 
         // get client metadata
@@ -141,7 +158,7 @@ impl super::Context for Context {
             response_type: "vp_token".to_string(),
             state: Some(state_key.clone()),
             nonce: gen::nonce(),
-            presentation_definition: Some(def),
+            presentation_definition: Some(pres_def),
             client_metadata: Some(client_meta),
             client_id_scheme: Some("redirect_uri".to_string()),
             ..Default::default()
@@ -169,56 +186,6 @@ impl super::Context for Context {
     }
 }
 
-impl Context {
-    #[instrument]
-    fn build_def(&self, cred_defs: &[CredentialDefinition]) -> PresentationDefinition {
-        trace!("creating presentation definition");
-
-        let mut input_descs = Vec::<InputDescriptor>::new();
-
-        for cred_def in cred_defs {
-            let fields = vec![
-                (Field {
-                    // TODO: build JSONPath query properly
-                    path: vec!["$.type".to_string()],
-                    filter: Some(Filter {
-                        type_: "string".to_string(),
-                        value: FilterValue::Const("EmployeeIDCredential".to_string()),
-                    }),
-
-                    ..Field::default()
-                }),
-            ];
-
-            input_descs.push(InputDescriptor {
-                // TODO: check types == [VerifiableCredential, <specific type>]
-                id: cred_def.type_[1].clone(),
-                constraints: Constraints {
-                    fields: Some(fields),
-                    limit_disclosure: None,
-                },
-                name: None,
-                purpose: None,
-                format: None, // Some(HashMap::<String, Format>::new()),
-            });
-        }
-
-        let fmt = Format {
-            alg: Some(vec![Algorithm::ES256K.to_string()]),
-            proof_type: None,
-        };
-
-        // presentation definition
-        PresentationDefinition {
-            id: Uuid::new_v4().to_string(),
-            input_descriptors: input_descs,
-            name: None,
-            purpose: None,
-            format: Some(HashMap::from([("jwt_vc".to_string(), fmt)])),
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use assert_let_bind::assert_let;
@@ -235,10 +202,19 @@ mod tests {
 
         // create offer to 'send' to the app
         let body = json!({
-            "credentials": [
-                {"type": ["VerifiableCredential", "EmployeeIDCredential"]},
-                {"type": ["VerifiableCredential", "CitizenshipCredential"]}
-            ],
+            "purpose": "To verify employment",
+            "input_descriptors": [{
+                "id": "employment",
+                "constraints": {
+                    "fields": [{
+                        "path":["$.type"],
+                        "filter": {
+                            "type": "string",
+                            "const": "EmployeeIDCredential"
+                        }
+                    }]
+                }
+            }],
             "device_flow": "SameDevice"
         });
 
@@ -277,10 +253,20 @@ mod tests {
 
         // create offer to 'send' to the app
         let body = json!({
-            "credentials": [
-                {"type": ["VerifiableCredential", "EmployeeIDCredential"]},
-                {"type": ["VerifiableCredential", "CitizenshipCredential"]}
-            ],
+            "purpose": "To verify employment",
+            "input_descriptors": [{
+                "id": "employment",
+                "constraints": {
+                    "fields": [{
+                        "path":["$.type"],
+                        "filter": {
+                            "type": "string",
+                            "const": "EmployeeIDCredential"
+                        }
+                    }]
+                }
+            }],
+            "device_flow": "CrossDevice"
         });
 
         let mut request =

@@ -64,7 +64,6 @@ use std::fmt::Debug;
 use chrono::Utc;
 use tracing::{instrument, trace};
 use vercre_core::error::Err;
-use vercre_core::metadata::Issuer as IssuerMetadata;
 use vercre_core::vci::{
     AuthorizationCodeGrant, CredentialOffer, Grants, InvokeRequest, InvokeResponse,
     PreAuthorizedCodeGrant,
@@ -92,7 +91,6 @@ where
 
         let ctx = Context {
             callback_id: request.callback_id.clone(),
-            issuer_meta: Issuer::metadata(&self.provider, &request.credential_issuer).await?,
         };
 
         self.handle_request(request, ctx).await
@@ -102,7 +100,6 @@ where
 #[derive(Debug)]
 struct Context {
     callback_id: Option<String>,
-    issuer_meta: IssuerMetadata,
 }
 
 impl super::Context for Context {
@@ -120,6 +117,8 @@ impl super::Context for Context {
     {
         trace!("Context::verify");
 
+        let issuer_meta = Issuer::metadata(provider, &request.credential_issuer).await?;
+
         // credential_issuer required
         if request.credential_issuer.is_empty() {
             err!(Err::InvalidRequest, "No credential_issuer specified");
@@ -130,7 +129,7 @@ impl super::Context for Context {
         };
         // requested credential is supported
         for cred_id in &request.credentials {
-            let Some(_) = self.issuer_meta.credentials_supported.get(cred_id) else {
+            let Some(_) = issuer_meta.credentials_supported.get(cred_id) else {
                 err!(Err::UnsupportedCredentialType, "Requested credential is unsupported");
             };
         }

@@ -30,7 +30,6 @@ use crate::metadata::{
 /// Presentations.
 pub type Result<T, E = error::Error> = core::result::Result<T, E>;
 
-
 /// The Client trait is used by implementers to provide Client metadata to the
 /// library.
 #[allow(async_fn_in_trait)]

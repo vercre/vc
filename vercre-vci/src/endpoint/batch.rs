@@ -47,8 +47,8 @@ where
         };
 
         let ctx = Context {
-            // callback_id: state.callback_id.clone(),
-            state: Some(state),
+            callback_id: state.callback_id.clone(),
+            state,
             issuer_meta: Issuer::metadata(&self.provider, &request.credential_issuer).await?,
             holder_did: Arc::new(Mutex::new(String::new())),
         };
@@ -59,9 +59,9 @@ where
 
 #[derive(Debug)]
 struct Context {
-    // callback_id: Option<String>,
+    callback_id: Option<String>,
     issuer_meta: IssuerMetadata,
-    state: Option<State>,
+    state: State,
     holder_did: Arc<Mutex<String>>,
 }
 
@@ -70,10 +70,7 @@ impl super::Context for Context {
     type Response = BatchCredentialResponse;
 
     fn callback_id(&self) -> Option<String> {
-        if let Some(state) = &self.state {
-            return state.callback_id.clone();
-        }
-        None
+        self.callback_id.clone()
     }
 
     #[instrument]
@@ -83,10 +80,7 @@ impl super::Context for Context {
     {
         trace!("Context::verify");
 
-        let Some(state) = &self.state else {
-            err!("Invalid state");
-        };
-        let Some(token_state) = &state.token else {
+        let Some(token_state) = &self.state.token else {
             err!(Err::AccessDenied, "Invalid access token state");
         };
 
@@ -101,7 +95,7 @@ impl super::Context for Context {
             // specify requested credential
             if let Some(identifier) = &request.credential_identifier {
                 // check identifier is authorized
-                if !state.credentials.contains(identifier) {
+                if !self.state.credentials.contains(identifier) {
                     err!(Err::InvalidCredentialRequest, "Credential not authorized");
                 }
                 // check credential format is not set
@@ -123,7 +117,7 @@ impl super::Context for Context {
                 let mut authorized = false;
                 for (k, v) in &self.issuer_meta.credentials_supported {
                     if (&v.format == format) && (v.credential_definition.type_ == cred_def.type_) {
-                        authorized = state.credentials.contains(k);
+                        authorized = self.state.credentials.contains(k);
                         break;
                     }
                 }
@@ -193,10 +187,7 @@ impl super::Context for Context {
         }
 
         // generate nonce and update state
-        let Some(state) = self.state.clone() else {
-            err!("Invalid state");
-        };
-        let Some(token_state) = state.token else {
+        let Some(token_state) = &self.state.token else {
             err!("Invalid token state");
         };
 
@@ -240,10 +231,7 @@ impl Context {
             //--------------------------------------------------
             // Defer credential issuance
             //--------------------------------------------------
-            let Some(mut state) = self.state.clone() else {
-                err!("Invalid state");
-            };
-
+            let mut state = self.state.clone();
             let txn_id = gen::transaction_id();
 
             // save credential request in state for later use in a deferred request.
@@ -291,12 +279,8 @@ impl Context {
     {
         trace!("Context::make_vc");
 
-        let Some(state) = &self.state else {
-            err!("Invalid state");
-        };
-
         let cred_def = self.credential_definition(request)?;
-        let Some(holder_id) = &state.holder_id else {
+        let Some(holder_id) = &self.state.holder_id else {
             err!(Err::AccessDenied, "Holder not found");
         };
 
@@ -397,9 +381,7 @@ impl Context {
         P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
     {
         // generate nonce and update state
-        let Some(mut state) = self.state.clone() else {
-            err!("state not set");
-        };
+        let mut state = self.state.clone();
         let Some(mut token_state) = state.token else {
             err!("token state not set");
         };

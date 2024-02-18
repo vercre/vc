@@ -51,10 +51,19 @@ Once both the VP server and Tauri app are running, the presentation process can 
 ```bash
 # get presentation request from verification service
 RESP=$(curl --json '{
-        "credentials": [
-            {"type": ["VerifiableCredential", "EmployeeIDCredential"]},
-            {"type": ["VerifiableCredential", "CitizenshipCredential"]}
-        ],
+        "purpose": "To verify employment",
+        "input_descriptors": [{
+            "id": "employment",
+            "constraints": {
+                "fields": [{
+                    "path":["$.type"],
+                    "filter": {
+                        "type": "string",
+                        "const": "EmployeeIDCredential"
+                    }
+                }]
+            }
+        }],
         "device_flow": "CrossDevice"
     }' \
     http://localhost:8080/invoke)

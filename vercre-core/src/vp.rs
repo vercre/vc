@@ -22,9 +22,8 @@ use serde_json::Value;
 
 use crate::error::Err;
 use crate::jwt::{self, Jwt};
-use crate::metadata::{Client as ClientMetadata, CredentialDefinition};
-// use crate::vci::CredentialDefinition;
-use crate::w3c::vp::{PresentationDefinition, PresentationSubmission};
+use crate::metadata::Client as ClientMetadata;
+use crate::w3c::vp::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 use crate::{err, stringify, Result};
 
 /// The Request Object Request is created by the Verifier to generate an
@@ -37,8 +36,12 @@ pub struct InvokeRequest {
     #[serde(skip)]
     pub client_id: String,
 
-    /// Verifiable Credentials to request from the Wallet.
-    pub credentials: Vec<CredentialDefinition>,
+    /// The reason the Verifier is requesting the Verifiable Presentation.
+    pub purpose: String,
+
+    /// Input Descriptors describing the information required from the
+    /// Holder.
+    pub input_descriptors: Vec<InputDescriptor>,
 
     /// The Verifier can specify whether Authorization Requests and Responses
     /// are to be passed between endpoints on the same device or across devices

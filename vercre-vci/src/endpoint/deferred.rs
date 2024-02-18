@@ -27,8 +27,15 @@ where
     ) -> Result<DeferredCredentialResponse> {
         let request = request.into();
 
+        let Ok(buf) = StateManager::get(&self.provider, &request.access_token).await else {
+            err!(Err::AccessDenied, "Invalid access token");
+        };
+        let Ok(state) = State::try_from(buf) else {
+            err!(Err::AccessDenied, "Invalid state for access token");
+        };
+
         let ctx = Context {
-            // callback_id: state.callback_id.clone(),
+            callback_id: state.callback_id.clone(),
         };
 
         self.handle_request(request, ctx).await
@@ -37,7 +44,7 @@ where
 
 #[derive(Debug)]
 struct Context {
-    // callback_id: Option<String>,
+    callback_id: Option<String>,
 }
 
 impl super::Context for Context {
@@ -46,8 +53,7 @@ impl super::Context for Context {
 
     // TODO: get callback_id from state
     fn callback_id(&self) -> Option<String> {
-        // self.callback_id.clone()
-        None
+        self.callback_id.clone()
     }
 
     #[instrument]

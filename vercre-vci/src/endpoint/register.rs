@@ -27,10 +27,7 @@ where
         &self, request: impl Into<RegistrationRequest>,
     ) -> Result<RegistrationResponse> {
         let request = request.into();
-
-        let ctx = Context {};
-
-        self.handle_request(request, ctx).await
+        self.handle_request(request, Context {}).await
     }
 }
 
@@ -141,8 +138,7 @@ mod tests {
         request.credential_issuer = ISSUER.to_string();
         request.access_token = access_token.to_string();
 
-        let response =
-            Endpoint::new(provider).register(request).await.expect("response is ok");
+        let response = Endpoint::new(provider).register(request).await.expect("response is ok");
         assert_snapshot!("response", response, {
             ".client_id" => "[client_id]",
         });

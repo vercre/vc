@@ -28,11 +28,20 @@ async fn cross_device_flow() {
 
     // generate verifier request to 'send' to the app
     let body = json!({
-        "credentials": [
-            {"type": ["VerifiableCredential", "EmployeeIDCredential"]},
-            {"type": ["VerifiableCredential", "CitizenshipCredential"]}
-        ],
-        "device_flow": "CrossDevice",
+        "purpose": "To verify employment",
+        "input_descriptors": [{
+            "id": "employment",
+            "constraints": {
+                "fields": [{
+                    "path":["$.type"],
+                    "filter": {
+                        "type": "string",
+                        "const": "EmployeeIDCredential"
+                    }
+                }]
+            }
+        }],
+        "device_flow": "CrossDevice"
     });
 
     let resp = verifier.post("/invoke").json(&body).expect_success().await.json::<InvokeResponse>();

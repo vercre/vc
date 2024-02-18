@@ -73,8 +73,7 @@ mod tests {
         let request = MetadataRequest {
             credential_issuer: ISSUER.to_string(),
         };
-        let response =
-            Endpoint::new(provider).metadata(request).await.expect("response is ok");
+        let response = Endpoint::new(provider).metadata(request).await.expect("response is ok");
         assert_snapshot!("response", response, {
             ".credentials_supported" => insta::sorted_redaction(),
             ".credentials_supported.*.credential_definition.credentialSubject" => insta::sorted_redaction()

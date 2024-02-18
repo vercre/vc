@@ -103,13 +103,14 @@ where
     ) -> Result<AuthorizationResponse> {
         let request = request.into();
 
-        // // restore state (from a credential offer), if exists
-        // let state = if let Some(state_key) = &request.issuer_state {
-        //     let buf = StateManager::get(&self.provider, state_key).await?;
-        //     Some(State::try_from(buf.as_slice())?)
-        // } else {
-        //     None
-        // };
+        // attempt to get callback_id from state, if pre-auth flow
+        let callback_id = if let Some(state_key) = &request.issuer_state {
+            let buf = StateManager::get(&self.provider, state_key).await?;
+            let state = State::try_from(buf.as_slice())?;
+            state.callback_id
+        } else {
+            None
+        };
 
         let issuer_meta = Issuer::metadata(&self.provider, &request.credential_issuer).await?;
 
@@ -122,11 +123,9 @@ where
         identifiers.dedup();
 
         let ctx = Context {
-            issuer_meta,
-            // state,
+            callback_id,
             authorization_details,
             identifiers,
-            callback_id: None, //request.callback_id.clone(),
         };
 
         self.handle_request(request, ctx).await
@@ -135,11 +134,9 @@ where
 
 #[derive(Debug)]
 struct Context {
-    issuer_meta: IssuerMetadata,
-    // state: Option<State>,
+    callback_id: Option<String>,
     authorization_details: Vec<AuthorizationDetail>,
     identifiers: Vec<String>,
-    callback_id: Option<String>,
 }
 
 impl super::Context for Context {
@@ -233,6 +230,8 @@ impl super::Context for Context {
     {
         trace!("Context::process");
 
+        let issuer_meta = Issuer::metadata(provider, &request.credential_issuer).await?;
+
         // save authorization state
         let mut state = State::builder()
             .credential_issuer(request.credential_issuer.clone())
@@ -256,7 +255,7 @@ impl super::Context for Context {
             let mut details = self.authorization_details.clone();
 
             // remove credential_identifiers if not supported for this issuer
-            if !self.issuer_meta.credential_identifiers_supported.unwrap_or_default() {
+            if !issuer_meta.credential_identifiers_supported.unwrap_or_default() {
                 for det in &mut details {
                     det.credential_identifiers = None;
                 }
