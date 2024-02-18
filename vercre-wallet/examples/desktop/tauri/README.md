@@ -26,7 +26,7 @@ RESP=$(curl --json '{
         "user_pin_required": true,
         "callback_id": "1234"
     }' \
-    http://localhost:8080/pre-auth)
+    http://localhost:8080/invoke)
 
 # send credential offer to wallet (Tauri app)
 OFFER=$(echo $RESP | jq '.credential_offer' | jq -r @uri)

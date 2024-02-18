@@ -1,74 +1,59 @@
 //! # Metadata Handler
 
-use std::fmt::Debug;
-use std::marker::PhantomData;
+// use std::fmt::Debug;
 
 use tracing::{instrument, trace};
-use vercre_core::metadata::Issuer as IssuerMetadata;
 use vercre_core::vci::{MetadataRequest, MetadataResponse};
 use vercre_core::{Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager};
 
-use super::Handler;
+use super::Endpoint;
 
 /// Metadata request handler.
-impl<P> Handler<P, MetadataRequest>
+impl<P> Endpoint<P>
 where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
 {
-    /// Call the request for the Request Object endpoint.
-    #[instrument]
-    pub async fn call(&self) -> Result<MetadataResponse> {
-        trace!("Handler::call");
-        self.handle_request(Context::new()).await
+    /// Request Issuer metadata.
+    ///
+    /// # Errors
+    ///
+    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+    /// not available.
+    pub async fn metadata(&self, request: impl Into<MetadataRequest>) -> Result<MetadataResponse> {
+        let request = request.into();
+
+        let ctx = Context {
+            // callback_id: request.callback_id.clone(),
+        };
+
+        self.handle_request(request, ctx).await
     }
 }
 
 #[derive(Debug)]
-struct Context<P>
-where
-    P: Issuer,
-{
-    issuer_meta: IssuerMetadata,
-    _phantom: PhantomData<P>,
+struct Context {
+    // callback_id: Option<String>,
 }
 
-impl<P> Context<P>
-where
-    P: Issuer,
-{
-    #[instrument]
-    pub fn new() -> Self {
-        trace!("Context::new");
-        Self {
-            issuer_meta: IssuerMetadata::default(),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-impl<P> vercre_core::Context for Context<P>
-where
-    P: Issuer + Debug,
-{
-    type Provider = P;
+impl super::Context for Context {
     type Request = MetadataRequest;
     type Response = MetadataResponse;
 
-    #[instrument]
-    async fn init(&mut self, req: &Self::Request, provider: Self::Provider) -> Result<&Self> {
-        trace!("Context::prepare");
-
-        self.issuer_meta = Issuer::metadata(&provider, &req.credential_issuer).await?;
-        Ok(self)
+    // TODO: get callback_id from state
+    fn callback_id(&self) -> Option<String> {
+        // self.callback_id.clone()
+        None
     }
 
     #[instrument]
-    async fn process(&self, _: &Self::Request) -> Result<Self::Response> {
+    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
+    where
+        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    {
         trace!("Context::process");
 
-        Ok(MetadataResponse {
-            credential_issuer: self.issuer_meta.clone(),
-        })
+        let credential_issuer = Issuer::metadata(provider, &request.credential_issuer).await?;
+        Ok(MetadataResponse { credential_issuer })
     }
 }
 
@@ -88,7 +73,8 @@ mod tests {
         let request = MetadataRequest {
             credential_issuer: ISSUER.to_string(),
         };
-        let response = Handler::new(&provider, request).call().await.expect("response is ok");
+        let response =
+            Endpoint::new(provider).metadata(request).await.expect("response is ok");
         assert_snapshot!("response", response, {
             ".credentials_supported" => insta::sorted_redaction(),
             ".credentials_supported.*.credential_definition.credentialSubject" => insta::sorted_redaction()

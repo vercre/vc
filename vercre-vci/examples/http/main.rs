@@ -24,19 +24,25 @@ use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 use vercre_vci::endpoint::{
     AuthorizationRequest, BatchCredentialRequest, BatchCredentialResponse, CredentialRequest,
-    CredentialResponse, DeferredCredentialRequest, DeferredCredentialResponse, Handler,
+    CredentialResponse, DeferredCredentialRequest, DeferredCredentialResponse, Endpoint,
     InvokeRequest, InvokeResponse, MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,
 };
+
+
+lazy_static::lazy_static! {
+    static ref AUTHORIZED: RwLock<HashMap<String, AuthorizationRequest>> = RwLock::new(HashMap::new());
+}
+
 
 #[tokio::main]
 async fn main() {
     let subscriber = FmtSubscriber::builder().with_max_level(Level::ERROR).finish();
     tracing::subscriber::set_global_default(subscriber).expect("set subscriber");
 
-    let state = Arc::new(AppState::new());
+    let endpoint = Arc::new(Endpoint::new(Provider::new()));
 
     let router = Router::new()
-        .route("/pre-auth", post(credential_offer))
+        .route("/invoke", post(invoke))
         .route("/auth", get(authorize))
         .route("/login", post(login))
         .route("/token", post(token))
@@ -45,35 +51,22 @@ async fn main() {
         .route("/deferred_credential", post(deferred_credential))
         .route("/metadata", get(metadata))
         .layer(TraceLayer::new_for_http())
-        .with_state(state);
+        .with_state(endpoint);
 
     let listener = TcpListener::bind("0.0.0.0:8080").await.expect("should bind");
     tracing::info!("listening on {}", listener.local_addr().expect("should have addr"));
     axum::serve(listener, router).await.expect("server should run");
 }
 
-struct AppState {
-    provider: Provider,
-    authorized: RwLock<HashMap<String, AuthorizationRequest>>,
-}
-
-impl AppState {
-    fn new() -> Self {
-        Self {
-            provider: Provider::new(),
-            authorized: RwLock::new(HashMap::new()),
-        }
-    }
-}
-
 // Credential Offer endpoint
 #[axum::debug_handler]
-async fn credential_offer(
-    State(state): State<Arc<AppState>>, TypedHeader(host): TypedHeader<Host>,
+async fn invoke(
+    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     Json(mut req): Json<InvokeRequest>,
-) -> AxResult<InvokeResponse> {
+) -> AxResult<InvokeResponse>
+{
     req.credential_issuer = format!("http://{}", host);
-    Handler::new(&state.provider, req).call().await.into()
+    endpoint.invoke(req).await.into()
 }
 
 /// Authorize endpoint
@@ -85,7 +78,7 @@ async fn credential_offer(
 
 #[axum::debug_handler]
 async fn authorize(
-    State(state): State<Arc<AppState>>, TypedHeader(host): TypedHeader<Host>,
+    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     Form(mut req): Form<AuthorizationRequest>,
 ) -> impl IntoResponse {
     // return error if no holder_id
@@ -95,12 +88,12 @@ async fn authorize(
 
     // show login form if holder_id is unauthorized
     // (subject is authorized if they can be found in the 'authorized' HashMap)
-    if state.authorized.read().await.get(&req.holder_id).is_none() {
+    if AUTHORIZED.read().await.get(&req.holder_id).is_none() {
         // save request
         let csrf = CsrfToken::new_random();
         let token = csrf.secret();
 
-        let mut authorized = state.authorized.write().await;
+        let mut authorized = AUTHORIZED.write().await;
         authorized.insert(token.clone(), req);
 
         // prompt user to login
@@ -125,7 +118,7 @@ async fn authorize(
             .into_response();
     };
 
-    match Handler::new(&state.provider, req).call().await {
+    match endpoint.authorize(req).await {
         Ok(v) => (StatusCode::FOUND, Redirect::to(&format!("{redirect_uri}?code={}", v.code)))
             .into_response(),
         Err(e) => {
@@ -145,7 +138,7 @@ struct LoginRequest {
 
 #[axum::debug_handler]
 async fn login(
-    State(state): State<Arc<AppState>>, TypedHeader(host): TypedHeader<Host>,
+     TypedHeader(host): TypedHeader<Host>,
     Form(req): Form<LoginRequest>,
 ) -> impl IntoResponse {
     // check username and password
@@ -159,12 +152,12 @@ async fn login(
     }
 
     // update 'authorized' HashMap with subject as key
-    let authorized = state.authorized.read().await;
+    let authorized = AUTHORIZED.read().await;
     let Some(auth_req) = authorized.get(&req.csrf_token) else {
         return (StatusCode::UNAUTHORIZED, Json(json!({"error": "invalid csrf_token"})))
             .into_response();
     };
-    state.authorized.write().await.insert(req.username.clone(), auth_req.clone());
+    AUTHORIZED.write().await.insert(req.username.clone(), auth_req.clone());
 
     // redirect back to authorize endpoint
     let qs = serde_qs::to_string(&auth_req).expect("should serialize");
@@ -184,57 +177,57 @@ async fn login(
 /// header field [RFC2616] with a value of "no-cache".
 #[axum::debug_handler]
 async fn token(
-    State(state): State<Arc<AppState>>, TypedHeader(host): TypedHeader<Host>,
+    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     Form(mut req): Form<TokenRequest>,
 ) -> AxResult<TokenResponse> {
     req.credential_issuer = format!("http://{}", host);
-    Handler::new(&state.provider, req).call().await.into()
+    endpoint.token(req).await.into()
 }
 
 // Credential endpoint
 #[axum::debug_handler]
 async fn credential(
-    State(state): State<Arc<AppState>>, TypedHeader(host): TypedHeader<Host>,
+    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>, Json(mut req): Json<CredentialRequest>,
 ) -> AxResult<CredentialResponse> {
     req.credential_issuer = format!("http://{}", host);
     req.access_token = auth.token().to_string();
-    Handler::new(&state.provider, req).call().await.into()
+    endpoint.credential(req).await.into()
 }
 
 // Deferred endpoint
 #[axum::debug_handler]
 async fn deferred_credential(
-    State(state): State<Arc<AppState>>, TypedHeader(host): TypedHeader<Host>,
+    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(mut req): Json<DeferredCredentialRequest>,
 ) -> AxResult<DeferredCredentialResponse> {
     req.credential_issuer = format!("http://{}", host);
     req.access_token = auth.0.token().to_string();
-    Handler::new(&state.provider, req).call().await.into()
+    endpoint.deferred(req).await.into()
 }
 
 // Batch endpoint
 #[axum::debug_handler]
 async fn batch_credential(
-    State(state): State<Arc<AppState>>, TypedHeader(host): TypedHeader<Host>,
+    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(mut req): Json<BatchCredentialRequest>,
 ) -> AxResult<BatchCredentialResponse> {
     req.credential_issuer = format!("http://{}", host);
     req.access_token = auth.0.token().to_string();
-    Handler::new(&state.provider, req).call().await.into()
+    endpoint.batch(req).await.into()
 }
 
 // Metadata endpoint
 #[axum::debug_handler]
 async fn metadata(
-    State(state): State<Arc<AppState>>, TypedHeader(host): TypedHeader<Host>,
+    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
 ) -> AxResult<MetadataResponse> {
     let req = MetadataRequest {
         credential_issuer: format!("http://{}", host),
     };
-    Handler::new(&state.provider, req).call().await.into()
+    endpoint.metadata(req).await.into()
 }
 
 // ----------------------------------------------------------------------------

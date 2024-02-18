@@ -75,123 +75,92 @@
 use std::fmt::Debug;
 use std::vec;
 
-use anyhow::anyhow;
 use chrono::Utc;
 use tracing::{instrument, trace};
-use vercre_core::error::{Ancillary, Err};
+use vercre_core::error::Err;
 use vercre_core::metadata::Issuer as IssuerMetadata;
 use vercre_core::vci::{AuthorizationDetail, AuthorizationRequest, AuthorizationResponse};
 use vercre_core::{
     err, gen, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager,
 };
 
-use super::Handler;
+use super::Endpoint;
 use crate::state::{AuthState, Expire, State};
 
-/// Authorize request handler.
-impl<P> Handler<P, AuthorizationRequest>
+/// Authorize Request handler.
+impl<P> Endpoint<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
 {
-    /// Call the request for the Request Object endpoint.
-    #[instrument]
-    pub async fn call(&self) -> Result<AuthorizationResponse> {
-        trace!("Handler::call");
+    /// Initiate an Authorization Request flow.
+    ///
+    /// # Errors
+    ///
+    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+    /// not available.
+    pub async fn authorize(
+        &self, request: impl Into<AuthorizationRequest>,
+    ) -> Result<AuthorizationResponse> {
+        let request = request.into();
 
-        // add client state to error responses
-        match self.handle_request(Context::new()).await {
-            Ok(resp) => Ok(resp),
-            Err(e) => {
-                if let Some(state) = &self.request.state {
-                    return Err(e).state(state.clone());
-                };
-                Err(e)
-            }
+        // // restore state (from a credential offer), if exists
+        // let state = if let Some(state_key) = &request.issuer_state {
+        //     let buf = StateManager::get(&self.provider, state_key).await?;
+        //     Some(State::try_from(buf.as_slice())?)
+        // } else {
+        //     None
+        // };
+
+        let issuer_meta = Issuer::metadata(&self.provider, &request.credential_issuer).await?;
+
+        // resolve scope and authorization_details to credential identifiers
+        let mut identifiers = resolve_scope(&request, &issuer_meta)?;
+        let authorization_details = resolve_authzn(&request, &issuer_meta)?;
+        for auth_det in &authorization_details {
+            identifiers.extend(auth_det.credential_identifiers.clone().unwrap_or_default());
         }
+        identifiers.dedup();
+
+        let ctx = Context {
+            issuer_meta,
+            // state,
+            authorization_details,
+            identifiers,
+            callback_id: None, //request.callback_id.clone(),
+        };
+
+        self.handle_request(request, ctx).await
     }
 }
 
 #[derive(Debug)]
-struct Context<P>
-where
-    P: Client + Issuer + Server + StateManager,
-{
-    provider: Option<P>,
+struct Context {
     issuer_meta: IssuerMetadata,
-    state: Option<State>,
+    // state: Option<State>,
     authorization_details: Vec<AuthorizationDetail>,
     identifiers: Vec<String>,
+    callback_id: Option<String>,
 }
 
-impl<P> Context<P>
-where
-    P: Client + Issuer + Server + StateManager,
-{
-    #[instrument]
-    pub fn new() -> Self {
-        trace!("Context::new");
-
-        Self {
-            provider: None,
-            issuer_meta: IssuerMetadata::default(),
-            state: None,
-            authorization_details: vec![],
-            identifiers: vec![],
-        }
-    }
-}
-
-impl<P> vercre_core::Context for Context<P>
-where
-    P: Client + Issuer + Server + Holder + StateManager + Debug,
-{
-    type Provider = P;
+impl super::Context for Context {
     type Request = AuthorizationRequest;
     type Response = AuthorizationResponse;
 
-    // Prepare the context for processing the request.
-    #[instrument]
-    async fn init(&mut self, req: &Self::Request, provider: Self::Provider) -> Result<&Self> {
-        trace!("Context::prepare");
-
-        self.issuer_meta = Issuer::metadata(&provider, &req.credential_issuer).await?;
-
-        // restore state (from a credential offer), if exists
-        if let Some(state_key) = &req.issuer_state {
-            let buf = StateManager::get(&provider, state_key).await?;
-            self.state = Some(State::try_from(buf.as_slice())?);
-        }
-
-        // resolve scope and authorization_details to credential identifiers
-        self.identifiers = self.resolve_scope(req)?;
-        self.authorization_details = self.resolve_authzn(req)?;
-        for auth_det in &self.authorization_details {
-            self.identifiers.extend(auth_det.credential_identifiers.clone().unwrap_or_default());
-        }
-        self.identifiers.dedup();
-
-        self.provider = Some(provider);
-        Ok(self)
-    }
-
     fn callback_id(&self) -> Option<String> {
-        if let Some(state) = &self.state {
-            return state.callback_id.clone();
-        }
-        None
+        self.callback_id.clone()
     }
 
     #[instrument]
-    async fn verify(&self, req: &Self::Request) -> Result<&Self> {
+    async fn verify<P>(&self, provider: &P, request: &Self::Request) -> Result<&Self>
+    where
+        P: Client + Issuer + Server + Holder + StateManager + Debug,
+    {
         trace!("Context::verify");
 
-        let Some(provider) = &self.provider else {
-            err!("Provider not set");
-        };
-        let Ok(client_meta) = Client::metadata(provider, &req.client_id).await else {
+        let Ok(client_meta) = Client::metadata(provider, &request.client_id).await else {
             err!(Err::InvalidClient, "Invalid client_id");
         };
-        let server_meta = Server::metadata(provider, &req.credential_issuer).await?;
+        let server_meta = Server::metadata(provider, &request.credential_issuer).await?;
 
         // 'authorization_code' grant_type allowed (client and server)?
         let client_grant_types = client_meta.grant_types.unwrap_or_default();
@@ -204,20 +173,20 @@ where
         }
 
         // holder authorized?
-        if req.holder_id.is_empty() {
+        if request.holder_id.is_empty() {
             err!(Err::AuthorizationPending, "Missing holder subject");
         }
-        if Holder::authorize(provider, &req.holder_id, &self.identifiers).await.is_err() {
+        if Holder::authorize(provider, &request.holder_id, &self.identifiers).await.is_err() {
             err!(Err::AuthorizationPending, "Holder is not authorized");
         }
 
         // credential request?
-        if req.authorization_details.is_none() && req.scope.is_none() {
+        if request.authorization_details.is_none() && request.scope.is_none() {
             err!(Err::InvalidRequest, "No credentials requested");
         }
 
         // authorization_details (basic type validation)
-        if let Some(authorization_details) = &req.authorization_details {
+        if let Some(authorization_details) = &request.authorization_details {
             for auth_det in authorization_details {
                 if auth_det.type_ != "openid_credential" {
                     err!(Err::InvalidRequest, "Invalid authorization_details type");
@@ -226,7 +195,7 @@ where
         }
 
         // redirect_uri
-        let Some(redirect_uri) = &req.redirect_uri else {
+        let Some(redirect_uri) = &request.redirect_uri else {
             err!(Err::InvalidRequest, "No redirect_uri specified");
         };
         let Some(redirect_uris) = client_meta.redirect_uris else {
@@ -237,20 +206,20 @@ where
         }
 
         // response_type
-        if !client_meta.response_types.unwrap_or_default().contains(&req.response_type) {
+        if !client_meta.response_types.unwrap_or_default().contains(&request.response_type) {
             err!(Err::UnsupportedResponseType, "The response_type not supported by client");
         }
-        if !server_meta.response_types_supported.contains(&req.response_type) {
+        if !server_meta.response_types_supported.contains(&request.response_type) {
             err!(Err::UnsupportedResponseType, "response_type not supported by server");
         }
 
         // code_challenge
         // N.B. while optional in the spec, we require it
         let challenge_methods = server_meta.code_challenge_methods_supported.unwrap_or_default();
-        if !challenge_methods.contains(&req.code_challenge_method) {
+        if !challenge_methods.contains(&request.code_challenge_method) {
             err!(Err::InvalidRequest, "Unsupported code_challenge_method");
         }
-        if req.code_challenge.len() < 43 || req.code_challenge.len() > 128 {
+        if request.code_challenge.len() < 43 || request.code_challenge.len() > 128 {
             err!(Err::InvalidRequest, "code_challenge must be between 43 and 128 characters");
         }
 
@@ -258,30 +227,29 @@ where
     }
 
     #[instrument]
-    async fn process(&self, req: &Self::Request) -> Result<Self::Response> {
+    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
+    where
+        P: Client + Issuer + Server + Holder + StateManager + Debug,
+    {
         trace!("Context::process");
-
-        let Some(provider) = &self.provider else {
-            err!("Provider not set");
-        };
 
         // save authorization state
         let mut state = State::builder()
-            .credential_issuer(req.credential_issuer.clone())
-            .client_id(req.client_id.clone())
+            .credential_issuer(request.credential_issuer.clone())
+            .client_id(request.client_id.clone())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credentials(self.identifiers.clone())
-            .holder_id(Some(req.holder_id.clone()))
+            .holder_id(Some(request.holder_id.clone()))
             .build();
 
         // save redirect uri and verify in token endpoint
-        let Some(redirect_uri) = &req.redirect_uri else {
+        let Some(redirect_uri) = &request.redirect_uri else {
             err!(Err::InvalidRequest, "No redirect_uri specified");
         };
         let mut auth_state = AuthState::builder()
             .redirect_uri(redirect_uri.clone())
-            .code_challenge(req.code_challenge.clone(), req.code_challenge_method.clone())
-            .scope(req.scope.clone())
+            .code_challenge(request.code_challenge.clone(), request.code_challenge_method.clone())
+            .scope(request.scope.clone())
             .build();
 
         if !self.authorization_details.is_empty() {
@@ -302,77 +270,69 @@ where
         StateManager::put(provider, &code, state.to_vec(), state.expires_at).await?;
 
         // remove offer state
-        if let Some(issuer_state) = &req.issuer_state {
+        if let Some(issuer_state) = &request.issuer_state {
             StateManager::purge(provider, issuer_state).await?;
         }
 
         Ok(AuthorizationResponse {
             code,
-            state: req.state.clone(),
+            state: request.state.clone(),
             redirect_uri: redirect_uri.clone(),
         })
     }
 }
 
-impl<P> Context<P>
-where
-    P: Client + Issuer + Server + StateManager,
-{
-    // resolve credentials specified in authorization_details to supported
-    // credential identifiers
-    #[instrument]
-    fn resolve_authzn(&self, req: &AuthorizationRequest) -> Result<Vec<AuthorizationDetail>>
-    where
-        P: Client + Issuer + Server + StateManager + Debug,
-    {
-        trace!("Context::resolve_authzn");
+// resolve credentials specified in authorization_details to supported
+// credential identifiers
+#[instrument]
+fn resolve_authzn(
+    req: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
+) -> Result<Vec<AuthorizationDetail>> {
+    trace!("resolve_authzn");
 
-        let Some(mut auth_dets) = req.authorization_details.clone() else {
-            return Ok(vec![]);
-        };
+    let Some(mut auth_dets) = req.authorization_details.clone() else {
+        return Ok(vec![]);
+    };
 
-        for auth_det in &mut auth_dets {
-            let mut identifiers = vec![];
-            for (id, cred) in &self.issuer_meta.credentials_supported {
-                if cred.format == auth_det.format
-                    && cred.credential_definition.type_ == auth_det.credential_definition.type_
-                {
-                    identifiers.push(id.to_owned());
-                }
-            }
-
-            if identifiers.is_empty() {
-                err!(Err::InvalidRequest, "Unsupported credentials requested");
-            }
-            auth_det.credential_identifiers = Some(identifiers);
-        }
-
-        Ok(auth_dets)
-    }
-
-    #[instrument]
-    fn resolve_scope(&self, req: &AuthorizationRequest) -> Result<Vec<String>>
-    where
-        P: Client + Issuer + Server + StateManager + Debug,
-    {
-        trace!("Context::resolve_scope");
-
-        let Some(scope) = &req.scope else {
-            return Ok(vec![]);
-        };
-
+    for auth_det in &mut auth_dets {
         let mut identifiers = vec![];
-
-        for item in scope.split_whitespace().collect::<Vec<&str>>() {
-            for (id, cred) in &self.issuer_meta.credentials_supported {
-                if cred.scope == Some(item.to_string()) {
-                    identifiers.push(id.to_owned());
-                }
+        for (id, cred) in &issuer_meta.credentials_supported {
+            if cred.format == auth_det.format
+                && cred.credential_definition.type_ == auth_det.credential_definition.type_
+            {
+                identifiers.push(id.to_owned());
             }
         }
 
-        Ok(identifiers)
+        if identifiers.is_empty() {
+            err!(Err::InvalidRequest, "Unsupported credentials requested");
+        }
+        auth_det.credential_identifiers = Some(identifiers);
     }
+
+    Ok(auth_dets)
+}
+
+#[instrument]
+fn resolve_scope(
+    request: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
+) -> Result<Vec<String>> {
+    trace!("resolve_scope");
+
+    let Some(scope) = &request.scope else {
+        return Ok(vec![]);
+    };
+    let mut identifiers = vec![];
+
+    for item in scope.split_whitespace().collect::<Vec<&str>>() {
+        for (id, cred) in &issuer_meta.credentials_supported {
+            if cred.scope == Some(item.to_string()) {
+                identifiers.push(id.to_owned());
+            }
+        }
+    }
+
+    Ok(identifiers)
 }
 
 #[cfg(test)]
@@ -428,14 +388,15 @@ mod tests {
             serde_json::from_value::<AuthorizationRequest>(body).expect("should deserialize");
         request.credential_issuer = ISSUER.to_string();
 
-        let response = Handler::new(&provider, request).call().await.expect("response is ok");
+        let response =
+            Endpoint::new(provider.clone()).authorize(request).await.expect("response is ok");
 
         assert_snapshot!("authzn-ok", response, {
             ".code" => "[code]",
         });
 
         // compare response with saved state
-        let buf = StateManager::get(&&provider, &response.code).await.expect("state exists");
+        let buf = StateManager::get(&provider, &response.code).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
         assert_snapshot!("authzn-state", state, {
             ".expires_at" => "[expires_at]",
@@ -468,13 +429,14 @@ mod tests {
             serde_json::from_value::<AuthorizationRequest>(body).expect("should deserialize");
         request.credential_issuer = ISSUER.to_string();
 
-        let response = Handler::new(&provider, request).call().await.expect("response is ok");
+        let response =
+            Endpoint::new(provider.clone()).authorize(request).await.expect("response is ok");
         assert_snapshot!("scope-ok", response, {
             ".code" => "[code]",
         });
 
         // compare response with saved state
-        let buf = StateManager::get(&&provider, &response.code).await.expect("state exists");
+        let buf = StateManager::get(&provider, &response.code).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
         assert_snapshot!("scope-state", state, {
             ".expires_at" => "[expires_at]",

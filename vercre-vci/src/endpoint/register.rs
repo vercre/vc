@@ -9,67 +9,52 @@ use vercre_core::error::Err;
 use vercre_core::vci::{RegistrationRequest, RegistrationResponse};
 use vercre_core::{err, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager};
 
-use super::Handler;
+use super::Endpoint;
 use crate::state::State;
 
 /// Registration request handler.
-impl<P> Handler<P, RegistrationRequest>
+impl<P> Endpoint<P>
 where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
 {
-    /// Call the request for the Request Object endpoint.
-    #[instrument]
-    pub async fn call(&self) -> Result<RegistrationResponse> {
-        trace!("Handler::call");
-        self.handle_request(Context::new()).await
+    /// Register client.
+    ///
+    /// # Errors
+    ///
+    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+    /// not available.
+    pub async fn register(
+        &self, request: impl Into<RegistrationRequest>,
+    ) -> Result<RegistrationResponse> {
+        let request = request.into();
+
+        let ctx = Context {};
+
+        self.handle_request(request, ctx).await
     }
 }
 
 #[derive(Debug)]
-struct Context<P>
-where
-    P: Client,
-{
-    // client_meta: ClientMetadata,
-    provider: Option<P>,
-}
+struct Context;
 
-impl<P> Context<P>
-where
-    P: Client,
-{
-    #[instrument]
-    pub fn new() -> Self {
-        trace!("Context::new");
-        Self { provider: None }
-    }
-}
-
-impl<P> vercre_core::Context for Context<P>
-where
-    P: Client + StateManager + Debug,
-{
-    type Provider = P;
+impl super::Context for Context {
     type Request = RegistrationRequest;
     type Response = RegistrationResponse;
 
-    #[instrument]
-    async fn init(&mut self, req: &Self::Request, provider: Self::Provider) -> Result<&Self> {
-        trace!("Context::prepare");
-
-        self.provider = Some(provider);
-        Ok(self)
+    // TODO: get callback_id from state
+    fn callback_id(&self) -> Option<String> {
+        // self.callback_id.clone()
+        None
     }
 
     #[instrument]
-    async fn verify(&self, req: &Self::Request) -> Result<&Self> {
+    async fn verify<P>(&self, provider: &P, request: &Self::Request) -> Result<&Self>
+    where
+        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    {
         trace!("Context::verify");
 
-        let Some(provider) = &self.provider else {
-            err!("State manager not set");
-        };
-
-        let buf = match StateManager::get(provider, &req.access_token).await {
+        let buf = match StateManager::get(provider, &request.access_token).await {
             Ok(buf) => buf,
             Err(e) => err!(Err::ServerError(e), "State not found"),
         };
@@ -85,14 +70,13 @@ where
     }
 
     #[instrument]
-    async fn process(&self, req: &Self::Request) -> Result<Self::Response> {
+    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
+    where
+        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    {
         trace!("Context::process");
 
-        let Some(provider) = &self.provider else {
-            err!("State manager not set");
-        };
-
-        let Ok(client_meta) = provider.register(&req.client_metadata).await else {
+        let Ok(client_meta) = provider.register(&request.client_metadata).await else {
             err!("Registration failed");
         };
 
@@ -132,7 +116,7 @@ mod tests {
             ..Default::default()
         });
 
-        StateManager::put(&&provider, access_token, state.to_vec(), state.expires_at)
+        StateManager::put(&provider, access_token, state.to_vec(), state.expires_at)
             .await
             .expect("state saved");
 
@@ -157,7 +141,8 @@ mod tests {
         request.credential_issuer = ISSUER.to_string();
         request.access_token = access_token.to_string();
 
-        let response = Handler::new(&provider, request).call().await.expect("response is ok");
+        let response =
+            Endpoint::new(provider).register(request).await.expect("response is ok");
         assert_snapshot!("response", response, {
             ".client_id" => "[client_id]",
         });

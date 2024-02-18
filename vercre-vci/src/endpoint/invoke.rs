@@ -61,7 +61,6 @@
 
 use std::fmt::Debug;
 
-use anyhow::anyhow;
 use chrono::Utc;
 use tracing::{instrument, trace};
 use vercre_core::error::Err;
@@ -74,92 +73,69 @@ use vercre_core::{
     err, gen, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager,
 };
 
-use super::Handler;
+use super::Endpoint;
 use crate::state::{AuthState, Expire, State};
 
-/// Credential Offer request handler.
-impl<P> Handler<P, InvokeRequest>
+/// Invoke Credential Offer request handler.
+impl<P> Endpoint<P>
 where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
 {
-    /// Call the request for the Request Object endpoint.
-    #[instrument]
-    pub async fn call(&self) -> Result<InvokeResponse> {
-        trace!("Handler::call");
-        self.handle_request(Context::new()).await
+    /// Initiate an Authorization Request flow.
+    ///
+    /// # Errors
+    ///
+    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+    /// not available.
+    pub async fn invoke(&self, request: impl Into<InvokeRequest>) -> Result<InvokeResponse> {
+        let request = request.into();
+
+        let ctx = Context {
+            callback_id: request.callback_id.clone(),
+            issuer_meta: Issuer::metadata(&self.provider, &request.credential_issuer).await?,
+        };
+
+        self.handle_request(request, ctx).await
     }
 }
 
 #[derive(Debug)]
-struct Context<P>
-where
-    P: Issuer + StateManager,
-{
+struct Context {
     callback_id: Option<String>,
     issuer_meta: IssuerMetadata,
-    provider: Option<P>,
 }
 
-impl<P> Context<P>
-where
-    P: Issuer + StateManager,
-{
-    #[instrument]
-    pub fn new() -> Self {
-        trace!("Context::new");
-        Self {
-            callback_id: None,
-            issuer_meta: IssuerMetadata::default(),
-            provider: None,
-        }
-    }
-}
-
-impl<P> vercre_core::Context for Context<P>
-where
-    P: Issuer + StateManager + Debug,
-{
-    type Provider = P;
+impl super::Context for Context {
     type Request = InvokeRequest;
     type Response = InvokeResponse;
-
-    // Prepare the context for processing the request.
-    #[instrument]
-    async fn init(&mut self, req: &Self::Request, provider: Self::Provider) -> Result<&Self> {
-        trace!("Context::prepare");
-
-        self.callback_id = req.callback_id.clone();
-        self.issuer_meta = Issuer::metadata(&provider, &req.credential_issuer).await?;
-        self.provider = Some(provider);
-
-        Ok(self)
-    }
 
     fn callback_id(&self) -> Option<String> {
         self.callback_id.clone()
     }
 
-    // Verify the request is valid.
     #[instrument]
-    async fn verify(&self, req: &Self::Request) -> Result<&Self> {
+    async fn verify<P>(&self, provider: &P, request: &Self::Request) -> Result<&Self>
+    where
+        P: Issuer + StateManager + Debug,
+    {
         trace!("Context::verify");
 
         // credential_issuer required
-        if req.credential_issuer.is_empty() {
+        if request.credential_issuer.is_empty() {
             err!(Err::InvalidRequest, "No credential_issuer specified");
         };
         // credentials required
-        if req.credentials.is_empty() {
+        if request.credentials.is_empty() {
             err!(Err::InvalidRequest, "No credentials requested");
         };
         // requested credential is supported
-        for cred_id in &req.credentials {
+        for cred_id in &request.credentials {
             let Some(_) = self.issuer_meta.credentials_supported.get(cred_id) else {
                 err!(Err::UnsupportedCredentialType, "Requested credential is unsupported");
             };
         }
         // holder_id is required
-        if req.holder_id.is_none() {
+        if request.holder_id.is_none() {
             err!(Err::InvalidRequest, "No holder_id specified");
         };
 
@@ -168,26 +144,25 @@ where
 
     // Process the request.
     #[instrument]
-    async fn process(&self, req: &Self::Request) -> Result<Self::Response> {
+    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
+    where
+        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    {
         trace!("Context::process");
 
-        let Some(provider) = &self.provider else {
-            err!("Provider not set");
-        };
-
         let mut state = State::builder()
-            .credential_issuer(req.credential_issuer.clone())
+            .credential_issuer(request.credential_issuer.clone())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credentials(req.credentials.clone())
-            .holder_id(req.holder_id.clone())
-            .callback_id(req.callback_id.clone())
+            .credentials(request.credentials.clone())
+            .holder_id(request.holder_id.clone())
+            .callback_id(request.callback_id.clone())
             .build();
 
         let mut pre_auth_grant = None;
         let mut auth_grant = None;
         let mut user_pin = None;
 
-        if req.pre_authorize {
+        if request.pre_authorize {
             // ------------------------------------------------
             // Pre-authorized Code Grant
             // ------------------------------------------------
@@ -195,12 +170,12 @@ where
 
             pre_auth_grant = Some(PreAuthorizedCodeGrant {
                 pre_authorized_code: pre_auth_code.clone(),
-                user_pin_required: Some(req.user_pin_required),
+                user_pin_required: Some(request.user_pin_required),
                 interval: None,
                 authorization_server: None,
             });
 
-            if req.user_pin_required {
+            if request.user_pin_required {
                 user_pin = Some(gen::user_pin());
             }
 
@@ -228,8 +203,8 @@ where
         // return response
         Ok(InvokeResponse {
             credential_offer: Some(CredentialOffer {
-                credential_issuer: req.credential_issuer.clone(),
-                credentials: req.credentials.clone(),
+                credential_issuer: request.credential_issuer.clone(),
+                credentials: request.credentials.clone(),
                 grants: Some(Grants {
                     authorization_code: auth_grant,
                     pre_authorized_code: pre_auth_grant,
@@ -270,7 +245,8 @@ mod tests {
         let mut request =
             serde_json::from_value::<InvokeRequest>(body).expect("request should deserialize");
         request.credential_issuer = ISSUER.to_string();
-        let response = Handler::new(&provider, request).call().await.expect("response is ok");
+        let response =
+            Endpoint::new(provider.clone()).invoke(request).await.expect("response is ok");
         assert_snapshot!("invoke", response, {
             ".credential_offer.grants.authorization_code.issuer_state" => "[state]",
             ".credential_offer.grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
@@ -285,7 +261,7 @@ mod tests {
 
         // compare response with saved state
         let state_key = &pre_auth_code.pre_authorized_code; //as_ref().expect("has state");
-        let buf = StateManager::get(&&provider, state_key).await.expect("state exists");
+        let buf = StateManager::get(&provider, state_key).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
 
         assert_snapshot!("state", state, {

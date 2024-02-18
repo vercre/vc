@@ -8,7 +8,7 @@ Shared types and logic for higher order `vercre-xxx` crates.
 >
 > The code in this repository is experimental and under active development. The examples work, albeit for a narrow range of use cases, so have a play. We welcome feedback and contributions.
 
-This crate is primarily of interest to developers using any of the following crates to deliver **OpenID for Verifiable Data** solutions:
+This crate is primarily of interest to developers using any of the following crates to deliver **OpenID for Verifiable Credentials** solutions:
 
 - [`vercre-wallet`](../vercre-wallet/) — a library that greatly simplifies building cross-platform wallets.
 - [`vercre-vci`](../vercre-vci/) — a library for building credential issuance APIs.

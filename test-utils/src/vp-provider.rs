@@ -16,7 +16,7 @@ pub const VERIFIER_DID: &str ="did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3Uo
 pub const VERIFY_KEY_ID: &str = "publicKeyModel1Id";
 const JWK_D: &str = "0Md3MhPaKEpnKAyKE498EdDFerD5NLeKJ5Rb-vC16Gs";
 
-#[derive(Clone, Debug, Default)]
+#[derive(Default, Clone, Debug)]
 pub struct Provider {
     client: ClientStore,
     state_store: StateStore,

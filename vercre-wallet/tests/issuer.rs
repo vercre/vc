@@ -19,28 +19,13 @@ use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 use vercre_vci::endpoint::{
     AuthorizationRequest, BatchCredentialRequest, BatchCredentialResponse, CredentialRequest,
-    CredentialResponse, DeferredCredentialRequest, DeferredCredentialResponse, Handler,
+    CredentialResponse, DeferredCredentialRequest, DeferredCredentialResponse, Endpoint,
     InvokeRequest, InvokeResponse, MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,
 };
 
-#[derive(Clone)]
-pub struct AppState {
-    provider: Provider,
-}
-
-impl Default for AppState {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AppState {
-    pub fn new() -> Self {
-        Self {
-            provider: Provider::new(),
-        }
-    }
-}
+// lazy_static::lazy_static! {
+//     static ref AUTHORIZED: RwLock<HashMap<String, AuthorizationRequest>> = RwLock::new(HashMap::new());
+// }
 
 // Set up issuance test server
 pub fn new() -> TestServer {
@@ -54,9 +39,10 @@ pub fn app() -> Router {
     let subscriber = FmtSubscriber::builder().with_max_level(Level::ERROR).finish();
     tracing::subscriber::set_global_default(subscriber).expect("set subscriber");
 
-    let state = Arc::new(AppState::new());
+    let endpoint = Arc::new(Endpoint::new(Provider::new()));
+
     Router::new()
-        .route("/pre-auth", post(credential_offer))
+        .route("/invoke", post(invoke))
         .route("/auth", get(authorize))
         .route("/token", post(token))
         .route("/credential", post(credential))
@@ -64,21 +50,21 @@ pub fn app() -> Router {
         .route("/batch_credential", post(batch_credential))
         .route("/metadata", get(metadata))
         .layer(TraceLayer::new_for_http())
-        .with_state(state)
+        .with_state(endpoint)
 }
 
 // Push endpoint
-async fn credential_offer(
-    State(state): State<Arc<AppState>>, TypedHeader(host): TypedHeader<Host>,
+async fn invoke(
+    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     Json(mut req): Json<InvokeRequest>,
 ) -> AxResult<InvokeResponse> {
     req.credential_issuer = format!("http://{}", host);
-    Handler::new(&state.provider, req).call().await.into()
+    endpoint.invoke(req).await.into()
 }
 
 // Authorize endpoint
 async fn authorize(
-    State(state): State<Arc<AppState>>, TypedHeader(host): TypedHeader<Host>,
+    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     Form(mut req): Form<AuthorizationRequest>,
 ) -> impl IntoResponse {
     req.credential_issuer = format!("http://{}", host);
@@ -90,31 +76,31 @@ async fn authorize(
 
     // TODO: do redirect here
     // process request
-    let res = Handler::new(&state.provider, req).call().await;
+    let res = endpoint.authorize(req).await.into();
     AxResult(res).into_response()
 }
 
 // Token endpoint
 async fn token(
-    State(state): State<Arc<AppState>>, TypedHeader(host): TypedHeader<Host>,
+    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     Form(mut req): Form<TokenRequest>,
 ) -> AxResult<TokenResponse> {
     req.credential_issuer = format!("http://{}", host);
-    Handler::new(&state.provider, req).call().await.into()
+    endpoint.token(req).await.into()
 }
 
 // Credential endpoint
 async fn credential(
-    State(state): State<Arc<AppState>>, TypedHeader(host): TypedHeader<Host>,
+    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>, Json(mut req): Json<CredentialRequest>,
 ) -> AxResult<CredentialResponse> {
     req.credential_issuer = format!("http://{}", host);
     req.access_token = auth.token().to_string().clone();
-    Handler::new(&state.provider, req).call().await.into()
+    endpoint.credential(req).await.into()
 }
 
 pub async fn deferred_credential(
-    State(state): State<Arc<AppState>>, TypedHeader(host): TypedHeader<Host>,
+    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
 ) -> AxResult<DeferredCredentialResponse> {
     // TODO: move request generation to client
@@ -124,27 +110,27 @@ pub async fn deferred_credential(
         // TODO: generate transaction_id
         transaction_id: auth.0.token().to_string(),
     };
-    Handler::new(&state.provider, req).call().await.into()
+    endpoint.deferred(req).await.into()
 }
 
 pub async fn batch_credential(
-    State(state): State<Arc<AppState>>, TypedHeader(host): TypedHeader<Host>,
+    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(mut req): Json<BatchCredentialRequest>,
 ) -> AxResult<BatchCredentialResponse> {
     req.credential_issuer = format!("http://{}", host);
     req.access_token = auth.0.token().to_string();
-    Handler::new(&state.provider, req).call().await.into()
+    endpoint.batch(req).await.into()
 }
 
 // '/metadata' endpoint
 pub async fn metadata(
-    State(state): State<Arc<AppState>>, TypedHeader(host): TypedHeader<Host>,
+    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
 ) -> AxResult<MetadataResponse> {
     let req = MetadataRequest {
         credential_issuer: format!("http://{}", host),
     };
-    Handler::new(&state.provider, req).call().await.into()
+    endpoint.metadata(req).await.into()
 }
 
 // ----------------------------------------------------------------------------

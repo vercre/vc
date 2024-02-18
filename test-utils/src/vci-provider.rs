@@ -27,7 +27,7 @@ pub const ISSUER_DID: &str ="did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4
 pub const VERIFY_KEY_ID: &str = "publicKeyModel1Id";
 const JWK_D: &str = "0Md3MhPaKEpnKAyKE498EdDFerD5NLeKJ5Rb-vC16Gs";
 
-#[derive(Clone, Debug)]
+#[derive(Default, Clone, Debug)]
 pub struct Provider {
     client: ClientStore,
     issuer: IssuerStore,
@@ -35,12 +35,6 @@ pub struct Provider {
     holder: HolderStore,
     state_store: StateStore,
     callback: CallbackHook,
-}
-
-impl Default for Provider {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 impl Provider {
@@ -57,7 +51,7 @@ impl Provider {
     }
 }
 
-impl Client for &Provider {
+impl Client for Provider {
     async fn metadata(&self, client_id: &str) -> anyhow::Result<metadata::Client> {
         self.client.get(client_id)
     }
@@ -67,19 +61,19 @@ impl Client for &Provider {
     }
 }
 
-impl Issuer for &Provider {
+impl Issuer for Provider {
     async fn metadata(&self, issuer_id: &str) -> anyhow::Result<metadata::Issuer> {
         self.issuer.get(issuer_id)
     }
 }
 
-impl Server for &Provider {
+impl Server for Provider {
     async fn metadata(&self, server_id: &str) -> anyhow::Result<metadata::Server> {
         self.server.get(server_id)
     }
 }
 
-impl Holder for &Provider {
+impl Holder for Provider {
     /// Authorize issuance of the specified credential for the holder.
     async fn authorize(
         &self, holder_id: &str, credential_identifiers: &[String],
@@ -94,7 +88,7 @@ impl Holder for &Provider {
     }
 }
 
-impl StateManager for &Provider {
+impl StateManager for Provider {
     async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> anyhow::Result<()> {
         self.state_store.put(key, state, dt)
     }
@@ -108,7 +102,7 @@ impl StateManager for &Provider {
     }
 }
 
-impl Signer for &Provider {
+impl Signer for Provider {
     fn algorithm(&self) -> Algorithm {
         Algorithm::ES256K
     }
@@ -125,7 +119,7 @@ impl Signer for &Provider {
     }
 }
 
-impl Callback for &Provider {
+impl Callback for Provider {
     async fn callback(&self, pl: &Payload) -> anyhow::Result<()> {
         self.callback.callback(pl)
     }
@@ -134,7 +128,7 @@ impl Callback for &Provider {
 //-----------------------------------------------------------------------------
 // Client
 //-----------------------------------------------------------------------------
-#[derive(Clone, Debug)]
+#[derive(Default, Clone, Debug)]
 struct ClientStore {
     clients: Arc<Mutex<HashMap<String, metadata::Client>>>,
 }
@@ -188,7 +182,7 @@ impl ClientStore {
 //-----------------------------------------------------------------------------
 // Holder
 //-----------------------------------------------------------------------------
-#[derive(Clone, Debug)]
+#[derive(Default, Clone, Debug)]
 struct Person {
     given_name: &'static str,
     family_name: &'static str,
@@ -196,7 +190,7 @@ struct Person {
     pending: bool,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Default, Clone, Debug)]
 struct HolderStore {
     holders: Arc<Mutex<HashMap<String, Person>>>,
 }
@@ -282,7 +276,7 @@ impl HolderStore {
 // StateStore
 //-----------------------------------------------------------------------------
 
-#[derive(Clone, Debug)]
+#[derive(Default, Clone, Debug)]
 struct StateStore {
     store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
 }
@@ -317,7 +311,7 @@ impl StateStore {
 //-----------------------------------------------------------------------------
 // Issuer
 //-----------------------------------------------------------------------------
-#[derive(Clone, Debug)]
+#[derive(Default, Clone, Debug)]
 struct IssuerStore {
     issuers: HashMap<String, metadata::Issuer>,
 }
@@ -342,7 +336,7 @@ impl IssuerStore {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Default, Clone, Debug)]
 struct ServerStore {
     servers: HashMap<String, metadata::Server>,
 }
@@ -370,7 +364,7 @@ impl ServerStore {
 // Callback Hook
 //-----------------------------------------------------------------------------
 
-#[derive(Clone, Debug)]
+#[derive(Default, Clone, Debug)]
 struct CallbackHook {
     _clients: Arc<Mutex<HashMap<String, String>>>,
 }

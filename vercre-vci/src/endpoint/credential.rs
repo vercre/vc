@@ -11,75 +11,64 @@
 
 use std::fmt::Debug;
 
-use anyhow::anyhow;
 use tracing::{instrument, trace};
 use vercre_core::vci::{BatchCredentialRequest, CredentialRequest, CredentialResponse};
-use vercre_core::{err, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager};
+use vercre_core::{Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager};
 
-use super::Handler;
+use super::Endpoint;
 
 /// Credential request handler.
-impl<P> Handler<P, CredentialRequest>
+impl<P> Endpoint<P>
 where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
 {
-    /// Call the request for the Request Object endpoint.
-    #[instrument]
-    pub async fn call(&self) -> Result<CredentialResponse> {
-        trace!("Handler::call");
-        self.handle_request(Context::new()).await
+    /// Initiate an Authorization Request flow.
+    ///
+    /// # Errors
+    ///
+    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+    /// not available.
+    pub async fn credential(
+        &self, request: impl Into<CredentialRequest>,
+    ) -> Result<CredentialResponse> {
+        let request = request.into();
+
+        let ctx = Context {
+            // callback_id: state.callback_id.clone(),
+        };
+
+        self.handle_request(request, ctx).await
     }
 }
 
 #[derive(Debug)]
-struct Context<P>
-where
-    P: Client + Issuer + Server + Holder + StateManager + Callback + Clone,
-{
-    provider: Option<P>,
+struct Context {
+    // callback_id: Option<String>,
 }
 
-impl<P> Context<P>
-where
-    P: Client + Issuer + Server + Holder + StateManager + Callback + Clone,
-{
-    #[instrument]
-    pub fn new() -> Self {
-        trace!("Context::new");
-        Self { provider: None }
-    }
-}
-
-impl<P> vercre_core::Context for Context<P>
-where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
-{
-    type Provider = P;
+impl super::Context for Context {
     type Request = CredentialRequest;
     type Response = CredentialResponse;
 
-    #[instrument]
-    async fn init(&mut self, _: &Self::Request, provider: Self::Provider) -> Result<&Self> {
-        trace!("Context::prepare");
-
-        self.provider = Some(provider);
-        Ok(self)
+    // TODO: get callback_id from state
+    fn callback_id(&self) -> Option<String> {
+        // self.callback_id.clone()
+        None
     }
 
     #[instrument]
-    async fn process(&self, req: &Self::Request) -> Result<Self::Response> {
+    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
+    where
+        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    {
         trace!("Context::process");
 
-        let Some(provider) = self.provider.clone() else {
-            err!("Provider not set")
-        };
-
         let batch_req = BatchCredentialRequest {
-            credential_issuer: req.credential_issuer.clone(),
-            access_token: req.access_token.clone(),
-            credential_requests: vec![req.clone()],
+            credential_issuer: request.credential_issuer.clone(),
+            access_token: request.access_token.clone(),
+            credential_requests: vec![request.clone()],
         };
-        let batch_res = Handler::new(provider, batch_req).call().await?;
+        let batch_res = Endpoint::new(provider.clone()).batch(batch_req).await?;
 
         // set c_nonce and c_nonce_expires_at - batch endpoint sets them in the
         // top-level response, not each credential response
@@ -113,7 +102,7 @@ mod tests {
     async fn credential_ok() {
         test_utils::init_tracer();
 
-        let provider = &Provider::new();
+        let provider = Provider::new();
         let access_token = "ABCDEF";
         let c_nonce = "1234ABCD";
         let credentials = vec!["EmployeeID_JWT".to_string()];
@@ -170,7 +159,8 @@ mod tests {
         request.credential_issuer = ISSUER.to_string();
         request.access_token = access_token.to_string();
 
-        let response = Handler::new(provider, request).call().await.expect("response is valid");
+        let response =
+            Endpoint::new(provider.clone()).credential(request).await.expect("response is valid");
         assert_snapshot!("response", response, {
             ".credential" => "[credential]",
             ".c_nonce" => "[c_nonce]",

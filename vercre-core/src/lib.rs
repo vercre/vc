@@ -30,37 +30,6 @@ use crate::metadata::{
 /// Presentations.
 pub type Result<T, E = error::Error> = core::result::Result<T, E>;
 
-/// Context is implemented by every endpoint to set up a context for each
-/// request.
-#[allow(async_fn_in_trait)]
-pub trait Context: Send + Sync + Debug {
-    /// The provider type for the endpoint.
-    type Provider;
-
-    /// The request type for the endpoint.
-    type Request;
-
-    /// The response type for the endpoint.
-    type Response;
-
-    /// Initialize the context.
-    async fn init(&mut self, req: &Self::Request, provider: Self::Provider) -> Result<&Self>;
-
-    /// Callback ID is used to identify the initial request when sending status
-    /// updates to the client.
-    fn callback_id(&self) -> Option<String> {
-        None
-    }
-
-    /// Verify the request.
-    #[allow(clippy::unused_async)]
-    async fn verify(&self, _: &Self::Request) -> Result<&Self> {
-        Ok(self)
-    }
-
-    /// Process the request.
-    async fn process(&self, req: &Self::Request) -> Result<Self::Response>;
-}
 
 /// The Client trait is used by implementers to provide Client metadata to the
 /// library.

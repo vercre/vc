@@ -18,35 +18,6 @@ pub use vercre_core::vp::{
 };
 use vercre_core::{Callback, Client, Result, Signer, StateManager};
 
-/// Context is implemented by every endpoint to set up a context for each
-/// request.
-#[allow(async_fn_in_trait)]
-trait Context: Send + Sync + Debug {
-    /// The request type for the request context.
-    type Request;
-
-    /// The response type for the request context.
-    type Response;
-
-    /// Callback ID is used to identify the initial request when sending status
-    /// updates to the client.
-    fn callback_id(&self) -> Option<String>;
-
-    /// Verify the request.
-    #[allow(clippy::unused_async)]
-    async fn verify<P>(&self, _: &P, _: &Self::Request) -> Result<&Self>
-    where
-        P: Client + StateManager + Signer + Callback + Clone + Debug,
-    {
-        Ok(self)
-    }
-
-    /// Process the request.
-    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
-    where
-        P: Client + StateManager + Signer + Callback + Clone + Debug;
-}
-
 // TODO: remove double borrow for traits (i.e. &self -> self)
 // TODO: reintroduce impl Provider trait + lifetimes for Endpoint
 
@@ -86,7 +57,7 @@ where
     async fn handle_request<R, C, U>(&self, request: R, ctx: C) -> Result<U>
     where
         C: Context<Request = R, Response = U>,
-        R: Default + Clone + Send + Sync + Debug,
+        R: Default + Clone + Debug + Send + Sync,
     {
         if let Some(callback_id) = ctx.callback_id() {
             let pl = Payload {
@@ -135,6 +106,35 @@ where
         }
         Ok(())
     }
+}
+
+/// Context is implemented by every endpoint to set up a context for each
+/// request.
+#[allow(async_fn_in_trait)]
+pub trait Context: Send + Sync + Debug {
+    /// The request type for the request context.
+    type Request;
+
+    /// The response type for the request context.
+    type Response;
+
+    /// Callback ID is used to identify the initial request when sending status
+    /// updates to the client.
+    fn callback_id(&self) -> Option<String>;
+
+    /// Verify the request.
+    #[allow(clippy::unused_async)]
+    async fn verify<P>(&self, _: &P, _: &Self::Request) -> Result<&Self>
+    where
+        P: Client + StateManager + Signer + Callback + Clone + Debug,
+    {
+        Ok(self)
+    }
+
+    /// Process the request.
+    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
+    where
+        P: Client + StateManager + Signer + Callback + Clone + Debug;
 }
 
 #[cfg(test)]

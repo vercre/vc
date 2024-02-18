@@ -20,78 +20,54 @@ use vercre_core::{
     err, gen, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager,
 };
 
-use super::Handler;
+use super::Endpoint;
 use crate::state::{DeferredState, Expire, State};
 
 /// Batch Credential request handler.
-impl<P> Handler<P, BatchCredentialRequest>
+impl<P> Endpoint<P>
 where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
 {
-    /// Call the request for the Request Object endpoint.
-    #[instrument]
-    pub async fn call(&self) -> Result<BatchCredentialResponse> {
-        trace!("Handler::call");
-        self.handle_request(Context::new()).await
-    }
-}
+    /// Initiate an Authorization Request flow.
+    ///
+    /// # Errors
+    ///
+    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+    /// not available.
+    pub async fn batch(
+        &self, request: impl Into<BatchCredentialRequest>,
+    ) -> Result<BatchCredentialResponse> {
+        let request = request.into();
 
-#[derive(Debug)]
-struct Context<P>
-where
-    P: Issuer + StateManager + Holder + Signer,
-{
-    issuer_meta: IssuerMetadata,
-    provider: Option<P>,
-    state: Option<State>,
-    holder_did: Arc<Mutex<String>>,
-}
-
-impl<P> Context<P>
-where
-    P: Issuer + StateManager + Holder + Signer,
-{
-    #[instrument]
-    pub fn new() -> Self {
-        trace!("Context::new");
-
-        Self {
-            provider: None,
-            issuer_meta: IssuerMetadata::default(),
-            state: None,
-            holder_did: Arc::new(Mutex::from(String::new())),
-        }
-    }
-}
-
-impl<P> vercre_core::Context for Context<P>
-where
-    P: Issuer + Holder + StateManager + Signer + Clone + Debug,
-{
-    type Provider = P;
-    type Request = BatchCredentialRequest;
-    type Response = BatchCredentialResponse;
-
-    /// This method is called before any other to prepare data used in the processing
-    /// the request.
-    #[instrument]
-    async fn init(&mut self, req: &Self::Request, provider: Self::Provider) -> Result<&Self> {
-        trace!("Context::prepare");
-
-        self.issuer_meta = Issuer::metadata(&provider, &req.credential_issuer).await?;
-
-        let Ok(buf) = StateManager::get(&provider, &req.access_token).await else {
+        let Ok(buf) = StateManager::get(&self.provider, &request.access_token).await else {
             err!(Err::AccessDenied, "Invalid access token");
         };
         let Ok(state) = State::try_from(buf) else {
             err!(Err::AccessDenied, "Invalid state for access token");
         };
-        self.state = Some(state);
 
-        self.provider = Some(provider);
+        let ctx = Context {
+            // callback_id: state.callback_id.clone(),
+            state: Some(state),
+            issuer_meta: Issuer::metadata(&self.provider, &request.credential_issuer).await?,
+            holder_did: Arc::new(Mutex::new(String::new())),
+        };
 
-        Ok(self)
+        self.handle_request(request, ctx).await
     }
+}
+
+#[derive(Debug)]
+struct Context {
+    // callback_id: Option<String>,
+    issuer_meta: IssuerMetadata,
+    state: Option<State>,
+    holder_did: Arc<Mutex<String>>,
+}
+
+impl super::Context for Context {
+    type Request = BatchCredentialRequest;
+    type Response = BatchCredentialResponse;
 
     fn callback_id(&self) -> Option<String> {
         if let Some(state) = &self.state {
@@ -101,7 +77,10 @@ where
     }
 
     #[instrument]
-    async fn verify(&self, req: &Self::Request) -> Result<&Self> {
+    async fn verify<P>(&self, provider: &P, request: &Self::Request) -> Result<&Self>
+    where
+        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    {
         trace!("Context::verify");
 
         let Some(state) = &self.state else {
@@ -117,24 +96,24 @@ where
         }
 
         // verify each credential request
-        for req in &req.credential_requests {
+        for request in &request.credential_requests {
             // request can use credential_identifier OR credential_definition to
             // specify requested credential
-            if let Some(identifier) = &req.credential_identifier {
+            if let Some(identifier) = &request.credential_identifier {
                 // check identifier is authorized
                 if !state.credentials.contains(identifier) {
                     err!(Err::InvalidCredentialRequest, "Credential not authorized");
                 }
                 // check credential format is not set
-                if req.format.is_some() {
+                if request.format.is_some() {
                     return Err(Err::InvalidCredentialRequest)
                         .hint("'format' cannot be used with 'credential_identifier'");
                 };
             } else {
-                let Some(format) = &req.format else {
+                let Some(format) = &request.format else {
                     err!(Err::InvalidCredentialRequest, "Credential format not set");
                 };
-                let Some(cred_def) = &req.credential_definition else {
+                let Some(cred_def) = &request.credential_definition else {
                     err!(Err::InvalidCredentialRequest, "Credential definition not set");
                 };
 
@@ -154,25 +133,25 @@ where
                 }
             }
 
-            let Some(proof_jwt) = &req.proof.jwt else {
-                let (nonce, expires_in) = self.err_nonce().await?;
+            let Some(proof_jwt) = &request.proof.jwt else {
+                let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(Err::InvalidProof(nonce, expires_in), "Proof not set");
             };
 
             // TODO: allow passing verifier into this method
             let Ok(jwt) = Jwt::<ProofClaims>::from_str(proof_jwt) else {
-                let (nonce, expires_in) = self.err_nonce().await?;
+                let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(Err::InvalidProof(nonce, expires_in), "Invalid proof_jwt");
             };
 
             // algorithm
             if !(jwt.header.alg == "ES256K" || jwt.header.alg == "EdDSA") {
-                let (nonce, expires_in) = self.err_nonce().await?;
+                let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(Err::InvalidProof(nonce, expires_in), "Proof JWT 'alg' is not recognised");
             }
             // proof type
             if jwt.header.typ != "vercre-vci-proof+jwt" {
-                let (nonce, expires_in) = self.err_nonce().await?;
+                let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(
                     Err::InvalidProof(nonce, expires_in),
                     "Proof JWT 'typ' is not 'vercre-vci-proof+jwt'"
@@ -180,18 +159,18 @@ where
             }
             // previously issued c_nonce
             if jwt.claims.nonce != token_state.c_nonce {
-                let (nonce, expires_in) = self.err_nonce().await?;
+                let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(Err::InvalidProof(nonce, expires_in), "Proof JWT nonce claim is invalid");
             }
             // Key ID
             if jwt.header.kid.is_empty() {
-                let (nonce, expires_in) = self.err_nonce().await?;
+                let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(Err::InvalidProof(nonce, expires_in), "Proof JWT 'kid' is missing");
             };
 
             // HACK: save extracted DID for later use when issuing credential
             let Some(did) = jwt.header.kid.split('#').next() else {
-                let (nonce, expires_in) = self.err_nonce().await?;
+                let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(Err::InvalidProof(nonce, expires_in), "Proof JWT DID is invalid");
             };
             *self.holder_did.lock().unwrap() = did.to_string();
@@ -201,13 +180,16 @@ where
     }
 
     #[instrument]
-    async fn process(&self, req: &Self::Request) -> Result<Self::Response> {
+    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
+    where
+        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    {
         trace!("Context::process");
 
         // process credential requests
         let mut responses = Vec::<CredentialResponse>::new();
-        for c_req in req.credential_requests.clone() {
-            responses.push(self.make_response(&c_req).await?);
+        for c_req in request.credential_requests.clone() {
+            responses.push(self.make_response(provider, &c_req).await?);
         }
 
         // generate nonce and update state
@@ -242,24 +224,19 @@ where
     }
 }
 
-impl<P> Context<P>
-where
-    P: Issuer + StateManager + Holder + Signer,
-{
+impl Context {
     // Processes the Credential Request to generate a Credential Response.
     #[instrument]
-    async fn make_response(&self, req: &CredentialRequest) -> Result<CredentialResponse>
+    async fn make_response<P>(
+        &self, provider: &P, request: &CredentialRequest,
+    ) -> Result<CredentialResponse>
     where
-        P: Issuer + StateManager + Holder + Signer + Clone + Debug,
+        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
     {
         trace!("Context::make_response");
 
-        let Some(provider) = &self.provider else {
-            err!("Provider not set");
-        };
-
         // Try to create a VC. If None, then return a deferred issuance response.
-        let Some(mut vc) = self.make_vc(req).await? else {
+        let Some(mut vc) = self.make_vc(provider, request).await? else {
             //--------------------------------------------------
             // Defer credential issuance
             //--------------------------------------------------
@@ -272,7 +249,7 @@ where
             // save credential request in state for later use in a deferred request.
             state.deferred = Some(DeferredState {
                 transaction_id: txn_id.clone(),
-                credential_request: req.clone(),
+                credential_request: request.clone(),
             });
             state.token = None;
 
@@ -286,9 +263,9 @@ where
             });
         };
 
-        // TODO: support other req.credential.formats
+        // TODO: support other request.credential.formats
         // transform VC into base64 encoded, signed JWT
-        let format = req.format.clone().unwrap_or("jwt_vc_json".to_string());
+        let format = request.format.clone().unwrap_or("jwt_vc_json".to_string());
 
         // transform to JWT
         let mut vc_jwt = vc.to_jwt()?;
@@ -306,20 +283,19 @@ where
     // Request. May return `None` if the credential is not ready to be issued because the request
     // for Holder is pending.
     #[instrument]
-    async fn make_vc(&self, req: &CredentialRequest) -> Result<Option<VerifiableCredential>>
+    async fn make_vc<P>(
+        &self, provider: &P, request: &CredentialRequest,
+    ) -> Result<Option<VerifiableCredential>>
     where
-        P: Issuer + StateManager + Holder + Signer + Debug,
+        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
     {
         trace!("Context::make_vc");
 
-        let Some(provider) = &self.provider else {
-            err!("Provider not set");
-        };
         let Some(state) = &self.state else {
             err!("Invalid state");
         };
 
-        let cred_def = self.credential_definition(req)?;
+        let cred_def = self.credential_definition(request)?;
         let Some(holder_id) = &state.holder_id else {
             err!(Err::AccessDenied, "Holder not found");
         };
@@ -348,7 +324,7 @@ where
             verification_method: Signer::verification_method(provider),
             created: Some(Utc::now()),
             expires: Utc::now().checked_add_signed(chrono::Duration::hours(1)),
-            //domain: Some(vec![req.client_id.clone()]),
+            //domain: Some(vec![request.client_id.clone()]),
             ..Default::default()
         };
 
@@ -372,22 +348,19 @@ where
 
     // Get the request's credential definition. If it does not exist, create it.
     #[instrument]
-    fn credential_definition(&self, req: &CredentialRequest) -> Result<CredentialDefinition>
-    where
-        P: Issuer + StateManager + Holder + Signer + Debug,
-    {
+    fn credential_definition(&self, request: &CredentialRequest) -> Result<CredentialDefinition> {
         trace!("Context::credential_definition");
 
-        if let Some(mut cred_def) = req.credential_definition.clone() {
+        if let Some(mut cred_def) = request.credential_definition.clone() {
             // add credential subject when not present
             if cred_def.credential_subject.is_none() {
-                let maybe_supported = match &req.credential_identifier {
+                let maybe_supported = match &request.credential_identifier {
                     // get supported_credential by credential_identifier
                     Some(id) => self.issuer_meta.credentials_supported.get(id),
 
                     // find supported_credential by matching format and type
                     None => self.issuer_meta.credentials_supported.values().find(|v| {
-                        Some(&v.format) == req.format.as_ref()
+                        Some(&v.format) == request.format.as_ref()
                             && v.credential_definition.type_ == cred_def.type_
                     }),
                 };
@@ -402,7 +375,7 @@ where
 
             Ok(cred_def)
         } else {
-            let Some(id) = &req.credential_identifier else {
+            let Some(id) = &request.credential_identifier else {
                 err!(Err::InvalidCredentialRequest, "No credential identifier");
             };
             let Some(supported) = self.issuer_meta.credentials_supported.get(id) else {
@@ -419,11 +392,10 @@ where
 
     /// Creates, stores, and returns new `c_nonce` and `c_nonce_expires`_in values
     /// for use in `Err::InvalidProof` errors, as per specification.
-    async fn err_nonce(&self) -> Result<(String, i64)> {
-        let Some(provider) = &self.provider else {
-            err!("provider not set");
-        };
-
+    async fn err_nonce<P>(&self, provider: &P) -> Result<(String, i64)>
+    where
+        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    {
         // generate nonce and update state
         let Some(mut state) = self.state.clone() else {
             err!("state not set");
@@ -466,7 +438,7 @@ mod tests {
     async fn credential_identifiers() {
         test_utils::init_tracer();
 
-        let provider = &Provider::new();
+        let provider = Provider::new();
         let access_token = "ABCDEF";
         let c_nonce = "1234ABCD";
         let credentials = vec!["EmployeeID_JWT".to_string()];
@@ -525,7 +497,8 @@ mod tests {
         request.credential_issuer = ISSUER.to_string();
         request.access_token = access_token.to_string();
 
-        let response = Handler::new(provider, request).call().await.expect("response is valid");
+        let response =
+            Endpoint::new(provider.clone()).batch(request).await.expect("response is valid");
         assert_snapshot!("ci-response", response, {
             ".credential_responses[0]" => "[credential]",
             ".c_nonce" => "[c_nonce]",
@@ -560,7 +533,7 @@ mod tests {
     async fn authorization_details() {
         test_utils::init_tracer();
 
-        let provider = &Provider::new();
+        let provider = Provider::new();
         let access_token = "ABCDEF";
         let c_nonce = "1234ABCD";
         let credentials = vec!["EmployeeID_JWT".to_string()];
@@ -626,7 +599,8 @@ mod tests {
         request.credential_issuer = ISSUER.to_string();
         request.access_token = access_token.to_string();
 
-        let response = Handler::new(provider, request).call().await.expect("response is valid");
+        let response =
+            Endpoint::new(provider.clone()).batch(request).await.expect("response is valid");
         assert_snapshot!("ad-response", response, {
             ".credential_responses[0]" => "[credential]",
             ".c_nonce" => "[c_nonce]",

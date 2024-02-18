@@ -88,8 +88,7 @@ impl super::Context for Context {
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use test_utils::vci_provider::Provider;
-    use test_utils::vp_provider::VERIFIER;
+    use test_utils::vp_provider::{Provider, VERIFIER};
     use vercre_core::jwt::Jwt;
     use vercre_core::vp::RequestObject;
 
@@ -100,7 +99,7 @@ mod tests {
     async fn request_jwt() {
         test_utils::init_tracer();
 
-        let provider = &Provider::new();
+        let provider = Provider::new();
         let state_key = "ABCDEF123456";
         let nonce = "1234567890";
 
@@ -131,8 +130,10 @@ mod tests {
             client_id: VERIFIER.to_string(),
             state: state_key.to_string(),
         };
-        let response =
-            Endpoint::new(provider).request_object(request).await.expect("response is valid");
+        let response = Endpoint::new(provider.clone())
+            .request_object(request)
+            .await
+            .expect("response is valid");
 
         let jwt_enc = response.jwt.expect("jwt exists");
         let jwt = jwt_enc.parse::<Jwt<RequestObject>>().expect("jwt is valid");

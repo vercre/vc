@@ -37,7 +37,7 @@ async fn receive_offer() {
         "callback_id": "1234"
     });
 
-    let resp = issuer.post("/pre-auth").expect_success().json(&body).await;
+    let resp = issuer.post("/invoke").expect_success().json(&body).await;
 
     // generate issuer offer to 'send' to the app
     let offer_resp = resp.json::<InvokeResponse>();

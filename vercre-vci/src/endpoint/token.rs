@@ -19,114 +19,86 @@ use vercre_core::{
     err, gen, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager,
 };
 
-use super::Handler;
+use super::Endpoint;
 use crate::state::{Expire, State, TokenState};
 
 /// Token request handler.
-impl<P> Handler<P, TokenRequest>
+impl<P> Endpoint<P>
 where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
 {
-    /// Call the request for the Request Object endpoint.
-    #[instrument]
-    pub async fn call(&self) -> Result<TokenResponse> {
-        trace!("Handler::call");
-        self.handle_request(Context::new()).await
-    }
-}
-
-#[derive(Debug)]
-struct Context<P>
-where
-    P: Server + StateManager,
-{
-    provider: Option<P>,
-    state: Option<State>,
-}
-
-impl<P> Context<P>
-where
-    P: Server + StateManager,
-{
-    #[instrument]
-    pub fn new() -> Self {
-        trace!("Context::new");
-        Self {
-            provider: None,
-            state: None,
-        }
-    }
-}
-
-impl<P> vercre_core::Context for Context<P>
-where
-    P: Server + StateManager + Debug,
-{
-    type Provider = P;
-    type Request = TokenRequest;
-    type Response = TokenResponse;
-
-    #[instrument]
-    async fn init(&mut self, req: &Self::Request, provider: Self::Provider) -> Result<&Self> {
-        trace!("Context::prepare");
+    /// Request Issuer metadata.
+    ///
+    /// # Errors
+    ///
+    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+    /// not available.
+    pub async fn token(&self, request: impl Into<TokenRequest>) -> Result<TokenResponse> {
+        let request = request.into();
 
         // restore state
         // RFC 6749 requires a particular error here
-        let Ok(buf) = StateManager::get(&provider, &auth_state_key(req)?).await else {
+        let Ok(buf) = StateManager::get(&self.provider, &auth_state_key(&request)?).await else {
             err!(Err::InvalidGrant, "The authorization code is invalid");
         };
         let Ok(state) = State::try_from(buf.as_slice()) else {
             err!(Err::InvalidGrant, "The authorization code has expired");
         };
-        self.state = Some(state);
 
-        self.provider = Some(provider);
+        let ctx = Context {
+            callback_id: state.callback_id.clone(),
+            state,
+        };
 
-        Ok(self)
+        self.handle_request(request, ctx).await
     }
+}
+
+#[derive(Debug)]
+struct Context {
+    callback_id: Option<String>,
+    state: State,
+}
+
+impl super::Context for Context {
+    type Request = TokenRequest;
+    type Response = TokenResponse;
 
     fn callback_id(&self) -> Option<String> {
-        if let Some(state) = &self.state {
-            return state.callback_id.clone();
-        }
-        None
+        self.callback_id.clone()
     }
 
     /// Verify the token request.
     #[instrument]
-    async fn verify(&self, req: &Self::Request) -> Result<&Self> {
+    async fn verify<P>(&self, provider: &P, request: &Self::Request) -> Result<&Self>
+    where
+        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    {
         trace!("Context::verify");
 
-        let Some(provider) = &self.provider else {
-            err!("Provider not set");
-        };
-
-        let Ok(server_meta) = Server::metadata(provider, &req.credential_issuer).await else {
+        let Ok(server_meta) = Server::metadata(provider, &request.credential_issuer).await else {
             err!(Err::InvalidRequest, "Unknown authorization server");
         };
-        let Some(state) = &self.state else {
-            err!("State not set");
-        };
-        let Some(auth_state) = &state.auth else {
+        let Some(auth_state) = &self.state.auth else {
             err!("Authorization state not set");
         };
 
         // grant_type
-        match req.grant_type.as_str() {
+        match request.grant_type.as_str() {
             AUTH_CODE_GRANT_TYPE => {
                 // client_id is the same as the one used to obtain the authorization code
-                if Some(&req.client_id) != state.client_id.as_ref() {
+                if Some(&request.client_id) != self.state.client_id.as_ref() {
                     err!(Err::InvalidGrant, "client_id differs from authorized one");
                 }
 
                 // redirect_uri is the same as the one provided in authorization request
                 // i.e. either 'None' or 'Some(redirect_uri)'
-                if req.redirect_uri != auth_state.redirect_uri {
+                if request.redirect_uri != auth_state.redirect_uri {
                     err!(Err::InvalidGrant, "redirect_uri differs from authorized one");
                 }
 
                 // code_verifier
-                let Some(verifier) = &req.code_verifier else {
+                let Some(verifier) = &request.code_verifier else {
                     err!(Err::AccessDenied, "code_verifier is missing");
                 };
 
@@ -141,18 +113,18 @@ where
 
             PRE_AUTH_GRANT_TYPE => {
                 // anonymous access allowed?
-                if req.client_id.is_empty()
+                if request.client_id.is_empty()
                     && !server_meta.pre_authorized_grant_anonymous_access_supported
                 {
                     err!(Err::InvalidClient, "Anonymous access is not supported");
                 }
                 // user_pin
-                if req.user_pin != auth_state.user_pin {
+                if request.user_pin != auth_state.user_pin {
                     err!(Err::InvalidGrant, "Invalid user_pin provided");
                 }
             }
             _ => {
-                err!(Err::UnsupportedGrantType, "Grant {} is not supported", req.grant_type)
+                err!(Err::UnsupportedGrantType, "Grant {} is not supported", request.grant_type)
             }
         }
 
@@ -162,20 +134,17 @@ where
     /// Exchange auth code (authorization or pre-authorized) for access token,
     /// updating state along the way.
     #[instrument]
-    async fn process(&self, req: &Self::Request) -> Result<Self::Response> {
+    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
+    where
+        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    {
         trace!("Context::process");
 
-        let Some(provider) = &self.provider else {
-            err!("Provider not set");
-        };
-
         // remove authorization state to prevent auth code reuse
-        StateManager::purge(provider, &auth_state_key(req)?).await?;
+        StateManager::purge(provider, &auth_state_key(request)?).await?;
 
         // clone authorization state, update, then save as token state
-        let Some(mut state) = self.state.clone() else {
-            err!("State not set");
-        };
+        let mut state = self.state.clone();
 
         // we need a copy of auth_state in order to return authorization_details
         // in TokenResponse
@@ -208,12 +177,12 @@ where
 // Helper to get correct authorization state key from request.
 // Authorization state is stored by either 'code' or 'pre_authorized_code',
 // depending on grant_type.
-fn auth_state_key(req: &TokenRequest) -> Result<String> {
-    let state_key = match req.grant_type.as_str() {
-        AUTH_CODE_GRANT_TYPE => req.code.as_ref(),
-        PRE_AUTH_GRANT_TYPE => req.pre_authorized_code.as_ref(),
+fn auth_state_key(request: &TokenRequest) -> Result<String> {
+    let state_key = match request.grant_type.as_str() {
+        AUTH_CODE_GRANT_TYPE => request.code.as_ref(),
+        PRE_AUTH_GRANT_TYPE => request.pre_authorized_code.as_ref(),
         _ => {
-            err!(Err::UnsupportedGrantType, "Grant {} is not supported", req.grant_type)
+            err!(Err::UnsupportedGrantType, "Grant {} is not supported", request.grant_type)
         }
     };
     let Some(state_key) = state_key else {
@@ -224,7 +193,6 @@ fn auth_state_key(req: &TokenRequest) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-
     use assert_let_bind::assert_let;
     use base64ct::{Base64UrlUnpadded, Encoding};
     use chrono::Utc;
@@ -243,7 +211,7 @@ mod tests {
     async fn simple_token() {
         test_utils::init_tracer();
 
-        let provider = &Provider::new();
+        let provider = Provider::new();
 
         // set up state
         let credentials = vec!["EmployeeID_JWT".to_string()];
@@ -277,7 +245,8 @@ mod tests {
         let mut request =
             serde_json::from_value::<TokenRequest>(body).expect("request should deserialize");
         request.credential_issuer = ISSUER.to_string();
-        let response = Handler::new(provider, request).call().await.expect("response is valid");
+        let response =
+            Endpoint::new(provider.clone()).token(request).await.expect("response is valid");
         assert_snapshot!("simpl-token", response, {
             ".access_token" => "[access_token]",
             ".c_nonce" => "[c_nonce]"
@@ -299,7 +268,7 @@ mod tests {
     async fn authzn_token() {
         test_utils::init_tracer();
 
-        let provider = &Provider::new();
+        let provider = Provider::new();
 
         // set up state
         let credentials = vec!["EmployeeID_JWT".to_string()];
@@ -353,7 +322,8 @@ mod tests {
         let mut request =
             serde_json::from_value::<TokenRequest>(body).expect("request should deserialize");
         request.credential_issuer = ISSUER.to_string();
-        let response = Handler::new(provider, request).call().await.expect("response is valid");
+        let response =
+            Endpoint::new(provider.clone()).token(request).await.expect("response is valid");
         assert_snapshot!("authzn-token", response, {
             ".access_token" => "[access_token]",
             ".c_nonce" => "[c_nonce]"

@@ -54,7 +54,7 @@ async fn invoke(
     Json(mut req): Json<InvokeRequest>,
 ) -> AxResult<InvokeResponse> {
     req.client_id = format!("http://{}", host);
-    endpoint.initiate(req).await.into()
+    endpoint.invoke(req).await.into()
 }
 
 // Retrieve Authorization Request Object endpoint

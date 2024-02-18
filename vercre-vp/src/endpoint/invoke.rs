@@ -39,8 +39,6 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::fmt::Debug;
 
-// use serde_json::map::Map;
-// use serde_json::Value;
 use tracing::{instrument, trace};
 use uuid::Uuid;
 use vercre_core::error::Err;
@@ -76,7 +74,7 @@ use crate::state::State;
 //   ]
 // }
 
-/// Initiate Request handler.
+/// Invoke Request handler.
 impl<P> Endpoint<P>
 where
     P: Client + StateManager + Signer + Callback + Clone + Debug,
@@ -87,7 +85,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
-    pub async fn initiate(&self, request: impl Into<InvokeRequest>) -> Result<InvokeResponse> {
+    pub async fn invoke(&self, request: impl Into<InvokeRequest>) -> Result<InvokeResponse> {
         let request = request.into();
         let ctx = Context {
             callback_id: request.callback_id.clone(),
@@ -97,7 +95,7 @@ where
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 struct Context {
     callback_id: Option<String>,
 }
@@ -249,7 +247,7 @@ mod tests {
         request.client_id = "http://credibil.io".to_string();
 
         let response =
-            Endpoint::new(provider.clone()).initiate(request).await.expect("response is ok");
+            Endpoint::new(provider.clone()).invoke(request).await.expect("response is ok");
 
         assert_eq!(response.request_uri, None);
         assert_let!(Some(req_obj), &response.request_object);
@@ -290,7 +288,7 @@ mod tests {
         request.client_id = "http://credibil.io".to_string();
 
         let response =
-            Endpoint::new(provider.clone()).initiate(request).await.expect("response is ok");
+            Endpoint::new(provider.clone()).invoke(request).await.expect("response is ok");
 
         assert!(response.request_object.is_none());
         assert_let!(Some(req_uri), response.request_uri);

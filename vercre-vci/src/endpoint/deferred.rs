@@ -8,67 +8,57 @@ use vercre_core::error::Err;
 use vercre_core::vci::{DeferredCredentialRequest, DeferredCredentialResponse};
 use vercre_core::{err, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager};
 
-use super::Handler;
+use super::Endpoint;
 use crate::state::State;
 
 /// Deferred Credential request handler.
-impl<P> Handler<P, DeferredCredentialRequest>
+impl<P> Endpoint<P>
 where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
 {
-    /// Call the request for the Request Object endpoint.
-    #[instrument]
-    pub async fn call(&self) -> Result<DeferredCredentialResponse> {
-        trace!("Handler::call");
-        self.handle_request(Context::new()).await
+    /// Request a credential whose issuance has previously been deferred.
+    ///
+    /// # Errors
+    ///
+    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+    /// not available.
+    pub async fn deferred(
+        &self, request: impl Into<DeferredCredentialRequest>,
+    ) -> Result<DeferredCredentialResponse> {
+        let request = request.into();
+
+        let ctx = Context {
+            // callback_id: state.callback_id.clone(),
+        };
+
+        self.handle_request(request, ctx).await
     }
 }
 
 #[derive(Debug)]
-struct Context<P>
-where
-    P: Client + Issuer + Server + Holder + StateManager + Callback + Clone,
-{
-    provider: Option<P>,
+struct Context {
+    // callback_id: Option<String>,
 }
 
-impl<P> Context<P>
-where
-    P: Client + Issuer + Server + Holder + StateManager + Callback + Clone,
-{
-    #[instrument]
-    pub fn new() -> Self {
-        trace!("Context::new");
-        Self { provider: None }
-    }
-}
-
-impl<P> vercre_core::Context for Context<P>
-where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
-{
-    type Provider = P;
+impl super::Context for Context {
     type Request = DeferredCredentialRequest;
     type Response = DeferredCredentialResponse;
 
-    #[instrument]
-    async fn init(&mut self, _: &Self::Request, provider: Self::Provider) -> Result<&Self> {
-        trace!("Context::prepare");
-
-        self.provider = Some(provider);
-        Ok(self)
+    // TODO: get callback_id from state
+    fn callback_id(&self) -> Option<String> {
+        // self.callback_id.clone()
+        None
     }
 
     #[instrument]
-    async fn process(&self, req: &Self::Request) -> Result<Self::Response> {
+    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
+    where
+        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    {
         trace!("Context::process");
 
-        let Some(provider) = self.provider.clone() else {
-            err!("Provider not set")
-        };
-
         // retrieve deferred credential request from state
-        let Ok(buf) = StateManager::get(&provider, &req.transaction_id).await else {
+        let Ok(buf) = StateManager::get(provider, &request.transaction_id).await else {
             err!(Err::InvalidTransactionId, "Deferred state not found");
         };
         let Ok(state) = State::try_from(buf) else {
@@ -80,17 +70,17 @@ where
         };
 
         // remove deferred state item
-        StateManager::purge(&provider, &req.transaction_id).await?;
+        StateManager::purge(provider, &request.transaction_id).await?;
 
         // make credential request
         let mut cred_req = deferred_state.credential_request;
-        cred_req.credential_issuer = req.credential_issuer.clone();
-        cred_req.access_token = req.access_token.clone();
+        cred_req.credential_issuer = request.credential_issuer.clone();
+        cred_req.access_token = request.access_token.clone();
 
-        let res = Handler::new(provider.clone(), cred_req).call().await?;
+        let response = Endpoint::new(provider.clone()).credential(cred_req).await?;
 
         Ok(DeferredCredentialResponse {
-            credential_response: res,
+            credential_response: response,
         })
     }
 }
@@ -117,7 +107,7 @@ mod tests {
     async fn deferred_ok() {
         test_utils::init_tracer();
 
-        let provider = &Provider::new();
+        let provider = Provider::new();
         let access_token = "tkn-ABCDEF";
         let c_nonce = "1234ABCD".to_string();
         let transaction_id = "txn-ABCDEF";
@@ -191,7 +181,8 @@ mod tests {
             transaction_id: transaction_id.to_string(),
         };
 
-        let response = Handler::new(provider, request).call().await.expect("response is valid");
+        let response =
+            Endpoint::new(provider.clone()).deferred(request).await.expect("response is valid");
         assert_snapshot!("response", response, {
             ".credential" => "[credential]",
             ".c_nonce" => "[c_nonce]",

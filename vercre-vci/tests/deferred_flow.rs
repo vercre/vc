@@ -12,7 +12,7 @@ use vercre_core::vci::ProofClaims;
 use vercre_core::Result;
 use vercre_vci::endpoint::{
     CredentialRequest, CredentialResponse, DeferredCredentialRequest, DeferredCredentialResponse,
-    Handler, InvokeRequest, InvokeResponse, TokenRequest, TokenResponse,
+    Endpoint, InvokeRequest, InvokeResponse, TokenRequest, TokenResponse,
 };
 
 lazy_static! {
@@ -43,7 +43,7 @@ async fn deferred_flow() {
     });
 }
 
-// Simulate Issuer request to '/pre-auth' endpoint to get credential offer to use to
+// Simulate Issuer request to '/invoke' endpoint to get credential offer to use to
 // make credential offer to Wallet.
 async fn get_offer() -> Result<InvokeResponse> {
     // offer request
@@ -58,7 +58,8 @@ async fn get_offer() -> Result<InvokeResponse> {
     let mut request = serde_json::from_value::<InvokeRequest>(body)?;
     request.credential_issuer = ISSUER.to_string();
 
-    let response = Handler::new(&PROVIDER.to_owned(), request).call().await?;
+    let endpoint = Endpoint::new(PROVIDER.to_owned());
+    let response = endpoint.invoke(request).await?;
     Ok(response)
 }
 
@@ -80,7 +81,8 @@ async fn get_token(input: InvokeResponse) -> Result<TokenResponse> {
     let mut request = serde_json::from_value::<TokenRequest>(body)?;
     request.credential_issuer = ISSUER.to_string();
 
-    let response = Handler::new(&PROVIDER.to_owned(), request).call().await?;
+    let endpoint = Endpoint::new(PROVIDER.to_owned());
+    let response = endpoint.token(request).await?;
     Ok(response)
 }
 
@@ -116,7 +118,8 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     request.credential_issuer = ISSUER.to_string();
     request.access_token = input.access_token;
 
-    let response = Handler::new(&PROVIDER.to_owned(), request).call().await?;
+    let endpoint = Endpoint::new(PROVIDER.to_owned());
+    let response = endpoint.credential(request).await?;
     Ok(response)
 }
 
@@ -129,6 +132,7 @@ async fn get_deferred(
         transaction_id: cred_resp.transaction_id.expect("should have transaction_id"),
     };
 
-    let response = Handler::new(&PROVIDER.to_owned(), request).call().await?;
+    let endpoint = Endpoint::new(PROVIDER.to_owned());
+    let response = endpoint.deferred(request).await?;
     Ok(response)
 }

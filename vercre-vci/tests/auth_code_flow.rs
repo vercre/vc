@@ -14,7 +14,7 @@ use vercre_core::vci::ProofClaims;
 use vercre_core::w3c::vc::VcClaims;
 use vercre_core::Result;
 use vercre_vci::endpoint::{
-    AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse, Handler,
+    AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse, Endpoint,
     TokenRequest, TokenResponse,
 };
 
@@ -44,7 +44,7 @@ async fn auth_code_flow() {
     });
 }
 
-// Simulate Issuer request to '/pre-auth' endpoint to get credential offer to use to
+// Simulate Issuer request to '/invoke' endpoint to get credential offer to use to
 // make credential offer to Wallet.
 async fn authorize() -> Result<AuthorizationResponse> {
     // authorize request
@@ -83,7 +83,8 @@ async fn authorize() -> Result<AuthorizationResponse> {
     let mut request = serde_json::from_value::<AuthorizationRequest>(body)?;
     request.credential_issuer = ISSUER.to_string();
 
-    let response = Handler::new(&PROVIDER.to_owned(), request).call().await?;
+    let endpoint = Endpoint::new(PROVIDER.to_owned());
+    let response = endpoint.authorize(request).await?;
     Ok(response)
 }
 
@@ -102,7 +103,8 @@ async fn get_token(input: AuthorizationResponse) -> Result<TokenResponse> {
     let mut request = serde_json::from_value::<TokenRequest>(body)?;
     request.credential_issuer = ISSUER.to_string();
 
-    let response = Handler::new(&PROVIDER.to_owned(), request).call().await?;
+    let endpoint = Endpoint::new(PROVIDER.to_owned());
+    let response = endpoint.token(request).await?;
 
     assert_snapshot!("token", response, {
         ".access_token" => "[access_token]",
@@ -154,6 +156,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     request.credential_issuer = ISSUER.to_string();
     request.access_token = input.access_token;
 
-    let response = Handler::new(&PROVIDER.to_owned(), request).call().await?;
+    let endpoint = Endpoint::new(PROVIDER.to_owned());
+    let response = endpoint.credential(request).await?;
     Ok(response)
 }
