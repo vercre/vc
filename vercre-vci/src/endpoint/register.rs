@@ -1,4 +1,4 @@
-//! # Dynamic Client Registration
+//! # Dynamic Client Registration Endpoint
 
 use std::fmt::Debug;
 

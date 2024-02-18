@@ -1,4 +1,12 @@
-//! # Batch Credential Handler
+//! # Batch Credential Endpoint
+//!
+//! The Batch Credential Endpoint issues multiple Credentials in one Batch Credential
+//! Response as approved by the End-User upon presentation of a valid Access Token
+//! representing this approval.
+//!
+//! A Wallet can request issuance of multiple Credentials of certain types and formats
+//! in one Batch Credential Request. This includes Credentials of the same type and
+//! multiple formats, different types and one format, or both.
 
 use std::fmt::Debug;
 use std::str::FromStr;
@@ -23,12 +31,11 @@ use vercre_core::{
 use super::Endpoint;
 use crate::state::{DeferredState, Expire, State};
 
-/// Batch Credential request handler.
 impl<P> Endpoint<P>
 where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
 {
-    /// Initiate an Authorization Request flow.
+    /// Batch credential request handler.
     ///
     /// # Errors
     ///

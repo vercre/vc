@@ -1,4 +1,4 @@
-//! # Credential Handler
+//! # Credential Endpoint
 //!
 //! The Credential Handler issues a Credential as approved by the End-User upon
 //! presentation of a valid Access Token representing this approval.
@@ -19,12 +19,11 @@ use vercre_core::{err, Callback, Client, Holder, Issuer, Result, Server, Signer,
 use super::Endpoint;
 use crate::state::State;
 
-/// Credential request handler.
 impl<P> Endpoint<P>
 where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
 {
-    /// Initiate an Authorization Request flow.
+    /// Credential request handler.
     ///
     /// # Errors
     ///

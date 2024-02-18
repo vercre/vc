@@ -1,7 +1,8 @@
-//! # Credential Offer Handler
+//! # Invoke Endpoint
 //!
-//! The Credential Offer endpoint is for Credential Issuers to generate a Credential Offer
-//! which can be used to initiate Credential issuance with a Wallet.
+//! The Invoke endpoint is used to initiate Pre-authorized credential issuance flow.
+//! Credential Issuers can use this endpoint to generate a Credential Offer which can
+//! be used to initiate issuance with a Wallet.
 //!
 //! When a Credential Issuer is already interacting with a user and wishes to initate a
 //! Credential issuance, they can 'send' the user's Wallet a Credential Offer.
@@ -75,12 +76,11 @@ use vercre_core::{
 use super::Endpoint;
 use crate::state::{AuthState, Expire, State};
 
-/// Invoke Credential Offer request handler.
 impl<P> Endpoint<P>
 where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
 {
-    /// Initiate an Authorization Request flow.
+    /// Invoke request handler generates and returns a Credential Offer.
     ///
     /// # Errors
     ///

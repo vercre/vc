@@ -1,6 +1,6 @@
 ---
 source: vercre-vci/src/endpoint/authorize.rs
-assertion_line: 440
+assertion_line: 408
 expression: state
 ---
 credential_issuer: "http://credibil.io"

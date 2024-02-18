@@ -714,6 +714,11 @@ pub struct MetadataRequest {
     /// returned.
     #[serde(skip)]
     pub credential_issuer: String,
+
+    /// The language(s) set in HTTP Accept-Language Headers.
+    /// MUST be values defined in [RFC3066].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub languages: Option<String>,
 }
 
 /// Response containing the Credential Issuer's configuration.

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::extract::State;
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum::{Form, Json, Router};
@@ -48,7 +48,7 @@ pub fn app() -> Router {
         .route("/credential", post(credential))
         .route("/deferred_credential", post(deferred_credential))
         .route("/batch_credential", post(batch_credential))
-        .route("/metadata", get(metadata))
+        .route("/.well-known/openid-credential-issuer", get(metadata))
         .layer(TraceLayer::new_for_http())
         .with_state(endpoint)
 }
@@ -123,12 +123,17 @@ pub async fn batch_credential(
     endpoint.batch(req).await.into()
 }
 
-// '/metadata' endpoint
+// '/.well-known/openid-credential-issuer' endpoint
 pub async fn metadata(
-    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
+    headers: HeaderMap, State(endpoint): State<Arc<Endpoint<Provider>>>,
+    TypedHeader(host): TypedHeader<Host>,
 ) -> AxResult<MetadataResponse> {
     let req = MetadataRequest {
         credential_issuer: format!("http://{}", host),
+        languages: headers
+            .get("accept-language")
+            .and_then(|v| v.to_str().ok())
+            .map(|v| v.to_string()),
     };
     endpoint.metadata(req).await.into()
 }

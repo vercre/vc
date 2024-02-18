@@ -1,9 +1,15 @@
-//! # Token Handler
+//! # Token Endpoint
 //!
-//! The Token Handler issues an Access Token and, optionally, a Refresh Token in
+//! The Token Endpoint issues an Access Token and, optionally, a Refresh Token in
 //! exchange for the Authorization Code that client obtained in a successful
 //! Authorization Response. It is used in the same manner as defined in
-//! [RFC6749] and follows the recommendations given in [I-D.ietf-oauth-security-topics].
+//! [RFC6749](https://tools.ietf.org/html/rfc6749#section-5.1) and follows the
+//! recommendations given in [I-D.ietf-oauth-security-topics].
+//!
+//! The authorization server MUST include the HTTP "Cache-Control" response header
+//! field [RFC2616] with a value of "no-store" in any response containing tokens,
+//! credentials, or other sensitive information, as well as the "Pragma" response
+//! header field [RFC2616] with a value of "no-cache".
 
 use std::fmt::Debug;
 
@@ -13,7 +19,6 @@ use sha2::{Digest, Sha256};
 use tracing::{instrument, trace};
 use vercre_core::error::Err;
 use vercre_core::metadata::{AUTH_CODE_GRANT_TYPE, PRE_AUTH_GRANT_TYPE};
-// use vercre_core::metadata::{ClientMetadata, IssuerMetadata, ServerMetadata};
 use vercre_core::vci::{TokenRequest, TokenResponse};
 use vercre_core::{
     err, gen, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager,
@@ -22,12 +27,11 @@ use vercre_core::{
 use super::Endpoint;
 use crate::state::{Expire, State, TokenState};
 
-/// Token request handler.
 impl<P> Endpoint<P>
 where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
 {
-    /// Request Issuer metadata.
+    /// Token request handler.
     ///
     /// # Errors
     ///

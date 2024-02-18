@@ -1,6 +1,27 @@
-//! # Metadata Handler
-
-// use std::fmt::Debug;
+//! # Metadata Endpoint
+//!
+//! The Credential Issuer Metadata contains information on the Credential Issuer's
+//! technical capabilities, supported Credentials, and (internationalized) display
+//! information.
+//!
+//! The Credential Issuer's configuration can be retrieved using the Credential Issuer
+//! Identifier.
+//!
+//! Credential Issuers publishing metadata MUST make a JSON document available at the
+//! path formed by concatenating the string `/.well-known/openid-credential-issuer` to
+//! the Credential Issuer Identifier. If the Credential Issuer value contains a path
+//! component, any terminating / MUST be removed before appending
+//! `/.well-known/openid-credential-issuer`.
+//!
+//! The language(s) in HTTP Accept-Language and Content-Language Headers MUST use the values defined in [RFC3066].
+//!
+//! Below is a non-normative example of a Credential Issuer Metadata request:
+//!
+//! ```http
+//! GET /.well-known/openid-credential-issuer HTTP/1.1
+//!     Host: server.example.com
+//!     Accept-Language: fr-ch, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5
+//! ```
 
 use tracing::{instrument, trace};
 use vercre_core::vci::{MetadataRequest, MetadataResponse};
@@ -21,19 +42,12 @@ where
     /// not available.
     pub async fn metadata(&self, request: impl Into<MetadataRequest>) -> Result<MetadataResponse> {
         let request = request.into();
-
-        let ctx = Context {
-            // callback_id: request.callback_id.clone(),
-        };
-
-        self.handle_request(request, ctx).await
+        self.handle_request(request, Context {}).await
     }
 }
 
 #[derive(Debug)]
-struct Context {
-    // callback_id: Option<String>,
-}
+struct Context;
 
 impl super::Context for Context {
     type Request = MetadataRequest;
@@ -41,7 +55,6 @@ impl super::Context for Context {
 
     // TODO: get callback_id from state
     fn callback_id(&self) -> Option<String> {
-        // self.callback_id.clone()
         None
     }
 
@@ -52,6 +65,7 @@ impl super::Context for Context {
     {
         trace!("Context::process");
 
+        // TODO: add languages to request
         let credential_issuer = Issuer::metadata(provider, &request.credential_issuer).await?;
         Ok(MetadataResponse { credential_issuer })
     }
@@ -72,6 +86,7 @@ mod tests {
 
         let request = MetadataRequest {
             credential_issuer: ISSUER.to_string(),
+            languages: None,
         };
         let response = Endpoint::new(provider).metadata(request).await.expect("response is ok");
         assert_snapshot!("response", response, {

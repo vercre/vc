@@ -1,4 +1,4 @@
-//! # Authorization Handler
+//! # Authorization Endpoint
 //!
 //! The Authorization Endpoint is used in the same manner as defined in [RFC6749].
 //!
@@ -87,12 +87,11 @@ use vercre_core::{
 use super::Endpoint;
 use crate::state::{AuthState, Expire, State};
 
-/// Authorize Request handler.
 impl<P> Endpoint<P>
 where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
 {
-    /// Initiate an Authorization Request flow.
+    /// Authorization request handler.
     ///
     /// # Errors
     ///
@@ -117,8 +116,8 @@ where
         // resolve scope and authorization_details to credential identifiers
         let mut identifiers = resolve_scope(&request, &issuer_meta)?;
         let authorization_details = resolve_authzn(&request, &issuer_meta)?;
-        for auth_det in &authorization_details {
-            identifiers.extend(auth_det.credential_identifiers.clone().unwrap_or_default());
+        for det in &authorization_details {
+            identifiers.extend(det.credential_identifiers.clone().unwrap_or_default());
         }
         identifiers.dedup();
 
@@ -241,7 +240,7 @@ impl super::Context for Context {
             .holder_id(Some(request.holder_id.clone()))
             .build();
 
-        // save redirect uri and verify in token endpoint
+        // save `redirect_uri` and verify in `token` endpoint
         let Some(redirect_uri) = &request.redirect_uri else {
             err!(Err::InvalidRequest, "No redirect_uri specified");
         };
@@ -250,6 +249,15 @@ impl super::Context for Context {
             .code_challenge(request.code_challenge.clone(), request.code_challenge_method.clone())
             .scope(request.scope.clone())
             .build();
+
+        // remove `credential_identifiers` if not supported
+        // if !issuer_meta.credential_identifiers_supported.unwrap_or_default() {
+        //     let mut details = self.authorization_details.clone();
+        //     for det in &mut details {
+        //         det.credential_identifiers = None;
+        //     }
+        //     auth_state.authorization_details = Some(details);
+        // }
 
         if !self.authorization_details.is_empty() {
             let mut details = self.authorization_details.clone();
