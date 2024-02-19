@@ -266,13 +266,13 @@ pub struct Issuer {
     /// signed metadata MUST be secured using JSON Web Signature (JWS) [RFC7515] and
     /// MUST contain an iat (Issued At) claim, an iss (Issuer) claim denoting the party
     /// attesting to the claims in the signed metadata, and sub (Subject) claim matching
-    /// the Credential Issuer identifier. If the Wallet supports signed metadata, 
-    /// metadata values conveyed in the signed JWT MUST take precedence over the 
+    /// the Credential Issuer identifier. If the Wallet supports signed metadata,
+    /// metadata values conveyed in the signed JWT MUST take precedence over the
     /// corresponding values conveyed using plain JSON elements. If the Credential Issuer
-    /// wants to enforce use of signed metadata, it omits the respective metadata 
+    /// wants to enforce use of signed metadata, it omits the respective metadata
     /// parameters from the unsigned part of the Credential Issuer metadata. A signed_
-    /// metadata metadata value MUST NOT appear as a claim in the JWT. The Wallet MUST 
-    /// establish trust in the signer of the metadata, and obtain the keys to validate 
+    /// metadata metadata value MUST NOT appear as a claim in the JWT. The Wallet MUST
+    /// establish trust in the signer of the metadata, and obtain the keys to validate
     /// the signature before processing the metadata.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub signed_metadata: Option<String>,
@@ -286,7 +286,7 @@ pub struct Issuer {
     /// identifier is used in the Credential Offer to communicate to the Wallet which
     /// Credential is being offered. The value is a Credential object containing
     /// metadata about specific credential.
-    pub credentials_supported: HashMap<String, SupportedCredential>,
+    pub credential_configurations_supported: HashMap<String, CredentialConfiguration>,
 }
 
 impl Issuer {
@@ -311,9 +311,9 @@ impl Issuer {
                 name: "Credibil".to_string(),
                 locale: Some("en-NZ".to_string()),
             }),
-            credentials_supported: HashMap::from([
-                ("EmployeeID_JWT".to_string(), SupportedCredential::sample()),
-                ("Developer_JWT".to_string(), SupportedCredential::sample2()),
+            credential_configurations_supported: HashMap::from([
+                ("EmployeeID_JWT".to_string(), CredentialConfiguration::sample()),
+                ("Developer_JWT".to_string(), CredentialConfiguration::sample2()),
             ]),
         }
     }
@@ -331,10 +331,10 @@ pub struct Display {
     pub locale: Option<String>,
 }
 
-/// Supported credential metadata.
+/// Credential configuration.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(default)]
-pub struct SupportedCredential {
+pub struct CredentialConfiguration {
     /// Identifies the format of the credential, e.g. jwt_vc_json or ldp_vc.
     /// Each object will contain further elements defining the type and
     /// claims the credential MAY contain, as well as information on how to
@@ -346,7 +346,7 @@ pub struct SupportedCredential {
 
     /// Identifies the scope value that this Credential Issuer supports for this
     /// particular credential. The value can be the same accross multiple
-    /// 'credentials_supported' objects. The Authorization Server MUST be able to
+    /// 'credential_configurations_supported' objects. The Authorization Server MUST be able to
     /// uniquely identify the Credential Issuer based on the scope value. The Wallet
     /// can use this value in the Authorization Request Scope values in this
     /// Credential Issuer metadata MAY duplicate those in the scopes_supported
@@ -354,8 +354,8 @@ pub struct SupportedCredential {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scope: Option<String>,
 
-    // /// Identifies this SupportedCredential object. MUST be unique across all
-    // /// `credentials_supported` entries in the Credential Issuer's Metadata.
+    // /// Identifies this CredentialConfiguration object. MUST be unique across all
+    // /// `credential_configurations_supported` entries in the Credential Issuer's Metadata.
     // #[serde(skip_serializing_if = "Option::is_none")]
     // pub id: Option<String>,
     /// Identifies how the Credential should be bound to the identifier of the
@@ -425,8 +425,8 @@ pub struct SupportedCredential {
     pub credential_definition: CredentialDefinition,
 }
 
-impl SupportedCredential {
-    /// Create a new `SupportedCredential` with the specified format.
+impl CredentialConfiguration {
+    /// Create a new `CredentialConfiguration` with the specified format.
     // #[cfg(feature = "typegen")]
     #[must_use]
     pub fn sample() -> Self {
@@ -511,7 +511,7 @@ impl SupportedCredential {
         }
     }
 
-    /// Create a new `SupportedCredential` with the specified format.
+    /// Create a new `CredentialConfiguration` with the specified format.
     // TODO: Better demonstrate standards variation from that supplied by sample().
     #[must_use]
     pub fn sample2() -> Self {
@@ -698,15 +698,18 @@ pub struct CredentialDefinition {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(default)]
 pub struct Claim {
-    /// When set to true indicates the claim MUST be present in the issued
-    /// Credential. Defaults to false.
+    /// When true, indicates that the Credential Issuer will always include this claim
+    /// in the issued Credential. When false, the claim is not included in the issued
+    /// Credential if the wallet did not request the inclusion of the claim, and/or if
+    /// the Credential Issuer chose to not include the claim. If the mandatory parameter
+    /// is omitted, the default value is false. Defaults to false.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mandatory: Option<bool>,
 
     /// The type of value of the claim. Defaults to string.
     /// Supported values include `string`, `number`, and `image` media types
-    /// such as image/jpeg. See IANA media type registry for a complete
-    /// list. (<https://www.iana.org/assignments/media-types/media-types.xhtml#image>).
+    /// such as image/jpeg. See the [IANA media type registry](https://www.iana.org/assignments/media-types/media-types.xhtml#image)
+    /// for a complete list.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub value_type: Option<String>,
 
@@ -921,13 +924,13 @@ pub struct SupportedVpFormat {
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "typegen")]
-    use super::SupportedCredential;
+    use super::CredentialConfiguration;
 
     #[cfg(feature = "typegen")]
     #[test]
     fn generate() {
         let mut gen = crux_core::typegen::TypeGen::new();
-        gen.register_samples::<SupportedCredential>(vec![SupportedCredential::sample()])
+        gen.register_samples::<CredentialConfiguration>(vec![CredentialConfiguration::sample()])
             .expect("should register type");
         // gen.swift("SharedTypes", "swift").expect("should generate swift types");
     }

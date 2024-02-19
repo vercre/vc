@@ -317,8 +317,8 @@ fn authzn_identifiers(
 
     for auth_det in &mut auth_dets {
         let mut identifiers = vec![];
-        for (id, cred) in &issuer_meta.credentials_supported {
-            if cred.format == auth_det.format
+        for (id, cred) in &issuer_meta.credential_configurations_supported {
+            if Some(&cred.format) == auth_det.format.as_ref()
                 && cred.credential_definition.type_ == auth_det.credential_definition.type_
             {
                 identifiers.push(id.to_owned());
@@ -346,7 +346,7 @@ fn scope_identifiers(
     let mut identifiers = vec![];
 
     for item in scope.split_whitespace().collect::<Vec<&str>>() {
-        for (id, cred) in &issuer_meta.credentials_supported {
+        for (id, cred) in &issuer_meta.credential_configurations_supported {
             if cred.scope == Some(item.to_string()) {
                 identifiers.push(id.to_owned());
             }

@@ -16,7 +16,7 @@ credential_identifiers_supported: true
 display:
   name: Credibil
   locale: en-NZ
-credentials_supported:
+credential_configurations_supported:
   Developer_JWT:
     format: jwt_vc_json
     scope: DeveloperCredential

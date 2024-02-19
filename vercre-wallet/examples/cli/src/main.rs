@@ -71,7 +71,7 @@ fn main() -> Result<()> {
             //     .pre_authorized_code
             //     .as_ref()
             //     .unwrap()
-            //     .user_pin_required
+            //     .tx_code
             //     .unwrap();
 
             // if pin_required {

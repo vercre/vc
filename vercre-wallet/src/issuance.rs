@@ -13,7 +13,7 @@ use crux_core::render::Render;
 use crux_http::Http;
 pub use model::{Model, Status};
 use serde::{Deserialize, Serialize};
-use vercre_core::metadata::SupportedCredential;
+use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::vci::{CredentialResponse, MetadataResponse, TokenResponse};
 
 use crate::capabilities::delay::Delay;
@@ -104,7 +104,7 @@ pub struct ViewModel {
     pub issuer: String,
 
     /// A list of credentials being offered by the issuer.
-    pub offered: HashMap<String, SupportedCredential>,
+    pub offered: HashMap<String, CredentialConfiguration>,
 
     /// The current status of the issuance flow.
     pub status: Status,
@@ -568,7 +568,7 @@ mod tests {
                 },
                 "urn:ietf:params:oauth:grant-type:pre-authorized_code":{
                     "pre-authorized_code":"XnFPIW56SlEpZzRpYyEpZTMzMXJmKFJJSmFGem1hKGU",
-                    "user_pin_required":true
+                    "tx_code":true
                 }
             }
         });

@@ -21,7 +21,6 @@
 //! Credential Issuer will receive a notification within a certain time period or at
 //! all.
 
-
 use tracing::{instrument, trace};
 use vercre_core::vci::{MetadataRequest, MetadataResponse};
 use vercre_core::{Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager};
@@ -39,7 +38,9 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
-    pub async fn notification(&self, request: impl Into<MetadataRequest>) -> Result<MetadataResponse> {
+    pub async fn notification(
+        &self, request: impl Into<MetadataRequest>,
+    ) -> Result<MetadataResponse> {
         let request = request.into();
         self.handle_request(request, Context {}).await
     }
@@ -89,8 +90,8 @@ mod tests {
         };
         let response = Endpoint::new(provider).metadata(request).await.expect("response is ok");
         assert_snapshot!("response", response, {
-            ".credentials_supported" => insta::sorted_redaction(),
-            ".credentials_supported.*.credential_definition.credentialSubject" => insta::sorted_redaction()
+            ".credential_configurations_supported" => insta::sorted_redaction(),
+            ".credential_configurations_supported.*.credential_definition.credentialSubject" => insta::sorted_redaction()
         });
     }
 }

@@ -122,7 +122,7 @@ impl super::Context for Context {
                 //   step 1: use format and type to look up credential's identifier in metadata
                 //   step 2: match identifier against previously authorised identifier in state
                 let mut authorized = false;
-                for (k, v) in &self.issuer_meta.credentials_supported {
+                for (k, v) in &self.issuer_meta.credential_configurations_supported {
                     if (&v.format == format) && (v.credential_definition.type_ == cred_def.type_) {
                         authorized = self.state.credentials.contains(k);
                         break;
@@ -342,13 +342,15 @@ impl Context {
             if cred_def.credential_subject.is_none() {
                 let maybe_supported = match &request.credential_identifier {
                     // get supported_credential by credential_identifier
-                    Some(id) => self.issuer_meta.credentials_supported.get(id),
+                    Some(id) => self.issuer_meta.credential_configurations_supported.get(id),
 
                     // find supported_credential by matching format and type
-                    None => self.issuer_meta.credentials_supported.values().find(|v| {
-                        Some(&v.format) == request.format.as_ref()
-                            && v.credential_definition.type_ == cred_def.type_
-                    }),
+                    None => {
+                        self.issuer_meta.credential_configurations_supported.values().find(|v| {
+                            Some(&v.format) == request.format.as_ref()
+                                && v.credential_definition.type_ == cred_def.type_
+                        })
+                    }
                 };
                 let Some(supported) = maybe_supported else {
                     err!(Err::InvalidCredentialRequest, "Credential is not supported");
@@ -364,7 +366,8 @@ impl Context {
             let Some(id) = &request.credential_identifier else {
                 err!(Err::InvalidCredentialRequest, "No credential identifier");
             };
-            let Some(supported) = self.issuer_meta.credentials_supported.get(id) else {
+            let Some(supported) = self.issuer_meta.credential_configurations_supported.get(id)
+            else {
                 err!(Err::InvalidCredentialRequest, "No supported credential for identifier {id}");
             };
 

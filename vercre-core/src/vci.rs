@@ -21,11 +21,11 @@ pub struct InvokeRequest {
     #[serde(skip)]
     pub credential_issuer: String,
 
-    /// A list of credentials (as identified by their metadata ids) to include in the 
+    /// A list of credentials (as identified by their metadata ids) to include in the
     /// offer to the Wallet. Each id identifies one of the keys in the name/value
-    /// pairs stored in the 'credential_identifiers_supported' Credential Issuer 
+    /// pairs stored in the 'credential_identifiers_supported' Credential Issuer
     /// metadata property. The Wallet uses this string value to obtain the respective
-    /// object that contains information about the Credential being offered. For 
+    /// object that contains information about the Credential being offered. For
     /// example, this string value can be used to obtain scope value to be used in
     /// the Authorization Request.
     pub credential_configuration_ids: Vec<String>,
@@ -40,7 +40,7 @@ pub struct InvokeRequest {
 
     /// Whether a user PIN is required in order for the Wallet to complete a
     /// credential request.
-    pub user_pin_required: bool,
+    pub tx_code: bool,
 
     /// Identifies the (previously authenticated) Holder to the Issuer for the
     /// in order that they can authorize credential issuance.
@@ -81,7 +81,7 @@ pub struct CredentialOffer {
     pub credential_issuer: String,
 
     /// Credentials offered to the Wallet.
-    /// A list of names identifying entries in the 'credentials_supported' HashMap
+    /// A list of names identifying entries in the 'credential_configurations_supported' HashMap
     /// in the Credential Issuer metadata. The Wallet uses the identifier to obtain
     /// the respective Credential Definition containing information about the
     /// Credential being offered. For example, the identifier can be used to obtain
@@ -229,7 +229,7 @@ pub struct PreAuthorizedCodeGrant {
     /// Request.
     /// Default is false.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub user_pin_required: Option<bool>,
+    pub tx_code: Option<bool>,
 
     /// The minimum amount of time in seconds that the Wallet SHOULD wait between
     /// polling requests to the token endpoint (in case the Authorization Server
@@ -335,16 +335,26 @@ pub struct AuthorizationDetail {
     #[serde(rename = "type")]
     pub type_: String,
 
-    /// The format in which the Credential is requested to be issued. The format
-    /// determines further claims in the authorization details object specifically
-    /// used to identify the Credential type to be issued.
+    /// Specifies the unique identifier of the Credential being described in the
+    /// `credential_configurations_supported` map in the Credential Issuer Metadata.
+    /// REQUIRED when `format` parameter is not set. MUST NOT be set if `format`
+    /// parameter is set.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_configuration_id: Option<String>,
+
+    /// The format of the Credential the Wallet is requesting. The format determines
+    /// further authorization details claims needed to identify the Credential type
+    /// in the requested format.
+    /// REQUIRED when `credential_configuration_id` parameter is not set. MUST NOT be
+    /// set if credential_configuration_id parameter is set.
     ///
     /// One of "jwt_vc_json", "jwt_vc_json-ld", or "ldp_vc".
-    pub format: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub format: Option<String>,
 
-    /// REQUIRED when 'format' is "jwt_vc_json", "jwt_vc_json-ld", or "ldp_vc".
     /// The detailed description of the credential type requested. At a minimum,
     /// the Credential Definition 'type' field MUST be set.
+    /// REQUIRED when 'format' is "jwt_vc_json", "jwt_vc_json-ld", or "ldp_vc".
     pub credential_definition: CredentialDefinition,
 
     // LATER: integrate locations
@@ -363,7 +373,7 @@ pub struct AuthorizationDetail {
     pub locations: Option<Vec<String>>,
 
     /// Uniquely identify Credentials that can be issued using Access Token.
-    /// Each Credential is described using the same entry in the 'credentials_supported'
+    /// Each Credential is described using the same entry in the 'credential_configurations_supported'
     /// Credential Issuer metadata, but can contain different claim values or different
     /// subset of claims within the Credential type claimset.
     /// This parameter can be used to simplify the Credential Request as it can be used to
@@ -453,7 +463,7 @@ pub struct TokenRequest {
     pub pre_authorized_code: Option<String>,
 
     /// The user PIN provided during the Credential Offer process. Must be
-    /// present if user_pin_required was set to true in the Credential
+    /// present if tx_code was set to true in the Credential
     /// Offer. Only set when grant_type is
     /// "urn:ietf:params:oauth:grant-type:pre-authorized_code".
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -783,7 +793,7 @@ mod tests {
             code_challenge_method: "S256".to_string(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: "openid_credential".to_string(),
-                format: "jwt_vc_json".to_string(),
+                format: Some("jwt_vc_json".to_string()),
                 credential_definition: CredentialDefinition {
                     context: Some(vec![
                         "https://www.w3.org/2018/credentials/v1".to_string(),
@@ -796,6 +806,7 @@ mod tests {
                     credential_subject: None,
                 },
                 locations: None,
+                credential_configuration_id: None,
                 credential_identifiers: None,
             }]),
             scope: None,

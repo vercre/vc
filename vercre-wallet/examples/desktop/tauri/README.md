@@ -23,7 +23,7 @@ RESP=$(curl --json '{
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "holder_id": "normal_user",
         "pre-authorize": true,
-        "user_pin_required": true,
+        "tx_code": true,
         "callback_id": "1234"
     }' \
     http://localhost:8080/invoke)
@@ -51,7 +51,7 @@ RESP=$(curl --json '{
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "holder_id": "normal_user",
         "pre-authorize": true,
-        "user_pin_required": true,
+        "tx_code": true,
         "callback_id": "1234"
     }' \
     http://localhost:8080/invoke)
@@ -62,7 +62,6 @@ echo $RESP | jq '.credential_offer'
 # print user pin
 echo $RESP | jq '.user_pin'
 ```
-
 
 ### Presentation
 

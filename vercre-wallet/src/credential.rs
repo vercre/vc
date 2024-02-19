@@ -11,7 +11,7 @@ use crux_core::render::Render;
 use crux_http::Http;
 use serde::{Deserialize, Serialize};
 #[allow(clippy::module_name_repetitions)]
-pub use vercre_core::metadata::SupportedCredential;
+pub use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::w3c::vp::Constraints;
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::w3c::VerifiableCredential;

@@ -33,7 +33,7 @@ async fn receive_offer() {
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "holder_id": NORMAL_USER,
         "pre-authorize": true,
-        "user_pin_required": true,
+        "tx_code": true,
         "callback_id": "1234"
     });
 

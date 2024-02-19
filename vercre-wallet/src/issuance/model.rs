@@ -10,7 +10,7 @@ use crux_http::Response;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use vercre_core::jwt::{self, Jwt};
-use vercre_core::metadata::SupportedCredential;
+use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::vci::{
     CredentialOffer, CredentialResponse, MetadataResponse, ProofClaims, TokenRequest, TokenResponse,
 };
@@ -36,8 +36,8 @@ pub struct Model {
     // The `CredentialOffer` received from the issuer.
     pub(super) offer: CredentialOffer,
 
-    /// A list of `SupportedCredential`s, one for each credential offered.
-    pub(super) offered: HashMap<String, SupportedCredential>,
+    /// A list of `CredentialConfiguration`s, one for each credential offered.
+    pub(super) offered: HashMap<String, CredentialConfiguration>,
 
     /// The user's pin, as set from the shell.
     pub(super) pin: Option<String>,
@@ -79,7 +79,7 @@ impl Model {
 
         // create a new `Credential` for each expected credential
         for identifier in offer.credential_configuration_ids {
-            self.offered.insert(identifier, SupportedCredential::default());
+            self.offered.insert(identifier, CredentialConfiguration::default());
         }
 
         self.status = Status::Offered;
@@ -98,12 +98,13 @@ impl Model {
             return Err(anyhow!("Missing response body"));
         };
 
-        let credentials_supported = &metadata.credential_issuer.credentials_supported;
+        let credential_configurations_supported =
+            &metadata.credential_issuer.credential_configurations_supported;
 
         // add metadata to each expected credential
         for (identifier, supported) in &mut self.offered {
             // find supported credential in metadata
-            let Some(found) = credentials_supported.get(identifier) else {
+            let Some(found) = credential_configurations_supported.get(identifier) else {
                 self.status = Status::Failed("Unsupported credential type".to_string());
                 return Err(anyhow!("Unsupported credential type"));
             };
@@ -131,7 +132,7 @@ impl Model {
         };
 
         // set status based on whether user pin is required
-        if pre_auth_code.user_pin_required.unwrap_or_default() {
+        if pre_auth_code.tx_code.unwrap_or_default() {
             self.status = Status::PendingPin;
         } else {
             self.status = Status::Accepted;

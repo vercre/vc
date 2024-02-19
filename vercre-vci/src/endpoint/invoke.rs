@@ -52,7 +52,7 @@
 //!    "grants": {
 //!       "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
 //!           "pre-authorized_code": "adhjhdjajkdkhjhdj",
-//!           "user_pin_required": true
+//!           "tx_code": true
 //!       }
 //!   }
 //! }
@@ -129,7 +129,7 @@ impl super::Context for Context {
         };
         // requested credential is supported
         for cred_id in &request.credential_configuration_ids {
-            let Some(_) = issuer_meta.credentials_supported.get(cred_id) else {
+            let Some(_) = issuer_meta.credential_configurations_supported.get(cred_id) else {
                 err!(Err::UnsupportedCredentialType, "Requested credential is unsupported");
             };
         }
@@ -169,12 +169,12 @@ impl super::Context for Context {
 
             pre_auth_grant = Some(PreAuthorizedCodeGrant {
                 pre_authorized_code: pre_auth_code.clone(),
-                user_pin_required: Some(request.user_pin_required),
+                tx_code: Some(request.tx_code),
                 interval: None,
                 authorization_server: None,
             });
 
-            if request.user_pin_required {
+            if request.tx_code {
                 user_pin = Some(gen::user_pin());
             }
 
@@ -237,7 +237,7 @@ mod tests {
             "credential_configuration_ids": ["EmployeeID_JWT"],
             "holder_id": NORMAL_USER,
             "pre-authorize": true,
-            "user_pin_required": true,
+            "tx_code": true,
             "callback_id": "1234"
         });
 

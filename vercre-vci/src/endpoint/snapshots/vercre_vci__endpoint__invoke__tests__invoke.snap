@@ -11,7 +11,7 @@ credential_offer:
     authorization_code: ~
     "urn:ietf:params:oauth:grant-type:pre-authorized_code":
       pre-authorized_code: "[pre-authorized_code]"
-      user_pin_required: true
+      tx_code: true
       interval: ~
       authorization_server: ~
 user_pin: "[user_pin]"

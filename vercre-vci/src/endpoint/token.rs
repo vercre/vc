@@ -293,7 +293,7 @@ mod tests {
             code_challenge_method: Some("S256".to_string()),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: "openid_credential".to_string(),
-                format: "jwt_vc_json".to_string(),
+                format: Some("jwt_vc_json".to_string()),
                 credential_definition: CredentialDefinition {
                     type_: vec![
                         "VerifiableCredential".to_string(),
@@ -303,6 +303,7 @@ mod tests {
                     ..Default::default()
                 },
                 credential_identifiers: Some(vec!["EmployeeID_JWT".to_string()]),
+                credential_configuration_id: None,
                 locations: None,
             }]),
             ..Default::default()

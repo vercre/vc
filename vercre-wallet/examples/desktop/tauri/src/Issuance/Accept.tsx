@@ -1,6 +1,6 @@
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Unstable_Grid2";
-import { IssuanceView, SupportedCredential } from "shared_types/types/shared_types";
+import { IssuanceView, CredentialConfiguration } from "shared_types/types/shared_types";
 
 import VcCard, { VcCardProps } from '../Credentials/VcCard';
 
@@ -16,7 +16,7 @@ export const Accept = (props: AcceptProps) => {
         onChange();
     }
 
-    const displayProps = (credential: SupportedCredential) : VcCardProps => {
+    const displayProps = (credential: CredentialConfiguration) : VcCardProps => {
         const display = credential.display?.at(0);
         return {
             backgroundColor: display?.background_color || undefined,
