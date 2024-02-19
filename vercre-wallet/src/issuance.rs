@@ -321,7 +321,6 @@ mod tests {
 
     use super::*;
     use crate::capabilities::store::{StoreRequest, StoreResponse};
-    use crate::credential;
 
     /// Test that a `NewOffer` event causes the app to fetch credential
     /// metatdata.

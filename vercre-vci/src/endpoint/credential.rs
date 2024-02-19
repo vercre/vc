@@ -103,7 +103,7 @@ mod tests {
     use vercre_core::w3c::vc::VcClaims;
 
     use super::*;
-    use crate::state::{Expire, State, TokenState};
+    use crate::state::{Expire, TokenState};
 
     #[tokio::test]
     async fn credential_ok() {

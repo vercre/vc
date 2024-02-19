@@ -84,14 +84,13 @@ impl super::Context for Context {
 
 #[cfg(test)]
 mod tests {
-    use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use test_utils::vci_provider::{Provider, ISSUER};
     use test_utils::wallet;
 
     use super::*;
-    use crate::state::{Expire, State, TokenState};
+    use crate::state::{Expire, TokenState};
 
     #[tokio::test]
     async fn registration_ok() {

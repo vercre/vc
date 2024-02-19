@@ -10,7 +10,7 @@
 //! Credential formats.
 //!
 //! As per the specification, this library supports the response being sent using either
-//! a redirect (same-device flow) or an HTTPS POST request (cross-device flow). This 
+//! a redirect (same-device flow) or an HTTPS POST request (cross-device flow). This
 //! enables the response to be sent across devices, or when the response size exceeds
 //! the redirect URL character size limitation.
 //!
@@ -91,7 +91,7 @@
 //!
 //! The `vercre-vp` library has been implemented to support the profile's
 //! recommendations.
-//! 
+//!
 //! # Design
 //!
 //! **Endpoints**
@@ -152,7 +152,7 @@
 //!     endpoint.request_object(req).await.into()
 //! }
 //! ```
-//! 
+//!
 //! [OpenID for Verifiable Presentations]: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
 //! [OpenID4VP]: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
 //! [JWT VC Presentation Profile]: https://identity.foundation/jwt-vc-presentation-profile

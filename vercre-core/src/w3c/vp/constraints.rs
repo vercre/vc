@@ -157,7 +157,6 @@ mod test {
     use serde_json::json;
 
     use super::*;
-    use crate::w3c::vp::Constraints;
 
     #[test]
     fn test_const() {

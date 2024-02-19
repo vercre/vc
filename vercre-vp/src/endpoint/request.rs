@@ -93,7 +93,6 @@ mod tests {
     use vercre_core::vp::RequestObject;
 
     use super::*;
-    use crate::state::State;
 
     #[tokio::test]
     async fn request_jwt() {

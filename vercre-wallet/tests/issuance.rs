@@ -60,7 +60,10 @@ async fn receive_offer() {
     // make real metadata request
     assert_let!(Effect::Http(request), &mut update.effects[0]);
     let op = &request.operation;
-    assert_eq!(op.url, format!("{}/.well-known/openid-credential-issuer", &offer.credential_issuer));
+    assert_eq!(
+        op.url,
+        format!("{}/.well-known/openid-credential-issuer", &offer.credential_issuer)
+    );
 
     let resp = issuer.get("/.well-known/openid-credential-issuer").expect_success().await;
     let metadata: MetadataResponse = resp.json();

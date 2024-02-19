@@ -198,18 +198,16 @@ fn auth_state_key(request: &TokenRequest) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use assert_let_bind::assert_let;
-    use base64ct::{Base64UrlUnpadded, Encoding};
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
-    use sha2::{Digest, Sha256};
     use test_utils::vci_provider::{Provider, ISSUER, NORMAL_USER};
     use test_utils::wallet;
     use vercre_core::metadata::CredentialDefinition;
-    use vercre_core::vci::{AuthorizationDetail, TokenRequest};
+    use vercre_core::vci::AuthorizationDetail;
 
     use super::*;
-    use crate::state::{AuthState, Expire, State};
+    use crate::state::AuthState;
 
     #[tokio::test]
     async fn simple_token() {

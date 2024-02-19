@@ -296,14 +296,8 @@ impl Issuer {
                 locale: Some("en-NZ".to_string()),
             }),
             credentials_supported: HashMap::from([
-                (
-                    "EmployeeID_JWT".to_string(),
-                    SupportedCredential::sample(),
-                ),
-                (
-                    "Developer_JWT".to_string(),
-                    SupportedCredential::sample2(),
-                )
+                ("EmployeeID_JWT".to_string(), SupportedCredential::sample()),
+                ("Developer_JWT".to_string(), SupportedCredential::sample2()),
             ]),
         }
     }
@@ -484,7 +478,8 @@ impl SupportedCredential {
                 locale: Some("en-NZ".to_string()),
                 logo: Some(Logo {
                     url: Some(
-                        "https://credibil.github.io/assets/propellerhead-logo-reversed.png".to_string(),
+                        "https://credibil.github.io/assets/propellerhead-logo-reversed.png"
+                            .to_string(),
                     ),
                     alt_text: Some("Propellerhead Logo".to_string()),
                 }),

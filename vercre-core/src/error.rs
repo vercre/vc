@@ -483,7 +483,6 @@ mod test {
     use serde_json::json;
 
     use super::*;
-    use crate::Result;
 
     // Test that error details are retuned as json.
     #[test]

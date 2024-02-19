@@ -10,7 +10,7 @@ clean:
 
 # TESTS = ""
 test:
-	@cargo nextest run
+	@RUSTFLAGS="-Dwarnings" cargo nextest run
 	# @cargo test $(TESTS) --offline --lib -- --color=always --nocapture
 
 test-miri:
