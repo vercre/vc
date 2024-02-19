@@ -29,7 +29,6 @@ where
 }
 
 pub mod stronghold {
-    use std::convert::TryFrom;
     use std::path::Path;
 
     use anyhow::Result;
@@ -167,7 +166,6 @@ mod test {
     use lazy_static::lazy_static;
     use serde_json::json;
     use tauri::test::{mock_builder, mock_context, noop_assets};
-    use tauri::Manager;
 
     use super::*;
 

@@ -11,7 +11,6 @@ clean:
 # TESTS = ""
 test:
 	@RUSTFLAGS="-Dwarnings" cargo nextest run
-	# @cargo test $(TESTS) --offline --lib -- --color=always --nocapture
 
 test-miri:
 	MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-panic-on-unsupported" cargo miri test -- --nocapture --color=always
