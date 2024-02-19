@@ -9,7 +9,7 @@
 //! A VP Token contains one or more Verifiable Presentations in the same or different
 //! Credential formats.
 //!
-//! As per the `OpenID` for Verifiable Presentations specification [OpenID.VP], this
+//! As per the `OpenID` for Verifiable Presentations specification [OpenID4VP], this
 //! library supports the response being sent using either a redirect (same-device flow)
 //! or an HTTPS POST request (cross-device flow). This enables the response to be sent
 //! across devices, or when the response size exceeds the redirect URL character size
@@ -93,7 +93,7 @@
 //! The `vercre-vp` library has been implemented to support the profile's
 //! recommendations.
 //!  
-//! [OpenID.VP]: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
+//! [OpenID4VP]: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
 //! [JWT VC Presentation Profile]: https://identity.foundation/jwt-vc-presentation-profile
 //!
 //! # Design
@@ -152,7 +152,7 @@
 //!         client_id: format!("http://{}", host),
 //!         state: client_state,
 //!     };
-//! 
+//!
 //!     endpoint.request_object(req).await.into()
 //! }
 //! ```

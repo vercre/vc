@@ -14,7 +14,7 @@ use crate::{err, error, Result};
 /// OAuth 2.0 Authorization Code grant type.
 pub const AUTH_CODE_GRANT_TYPE: &str = "authorization_code";
 
-/// OpenID.VCI Pre-Authorized Code grant type.
+/// OpenID4VCI Pre-Authorized Code grant type.
 pub const PRE_AUTH_GRANT_TYPE: &str = "urn:ietf:params:oauth:grant-type:pre-authorized_code";
 
 /// OAuth 2 client metadata used for registering clients of the issuance and
@@ -63,7 +63,7 @@ pub struct Client {
     /// OAuth 2.0 grant types the client can use at the token endpoint.
     /// Supported grant types are:
     /// - "authorization_code": RFC6749 Authorization Code Grant
-    /// - "urn:ietf:params:oauth:grant-type:pre-authorized_code": OpenID.VCI
+    /// - "urn:ietf:params:oauth:grant-type:pre-authorized_code": OpenID4VCI
     ///   Pre-Authorized Code Grant
     #[serde(skip_serializing_if = "Option::is_none")]
     pub grant_types: Option<Vec<String>>,
@@ -128,14 +128,14 @@ pub struct Client {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub software_version: Option<String>,
 
-    /// OpenID.VCI
+    /// OpenID4VCI
     /// Used by the Wallet to publish its Credential Offer Handler. The
     /// Credential Issuer should use `openid-credential-offer://` if unable
     /// to perform discovery of the endpoint.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_offer_endpoint: Option<String>,
 
-    /// REQUIRED for OpenID.VP
+    /// REQUIRED for OpenID4VP
     /// An object defining the formats and proof types of Verifiable Presentations
     /// and Verifiable Credentials that a Verifier supports. For specific values that
     /// can be used.
@@ -324,7 +324,7 @@ pub struct SupportedCredential {
     /// claims the credential MAY contain, as well as information on how to
     /// display the credential.
     ///
-    /// See Appendix E of the OpenID.VCI specification for Credential Format
+    /// See Appendix E of the OpenID4VCI specification for Credential Format
     /// Profiles.
     pub format: String,
 
@@ -673,7 +673,7 @@ pub struct Server {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub signed_metadata: Option<String>,
 
-    /// OpenID.VCI
+    /// OpenID4VCI
     /// Indicates whether the issuer accepts a Token Request with a
     /// Pre-Authorized Code but without a client id. Defaults to false.
     #[serde(rename = "pre-authorized_grant_anonymous_access_supported")]
@@ -746,7 +746,7 @@ impl Server {
 
 /// Credential format supported by the Wallet.
 /// Valid Credential format identifier values are defined in Annex E of
-/// [OpenID.VCI].
+/// [OpenID4VCI].
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct SupportedVpFormat {
     /// An object where the value is an array of case sensitive strings that

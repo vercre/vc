@@ -3,7 +3,7 @@
 //! ## Note
 //! If the JWT is only a JWE, iss, exp and aud MUST be omitted in the JWT Claims
 //! Set of the JWE, and the processing rules as per JARM Section 2.4 related to
-//! these claims do not apply. OpenID.VP JWT - JWE
+//! these claims do not apply. OpenID4VP JWT - JWE
 //!
 //! ```json
 //! {

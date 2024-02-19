@@ -310,7 +310,7 @@ pub struct DescriptorMap {
     /// A JSONPath string expression that indicates the Claim submitted in
     /// relation to the Input Descriptor, when executed against the
     /// top-level of the object the Presentation Submission.
-    /// For the OpenID.VP specification, this value MUST be:
+    /// For the OpenID4VP specification, this value MUST be:
     ///  - $ when only one Verifiable Presentation
     ///  - $\[n\] when there are multiple Verifiable Presentations, where n is the
     ///    vp's index.
