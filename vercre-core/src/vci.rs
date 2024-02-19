@@ -5,7 +5,6 @@ use std::str::FromStr;
 
 use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
-use image;
 use qrcode_rs::QrCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
