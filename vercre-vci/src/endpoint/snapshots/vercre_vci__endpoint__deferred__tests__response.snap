@@ -1,9 +1,8 @@
 ---
 source: vercre-vci/src/endpoint/deferred.rs
-assertion_line: 191
+assertion_line: 199
 expression: response
 ---
-format: jwt_vc_json
 credential: "[credential]"
 c_nonce: "[c_nonce]"
 c_nonce_expires_in: "[c_nonce_expires_in]"

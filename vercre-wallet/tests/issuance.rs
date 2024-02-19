@@ -30,7 +30,7 @@ async fn receive_offer() {
 
     // create InvokeRequest
     let body = json!({
-        "credentials": ["EmployeeID_JWT"],
+        "credential_configuration_ids": ["EmployeeID_JWT"],
         "holder_id": NORMAL_USER,
         "pre-authorize": true,
         "user_pin_required": true,

@@ -47,7 +47,7 @@ async fn pre_auth_flow() {
 async fn get_offer() -> Result<InvokeResponse> {
     // offer request
     let body = json!({
-        "credentials": ["EmployeeID_JWT"],
+        "credential_configuration_ids": ["EmployeeID_JWT"],
         "holder_id": NORMAL_USER,
         "pre-authorize": true,
         "user_pin_required": true,

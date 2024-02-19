@@ -3,7 +3,6 @@ source: vercre-vci/tests/deferred_flow.rs
 assertion_line: 39
 expression: deferred_resp
 ---
-format: jwt_vc_json
 credential: "[credential]"
 c_nonce: "[c_nonce]"
 c_nonce_expires_in: "[c_nonce_expires_in]"

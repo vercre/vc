@@ -1,11 +1,11 @@
 ---
 source: vercre-vci/src/endpoint/invoke.rs
-assertion_line: 274
+assertion_line: 249
 expression: response
 ---
 credential_offer:
   credential_issuer: "http://credibil.io"
-  credentials:
+  credential_configuration_ids:
     - EmployeeID_JWT
   grants:
     authorization_code: ~

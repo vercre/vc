@@ -21,13 +21,14 @@ pub struct InvokeRequest {
     #[serde(skip)]
     pub credential_issuer: String,
 
-    /// A list of credentials to include in the offer to the Wallet.
-    /// An array of strings that each identify one of the keys in the name/value
-    /// pairs stored in the 'credentials_supported' Credential Issuer metadata property.
-    /// The Wallet uses this string value to obtain the respective object that contains
-    /// information about the Credential being offered. For example, this string value
-    /// can be used to obtain scope value to be used in the Authorization Request.
-    pub credentials: Vec<String>,
+    /// A list of credentials (as identified by their metadata ids) to include in the 
+    /// offer to the Wallet. Each id identifies one of the keys in the name/value
+    /// pairs stored in the 'credential_identifiers_supported' Credential Issuer 
+    /// metadata property. The Wallet uses this string value to obtain the respective
+    /// object that contains information about the Credential being offered. For 
+    /// example, this string value can be used to obtain scope value to be used in
+    /// the Authorization Request.
+    pub credential_configuration_ids: Vec<String>,
 
     /// Whether the Issuer should provide a pre-authorized offer or not. If not
     /// pre-authorized, the Wallet must request authorization to fulfill the
@@ -89,12 +90,12 @@ pub struct CredentialOffer {
     /// # Example
     ///
     /// ```json
-    ///    "credentials": [
+    ///    "credential_configuration_ids": [
     ///       "UniversityDegree_JWT",
     ///       "org.iso.18013.5.1.mDL"
     ///    ],
     /// ```
-    pub credentials: Vec<String>,
+    pub credential_configuration_ids: Vec<String>,
 
     /// Indicates to the Wallet the Grant Types the Credential Issuer is
     /// prepared to process for this credential offer.
@@ -606,10 +607,6 @@ pub struct ProofClaims {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 // #[serde(from = "CredentialFormat")]
 pub struct CredentialResponse {
-    /// Used to denote the format of the issued Credential. One of
-    /// "jwt_vc_json", "jwt_vc_json-ld", or "ldp_vc".
-    pub format: Option<String>,
-
     /// The issued Credential. MUST be present when `acceptance_token` is not
     /// returned.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -764,7 +761,7 @@ mod tests {
     fn credential_offer() {
         let offer = CredentialOffer {
             credential_issuer: "https://example.com".to_string(),
-            credentials: vec!["UniversityDegree_JWT".to_string()],
+            credential_configuration_ids: vec!["UniversityDegree_JWT".to_string()],
             grants: None,
         };
 

@@ -20,7 +20,7 @@ Once both the VCI server and Tauri app are running, the issuance process can be 
 ```bash
 # get pre-authorized credential offer from issuance service
 RESP=$(curl --json '{
-        "credentials": ["EmployeeID_JWT"],
+        "credential_configuration_ids": ["EmployeeID_JWT"],
         "holder_id": "normal_user",
         "pre-authorize": true,
         "user_pin_required": true,
@@ -48,7 +48,7 @@ A convenient way to process a credential offer that bypasses the deep link is to
 ```bash
 # get pre-authorized credential offer from issuance service
 RESP=$(curl --json '{
-        "credentials": ["EmployeeID_JWT"],
+        "credential_configuration_ids": ["EmployeeID_JWT"],
         "holder_id": "normal_user",
         "pre-authorize": true,
         "user_pin_required": true,

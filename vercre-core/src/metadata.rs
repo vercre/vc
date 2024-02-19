@@ -262,6 +262,21 @@ pub struct Issuer {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_identifiers_supported: Option<bool>,
 
+    /// A signed JWT containing Credential Issuer metadata parameters as claims. The
+    /// signed metadata MUST be secured using JSON Web Signature (JWS) [RFC7515] and
+    /// MUST contain an iat (Issued At) claim, an iss (Issuer) claim denoting the party
+    /// attesting to the claims in the signed metadata, and sub (Subject) claim matching
+    /// the Credential Issuer identifier. If the Wallet supports signed metadata, 
+    /// metadata values conveyed in the signed JWT MUST take precedence over the 
+    /// corresponding values conveyed using plain JSON elements. If the Credential Issuer
+    /// wants to enforce use of signed metadata, it omits the respective metadata 
+    /// parameters from the unsigned part of the Credential Issuer metadata. A signed_
+    /// metadata metadata value MUST NOT appear as a claim in the JWT. The Wallet MUST 
+    /// establish trust in the signer of the metadata, and obtain the keys to validate 
+    /// the signature before processing the metadata.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signed_metadata: Option<String>,
+
     /// Credential Issuer display properties for supported languages.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display: Option<Display>,
@@ -291,6 +306,7 @@ impl Issuer {
             credential_response_encryption_enc_values_supported: Some(vec!["A256GCM".to_string()]),
             require_credential_response_encryption: Some(false),
             credential_identifiers_supported: Some(true),
+            signed_metadata: None,
             display: Some(Display {
                 name: "Credibil".to_string(),
                 locale: Some("en-NZ".to_string()),
@@ -365,16 +381,41 @@ pub struct SupportedCredential {
     /// should use signature suites names defined in Linked Data Cryptographic Suite
     /// Registry.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub cryptographic_suites_supported: Option<Vec<String>>,
+    pub credential_signing_alg_values_supported: Option<Vec<String>>,
 
-    /// Case sensitive strings, representing proof_type that the Credential Issuer
-    /// supports. Supported values include those defined in Credential Requests
-    /// (jwt, cwt) or other values defined in a profile of the specification.
-    /// The 'proof_type'mclaim is defined in the Credential Request specification.
+    /// The key proof(s) that the Credential Issuer supports. This object contains
+    /// a list of name/value pairs, where each name is a unique identifier of the
+    /// supported proof type(s). Valid values are defined in Section 7.2.1,
+    /// other values MAY be used. This identifier is also used by the Wallet in the
+    /// Credential Request as defined in Section 7.2. The value in the name/value
+    /// pair is an object that contains metadata about the key proof and contains
+    /// the following parameters defined by this specification:
     ///
-    /// If omitted, the default value is jwt.
+    ///  - jwt: A JWT [RFC7519] is used as proof of possession. A proof object MUST
+    ///    include a jwt claim containing a JWT defined in Section 7.2.1.1.
+    ///
+    ///  - cwt: A CWT [RFC8392] is used as proof of possession. A proof object MUST
+    ///    include a cwt claim containing a CWT defined in Section 7.2.1.3.
+    ///
+    ///  - ldp_vp: A W3C Verifiable Presentation object signed using the Data Integrity
+    ///    Proof as defined in [VC_DATA_2.0] or [VC_DATA], and where the proof of
+    ///    possession MUST be done in accordance with [VC_Data_Integrity]. When
+    ///    `proof_type` is set to `ldp_vp`, the proof object MUST include a `ldp_vp`
+    ///    claim containing a W3C Verifiable Presentation defined in Section 7.2.1.2.
+    ///
+    /// # Example
+    ///
+    /// ```json
+    /// "proof_types_supported": {
+    ///     "jwt": {
+    ///         "proof_signing_alg_values_supported": [
+    ///             "ES256"
+    ///         ]
+    ///     }
+    /// }
+    /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub proof_types_supported: Option<Vec<String>>,
+    pub proof_types_supported: Option<HashMap<String, ProofTypesSupported>>,
 
     /// Language-based display properties of the supported credential.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -396,8 +437,19 @@ impl SupportedCredential {
                 "did:jwk".to_string(),
                 "did:ion".to_string(),
             ]),
-            cryptographic_suites_supported: Some(vec!["ES256K".to_string(), "EdDSA".to_string()]),
-            proof_types_supported: Some(vec!["jwt".to_string()]),
+            credential_signing_alg_values_supported: Some(vec![
+                "ES256K".to_string(),
+                "EdDSA".to_string(),
+            ]),
+            proof_types_supported: Some(HashMap::from([(
+                "jwt".to_string(),
+                ProofTypesSupported {
+                    proof_signing_alg_values_supported: vec![
+                        "ES256K".to_string(),
+                        "EdDSA".to_string(),
+                    ],
+                },
+            )])),
             display: Some(vec![CredentialDisplay {
                 name: "Employee ID".to_string(),
                 description: Some("Credibil employee ID credential".to_string()),
@@ -470,8 +522,19 @@ impl SupportedCredential {
                 "did:jwk".to_string(),
                 "did:ion".to_string(),
             ]),
-            cryptographic_suites_supported: Some(vec!["ES256K".to_string(), "EdDSA".to_string()]),
-            proof_types_supported: Some(vec!["jwt".to_string()]),
+            credential_signing_alg_values_supported: Some(vec![
+                "ES256K".to_string(),
+                "EdDSA".to_string(),
+            ]),
+            proof_types_supported: Some(HashMap::from([(
+                "jwt".to_string(),
+                ProofTypesSupported {
+                    proof_signing_alg_values_supported: vec![
+                        "ES256K".to_string(),
+                        "EdDSA".to_string(),
+                    ],
+                },
+            )])),
             display: Some(vec![CredentialDisplay {
                 name: "Developer".to_string(),
                 description: Some("Propellerhead certified developer credential".to_string()),
@@ -533,6 +596,29 @@ impl SupportedCredential {
             },
         }
     }
+}
+
+/// `ProofTypesSupported` describes specifics of the key proof(s) that the Credential
+/// Issuer supports. This object contains a list of name/value pairs, where each name
+/// is a unique identifier of the supported proof type(s). Valid values are defined in
+/// Section 7.2.1, other values MAY be used. This identifier is also used by the Wallet
+/// in the Credential Request as defined in Section 7.2. The value in the name/value
+/// pair is an object that contains metadata about the key proof.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct ProofTypesSupported {
+    /// One or more case sensitive strings that identify the algorithms that the Issuer
+    /// supports for this proof type. The Wallet uses one of them to sign the proof.
+    /// Algorithm names used are determined by the key proof type.
+    ///
+    /// For example, for JWT, the algorithm names are defined in IANA JOSE Algorithms
+    /// Registry.
+    ///
+    /// # Example
+    ///
+    /// ```json
+    /// "proof_signing_alg_values_supported": ["ES256K", "EdDSA"]
+    /// ```
+    pub proof_signing_alg_values_supported: Vec<String>,
 }
 
 /// `CredentialDisplay` holds language-based display properties of the supported

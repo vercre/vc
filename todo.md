@@ -1,12 +1,12 @@
 # Draft 13 Changes
 
-- [ ] change the structure of `proof_types` from an array to a `proof_types_supported` map that contains a required `proof_signing_alg_values_supported` parameter
-- [ ] renamed `cryptographic_suites_supported` to `credential_signing_alg_values_supported` to clarify the purpose of the parameter
-- [ ] renamed `credential_configurations` Credential Offer parameter to `credential_configuration_ids`
-- [ ] remove `format` from the Credential Response
-- [ ] added `signed_metadata` parameter
-- [ ] clarified that logo can is a uri and not a url only
-- [ ] moved the annex with Credential format profiles to the top of all annexes
+- [x] change the structure of `proof_types` from an array to a `proof_types_supported` map that contains a required `proof_signing_alg_values_supported` parameter
+- [x] renamed `cryptographic_suites_supported` to `credential_signing_alg_values_supported` to clarify the purpose of the parameter
+- [x] renamed `credential_configurations` Credential Offer parameter to `credential_configuration_ids`
+- [x] remove `format` from the Credential Response
+- [x] added `signed_metadata` parameter
+- [x] clarified that logo can is a uri and not a url only
+
 - [ ] added a Notification Endpoint used by the Wallet to notify the Credential Issuer of certain events for issued Credentials
 - [ ] completed IANA registrations section
 - [ ] clarified description of a mandatory claim
@@ -22,3 +22,7 @@
 - [ ] added privacy considerations
 - [ ] clarifed that AS that only supports pre-auth grant can omit `response_types_supported` metadata
 - [ ] added `background_image` credential issuer metadata
+
+# TODOs
+
+- [ ] check proof_types_supported in credential request verification

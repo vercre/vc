@@ -46,7 +46,7 @@
 //! ```json
 //! {
 //!    "credential_issuer": "https://credential-issuer.example.com",
-//!    "credentials": [
+//!    "credential_configuration_ids": [
 //!       "UniversityDegree_LDP_VC"
 //!    ],
 //!    "grants": {
@@ -124,11 +124,11 @@ impl super::Context for Context {
             err!(Err::InvalidRequest, "No credential_issuer specified");
         };
         // credentials required
-        if request.credentials.is_empty() {
+        if request.credential_configuration_ids.is_empty() {
             err!(Err::InvalidRequest, "No credentials requested");
         };
         // requested credential is supported
-        for cred_id in &request.credentials {
+        for cred_id in &request.credential_configuration_ids {
             let Some(_) = issuer_meta.credentials_supported.get(cred_id) else {
                 err!(Err::UnsupportedCredentialType, "Requested credential is unsupported");
             };
@@ -152,7 +152,7 @@ impl super::Context for Context {
         let mut state = State::builder()
             .credential_issuer(request.credential_issuer.clone())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credentials(request.credentials.clone())
+            .credentials(request.credential_configuration_ids.clone())
             .holder_id(request.holder_id.clone())
             .callback_id(request.callback_id.clone())
             .build();
@@ -203,7 +203,7 @@ impl super::Context for Context {
         Ok(InvokeResponse {
             credential_offer: Some(CredentialOffer {
                 credential_issuer: request.credential_issuer.clone(),
-                credentials: request.credentials.clone(),
+                credential_configuration_ids: request.credential_configuration_ids.clone(),
                 grants: Some(Grants {
                     authorization_code: auth_grant,
                     pre_authorized_code: pre_auth_grant,
@@ -234,7 +234,7 @@ mod tests {
 
         // create offer to 'send' to the app
         let body = json!({
-            "credentials": ["EmployeeID_JWT"],
+            "credential_configuration_ids": ["EmployeeID_JWT"],
             "holder_id": NORMAL_USER,
             "pre-authorize": true,
             "user_pin_required": true,

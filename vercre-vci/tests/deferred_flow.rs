@@ -48,7 +48,7 @@ async fn deferred_flow() {
 async fn get_offer() -> Result<InvokeResponse> {
     // offer request
     let body = json!({
-        "credentials": ["EmployeeID_JWT"],
+        "credential_configuration_ids": ["EmployeeID_JWT"],
         "holder_id": PENDING_USER,
         "pre-authorize": true,
         "user_pin_required": true,

@@ -561,7 +561,7 @@ mod tests {
     lazy_static! {
         static ref OFFER: Value = json!({
             "credential_issuer":"http://127.0.0.1:8000",
-            "credentials":["EmployeeID_JWT"],
+            "credential_configuration_ids":["EmployeeID_JWT"],
             "grants":{
                 "authorization_code":{
                     "issuer_state":"KSZBaEJaSTEwTTVRcU83U35tNDg3aWxXWHhnMkhKeCU"
@@ -574,7 +574,7 @@ mod tests {
         });
         static ref OFFER_NO_PIN: Value = json!({
             "credential_issuer":"http://127.0.0.1:8000",
-            "credentials":["EmployeeID_JWT"],
+            "credential_configuration_ids":["EmployeeID_JWT"],
             "grants":{
                 "authorization_code":{
                     "issuer_state":"KSZBaEJaSTEwTTVRcU83U35tNDg3aWxXWHhnMkhKeCU"

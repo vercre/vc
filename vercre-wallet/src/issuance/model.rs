@@ -70,7 +70,7 @@ impl Model {
 
         self.offer = offer.clone();
 
-        if offer.credentials.is_empty() {
+        if offer.credential_configuration_ids.is_empty() {
             return Err(anyhow!("No credentials"));
         }
         if offer.grants.is_none() {
@@ -78,7 +78,7 @@ impl Model {
         }
 
         // create a new `Credential` for each expected credential
-        for identifier in offer.credentials {
+        for identifier in offer.credential_configuration_ids {
             self.offered.insert(identifier, SupportedCredential::default());
         }
 

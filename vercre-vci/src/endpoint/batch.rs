@@ -258,17 +258,12 @@ impl Context {
             });
         };
 
-        // TODO: support other request.credential.formats
-        // transform VC into base64 encoded, signed JWT
-        let format = request.format.clone().unwrap_or("jwt_vc_json".to_string());
-
         // transform to JWT
         let mut vc_jwt = vc.to_jwt()?;
         vc_jwt.claims.sub = self.holder_did.lock().unwrap().clone();
         let signed = vc_jwt.sign(provider.clone()).await?;
 
         Ok(CredentialResponse {
-            format: Some(format),
             credential: Some(serde_json::to_value(signed)?),
             ..Default::default()
         })

@@ -1,6 +1,6 @@
 ---
 source: vercre-wallet/src/presentation.rs
-assertion_line: 379
+assertion_line: 412
 expression: app.view(&model)
 ---
 credentials:
@@ -68,11 +68,14 @@ credentials:
       cryptographic_binding_methods_supported:
         - "did:jwk"
         - "did:ion"
-      cryptographic_suites_supported:
+      credential_signing_alg_values_supported:
         - ES256K
         - EdDSA
       proof_types_supported:
-        - jwt
+        jwt:
+          proof_signing_alg_values_supported:
+            - ES256K
+            - EdDSA
       display:
         - name: Employee ID
           locale: en-NZ

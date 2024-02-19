@@ -1,6 +1,6 @@
 ---
 source: vercre-wallet/tests/issuance.rs
-assertion_line: 153
+assertion_line: 163
 expression: app.view(&model)
 ---
 issuer: "http://credibil.io"
@@ -11,11 +11,14 @@ offered:
     cryptographic_binding_methods_supported:
       - "did:jwk"
       - "did:ion"
-    cryptographic_suites_supported:
+    credential_signing_alg_values_supported:
       - ES256K
       - EdDSA
     proof_types_supported:
-      - jwt
+      jwt:
+        proof_signing_alg_values_supported:
+          - ES256K
+          - EdDSA
     display:
       - name: Employee ID
         locale: en-NZ
