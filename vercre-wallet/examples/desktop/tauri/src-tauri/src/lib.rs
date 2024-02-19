@@ -49,7 +49,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            accept, authorize, cancel, delete, get_list, set_pin, start
+            accept, authorize, cancel, delete, get_list, set_pin, start, offer
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -109,6 +109,11 @@ async fn delete(id: String, handle: AppHandle) -> Result<(), error::Error> {
 // ----------------------------------------------------------------------------
 // Issuance flow
 // ----------------------------------------------------------------------------
+#[tauri::command]
+async fn offer(url: String, handle: AppHandle) -> Result<(), error::Error> {
+    process_event(Event::Issuance(issuance::Event::Offer(url)), handle)
+}
+
 #[tauri::command]
 async fn accept(handle: AppHandle) -> Result<(), error::Error> {
     process_event(Event::Issuance(issuance::Event::Accept), handle)

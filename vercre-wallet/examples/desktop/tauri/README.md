@@ -42,6 +42,28 @@ The resultant link should look like:
 openid-vc://credential_offer?credential_offer=%7B%22credential_issuer%22%3A%22http%3A%2F%2Flocalhost%3A8080%22%2C%22credentials%22%3A%5B%22EmployeeID_JWT%22%5D%2C%22grants%22%3A%7B%22authorization_code%22%3Anull%2C%22urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Apre-authorized_code%22%3A%7B%22authorization_server%22%3Anull%2C%22interval%22%3Anull%2C%22pre-authorized_code%22%3A%22QCZ1WTMmYjNDUjJSQHNTMmRAR3RaU1ZPSkAlaW1TQVo%22%2C%22user_pin_required%22%3Atrue%7D%7D%7D
 ```
 
+A convenient way to process a credential offer that bypasses the deep link is to use the add-credential form and paste the offer into the input field. This is not the intended end user experience but allows faster shell development and testing.
+
+```bash
+```bash
+# get pre-authorized credential offer from issuance service
+RESP=$(curl --json '{
+        "credentials": ["EmployeeID_JWT"],
+        "holder_id": "normal_user",
+        "pre-authorize": true,
+        "user_pin_required": true,
+        "callback_id": "1234"
+    }' \
+    http://localhost:8080/invoke)
+
+# paste this into the add-credential form in the Tauri app
+echo $RESP | jq '.credential_offer'
+
+# print user pin
+echo $RESP | jq '.user_pin'
+```
+
+
 ### Presentation
 
 Launch the `vercre-vp/examples/http` server. It runs on port 8080 by default.

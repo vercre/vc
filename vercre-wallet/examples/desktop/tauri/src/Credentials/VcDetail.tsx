@@ -11,7 +11,7 @@ export type VcDetailProps = {
     credential: Credential;
 };
 
-export const VcDetail = (props: VcDetailProps) => {
+const VcDetail = (props: VcDetailProps) => {
     const { credential } = props;
 
     const claimValues = credential.vc.credentialSubject;

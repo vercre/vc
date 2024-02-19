@@ -24,29 +24,4 @@ export const components = {
             ]
         `,
     },
-    MuiFormLabel: {
-        styleOverrides: {
-            root: {
-                color: 'rgba(255, 255, 255, 0.66)',
-            },
-        },
-    },
-    MuiOutlinedInput: {
-        styleOverrides: {
-            root: {
-                '& fieldset': {
-                    borderColor: 'rgba(255, 255, 255, 0.66)',
-                },
-            }
-        },
-    },
-    MuiLoadingButton: {
-        styleOverrides: {
-            root: {
-                '&.Mui-disabled': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                },
-            },
-        },
-    },
 };

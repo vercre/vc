@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 
-// import AddIcon from '@mui/icons-material/Add';
+import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import Box from '@mui/material/Box';
-// import Fab from '@mui/material/Fab';
+import Fab from '@mui/material/Fab';
 import IconButton from '@mui/material/IconButton';
 import Slide from '@mui/material/Slide';
 import Stack from '@mui/material/Stack';
@@ -12,6 +12,7 @@ import { useTheme } from '@mui/material/styles';
 import { invoke } from "@tauri-apps/api/core";
 import { Credential } from "shared_types/types/shared_types";
 
+import VcAdd from "./VcAdd";
 import VcCard, { VcCardProps } from "./VcCard";
 import VcDelete from "./VcDelete";
 import VcDetail from "./VcDetail";
@@ -19,14 +20,19 @@ import { useShellState } from "../Shell/Context";
 
 export type CredentialsProps = {
     credentials: Credential[] | undefined;
-    onAdd?: () => void;
 }
+
+const listShellState = {
+    title: "Credentials",
+    action: undefined,
+    secondaryAction: undefined,
+};
 
 export const Credentials = (props: CredentialsProps) => {
     const { credentials } = props;
     const [selected, setSelected] = useState<Credential | undefined>(undefined);
     const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
-    const [showDetail, setShowDetail] = useState<boolean>(false);
+    const [viewMode, setViewMode] = useState<'list' | 'detail' | 'add'>('list');
     const { setShellState } = useShellState();
     const initialLoad = useRef<boolean>(true);
     const theme = useTheme();
@@ -36,11 +42,7 @@ export const Credentials = (props: CredentialsProps) => {
             return;
         }
         initialLoad.current = false;
-        setShellState({
-            title: "Credentials",
-            action: undefined,
-            secondaryAction: undefined,
-        });
+        setShellState({...listShellState});
     }, [setShellState]);
 
     useEffect(() => {
@@ -49,7 +51,7 @@ export const Credentials = (props: CredentialsProps) => {
 
     const handleSelect = (c: Credential) => {
         setSelected(c);
-        setShowDetail(true);
+        setViewMode('detail');
         setShellState({
             title: c.metadata.display?.at(0)?.name || "Credential Detail",
             action: (
@@ -66,12 +68,9 @@ export const Credentials = (props: CredentialsProps) => {
     };
 
     const handleClose = () => {
-        setShowDetail(false);
-        setShellState({
-            title: "Credentials",
-            action: undefined,
-            secondaryAction: undefined,
-        })
+        setSelected(undefined);
+        setViewMode('list');
+        setShellState({...listShellState});
     };
 
     const handleConfirmDelete = () => {
@@ -84,6 +83,30 @@ export const Credentials = (props: CredentialsProps) => {
             return;
         }
         invoke("delete", { id });
+        handleClose();
+    };
+
+    // Circumvent the deep link to accepting a credential offer by displaying an offer input view.
+    const handleAdd = () => {
+        setSelected(undefined);
+        setViewMode('add');
+        setShellState({
+            title: "Add Credential",
+            action: (
+                <IconButton onClick={handleClose} size="large">
+                    <ArrowBackIosIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
+                </IconButton>
+            ),
+            secondaryAction: undefined,
+        });
+    };
+
+    const handleProcessOffer = (url: string) => {
+        if (url === "") {
+            return;
+        }
+        const encoded = encodeURIComponent(url);
+        invoke("offer", { url: encoded });
     };
 
     const displayProps = (credential: Credential) : VcCardProps => {
@@ -108,7 +131,7 @@ export const Credentials = (props: CredentialsProps) => {
                 position: 'relative',
             }}
         >
-            <Slide direction="right" in={!showDetail} mountOnEnter unmountOnExit>
+            <Slide direction="right" in={viewMode === 'list'} mountOnEnter unmountOnExit>
                 <Stack
                     spacing={-16}
                     sx={{
@@ -122,16 +145,16 @@ export const Credentials = (props: CredentialsProps) => {
                             <VcCard key={index} { ...displayProps(credential) } />
                         </Stack>
                     )}
-                    {/* <Fab
+                    <Fab
                         color="primary"
-                        onClick={props.onAdd}
+                        onClick={handleAdd}
                         sx={{ position: 'fixed', bottom: 56, right: 24 }}
                     >
                         <AddIcon />
-                    </Fab> */}
+                    </Fab>
                 </Stack>
             </Slide>
-            <Slide direction="left" in={showDetail} mountOnEnter unmountOnExit>
+            <Slide direction="left" in={viewMode === 'detail'} mountOnEnter unmountOnExit>
                 <Box
                     sx={{
                         position: 'absolute',
@@ -142,6 +165,17 @@ export const Credentials = (props: CredentialsProps) => {
                     {selected &&
                         <VcDetail credential={selected} />
                     }
+                </Box>
+            </Slide>
+            <Slide direction="left" in={viewMode === 'add'} mountOnEnter unmountOnExit>
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: 0,
+                        pt: 2,
+                    }}
+                >
+                    <VcAdd onSubmit={handleProcessOffer} />
                 </Box>
             </Slide>
             <VcDelete
