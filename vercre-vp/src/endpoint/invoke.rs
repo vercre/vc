@@ -41,7 +41,6 @@
 //! `request_uri` pointing to the prepared Request Object.
 
 use std::collections::HashMap;
-use std::convert::From;
 use std::fmt::Debug;
 
 use tracing::{instrument, trace};
