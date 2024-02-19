@@ -56,7 +56,7 @@ RESP=$(curl --json '{
     }' \
     http://localhost:8080/invoke)
 
-# paste this into the add-credential form in the Tauri app
+# paste this JSON into the add-credential form in the Tauri app
 echo $RESP | jq '.credential_offer'
 
 # print user pin

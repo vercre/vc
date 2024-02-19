@@ -295,10 +295,16 @@ impl Issuer {
                 name: "Credibil".to_string(),
                 locale: Some("en-NZ".to_string()),
             }),
-            credentials_supported: HashMap::from([(
-                "EmployeeID_JWT".to_string(),
-                SupportedCredential::sample(),
-            )]),
+            credentials_supported: HashMap::from([
+                (
+                    "EmployeeID_JWT".to_string(),
+                    SupportedCredential::sample(),
+                ),
+                (
+                    "Developer_JWT".to_string(),
+                    SupportedCredential::sample2(),
+                )
+            ]),
         }
     }
 }
@@ -425,6 +431,80 @@ impl SupportedCredential {
                             value_type: Some("string".to_string()),
                             display: Some(vec![Display {
                                 name: "Email".to_string(),
+                                locale: Some("en-NZ".to_string()),
+                            }]),
+                            claim_nested: None,
+                        },
+                    ),
+                    (
+                        "familyName".to_string(),
+                        Claim {
+                            mandatory: Some(true),
+                            value_type: Some("string".to_string()),
+                            display: Some(vec![Display {
+                                name: "Family name".to_string(),
+                                locale: Some("en-NZ".to_string()),
+                            }]),
+                            claim_nested: None,
+                        },
+                    ),
+                    (
+                        "givenName".to_string(),
+                        Claim {
+                            mandatory: Some(true),
+                            value_type: Some("string".to_string()),
+                            display: Some(vec![Display {
+                                name: "Given name".to_string(),
+                                locale: Some("en-NZ".to_string()),
+                            }]),
+                            claim_nested: None,
+                        },
+                    ),
+                ])),
+            },
+        }
+    }
+
+    /// Create a new `SupportedCredential` with the specified format.
+    // TODO: Better demonstrate standards variation from that supplied by sample().
+    #[must_use]
+    pub fn sample2() -> Self {
+        Self {
+            format: "jwt_vc_json".to_string(),
+            scope: Some("DeveloperCredential".to_string()),
+            cryptographic_binding_methods_supported: Some(vec![
+                "did:jwk".to_string(),
+                "did:ion".to_string(),
+            ]),
+            cryptographic_suites_supported: Some(vec!["ES256K".to_string(), "EdDSA".to_string()]),
+            proof_types_supported: Some(vec!["jwt".to_string()]),
+            display: Some(vec![CredentialDisplay {
+                name: "Developer".to_string(),
+                description: Some("Propellerhead certified developer credential".to_string()),
+                locale: Some("en-NZ".to_string()),
+                logo: Some(Logo {
+                    url: Some(
+                        "https://credibil.github.io/assets/propellerhead-logo-reversed.png".to_string(),
+                    ),
+                    alt_text: Some("Propellerhead Logo".to_string()),
+                }),
+                text_color: Some("#ffffff".to_string()),
+                background_color: Some("#010100".to_string()),
+            }]),
+            credential_definition: CredentialDefinition {
+                context: Some(vec![
+                    "https://www.w3.org/2018/credentials/v1".to_string(),
+                    "https://www.w3.org/2018/credentials/examples/v1".to_string(),
+                ]),
+                type_: vec!["VerifiableCredential".to_string(), "DeveloperCredential".to_string()],
+                credential_subject: Some(HashMap::from([
+                    (
+                        "proficiency".to_string(),
+                        Claim {
+                            mandatory: Some(true),
+                            value_type: Some("number".to_string()),
+                            display: Some(vec![Display {
+                                name: "Proficiency".to_string(),
                                 locale: Some("en-NZ".to_string()),
                             }]),
                             claim_nested: None,

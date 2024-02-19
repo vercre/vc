@@ -1,6 +1,6 @@
 ---
 source: vercre-vci/src/endpoint/metadata.rs
-assertion_line: 92
+assertion_line: 91
 expression: response
 ---
 credential_issuer: "http://credibil.io"
@@ -17,6 +17,52 @@ display:
   name: Credibil
   locale: en-NZ
 credentials_supported:
+  Developer_JWT:
+    format: jwt_vc_json
+    scope: DeveloperCredential
+    cryptographic_binding_methods_supported:
+      - "did:jwk"
+      - "did:ion"
+    cryptographic_suites_supported:
+      - ES256K
+      - EdDSA
+    proof_types_supported:
+      - jwt
+    display:
+      - name: Developer
+        locale: en-NZ
+        logo:
+          url: "https://credibil.github.io/assets/propellerhead-logo-reversed.png"
+          alt_text: Propellerhead Logo
+        description: Propellerhead certified developer credential
+        background_color: "#010100"
+        text_color: "#ffffff"
+    credential_definition:
+      "@context":
+        - "https://www.w3.org/2018/credentials/v1"
+        - "https://www.w3.org/2018/credentials/examples/v1"
+      type:
+        - VerifiableCredential
+        - DeveloperCredential
+      credentialSubject:
+        familyName:
+          mandatory: true
+          value_type: string
+          display:
+            - name: Family name
+              locale: en-NZ
+        givenName:
+          mandatory: true
+          value_type: string
+          display:
+            - name: Given name
+              locale: en-NZ
+        proficiency:
+          mandatory: true
+          value_type: number
+          display:
+            - name: Proficiency
+              locale: en-NZ
   EmployeeID_JWT:
     format: jwt_vc_json
     scope: EmployeeIDCredential
