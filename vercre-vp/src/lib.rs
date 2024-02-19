@@ -2,18 +2,17 @@
 //! based on the [OpenID for Verifiable Presentations](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
 //! specification.
 //!
-//! # `OpenID` for Verifiable Presentations
+//! # [OpenID for Verifiable Presentations]
 //!
-//! `OpenID` for Verifiable Presentations introduces the VP Token as a container to enable
+//! [OpenID for Verifiable Presentations] introduces the VP Token as a container to enable
 //! End-Users to present Verifiable Presentations to Verifiers using the Wallet.
 //! A VP Token contains one or more Verifiable Presentations in the same or different
 //! Credential formats.
 //!
-//! As per the `OpenID` for Verifiable Presentations specification [OpenID4VP], this
-//! library supports the response being sent using either a redirect (same-device flow)
-//! or an HTTPS POST request (cross-device flow). This enables the response to be sent
-//! across devices, or when the response size exceeds the redirect URL character size
-//! limitation.
+//! As per the specification, this library supports the response being sent using either
+//! a redirect (same-device flow) or an HTTPS POST request (cross-device flow). This 
+//! enables the response to be sent across devices, or when the response size exceeds
+//! the redirect URL character size limitation.
 //!
 //! ## Same Device Flow
 //!
@@ -92,22 +91,19 @@
 //!
 //! The `vercre-vp` library has been implemented to support the profile's
 //! recommendations.
-//!  
-//! [OpenID4VP]: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
-//! [JWT VC Presentation Profile]: https://identity.foundation/jwt-vc-presentation-profile
-//!
+//! 
 //! # Design
 //!
 //! **Endpoints**
 //!
-//! The library is architected around the OpenID4VP endpoints, each with its own
+//! The library is architected around the [OpenID4VP] endpoints, each with its own
 //! `XxxRequest` and `XxxResponse` types. The types serialize to and from JSON, in
 //! accordance with the specification.
 //!
 //! The endpoints are designed to be used with Rust-based HTTP servers, such as
 //! [axum](https://docs.rs/axum/latest/axum/).
 //!
-//! Endpoints can be combined to implement both the OpenID4VP same-device and
+//! Endpoints can be combined to implement both the [OpenID4VP] same-device and
 //! cross-device flows.
 //!
 //! **Running**
@@ -156,6 +152,10 @@
 //!     endpoint.request_object(req).await.into()
 //! }
 //! ```
+//! 
+//! [OpenID for Verifiable Presentations]: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
+//! [OpenID4VP]: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
+//! [JWT VC Presentation Profile]: https://identity.foundation/jwt-vc-presentation-profile
 
 pub mod endpoint;
 mod state;

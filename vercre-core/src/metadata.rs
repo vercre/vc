@@ -14,7 +14,7 @@ use crate::{err, error, Result};
 /// OAuth 2.0 Authorization Code grant type.
 pub const AUTH_CODE_GRANT_TYPE: &str = "authorization_code";
 
-/// OpenID4VCI Pre-Authorized Code grant type.
+/// `OpenID4VCI` Pre-Authorized Code grant type.
 pub const PRE_AUTH_GRANT_TYPE: &str = "urn:ietf:params:oauth:grant-type:pre-authorized_code";
 
 /// OAuth 2 client metadata used for registering clients of the issuance and
@@ -746,7 +746,7 @@ impl Server {
 
 /// Credential format supported by the Wallet.
 /// Valid Credential format identifier values are defined in Annex E of
-/// [OpenID4VCI].
+/// [OpenID4VCI](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html).
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct SupportedVpFormat {
     /// An object where the value is an array of case sensitive strings that

@@ -434,7 +434,7 @@ pub struct ResponseRequest {
     /// One or more Verifiable Presentations represented as base64url encoded strings
     /// and/or JSON objects. The VP format determines the encoding. The encoding follows
     /// the same format-based rules as for Credential issuance (Appendix E of the
-    /// [OpenID4VCI] specification).
+    /// [OpenID4VCI](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html) specification).
     ///
     /// When a single Verifiable Presentation is returned, array syntax MUST NOT be used.
     #[serde(skip_serializing_if = "Option::is_none")]

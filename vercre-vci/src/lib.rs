@@ -1,38 +1,36 @@
 //! An API for the issuance of Verifiable Credentials based on the
-//! [OpenID for Verifiable Credential Issuance](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
-//! specification.
+//! [OpenID for Verifiable Credential Issuance] specification.
 //!
-//! # OpenID for Verifiable Credential Issuance
+//! # [OpenID for Verifiable Credential Issuance]
 //!
 //! This library implements an OAuth protected API for the issuance of Verifiable
-//! Credentials as specified by [OpenID for Verifiable Credential Issuance](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html).
+//! Credentials as specified by [OpenID for Verifiable Credential Issuance].
 //!
 //! Verifiable Credentials are similar to identity assertions, like ID Tokens in
-//! OpenID Connect [OpenID.Core](https://openid.net/specs/openid-connect-core-1_0.html),
-//! in that they allow a Credential Issuer to assert End-User claims. A Verifiable
-//! Credential follows a pre-defined schema (the Credential type) and MAY be bound to a
-//! certain holder, e.g., through Cryptographic Holder Binding. Verifiable Credentials
-//! can be securely presented for the End-User to the RP, without involvement of the
-//! Credential Issuer.
+//! [OpenID Connect], in that they allow a Credential Issuer to assert End-User claims.
+//! A Verifiable Credential follows a pre-defined schema (the Credential type) and MAY
+//! be bound to a certain holder, e.g., through Cryptographic Holder Binding. Verifiable
+//! Credentials can be securely presented for the End-User to the RP, without
+//! involvement of the Credential Issuer.
 //!
-//! Access to this API is authorized using OAuth 2.0 [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html),
+//! Access to this API is authorized using OAuth 2.0 [RFC6749],
 //! i.e., Wallets use OAuth 2.0 to obtain authorization to receive Verifiable
 //! Credentials. This way the issuance process can benefit from the proven security,
 //! simplicity, and flexibility of OAuth 2.0, use existing OAuth 2.0 deployments, and
-//! OpenID Connect OPs can be extended to become Credential Issuers.
+//! [OpenID Connect] OPs can be extended to become Credential Issuers.
 //!
 //! # Design
 //!
 //! **Endpoints**
 //!
-//! The library is architected around the OpenID4VCI endpoints, each with its own
+//! The library is architected around the [OpenID4VCI] endpoints, each with its own
 //! `XxxRequest` and `XxxResponse` types. The types serialize to and from JSON, in
 //! accordance with the specification.
 //!
 //! The endpoints are designed to be used with Rust-based HTTP servers, such as
 //! [axum](https://docs.rs/axum/latest/axum/).
 //!
-//! Endpoints can be combined to implement both the OpenID4VCI Authorization Code Flow
+//! Endpoints can be combined to implement both the [OpenID4VCI] Authorization Code Flow
 //! and Pre-Authorized Code Flow.
 //!
 //! **Running**
@@ -82,6 +80,11 @@
 //!     endpoint.credential(req).await.into()
 //! }
 //! ```
+//!
+//! [OpenID for Verifiable Credential Issuance]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
+//! [OpenID4VCI]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
+//! [OpenID Connect]: https://openid.net/specs/openid-connect-core-1_0.html
+//! [RFC6749]: https://www.rfc-editor.org/rfc/rfc6749.html
 
 pub mod endpoint;
 mod state;
@@ -93,4 +96,5 @@ pub use vercre_core::vci::{
     InvokeRequest, InvokeResponse, MetadataRequest, MetadataResponse, PreAuthorizedCodeGrant,
     Proof, ProofClaims, RegistrationRequest, RegistrationResponse, TokenRequest, TokenResponse,
 };
+
 pub use crate::endpoint::Endpoint;
