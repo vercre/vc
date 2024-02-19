@@ -8,7 +8,6 @@
 - [x] clarified that logo can is a uri and not a url only
 
 - [ ] added a Notification Endpoint used by the Wallet to notify the Credential Issuer of certain events for issued Credentials
-- [ ] completed IANA registrations section
 - [ ] clarified description of a mandatory claim
 - [ ] added an option in `authorization_details` to use `credential_configuration_id` pointing to the name of a `credential_configurations_supported` object in the Credential Issuer's Metadata; in addition to an option to use format and type.
 - [ ] renamed `credentials` Credential Offer parameter to `credential_configuration_ids`
