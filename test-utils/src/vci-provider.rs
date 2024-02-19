@@ -187,6 +187,7 @@ struct Person {
     given_name: &'static str,
     family_name: &'static str,
     email: &'static str,
+    proficiency: &'static str,
     pending: bool,
 }
 
@@ -205,6 +206,7 @@ impl HolderStore {
                     given_name: "Normal",
                     family_name: "Person",
                     email: "normal.user@example.com",
+                    proficiency: "3",
                     pending: false,
                 },
             ),
@@ -214,6 +216,7 @@ impl HolderStore {
                     given_name: "Pending",
                     family_name: "Person",
                     email: "pending.user@example.com",
+                    proficiency: "1",
                     pending: true,
                 },
             ),
@@ -253,6 +256,7 @@ impl HolderStore {
                     "givenName" => holder.given_name,
                     "familyName" => holder.family_name,
                     "email" => holder.email,
+                    "proficiency" => holder.proficiency,
                     _ => continue,
                 };
 
