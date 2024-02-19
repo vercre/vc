@@ -13,7 +13,7 @@ use vercre_core::jwt::{self, Jwt};
 use vercre_core::vci::ProofClaims;
 use vercre_core::w3c::vc::VcClaims;
 use vercre_core::Result;
-use vercre_vci::endpoint::{
+use vercre_vci::{
     AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse, Endpoint,
     TokenRequest, TokenResponse,
 };

@@ -1,7 +1,8 @@
-//! # `OpenID` for Verifiable Presentations
+//! An API to request and present Verifiable Credentials as Verifiable Presentations
+//! based on the [OpenID for Verifiable Presentations](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
+//! specification.
 //!
-//! A mechanism on top of OAuth 2.0 to request and present Verifiable Credentials as
-//! Verifiable Presentations.
+//! # `OpenID` for Verifiable Presentations
 //!
 //! `OpenID` for Verifiable Presentations introduces the VP Token as a container to enable
 //! End-Users to present Verifiable Presentations to Verifiers using the Wallet.
@@ -94,15 +95,73 @@
 //!  
 //! [OpenID.VP]: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
 //! [JWT VC Presentation Profile]: https://identity.foundation/jwt-vc-presentation-profile
+//!
+//! # Design
+//!
+//! **Endpoints**
+//!
+//! The library is architected around the OpenID4VP endpoints, each with its own
+//! `XxxRequest` and `XxxResponse` types. The types serialize to and from JSON, in
+//! accordance with the specification.
+//!
+//! The endpoints are designed to be used with Rust-based HTTP servers, such as
+//! [axum](https://docs.rs/axum/latest/axum/).
+//!
+//! Endpoints can be combined to implement both the OpenID4VP same-device and
+//! cross-device flows.
+//!
+//! **Running**
+//!
+//! Per the OAuth 2.0 specification, endpoints are exposed using HTTP. The library
+//! will work with most common Rust HTTP servers with a few lines of 'wrapper' code
+//! for each endpoint.
+//!
+//! In addition, implementors need to implement 'Provider' traits that are responsible
+//! for handling externals such as  storage, authorization, external communication,
+//! etc.. See [`vercre_core`](https://docs.rs/vercre-core/latest/vercre_core/).
+//!
+//! # Example
+//!
+//! The following example demonstrates how a single endpoint might be surfaced.
+//!
+//! A number of elements have been excluded for brevity. A more complete example can be
+//! found in the `examples` directory.
+//!  
+//! ```no_run
+//! #[tokio::main]
+//! async fn main() {
+//!     // `Provider` implements the `Provider` traits
+//!     let endpoint = Arc::new(Endpoint::new(Provider::new()));
+//!
+//!     let router = Router::new()
+//!         // --- other routes ---
+//!         .route("/request/:client_state", get(request_object))
+//!         // --- other routes ---
+//!         .with_state(endpoint);
+//!
+//!     let listener = TcpListener::bind("0.0.0.0:8080").await.expect("should bind");
+//!     axum::serve(listener, router).await.expect("server should run");
+//! }
+//!
+//! // Credential endpoint
+//! async fn request_object(
+//!     State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
+//!     Path(client_state): Path<String>,
+//! ) -> AxResult<RequestObjectResponse> {
+//!     let req = RequestObjectRequest {
+//!         client_id: format!("http://{}", host),
+//!         state: client_state,
+//!     };
+//! 
+//!     endpoint.request_object(req).await.into()
+//! }
+//! ```
 
 pub mod endpoint;
 mod state;
+pub use vercre_core::vp::{
+    DeviceFlow, InvokeRequest, InvokeResponse, MetadataRequest, MetadataResponse, RequestObject,
+    RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
+};
 
-// LATER: organise prelude exports
-/// A convenience module appropriate for glob imports (`use
-/// vercre_vp::prelude::*;`).
-pub mod prelude {
-    pub use crate::endpoint::*;
-}
-
-// LATER: use git replace to hide early development history (https://git-scm.com/book/en/v2/Git-Tools-Replace)
+pub use crate::endpoint::Endpoint;

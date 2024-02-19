@@ -1,6 +1,6 @@
 //! # Authorization Endpoint
 //!
-//! The Authorization Endpoint is used in the same manner as defined in [RFC6749].
+//! The Authorization Endpoint is used in the same manner as defined in [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html).
 //!
 //! An Authorization Request is used to request to grant access to the Credential
 //! Endpoint.
@@ -39,7 +39,7 @@
 //! There are two possible ways to request issuance of a specific Credential type in an
 //! Authorization Request:
 //!
-//! 1. Use of the `authorization_details` parameter as defined in [RFC9396]:
+//! 1. Use of the `authorization_details` parameter as defined in [RFC9396](https://www.rfc-editor.org/rfc/rfc9396):
 //!
 //! ```json
 //! [

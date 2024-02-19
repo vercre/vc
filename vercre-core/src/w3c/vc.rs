@@ -30,17 +30,19 @@ use crate::{err, error, Result};
 #[serde(default)]
 pub struct VerifiableCredential {
     // LATER: add support for @context objects
+    #[allow(rustdoc::bare_urls)]
     /// The @context property is used to map property URIs into short-form aliases.
-    /// It is an ordered set where the first item is https://www.w3.org/2018/credentials/v1.
+    /// It is an ordered set where the first item is "https://www.w3.org/2018/credentials/v1".
     /// Subsequent items MUST express context information and can be either URIs or
     /// objects. Each URI, if dereferenced, should result in a document containing
     /// machine-readable information about the @context.
     #[cfg_attr(not(feature = "typegen"), serde(rename = "@context"))]
     pub context: Vec<String>,
 
+    #[allow(rustdoc::bare_urls)]
     /// The credential's URI. It is RECOMMENDED that if dereferenced, the URI
     /// results in a document containing machine-readable information about
-    /// the id (a schema). For example, http://example.edu/credentials/3732.
+    /// the id (a schema). For example, "http://example.edu/credentials/3732".
     pub id: String,
 
     /// The type property is used to uniquely identify the type of the credential.
@@ -326,7 +328,7 @@ pub struct Proof {
     pub type_: String,
 
     /// The value of the cryptosuite property identifies the cryptographic
-    /// suite. If subtypes are supported, it MUST be the https://w3id.org/security#cryptosuiteString
+    /// suite. If subtypes are supported, it MUST be the <https://w3id.org/security#cryptosuiteString>
     /// subtype of string.
     ///
     /// For example, 'ecdsa-rdfc-2019', 'eddsa-2022'
@@ -664,7 +666,7 @@ pub struct VcClaims {
     pub sub: String,
 
     /// MUST be the verifiable credential's `issuanceDate`, encoded as a
-    /// UNIX timestamp ([RFC7519] NumericDate).
+    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) NumericDate).
     pub nbf: i64,
 
     /// MUST be the `issuer` property of a verifiable credential or the `holder`
@@ -674,7 +676,7 @@ pub struct VcClaims {
     pub iss: String,
 
     /// MUST be the verifiable credential's `issuanceDate`, encoded as a
-    /// UNIX timestamp ([RFC7519] NumericDate).
+    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) NumericDate).
     pub iat: i64,
 
     /// MUST be the `id` property of the verifiable credential or verifiable
@@ -682,7 +684,7 @@ pub struct VcClaims {
     pub jti: String,
 
     /// MUST be the verifiable credential's `expirationDate`, encoded as a
-    /// UNIX timestamp ([RFC7519] NumericDate).
+    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) NumericDate).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub exp: Option<i64>,
 

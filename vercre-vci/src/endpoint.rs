@@ -16,13 +16,6 @@ use std::fmt::Debug;
 use tracing::instrument;
 use vercre_core::callback::{Payload, Status};
 use vercre_core::error::Error;
-pub use vercre_core::vci::{
-    AuthorizationDetail, AuthorizationRequest, AuthorizationResponse, BatchCredentialRequest,
-    BatchCredentialResponse, CredentialOffer, CredentialRequest, CredentialResponse,
-    DeferredCredentialRequest, DeferredCredentialResponse, Grants, InvokeRequest, InvokeResponse,
-    MetadataRequest, MetadataResponse, RegistrationRequest, RegistrationResponse, TokenRequest,
-    TokenResponse,
-};
 use vercre_core::{Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager};
 
 /// Endpoint is used to surface the public Verifiable Presentation endpoints to

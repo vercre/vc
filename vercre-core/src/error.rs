@@ -443,6 +443,7 @@ impl From<std::convert::Infallible> for Error {
 ///     err!(Err::InvalidRequest)
 /// }
 /// ```
+#[doc(hidden)]
 #[macro_export]
 macro_rules! err {
     // Err::<code> + hint + state

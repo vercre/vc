@@ -12,10 +12,6 @@ use std::fmt::Debug;
 use tracing::instrument;
 use vercre_core::callback::{Payload, Status};
 use vercre_core::error::Error;
-pub use vercre_core::vp::{
-    InvokeRequest, InvokeResponse, RequestObject, RequestObjectRequest, RequestObjectResponse,
-    ResponseRequest, ResponseResponse,
-};
 use vercre_core::{Callback, Client, Result, Signer, StateManager};
 
 // TODO: remove double borrow for traits (i.e. &self -> self)

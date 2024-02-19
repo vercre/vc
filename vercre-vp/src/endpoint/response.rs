@@ -1,6 +1,6 @@
 //! # Response Redirect Endpoint
 //!
-//! This endpoint is where the Wallet **redirects** to when returning an [RFC6749]
+//! This endpoint is where the Wallet **redirects** to when returning an [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html).
 //! Authorization Response when both Wallet and Verifier interact on the same device.
 //! That is, during a 'same-device flow'.
 //!
@@ -15,13 +15,10 @@
 //! is returned in the Authorization Response. When the Response Type value is
 //! "`vp_token id_token`" and the scope parameter contains "openid", the VP Token is
 //! returned in the Authorization Response alongside a Self-Issued ID Token as defined
-//! in [SIOPv2].
+//! in [SIOPv2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html).
 //!
 //! If the Response Type value is "code" (Authorization Code Grant Type), the VP
 //! Token is provided in the Token Response.
-//!
-//! [RFC6749]: https://www.rfc-editor.org/rfc/rfc6749.html
-//! [SIOPv2]: https://openid.net/specs/openid-connect-self-issued-v2-1_0.html
 
 use std::fmt::Debug;
 use std::str::FromStr;

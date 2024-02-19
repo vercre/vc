@@ -22,7 +22,7 @@ use tokio::sync::RwLock;
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
-use vercre_vci::endpoint::{
+use vercre_vci::{
     AuthorizationRequest, BatchCredentialRequest, BatchCredentialResponse, CredentialRequest,
     CredentialResponse, DeferredCredentialRequest, DeferredCredentialResponse, Endpoint,
     InvokeRequest, InvokeResponse, MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,
@@ -168,9 +168,9 @@ async fn login(
 /// serialized into JSON
 ///
 /// The authorization server MUST include the HTTP "Cache-Control" response header
-/// field [RFC2616] with a value of "no-store" in any response containing tokens,
+/// field [RFC2616](https://www.rfc-editor.org/rfc/rfc2616) with a value of "no-store" in any response containing tokens,
 /// credentials, or other sensitive information, as well as the "Pragma" response
-/// header field [RFC2616] with a value of "no-cache".
+/// header field [RFC2616](https://www.rfc-editor.org/rfc/rfc2616) with a value of "no-cache".
 #[axum::debug_handler]
 async fn token(
     State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,

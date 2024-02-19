@@ -13,7 +13,7 @@
 //! component, any terminating / MUST be removed before appending
 //! `/.well-known/openid-credential-issuer`.
 //!
-//! The language(s) in HTTP Accept-Language and Content-Language Headers MUST use the values defined in [RFC3066].
+//! The language(s) in HTTP Accept-Language and Content-Language Headers MUST use the values defined in [RFC3066](https://www.rfc-editor.org/rfc/rfc3066).
 //!
 //! Below is a non-normative example of a Credential Issuer Metadata request:
 //!

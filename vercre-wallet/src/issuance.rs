@@ -99,7 +99,8 @@ pub enum Event {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename = "IssuanceView")]
 pub struct ViewModel {
-    /// The credential issuer's URI (e.g. https://credibil.io).
+    #[allow(rustdoc::bare_urls)]
+    /// The credential issuer's URI (e.g. "https://credibil.io").
     pub issuer: String,
 
     /// A list of credentials being offered by the issuer.
@@ -149,7 +150,10 @@ impl crux_core::App for App {
                     return;
                 };
                 caps.http
-                    .get(format!("{}/.well-known/openid-credential-issuer", model.offer.credential_issuer))
+                    .get(format!(
+                        "{}/.well-known/openid-credential-issuer",
+                        model.offer.credential_issuer
+                    ))
                     .expect_json()
                     .send(Event::Metadata);
             }
@@ -339,7 +343,10 @@ mod tests {
         // check that the app emitted an HTTP request
         assert_let!(Effect::Http(request), &mut update.effects[0]);
         let op = &request.operation;
-        assert_eq!(op.url, format!("{}/.well-known/openid-credential-issuer", &model.offer.credential_issuer));
+        assert_eq!(
+            op.url,
+            format!("{}/.well-known/openid-credential-issuer", &model.offer.credential_issuer)
+        );
 
         // resolve the app request with a simulated response
         let http_output = HttpResponse::ok().json(METADATA.to_owned()).build();

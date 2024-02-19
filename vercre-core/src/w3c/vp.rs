@@ -31,8 +31,9 @@ use crate::{err, error, Result};
 #[serde(default)]
 pub struct VerifiablePresentation {
     // LATER: add support for @context objects
+    #[allow(rustdoc::bare_urls)]
     /// The @context property is used to map property URIs into short-form
-    /// aliases. It is an ordered set where the first item is https://www.w3.org/2018/credentials/v1.
+    /// aliases. It is an ordered set where the first item is "https://www.w3.org/2018/credentials/v1".
     /// Subsequent items MUST express context information and can be either URIs
     /// or objects. Each URI, if dereferenced, should result in a document
     /// containing machine-readable information about the @context.
@@ -311,7 +312,7 @@ pub struct DescriptorMap {
     /// top-level of the object the Presentation Submission.
     /// For the OpenID.VP specification, this value MUST be:
     ///  - $ when only one Verifiable Presentation
-    ///  - $[n] when there are multiple Verifiable Presentations, where n is the
+    ///  - $\[n\] when there are multiple Verifiable Presentations, where n is the
     ///    vp's index.
     pub path: String,
 
@@ -477,11 +478,11 @@ impl FromStr for VerifiablePresentation {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Claims {
     /// MUST be the verifiable credential's `expirationDate`, encoded as a
-    /// UNIX timestamp ([RFC7519] NumericDate).
+    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) NumericDate).
     pub exp: i64,
 
     /// MUST be the verifiable credential's `expirationDate`, encoded as a
-    /// UNIX timestamp ([RFC7519] NumericDate).
+    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) NumericDate).
     pub iat: i64,
 
     /// MUST be the `issuer` property of a verifiable credential or the `holder`
@@ -491,7 +492,7 @@ pub struct Claims {
     pub iss: String,
 
     // /// MUST be the verifiable credential's `issuanceDate`, encoded as a
-    // /// UNIX timestamp ([RFC7519] NumericDate).
+    // /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) NumericDate).
     // pub nbf: i64,
     /// MUST be the `id` property of the verifiable credential or verifiable
     /// presentation.

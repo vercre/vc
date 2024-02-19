@@ -17,7 +17,7 @@ use test_utils::vci_provider::Provider;
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
-use vercre_vci::endpoint::{
+use vercre_vci::{
     AuthorizationRequest, BatchCredentialRequest, BatchCredentialResponse, CredentialRequest,
     CredentialResponse, DeferredCredentialRequest, DeferredCredentialResponse, Endpoint,
     InvokeRequest, InvokeResponse, MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,

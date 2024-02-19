@@ -22,7 +22,7 @@ use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
-use vercre_vp::endpoint::{
+use vercre_vp::{
     Endpoint, InvokeRequest, InvokeResponse, RequestObjectRequest, RequestObjectResponse,
     ResponseRequest,
 };

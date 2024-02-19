@@ -106,13 +106,13 @@ pub struct Client {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub policy_uri: Option<String>,
 
-    /// URL referencing the client's JSON Web Key (JWK) Set [RFC7517] document,
+    /// URL referencing the client's JSON Web Key (JWK) Set [RFC7517](https://www.rfc-editor.org/rfc/rfc7517) document,
     /// containing the client's public keys. MUST NOT both be set if the`jwks`
     /// parameter is set.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub jwks_uri: Option<String>,
 
-    /// Client's JSON Web Key Set [RFC7517], containing the client's public
+    /// Client's JSON Web Key Set [RFC7517](https://www.rfc-editor.org/rfc/rfc7517), containing the client's public
     /// keys. MUST be a JSON object containing a valid JWK Set. MUST NOT be
     /// set if the `jwks_uri` parameter is set.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -310,7 +310,7 @@ pub struct Display {
     /// specified locale. If no locale is set, then this value is the default value.
     pub name: String,
 
-    /// A BCP47 [RFC5646] language tag identifying the display language.
+    /// A BCP47 [RFC5646](https://www.rfc-editor.org/rfc/rfc5646) language tag identifying the display language.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub locale: Option<String>,
 }
@@ -345,16 +345,16 @@ pub struct SupportedCredential {
     /// Identifies how the Credential should be bound to the identifier of the
     /// End-User who possesses the Credential. Is case sensitive.
     ///
-    /// Support for keys in JWK format [RFC7517] is indicated by the value jwk.
-    /// Support for keys expressed as a COSE Key object [RFC8152] (for example, used
+    /// Support for keys in JWK format [RFC7517](https://www.rfc-editor.org/rfc/rfc7517) is indicated by the value jwk.
+    /// Support for keys expressed as a COSE Key object [RFC8152](https://www.rfc-editor.org/rfc/rfc8152) (for example, used
     /// in [ISO.18013-5]) is indicated by the value 'cose_key'.
     ///
     /// When Cryptographic Binding Method is a DID, valid values MUST be a did: prefix
     /// followed by a method-name using a syntax as defined in Section 3.1 of [DID-Core],
     /// but without a :and method-specific-id. For example, support for the DID method
     /// with a method-name "example" would be represented by did:example. Support for
-    /// all DID methods listed in Section 13 of [DID_Specification_Registries] is
-    /// indicated by sending a DID without any method-name.
+    /// all DID methods listed in Section 13 of [DID Specification Registries](https://www.w3.org/TR/did-spec-registries/)
+    /// is indicated by sending a DID without any method-name.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cryptographic_binding_methods_supported: Option<Vec<String>>,
 
@@ -468,7 +468,7 @@ pub struct CredentialDisplay {
     /// specified locale. If no locale is set, then this is the default value.
     pub name: String,
 
-    /// A BCP47 [RFC5646] language tag identifying the display language.
+    /// A BCP47 [RFC5646](https://www.rfc-editor.org/rfc/rfc5646) language tag identifying the display language.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub locale: Option<String>,
 
@@ -545,7 +545,7 @@ pub struct Claim {
     /// The type of value of the claim. Defaults to string.
     /// Supported values include `string`, `number`, and `image` media types
     /// such as image/jpeg. See IANA media type registry for a complete
-    /// list. (https://www.iana.org/assignments/media-types/media-types.xhtml#image).
+    /// list. (<https://www.iana.org/assignments/media-types/media-types.xhtml#image>).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub value_type: Option<String>,
 
@@ -564,7 +564,7 @@ pub struct Claim {
 pub struct Server {
     /// The authorization server's issuer identifier (URL). MUST be identical to
     /// the issuer identifier value in the well-known URI:
-    /// <issuer>/.well-known/oauth-authorization-server.
+    /// `{issuer}/.well-known/oauth-authorization-server``.
     pub issuer: String,
 
     /// URL of the authorization server's authorization endpoint.

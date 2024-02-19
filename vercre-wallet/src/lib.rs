@@ -17,7 +17,7 @@
 // TODO: implement server metatdata endpoint
 // TODO: implement client registration/ client metadata endpoints
 
-// TODO: support [SIOPv2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html)
+// TODO: support [SIOPv2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html)(https://openid.net/specs/openid-connect-self-issued-v2-1_0.html)
 //        - add Token endpoint
 //        - add Metadata endpoint
 //        - add Registration endpoint

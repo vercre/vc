@@ -10,7 +10,7 @@ use test_utils::wallet;
 use vercre_core::jwt::{self, Jwt};
 use vercre_core::vci::ProofClaims;
 use vercre_core::Result;
-use vercre_vci::endpoint::{
+use vercre_vci::{
     CredentialRequest, CredentialResponse, DeferredCredentialRequest, DeferredCredentialResponse,
     Endpoint, InvokeRequest, InvokeResponse, TokenRequest, TokenResponse,
 };

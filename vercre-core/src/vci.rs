@@ -246,7 +246,7 @@ pub struct PreAuthorizedCodeGrant {
 }
 
 /// An Authorization Request is an OAuth 2.0 Authorization Request as defined in
-/// section 4.1.1 of [RFC6749], which requests to grant access to the Credential
+/// section 4.1.1 of [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html), which requests to grant access to the Credential
 /// Endpoint.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(default)]
@@ -295,7 +295,7 @@ pub struct AuthorizationRequest {
     pub scope: Option<String>,
 
     /// The Credential Issuer's identifier to allow the Authorization Server to
-    /// differentiate between Issuers. [RFC8707]: The target resource to which
+    /// differentiate between Issuers. [RFC8707](https://www.rfc-editor.org/rfc/rfc8707): The target resource to which
     /// access is being requested. MUST be an absolute URI.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resource: Option<String>,
@@ -307,7 +307,7 @@ pub struct AuthorizationRequest {
     pub holder_id: String,
 
     /// The Wallet's `OpenID` Connect issuer URL. The Credential Issuer can use
-    /// the discovery process as defined in [SIOPv2] to determine the
+    /// the discovery process as defined in [SIOPv2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html) to determine the
     /// Wallet's capabilities and endpoints. RECOMMENDED in Dynamic
     /// Credential Requests.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -383,7 +383,7 @@ pub struct AuthorizationDetail {
     pub credential_identifiers: Option<Vec<String>>,
 }
 
-/// Authorization Response as defined in [RFC6749].
+/// Authorization Response as defined in [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AuthorizationResponse {
     /// Authorization code.
@@ -399,7 +399,7 @@ pub struct AuthorizationResponse {
 }
 
 /// Upon receiving a successful Authorization Response, a Token Request is made
-/// as defined in [RFC6749] with extensions to support the Pre-Authorized Code
+/// as defined in [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html) with extensions to support the Pre-Authorized Code
 /// Flow.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(default)]
@@ -460,7 +460,7 @@ pub struct TokenRequest {
     pub user_pin: Option<String>,
 }
 
-/// Token Response as defined in [RFC6749].
+/// Token Response as defined in [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html).
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct TokenResponse {
     /// An OAuth 2.0 Access Token that can subsequently be used to request one
@@ -549,13 +549,13 @@ pub struct CredentialRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_encryption_jwk: Option<Value>,
 
-    /// JWE [RFC7516] alg algorithm [RFC7518] REQUIRED for encrypting Credential
+    /// JWE [RFC7516](https://www.rfc-editor.org/rfc/rfc7516) alg algorithm [RFC7518](https://www.rfc-editor.org/rfc/rfc7518) REQUIRED for encrypting Credential
     /// Responses. If omitted, no encryption is intended to be performed. When present,
     /// the 'credential_encryption_jwk' MUST also be present.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_response_encryption_alg: Option<String>,
 
-    /// JWE [RFC7516] enc algorithm [RFC7518] REQUIRED for encrypting Credential
+    /// JWE [RFC7516](https://www.rfc-editor.org/rfc/rfc7516) enc algorithm [RFC7518](https://www.rfc-editor.org/rfc/rfc7518) REQUIRED for encrypting Credential
     /// Responses. If credential_response_encryption_alg is specified, the default for
     /// this value is A256GCM. When credential_response_encryption_enc is included,
     /// 'credential_response_encryption_alg' MUST also be provided.
@@ -591,7 +591,7 @@ pub struct ProofClaims {
     /// The Credential Issuer URL of the Credential Issuer.
     pub aud: String,
 
-    /// The time at which the proof was issued, as [RFC7519] NumericDate.
+    /// The time at which the proof was issued, as [RFC7519](https://www.rfc-editor.org/rfc/rfc7519) NumericDate.
     /// For example, "1541493724".
     pub iat: i64,
 
@@ -716,7 +716,7 @@ pub struct MetadataRequest {
     pub credential_issuer: String,
 
     /// The language(s) set in HTTP Accept-Language Headers.
-    /// MUST be values defined in [RFC3066].
+    /// MUST be values defined in [RFC3066](https://www.rfc-editor.org/rfc/rfc3066).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub languages: Option<String>,
 }
