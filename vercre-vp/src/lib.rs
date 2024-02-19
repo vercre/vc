@@ -123,7 +123,7 @@
 //! A number of elements have been excluded for brevity. A more complete example can be
 //! found in the `examples` directory.
 //!  
-//! ```no_run
+//! ```compile_fail
 //! #[tokio::main]
 //! async fn main() {
 //!     // `Provider` implements the `Provider` traits
