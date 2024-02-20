@@ -1,13 +1,12 @@
 ---
 source: vercre-wallet/tests/issuance.rs
-assertion_line: 54
+assertion_line: 55
 expression: app.view(&model)
 ---
 issuer: "http://credibil.io"
 offered:
   EmployeeID_JWT:
     format: ""
-    credential_definition:
-      type: []
+    credential_definition: {}
 status: Offered
 

@@ -4,7 +4,7 @@
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use vercre_core::error::Err;
-use vercre_core::vci::{AuthorizationDetail, CredentialRequest};
+use vercre_core::vci::{CredentialRequest, TokenAuthorizationDetail};
 use vercre_core::{err, Result};
 pub(crate) enum Expire {
     AuthCode,
@@ -37,7 +37,7 @@ pub(crate) struct State {
     pub(crate) expires_at: DateTime<Utc>,
 
     /// Identifiers of credentials offered to/requested by the Wallet.
-    pub(crate) credentials: Vec<String>,
+    pub(crate) credential_configuration_ids: Vec<String>,
 
     /// The subject of the credential Holder.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -124,10 +124,8 @@ pub(crate) struct AuthState {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) user_pin: Option<String>,
 
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub(crate) issuer_state: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) authorization_details: Option<Vec<AuthorizationDetail>>,
+    pub(crate) authorization_details: Option<Vec<TokenAuthorizationDetail>>,
 }
 
 /// `TokenState` is used to store token state.
@@ -206,10 +204,10 @@ impl StateBuilder {
         self
     }
 
-    /// Sets the `credentials` property
+    /// Sets the `credential_configuration_ids` property
     #[must_use]
-    pub(crate) fn credentials(mut self, credentials: Vec<String>) -> Self {
-        self.state.credentials = credentials;
+    pub(crate) fn credential_configuration_ids(mut self, cfg_ids: Vec<String>) -> Self {
+        self.state.credential_configuration_ids = cfg_ids;
         self
     }
 

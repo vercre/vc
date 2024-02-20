@@ -79,7 +79,7 @@ use chrono::Utc;
 use tracing::{instrument, trace};
 use vercre_core::error::Err;
 use vercre_core::metadata::Issuer as IssuerMetadata;
-use vercre_core::vci::{AuthorizationDetail, AuthorizationRequest, AuthorizationResponse};
+use vercre_core::vci::{AuthorizationRequest, AuthorizationResponse, TokenAuthorizationDetail};
 use vercre_core::{
     err, gen, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager,
 };
@@ -112,27 +112,11 @@ where
         };
 
         let issuer_meta = Issuer::metadata(&self.provider, &request.credential_issuer).await?;
-
-        // resolve scope and authorization_details to credential identifiers
-        let mut identifiers = scope_identifiers(&request, &issuer_meta)?;
-        let authorization_details = authzn_identifiers(&request, &issuer_meta)?;
-
-        // // remove credential_identifiers if not supported for this issuer
-        // if !issuer_meta.credential_identifiers_supported.unwrap_or_default() {
-        //     for det in &mut authorization_details {
-        //         det.credential_identifiers = None;
-        //     }
-        // }
-
-        for det in &authorization_details {
-            identifiers.extend(det.credential_identifiers.clone().unwrap_or_default());
-        }
-        identifiers.dedup();
+        let cfg_ids = credential_configuration_ids(&request, &issuer_meta)?;
 
         let ctx = Context {
             callback_id,
-            authorization_details,
-            identifiers,
+            credential_configuration_ids: cfg_ids,
         };
 
         self.handle_request(request, ctx).await
@@ -142,8 +126,7 @@ where
 #[derive(Debug)]
 struct Context {
     callback_id: Option<String>,
-    authorization_details: Vec<AuthorizationDetail>,
-    identifiers: Vec<String>,
+    credential_configuration_ids: Vec<String>,
 }
 
 impl super::Context for Context {
@@ -181,25 +164,67 @@ impl super::Context for Context {
         if request.holder_id.is_empty() {
             err!(Err::AuthorizationPending, "Missing holder subject");
         }
-        if Holder::authorize(provider, &request.holder_id, &self.identifiers).await.is_err() {
-            err!(Err::AuthorizationPending, "Holder is not authorized");
-        }
+
+        // FIXME: implement `Holder::authorize`
+        // if Holder::authorize(provider, &request.holder_id, &self.credential_configuration_ids).await.is_err() {
+        //     err!(Err::AuthorizationPending, "Holder is not authorized");
+        // }
 
         // credential request?
         if request.authorization_details.is_none() && request.scope.is_none() {
             err!(Err::InvalidRequest, "No credentials requested");
         }
 
-        // authorization_details (basic type validation)
+        // authorization_details
         if let Some(authorization_details) = &request.authorization_details {
-            let supported = issuer_meta.credential_identifiers_supported.unwrap_or_default();
-
             for auth_det in authorization_details {
                 if auth_det.type_ != "openid_credential" {
                     err!(Err::InvalidRequest, "Invalid authorization_details type");
                 }
-                if !supported && auth_det.credential_identifiers.is_some() {
-                    err!(Err::InvalidRequest, "credential_identifiers not supported");
+
+                if let Some(cfg_id) = auth_det.credential_configuration_id.clone() {
+                    // `format` must not be specified
+                    if auth_det.format.is_some() {
+                        err!(
+                            Err::InvalidRequest,
+                            "`credential_configuration_id` and `format` cannot both be specified"
+                        );
+                    }
+
+                    // check if requested credential_configuration_id is supported
+                    if issuer_meta.credential_configurations_supported.get(&cfg_id).is_none() {
+                        err!(Err::InvalidRequest, "Unsupported credential_configuration_id");
+                    }
+                } else if let Some(format) = &auth_det.format {
+                    // check if requested is supported
+                    let mut found = false;
+                    for (_cfg_id, cred_cfg) in &issuer_meta.credential_configurations_supported {
+                        // credential_definition must be present
+                        if &cred_cfg.format == format {
+                            let cfg_def = cred_cfg.credential_definition.clone();
+                            let auth_def =
+                                auth_det.credential_definition.clone().unwrap_or_default();
+
+                            if cfg_def.type_.unwrap_or_default()
+                                == auth_def.type_.unwrap_or_default()
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if !found {
+                        err!(
+                            Err::InvalidRequest,
+                            "one of `credential_configuration_id` or `format` must be specified"
+                        );
+                    }
+                } else {
+                    err!(
+                        Err::InvalidRequest,
+                        "one of `credential_configuration_id` or `format` must be specified"
+                    );
                 }
             }
         }
@@ -243,14 +268,12 @@ impl super::Context for Context {
     {
         trace!("Context::process");
 
-        let issuer_meta = Issuer::metadata(provider, &request.credential_issuer).await?;
-
         // save authorization state
         let mut state = State::builder()
             .credential_issuer(request.credential_issuer.clone())
             .client_id(request.client_id.clone())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credentials(self.identifiers.clone())
+            .credential_configuration_ids(self.credential_configuration_ids.clone())
             .holder_id(Some(request.holder_id.clone()))
             .build();
 
@@ -264,25 +287,18 @@ impl super::Context for Context {
             .scope(request.scope.clone())
             .build();
 
-        // remove `credential_identifiers` if not supported
-        // if !issuer_meta.credential_identifiers_supported.unwrap_or_default() {
-        //     let mut details = self.authorization_details.clone();
-        //     for det in &mut details {
-        //         det.credential_identifiers = None;
-        //     }
-        //     auth_state.authorization_details = Some(details);
-        // }
+        // add `authorization_details` into state
+        if let Some(auth_dets) = &request.authorization_details {
+            let mut tkn_auth_dets = vec![];
 
-        if !self.authorization_details.is_empty() {
-            let mut details = self.authorization_details.clone();
-
-            // remove credential_identifiers if not supported for this issuer
-            if !issuer_meta.credential_identifiers_supported.unwrap_or_default() {
-                for det in &mut details {
-                    det.credential_identifiers = None;
-                }
+            for auth_det in auth_dets {
+                let tkn_auth_det = TokenAuthorizationDetail {
+                    authorization_detail: auth_det.clone(),
+                    credential_identifiers: None,
+                };
+                tkn_auth_dets.push(tkn_auth_det.clone());
             }
-            auth_state.authorization_details = Some(details);
+            auth_state.authorization_details = Some(tkn_auth_dets);
         }
 
         state.auth = Some(auth_state);
@@ -303,39 +319,59 @@ impl super::Context for Context {
     }
 }
 
-// resolve credentials specified in authorization_details to supported
-// credential identifiers
 #[instrument]
-fn authzn_identifiers(
-    req: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
-) -> Result<Vec<AuthorizationDetail>> {
-    trace!("authzn_identifiers");
+fn credential_configuration_ids(
+    request: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
+) -> Result<Vec<String>> {
+    trace!("credential_configuration_ids");
 
-    let Some(mut auth_dets) = req.authorization_details.clone() else {
-        return Ok(vec![]);
-    };
+    let mut cfg_ids = auth_cfg_ids(request, issuer_meta)?;
+    cfg_ids.extend(scope_cfg_ids(request, issuer_meta)?);
 
-    for auth_det in &mut auth_dets {
-        let mut identifiers = vec![];
-        for (id, cred) in &issuer_meta.credential_configurations_supported {
-            if Some(&cred.format) == auth_det.format.as_ref()
-                && cred.credential_definition.type_ == auth_det.credential_definition.type_
-            {
-                identifiers.push(id.to_owned());
-            }
-        }
-
-        if identifiers.is_empty() {
-            err!(Err::InvalidRequest, "Unsupported credentials requested");
-        }
-        auth_det.credential_identifiers = Some(identifiers);
-    }
-
-    Ok(auth_dets)
+    Ok(cfg_ids)
 }
 
 #[instrument]
-fn scope_identifiers(
+fn auth_cfg_ids(
+    request: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
+) -> Result<Vec<String>> {
+    trace!("auth_cfg_ids");
+
+    let Some(authorization_details) = &request.authorization_details else {
+        return Ok(vec![]);
+    };
+
+    let mut cfg_ids = vec![];
+
+    for auth_det in authorization_details {
+        if let Some(cfg_id) = auth_det.credential_configuration_id.clone() {
+            // check if requested credential_configuration_id is supported
+            if issuer_meta.credential_configurations_supported.get(&cfg_id).is_some() {
+                cfg_ids.push(cfg_id);
+            }
+        } else {
+            if let Some(format) = &auth_det.format {
+                // check if requested is supported
+                for (cfg_id, cred_cfg) in &issuer_meta.credential_configurations_supported {
+                    // credential_definition must be present
+                    if &cred_cfg.format == format {
+                        let cfg_def = cred_cfg.credential_definition.clone();
+                        let auth_def = auth_det.credential_definition.clone().unwrap_or_default();
+
+                        if cfg_def.type_.unwrap_or_default() == auth_def.type_.unwrap_or_default() {
+                            cfg_ids.push(cfg_id.clone());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(cfg_ids)
+}
+
+#[instrument]
+fn scope_cfg_ids(
     request: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
 ) -> Result<Vec<String>> {
     trace!("scope_identifiers");
@@ -343,17 +379,17 @@ fn scope_identifiers(
     let Some(scope) = &request.scope else {
         return Ok(vec![]);
     };
-    let mut identifiers = vec![];
+    let mut cfg_ids = vec![];
 
     for item in scope.split_whitespace().collect::<Vec<&str>>() {
         for (id, cred) in &issuer_meta.credential_configurations_supported {
             if cred.scope == Some(item.to_string()) {
-                identifiers.push(id.to_owned());
+                cfg_ids.push(id.to_owned());
             }
         }
     }
 
-    Ok(identifiers)
+    Ok(cfg_ids)
 }
 
 #[cfg(test)]

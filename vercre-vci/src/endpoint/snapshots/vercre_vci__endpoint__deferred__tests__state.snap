@@ -1,11 +1,11 @@
 ---
 source: vercre-vci/src/endpoint/deferred.rs
-assertion_line: 223
+assertion_line: 222
 expression: state
 ---
 credential_issuer: "http://credibil.io"
 expires_at: "[expires_at]"
-credentials:
+credential_configuration_ids:
   - EmployeeID_JWT
 holder_id: normal_user
 token:

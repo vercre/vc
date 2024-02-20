@@ -102,7 +102,7 @@ impl super::Context for Context {
             // specify requested credential
             if let Some(identifier) = &request.credential_identifier {
                 // check identifier is authorized
-                if !self.state.credentials.contains(identifier) {
+                if !self.state.credential_configuration_ids.contains(identifier) {
                     err!(Err::InvalidCredentialRequest, "Credential not authorized");
                 }
                 // check credential format is not set
@@ -124,7 +124,7 @@ impl super::Context for Context {
                 let mut authorized = false;
                 for (k, v) in &self.issuer_meta.credential_configurations_supported {
                     if (&v.format == format) && (v.credential_definition.type_ == cred_def.type_) {
-                        authorized = self.state.credentials.contains(k);
+                        authorized = self.state.credential_configuration_ids.contains(k);
                         break;
                     }
                 }
@@ -316,12 +316,18 @@ impl Context {
 
         let credential_issuer = &self.issuer_meta.credential_issuer;
 
+        // HACK: fix this
+        let Some(types) = cred_def.type_ else {
+            err!("Credential type not set");
+        };
+
         let vc_id = format!("{credential_issuer}/credentials/{}", cred_def.type_[1].clone());
 
         let vc = VerifiableCredential::builder()
             .add_context(credential_issuer.clone() + "/credentials/v1")
-            .id(vc_id)
-            .add_type(cred_def.type_[1].clone())
+            // TODO: generate credential id
+            .id("https://credibil.io/credentials/3732".to_string())
+            .add_type(types[1].clone())
             .issuer(credential_issuer.clone())
             .add_subject(CredentialSubject {
                 id: Some(self.holder_did.lock().unwrap().clone()),
@@ -431,7 +437,7 @@ mod tests {
         let mut state = State::builder()
             .credential_issuer(ISSUER.to_string())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credentials(credentials)
+            .credential_configuration_ids(credentials)
             .holder_id(Some(NORMAL_USER.to_string()))
             .build();
 
@@ -526,7 +532,7 @@ mod tests {
         let mut state = State::builder()
             .credential_issuer(ISSUER.to_string())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credentials(credentials)
+            .credential_configuration_ids(credentials)
             .holder_id(Some(NORMAL_USER.to_string()))
             .build();
 

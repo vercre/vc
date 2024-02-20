@@ -139,13 +139,17 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     let Some(auth_dets) = input.authorization_details else {
         panic!("No authorization details");
     };
-    let Some(identifiers) = &auth_dets[0].credential_identifiers else {
-        panic!("No credential identifiers");
-    };
+    // let Some(identifiers) = &auth_dets[0].credential_identifiers else {
+    //     panic!("No credential identifiers");
+    // };
+
+    let auth_det = auth_dets[0].authorization_detail.clone();
 
     // TODO: get identifier from token
     let body = json!({
-        "credential_identifier": identifiers[0],
+        // "credential_identifier": identifiers[0],
+        "format": auth_det.format.unwrap(),
+        "credential_definition": auth_det.credential_definition,
         "proof":{
             "proof_type": "jwt",
             "jwt": signed_jwt

@@ -114,7 +114,6 @@ impl super::Context for Context {
                     err!(Err::AccessDenied, "code_verifier is invalid");
                 }
             }
-
             PRE_AUTH_GRANT_TYPE => {
                 // anonymous access allowed?
                 if request.client_id.is_empty()
@@ -204,7 +203,7 @@ mod tests {
     use test_utils::vci_provider::{Provider, ISSUER, NORMAL_USER};
     use test_utils::wallet;
     use vercre_core::metadata::CredentialDefinition;
-    use vercre_core::vci::AuthorizationDetail;
+    use vercre_core::vci::{AuthorizationDetail, TokenAuthorizationDetail};
 
     use super::*;
     use crate::state::AuthState;
@@ -221,7 +220,7 @@ mod tests {
         let mut state = State::builder()
             .credential_issuer(ISSUER.to_string())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credentials(credentials)
+            .credential_configuration_ids(credentials)
             .holder_id(Some(NORMAL_USER.to_string()))
             .build();
 
@@ -279,7 +278,7 @@ mod tests {
             .credential_issuer(ISSUER.to_string())
             .client_id(wallet::did())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credentials(credentials)
+            .credential_configuration_ids(credentials)
             .holder_id(Some(NORMAL_USER.to_string()))
             .build();
 
@@ -291,20 +290,22 @@ mod tests {
             redirect_uri: Some("https://example.com".to_string()),
             code_challenge: Some(Base64UrlUnpadded::encode_string(&verifier_hash)),
             code_challenge_method: Some("S256".to_string()),
-            authorization_details: Some(vec![AuthorizationDetail {
-                type_: "openid_credential".to_string(),
-                format: Some("jwt_vc_json".to_string()),
-                credential_definition: CredentialDefinition {
-                    type_: vec![
-                        "VerifiableCredential".to_string(),
-                        "EmployeeIDCredential".to_string(),
-                    ],
-                    credential_subject: None,
-                    ..Default::default()
+            authorization_details: Some(vec![TokenAuthorizationDetail {
+                authorization_detail: AuthorizationDetail {
+                    type_: "openid_credential".to_string(),
+                    format: Some("jwt_vc_json".to_string()),
+                    credential_definition: Some(CredentialDefinition {
+                        type_: Some(vec![
+                            "VerifiableCredential".to_string(),
+                            "EmployeeIDCredential".to_string(),
+                        ]),
+                        credential_subject: None,
+                        ..Default::default()
+                    }),
+                    credential_configuration_id: None,
+                    locations: None,
                 },
                 credential_identifiers: Some(vec!["EmployeeID_JWT".to_string()]),
-                credential_configuration_id: None,
-                locations: None,
             }]),
             ..Default::default()
         });

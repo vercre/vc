@@ -300,8 +300,8 @@ impl Issuer {
             credential_issuer: ISSUER_URI.to_string(),
             authorization_servers: None,
             credential_endpoint: format!("{ISSUER_URI}/credential"),
-            batch_credential_endpoint: Some(format!("{ISSUER_URI}/batch_credential")),
-            deferred_credential_endpoint: Some(format!("{ISSUER_URI}/deferred_credential")),
+            batch_credential_endpoint: Some(format!("{ISSUER_URI}/batch")),
+            deferred_credential_endpoint: Some(format!("{ISSUER_URI}/deferred")),
             credential_response_encryption_alg_values_supported: Some(vec!["ECDH-ES".to_string()]),
             credential_response_encryption_enc_values_supported: Some(vec!["A256GCM".to_string()]),
             require_credential_response_encryption: Some(false),
@@ -468,7 +468,10 @@ impl CredentialConfiguration {
                     "https://www.w3.org/2018/credentials/v1".to_string(),
                     "https://www.w3.org/2018/credentials/examples/v1".to_string(),
                 ]),
-                type_: vec!["VerifiableCredential".to_string(), "EmployeeIDCredential".to_string()],
+                type_: Some(vec![
+                    "VerifiableCredential".to_string(),
+                    "EmployeeIDCredential".to_string(),
+                ]),
                 credential_subject: Some(HashMap::from([
                     (
                         "email".to_string(),
@@ -554,7 +557,10 @@ impl CredentialConfiguration {
                     "https://www.w3.org/2018/credentials/v1".to_string(),
                     "https://www.w3.org/2018/credentials/examples/v1".to_string(),
                 ]),
-                type_: vec!["VerifiableCredential".to_string(), "DeveloperCredential".to_string()],
+                type_: Some(vec![
+                    "VerifiableCredential".to_string(),
+                    "DeveloperCredential".to_string(),
+                ]),
                 credential_subject: Some(HashMap::from([
                     (
                         "proficiency".to_string(),
@@ -680,8 +686,13 @@ pub struct CredentialDefinition {
     /// Uniquely identifies the credential type the Credential Definition display
     /// properties are for, in accordance with the W3C Verifiable Credentials Data
     /// Model.
+    ///
+    /// Contains the type values the Wallet requests authorization for at the
+    /// Credential Issuer. It MUST be present if the claim format is present in the
+    /// root of the authorization details object. It MUST not be present otherwise.
     #[serde(rename = "type")]
-    pub type_: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub type_: Option<Vec<String>>,
 
     /// A list of name/value pairs identifying claims offered in the Credential.
     /// A value can be another such object (nested data structures), or an array of

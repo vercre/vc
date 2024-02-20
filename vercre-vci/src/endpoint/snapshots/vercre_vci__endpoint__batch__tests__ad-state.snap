@@ -1,11 +1,11 @@
 ---
 source: vercre-vci/src/endpoint/batch.rs
-assertion_line: 690
+assertion_line: 610
 expression: state
 ---
 credential_issuer: "http://credibil.io"
 expires_at: "[expires_at]"
-credentials:
+credential_configuration_ids:
   - EmployeeID_JWT
 holder_id: normal_user
 token:

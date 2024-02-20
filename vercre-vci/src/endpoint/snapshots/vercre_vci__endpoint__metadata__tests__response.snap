@@ -5,8 +5,8 @@ expression: response
 ---
 credential_issuer: "http://credibil.io"
 credential_endpoint: "http://credibil.io/credential"
-batch_credential_endpoint: "http://credibil.io/batch_credential"
-deferred_credential_endpoint: "http://credibil.io/deferred_credential"
+batch_credential_endpoint: "http://credibil.io/batch"
+deferred_credential_endpoint: "http://credibil.io/deferred"
 credential_response_encryption_alg_values_supported:
   - ECDH-ES
 credential_response_encryption_enc_values_supported:

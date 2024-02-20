@@ -246,7 +246,7 @@ impl Model {
 
         // update `model::Credential` with returned VC
         for meta in self.offered.values_mut() {
-            if meta.credential_definition.type_ == vc.type_ {
+            if meta.credential_definition.type_.as_ref() == Some(&vc.type_) {
                 return Ok(credential::Credential {
                     id: vc.id.clone(),
                     issuer: self.offer.credential_issuer.clone(),

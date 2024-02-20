@@ -23,7 +23,7 @@ pub struct InvokeRequest {
 
     /// A list of credentials (as identified by their metadata ids) to include in the
     /// offer to the Wallet. Each id identifies one of the keys in the name/value
-    /// pairs stored in the 'credential_identifiers_supported' Credential Issuer
+    /// pairs stored in the 'credential_configurations_supported' Credential Issuer
     /// metadata property. The Wallet uses this string value to obtain the respective
     /// object that contains information about the Credential being offered. For
     /// example, this string value can be used to obtain scope value to be used in
@@ -346,7 +346,7 @@ pub struct AuthorizationDetail {
     /// further authorization details claims needed to identify the Credential type
     /// in the requested format.
     /// REQUIRED when `credential_configuration_id` parameter is not set. MUST NOT be
-    /// set if credential_configuration_id parameter is set.
+    /// set if `credential_configuration_id` parameter is set.
     ///
     /// One of "jwt_vc_json", "jwt_vc_json-ld", or "ldp_vc".
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -354,8 +354,10 @@ pub struct AuthorizationDetail {
 
     /// The detailed description of the credential type requested. At a minimum,
     /// the Credential Definition 'type' field MUST be set.
-    /// REQUIRED when 'format' is "jwt_vc_json", "jwt_vc_json-ld", or "ldp_vc".
-    pub credential_definition: CredentialDefinition,
+    /// REQUIRED when 'format' is "jwt_vc_json", "jwt_vc_json-ld", or "ldp_vc"
+    /// AND `format` parameter is set. OPTIONAL otherwise.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_definition: Option<CredentialDefinition>,
 
     // LATER: integrate locations
     /// If the Credential Issuer metadata contains an 'authorization_servers' parameter,
@@ -371,26 +373,6 @@ pub struct AuthorizationDetail {
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
     pub locations: Option<Vec<String>>,
-
-    /// Uniquely identify Credentials that can be issued using Access Token.
-    /// Each Credential is described using the same entry in the 'credential_configurations_supported'
-    /// Credential Issuer metadata, but can contain different claim values or different
-    /// subset of claims within the Credential type claimset.
-    /// This parameter can be used to simplify the Credential Request as it can be used to
-    /// replaces Credential Request format specific parameters.
-    /// When received, the Wallet MUST use these values together with an Access Token
-    /// in the subsequent Credential Request(s).
-    ///
-    /// # Example
-    ///
-    /// ```json
-    /// "credential_identifiers": [
-    ///     "CivilEngineeringDegree-2023",
-    ///     "ElectricalEngineeringDegree-2023"
-    /// ]
-    /// ```
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_identifiers: Option<Vec<String>>,
 }
 
 /// Authorization Response as defined in [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html).
@@ -494,11 +476,11 @@ pub struct TokenResponse {
 
     /// REQUIRED when authorization_details parameter is used to request issuance
     /// of a certain Credential type. MUST NOT be used otherwise.
-    ///
+
     /// The Authorization Details 'credential_identifiers' parameter may be populated
     /// for use in subsequent Credential Requests.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub authorization_details: Option<Vec<AuthorizationDetail>>,
+    pub authorization_details: Option<Vec<TokenAuthorizationDetail>>,
 
     /// OPTIONAL if identical to the requested scope, otherwise REQUIRED.
     ///
@@ -508,6 +490,35 @@ pub struct TokenResponse {
     /// of the scope of the access token issued.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scope: Option<String>,
+}
+
+/// Authorization Details object specifically for use in successful Access Token
+/// responses ([`TokenResponse`]). It wraps the `AuthorizationDetail` struct and adds
+/// 'credential_identifiers' parameter for use in Credential requests.
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct TokenAuthorizationDetail {
+    #[serde(flatten)]
+    pub authorization_detail: AuthorizationDetail,
+
+    /// Uniquely identify Credentials that can be issued using the Access Token.
+    /// Each Credential is described using the same entry in the
+    /// 'credential_configurations_supported' Credential Issuer metadata, but can
+    /// contain different claim values or different subset of claims within the
+    /// Credential type claimset. This parameter can be used to simplify the Credential
+    /// Request as it can be used to replaces Credential Request format-specific
+    /// parameters. When received, the Wallet MUST use these values together with an
+    /// Access Token in the subsequent Credential Request(s).
+    ///
+    /// # Example
+    ///
+    /// ```json
+    /// "credential_identifiers": [
+    ///     "CivilEngineeringDegree-2023",
+    ///     "ElectricalEngineeringDegree-2023"
+    /// ]
+    /// ```
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_identifiers: Option<Vec<String>>,
 }
 
 /// `CredentialRequest` is used by the Client to make a Credential Request to the
@@ -794,20 +805,19 @@ mod tests {
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: "openid_credential".to_string(),
                 format: Some("jwt_vc_json".to_string()),
-                credential_definition: CredentialDefinition {
+                credential_definition: Some(CredentialDefinition {
                     context: Some(vec![
                         "https://www.w3.org/2018/credentials/v1".to_string(),
                         "https://www.w3.org/2018/credentials/examples/v1".to_string(),
                     ]),
-                    type_: vec![
+                    type_: Some(vec![
                         "VerifiableCredential".to_string(),
                         "EmployeeIDCredential".to_string(),
-                    ],
+                    ]),
                     credential_subject: None,
-                },
+                }),
                 locations: None,
                 credential_configuration_id: None,
-                credential_identifiers: None,
             }]),
             scope: None,
             resource: None,

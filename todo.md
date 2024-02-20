@@ -18,13 +18,13 @@
 
 - [ ] grouped `credential_encryption_jwk`, `credential_response_encryption_alg` and `credential_response_encryption_enc` from Credential Request into a single `credential_response_encryption` object
 
-- [x] replaced `user_pin_required` in Credential Offer with a `tx_code` object that also now contains description and length
+- [ ] replaced `user_pin_required` in Credential Offer with a `tx_code` object that also now contains description and length
 - [ ] reworked flow description in Overview section
 - [ ] added support for HTTP Accept-Language Header in the request for Credential Issuer Metadata to request a subset for display data
 - [ ] clarified how the Credential Issuer indicates that it requires proof of possession of the cryptographic key material in the Credential Request
 - [ ] added an option to use data integrity proofs as proof of possession of the cryptographic key material in the Credential Request
 - [ ] added privacy considerations
-- [ ] clarifed that AS that only supports pre-auth grant can omit `response_types_supported` metadata
+- [x] clarifed that AS that only supports pre-auth grant can omit `response_types_supported` metadata
 - [ ] added `background_image` credential issuer metadata
 
 # TODOs
