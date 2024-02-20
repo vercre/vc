@@ -48,7 +48,7 @@ assert_let_bind = "0.1.1"
 axum = { version = "0.7.4", features = ["macros"] }
 axum-extra = { version = "0.9.2", features = ["typed-header"] }
 futures = "0.3.30"
-insta = { version = "1.35.0", features = ["filters", "redactions", "yaml"] }
+insta = { version = "1.35.1", features = ["filters", "redactions", "yaml"] }
 lazy_static = "1.4.0"
 oauth2 = { version = "4.4.2" }
 serde_qs = "0.12.0"
