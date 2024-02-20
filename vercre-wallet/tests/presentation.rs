@@ -192,7 +192,7 @@ lazy_static! {
                 "name":"Employee ID",
                 "description":"Credibil employee ID credential",
                 "locale":"en-NZ",
-                "logo":{"alt_text":"Credibil Logo","url":"http://credibil.io/logo.png"},
+                "logo":{"alt_text":"Credibil Logo","uri":"http://credibil.io/logo.png"},
                 "text_color":"#ffffff",
                 "background_color":"#12107c"
             }],

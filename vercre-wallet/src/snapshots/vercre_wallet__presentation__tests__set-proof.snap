@@ -80,7 +80,7 @@ credentials:
         - name: Employee ID
           locale: en-NZ
           logo:
-            url: "https://credibil.github.io/assets/credibil-logo-reversed.png"
+            uri: "https://credibil.github.io/assets/credibil-logo-reversed.png"
             alt_text: Credibil Logo
           description: Credibil employee ID credential
           background_color: "#323ed2"
@@ -116,4 +116,3 @@ credentials:
       image: iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAAGXcA1uAAAACXBIWXMAAAsSAAALEgHS3X78AAACGklEQVRIiYVV0XXbMAw8+eXf7AYagd2A2YAjeIR0A3eCagRlA20QZYJ4g6gbKBNcP3QwIZpq8B6eCIIAARwIdSQBYAEQOgkZAEzAg3ACYNLacVN1AGjHTNvZ+sltPmvdAQBIguSVG0V9R3/jqm8wVwOABOAsxQxggcwvchlIZpLRQnyWi9lcngD8BfAmN1mRrRZVYqFEMpiideDq1hbDPT9PIDnqO9X6kwIEgK97lYAewGQ10P7GSnVW+lbNIDlIvofdCinKAfTNdbyee6cLbt3XNxibt8wC8MWf2bWXa5WarBg4uYME8Cr5FcAvtzY9WmhaLoENtC2km+u/5Jona33TurcuA4Af7lB0XTftsnHXDbo+kVxY2mLHHclR3rJ8TLrJ2iLXN/hbDKAXV//o9KFGN+mwf6XeIFqVXnThnwPgDJPhCOkvfe1Fd+VEoxIsL3zlntaDfZ//jp+qUC/YHtuCDdxzpT9jw7Teh+ySsx+BMjt7AJ8NIxtLEaVhjGZsEC/ij4b9T5/O8k3a2SF64f4Z9g3b1drCxsjMbXjVtRy0H5x+kjyID7H0b8fTb5RhaBRU1zOAd5VsxXekyFudUs/zm8t0kJxaUXv2QlTqqxwlOfO1tmFrJTI8bIoPCvI+1X2ELfIRenwC99MkHtn7DKZKeZNTTwbotdof+VjqmXz8K9R1b1Ht3Ci3/PwXIG71tbGwsuCRDvYf+B9W+Cda6rdupAAAAABJRU5ErkJggg==
       media_type: image/png
 status: Requested
-

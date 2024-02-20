@@ -21,7 +21,7 @@ EmployeeID_JWT:
     - name: Employee ID
       locale: en-NZ
       logo:
-        url: "https://credibil.github.io/assets/credibil-logo-reversed.png"
+        uri: "https://credibil.github.io/assets/credibil-logo-reversed.png"
         alt_text: Credibil Logo
       description: Credibil employee ID credential
       background_color: "#323ed2"
@@ -52,4 +52,3 @@ EmployeeID_JWT:
         display:
           - name: Given name
             locale: en-NZ
-

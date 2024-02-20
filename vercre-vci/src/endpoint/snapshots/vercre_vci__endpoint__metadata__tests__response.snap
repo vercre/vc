@@ -35,8 +35,8 @@ credential_configurations_supported:
       - name: Developer
         locale: en-NZ
         logo:
-          url: "https://credibil.github.io/assets/propellerhead-logo-reversed.png"
-          alt_text: Propellerhead Logo
+          uri: "https://credibil.github.io/assets/propellerhead-logo-reversed.png"
+          alt_text: Propellerhead Image
         description: Propellerhead certified developer credential
         background_color: "#010100"
         text_color: "#ffffff"
@@ -84,7 +84,7 @@ credential_configurations_supported:
       - name: Employee ID
         locale: en-NZ
         logo:
-          url: "https://credibil.github.io/assets/credibil-logo-reversed.png"
+          uri: "https://credibil.github.io/assets/credibil-logo-reversed.png"
           alt_text: Credibil Logo
         description: Credibil employee ID credential
         background_color: "#323ed2"
@@ -115,4 +115,3 @@ credential_configurations_supported:
           display:
             - name: Given name
               locale: en-NZ
-

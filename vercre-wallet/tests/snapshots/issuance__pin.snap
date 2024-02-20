@@ -23,7 +23,7 @@ offered:
       - name: Employee ID
         locale: en-NZ
         logo:
-          url: "https://credibil.github.io/assets/credibil-logo-reversed.png"
+          uri: "https://credibil.github.io/assets/credibil-logo-reversed.png"
           alt_text: Credibil Logo
         description: Credibil employee ID credential
         background_color: "#323ed2"
@@ -55,4 +55,3 @@ offered:
             - name: Given name
               locale: en-NZ
 status: Accepted
-

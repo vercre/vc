@@ -530,7 +530,7 @@ mod tests {
         let op = &request.operation;
         assert_eq!(
             op.url,
-            cred.clone().metadata.display.unwrap()[0].logo.clone().unwrap().url.unwrap()
+            cred.clone().metadata.display.unwrap()[0].logo.clone().unwrap().uri.unwrap()
         );
 
         // resolve the app request with a simulated response

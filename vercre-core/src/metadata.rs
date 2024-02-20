@@ -454,14 +454,15 @@ impl CredentialConfiguration {
                 name: "Employee ID".to_string(),
                 description: Some("Credibil employee ID credential".to_string()),
                 locale: Some("en-NZ".to_string()),
-                logo: Some(Logo {
-                    url: Some(
+                logo: Some(Image {
+                    uri: Some(
                         "https://credibil.github.io/assets/credibil-logo-reversed.png".to_string(),
                     ),
                     alt_text: Some("Credibil Logo".to_string()),
                 }),
                 text_color: Some("#ffffff".to_string()),
                 background_color: Some("#323ed2".to_string()),
+                background_image: None,
             }]),
             credential_definition: CredentialDefinition {
                 context: Some(vec![
@@ -542,15 +543,16 @@ impl CredentialConfiguration {
                 name: "Developer".to_string(),
                 description: Some("Propellerhead certified developer credential".to_string()),
                 locale: Some("en-NZ".to_string()),
-                logo: Some(Logo {
-                    url: Some(
+                logo: Some(Image {
+                    uri: Some(
                         "https://credibil.github.io/assets/propellerhead-logo-reversed.png"
                             .to_string(),
                     ),
-                    alt_text: Some("Propellerhead Logo".to_string()),
+                    alt_text: Some("Propellerhead Image".to_string()),
                 }),
                 text_color: Some("#ffffff".to_string()),
                 background_color: Some("#010100".to_string()),
+                background_image: None,
             }]),
             credential_definition: CredentialDefinition {
                 context: Some(vec![
@@ -641,7 +643,7 @@ pub struct CredentialDisplay {
 
     /// Information about the logo of the Credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub logo: Option<Logo>,
+    pub logo: Option<Image>,
 
     /// Description of the Credential.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -652,19 +654,23 @@ pub struct CredentialDisplay {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub background_color: Option<String>,
 
+    /// Information about the background image of the Credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub background_image: Option<Image>,
+
     /// Text color color of the Credential using CSS Color Module Level 37
     /// values.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub text_color: Option<String>,
 }
 
-/// Logo contains information about the logo of the Credential.
+/// Image contains information about the logo of the Credential.
 /// N.B. The list is non-exhaustive and may be extended in the future.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Logo {
+pub struct Image {
     /// URL where the Wallet can obtain a logo of the Credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub url: Option<String>,
+    pub uri: Option<String>,
 
     /// Alternative text of a logo image.
     #[serde(skip_serializing_if = "Option::is_none")]

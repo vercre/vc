@@ -275,9 +275,9 @@ pub(super) fn logo_response(response: &crux_http::Response<Vec<u8>>) -> Option<c
 pub(super) fn logo_url(credential: &credential::Credential) -> Option<String> {
     for d in credential.metadata.display.as_ref()? {
         if let Some(logo) = &d.logo
-            && logo.url.is_some()
+            && logo.uri.is_some()
         {
-            return logo.url.clone();
+            return logo.uri.clone();
         }
     }
 

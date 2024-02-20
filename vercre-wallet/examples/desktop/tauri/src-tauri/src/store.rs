@@ -147,7 +147,7 @@ mod test {
                             "locale": "en-NZ",
                             "logo": {
                                 "alt_text": "Credibil Logo",
-                                "url": "http://credibil.io/logo.png"
+                                "uri": "http://credibil.io/logo.png"
                             },
                             "name": "Employee ID",
                             "text_color": "#ffffff"
