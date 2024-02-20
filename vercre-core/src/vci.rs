@@ -494,7 +494,7 @@ pub struct TokenResponse {
 
 /// Authorization Details object specifically for use in successful Access Token
 /// responses ([`TokenResponse`]). It wraps the `AuthorizationDetail` struct and adds
-/// 'credential_identifiers' parameter for use in Credential requests.
+/// `credential_identifiers` parameter for use in Credential requests.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TokenAuthorizationDetail {
     #[serde(flatten)]

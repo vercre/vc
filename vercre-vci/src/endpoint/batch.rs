@@ -321,12 +321,12 @@ impl Context {
             err!("Credential type not set");
         };
 
-        let vc_id = format!("{credential_issuer}/credentials/{}", cred_def.type_[1].clone());
+        let vc_id = format!("{credential_issuer}/credentials/{}", types[1].clone());
 
         let vc = VerifiableCredential::builder()
             .add_context(credential_issuer.clone() + "/credentials/v1")
             // TODO: generate credential id
-            .id("https://credibil.io/credentials/3732".to_string())
+            .id(vc_id)
             .add_type(types[1].clone())
             .issuer(credential_issuer.clone())
             .add_subject(CredentialSubject {

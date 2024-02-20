@@ -198,7 +198,9 @@ impl super::Context for Context {
                 } else if let Some(format) = &auth_det.format {
                     // check if requested is supported
                     let mut found = false;
-                    for (_cfg_id, cred_cfg) in &issuer_meta.credential_configurations_supported {
+                    for (_cfg_id, cred_cfg) in
+                        issuer_meta.credential_configurations_supported.clone()
+                    {
                         // credential_definition must be present
                         if &cred_cfg.format == format {
                             let cfg_def = cred_cfg.credential_definition.clone();
@@ -349,18 +351,16 @@ fn auth_cfg_ids(
             if issuer_meta.credential_configurations_supported.get(&cfg_id).is_some() {
                 cfg_ids.push(cfg_id);
             }
-        } else {
-            if let Some(format) = &auth_det.format {
-                // check if requested is supported
-                for (cfg_id, cred_cfg) in &issuer_meta.credential_configurations_supported {
-                    // credential_definition must be present
-                    if &cred_cfg.format == format {
-                        let cfg_def = cred_cfg.credential_definition.clone();
-                        let auth_def = auth_det.credential_definition.clone().unwrap_or_default();
+        } else if let Some(format) = &auth_det.format {
+            // check if requested is supported
+            for (cfg_id, cred_cfg) in &issuer_meta.credential_configurations_supported {
+                // credential_definition must be present
+                if &cred_cfg.format == format {
+                    let cfg_def = cred_cfg.credential_definition.clone();
+                    let auth_def = auth_det.credential_definition.clone().unwrap_or_default();
 
-                        if cfg_def.type_.unwrap_or_default() == auth_def.type_.unwrap_or_default() {
-                            cfg_ids.push(cfg_id.clone());
-                        }
+                    if cfg_def.type_.unwrap_or_default() == auth_def.type_.unwrap_or_default() {
+                        cfg_ids.push(cfg_id.clone());
                     }
                 }
             }
