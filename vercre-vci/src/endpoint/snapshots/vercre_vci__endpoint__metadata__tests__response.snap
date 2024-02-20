@@ -30,7 +30,7 @@ credential_configurations_supported:
         locale: en-NZ
         logo:
           uri: "https://credibil.github.io/assets/propellerhead-logo-reversed.png"
-          alt_text: Propellerhead Image
+          alt_text: Propellerhead Logo
         description: Propellerhead certified developer credential
         background_color: "#010100"
         text_color: "#ffffff"

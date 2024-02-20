@@ -299,25 +299,22 @@ impl Issuer {
     pub fn sample() -> Self {
         const ISSUER_URI: &str = "http://credibil.io";
 
-        Self {
-            credential_issuer: ISSUER_URI.to_string(),
-            credential_endpoint: format!("{ISSUER_URI}/credential"),
-            batch_credential_endpoint: Some(format!("{ISSUER_URI}/batch")),
-            deferred_credential_endpoint: Some(format!("{ISSUER_URI}/deferred")),
-            display: Some(Display {
-                name: "Credibil".to_string(),
-                locale: Some("en-NZ".to_string()),
-            }),
-            credential_configurations_supported: HashMap::from([
-                ("EmployeeID_JWT".to_string(), CredentialConfiguration::sample()),
-                ("Developer_JWT".to_string(), CredentialConfiguration::sample2()),
-            ]),
+        let issuer = serde_json::json!({
+            "credential_issuer": ISSUER_URI,
+            "credential_endpoint": format!("{ISSUER_URI}/credential"),
+            "batch_credential_endpoint": format!("{ISSUER_URI}/batch"),
+            "deferred_credential_endpoint": format!("{ISSUER_URI}/deferred"),
+            "display": {
+                "name": "Credibil",
+                "locale": "en-NZ"
+            },
+            "credential_configurations_supported": {
+                "EmployeeID_JWT": CredentialConfiguration::sample(),
+                "Developer_JWT": CredentialConfiguration::sample2(),
+            },
+        });
 
-            authorization_servers: None,
-            credential_response_encryption: None,
-            credential_identifiers_supported: None,
-            signed_metadata: None,
-        }
+        serde_json::from_value(issuer).expect("should serialize to Issuer")
     }
 }
 
@@ -432,179 +429,132 @@ impl CredentialConfiguration {
     // #[cfg(feature = "typegen")]
     #[must_use]
     pub fn sample() -> Self {
-        Self {
-            format: "jwt_vc_json".to_string(),
-            scope: Some("EmployeeIDCredential".to_string()),
-            cryptographic_binding_methods_supported: Some(vec![
-                "did:jwk".to_string(),
-                "did:ion".to_string(),
-            ]),
-            credential_signing_alg_values_supported: Some(vec![
-                "ES256K".to_string(),
-                "EdDSA".to_string(),
-            ]),
-            proof_types_supported: Some(HashMap::from([(
-                "jwt".to_string(),
-                ProofTypesSupported {
-                    proof_signing_alg_values_supported: vec![
-                        "ES256K".to_string(),
-                        "EdDSA".to_string(),
-                    ],
+        let cred_cfg = serde_json::json!({
+            "format": "jwt_vc_json",
+            "scope": "EmployeeIDCredential",
+            "cryptographic_binding_methods_supported": ["did:jwk","did:ion"],
+            "credential_signing_alg_values_supported": ["ES256K","EdDSA"],
+            "proof_types_supported":{
+                "jwt":{
+                    "proof_signing_alg_values_supported": ["ES256K","EdDSA"],
                 },
-            )])),
-            display: Some(vec![CredentialDisplay {
-                name: "Employee ID".to_string(),
-                description: Some("Credibil employee ID credential".to_string()),
-                locale: Some("en-NZ".to_string()),
-                logo: Some(Image {
-                    uri: Some(
-                        "https://credibil.github.io/assets/credibil-logo-reversed.png".to_string(),
-                    ),
-                    alt_text: Some("Credibil Logo".to_string()),
-                }),
-                text_color: Some("#ffffff".to_string()),
-                background_color: Some("#323ed2".to_string()),
-                background_image: None,
-            }]),
-            credential_definition: CredentialDefinition {
-                context: Some(vec![
-                    "https://www.w3.org/2018/credentials/v1".to_string(),
-                    "https://www.w3.org/2018/credentials/examples/v1".to_string(),
-                ]),
-                type_: Some(vec![
-                    "VerifiableCredential".to_string(),
-                    "EmployeeIDCredential".to_string(),
-                ]),
-                credential_subject: Some(HashMap::from([
-                    (
-                        "email".to_string(),
-                        Claim {
-                            mandatory: Some(true),
-                            value_type: Some("string".to_string()),
-                            display: Some(vec![Display {
-                                name: "Email".to_string(),
-                                locale: Some("en-NZ".to_string()),
-                            }]),
-                            claim_nested: None,
-                        },
-                    ),
-                    (
-                        "familyName".to_string(),
-                        Claim {
-                            mandatory: Some(true),
-                            value_type: Some("string".to_string()),
-                            display: Some(vec![Display {
-                                name: "Family name".to_string(),
-                                locale: Some("en-NZ".to_string()),
-                            }]),
-                            claim_nested: None,
-                        },
-                    ),
-                    (
-                        "givenName".to_string(),
-                        Claim {
-                            mandatory: Some(true),
-                            value_type: Some("string".to_string()),
-                            display: Some(vec![Display {
-                                name: "Given name".to_string(),
-                                locale: Some("en-NZ".to_string()),
-                            }]),
-                            claim_nested: None,
-                        },
-                    ),
-                ])),
             },
-        }
+            "display": [{
+                "name": "Employee ID",
+                "description": "Credibil employee ID credential",
+                "locale": "en-NZ",
+                "logo": {
+                    "uri":"https://credibil.github.io/assets/credibil-logo-reversed.png",
+                    "alt_text": "Credibil Logo",
+                },
+                "text_color":"#ffffff",
+                "background_color":"#323ed2",
+            }],
+            "credential_definition": {
+                "@context": [
+                    "https://www.w3.org/2018/credentials/v1",
+                    "https://www.w3.org/2018/credentials/examples/v1",
+                ],
+                "type": [
+                    "VerifiableCredential",
+                    "EmployeeIDCredential",
+                ],
+                "credentialSubject":{
+                    "email":{
+                        "mandatory": true,
+                        "value_type": "string",
+                        "display": [ {
+                            "name": "Email",
+                            "locale": "en-NZ",
+                        }]
+                    },
+                    "familyName":{
+                        "mandatory": true,
+                        "value_type": "string",
+                        "display": [{
+                            "name": "Family name",
+                            "locale": "en-NZ",
+                        }],
+                    },
+                    "givenName":{
+                        "mandatory": true,
+                        "value_type": "string",
+                        "display": [{
+                            "name": "Given name",
+                            "locale": "en-NZ",
+                        }],
+                    },
+                },
+            },
+        });
+
+        serde_json::from_value(cred_cfg).expect("should serialize to CredentialConfiguration")
     }
 
     /// Create a new `CredentialConfiguration` with the specified format.
     // TODO: Better demonstrate standards variation from that supplied by sample().
     #[must_use]
     pub fn sample2() -> Self {
-        Self {
-            format: "jwt_vc_json".to_string(),
-            scope: Some("DeveloperCredential".to_string()),
-            cryptographic_binding_methods_supported: Some(vec![
-                "did:jwk".to_string(),
-                "did:ion".to_string(),
-            ]),
-            credential_signing_alg_values_supported: Some(vec![
-                "ES256K".to_string(),
-                "EdDSA".to_string(),
-            ]),
-            proof_types_supported: Some(HashMap::from([(
-                "jwt".to_string(),
-                ProofTypesSupported {
-                    proof_signing_alg_values_supported: vec![
-                        "ES256K".to_string(),
-                        "EdDSA".to_string(),
-                    ],
+        let cred_cfg = serde_json::json!({
+            "format": "jwt_vc_json",
+            "scope": "DeveloperCredential",
+            "cryptographic_binding_methods_supported": ["did:jwk","did:ion"],
+            "credential_signing_alg_values_supported": ["ES256K","EdDSA"],
+            "proof_types_supported":{
+                "jwt":{
+                    "proof_signing_alg_values_supported": ["ES256K","EdDSA"],
                 },
-            )])),
-            display: Some(vec![CredentialDisplay {
-                name: "Developer".to_string(),
-                description: Some("Propellerhead certified developer credential".to_string()),
-                locale: Some("en-NZ".to_string()),
-                logo: Some(Image {
-                    uri: Some(
-                        "https://credibil.github.io/assets/propellerhead-logo-reversed.png"
-                            .to_string(),
-                    ),
-                    alt_text: Some("Propellerhead Image".to_string()),
-                }),
-                text_color: Some("#ffffff".to_string()),
-                background_color: Some("#010100".to_string()),
-                background_image: None,
-            }]),
-            credential_definition: CredentialDefinition {
-                context: Some(vec![
-                    "https://www.w3.org/2018/credentials/v1".to_string(),
-                    "https://www.w3.org/2018/credentials/examples/v1".to_string(),
-                ]),
-                type_: Some(vec![
-                    "VerifiableCredential".to_string(),
-                    "DeveloperCredential".to_string(),
-                ]),
-                credential_subject: Some(HashMap::from([
-                    (
-                        "proficiency".to_string(),
-                        Claim {
-                            mandatory: Some(true),
-                            value_type: Some("number".to_string()),
-                            display: Some(vec![Display {
-                                name: "Proficiency".to_string(),
-                                locale: Some("en-NZ".to_string()),
-                            }]),
-                            claim_nested: None,
-                        },
-                    ),
-                    (
-                        "familyName".to_string(),
-                        Claim {
-                            mandatory: Some(true),
-                            value_type: Some("string".to_string()),
-                            display: Some(vec![Display {
-                                name: "Family name".to_string(),
-                                locale: Some("en-NZ".to_string()),
-                            }]),
-                            claim_nested: None,
-                        },
-                    ),
-                    (
-                        "givenName".to_string(),
-                        Claim {
-                            mandatory: Some(true),
-                            value_type: Some("string".to_string()),
-                            display: Some(vec![Display {
-                                name: "Given name".to_string(),
-                                locale: Some("en-NZ".to_string()),
-                            }]),
-                            claim_nested: None,
-                        },
-                    ),
-                ])),
             },
-        }
+            "display": [{
+                "name": "Developer",
+                "description": "Propellerhead certified developer credential",
+                "locale": "en-NZ",
+                "logo": {
+                    "uri":"https://credibil.github.io/assets/propellerhead-logo-reversed.png",
+                    "alt_text": "Propellerhead Logo",
+                },
+                "text_color":"#ffffff",
+                "background_color":"#010100",
+            }],
+            "credential_definition": {
+                "@context": [
+                    "https://www.w3.org/2018/credentials/v1",
+                    "https://www.w3.org/2018/credentials/examples/v1",
+                ],
+                "type": [
+                    "VerifiableCredential",
+                    "DeveloperCredential",
+                ],
+                "credentialSubject":{
+                    "proficiency":{
+                        "mandatory": true,
+                        "value_type": "number",
+                        "display": [ {
+                            "name": "Proficiency",
+                            "locale": "en-NZ",
+                        }]
+                    },
+                    "familyName":{
+                        "mandatory": true,
+                        "value_type": "string",
+                        "display": [{
+                            "name": "Family name",
+                            "locale": "en-NZ",
+                        }],
+                    },
+                    "givenName":{
+                        "mandatory": true,
+                        "value_type": "string",
+                        "display": [{
+                            "name": "Given name",
+                            "locale": "en-NZ",
+                        }],
+                    },
+                },
+            },
+        });
+
+        serde_json::from_value(cred_cfg).expect("should serialize to CredentialConfiguration")
     }
 }
 
