@@ -11,6 +11,7 @@ use serde_json::Value;
 
 use crate::error::{self, Err};
 use crate::metadata::{Client as ClientMetadata, CredentialDefinition, Issuer as IssuerMetadata};
+use crate::proof::Jwk;
 use crate::{err, stringify, Result};
 
 /// Request a Credential Offer for a Credential Issuer.
@@ -180,8 +181,8 @@ impl CredentialOffer {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Grants {
     /// Authorization Code Grant Type: authorization_code.
-   #[serde(skip_serializing_if = "Option::is_none")]
-   pub authorization_code: Option<AuthorizationCodeGrant>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub authorization_code: Option<AuthorizationCodeGrant>,
 
     /// Pre-Authorized Code Grant Type:
     /// `urn:ietf:params:oauth:grant-type:pre-authorized_code`.
@@ -604,22 +605,10 @@ pub struct CredentialRequest {
     /// will be bound to.
     pub proof: Proof,
 
-    /// A public key as a JWK to be used for encrypting the Credential Response.
+    /// If present, specifies how the Credential Response should be encrypted. If not
+    /// present.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_encryption_jwk: Option<Value>,
-
-    /// JWE [RFC7516](https://www.rfc-editor.org/rfc/rfc7516) alg algorithm [RFC7518](https://www.rfc-editor.org/rfc/rfc7518) REQUIRED for encrypting Credential
-    /// Responses. If omitted, no encryption is intended to be performed. When present,
-    /// the 'credential_encryption_jwk' MUST also be present.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_response_encryption_alg: Option<String>,
-
-    /// JWE [RFC7516](https://www.rfc-editor.org/rfc/rfc7516) enc algorithm [RFC7518](https://www.rfc-editor.org/rfc/rfc7518) REQUIRED for encrypting Credential
-    /// Responses. If credential_response_encryption_alg is specified, the default for
-    /// this value is A256GCM. When credential_response_encryption_enc is included,
-    /// 'credential_response_encryption_alg' MUST also be provided.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_response_encryption_enc: Option<String>,
+    pub credential_response_encryption: Option<CredentialResponseEncryption>,
 }
 
 /// Wallet's proof of possession of the key material the issued Credential is to
@@ -650,12 +639,32 @@ pub struct ProofClaims {
     /// The Credential Issuer URL of the Credential Issuer.
     pub aud: String,
 
-    /// The time at which the proof was issued, as [RFC7519](https://www.rfc-editor.org/rfc/rfc7519) NumericDate.
+    /// The time at which the proof was issued, as
+    /// [RFC7519](https://www.rfc-editor.org/rfc/rfc7519) NumericDate.
     /// For example, "1541493724".
     pub iat: i64,
 
     /// The nonce value provided by the Credential Issuer.
     pub nonce: String,
+}
+
+/// `CredentialResponseEncryption` contains information about whether the Credential
+/// Issuer supports encryption of the Credential and Batch Credential Response on
+/// top of TLS.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct CredentialResponseEncryption {
+    /// The public key used for encrypting the Credential Response.
+    pub jwk: Jwk,
+
+    /// JWE [RFC7516](https://www.rfc-editor.org/rfc/rfc7516) alg algorithm
+    /// [RFC7518](https://www.rfc-editor.org/rfc/rfc7518) for encrypting
+    /// Credential Response.
+    pub alg: String,
+
+    /// JWE [RFC7516](https://www.rfc-editor.org/rfc/rfc7516) enc algorithm
+    /// [RFC7518](https://www.rfc-editor.org/rfc/rfc7518) for encrypting
+    /// Credential Response.
+    pub enc: String,
 }
 
 /// The Credential Response can be Synchronous or Deferred. The Credential

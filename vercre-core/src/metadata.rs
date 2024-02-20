@@ -230,31 +230,10 @@ pub struct Issuer {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deferred_credential_endpoint: Option<String>,
 
-    /// A list of the JWE encryption algorithms (alg values)
-    /// [RFC7518](https://www.rfc-editor.org/rfc/rfc7518#section-4.1) supported by the
-    /// Credential and Batch Credential Endpoint to encode the Response in a JWT
-    /// [RFC7519](https://www.rfc-editor.org/rfc/rfc7519).
-    ///
-    /// For example, "ECDH-ES"
-    pub credential_response_encryption_alg_values_supported: Option<Vec<String>>,
-
-    /// A list of the JWE encryption algorithms (enc values)
-    /// [RFC7518](https://www.rfc-editor.org/rfc/rfc7518#section-5) supported by the
-    /// Credential and Batch Credential Endpoints to encode the Response in a JWT
-    /// [RFC7519](https://www.rfc-editor.org/rfc/rfc7519).
-    ///
-    /// For example, "A256GCM"
-    pub credential_response_encryption_enc_values_supported: Option<Vec<String>>,
-
-    /// Specifies whether the Credential Issuer requires additional encryption on
-    /// top of TLS for the Credential Response and expects encryption parameters
-    /// to be present in the Credential Request and/or Batch Credential Request,
-    /// with true indicating support.
-    ///
-    /// When true, 'credential_response_encryption_alg_values_supported parameter'
-    /// MUST also be provided. The default value is false.
+    /// Specifies whether (and how)the Credential Issuer supports encryption of the
+    /// Credential and Batch Credential Response on top of TLS.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub require_credential_response_encryption: Option<bool>,
+    pub credential_response_encryption: Option<CredentialResponseEncryption>,
 
     /// Specifies whether the Credential Issuer supports returning 'credential_identifiers'
     /// parameter in the authorization_details Token Response parameter, with true
@@ -289,6 +268,30 @@ pub struct Issuer {
     pub credential_configurations_supported: HashMap<String, CredentialConfiguration>,
 }
 
+/// `CredentialResponseEncryption` contains information about whether the Credential
+/// Issuer supports encryption of the Credential and Batch Credential Response on
+/// top of TLS.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct CredentialResponseEncryption {
+    /// JWE [RFC7516](https://www.rfc-editor.org/rfc/rfc7516) alg algorithm
+    /// [RFC7518](https://www.rfc-editor.org/rfc/rfc7518) REQUIRED for encrypting
+    /// Credential Responses.
+    pub alg_values_supported: Vec<String>,
+
+    /// JWE [RFC7516](https://www.rfc-editor.org/rfc/rfc7516) enc algorithm
+    /// [RFC7518](https://www.rfc-editor.org/rfc/rfc7518) REQUIRED for encrypting
+    /// Credential Responses. If credential_response_encryption_alg is specified,
+    /// the default for this value is A256GCM.
+    pub enc_values_supported: Vec<String>,
+
+    /// Specifies whether the Credential Issuer requires the additional encryption
+    /// on top of TLS for the Credential Response. If the value is true, the Credential
+    /// Issuer requires encryption for every Credential Response and therefore the
+    /// Wallet MUST provide encryption keys in the Credential Request. If the value is
+    /// false, the Wallet MAY chose whether it provides encryption keys or not.
+    pub encryption_required: bool,
+}
+
 impl Issuer {
     /// Create a new `Issuer` with the specified `credential_issuer` and
     /// `credential_endpoint`.
@@ -298,15 +301,9 @@ impl Issuer {
 
         Self {
             credential_issuer: ISSUER_URI.to_string(),
-            authorization_servers: None,
             credential_endpoint: format!("{ISSUER_URI}/credential"),
             batch_credential_endpoint: Some(format!("{ISSUER_URI}/batch")),
             deferred_credential_endpoint: Some(format!("{ISSUER_URI}/deferred")),
-            credential_response_encryption_alg_values_supported: Some(vec!["ECDH-ES".to_string()]),
-            credential_response_encryption_enc_values_supported: Some(vec!["A256GCM".to_string()]),
-            require_credential_response_encryption: Some(false),
-            credential_identifiers_supported: Some(true),
-            signed_metadata: None,
             display: Some(Display {
                 name: "Credibil".to_string(),
                 locale: Some("en-NZ".to_string()),
@@ -315,6 +312,11 @@ impl Issuer {
                 ("EmployeeID_JWT".to_string(), CredentialConfiguration::sample()),
                 ("Developer_JWT".to_string(), CredentialConfiguration::sample2()),
             ]),
+
+            authorization_servers: None,
+            credential_response_encryption: None,
+            credential_identifiers_supported: None,
+            signed_metadata: None,
         }
     }
 }

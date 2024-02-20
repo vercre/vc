@@ -18,8 +18,8 @@
 - [x] added privacy considerations
 - [x] clarifed that AS that only supports pre-auth grant can omit `response_types_supported` metadata
 - [x] added `background_image` credential issuer metadata
+- [x] grouped `credential_encryption_jwk`, `credential_response_encryption_alg` and `credential_response_encryption_enc` from Credential Request into a single `credential_response_encryption` object
 
-- [ ] grouped `credential_encryption_jwk`, `credential_response_encryption_alg` and `credential_response_encryption_enc` from Credential Request into a single `credential_response_encryption` object
 - [ ] added a Notification Endpoint used by the Wallet to notify the Credential Issuer of certain events for issued Credentials
 
 # TODOs
