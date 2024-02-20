@@ -10,5 +10,5 @@ credentials:
 holder_id: normal_user
 callback_id: "1234"
 auth:
-  user_pin: "[user_pin]"
+  user_code: "[user_code]"
 

@@ -131,8 +131,9 @@ impl Model {
             return Err(anyhow!("Missing pre-authorized code"));
         };
 
+        // TODO: switch to using `tx_code` object to drive shell UI
         // set status based on whether user pin is required
-        if pre_auth_code.tx_code.unwrap_or_default() {
+        if pre_auth_code.tx_code.is_some() {
             self.status = Status::PendingPin;
         } else {
             self.status = Status::Accepted;
@@ -157,7 +158,7 @@ impl Model {
             client_id: CLIENT_ID.to_owned(),
             grant_type: "urn:ietf:params:oauth:grant-type:pre-authorized_code".to_string(),
             pre_authorized_code: Some(preauth.pre_authorized_code.clone()),
-            user_pin: self.pin.clone(),
+            user_code: self.pin.clone(),
 
             ..Default::default()
         };

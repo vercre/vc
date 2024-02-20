@@ -568,7 +568,11 @@ mod tests {
                 },
                 "urn:ietf:params:oauth:grant-type:pre-authorized_code":{
                     "pre-authorized_code":"XnFPIW56SlEpZzRpYyEpZTMzMXJmKFJJSmFGem1hKGU",
-                    "tx_code":true
+                    "tx_code": {
+                        "input_mode":"numeric",
+                        "length":6,
+                        "description":"Please provide the one-time code that was sent via e-mail"
+                    }
                 }
             }
         });

@@ -53,7 +53,7 @@ pub fn state_key() -> String {
 
 /// Generates a use PIN code.
 #[must_use]
-pub fn user_pin() -> String {
+pub fn user_code() -> String {
     random_string::generate(PIN_LEN, PIN_CHARS).to_string()
 }
 

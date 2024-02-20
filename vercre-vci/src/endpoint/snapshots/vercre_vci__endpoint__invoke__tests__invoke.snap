@@ -1,6 +1,6 @@
 ---
 source: vercre-vci/src/endpoint/invoke.rs
-assertion_line: 249
+assertion_line: 261
 expression: response
 ---
 credential_offer:
@@ -8,11 +8,10 @@ credential_offer:
   credential_configuration_ids:
     - EmployeeID_JWT
   grants:
-    authorization_code: ~
     "urn:ietf:params:oauth:grant-type:pre-authorized_code":
       pre-authorized_code: "[pre-authorized_code]"
-      tx_code: true
-      interval: ~
-      authorization_server: ~
-user_pin: "[user_pin]"
-
+      tx_code:
+        input_mode: numeric
+        length: 6
+        description: Please provide the one-time code that was sent via e-mail
+user_code: "[user_code]"

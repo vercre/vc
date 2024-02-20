@@ -45,16 +45,20 @@
 //!
 //! ```json
 //! {
-//!    "credential_issuer": "https://credential-issuer.example.com",
-//!    "credential_configuration_ids": [
-//!       "UniversityDegree_LDP_VC"
-//!    ],
-//!    "grants": {
-//!       "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
-//!           "pre-authorized_code": "adhjhdjajkdkhjhdj",
-//!           "tx_code": true
-//!       }
-//!   }
+//!     "credential_issuer": "https://credential-issuer.example.com",
+//!     "credential_configuration_ids": [
+//!         "UniversityDegree_LDP_VC"
+//!     ],
+//!     "grants": {
+//!         "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+//!             "pre-authorized_code": "adhjhdjajkdkhjhdj",
+//!             "tx_code": {
+//!                 "input_mode":"numeric",
+//!                 "length":6,
+//!                 "description":"Please provide the one-time code that was sent via e-mail"
+//!             }
+//!        }
+//!     }
 //! }
 //! ```
 //!
@@ -67,7 +71,7 @@ use tracing::{instrument, trace};
 use vercre_core::error::Err;
 use vercre_core::vci::{
     AuthorizationCodeGrant, CredentialOffer, Grants, InvokeRequest, InvokeResponse,
-    PreAuthorizedCodeGrant,
+    PreAuthorizedCodeGrant, TxCode,
 };
 use vercre_core::{
     err, gen, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager,
@@ -159,7 +163,7 @@ impl super::Context for Context {
 
         let mut pre_auth_grant = None;
         let mut auth_grant = None;
-        let mut user_pin = None;
+        let mut user_code = None;
 
         if request.pre_authorize {
             // ------------------------------------------------
@@ -167,22 +171,34 @@ impl super::Context for Context {
             // ------------------------------------------------
             let pre_auth_code = gen::auth_code();
 
+            let tx_code = if request.tx_code_required {
+                Some(TxCode {
+                    input_mode: Some("numeric".to_string()),
+                    length: Some(6),
+                    description: Some(
+                        "Please provide the one-time code that was sent via e-mail".to_string(),
+                    ),
+                })
+            } else {
+                None
+            };
+
             pre_auth_grant = Some(PreAuthorizedCodeGrant {
                 pre_authorized_code: pre_auth_code.clone(),
-                tx_code: Some(request.tx_code),
+                tx_code,
                 interval: None,
                 authorization_server: None,
             });
 
-            if request.tx_code {
-                user_pin = Some(gen::user_pin());
+            if request.tx_code_required {
+                user_code = Some(gen::user_code());
             }
 
             // save state by pre-auth_code
             state.auth = Some(
                 AuthState::builder()
                     // .issuer_state(iss_state.clone())
-                    .user_pin(user_pin.clone())
+                    .user_code(user_code.clone())
                     .build(),
             );
             StateManager::put(provider, &pre_auth_code, state.to_vec(), state.expires_at).await?;
@@ -209,7 +225,7 @@ impl super::Context for Context {
                     pre_authorized_code: pre_auth_grant,
                 }),
             }),
-            user_pin,
+            user_code,
 
             // LATER: save offer to state and return uri
             credential_offer_uri: None,
@@ -237,7 +253,7 @@ mod tests {
             "credential_configuration_ids": ["EmployeeID_JWT"],
             "holder_id": NORMAL_USER,
             "pre-authorize": true,
-            "tx_code": true,
+            "tx_code_required": true,
             "callback_id": "1234"
         });
 
@@ -249,7 +265,7 @@ mod tests {
         assert_snapshot!("invoke", response, {
             ".credential_offer.grants.authorization_code.issuer_state" => "[state]",
             ".credential_offer.grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
-            ".user_pin" => "[user_pin]"
+            ".user_code" => "[user_code]"
         });
 
         // check redacted fields
@@ -267,10 +283,10 @@ mod tests {
             ".expires_at" => "[expires_at]",
             ".auth.code"=>"[code]",
             ".auth.issuer_state" => "[issuer_state]",
-            ".auth.user_pin" => "[user_pin]"
+            ".auth.user_code" => "[user_code]"
         });
 
         assert_let!(Some(auth_state), &state.auth);
-        assert_eq!(auth_state.user_pin, response.user_pin);
+        assert_eq!(auth_state.user_code, response.user_code);
     }
 }

@@ -121,9 +121,9 @@ impl super::Context for Context {
                 {
                     err!(Err::InvalidClient, "Anonymous access is not supported");
                 }
-                // user_pin
-                if request.user_pin != auth_state.user_pin {
-                    err!(Err::InvalidGrant, "Invalid user_pin provided");
+                // user_code
+                if request.user_code != auth_state.user_code {
+                    err!(Err::InvalidGrant, "Invalid user_code provided");
                 }
             }
             _ => {
@@ -227,7 +227,7 @@ mod tests {
         let pre_auth_code = "ABCDEF";
 
         state.auth = Some(AuthState {
-            user_pin: Some("1234".to_string()),
+            user_code: Some("1234".to_string()),
             ..Default::default()
         });
 
@@ -240,7 +240,7 @@ mod tests {
             "client_id": wallet::did(),
             "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
             "pre-authorized_code": pre_auth_code,
-            "user_pin": "1234"
+            "user_code": "1234"
         });
 
         let mut request =

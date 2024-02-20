@@ -33,7 +33,7 @@ async fn receive_offer() {
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "holder_id": NORMAL_USER,
         "pre-authorize": true,
-        "tx_code": true,
+        "tx_code_required": true,
         "callback_id": "1234"
     });
 
@@ -98,8 +98,8 @@ async fn receive_offer() {
     // Event::Pin
     //   1. emits Event::GetToken
     // ------------------------------------------------
-    let user_pin = offer_resp.user_pin.expect("user pin should be set");
-    let mut update = app.update(Event::Pin(user_pin.clone()), &mut model);
+    let user_code = offer_resp.user_code.expect("user pin should be set");
+    let mut update = app.update(Event::Pin(user_code.clone()), &mut model);
     assert_snapshot!("pin", app.view(&model), {
         ".credentials" => insta::sorted_redaction(),
         ".offered.*.credential_definition.credentialSubject"=> insta::sorted_redaction()

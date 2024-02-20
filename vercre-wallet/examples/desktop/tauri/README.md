@@ -23,7 +23,7 @@ RESP=$(curl --json '{
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "holder_id": "normal_user",
         "pre-authorize": true,
-        "tx_code": true,
+        "tx_code_required": true,
         "callback_id": "1234"
     }' \
     http://localhost:8080/invoke)
@@ -33,7 +33,7 @@ OFFER=$(echo $RESP | jq '.credential_offer' | jq -r @uri)
 open "openid-vc://credential_offer?credential_offer=$OFFER"
 
 # print user pin
-echo $RESP | jq '.user_pin'
+echo $RESP | jq '.user_code'
 ```
 
 The resultant link should look like:
@@ -51,7 +51,7 @@ RESP=$(curl --json '{
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "holder_id": "normal_user",
         "pre-authorize": true,
-        "tx_code": true,
+        "tx_code_required": true,
         "callback_id": "1234"
     }' \
     http://localhost:8080/invoke)
@@ -60,7 +60,7 @@ RESP=$(curl --json '{
 echo $RESP | jq '.credential_offer'
 
 # print user pin
-echo $RESP | jq '.user_pin'
+echo $RESP | jq '.user_code'
 ```
 
 ### Presentation

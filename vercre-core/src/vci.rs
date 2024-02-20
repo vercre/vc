@@ -14,7 +14,7 @@ use crate::metadata::{Client as ClientMetadata, CredentialDefinition, Issuer as 
 use crate::{err, stringify, Result};
 
 /// Request a Credential Offer for a Credential Issuer.
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Default, Debug, Deserialize, Serialize)]
 pub struct InvokeRequest {
     /// The URL of the Credential Issuer the Wallet can use obtain offered
     /// Credentials.
@@ -38,9 +38,9 @@ pub struct InvokeRequest {
     #[serde(rename = "pre-authorize")]
     pub pre_authorize: bool,
 
-    /// Whether a user PIN is required in order for the Wallet to complete a
-    /// credential request.
-    pub tx_code: bool,
+    /// Specifies whether a Transaction Code (PIN) is required by the `token` endpoint
+    /// during the Pre-Authorized Code Flow.
+    pub tx_code_required: bool,
 
     /// Identifies the (previously authenticated) Holder to the Issuer for the
     /// in order that they can authorize credential issuance.
@@ -69,7 +69,7 @@ pub struct InvokeResponse {
     /// A user PIN that must be provided by the Wallet in order to complete a
     /// credential request.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub user_pin: Option<String>,
+    pub user_code: Option<String>,
 }
 
 /// A Credential Offer object that can be sent to a Wallet as an HTTP GET
@@ -102,6 +102,7 @@ pub struct CredentialOffer {
     /// If not present, the Wallet MUST determine the Grant Types the Credential
     /// Issuer supports using the Issuer metadata. When multiple grants are
     /// present, it's at the Wallet's discretion which one to use.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub grants: Option<Grants>,
 }
 
@@ -179,7 +180,8 @@ impl CredentialOffer {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Grants {
     /// Authorization Code Grant Type: authorization_code.
-    pub authorization_code: Option<AuthorizationCodeGrant>,
+   #[serde(skip_serializing_if = "Option::is_none")]
+   pub authorization_code: Option<AuthorizationCodeGrant>,
 
     /// Pre-Authorized Code Grant Type:
     /// `urn:ietf:params:oauth:grant-type:pre-authorized_code`.
@@ -219,22 +221,23 @@ pub struct PreAuthorizedCodeGrant {
     #[serde(rename = "pre-authorized_code")]
     pub pre_authorized_code: String,
 
-    /// Specifies whether the Issuer expects presentation of a user PIN along
-    /// with the Token Request in the Pre-Authorized Code Flow.
-    /// The PIN is used to prevent replay of the code by an attacker that, for
-    /// example, scanned the QR code while standing behind the legitimate
-    /// user. It is RECOMMENDED the PIN be sent via a separate channel. If
-    /// the Wallet decides to use the Pre-Authorized Code Flow, a PIN value
-    /// MUST be sent in the user_pin parameter with the respective Token
-    /// Request.
-    /// Default is false.
+    /// TxCode is used to specify whether the Authorization Server expects presentation
+    /// of a Transaction Code by the End-User along with the Token Request in a
+    /// Pre-Authorized Code Flow.
+    ///
+    /// The Transaction Code binds the Pre-Authorized Code to a certain transaction
+    // to prevent replay of this code by an attacker that, for example, scanned the
+    /// QR code while standing behind the legitimate End-User.
+    ///
+    /// It is RECOMMENDED to send the Transaction Code via a separate channel.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub tx_code: Option<bool>,
+    pub tx_code: Option<TxCode>,
 
     /// The minimum amount of time in seconds that the Wallet SHOULD wait between
     /// polling requests to the token endpoint (in case the Authorization Server
     /// responds with error code 'authorization_pending'). If no value is provided,
     /// Wallets MUST use 5 as the default.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub interval: Option<i32>,
 
     /// To be used by the Wallet to identify the Authorization Server to use with
@@ -242,7 +245,42 @@ pub struct PreAuthorizedCodeGrant {
     /// metadata has multiple entries. MUST NOT be used otherwise.
     /// The value of this parameter MUST match with one of the values in the Credential
     /// Issuer 'authorization_servers' metadata property.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub authorization_server: Option<String>,
+}
+
+/// `TxCode` is used to specify whether the Authorization Server expects presentation
+/// of a Transaction Code by the End-User along with the Token Request in a
+/// Pre-Authorized Code Flow. If the Authorization Server does not expect a Transaction
+/// Code, this object is absent; this is the default. The Transaction Code is intended
+/// to bind the Pre-Authorized Code to a certain transaction to prevent replay of this
+/// code by an attacker that, for example, scanned the QR code while standing behind
+/// the legitimate End-User. It is RECOMMENDED to send the Transaction Code via a
+/// separate channel. If the Wallet decides to use the Pre-Authorized Code Flow, the
+/// Transaction Code value MUST be sent in the `tx_code` parameter with the respective
+/// Token Request as defined in Section 6.1. If no length or description is given, this
+/// object may be empty, indicating that a Transaction Code is required.
+#[derive(Clone, Default, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct TxCode {
+    /// Specifies the input character set. Possible values are "numeric" (only digits)
+    /// and "text" (any characters). The default is "numeric".
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_mode: Option<String>,
+
+    /// Specifies the length of the Transaction Code. This helps the Wallet to render
+    /// the input screen and improve the user experience.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub length: Option<i32>,
+
+    /// Guidance for the Holder of the Wallet on how to obtain the Transaction Code,
+    /// e.g., describing over which communication channel it is delivered. The Wallet
+    /// is RECOMMENDED to display this description next to the Transaction Code input
+    /// screen to improve the user experience. The length of the string MUST NOT exceed
+    /// 300 characters. The description does not support internationalization, however
+    /// the Issuer MAY detect the Holder's language by previous communication or an HTTP
+    /// Accept-Language header within an HTTP GET request for a Credential Offer URI.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
 }
 
 /// An Authorization Request is an OAuth 2.0 Authorization Request as defined in
@@ -440,8 +478,8 @@ pub struct TokenRequest {
     /// The pre-authorized code provided to the Wallet in a Credential Offer.
     ///
     /// REQUIRED if grant_type is "urn:ietf:params:oauth:grant-type:pre-authorized_code".
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "pre-authorized_code")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub pre_authorized_code: Option<String>,
 
     /// The user PIN provided during the Credential Offer process. Must be
@@ -449,7 +487,7 @@ pub struct TokenRequest {
     /// Offer. Only set when grant_type is
     /// "urn:ietf:params:oauth:grant-type:pre-authorized_code".
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub user_pin: Option<String>,
+    pub user_code: Option<String>,
 }
 
 /// Token Response as defined in [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html).
@@ -630,8 +668,8 @@ pub struct ProofClaims {
 pub struct CredentialResponse {
     /// The issued Credential. MUST be present when `acceptance_token` is not
     /// returned.
-    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub credential: Option<Value>,
 
     /// Identifies a Deferred Issuance transaction. This property is set if the

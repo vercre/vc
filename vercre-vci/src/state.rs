@@ -122,7 +122,7 @@ pub(crate) struct AuthState {
     pub(crate) scope: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub(crate) user_pin: Option<String>,
+    pub(crate) user_code: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) authorization_details: Option<Vec<TokenAuthorizationDetail>>,
@@ -277,10 +277,10 @@ impl AuthStateBuilder {
         self
     }
 
-    /// Sets the `user_pin` property
+    /// Sets the `user_code` property
     #[must_use]
-    pub(crate) fn user_pin(mut self, user_pin: Option<String>) -> Self {
-        self.state.user_pin = user_pin;
+    pub(crate) fn user_code(mut self, user_code: Option<String>) -> Self {
+        self.state.user_code = user_code;
         self
     }
 

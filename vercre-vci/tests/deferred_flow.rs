@@ -51,7 +51,7 @@ async fn get_offer() -> Result<InvokeResponse> {
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "holder_id": PENDING_USER,
         "pre-authorize": true,
-        "tx_code": true,
+        "tx_code_required": true,
         "callback_id": "1234"
     });
 
@@ -75,7 +75,7 @@ async fn get_token(input: InvokeResponse) -> Result<TokenResponse> {
         "client_id": wallet::did(),
         "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
         "pre-authorized_code": &pre_authorized_code.pre_authorized_code,
-        "user_pin": input.user_pin.unwrap_or_default(),
+        "user_code": input.user_code.unwrap_or_default(),
     });
 
     let mut request = serde_json::from_value::<TokenRequest>(body)?;
