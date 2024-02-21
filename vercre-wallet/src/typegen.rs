@@ -8,8 +8,6 @@
 
 #![cfg(feature = "typegen")]
 
-// use std::path::PathBuf;
-
 use crux_core::bridge::Request;
 use crux_core::typegen::TypeGen;
 

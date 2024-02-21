@@ -36,7 +36,7 @@ pub struct VerifiableCredential {
     /// Subsequent items MUST express context information and can be either URIs or
     /// objects. Each URI, if dereferenced, should result in a document containing
     /// machine-readable information about the @context.
-    #[cfg_attr(not(feature = "typegen"), serde(rename = "@context"))]
+    #[serde(rename = "@context")]
     pub context: Vec<String>,
 
     #[allow(rustdoc::bare_urls)]
@@ -165,7 +165,6 @@ impl VerifiableCredential {
     }
 
     /// Returns a sample [`VerifiableCredential`] for use in type generation
-    // #[cfg(feature = "typegen")]
     #[must_use]
     pub fn sample() -> Self {
         use chrono::TimeZone;

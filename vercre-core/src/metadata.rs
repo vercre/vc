@@ -434,7 +434,6 @@ impl CredentialConfiguration {
     /// # Panics
     ///
     /// Panics if the JSON does not serialize to an `CredentialConfiguration` object
-    // #[cfg(feature = "typegen")]
     #[must_use]
     pub fn sample() -> Self {
         let cred_cfg = serde_json::json!({
@@ -455,8 +454,12 @@ impl CredentialConfiguration {
                     "uri":"https://credibil.github.io/assets/credibil-logo-reversed.png",
                     "alt_text": "Credibil Logo",
                 },
-                "text_color":"#ffffff",
                 "background_color":"#323ed2",
+                "background_image": {
+                    "uri":"https://credibil.github.io/assets/credibil-background.png",
+                    "alt_text": "Credibil Background",
+                },
+                "text_color":"#ffffff"
             }],
             "credential_definition": {
                 "@context": [
@@ -528,6 +531,10 @@ impl CredentialConfiguration {
                 },
                 "text_color":"#ffffff",
                 "background_color":"#010100",
+                "background_image": {
+                    "uri":"https://credibil.github.io/assets/propellerhead-background.png",
+                    "alt_text": "Propellerhead Background",
+                },
             }],
             "credential_definition": {
                 "@context": [
@@ -650,7 +657,8 @@ pub struct CredentialDefinition {
     /// in accordance with the W3C Verifiable Credentials Data Model.
     ///
     /// REQUIRED when 'format' is "jwt_vc_json-ld" or "ldp_vc".
-    #[cfg_attr(not(feature = "typegen"), serde(rename = "@context"))]
+    // #[cfg_attr(not(feature = "typegen"), serde(rename = "@context"))]
+    #[serde(rename = "@context")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub context: Option<Vec<String>>,
 
