@@ -13,6 +13,7 @@ pub mod stringify;
 pub mod vci;
 pub mod vp;
 pub mod w3c;
+
 use std::fmt::{Debug, Display};
 
 use chrono::{DateTime, Utc};
@@ -21,7 +22,6 @@ use crate::metadata::{
     Client as ClientMetadata, CredentialDefinition, Issuer as IssuerMetadata,
     Server as ServerMetadata,
 };
-// use crate::vci::CredentialDefinition;
 
 // LATER: reduce cloning by refactoring larger structs into smaller, 'composed' structs
 //        see https://rust-unofficial.github.io/patterns/patterns/structural/compose-structs.html
@@ -143,4 +143,11 @@ impl Algorithm {
             Algorithm::EdDSA => "JsonWebKey2020".to_string(),
         }
     }
+}
+
+/// The Request trait is implemented by endpoint Request objects to provide
+/// early validation functionality during deserialization.
+trait Request {
+    /// Validate the request object.
+    fn validate(&self) -> Result<()>;
 }
