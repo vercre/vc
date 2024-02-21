@@ -1,20 +1,19 @@
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
 import Typography from "@mui/material/Typography";
-import Grid from "@mui/material/Unstable_Grid2";
 import { IssuanceView, CredentialConfiguration } from "shared_types/types/shared_types";
 
 import VcCard, { VcCardProps } from '../Credentials/VcCard';
 
 export type AcceptProps = {
     model: IssuanceView;
+    onCancel: () => void;
     onChange: () => void;
 };
 
 export const Accept = (props: AcceptProps) => {
-    const { model, onChange } = props;
-
-    const handleAccept = () => {
-        onChange();
-    }
+    const { model, onCancel, onChange } = props;
 
     const displayProps = (credential: CredentialConfiguration) : VcCardProps => {
         const display = credential.display?.at(0);
@@ -23,30 +22,45 @@ export const Accept = (props: AcceptProps) => {
             color: display?.text_color || undefined,
             issuer: model.issuer,
             logo: undefined,
-            logoUrl: display?.logo?.url || undefined,
+            logoUrl: display?.logo?.uri || undefined,
             name: display?.name,
-            onSelect: handleAccept,
-            size: 'medium'
+            onSelect: undefined,
+            size: 'large'
         };
     };
 
     return (
-        <>
-            <Typography variant="h5" gutterBottom>
-                Accept Credentials
+        <Stack spacing={2} sx={{ pt: 2 }}>
+            <Typography sx={{ pb: 1, textAlign: 'center' }}>
+                Do you accept the following credentials?
             </Typography>
-            <Typography variant="body2" sx={{ pb: 4 }}>
-                Click credential to select
-            </Typography>
-
-            <Grid container spacing={2}>
-                {Object.entries(model?.offered).map(([key, supported]) => (
-                    <Grid key={key} xs={12} sm={6}>
-                        <VcCard { ...displayProps(supported) } />
-                    </Grid>
-                ))}
-            </Grid>
-        </>
+            {Object.entries(model?.offered).map(([key, supported]) => (
+                <Box key={key} sx={{ display: 'flex', justifyContent: 'center'}}>
+                    <VcCard { ...displayProps(supported) } />
+                </Box>
+            ))}
+            <Box
+                sx={{
+                    display: 'flex',
+                    my: 2,
+                    justifyContent: 'center',
+                    gap: 4
+                }}
+            >
+                <Button
+                    onClick={onCancel}
+                    variant="outlined"
+                >
+                    Cancel
+                </Button>
+                <Button
+                    onClick={onChange}
+                    variant="contained"
+                >
+                    Accept
+                </Button>
+            </Box>
+        </Stack>
     );
 }
 

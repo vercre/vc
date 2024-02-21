@@ -45,6 +45,9 @@ pub enum Event {
     /// Set from the shell when the user has entered their pin.
     Pin(String),
 
+    /// ClearError is set when the user has acknowledged an error.
+    ClearError,
+
     // -----------------------
     // Capability callbacks
     // -----------------------
@@ -180,6 +183,9 @@ impl crux_core::App for App {
                 log::info!("Pin");
                 model.pin(pin);
                 self.update(Event::GetToken, model, caps);
+            }
+            Event::ClearError => {
+                model.reset();
             }
             Event::GetToken => {
                 log::info!("GetToken");
