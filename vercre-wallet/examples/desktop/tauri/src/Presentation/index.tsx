@@ -21,11 +21,10 @@ const initInput: Input = {
 
 export type PresentationProps = {
     model: PresentationView
-    onCancel: () => void
 }
 
 export const Presentation = (props: PresentationProps) => {
-    const { model, onCancel } = props;
+    const { model } = props;
     const [step, setStep] = useState(0);
     const [input, setInput] = useState(initInput);
     const maxSteps = 2;
@@ -48,6 +47,10 @@ export const Presentation = (props: PresentationProps) => {
         setInput((prev) => { return { ...prev, authorized: true } });
     }
 
+    const handleCancel = () => {
+        invoke('cancel');
+    };
+
     const allowNext = () => {
         switch (step) {
             case 0:
@@ -65,7 +68,7 @@ export const Presentation = (props: PresentationProps) => {
                 invoke("authorize");
                 break;
             case 1:
-                onCancel();
+                handleCancel();
                 break;
             default:
                 break;
@@ -74,7 +77,7 @@ export const Presentation = (props: PresentationProps) => {
 
     const handleBack = () => {
         if (step === 0) {
-            onCancel();
+            handleCancel();
         }
         setStep((prevStep) => prevStep - 1);
     };
@@ -93,7 +96,7 @@ export const Presentation = (props: PresentationProps) => {
                 nextButton={
                     <>
                         {step === maxSteps - 1 &&
-                            <Button size="small" variant="contained" onClick={onCancel}>
+                            <Button size="small" variant="contained" onClick={handleCancel}>
                                 Done
                             </Button>
 
@@ -108,7 +111,7 @@ export const Presentation = (props: PresentationProps) => {
                 backButton={
                     <>
                         {step === 0 &&
-                            <Button size="small" variant="contained" onClick={onCancel}>
+                            <Button size="small" variant="contained" onClick={handleCancel}>
                                 Cancel
                             </Button>
                         }

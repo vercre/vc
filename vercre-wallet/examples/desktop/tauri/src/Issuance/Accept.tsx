@@ -2,18 +2,17 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from "@mui/material/Typography";
+import { invoke } from '@tauri-apps/api/core';
 import { IssuanceView, CredentialConfiguration } from "shared_types/types/shared_types";
 
 import VcCard, { VcCardProps } from '../Credentials/VcCard';
 
 export type AcceptProps = {
     model: IssuanceView;
-    onCancel: () => void;
-    onChange: () => void;
 };
 
 export const Accept = (props: AcceptProps) => {
-    const { model, onCancel, onChange } = props;
+    const { model } = props;
 
     const displayProps = (credential: CredentialConfiguration) : VcCardProps => {
         const display = credential.display?.at(0);
@@ -48,13 +47,13 @@ export const Accept = (props: AcceptProps) => {
                 }}
             >
                 <Button
-                    onClick={onCancel}
+                    onClick={() => invoke('cancel')}
                     variant="outlined"
                 >
                     Cancel
                 </Button>
                 <Button
-                    onClick={onChange}
+                    onClick={() => invoke('accept')}
                     variant="contained"
                 >
                     Accept

@@ -62,12 +62,12 @@ const view = (viewModel: ViewModel | undefined): ReactNode => {
     switch (viewName) {
         case "Issuance":
             if (viewModel?.issuance) {
-                return <Issuance model={viewModel?.issuance} onCancel={() => invoke('cancel')} />
+                return <Issuance model={viewModel?.issuance} />
             }
             break;
         case "Presentation":
             if (viewModel?.presentation) {
-                return <Presentation model={viewModel?.presentation} onCancel={() => invoke('cancel')} />
+                return <Presentation model={viewModel?.presentation} />
             }
             break;
     }

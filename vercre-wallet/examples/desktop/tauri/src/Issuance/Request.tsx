@@ -8,7 +8,6 @@ import { IssuanceView } from "shared_types/types/shared_types";
 
 export type RequestProps = {
     model: IssuanceView | undefined;
-    onCancel: () => void;
 };
 
 export const Request = (props: RequestProps) => {

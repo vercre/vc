@@ -5,23 +5,13 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from "@mui/material/Typography";
-
-export type EnterPinProps = {
-    value: string;
-    onCancel: () => void;
-    onChange: (offer: string) => void;
-};
+import { invoke } from '@tauri-apps/api/core';
 
 // TODO: This will be provided by the credential offer tx_code and should not be hard-coded
 const PIN_LENGTH = 6;
 
-export const EnterPin = (props: EnterPinProps) => {
-    const { value, onCancel, onChange } = props;
-    const [ pin, setPin ] = useState<Array<string>>(() => {
-        const array = new Array(PIN_LENGTH).fill('');
-        array.splice(0, value.length, ...value);
-        return array;
-    });
+export const EnterPin = () => {
+    const [ pin, setPin ] = useState<Array<string>>(new Array(PIN_LENGTH).fill(''));
     const inputRef = useRef<Array<HTMLInputElement>>([]);
 
     const handleInputChange = (index: number) => (e: ChangeEvent<HTMLInputElement>) => {
@@ -44,8 +34,7 @@ export const EnterPin = (props: EnterPinProps) => {
     };
 
     const handleEnter = () => {
-        const pinValue = pin.join('');
-        onChange(pinValue);
+        invoke('set_pin', { pin: pin.join('') });
     };
 
     return (
@@ -85,7 +74,7 @@ export const EnterPin = (props: EnterPinProps) => {
                 }}
             >
                 <Button
-                    onClick={onCancel}
+                    onClick={() => invoke('cancel')}
                     variant="outlined"
                 >
                     Cancel
