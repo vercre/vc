@@ -22,10 +22,10 @@ use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
-use vercre_vp::{
-    Endpoint, InvokeRequest, InvokeResponse, RequestObjectRequest, RequestObjectResponse,
-    ResponseRequest,
-};
+use vercre_vp::invoke::{InvokeRequest, InvokeResponse};
+use vercre_vp::request::{RequestObjectRequest, RequestObjectResponse};
+use vercre_vp::response::ResponseRequest;
+use vercre_vp::Endpoint;
 
 #[tokio::main]
 async fn main() {

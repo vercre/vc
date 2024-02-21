@@ -46,7 +46,8 @@ use std::fmt::Debug;
 use tracing::{instrument, trace};
 use uuid::Uuid;
 use vercre_core::error::Err;
-use vercre_core::vp::{DeviceFlow, InvokeRequest, InvokeResponse, RequestObject};
+#[allow(clippy::module_name_repetitions)]
+pub use vercre_core::vp::{DeviceFlow, InvokeRequest, InvokeResponse, RequestObject};
 use vercre_core::w3c::vp::{Format, PresentationDefinition};
 use vercre_core::{err, gen, Algorithm, Callback, Client, Result, Signer, StateManager};
 

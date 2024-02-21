@@ -7,7 +7,7 @@ use serde_json::json;
 use test::Bencher;
 use test_utils::vp_provider::Provider;
 use vercre_core::vp::InvokeRequest;
-use vercre_vp::endpoint::Endpoint;
+use vercre_vp::Endpoint;
 
 #[bench]
 fn request(b: &mut Bencher) {

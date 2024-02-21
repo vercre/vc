@@ -1,6 +1,6 @@
 ---
-source: vercre-vp/src/endpoint/request.rs
-assertion_line: 140
+source: vercre-vp/src/request.rs
+assertion_line: 141
 expression: jwt
 ---
 header:
@@ -15,4 +15,3 @@ claims:
   nonce: "1234567890"
   state: ABCDEF123456
   client_id_scheme: redirect_uri
-

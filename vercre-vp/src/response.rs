@@ -27,7 +27,8 @@ use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::{instrument, trace};
 use vercre_core::error::Err;
-use vercre_core::vp::{ResponseRequest, ResponseResponse};
+#[allow(clippy::module_name_repetitions)]
+pub use vercre_core::vp::{ResponseRequest, ResponseResponse};
 use vercre_core::w3c::{Claims as VpClaims, VerifiableCredential};
 use vercre_core::{err, jwt, Callback, Client, Result, Signer, StateManager};
 
