@@ -295,6 +295,10 @@ pub struct CredentialResponseEncryption {
 impl Issuer {
     /// Create a new `Issuer` with the specified `credential_issuer` and
     /// `credential_endpoint`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the JSON does not serialize to an `Issuer` object
     #[must_use]
     pub fn sample() -> Self {
         const ISSUER_URI: &str = "http://credibil.io";
@@ -426,6 +430,10 @@ pub struct CredentialConfiguration {
 
 impl CredentialConfiguration {
     /// Create a new `CredentialConfiguration` with the specified format.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the JSON does not serialize to an `CredentialConfiguration` object
     // #[cfg(feature = "typegen")]
     #[must_use]
     pub fn sample() -> Self {
@@ -491,8 +499,13 @@ impl CredentialConfiguration {
         serde_json::from_value(cred_cfg).expect("should serialize to CredentialConfiguration")
     }
 
-    /// Create a new `CredentialConfiguration` with the specified format.
     // TODO: Better demonstrate standards variation from that supplied by sample().
+
+    /// Create a new `CredentialConfiguration` with the specified format.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the JSON does not serialize to an `CredentialConfiguration` object.
     #[must_use]
     pub fn sample2() -> Self {
         let cred_cfg = serde_json::json!({

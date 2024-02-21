@@ -1,9 +1,0 @@
----
-source: vercre-vci/src/endpoint/authorize.rs
-assertion_line: 434
-expression: response
----
-code: "[code]"
-state: "1234"
-redirect_uri: "http://localhost:3000/callback"
-

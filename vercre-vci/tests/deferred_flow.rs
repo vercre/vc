@@ -10,10 +10,11 @@ use test_utils::wallet;
 use vercre_core::jwt::{self, Jwt};
 use vercre_core::vci::ProofClaims;
 use vercre_core::Result;
-use vercre_vci::{
-    CredentialRequest, CredentialResponse, DeferredCredentialRequest, DeferredCredentialResponse,
-    Endpoint, InvokeRequest, InvokeResponse, TokenRequest, TokenResponse,
-};
+use vercre_vci::credential::{CredentialRequest, CredentialResponse};
+use vercre_vci::deferred::{DeferredCredentialRequest, DeferredCredentialResponse};
+use vercre_vci::invoke::{InvokeRequest, InvokeResponse};
+use vercre_vci::token::{TokenRequest, TokenResponse};
+use vercre_vci::Endpoint;
 
 lazy_static! {
     static ref PROVIDER: Provider = Provider::new();

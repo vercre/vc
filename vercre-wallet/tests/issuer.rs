@@ -17,11 +17,14 @@ use test_utils::vci_provider::Provider;
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
-use vercre_vci::{
-    AuthorizationRequest, BatchCredentialRequest, BatchCredentialResponse, CredentialRequest,
-    CredentialResponse, DeferredCredentialRequest, DeferredCredentialResponse, Endpoint,
-    InvokeRequest, InvokeResponse, MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,
-};
+use vercre_vci::authorize::AuthorizationRequest;
+use vercre_vci::batch::{BatchCredentialRequest, BatchCredentialResponse};
+use vercre_vci::credential::{CredentialRequest, CredentialResponse};
+use vercre_vci::deferred::{DeferredCredentialRequest, DeferredCredentialResponse};
+use vercre_vci::invoke::{InvokeRequest, InvokeResponse};
+use vercre_vci::metadata::{MetadataRequest, MetadataResponse};
+use vercre_vci::token::{TokenRequest, TokenResponse};
+use vercre_vci::Endpoint;
 
 // lazy_static::lazy_static! {
 //     static ref AUTHORIZED: RwLock<HashMap<String, AuthorizationRequest>> = RwLock::new(HashMap::new());
