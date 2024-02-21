@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
 
-import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
-import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import MobileStepper from '@mui/material/MobileStepper';
-import { invoke } from "@tauri-apps/api/core";
-import { IssuanceView } from "shared_types/types/shared_types";
+import Slide from '@mui/material/Slide';
+import { invoke } from '@tauri-apps/api/core';
+import { IssuanceView } from 'shared_types/types/shared_types';
 
-import Accept from "./Accept";
-import EnterPin from "./EnterPin";
-import Request from "./Request";
+import Accept from './Accept';
+import EnterPin from './EnterPin';
+import Error from './Error';
+import Request from './Request';
+import { useShellState } from '../Shell/Context';
 
 type Input = {
     accepted: boolean
@@ -19,7 +18,7 @@ type Input = {
 
 const initInput: Input = {
     accepted: false,
-    pin: ""
+    pin: ''
 };
 
 export type IssuanceProps = {
@@ -29,113 +28,72 @@ export type IssuanceProps = {
 
 export const Issuance = (props: IssuanceProps) => {
     const { model, onCancel } = props;
-    const [step, setStep] = useState(0);
     const [input, setInput] = useState(initInput);
-    const maxSteps = 3;
+    const [mode, setMode] = useState<'accept' | 'pin' | 'request' | 'error'>('accept');
+    const { shellState, setShellState } = useShellState();
 
-    // translate status to step
     useEffect(() => {
+        if (shellState.title === 'Accept Credential') {
+            return;
+        }
+        setShellState({
+            title: 'Accept Credential',
+            action: undefined,
+            secondaryAction: undefined,
+        });
+    }, [shellState, setShellState]);
+    
+    // translate status to mode
+    useEffect(() => {
+        console.log('status', model.status);
+        const status = Object(model.status);
+        if (Object.prototype.hasOwnProperty.call(status, 'Failed')) {
+            setMode('error');
+            return;
+        }
         switch (String(model.status)) {
-            case "PendingPin":
-                setStep(1);
+            case 'PendingPin':
+                setMode('pin');
                 break;
-            case "Accepted":
-            case "Requested":
-            case "Completed":
-                setStep(2);
+            case 'Accepted':
+            case 'Requested':
+            case 'Completed':
+                setMode('request');
                 break;
             default:
-                setStep(0);
+                setMode('accept');
                 break;
         }
     }, [model]);
 
-
     const handleAcceptChange = () => {
         setInput((prev) => { return { ...prev, accepted: true } });
+        invoke('accept');
     }
+
     const handlePinChange = (pin: string) => {
+        console.log('pin', pin);
         setInput((prev) => { return { ...prev, pin } });
+        invoke('set_pin', { pin: input.pin });
     }
-
-    const allowNext = () => {
-        switch (step) {
-            case 0:
-                return input.accepted;
-            case 1:
-                return input.pin.length > 0;
-            case 2:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    const handleNext = () => {
-        switch (step) {
-            case 0:
-                invoke("accept");
-                break;
-            case 1:
-                invoke("set_pin", { pin: input.pin });
-                break;
-            case 2:
-                onCancel();
-                break;
-            default:
-                break;
-        }
-    };
-
-    const handleBack = () => {
-        if (step === 0) {
-            onCancel();
-        }
-        setStep((prevStep) => prevStep - 1);
-    };
 
     return (
-        <>
-            <Box sx={{ width: '100%', p: 2 }}>
-                {step === 0 &&
-                    // <Accept value={input.accepted} onChange={handleAcceptChange} model={model} />
-                    <Accept onChange={handleAcceptChange} model={model} />
-                }
-                {step === 1 &&
-                    <EnterPin value={input.pin} onChange={handlePinChange} />
-                }
-                {step === 2 &&
-                    <Request model={model} />
-                }
-            </Box>
-            <MobileStepper variant="dots" steps={maxSteps} position="static" activeStep={step}
-                nextButton={<>
-                    {step === maxSteps - 1 &&
-                        <Button size="small" variant="contained" onClick={onCancel}>
-                            Done
-                        </Button>
-
-                    }
-                    {step !== maxSteps - 1 &&
-                        <Button size="small" disabled={!allowNext()} onClick={handleNext}>
-                            Next<KeyboardArrowRight />
-                        </Button>
-                    }
-                </>}
-                backButton={<>
-                    {step === 0 &&
-                        <Button size="small" variant="contained" onClick={onCancel}>
-                            Cancel
-                        </Button>
-                    }
-                    {step !== 0 &&
-                        <Button size="small" onClick={handleBack}>
-                            <KeyboardArrowLeft />Back
-                        </Button>
-                    }
-                </>}
-            />
-        </>
+        <Box sx={{ pt: 1, position: 'relative'}}>
+            {mode === 'accept' &&
+                <Accept onCancel={onCancel} onChange={handleAcceptChange} model={model} />
+            }
+            <Slide direction="left" in={mode === 'pin'} mountOnEnter unmountOnExit>
+                <Box>
+                    <EnterPin onCancel={onCancel} onChange={handlePinChange} value={input.pin} />
+                </Box>
+            </Slide>
+            {mode === 'request' &&
+                <Request onCancel={onCancel} model={model} />
+            }
+            {mode === 'error' &&
+                <Error />
+            }
+        </Box>
     );
 }
 

@@ -40,7 +40,7 @@ const VcAdd = (props: VcAddProps) => {
                 name="offer"
                 onChange={(e) => handleChange(e)}
                 required
-                rows={6}
+                rows={10}
                 size="small"
                 value={offer}
                 variant="outlined"
