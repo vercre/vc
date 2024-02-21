@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
 import Slide from '@mui/material/Slide';
+import { useTheme } from '@mui/material/styles';
 import { invoke } from '@tauri-apps/api/core';
 import { IssuanceView } from 'shared_types/types/shared_types';
 
@@ -31,6 +34,7 @@ export const Issuance = (props: IssuanceProps) => {
     const [input, setInput] = useState(initInput);
     const [mode, setMode] = useState<'accept' | 'pin' | 'request' | 'error'>('accept');
     const { shellState, setShellState } = useShellState();
+    const theme = useTheme();
 
     useEffect(() => {
         if (shellState.title === 'Accept Credential') {
@@ -49,8 +53,22 @@ export const Issuance = (props: IssuanceProps) => {
         const status = Object(model.status);
         if (Object.prototype.hasOwnProperty.call(status, 'Failed')) {
             setMode('error');
+            setShellState({
+                title: 'Accept Credential',
+                action: (
+                    <IconButton onClick={() => invoke('cancel')} size="large">
+                        <ArrowBackIosIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
+                    </IconButton>
+                ),
+                secondaryAction: undefined
+            });
             return;
         }
+        setShellState({
+            title: 'Accept Credential',
+            action: undefined,
+            secondaryAction: undefined,
+        });
         switch (String(model.status)) {
             case 'PendingPin':
                 setMode('pin');
@@ -64,7 +82,7 @@ export const Issuance = (props: IssuanceProps) => {
                 setMode('accept');
                 break;
         }
-    }, [model]);
+    }, [model, setShellState, theme.palette.primary.contrastText]);
 
     const handleAcceptChange = () => {
         setInput((prev) => { return { ...prev, accepted: true } });
