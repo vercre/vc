@@ -37,6 +37,7 @@ export const EnterPin = (props: EnterPinProps) => {
         inputRef.current[nextIndex].focus();
         setPin((prev) => {
             const newPin = [...prev];
+            console.log('newPin', newPin);
             newPin[index] = val;
             return newPin;
         });

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
@@ -23,7 +23,7 @@ export type CredentialsProps = {
 }
 
 const listShellState = {
-    title: "Credentials",
+    title: 'Credentials',
     action: undefined,
     secondaryAction: undefined,
 };
