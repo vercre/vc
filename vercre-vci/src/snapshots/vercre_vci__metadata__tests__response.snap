@@ -1,6 +1,6 @@
 ---
 source: vercre-vci/src/metadata.rs
-assertion_line: 91
+assertion_line: 92
 expression: response
 ---
 credential_issuer: "http://credibil.io"
@@ -33,6 +33,9 @@ credential_configurations_supported:
           alt_text: Propellerhead Logo
         description: Propellerhead certified developer credential
         background_color: "#010100"
+        background_image:
+          uri: "https://credibil.github.io/assets/propellerhead-background.png"
+          alt_text: Propellerhead Background
         text_color: "#ffffff"
     credential_definition:
       "@context":
@@ -82,6 +85,9 @@ credential_configurations_supported:
           alt_text: Credibil Logo
         description: Credibil employee ID credential
         background_color: "#323ed2"
+        background_image:
+          uri: "https://credibil.github.io/assets/credibil-background.png"
+          alt_text: Credibil Background
         text_color: "#ffffff"
     credential_definition:
       "@context":

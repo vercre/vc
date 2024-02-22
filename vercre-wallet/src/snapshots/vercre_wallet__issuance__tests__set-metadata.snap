@@ -1,6 +1,6 @@
 ---
 source: vercre-wallet/src/issuance.rs
-assertion_line: 380
+assertion_line: 381
 expression: model.offered
 ---
 EmployeeID_JWT:
@@ -25,6 +25,9 @@ EmployeeID_JWT:
         alt_text: Credibil Logo
       description: Credibil employee ID credential
       background_color: "#323ed2"
+      background_image:
+        uri: "https://credibil.github.io/assets/credibil-background.png"
+        alt_text: Credibil Background
       text_color: "#ffffff"
   credential_definition:
     "@context":

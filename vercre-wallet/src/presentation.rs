@@ -240,7 +240,7 @@ mod tests {
     use assert_let_bind::assert_let;
     use base64ct::{Base64UrlUnpadded, Encoding};
     use crux_core::testing::AppTester; // assert_effect,
-    use crux_http::protocol::HttpResponse;
+    use crux_http::protocol::{HttpResponse, HttpResult};
     use crux_http::testing::ResponseBuilder;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use lazy_static::lazy_static;
@@ -281,8 +281,8 @@ mod tests {
             jwt: None,
         };
 
-        let http_output = HttpResponse::ok().json(&response).build();
-        let update = app.resolve(request, http_output).expect("update");
+        let http_resp = HttpResponse::ok().json(&response).build();
+        let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("update");
 
         // check the app emitted an (internal) event to update the model
         let http_resp = ResponseBuilder::ok().body(response).build();
@@ -457,8 +457,8 @@ mod tests {
             "redirect_uri":"https://client.example.org/cb#response_code=091535f699ea575c7937fa5f0f454aee"
         });
 
-        let http_output = HttpResponse::ok().json(&req).build();
-        let update = app.resolve(request, http_output).expect("an update");
+        let http_resp = HttpResponse::ok().json(&req).build();
+        let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("an update");
 
         let http_resp = ResponseBuilder::ok().body(req).build();
         assert_eq!(Event::Submitted(Ok(http_resp)), update.events[0]);

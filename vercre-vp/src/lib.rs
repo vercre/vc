@@ -157,12 +157,11 @@
 //! [OpenID4VP]: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
 //! [JWT VC Presentation Profile]: https://identity.foundation/jwt-vc-presentation-profile
 
-
-mod state;
 pub mod invoke;
 pub mod metadata;
 pub mod request;
 pub mod response;
+mod state;
 
 use std::fmt::Debug;
 
@@ -361,4 +360,3 @@ mod tests {
         }
     }
 }
-

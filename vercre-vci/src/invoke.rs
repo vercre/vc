@@ -128,20 +128,23 @@ impl super::Context for Context {
         if request.credential_issuer.is_empty() {
             err!(Err::InvalidRequest, "No credential_issuer specified");
         };
-        // credentials required
-        if request.credential_configuration_ids.is_empty() {
-            err!(Err::InvalidRequest, "No credentials requested");
-        };
+
+        // // credentials required
+        // if request.credential_configuration_ids.is_empty() {
+        //     err!(Err::InvalidRequest, "No credentials requested");
+        // };
+
         // requested credential is supported
         for cred_id in &request.credential_configuration_ids {
             let Some(_) = issuer_meta.credential_configurations_supported.get(cred_id) else {
                 err!(Err::UnsupportedCredentialType, "Requested credential is unsupported");
             };
         }
-        // holder_id is required
-        if request.holder_id.is_none() {
-            err!(Err::InvalidRequest, "No holder_id specified");
-        };
+
+        // // holder_id is required
+        // if request.holder_id.is_none() {
+        //     err!(Err::InvalidRequest, "No holder_id specified");
+        // };
 
         Ok(self)
     }

@@ -1,6 +1,6 @@
 ---
 source: vercre-wallet/src/presentation.rs
-assertion_line: 412
+assertion_line: 413
 expression: app.view(&model)
 ---
 credentials:
@@ -84,6 +84,9 @@ credentials:
             alt_text: Credibil Logo
           description: Credibil employee ID credential
           background_color: "#323ed2"
+          background_image:
+            uri: "https://credibil.github.io/assets/credibil-background.png"
+            alt_text: Credibil Background
           text_color: "#ffffff"
       credential_definition:
         "@context":

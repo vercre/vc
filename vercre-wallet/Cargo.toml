@@ -36,7 +36,7 @@ anyhow.workspace = true
 base64ct = { version = "1.6.0", default-features = false, features = ["std"] }
 chrono = { version = "0.4.34", features = ["serde"] }
 crux_core = "0.7.3"
-crux_http = "0.6"
+crux_http = "0.7"
 futures = "0.3.30"
 http-types = "2.12.0"
 lazy_static = "1.4.0"
