@@ -712,15 +712,6 @@ mod tests {
 
     use super::*;
 
-    #[cfg(feature = "typegen")]
-    #[test]
-    fn generate() {
-        let mut gen = crux_core::typegen::TypeGen::new();
-        gen.register_samples::<VerifiableCredential>(vec![VerifiableCredential::sample()])
-            .expect("should register type");
-        // gen.swift("SharedTypes", "swift").expect("should generate swift types");
-    }
-
     #[test]
     fn test_builder() {
         test_utils::init_tracer();

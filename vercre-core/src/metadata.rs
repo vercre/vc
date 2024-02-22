@@ -911,17 +911,3 @@ pub struct SupportedVpFormat {
     pub alg_values_supported: Option<Vec<String>>,
 }
 
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "typegen")]
-    use super::CredentialConfiguration;
-
-    #[cfg(feature = "typegen")]
-    #[test]
-    fn generate() {
-        let mut gen = crux_core::typegen::TypeGen::new();
-        gen.register_samples::<CredentialConfiguration>(vec![CredentialConfiguration::sample()])
-            .expect("should register type");
-        // gen.swift("SharedTypes", "swift").expect("should generate swift types");
-    }
-}
