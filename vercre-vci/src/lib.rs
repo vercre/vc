@@ -50,7 +50,7 @@
 //! A number of elements have been excluded for brevity. A more complete example can be
 //! found in the `examples` directory.
 //!  
-//! ```compile_fail
+//! ```rust,ignore
 //! #[tokio::main]
 //! async fn main() {
 //!     // `Provider` implements the `Provider` traits

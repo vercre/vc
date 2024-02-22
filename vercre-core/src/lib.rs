@@ -144,10 +144,3 @@ impl Algorithm {
         }
     }
 }
-
-// /// The Request trait is implemented by endpoint Request objects to provide
-// /// early validation functionality during deserialization.
-// trait Request {
-//     /// Validate the request object.
-//     fn validate(&self) -> Result<()>;
-// }
