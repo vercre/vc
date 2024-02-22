@@ -18,14 +18,14 @@ const Transition = forwardRef(function Transition(
     return <Slide direction="down" ref={ref} {...props} />;
 });
 
-export type VcDeleteProps = {
+export type DeleteProps = {
     name?: string;
     open: boolean;
     onClose: () => void;
     onDelete: () => void;
 }
 
-const VcDelete = (props: VcDeleteProps) => {
+const Delete = (props: DeleteProps) => {
     const { name, open, onClose, onDelete } = props;
 
     return (
@@ -50,4 +50,4 @@ const VcDelete = (props: VcDeleteProps) => {
     );
 };
 
-export default VcDelete;
+export default Delete;

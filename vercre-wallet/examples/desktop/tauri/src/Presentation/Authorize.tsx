@@ -1,21 +1,18 @@
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
 import Typography from "@mui/material/Typography";
-import Grid from "@mui/material/Unstable_Grid2";
+import { invoke } from '@tauri-apps/api/core';
 import { Credential, PresentationView } from "shared_types/types/shared_types";
 
 import VcCard, { VcCardProps } from "../Credentials/VcCard";
 
 export type AuthorizeProps = {
-    model: PresentationView | undefined;
-    value: boolean;
-    onChange: () => void;
+    model: PresentationView;
 };
 
 export const Authorize = (props: AuthorizeProps) => {
-    const { model, onChange } = props;
-
-    const handleAuthorize = () => {
-        onChange();
-    }
+    const { model } = props;
 
     const displayProps = (credential: Credential) : VcCardProps => {
         const display = credential.metadata.display?.at(0);
@@ -26,28 +23,43 @@ export const Authorize = (props: AuthorizeProps) => {
             logo: credential.logo || undefined,
             logoUrl: undefined,
             name: display?.name,
-            onSelect: handleAuthorize,
-            size: 'medium'
+            onSelect: undefined,
+            size: 'large'
         }
     };
 
     return (
-        <>
-            <Typography variant="h5" gutterBottom>
-                Authorize Presentation
+        <Stack spacing={2} sx={{ pt: 2 }}>
+            <Typography sx={{ pb: 1, textAlign: 'center' }}>
+                Do you authorize presentation of the following credentials?
             </Typography>
-            <Typography variant="body2" sx={{ pb: 4 }}>
-                Click credentials to present
-            </Typography>
-
-            <Grid container spacing={2}>
-                {model?.credentials.map((credential, index) =>
-                    <Grid key={index} xs={12} sm={6}>
-                        <VcCard { ...displayProps(credential) } />
-                    </Grid>
-                )}
-            </Grid>
-        </>
+            {model?.credentials.map((credential, index) =>
+                <Box key={index} sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <VcCard { ...displayProps(credential) } />
+                </Box>
+            )}
+            <Box
+                sx={{
+                    display: 'flex',
+                    my: 2,
+                    justifyContent: 'center',
+                    gap: 4
+                }}
+            >
+                <Button
+                    onClick={() => invoke('cancel')}
+                    variant="outlined"
+                >
+                    Cancel
+                </Button>
+                <Button
+                    onClick={() => invoke('authorize')}
+                    variant="contained"
+                >
+                    Authorize
+                </Button>
+            </Box>
+        </Stack>
     );
 }
 

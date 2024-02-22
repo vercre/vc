@@ -1,23 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
-import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import MobileStepper from '@mui/material/MobileStepper';
-import { invoke } from "@tauri-apps/api/core";
 import { PresentationView } from "shared_types/types/shared_types";
 
 import Authorize from "./Authorize";
+import Error from "./Error";
 import Request from "./Request";
-
-type Input = {
-    authorized: boolean
-}
-
-const initInput: Input = {
-    authorized: false,
-};
+import { useShellState } from '../Shell/Context';
 
 export type PresentationProps = {
     model: PresentationView
@@ -25,105 +14,54 @@ export type PresentationProps = {
 
 export const Presentation = (props: PresentationProps) => {
     const { model } = props;
-    const [step, setStep] = useState(0);
-    const [input, setInput] = useState(initInput);
-    const maxSteps = 2;
+    const [mode, setMode] = useState<'authorize' | 'request' | 'error'>('authorize');
+    const { setShellState } = useShellState();
+    const initialLoad = useRef<boolean>(true);
 
-    // translate status to step
+    // set the default shell state
     useEffect(() => {
+        if (!initialLoad.current) {
+            return;
+        }
+        initialLoad.current = false;
+        setShellState({
+            title: 'Accept Credential',
+            action: undefined,
+            secondaryAction: undefined,
+        });
+    }, [setShellState]);
+    
+
+    // translate status to mode
+    useEffect(() => {
+        const status = Object(model.status);
+        if (Object.prototype.hasOwnProperty.call(status, 'Failed')) {
+            setMode('error');
+            return;
+        }
         switch (String(model.status)) {
             case "Authorized":
             case "Completed":
-                setStep(1);
+                setMode('request');
                 break;
             default:
-                setStep(0);
+                setMode('authorize');
                 break;
         }
     }, [model]);
 
-
-    const handleAuthorizeChange = () => {
-        setInput((prev) => { return { ...prev, authorized: true } });
-    }
-
-    const handleCancel = () => {
-        invoke('cancel');
-    };
-
-    const allowNext = () => {
-        switch (step) {
-            case 0:
-                return input.authorized;
-            case 1:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    const handleNext = () => {
-        switch (step) {
-            case 0:
-                invoke("authorize");
-                break;
-            case 1:
-                handleCancel();
-                break;
-            default:
-                break;
-        }
-    };
-
-    const handleBack = () => {
-        if (step === 0) {
-            handleCancel();
-        }
-        setStep((prevStep) => prevStep - 1);
-    };
-
     return (
-        <>
-            <Box sx={{ width: '100%', p: 2 }}>
-                {step === 0 &&
-                    <Authorize value={input.authorized} onChange={handleAuthorizeChange} model={model} />
-                }
-                {step === 1 &&
-                    <Request model={model} />
-                }
-            </Box>
-            <MobileStepper variant="dots" steps={maxSteps} position="static" activeStep={step}
-                nextButton={
-                    <>
-                        {step === maxSteps - 1 &&
-                            <Button size="small" variant="contained" onClick={handleCancel}>
-                                Done
-                            </Button>
-
-                        }
-                        {step !== maxSteps - 1 &&
-                            <Button size="small" disabled={!allowNext()} onClick={handleNext}>
-                                Next<KeyboardArrowRight />
-                            </Button>
-                        }
-                    </>
-                }
-                backButton={
-                    <>
-                        {step === 0 &&
-                            <Button size="small" variant="contained" onClick={handleCancel}>
-                                Cancel
-                            </Button>
-                        }
-                        {step !== 0 &&
-                            <Button size="small" onClick={handleBack}>
-                                <KeyboardArrowLeft />Back
-                            </Button>
-                        }
-                    </>
-                }
-            />
-        </>
+        <Box sx={{ pt: 1, position: 'relative'}}>
+            { mode === 'authorize' &&
+                <Authorize model={model} />
+            }
+            { mode === 'request' &&
+                <Request model={model} />
+            }
+            { mode === 'error' &&
+                <Error />
+            }
+        </Box>
     );
 }
 

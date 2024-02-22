@@ -12,10 +12,10 @@ import { useTheme } from '@mui/material/styles';
 import { invoke } from "@tauri-apps/api/core";
 import { Credential } from "shared_types/types/shared_types";
 
-import VcAdd from "./VcAdd";
+import VcAdd from "./Add";
 import VcCard, { VcCardProps } from "./VcCard";
-import VcDelete from "./VcDelete";
-import VcDetail from "./VcDetail";
+import VcDelete from "./Delete";
+import VcDetail from "./Detail";
 import { useShellState } from "../Shell/Context";
 
 export type CredentialsProps = {

@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 
 import Box from '@mui/material/Box';
 import Slide from '@mui/material/Slide';
-import { useTheme } from '@mui/material/styles';
 import { IssuanceView } from 'shared_types/types/shared_types';
 
 import Accept from './Accept';
@@ -20,7 +19,6 @@ export const Issuance = (props: IssuanceProps) => {
     const [mode, setMode] = useState<'accept' | 'pin' | 'request' | 'error'>('accept');
     const { setShellState } = useShellState();
     const initialLoad = useRef<boolean>(true);
-    const theme = useTheme();
 
     // set the default shell state
     useEffect(() => {
@@ -37,7 +35,6 @@ export const Issuance = (props: IssuanceProps) => {
 
     // translate status to mode
     useEffect(() => {
-        console.log('status', model.status);
         const status = Object(model.status);
         if (Object.prototype.hasOwnProperty.call(status, 'Failed')) {
             setMode('error');
@@ -56,7 +53,7 @@ export const Issuance = (props: IssuanceProps) => {
                 setMode('accept');
                 break;
         }
-    }, [model, theme.palette.primary.contrastText]);
+    }, [model]);
 
     return (
         <Box sx={{ pt: 1, position: 'relative'}}>

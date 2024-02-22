@@ -7,11 +7,11 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
-export type VcAddProps = {
+export type AddProps = {
     onSubmit: (url: string) => void;
 };
 
-const VcAdd = (props: VcAddProps) => {
+const Add = (props: AddProps) => {
     const [offer, setOffer] = useState<string>("");
     const [error, setError] = useState<string | undefined>(undefined);
 
@@ -66,4 +66,4 @@ const VcAdd = (props: VcAddProps) => {
     );
 };
 
-export default VcAdd;
+export default Add;

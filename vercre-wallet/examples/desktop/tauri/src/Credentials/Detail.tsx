@@ -7,11 +7,11 @@ import { Credential } from "shared_types/types/shared_types";
 import { dateFromIso, domainFromUrl } from '.';
 import VcCard, { VcCardProps } from "./VcCard";
 
-export type VcDetailProps = {
+export type DetailProps = {
     credential: Credential;
 };
 
-const VcDetail = (props: VcDetailProps) => {
+const Detail = (props: DetailProps) => {
     const { credential } = props;
 
     const claimValues = credential.vc.credentialSubject;
@@ -67,7 +67,7 @@ const VcDetail = (props: VcDetailProps) => {
     );
 }
 
-export default VcDetail;
+export default Detail;
 
 const ClaimEntry = (props: { name: string, value: Optional<string> | undefined }) => {
     return (<>

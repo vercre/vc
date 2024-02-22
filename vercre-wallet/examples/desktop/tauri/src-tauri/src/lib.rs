@@ -121,7 +121,6 @@ async fn accept(handle: AppHandle) -> Result<(), error::Error> {
 
 #[tauri::command]
 async fn set_pin(pin: String, handle: AppHandle) -> Result<(), error::Error> {
-    println!("set_pin: {pin}");
     process_event(Event::Issuance(issuance::Event::Pin(pin)), handle)
 }
 
