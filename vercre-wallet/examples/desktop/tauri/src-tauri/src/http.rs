@@ -1,6 +1,6 @@
-
 use vercre_wallet::http::protocol::{HttpRequest, HttpResponse};
 
+// use vercre_wallet::http::protocol::{HttpRequest, HttpResponse, HttpResult};
 use crate::error;
 
 pub async fn request(http_req: &HttpRequest) -> Result<HttpResponse, error::Error> {
@@ -25,4 +25,5 @@ pub async fn request(http_req: &HttpRequest) -> Result<HttpResponse, error::Erro
     let body = response.bytes().await?;
 
     Ok(HttpResponse::status(status).body(body).build())
+    // Ok(HttpResult::Ok(HttpResponse::status(status).body(body).build()))
 }

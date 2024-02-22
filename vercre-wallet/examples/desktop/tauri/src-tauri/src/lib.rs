@@ -148,11 +148,11 @@ fn process_effect(effect: Effect, handle: AppHandle) -> Result<(), error::Error>
         Effect::Http(mut request) => {
             tauri::async_runtime::spawn({
                 async move {
-                    let response = http_loc::request(&request.operation)
+                    let result = http_loc::request(&request.operation)
                         .await
                         .expect("error processing Http effect");
 
-                    for effect in CORE.resolve(&mut request, response) {
+                    for effect in CORE.resolve(&mut request, result) {
                         let _ = process_effect(effect, handle.clone());
                     }
                 }

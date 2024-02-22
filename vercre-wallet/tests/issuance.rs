@@ -69,7 +69,7 @@ async fn receive_offer() {
     let resp = issuer.get("/.well-known/openid-credential-issuer").expect_success().await;
     let metadata: MetadataResponse = resp.json();
     let http_resp = HttpResponse::ok().body(resp.into_bytes()).build();
-    let update = app.resolve(request, http_resp).expect("an update");
+    let update = app.resolve(request, http_resp).expect("update");
     // let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("update");
 
     // check the app emitted an (internal) event to update the model
@@ -123,7 +123,7 @@ async fn receive_offer() {
     // resolve the app request with a ~~simulated~~ response from the server
     let token: TokenResponse = resp.json();
     let http_resp = HttpResponse::ok().body(resp.into_bytes()).build();
-    let update = app.resolve(request, http_resp).expect("an update");
+    let update = app.resolve(request, http_resp).expect("update");
     // let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("update");
 
     // check the app emitted an (internal) event to update the model
@@ -210,7 +210,7 @@ async fn receive_offer() {
     // resolve the app request with a ~~simulated~~ response from the server
     let cred: CredentialResponse = resp.json();
     let http_resp = HttpResponse::ok().body(resp.into_bytes()).build();
-    let update = app.resolve(request, http_resp).expect("an update");
+        let update = app.resolve(request, http_resp).expect("update");
     // let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("update");
 
     // check the app emitted an (internal) event to interpret the response

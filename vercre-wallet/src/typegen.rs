@@ -77,3 +77,26 @@ pub fn generate(lang: Language, gen_dir: &str) {
             .expect("should generate types"),
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::fs;
+    use std::path::PathBuf;
+
+    use super::*;
+
+    #[test]
+    fn test_generate() {
+        let gen_dir = "src/gen";
+        let lang = Language::Typescript;
+
+        generate(lang, gen_dir);
+
+        let path = PathBuf::from(gen_dir);
+        assert!(path.exists());
+
+        let content = fs::read_to_string(path).unwrap();
+        assert!(content.contains("package io.credibil.shared_types;"));
+        assert!(content.contains("public class Request<T> {"));
+    }
+}
