@@ -2,7 +2,8 @@ mod verifier;
 
 use assert_let_bind::assert_let;
 use crux_core::testing::AppTester;
-use crux_http::protocol::{HttpResponse, HttpResult};
+// use crux_http::protocol::{HttpResponse, HttpResult};
+use crux_http::protocol::HttpResponse;
 use crux_http::testing::ResponseBuilder;
 use http_types::Body;
 use insta::assert_yaml_snapshot as assert_snapshot;
@@ -63,7 +64,8 @@ async fn cross_device_flow() {
 
     let req_obj_resp: RequestObjectResponse = resp.json();
     let http_resp = HttpResponse::ok().body(resp.into_bytes()).build();
-    let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("update");
+    let update = app.resolve(request, http_resp).expect("an update");
+    // let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("update");
 
     // check the app emitted an (internal) event to update the model
     let response = ResponseBuilder::ok().body(req_obj_resp.clone()).build();
@@ -168,7 +170,8 @@ async fn cross_device_flow() {
 
     let resp: Value = res.json();
     let http_resp = HttpResponse::ok().body(res.into_bytes()).build();
-    let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("a successful update");
+    let update = app.resolve(request, http_resp).expect("an update");
+    // let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("a successful update");
 
     // verify the expected Submitted event was emitted
     let response = ResponseBuilder::ok().body(resp.clone()).build();

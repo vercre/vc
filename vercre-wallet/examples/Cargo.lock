@@ -1327,9 +1327,9 @@ dependencies = [
 
 [[package]]
 name = "crux_http"
-version = "0.7.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2a8146bf386e0941a17bd2f3442b6e522fc0f919671fb24e9d1dd5f71b2ce46"
+checksum = "668ec62203cc81692f82f44846d4da49c496ca0520419575b13863c0cd41f02f"
 dependencies = [
  "anyhow",
  "async-trait",

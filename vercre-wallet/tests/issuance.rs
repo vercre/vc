@@ -3,7 +3,8 @@ mod issuer;
 use assert_let_bind::assert_let;
 use axum_test::http::header::{HeaderValue, AUTHORIZATION};
 use crux_core::testing::AppTester; // assert_effect,
-use crux_http::protocol::{HttpResponse, HttpResult};
+// use crux_http::protocol::{HttpResponse, HttpResult};
+use crux_http::protocol::HttpResponse;
 use crux_http::testing::ResponseBuilder;
 use http_types::Body;
 use insta::assert_yaml_snapshot as assert_snapshot;
@@ -68,7 +69,8 @@ async fn receive_offer() {
     let resp = issuer.get("/.well-known/openid-credential-issuer").expect_success().await;
     let metadata: MetadataResponse = resp.json();
     let http_resp = HttpResponse::ok().body(resp.into_bytes()).build();
-    let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("update");
+    let update = app.resolve(request, http_resp).expect("an update");
+    // let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("update");
 
     // check the app emitted an (internal) event to update the model
     let response = ResponseBuilder::ok().body(metadata.clone()).build();
@@ -121,7 +123,8 @@ async fn receive_offer() {
     // resolve the app request with a ~~simulated~~ response from the server
     let token: TokenResponse = resp.json();
     let http_resp = HttpResponse::ok().body(resp.into_bytes()).build();
-    let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("update");
+    let update = app.resolve(request, http_resp).expect("an update");
+    // let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("update");
 
     // check the app emitted an (internal) event to update the model
     let response = ResponseBuilder::ok().body(token.clone()).build();
@@ -207,7 +210,8 @@ async fn receive_offer() {
     // resolve the app request with a ~~simulated~~ response from the server
     let cred: CredentialResponse = resp.json();
     let http_resp = HttpResponse::ok().body(resp.into_bytes()).build();
-    let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("update");
+    let update = app.resolve(request, http_resp).expect("an update");
+    // let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("update");
 
     // check the app emitted an (internal) event to interpret the response
     let response = ResponseBuilder::ok().body(cred.clone()).build();
