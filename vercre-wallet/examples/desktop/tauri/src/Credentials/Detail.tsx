@@ -1,21 +1,64 @@
+import { useEffect, useRef, useState } from 'react';
+
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
+import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
+import { invoke } from "@tauri-apps/api/core";
 import { Optional } from 'shared_types/serde/types';
 import { Credential } from "shared_types/types/shared_types";
 
 import { dateFromIso, domainFromUrl } from '.';
+import Delete from './Delete';
 import VcCard, { VcCardProps } from "./VcCard";
+import { useShellState } from '../Shell/Context';
 
 export type DetailProps = {
     credential: Credential;
+    onClose: () => void;
 };
 
 const Detail = (props: DetailProps) => {
-    const { credential } = props;
+    const { credential, onClose } = props;
+    const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
+    const { setShellState } = useShellState();
+    const initialLoad = useRef<boolean>(true);
+    const theme = useTheme();
 
     const claimValues = credential.vc.credentialSubject;
     const display = credential.metadata.display?.at(0);
+
+    useEffect(() => {
+        if (!initialLoad.current) {
+            return;
+        }
+        initialLoad.current = false;
+        setShellState({
+            title: credential.metadata.display?.at(0)?.name || "Credential Detail",
+            action: (
+                <IconButton onClick={onClose} size="large">
+                    <ArrowBackIosIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
+                </IconButton>
+            ),
+            secondaryAction: (
+                <IconButton onClick={() => setConfirmDelete(true)} size="large">
+                    <DeleteForeverIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
+                </IconButton>
+            ),
+        })
+    }, [credential.metadata.display, onClose, setShellState, theme.palette.primary.contrastText]);
+
+    const handleDelete = (id?: string) => {
+        setConfirmDelete(false);
+        if (!id) {
+            return;
+        }
+        invoke("delete", { id });
+        onClose();
+    };
 
     const displayProps = (): VcCardProps => {
         const display = credential.metadata.display?.at(0);
@@ -48,7 +91,7 @@ const Detail = (props: DetailProps) => {
         return key;
     };
 
-    return (
+    return (<>
         <Stack spacing={2} sx={{ pt: 2 }}>
             <VcCard { ...displayProps() } />
             <Typography variant="h5">
@@ -64,7 +107,13 @@ const Detail = (props: DetailProps) => {
             } />
             <ClaimEntry name="Issued by" value={domainFromUrl(credential.issuer)} />
         </Stack>
-    );
+        <Delete
+            name={displayProps().name || 'Credential'}
+            open={confirmDelete}
+            onClose={() => setConfirmDelete(false)}
+            onDelete={() => handleDelete(credential.id)}
+        />
+    </>);
 }
 
 export default Detail;

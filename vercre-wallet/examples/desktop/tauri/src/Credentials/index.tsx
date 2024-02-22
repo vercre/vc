@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import AddIcon from '@mui/icons-material/Add';
-import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
-import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import BadgeIcon from '@mui/icons-material/BadgeOutlined';
 import Box from '@mui/material/Box';
 import Fab from '@mui/material/Fab';
 import IconButton from '@mui/material/IconButton';
@@ -12,30 +11,33 @@ import { useTheme } from '@mui/material/styles';
 import { invoke } from "@tauri-apps/api/core";
 import { Credential } from "shared_types/types/shared_types";
 
-import VcAdd from "./Add";
-import VcCard, { VcCardProps } from "./VcCard";
-import VcDelete from "./Delete";
-import VcDetail from "./Detail";
-import { useShellState } from "../Shell/Context";
+import Add from './Add';
+import Detail from './Detail';
+import Present from './Present';
+import VcCard, { VcCardProps } from './VcCard';
+import { useShellState } from '../Shell/Context';
 
 export type CredentialsProps = {
     credentials: Credential[] | undefined;
 }
 
-const listShellState = {
-    title: 'Credentials',
-    action: undefined,
-    secondaryAction: undefined,
-};
-
 export const Credentials = (props: CredentialsProps) => {
     const { credentials } = props;
     const [selected, setSelected] = useState<Credential | undefined>(undefined);
-    const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
-    const [viewMode, setViewMode] = useState<'list' | 'detail' | 'add'>('list');
+    const [viewMode, setViewMode] = useState<'list' | 'detail' | 'add' | 'present'>('list');
     const { setShellState } = useShellState();
     const initialLoad = useRef<boolean>(true);
     const theme = useTheme();
+
+    const listShellState = useMemo(() => ({
+        title: 'Credentials',
+        action: undefined,
+        secondaryAction: (
+            <IconButton onClick={() => setViewMode('present')} size="large">
+                <BadgeIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
+            </IconButton>
+        ),
+    }), [theme.palette.primary.contrastText]);
 
     useEffect(() => {
         if (!initialLoad.current) {
@@ -43,28 +45,12 @@ export const Credentials = (props: CredentialsProps) => {
         }
         initialLoad.current = false;
         setShellState({...listShellState});
-    }, [setShellState]);
-
-    useEffect(() => {
         invoke("get_list", { filter: "" });
-    }, []);
+    }, [listShellState, setShellState]);
 
     const handleSelect = (c: Credential) => {
         setSelected(c);
         setViewMode('detail');
-        setShellState({
-            title: c.metadata.display?.at(0)?.name || "Credential Detail",
-            action: (
-                <IconButton onClick={handleClose} size="large">
-                    <ArrowBackIosIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
-                </IconButton>
-            ),
-            secondaryAction: (
-                <IconButton onClick={handleConfirmDelete} size="large">
-                    <DeleteForeverIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
-                </IconButton>
-            ),
-        })
     };
 
     const handleClose = () => {
@@ -73,40 +59,9 @@ export const Credentials = (props: CredentialsProps) => {
         setShellState({...listShellState});
     };
 
-    const handleConfirmDelete = () => {
-        setConfirmDelete(true);
-    };
-
-    const handleDelete = (id?: string) => {
-        setConfirmDelete(false);
-        if (!id) {
-            return;
-        }
-        invoke("delete", { id });
-        handleClose();
-    };
-
-    // Circumvent the deep link to accepting a credential offer by displaying an offer input view.
     const handleAdd = () => {
         setSelected(undefined);
         setViewMode('add');
-        setShellState({
-            title: "Add Credential",
-            action: (
-                <IconButton onClick={handleClose} size="large">
-                    <ArrowBackIosIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
-                </IconButton>
-            ),
-            secondaryAction: undefined,
-        });
-    };
-
-    const handleProcessOffer = (url: string) => {
-        if (url === "") {
-            return;
-        }
-        const encoded = encodeURIComponent(url);
-        invoke("offer", { url: encoded });
     };
 
     const displayProps = (credential: Credential) : VcCardProps => {
@@ -163,7 +118,7 @@ export const Credentials = (props: CredentialsProps) => {
                     }}
                 >
                     {selected &&
-                        <VcDetail credential={selected} />
+                        <Detail credential={selected} onClose={handleClose} />
                     }
                 </Box>
             </Slide>
@@ -175,15 +130,20 @@ export const Credentials = (props: CredentialsProps) => {
                         pt: 2,
                     }}
                 >
-                    <VcAdd onSubmit={handleProcessOffer} />
+                    <Add onClose={handleClose} />
                 </Box>
             </Slide>
-            <VcDelete
-                name={selected ? displayProps(selected).name : 'Credential'}
-                open={confirmDelete}
-                onClose={() => setConfirmDelete(false)}
-                onDelete={() => handleDelete(selected?.id)}
-            />
+            <Slide direction="left" in={viewMode === 'present'} mountOnEnter unmountOnExit>
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: 0,
+                        pt: 2,
+                    }}
+                >
+                    <Present onClose={handleClose} />
+                </Box>
+            </Slide>
         </Box>
     );
 }
