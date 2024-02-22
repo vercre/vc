@@ -129,10 +129,10 @@ impl super::Context for Context {
             err!(Err::InvalidRequest, "No credential_issuer specified");
         };
 
-        // // credentials required
-        // if request.credential_configuration_ids.is_empty() {
-        //     err!(Err::InvalidRequest, "No credentials requested");
-        // };
+        // credentials required
+        if request.credential_configuration_ids.is_empty() {
+            err!(Err::InvalidRequest, "No credentials requested");
+        };
 
         // requested credential is supported
         for cred_id in &request.credential_configuration_ids {
@@ -141,10 +141,10 @@ impl super::Context for Context {
             };
         }
 
-        // // holder_id is required
-        // if request.holder_id.is_none() {
-        //     err!(Err::InvalidRequest, "No holder_id specified");
-        // };
+        // holder_id is required
+        if request.holder_id.is_none() {
+            err!(Err::InvalidRequest, "No holder_id specified");
+        };
 
         Ok(self)
     }

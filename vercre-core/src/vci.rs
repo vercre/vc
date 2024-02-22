@@ -1,5 +1,5 @@
 //! # `OpenID` for Verifiable Credential Issuance
-mod validate;
+
 use std::io::Cursor;
 use std::str::FromStr;
 
@@ -16,7 +16,6 @@ use crate::{err, stringify, Result};
 
 /// Request a Credential Offer for a Credential Issuer.
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
-#[serde(remote = "Self")]
 pub struct InvokeRequest {
     /// The URL of the Credential Issuer the Wallet can use obtain offered
     /// Credentials.
