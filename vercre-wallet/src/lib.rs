@@ -27,6 +27,7 @@ pub mod capabilities;
 pub mod credential;
 pub mod issuance;
 pub mod presentation;
+#[cfg(feature = "typegen")]
 pub mod typegen;
 
 pub use app::{App, Capabilities, Effect, Event};

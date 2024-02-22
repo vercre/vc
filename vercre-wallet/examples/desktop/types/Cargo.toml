@@ -5,6 +5,9 @@ name = "desktop-types"
 rust-version.workspace = true
 version.workspace = true
 
+[features]
+typegen = []
+
 [dependencies]
 
 [build-dependencies]

@@ -6,11 +6,12 @@ name = "mobile-types"
 rust-version.workspace = true
 version.workspace = true
 
+[features]
+typegen = []
+
 [dependencies]
 
 [build-dependencies]
-# vercre-wallet = { workspace = true, features = ["typegen"] }
-vercre-wallet = { path = "../../../../vercre-wallet", features = ["typegen"] }
+vercre-wallet = { workspace = true, features = ["typegen"] }
 
 [target]
-
