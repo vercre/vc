@@ -311,8 +311,7 @@ impl crux_core::App for App {
 mod tests {
     use assert_let_bind::assert_let;
     use crux_core::testing::AppTester;
-    // use crux_http::protocol::{HttpResponse, HttpResult};
-    use crux_http::protocol::HttpResponse;
+    use crux_http::protocol::{HttpResponse, HttpResult};
     use crux_http::testing::ResponseBuilder;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use lazy_static::lazy_static;
@@ -350,8 +349,7 @@ mod tests {
 
         // resolve the app request with a simulated response
         let http_resp = HttpResponse::ok().json(METADATA.to_owned()).build();
-        let update = app.resolve(request, http_resp).expect("an update");
-        // let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("an update");
+        let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("an update");
 
         // check that the app emitted an (internal) event to update the model
         let resp: MetadataResponse =
@@ -442,8 +440,7 @@ mod tests {
 
         // resolve the app request with a simulated response
         let http_resp = HttpResponse::ok().json(TOKEN.to_owned()).build();
-        let update = app.resolve(request, http_resp).expect("an update");
-        // let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("an update");
+        let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("an update");
 
         // check that the app emitted an (internal) event to update the model
         let resp: TokenResponse =

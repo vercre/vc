@@ -1,7 +1,8 @@
 
-# .PHONY: build
-# build:
-# 	@cargo build
+.PHONY: build
+build:
+	@cargo build
+	# cargo build --manifest-path ./vercre-wallet/examples/Cargo.toml
 
 .PHONY: clean
 clean:
@@ -36,11 +37,12 @@ unused:
 
 .PHONY: pub-check
 pub-check:
-	@cargo publish --dry-run vercre-core
-	# for e in crux_macros crux_core crux_http crux_kv crux_platform crux_time
-	# 	echo $e
+	@cargo publish --dry-run --package vercre-core
+	@cargo publish --dry-run --package vercre-vci
+	@cargo publish --dry-run --package vercre-vp
+	@cargo publish --dry-run --package vercre-wallet
+	
 	# 	cargo publish --package $e
-	# end
 
 # test-miri:
 # 	MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-panic-on-unsupported" cargo miri test -- --nocapture --color=always

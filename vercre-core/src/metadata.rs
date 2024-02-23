@@ -436,70 +436,94 @@ impl CredentialConfiguration {
     /// Panics if the JSON does not serialize to an `CredentialConfiguration` object
     #[must_use]
     pub fn sample() -> Self {
-        let cred_cfg = serde_json::json!({
-            "format": "jwt_vc_json",
-            "scope": "EmployeeIDCredential",
-            "cryptographic_binding_methods_supported": ["did:jwk","did:ion"],
-            "credential_signing_alg_values_supported": ["ES256K","EdDSA"],
-            "proof_types_supported":{
-                "jwt":{
-                    "proof_signing_alg_values_supported": ["ES256K","EdDSA"],
+        CredentialConfiguration {
+            format: "jwt_vc_json".to_string(),
+            scope: Some("EmployeeIDCredential".to_string()),
+            cryptographic_binding_methods_supported: Some(vec![
+                "did:jwk".to_string(),
+                "did:ion".to_string(),
+            ]),
+            credential_signing_alg_values_supported: Some(vec![
+                "ES256K".to_string(),
+                "EdDSA".to_string(),
+            ]),
+            proof_types_supported: Some(HashMap::from([(
+                "jwt".to_string(),
+                ProofTypesSupported {
+                    proof_signing_alg_values_supported: vec![
+                        "ES256K".to_string(),
+                        "EdDSA".to_string(),
+                    ],
                 },
+            )])),
+            display: Some(vec![CredentialDisplay {
+                name: "Employee ID".to_string(),
+                description: Some("Credibil employee ID credential".to_string()),
+                locale: Some("en-NZ".to_string()),
+                logo: Some(Image {
+                    uri: Some(
+                        "https://credibil.github.io/assets/credibil-logo-reversed.png".to_string(),
+                    ),
+                    alt_text: Some("Credibil Logo".to_string()),
+                }),
+                text_color: Some("#ffffff".to_string()),
+                background_color: Some("#323ed2".to_string()),
+                background_image: Some(Image {
+                    uri: Some(
+                        "https://credibil.github.io/assets/credibil-background.png".to_string(),
+                    ),
+                    alt_text: Some("Credibil Background".to_string()),
+                }),
+            }]),
+            credential_definition: CredentialDefinition {
+                context: Some(vec![
+                    "https://www.w3.org/2018/credentials/v1".to_string(),
+                    "https://www.w3.org/2018/credentials/examples/v1".to_string(),
+                ]),
+                type_: Some(vec![
+                    "VerifiableCredential".to_string(),
+                    "EmployeeIDCredential".to_string(),
+                ]),
+                credential_subject: Some(HashMap::from([
+                    (
+                        "email".to_string(),
+                        Claim {
+                            mandatory: Some(true),
+                            value_type: Some("string".to_string()),
+                            display: Some(vec![Display {
+                                name: "Email".to_string(),
+                                locale: Some("en-NZ".to_string()),
+                            }]),
+                            claim_nested: None,
+                        },
+                    ),
+                    (
+                        "familyName".to_string(),
+                        Claim {
+                            mandatory: Some(true),
+                            value_type: Some("string".to_string()),
+                            display: Some(vec![Display {
+                                name: "Family name".to_string(),
+                                locale: Some("en-NZ".to_string()),
+                            }]),
+                            claim_nested: None,
+                        },
+                    ),
+                    (
+                        "givenName".to_string(),
+                        Claim {
+                            mandatory: Some(true),
+                            value_type: Some("string".to_string()),
+                            display: Some(vec![Display {
+                                name: "Given name".to_string(),
+                                locale: Some("en-NZ".to_string()),
+                            }]),
+                            claim_nested: None,
+                        },
+                    ),
+                ])),
             },
-            "display": [{
-                "name": "Employee ID",
-                "description": "Credibil employee ID credential",
-                "locale": "en-NZ",
-                "logo": {
-                    "uri":"https://credibil.github.io/assets/credibil-logo-reversed.png",
-                    "alt_text": "Credibil Logo",
-                },
-                "background_color":"#323ed2",
-                "background_image": {
-                    "uri":"https://credibil.github.io/assets/credibil-background.png",
-                    "alt_text": "Credibil Background",
-                },
-                "text_color":"#ffffff"
-            }],
-            "credential_definition": {
-                "@context": [
-                    "https://www.w3.org/2018/credentials/v1",
-                    "https://www.w3.org/2018/credentials/examples/v1",
-                ],
-                "type": [
-                    "VerifiableCredential",
-                    "EmployeeIDCredential",
-                ],
-                "credentialSubject":{
-                    "email":{
-                        "mandatory": true,
-                        "value_type": "string",
-                        "display": [ {
-                            "name": "Email",
-                            "locale": "en-NZ",
-                        }]
-                    },
-                    "familyName":{
-                        "mandatory": true,
-                        "value_type": "string",
-                        "display": [{
-                            "name": "Family name",
-                            "locale": "en-NZ",
-                        }],
-                    },
-                    "givenName":{
-                        "mandatory": true,
-                        "value_type": "string",
-                        "display": [{
-                            "name": "Given name",
-                            "locale": "en-NZ",
-                        }],
-                    },
-                },
-            },
-        });
-
-        serde_json::from_value(cred_cfg).expect("should serialize to CredentialConfiguration")
+        }
     }
 
     // TODO: Better demonstrate standards variation from that supplied by sample().
@@ -511,70 +535,96 @@ impl CredentialConfiguration {
     /// Panics if the JSON does not serialize to an `CredentialConfiguration` object.
     #[must_use]
     pub fn sample2() -> Self {
-        let cred_cfg = serde_json::json!({
-            "format": "jwt_vc_json",
-            "scope": "DeveloperCredential",
-            "cryptographic_binding_methods_supported": ["did:jwk","did:ion"],
-            "credential_signing_alg_values_supported": ["ES256K","EdDSA"],
-            "proof_types_supported":{
-                "jwt":{
-                    "proof_signing_alg_values_supported": ["ES256K","EdDSA"],
+        CredentialConfiguration {
+            format: "jwt_vc_json".to_string(),
+            scope: Some("DeveloperCredential".to_string()),
+            cryptographic_binding_methods_supported: Some(vec![
+                "did:jwk".to_string(),
+                "did:ion".to_string(),
+            ]),
+            credential_signing_alg_values_supported: Some(vec![
+                "ES256K".to_string(),
+                "EdDSA".to_string(),
+            ]),
+            proof_types_supported: Some(HashMap::from([(
+                "jwt".to_string(),
+                ProofTypesSupported {
+                    proof_signing_alg_values_supported: vec![
+                        "ES256K".to_string(),
+                        "EdDSA".to_string(),
+                    ],
                 },
+            )])),
+            display: Some(vec![CredentialDisplay {
+                name: "Developer".to_string(),
+                description: Some("Propellerhead certified developer credential".to_string()),
+                locale: Some("en-NZ".to_string()),
+                logo: Some(Image {
+                    uri: Some(
+                        "https://credibil.github.io/assets/propellerhead-logo-reversed.png"
+                            .to_string(),
+                    ),
+                    alt_text: Some("Propellerhead Image".to_string()),
+                }),
+                text_color: Some("#ffffff".to_string()),
+                background_color: Some("#010100".to_string()),
+                background_image: Some(Image {
+                    uri: Some(
+                        "https://credibil.github.io/assets/propellerhead-background.png"
+                            .to_string(),
+                    ),
+                    alt_text: Some("Propellerhead Background".to_string()),
+                }),
+            }]),
+            credential_definition: CredentialDefinition {
+                context: Some(vec![
+                    "https://www.w3.org/2018/credentials/v1".to_string(),
+                    "https://www.w3.org/2018/credentials/examples/v1".to_string(),
+                ]),
+                type_: Some(vec![
+                    "VerifiableCredential".to_string(),
+                    "DeveloperCredential".to_string(),
+                ]),
+                credential_subject: Some(HashMap::from([
+                    (
+                        "proficiency".to_string(),
+                        Claim {
+                            mandatory: Some(true),
+                            value_type: Some("number".to_string()),
+                            display: Some(vec![Display {
+                                name: "Proficiency".to_string(),
+                                locale: Some("en-NZ".to_string()),
+                            }]),
+                            claim_nested: None,
+                        },
+                    ),
+                    (
+                        "familyName".to_string(),
+                        Claim {
+                            mandatory: Some(true),
+                            value_type: Some("string".to_string()),
+                            display: Some(vec![Display {
+                                name: "Family name".to_string(),
+                                locale: Some("en-NZ".to_string()),
+                            }]),
+                            claim_nested: None,
+                        },
+                    ),
+                    (
+                        "givenName".to_string(),
+                        Claim {
+                            mandatory: Some(true),
+                            value_type: Some("string".to_string()),
+                            display: Some(vec![Display {
+                                name: "Given name".to_string(),
+                                locale: Some("en-NZ".to_string()),
+                            }]),
+                            claim_nested: None,
+                        },
+                    ),
+                ])),
             },
-            "display": [{
-                "name": "Developer",
-                "description": "Propellerhead certified developer credential",
-                "locale": "en-NZ",
-                "logo": {
-                    "uri":"https://credibil.github.io/assets/propellerhead-logo-reversed.png",
-                    "alt_text": "Propellerhead Logo",
-                },
-                "text_color":"#ffffff",
-                "background_color":"#010100",
-                "background_image": {
-                    "uri":"https://credibil.github.io/assets/propellerhead-background.png",
-                    "alt_text": "Propellerhead Background",
-                },
-            }],
-            "credential_definition": {
-                "@context": [
-                    "https://www.w3.org/2018/credentials/v1",
-                    "https://www.w3.org/2018/credentials/examples/v1",
-                ],
-                "type": [
-                    "VerifiableCredential",
-                    "DeveloperCredential",
-                ],
-                "credentialSubject":{
-                    "proficiency":{
-                        "mandatory": true,
-                        "value_type": "number",
-                        "display": [ {
-                            "name": "Proficiency",
-                            "locale": "en-NZ",
-                        }]
-                    },
-                    "familyName":{
-                        "mandatory": true,
-                        "value_type": "string",
-                        "display": [{
-                            "name": "Family name",
-                            "locale": "en-NZ",
-                        }],
-                    },
-                    "givenName":{
-                        "mandatory": true,
-                        "value_type": "string",
-                        "display": [{
-                            "name": "Given name",
-                            "locale": "en-NZ",
-                        }],
-                    },
-                },
-            },
-        });
-
-        serde_json::from_value(cred_cfg).expect("should serialize to CredentialConfiguration")
+        }
     }
 }
 
@@ -657,8 +707,7 @@ pub struct CredentialDefinition {
     /// in accordance with the W3C Verifiable Credentials Data Model.
     ///
     /// REQUIRED when 'format' is "jwt_vc_json-ld" or "ldp_vc".
-    // #[cfg_attr(not(feature = "typegen"), serde(rename = "@context"))]
-    #[serde(rename = "@context")]
+    #[cfg_attr(not(feature = "typegen"), serde(rename = "@context"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub context: Option<Vec<String>>,
 

@@ -36,7 +36,7 @@ pub struct VerifiableCredential {
     /// Subsequent items MUST express context information and can be either URIs or
     /// objects. Each URI, if dereferenced, should result in a document containing
     /// machine-readable information about the @context.
-    #[serde(rename = "@context")]
+    #[cfg_attr(not(feature = "typegen"), serde(rename = "@context"))]
     pub context: Vec<String>,
 
     #[allow(rustdoc::bare_urls)]

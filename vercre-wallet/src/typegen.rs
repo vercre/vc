@@ -10,6 +10,7 @@
 
 use crux_core::bridge::Request;
 use crux_core::typegen::TypeGen;
+use crux_http::HttpError;
 
 use crate::credential::Credential;
 use crate::{app, credential, issuance, presentation};
@@ -32,6 +33,8 @@ pub fn generate(lang: Language, gen_dir: &str) {
     // register credential type
     gen.register_samples::<Credential>(vec![Credential::sample()])
         .expect("should register Credential");
+
+    gen.register_type::<HttpError>().expect("should register");
 
     // register issuance app
     gen.register_app::<issuance::App>().expect("should register issuance::App");
@@ -85,6 +88,7 @@ mod test {
 
     use super::*;
 
+    
     #[test]
     fn test_generate() {
         let gen_dir = "src/gen";

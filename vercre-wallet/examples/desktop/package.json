@@ -26,14 +26,14 @@
     "jwt-decode": "^3.1.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "shared_types": "link:./types/gen/typescript",
+    "shared_types": "link:types/gen/typescript",
     "tauri-plugin-log-api": "github:tauri-apps/tauri-plugin-log",
     "tinycolor2": "^1.6.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "2.0.0-beta.1",
     "@types/node": "^20.11.20",
-    "@types/react": "^18.2.57",
+    "@types/react": "^18.2.58",
     "@types/react-dom": "^18.2.19",
     "@types/tinycolor2": "^1.4.6",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
