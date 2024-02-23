@@ -564,7 +564,7 @@ impl CredentialConfiguration {
                         "https://credibil.github.io/assets/propellerhead-logo-reversed.png"
                             .to_string(),
                     ),
-                    alt_text: Some("Propellerhead Image".to_string()),
+                    alt_text: Some("Propellerhead Logo".to_string()),
                 }),
                 text_color: Some("#ffffff".to_string()),
                 background_color: Some("#010100".to_string()),

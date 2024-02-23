@@ -56,5 +56,5 @@ oauth2 = { version = "4.4.2" }
 serde_qs = "0.12.0"
 test-utils = { path = "../test-utils" }
 tokio = { version = "1.36.0", default-features = false, features = ["fs", "macros", "rt"] }
-tower-http = { version = "0.5.1", features = ["trace"] }
+tower-http = { version = "0.5.2", features = ["trace"] }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
