@@ -48,7 +48,9 @@ use chrono::Utc;
 use tracing::{instrument, trace};
 use vercre_core::error::Err;
 use vercre_core::metadata::Issuer as IssuerMetadata;
-pub use vercre_core::vci::{AuthorizationRequest, AuthorizationResponse, TokenAuthorizationDetail};
+pub use vercre_core::vci::{
+    AuthorizationDetail, AuthorizationRequest, AuthorizationResponse, TokenAuthorizationDetail,
+};
 use vercre_core::{
     err, gen, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager,
 };
@@ -139,64 +141,58 @@ impl super::Context for Context {
         //     err!(Err::AuthorizationPending, "Holder is not authorized");
         // }
 
-        // credential request?
+        // has a credential been requested?
         if request.authorization_details.is_none() && request.scope.is_none() {
             err!(Err::InvalidRequest, "No credentials requested");
         }
 
         // authorization_details
-        if let Some(authorization_details) = &request.authorization_details {
-            for auth_det in authorization_details {
-                if auth_det.type_ != "openid_credential" {
-                    err!(Err::InvalidRequest, "Invalid authorization_details type");
+        for auth_det in request.authorization_details.as_ref().unwrap_or(&vec![]) {
+            // this server only supports `openid_credential` authorization details
+            if auth_det.type_ != "openid_credential" {
+                err!(Err::InvalidRequest, "Invalid authorization_details type");
+            }
+
+            if let Some(cfg_id) = auth_det.credential_configuration_id.clone() {
+                // `format` must not be specified
+                if auth_det.format.is_some() {
+                    err!(
+                        Err::InvalidRequest,
+                        "`credential_configuration_id` and `format` cannot both be specified"
+                    );
                 }
 
-                if let Some(cfg_id) = auth_det.credential_configuration_id.clone() {
-                    // `format` must not be specified
-                    if auth_det.format.is_some() {
-                        err!(
-                            Err::InvalidRequest,
-                            "`credential_configuration_id` and `format` cannot both be specified"
-                        );
-                    }
+                // check if requested credential_configuration_id is supported
+                if issuer_meta.credential_configurations_supported.get(&cfg_id).is_none() {
+                    err!(Err::InvalidRequest, "Unsupported credential_configuration_id");
+                }
+            } else if let Some(format) = &auth_det.format {
+                // check if requested is supported
+                let mut found = false;
+                for (_cfg_id, cred_cfg) in issuer_meta.credential_configurations_supported.clone() {
+                    // credential_definition must be present
+                    if &cred_cfg.format == format {
+                        let cfg_def = cred_cfg.credential_definition.clone();
+                        let auth_def = auth_det.credential_definition.clone().unwrap_or_default();
 
-                    // check if requested credential_configuration_id is supported
-                    if issuer_meta.credential_configurations_supported.get(&cfg_id).is_none() {
-                        err!(Err::InvalidRequest, "Unsupported credential_configuration_id");
-                    }
-                } else if let Some(format) = &auth_det.format {
-                    // check if requested is supported
-                    let mut found = false;
-                    for (_cfg_id, cred_cfg) in
-                        issuer_meta.credential_configurations_supported.clone()
-                    {
-                        // credential_definition must be present
-                        if &cred_cfg.format == format {
-                            let cfg_def = cred_cfg.credential_definition.clone();
-                            let auth_def =
-                                auth_det.credential_definition.clone().unwrap_or_default();
-
-                            if cfg_def.type_.unwrap_or_default()
-                                == auth_def.type_.unwrap_or_default()
-                            {
-                                found = true;
-                                break;
-                            }
+                        if cfg_def.type_.unwrap_or_default() == auth_def.type_.unwrap_or_default() {
+                            found = true;
+                            break;
                         }
                     }
+                }
 
-                    if !found {
-                        err!(
-                            Err::InvalidRequest,
-                            "one of `credential_configuration_id` or `format` must be specified"
-                        );
-                    }
-                } else {
+                if !found {
                     err!(
                         Err::InvalidRequest,
                         "one of `credential_configuration_id` or `format` must be specified"
                     );
                 }
+            } else {
+                err!(
+                    Err::InvalidRequest,
+                    "one of `credential_configuration_id` or `format` must be specified"
+                );
             }
         }
 

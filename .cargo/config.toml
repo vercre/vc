@@ -7,4 +7,3 @@
 
 [alias]
 uniffi-bindgen = "run --bin uniffi-bindgen generate"
-tauri-dev = "tauri build --debug"
