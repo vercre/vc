@@ -44,17 +44,17 @@ const Present = (props: PresentProps) => {
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const val = e.target.value.trim();
         setRequest(val);
-        if (val === "") {
-            setError("Request is required");
+        if (val === '') {
+            setError('Request is required');
         }
     };
 
     const handleSubmit = () => {
-        if (request === "") {
+        if (request === '') {
             return;
         }
         const encoded = encodeURIComponent(request);
-        invoke("present", { url: encoded });
+        invoke('present', { url: encoded });
     };
 
     return (

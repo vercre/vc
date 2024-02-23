@@ -100,6 +100,10 @@ The resultant link should look like:
 openid-vc://request_uri=http://localhost:8080/request/R1BjcyojV01ZVjhvY0shayV-c3QyNEV5b1U1S2Eobl4
 ```
 
+As for the issuance process, there is a convenient form to paste the request URI that bypasses the
+deep link. This is not the intended end user experience but allows faster shell development and testing.
+
+
 ## Troubleshooting
 
 ### Debuggable Release

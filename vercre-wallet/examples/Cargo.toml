@@ -1,6 +1,6 @@
 [workspace]
 default-members = ["desktop/types", "mobile/types"]
-members = ["desktop/tauri/src-tauri", "desktop/types", "mobile/types"]
+members = ["desktop/src-tauri", "desktop/types", "mobile/types"]
 resolver = "2"
 
 [workspace.package]
