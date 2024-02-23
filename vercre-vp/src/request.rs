@@ -121,7 +121,7 @@ mod tests {
             client_metadata_uri: None,
         };
 
-        let state = State::builder().request_object(&req_obj).build();
+        let state = State::builder().request_object(req_obj).build().expect("should build state");
         StateManager::put(&provider, &state_key, state.to_vec(), state.expires_at)
             .await
             .expect("state exists");

@@ -32,10 +32,12 @@ path = "benches/bench.rs"
 workspace = true
 
 # [lints.clippy]
+
 [dependencies]
 anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true
+derive_builder.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sha2 = { version = "0.10.8", default-features = false, features = ["std"] }

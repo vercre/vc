@@ -101,9 +101,10 @@ mod tests {
 
         // set up state
         let mut state = State::builder()
-            .credential_issuer(ISSUER.to_string())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .build();
+            .credential_issuer(ISSUER.to_string())
+            .build()
+            .expect("should build state");
 
         state.token = Some(TokenState {
             access_token: access_token.to_string(),

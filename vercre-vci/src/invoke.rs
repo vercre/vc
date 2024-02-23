@@ -157,13 +157,16 @@ impl super::Context for Context {
     {
         trace!("Context::process");
 
-        let mut state = State::builder()
+        let Ok(mut state) = State::builder()
             .credential_issuer(request.credential_issuer.clone())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(request.credential_configuration_ids.clone())
             .holder_id(request.holder_id.clone())
             .callback_id(request.callback_id.clone())
-            .build();
+            .build()
+        else {
+            err!(Err::ServerError(anyhow!("Failed to build state")));
+        };
 
         let mut pre_auth_grant = None;
         let mut auth_grant = None;

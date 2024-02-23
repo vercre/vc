@@ -223,7 +223,8 @@ mod tests {
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
             .holder_id(Some(NORMAL_USER.to_string()))
-            .build();
+            .build()
+            .expect("should build state");
 
         let pre_auth_code = "ABCDEF";
 
@@ -281,7 +282,8 @@ mod tests {
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
             .holder_id(Some(NORMAL_USER.to_string()))
-            .build();
+            .build()
+            .expect("should build state");
 
         let auth_code = "ABCDEF";
         let verifier = "ABCDEF12345";

@@ -2,6 +2,7 @@
 //! in the issuance process.
 
 use chrono::{DateTime, Duration, Utc};
+use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use vercre_core::error::Err;
 use vercre_core::vci::{CredentialRequest, TokenAuthorizationDetail};
@@ -24,39 +25,47 @@ impl Expire {
 
 /// State is used to persist request information between issuance steps
 /// for the Credential Issuer.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Builder, Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub(crate) struct State {
+    /// The time this state item should expire.
+    #[builder(default = "Utc::now() + Expire::Access.duration()")]
+    pub(crate) expires_at: DateTime<Utc>,
+
     /// The URL of the Credential Issuer.
     pub(crate) credential_issuer: String,
 
     /// The client_id of the Wallet requesting issuance.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(setter(into, strip_option), default)]
     pub(crate) client_id: Option<String>,
 
-    /// The time this state item should expire.
-    pub(crate) expires_at: DateTime<Utc>,
-
     /// Identifiers of credentials offered to/requested by the Wallet.
+    #[builder(default)]
     pub(crate) credential_configuration_ids: Vec<String>,
 
     /// The subject of the credential Holder.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder( default)]
     pub(crate) holder_id: Option<String>,
 
     /// The callback ID for the current request.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default)]
     pub(crate) callback_id: Option<String>,
 
     /// Authorization state.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default)]
     pub(crate) auth: Option<AuthState>,
 
     /// Token state.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default)]
     pub(crate) token: Option<TokenState>,
 
     /// Deferred step state.
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default)]
     pub(crate) deferred: Option<DeferredState>,
 }
 
@@ -64,7 +73,7 @@ impl State {
     /// Returns a new [`StateBuilder`], which can be used to build a [State]
     #[must_use]
     pub(crate) fn builder() -> StateBuilder {
-        StateBuilder::new()
+        StateBuilder::default()
     }
 
     /// Serializes this [`State`] object into a byte array.
@@ -168,66 +177,6 @@ pub(crate) struct DeferredState {
 
     /// Save the CredentialRequest when issuance is deferred.
     pub(crate) credential_request: CredentialRequest,
-}
-
-/// [`StateBuilder`] is used to build a [State]
-#[derive(Clone, Default)]
-pub(crate) struct StateBuilder {
-    state: State,
-}
-
-impl StateBuilder {
-    /// Returns a new [`StateBuilder`]
-    #[must_use]
-    pub(crate) fn new() -> Self {
-        StateBuilder::default()
-    }
-
-    /// Sets the `credential_issuer` property
-    #[must_use]
-    pub(crate) fn credential_issuer(mut self, issuer: String) -> Self {
-        self.state.credential_issuer = issuer;
-        self
-    }
-
-    /// Sets the `client_id` property
-    #[must_use]
-    pub(crate) fn client_id(mut self, client_id: String) -> Self {
-        self.state.client_id = Some(client_id);
-        self
-    }
-
-    /// Sets the `expires_at` property
-    #[must_use]
-    pub(crate) fn expires_at(mut self, expires_at: DateTime<Utc>) -> Self {
-        self.state.expires_at = expires_at;
-        self
-    }
-
-    /// Sets the `credential_configuration_ids` property
-    #[must_use]
-    pub(crate) fn credential_configuration_ids(mut self, cfg_ids: Vec<String>) -> Self {
-        self.state.credential_configuration_ids = cfg_ids;
-        self
-    }
-
-    /// Sets the `holder_id` property
-    #[must_use]
-    pub(crate) fn holder_id(mut self, holder_id: Option<String>) -> Self {
-        self.state.holder_id = holder_id;
-        self
-    }
-
-    /// Sets the `callback_id` property
-    pub(crate) fn callback_id(mut self, callback_id: Option<String>) -> Self {
-        self.state.callback_id = callback_id;
-        self
-    }
-
-    /// Turns this builder into a [`State`]
-    pub(crate) fn build(self) -> State {
-        self.state
-    }
 }
 
 impl AuthState {

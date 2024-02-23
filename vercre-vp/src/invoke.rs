@@ -175,7 +175,9 @@ impl super::Context for Context {
         }
 
         // save request object in state
-        let state = State::builder().request_object(&req_obj).build();
+        let Ok(state) = State::builder().request_object(req_obj).build() else {
+            err!(Err::ServerError(anyhow!("Failed to build state")));
+        };
         StateManager::put(provider, &state_key, state.to_vec(), state.expires_at).await?;
 
         Ok(response)

@@ -240,13 +240,16 @@ impl super::Context for Context {
         trace!("Context::process");
 
         // save authorization state
-        let mut state = State::builder()
+        let Ok(mut state) = State::builder()
+            .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_issuer(request.credential_issuer.clone())
             .client_id(request.client_id.clone())
-            .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(self.credential_configuration_ids.clone())
             .holder_id(Some(request.holder_id.clone()))
-            .build();
+            .build()
+        else {
+            err!(Err::ServerError(anyhow!("Failed to build state")));
+        };
 
         // save `redirect_uri` and verify in `token` endpoint
         let Some(redirect_uri) = &request.redirect_uri else {

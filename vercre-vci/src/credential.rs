@@ -121,7 +121,8 @@ mod tests {
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
             .holder_id(Some(NORMAL_USER.to_string()))
-            .build();
+            .build()
+            .expect("should build state");
 
         state.token = Some(TokenState {
             access_token: access_token.to_string(),
