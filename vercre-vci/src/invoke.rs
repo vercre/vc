@@ -202,12 +202,10 @@ impl super::Context for Context {
             }
 
             // save state by pre-auth_code
-            state.auth = Some(
-                AuthState::builder()
-                    // .issuer_state(iss_state.clone())
-                    .user_code(user_code.clone())
-                    .build(),
-            );
+            let Ok(auth_state) = AuthState::builder().user_code(user_code.clone()).build() else {
+                err!(Err::ServerError(anyhow!("Failed to build auth state")));
+            };
+            state.auth = Some(auth_state);
             StateManager::put(provider, &pre_auth_code, state.to_vec(), state.expires_at).await?;
         } else {
             // ------------------------------------------------

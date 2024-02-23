@@ -255,11 +255,15 @@ impl super::Context for Context {
         let Some(redirect_uri) = &request.redirect_uri else {
             err!(Err::InvalidRequest, "No redirect_uri specified");
         };
-        let mut auth_state = AuthState::builder()
+        let Ok(mut auth_state) = AuthState::builder()
             .redirect_uri(redirect_uri.clone())
-            .code_challenge(request.code_challenge.clone(), request.code_challenge_method.clone())
+            .code_challenge(request.code_challenge.clone())
+            .code_challenge_method(request.code_challenge_method.clone())
             .scope(request.scope.clone())
-            .build();
+            .build()
+        else {
+            err!(Err::ServerError(anyhow!("Failed to build auth state")));
+        };
 
         // add `authorization_details` into state
         if let Some(auth_dets) = &request.authorization_details {

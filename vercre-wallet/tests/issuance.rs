@@ -210,7 +210,7 @@ async fn receive_offer() {
     // resolve the app request with a ~~simulated~~ response from the server
     let cred: CredentialResponse = resp.json();
     let http_resp = HttpResponse::ok().body(resp.into_bytes()).build();
-        let update = app.resolve(request, http_resp).expect("update");
+    let update = app.resolve(request, http_resp).expect("update");
     // let update = app.resolve(request, HttpResult::Ok(http_resp)).expect("update");
 
     // check the app emitted an (internal) event to interpret the response

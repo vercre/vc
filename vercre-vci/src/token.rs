@@ -160,9 +160,12 @@ impl super::Context for Context {
         let token = gen::token();
         let c_nonce = gen::nonce();
 
-        state.token = Some(
-            TokenState::builder().access_token(token.clone()).c_nonce(c_nonce.clone()).build(),
-        );
+        let Ok(token_state) =
+            TokenState::builder().access_token(token.clone()).c_nonce(c_nonce.clone()).build()
+        else {
+            err!(Err::ServerError(anyhow!("Failed to build auth state")));
+        };
+        state.token = Some(token_state);
         StateManager::put(provider, &token, state.to_vec(), state.expires_at).await?;
 
         Ok(TokenResponse {
