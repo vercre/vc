@@ -105,7 +105,7 @@ use vercre_core::{Callback, Client, Holder, Issuer, Server, Signer, StateManager
 #[derive(Debug)]
 pub struct Endpoint<P>
 where
-    P: Callback + Debug,
+    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
 {
     provider: P,
 }
@@ -167,11 +167,11 @@ mod tests {
     // Mock Endpoint
     // ------------------------------------------------------------------------
     #[derive(Clone, Debug, Default)]
-    pub(super) struct TestRequest {
+    struct TestRequest {
         return_ok: bool,
     }
 
-    pub(super) struct TestResponse {}
+     struct TestResponse {}
 
     impl<P> Endpoint<P>
     where

@@ -91,18 +91,24 @@ where
     pub async fn invoke(&self, request: &InvokeRequest) -> Result<InvokeResponse> {
         let ctx = Context {
             callback_id: request.callback_id.clone(),
+            _p: std::marker::PhantomData,
         };
 
-        self.handle_request(request, ctx).await
+        vercre_core::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
 #[derive(Debug)]
-struct Context {
+struct Context<P> {
     callback_id: Option<String>,
+    _p: std::marker::PhantomData<P>,
 }
 
-impl super::Context for Context {
+impl<P> vercre_core::Context for Context<P>
+where
+    P: Client + StateManager + Signer + Callback + Clone + Debug,
+{
+    type Provider = P;
     type Request = InvokeRequest;
     type Response = InvokeResponse;
 
@@ -111,10 +117,7 @@ impl super::Context for Context {
     }
 
     #[instrument]
-    async fn verify<P>(&self, provider: &P, request: &Self::Request) -> Result<&Self>
-    where
-        P: Client + StateManager + Debug,
-    {
+    async fn verify(&self, provider: &Self::Provider, request: &Self::Request) -> Result<&Self> {
         trace!("Context::verify");
 
         if request.input_descriptors.is_empty() {
@@ -124,10 +127,9 @@ impl super::Context for Context {
     }
 
     #[instrument]
-    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
-    where
-        P: Client + StateManager + Debug,
-    {
+    async fn process(
+        &self, provider: &Self::Provider, request: &Self::Request,
+    ) -> Result<Self::Response> {
         trace!("Context::process");
 
         // TODO: build dynamically...

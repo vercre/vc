@@ -59,18 +59,24 @@ where
 
         let ctx = Context {
             state: State::try_from(buf)?,
+            _p: std::marker::PhantomData,
         };
 
-        self.handle_request(request, ctx).await
+        vercre_core::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
 #[derive(Debug)]
-struct Context {
+struct Context<P> {
     state: State,
+    _p: std::marker::PhantomData<P>,
 }
 
-impl super::Context for Context {
+impl<P> vercre_core::Context for Context<P>
+where
+    P: Client + StateManager + Signer + Callback + Clone + Debug,
+{
+    type Provider = P;
     type Request = ResponseRequest;
     type Response = ResponseResponse;
 
@@ -80,10 +86,7 @@ impl super::Context for Context {
 
     // Verfiy the vp_token and presentation subm
     #[instrument]
-    async fn verify<P>(&self, provider: &P, request: &Self::Request) -> Result<&Self>
-    where
-        P: Client + StateManager + Debug,
-    {
+    async fn verify(&self, provider: &Self::Provider, request: &Self::Request) -> Result<&Self> {
         trace!("Context::verify");
 
         // TODO:
@@ -217,10 +220,9 @@ impl super::Context for Context {
 
     // Process the authorization request
     #[instrument]
-    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
-    where
-        P: Client + StateManager + Debug,
-    {
+    async fn process(
+        &self, provider: &Self::Provider, request: &Self::Request,
+    ) -> Result<Self::Response> {
         trace!("Context::process");
 
         // clear state

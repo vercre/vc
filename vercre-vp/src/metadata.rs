@@ -26,14 +26,24 @@ where
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
     pub async fn metadata(&self, request: &MetadataRequest) -> Result<MetadataResponse> {
-        self.handle_request(request, Context {}).await
+        let ctx = Context {
+            _p: std::marker::PhantomData,
+        };
+
+        vercre_core::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
 #[derive(Debug)]
-struct Context;
+struct Context<P> {
+    _p: std::marker::PhantomData<P>,
+}
 
-impl super::Context for Context {
+impl<P> vercre_core::Context for Context<P>
+where
+    P: Client + StateManager + Signer + Callback + Clone + Debug,
+{
+    type Provider = P;
     type Request = MetadataRequest;
     type Response = MetadataResponse;
 
@@ -43,10 +53,7 @@ impl super::Context for Context {
     }
 
     #[instrument]
-    async fn process<P>(&self, provider: &P, req: &Self::Request) -> Result<Self::Response>
-    where
-        P: Client + Debug,
-    {
+    async fn process(&self, provider: &P, req: &Self::Request) -> Result<Self::Response> {
         trace!("Context::process");
 
         Ok(MetadataResponse {

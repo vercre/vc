@@ -40,14 +40,23 @@ where
     pub async fn request_object(
         &self, request: &RequestObjectRequest,
     ) -> Result<RequestObjectResponse> {
-        self.handle_request(request, Context {}).await
+        let ctx = Context {
+            _p: std::marker::PhantomData,
+        };
+        vercre_core::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
 #[derive(Debug)]
-struct Context;
+struct Context<P> {
+    _p: std::marker::PhantomData<P>,
+}
 
-impl super::Context for Context {
+impl<P> vercre_core::Context for Context<P>
+where
+    P: Client + StateManager + Signer + Callback + Clone + Debug,
+{
+    type Provider = P;
     type Request = RequestObjectRequest;
     type Response = RequestObjectResponse;
 
@@ -57,10 +66,9 @@ impl super::Context for Context {
     }
 
     #[instrument]
-    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
-    where
-        P: Client + StateManager + Signer + Callback + Clone + Debug,
-    {
+    async fn process(
+        &self, provider: &Self::Provider, request: &Self::Request,
+    ) -> Result<Self::Response> {
         trace!("Context::process");
 
         // retrieve request object from state
