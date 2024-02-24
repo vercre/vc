@@ -66,6 +66,7 @@
 
 use std::fmt::Debug;
 
+use anyhow::anyhow;
 use chrono::Utc;
 use tracing::{instrument, trace};
 use vercre_core::error::Err;
@@ -157,16 +158,14 @@ impl super::Context for Context {
     {
         trace!("Context::process");
 
-        let Ok(mut state) = State::builder()
+        let mut state = State::builder()
             .credential_issuer(request.credential_issuer.clone())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(request.credential_configuration_ids.clone())
             .holder_id(request.holder_id.clone())
             .callback_id(request.callback_id.clone())
             .build()
-        else {
-            err!(Err::ServerError(anyhow!("Failed to build state")));
-        };
+            .map_err(|e| Err::ServerError(anyhow!(e)))?;
 
         let mut pre_auth_grant = None;
         let mut auth_grant = None;
@@ -202,9 +201,10 @@ impl super::Context for Context {
             }
 
             // save state by pre-auth_code
-            let Ok(auth_state) = AuthState::builder().user_code(user_code.clone()).build() else {
-                err!(Err::ServerError(anyhow!("Failed to build auth state")));
-            };
+            let auth_state = AuthState::builder()
+                .user_code(user_code.clone())
+                .build()
+                .map_err(|e| Err::ServerError(anyhow!(e)))?;
             state.auth = Some(auth_state);
             StateManager::put(provider, &pre_auth_code, state.to_vec(), state.expires_at).await?;
         } else {

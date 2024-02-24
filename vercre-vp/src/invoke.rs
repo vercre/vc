@@ -43,6 +43,7 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
 
+use anyhow::anyhow;
 use tracing::{instrument, trace};
 use uuid::Uuid;
 use vercre_core::error::Err;
@@ -175,9 +176,10 @@ impl super::Context for Context {
         }
 
         // save request object in state
-        let Ok(state) = State::builder().request_object(req_obj).build() else {
-            err!(Err::ServerError(anyhow!("Failed to build state")));
-        };
+        let state = State::builder()
+            .request_object(req_obj)
+            .build()
+            .map_err(|e| Err::ServerError(anyhow!(e)))?;
         StateManager::put(provider, &state_key, state.to_vec(), state.expires_at).await?;
 
         Ok(response)
