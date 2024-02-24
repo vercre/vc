@@ -194,7 +194,7 @@ impl FromStr for Client {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let Ok(res) = serde_json::from_str(s) else {
-            err!(Err::InvalidRequest, "Failed to parse Verifier");
+            err!(Err::InvalidRequest, "failed to parse Verifier");
         };
         Ok(res)
     }

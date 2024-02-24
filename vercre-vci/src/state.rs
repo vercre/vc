@@ -98,7 +98,7 @@ impl TryFrom<&[u8]> for State {
         match serde_json::from_slice::<Self>(value) {
             Ok(res) => {
                 if res.expired() {
-                    err!(Err::InvalidRequest, "State has expired");
+                    err!(Err::InvalidRequest, "state has expired");
                 }
                 Ok(res)
             }

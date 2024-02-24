@@ -36,10 +36,10 @@ where
         let request = request.into();
 
         let Ok(buf) = StateManager::get(&self.provider, &request.access_token).await else {
-            err!(Err::AccessDenied, "Invalid access token");
+            err!(Err::AccessDenied, "invalid access token");
         };
         let Ok(state) = State::try_from(buf) else {
-            err!(Err::AccessDenied, "Invalid state for access token");
+            err!(Err::AccessDenied, "invalid state for access token");
         };
 
         let ctx = Context {
@@ -73,10 +73,10 @@ impl super::Context for Context {
 
         // retrieve deferred credential request from state
         let Ok(buf) = StateManager::get(provider, &request.transaction_id).await else {
-            err!(Err::InvalidTransactionId, "Deferred state not found");
+            err!(Err::InvalidTransactionId, "deferred state not found");
         };
         let Ok(state) = State::try_from(buf) else {
-            err!(Err::InvalidTransactionId, "Deferred state is expired or corrupted");
+            err!(Err::InvalidTransactionId, "deferred state is expired or corrupted");
         };
 
         let Some(deferred_state) = state.deferred else {

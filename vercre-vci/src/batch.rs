@@ -48,10 +48,10 @@ where
         let request = request.into();
 
         let Ok(buf) = StateManager::get(&self.provider, &request.access_token).await else {
-            err!(Err::AccessDenied, "Invalid access token");
+            err!(Err::AccessDenied, "invalid access token");
         };
         let Ok(state) = State::try_from(buf) else {
-            err!(Err::AccessDenied, "Invalid state for access token");
+            err!(Err::AccessDenied, "invalid state for access token");
         };
 
         let ctx = Context {
@@ -89,7 +89,7 @@ impl super::Context for Context {
         trace!("Context::verify");
 
         let Some(token_state) = &self.state.token else {
-            err!(Err::AccessDenied, "Invalid access token state");
+            err!(Err::AccessDenied, "invalid access token state");
         };
 
         // c_nonce expiry
@@ -104,7 +104,7 @@ impl super::Context for Context {
             if let Some(identifier) = &request.credential_identifier {
                 // check identifier is authorized
                 if !self.state.credential_configuration_ids.contains(identifier) {
-                    err!(Err::InvalidCredentialRequest, "Credential not authorized");
+                    err!(Err::InvalidCredentialRequest, "credential not authorized");
                 }
                 // check credential format is not set
                 if request.format.is_some() {
@@ -113,10 +113,10 @@ impl super::Context for Context {
                 };
             } else {
                 let Some(format) = &request.format else {
-                    err!(Err::InvalidCredentialRequest, "Credential format not set");
+                    err!(Err::InvalidCredentialRequest, "credential format not set");
                 };
                 let Some(cred_def) = &request.credential_definition else {
-                    err!(Err::InvalidCredentialRequest, "Credential definition not set");
+                    err!(Err::InvalidCredentialRequest, "credential definition not set");
                 };
 
                 // check credential definition is authorized:
@@ -284,7 +284,7 @@ impl Context {
 
         let cred_def = self.credential_definition(request)?;
         let Some(holder_id) = &self.state.holder_id else {
-            err!(Err::AccessDenied, "Holder not found");
+            err!(Err::AccessDenied, "holder not found");
         };
 
         // claim values
@@ -299,7 +299,7 @@ impl Context {
         };
         for (name, claim) in &cred_subj {
             if claim.mandatory.unwrap_or_default() && !holder_claims.claims.contains_key(name) {
-                err!(Err::InvalidCredentialRequest, "Mandatory claim {name} not populated");
+                err!(Err::InvalidCredentialRequest, "mandatory claim {name} not populated");
             }
         }
 
@@ -361,7 +361,7 @@ impl Context {
                     }
                 };
                 let Some(supported) = maybe_supported else {
-                    err!(Err::InvalidCredentialRequest, "Credential is not supported");
+                    err!(Err::InvalidCredentialRequest, "credential is not supported");
                 };
 
                 // copy credential subject
@@ -372,11 +372,11 @@ impl Context {
             Ok(cred_def)
         } else {
             let Some(id) = &request.credential_identifier else {
-                err!(Err::InvalidCredentialRequest, "No credential identifier");
+                err!(Err::InvalidCredentialRequest, "no credential identifier");
             };
             let Some(supported) = self.issuer_meta.credential_configurations_supported.get(id)
             else {
-                err!(Err::InvalidCredentialRequest, "No supported credential for identifier {id}");
+                err!(Err::InvalidCredentialRequest, "no supported credential for identifier {id}");
             };
 
             Ok(CredentialDefinition {

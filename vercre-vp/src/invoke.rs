@@ -118,7 +118,7 @@ impl super::Context for Context {
         trace!("Context::verify");
 
         if request.input_descriptors.is_empty() {
-            err!(Err::InvalidRequest, "No credentials specified");
+            err!(Err::InvalidRequest, "no credentials specified");
         }
         Ok(self)
     }
@@ -147,7 +147,7 @@ impl super::Context for Context {
 
         // get client metadata
         let Ok(client_meta) = Client::metadata(provider, &request.client_id).await else {
-            err!(Err::InvalidRequest, "Invalid client_id");
+            err!(Err::InvalidRequest, "invalid client_id");
         };
 
         let mut req_obj = RequestObject {

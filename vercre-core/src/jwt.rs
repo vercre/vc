@@ -116,7 +116,7 @@ where
         // TODO: cater for different key types
         let parts: Vec<&str> = s.split('.').collect();
         if parts.len() != 3 {
-            err!(Err::InvalidRequest, "Invalid proof JWT format");
+            err!(Err::InvalidRequest, "invalid proof JWT format");
         }
 
         let jwt = Jwt {

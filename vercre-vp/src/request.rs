@@ -74,7 +74,7 @@ impl super::Context for Context {
 
         // verify client_id (perhaps should use 'verify' method?)
         if req_obj.client_id != format!("{}/post", request.client_id) {
-            err!(Err::InvalidRequest, "Client ID mismatch");
+            err!(Err::InvalidRequest, "client ID mismatch");
         }
 
         let jwt = req_obj.to_jwt()?.sign(provider.clone()).await?;

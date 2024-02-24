@@ -44,10 +44,10 @@ where
         // restore state
         // RFC 6749 requires a particular error here
         let Ok(buf) = StateManager::get(&self.provider, &auth_state_key(&request)?).await else {
-            err!(Err::InvalidGrant, "The authorization code is invalid");
+            err!(Err::InvalidGrant, "the authorization code is invalid");
         };
         let Ok(state) = State::try_from(buf.as_slice()) else {
-            err!(Err::InvalidGrant, "The authorization code has expired");
+            err!(Err::InvalidGrant, "the authorization code has expired");
         };
 
         let ctx = Context {
@@ -82,7 +82,7 @@ impl super::Context for Context {
         trace!("Context::verify");
 
         let Ok(server_meta) = Server::metadata(provider, &request.credential_issuer).await else {
-            err!(Err::InvalidRequest, "Unknown authorization server");
+            err!(Err::InvalidRequest, "unknown authorization server");
         };
         let Some(auth_state) = &self.state.auth else {
             err!("Authorization state not set");
@@ -120,15 +120,15 @@ impl super::Context for Context {
                 if request.client_id.is_empty()
                     && !server_meta.pre_authorized_grant_anonymous_access_supported
                 {
-                    err!(Err::InvalidClient, "Anonymous access is not supported");
+                    err!(Err::InvalidClient, "anonymous access is not supported");
                 }
                 // user_code
                 if request.user_code != auth_state.user_code {
-                    err!(Err::InvalidGrant, "Invalid user_code provided");
+                    err!(Err::InvalidGrant, "invalid user_code provided");
                 }
             }
             _ => {
-                err!(Err::UnsupportedGrantType, "Grant {} is not supported", request.grant_type)
+                err!(Err::UnsupportedGrantType, "grant {} is not supported", request.grant_type)
             }
         }
 
@@ -189,11 +189,11 @@ fn auth_state_key(request: &TokenRequest) -> Result<String> {
         AUTH_CODE_GRANT_TYPE => request.code.as_ref(),
         PRE_AUTH_GRANT_TYPE => request.pre_authorized_code.as_ref(),
         _ => {
-            err!(Err::UnsupportedGrantType, "Grant {} is not supported", request.grant_type)
+            err!(Err::UnsupportedGrantType, "grant {} is not supported", request.grant_type)
         }
     };
     let Some(state_key) = state_key else {
-        err!(Err::InvalidRequest, "Missing state key");
+        err!(Err::InvalidRequest, "missing state key");
     };
     Ok(state_key.to_string())
 }

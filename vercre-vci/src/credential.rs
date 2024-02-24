@@ -36,10 +36,10 @@ where
         let request = request.into();
 
         let Ok(buf) = StateManager::get(&self.provider, &request.access_token).await else {
-            err!(Err::AccessDenied, "Invalid access token");
+            err!(Err::AccessDenied, "invalid access token");
         };
         let Ok(state) = State::try_from(buf) else {
-            err!(Err::AccessDenied, "Invalid state for access token");
+            err!(Err::AccessDenied, "invalid state for access token");
         };
 
         let ctx = Context {

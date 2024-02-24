@@ -59,7 +59,7 @@ impl super::Context for Context {
         // token (access or acceptance) expiry
         let expires = state.expires_at.signed_duration_since(Utc::now()).num_seconds();
         if expires < 0 {
-            err!(Err::InvalidRequest, "Access Token has expired");
+            err!(Err::InvalidRequest, "access Token has expired");
         }
 
         Ok(self)
