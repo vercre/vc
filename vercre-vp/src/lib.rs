@@ -206,7 +206,7 @@ where
     /// Each endpoint implements a request-specific `Endpoint::call` method which then
     /// calls `Endpoint::handle_request` to handle shared functionality.
     #[instrument]
-    async fn handle_request<R, C, U>(&self, request: R, ctx: C) -> Result<U>
+    async fn handle_request<R, C, U>(&self, request: &R, ctx: C) -> Result<U>
     where
         C: Context<Request = R, Response = U>,
         R: Default + Clone + Debug + Send + Sync,
@@ -220,7 +220,7 @@ where
             self.provider.callback(&pl).await?;
         }
 
-        let res = match ctx.verify(&self.provider, &request).await {
+        let res = match ctx.verify(&self.provider, request).await {
             Ok(res) => res,
             Err(e) => {
                 tracing::error!(target:"Endpoint::verify", ?e);
@@ -229,7 +229,7 @@ where
             }
         };
 
-        match res.process(&self.provider, &request).await {
+        match res.process(&self.provider, request).await {
             Ok(res) => Ok(res),
             Err(e) => {
                 tracing::error!(target:"Endpoint::process", ?e);
@@ -300,7 +300,7 @@ mod tests {
     #[tokio::test]
     async fn test_ok() {
         let request = TestRequest { return_ok: true };
-        let response = Endpoint::new(Provider::new()).test(request).await;
+        let response = Endpoint::new(Provider::new()).test(&request).await;
 
         assert!(response.is_ok());
     }
@@ -308,7 +308,7 @@ mod tests {
     #[tokio::test]
     async fn test_err() {
         let request = TestRequest { return_ok: false };
-        let response = Endpoint::new(Provider::new()).test(request).await;
+        let response = Endpoint::new(Provider::new()).test(&request).await;
 
         assert!(response.is_err());
     }
@@ -327,7 +327,7 @@ mod tests {
     where
         P: Client + StateManager + Signer + Callback + Clone + Debug,
     {
-        async fn test(&mut self, request: TestRequest) -> Result<TestResponse> {
+        async fn test(&mut self, request: &TestRequest) -> Result<TestResponse> {
             self.handle_request(request, Context::new()).await
         }
     }

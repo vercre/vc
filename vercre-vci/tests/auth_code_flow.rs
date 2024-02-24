@@ -84,7 +84,7 @@ async fn authorize() -> Result<AuthorizationResponse> {
     request.credential_issuer = ISSUER.to_string();
 
     let endpoint = Endpoint::new(PROVIDER.to_owned());
-    let response = endpoint.authorize(request).await?;
+    let response = endpoint.authorize(&request).await?;
     Ok(response)
 }
 
@@ -104,7 +104,7 @@ async fn get_token(input: AuthorizationResponse) -> Result<TokenResponse> {
     request.credential_issuer = ISSUER.to_string();
 
     let endpoint = Endpoint::new(PROVIDER.to_owned());
-    let response = endpoint.token(request).await?;
+    let response = endpoint.token(&request).await?;
 
     assert_snapshot!("token", response, {
         ".access_token" => "[access_token]",
@@ -161,6 +161,6 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     request.access_token = input.access_token;
 
     let endpoint = Endpoint::new(PROVIDER.to_owned());
-    let response = endpoint.credential(request).await?;
+    let response = endpoint.credential(&request).await?;
     Ok(response)
 }

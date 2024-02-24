@@ -54,7 +54,7 @@ async fn invoke(
     Json(mut req): Json<InvokeRequest>,
 ) -> AxResult<InvokeResponse> {
     req.client_id = format!("http://{}", host);
-    endpoint.invoke(req).await.into()
+    endpoint.invoke(&req).await.into()
 }
 
 // Retrieve Authorization Request Object endpoint
@@ -67,7 +67,7 @@ async fn request_object(
         client_id: format!("http://{}", host),
         state: client_state,
     };
-    endpoint.request_object(req).await.into()
+    endpoint.request_object(&req).await.into()
 }
 
 // Wallet Authorization response endpoint
@@ -75,7 +75,7 @@ async fn request_object(
 async fn response(
     State(endpoint): State<Arc<Endpoint<Provider>>>, Form(req): Form<ResponseRequest>,
 ) -> impl IntoResponse {
-    let res = endpoint.response(req).await;
+    let res = endpoint.response(&req).await;
     AxResult(res)
 }
 

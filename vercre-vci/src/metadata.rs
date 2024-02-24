@@ -40,8 +40,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
-    pub async fn metadata(&self, request: impl Into<MetadataRequest>) -> Result<MetadataResponse> {
-        let request = request.into();
+    pub async fn metadata(&self, request: &MetadataRequest) -> Result<MetadataResponse> {
         self.handle_request(request, Context {}).await
     }
 }
@@ -88,7 +87,7 @@ mod tests {
             credential_issuer: ISSUER.to_string(),
             languages: None,
         };
-        let response = Endpoint::new(provider).metadata(request).await.expect("response is ok");
+        let response = Endpoint::new(provider).metadata(&request).await.expect("response is ok");
         assert_snapshot!("response", response, {
             ".credential_configurations_supported" => insta::sorted_redaction(),
             ".credential_configurations_supported.*.credential_definition.credentialSubject" => insta::sorted_redaction()

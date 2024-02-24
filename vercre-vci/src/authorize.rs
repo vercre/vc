@@ -42,7 +42,6 @@
 // LATER: implement `SlowDown` checks/errors
 
 use std::fmt::Debug;
-// use std::sync::Arc;
 use std::vec;
 
 use chrono::Utc;
@@ -69,10 +68,8 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
-    pub async fn authorize(
-        &self, request: impl Into<AuthorizationRequest>,
-    ) -> Result<AuthorizationResponse> {
-        let request = request.into();
+    pub async fn authorize(&self, request: &AuthorizationRequest) -> Result<AuthorizationResponse> {
+        //let request = request.into();
 
         // attempt to get callback_id from state, if pre-auth flow
         let callback_id = if let Some(state_key) = &request.issuer_state {
@@ -84,7 +81,7 @@ where
         };
 
         let issuer_meta = Issuer::metadata(&self.provider, &request.credential_issuer).await?;
-        let cfg_ids = credential_configuration_ids(&request, &issuer_meta)?;
+        let cfg_ids = credential_configuration_ids(request, &issuer_meta)?;
 
         let ctx = Context {
             callback_id,
@@ -422,7 +419,7 @@ mod tests {
         request.credential_issuer = ISSUER.to_string();
 
         let response =
-            Endpoint::new(provider.clone()).authorize(request).await.expect("response is ok");
+            Endpoint::new(provider.clone()).authorize(&request).await.expect("response is ok");
 
         assert_snapshot!("authzn-ok", response, {
             ".code" => "[code]",
@@ -463,7 +460,7 @@ mod tests {
         request.credential_issuer = ISSUER.to_string();
 
         let response =
-            Endpoint::new(provider.clone()).authorize(request).await.expect("response is ok");
+            Endpoint::new(provider.clone()).authorize(&request).await.expect("response is ok");
         assert_snapshot!("scope-ok", response, {
             ".code" => "[code]",
         });

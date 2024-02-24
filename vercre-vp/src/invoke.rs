@@ -88,8 +88,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
-    pub async fn invoke(&self, request: impl Into<InvokeRequest>) -> Result<InvokeResponse> {
-        let request = request.into();
+    pub async fn invoke(&self, request: &InvokeRequest) -> Result<InvokeResponse> {
         let ctx = Context {
             callback_id: request.callback_id.clone(),
         };
@@ -223,7 +222,7 @@ mod tests {
         request.client_id = "http://credibil.io".to_string();
 
         let response =
-            Endpoint::new(provider.clone()).invoke(request).await.expect("response is ok");
+            Endpoint::new(provider.clone()).invoke(&request).await.expect("response is ok");
 
         assert_eq!(response.request_uri, None);
         assert_let!(Some(req_obj), &response.request_object);
@@ -274,7 +273,7 @@ mod tests {
         request.client_id = "http://credibil.io".to_string();
 
         let response =
-            Endpoint::new(provider.clone()).invoke(request).await.expect("response is ok");
+            Endpoint::new(provider.clone()).invoke(&request).await.expect("response is ok");
 
         assert!(response.request_object.is_none());
         assert_let!(Some(req_uri), response.request_uri);

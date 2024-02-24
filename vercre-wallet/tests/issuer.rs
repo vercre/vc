@@ -62,7 +62,7 @@ async fn invoke(
     Json(mut req): Json<InvokeRequest>,
 ) -> AxResult<InvokeResponse> {
     req.credential_issuer = format!("http://{}", host);
-    endpoint.invoke(req).await.into()
+    endpoint.invoke(&req).await.into()
 }
 
 // Authorize endpoint
@@ -79,7 +79,7 @@ async fn authorize(
 
     // TODO: do redirect here
     // process request
-    let res = endpoint.authorize(req).await.into();
+    let res = endpoint.authorize(&req).await.into();
     AxResult(res).into_response()
 }
 
@@ -89,7 +89,7 @@ async fn token(
     Form(mut req): Form<TokenRequest>,
 ) -> AxResult<TokenResponse> {
     req.credential_issuer = format!("http://{}", host);
-    endpoint.token(req).await.into()
+    endpoint.token(&req).await.into()
 }
 
 // Credential endpoint
@@ -99,7 +99,7 @@ async fn credential(
 ) -> AxResult<CredentialResponse> {
     req.credential_issuer = format!("http://{}", host);
     req.access_token = auth.token().to_string().clone();
-    endpoint.credential(req).await.into()
+    endpoint.credential(&req).await.into()
 }
 
 pub async fn deferred_credential(
@@ -113,7 +113,7 @@ pub async fn deferred_credential(
         // TODO: generate transaction_id
         transaction_id: auth.0.token().to_string(),
     };
-    endpoint.deferred(req).await.into()
+    endpoint.deferred(&req).await.into()
 }
 
 pub async fn batch_credential(
@@ -123,7 +123,7 @@ pub async fn batch_credential(
 ) -> AxResult<BatchCredentialResponse> {
     req.credential_issuer = format!("http://{}", host);
     req.access_token = auth.0.token().to_string();
-    endpoint.batch(req).await.into()
+    endpoint.batch(&req).await.into()
 }
 
 // '/.well-known/openid-credential-issuer' endpoint
@@ -138,7 +138,7 @@ pub async fn metadata(
             .and_then(|v| v.to_str().ok())
             .map(|v| v.to_string()),
     };
-    endpoint.metadata(req).await.into()
+    endpoint.metadata(&req).await.into()
 }
 
 // ----------------------------------------------------------------------------

@@ -92,9 +92,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
-    pub async fn invoke(&self, request: impl Into<InvokeRequest>) -> Result<InvokeResponse> {
-        let request = request.into();
-
+    pub async fn invoke(&self, request: &InvokeRequest) -> Result<InvokeResponse> {
         let ctx = Context {
             callback_id: request.callback_id.clone(),
         };
@@ -266,7 +264,7 @@ mod tests {
             serde_json::from_value::<InvokeRequest>(body).expect("request should deserialize");
         request.credential_issuer = ISSUER.to_string();
         let response =
-            Endpoint::new(provider.clone()).invoke(request).await.expect("response is ok");
+            Endpoint::new(provider.clone()).invoke(&request).await.expect("response is ok");
         assert_snapshot!("invoke", response, {
             ".credential_offer.grants.authorization_code.issuer_state" => "[state]",
             ".credential_offer.grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",

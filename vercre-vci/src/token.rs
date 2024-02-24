@@ -38,12 +38,10 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
-    pub async fn token(&self, request: impl Into<TokenRequest>) -> Result<TokenResponse> {
-        let request = request.into();
-
+    pub async fn token(&self, request: &TokenRequest) -> Result<TokenResponse> {
         // restore state
         // RFC 6749 requires a particular error here
-        let Ok(buf) = StateManager::get(&self.provider, &auth_state_key(&request)?).await else {
+        let Ok(buf) = StateManager::get(&self.provider, &auth_state_key(request)?).await else {
             err!(Err::InvalidGrant, "the authorization code is invalid");
         };
         let Ok(state) = State::try_from(buf.as_slice()) else {
@@ -253,7 +251,7 @@ mod tests {
             serde_json::from_value::<TokenRequest>(body).expect("request should deserialize");
         request.credential_issuer = ISSUER.to_string();
         let response =
-            Endpoint::new(provider.clone()).token(request).await.expect("response is valid");
+            Endpoint::new(provider.clone()).token(&request).await.expect("response is valid");
         assert_snapshot!("simpl-token", response, {
             ".access_token" => "[access_token]",
             ".c_nonce" => "[c_nonce]"
@@ -334,7 +332,7 @@ mod tests {
             serde_json::from_value::<TokenRequest>(body).expect("request should deserialize");
         request.credential_issuer = ISSUER.to_string();
         let response =
-            Endpoint::new(provider.clone()).token(request).await.expect("response is valid");
+            Endpoint::new(provider.clone()).token(&request).await.expect("response is valid");
         assert_snapshot!("authzn-token", response, {
             ".access_token" => "[access_token]",
             ".c_nonce" => "[c_nonce]"

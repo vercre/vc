@@ -38,9 +38,9 @@ where
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
     pub async fn request_object(
-        &self, request: impl Into<RequestObjectRequest>,
+        &self, request: &RequestObjectRequest,
     ) -> Result<RequestObjectResponse> {
-        self.handle_request(request.into(), Context {}).await
+        self.handle_request(request, Context {}).await
     }
 }
 
@@ -131,7 +131,7 @@ mod tests {
             state: state_key.to_string(),
         };
         let response = Endpoint::new(provider.clone())
-            .request_object(request)
+            .request_object(&request)
             .await
             .expect("response is valid");
 

@@ -58,7 +58,7 @@ async fn get_offer() -> Result<InvokeResponse> {
     request.credential_issuer = ISSUER.to_string();
 
     let endpoint = Endpoint::new(PROVIDER.to_owned());
-    let response = endpoint.invoke(request).await?;
+    let response = endpoint.invoke(&request).await?;
     Ok(response)
 }
 
@@ -81,7 +81,7 @@ async fn get_token(input: InvokeResponse) -> Result<TokenResponse> {
     request.credential_issuer = ISSUER.to_string();
 
     let endpoint = Endpoint::new(PROVIDER.to_owned());
-    let response = endpoint.token(request).await?;
+    let response = endpoint.token(&request).await?;
     Ok(response)
 }
 
@@ -119,6 +119,6 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     request.access_token = input.access_token;
 
     let endpoint = Endpoint::new(PROVIDER.to_owned());
-    let response = endpoint.credential(request).await?;
+    let response = endpoint.credential(&request).await?;
     Ok(response)
 }

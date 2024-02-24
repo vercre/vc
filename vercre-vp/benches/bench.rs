@@ -26,5 +26,5 @@ fn request(b: &mut Bencher) {
     request.client_id = "http://credibil.io".to_string();
 
     // run benchmark test
-    b.iter(|| block_on(endpoint.invoke(request.clone())));
+    b.iter(|| block_on(endpoint.invoke(&request)));
 }

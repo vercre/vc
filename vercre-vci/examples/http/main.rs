@@ -66,7 +66,7 @@ async fn invoke(
     Json(mut req): Json<InvokeRequest>,
 ) -> AxResult<InvokeResponse> {
     req.credential_issuer = format!("http://{}", host);
-    endpoint.invoke(req).await.into()
+    endpoint.invoke(&req).await.into()
 }
 
 /// Authorize endpoint
@@ -118,7 +118,7 @@ async fn authorize(
             .into_response();
     };
 
-    match endpoint.authorize(req).await {
+    match endpoint.authorize(&req).await {
         Ok(v) => (StatusCode::FOUND, Redirect::to(&format!("{redirect_uri}?code={}", v.code)))
             .into_response(),
         Err(e) => {
@@ -180,7 +180,7 @@ async fn token(
     Form(mut req): Form<TokenRequest>,
 ) -> AxResult<TokenResponse> {
     req.credential_issuer = format!("http://{}", host);
-    endpoint.token(req).await.into()
+    endpoint.token(&req).await.into()
 }
 
 // Credential endpoint
@@ -191,7 +191,7 @@ async fn credential(
 ) -> AxResult<CredentialResponse> {
     req.credential_issuer = format!("http://{}", host);
     req.access_token = auth.token().to_string();
-    endpoint.credential(req).await.into()
+    endpoint.credential(&req).await.into()
 }
 
 // Deferred endpoint
@@ -203,7 +203,7 @@ async fn deferred_credential(
 ) -> AxResult<DeferredCredentialResponse> {
     req.credential_issuer = format!("http://{}", host);
     req.access_token = auth.0.token().to_string();
-    endpoint.deferred(req).await.into()
+    endpoint.deferred(&req).await.into()
 }
 
 // Batch endpoint
@@ -215,7 +215,7 @@ async fn batch_credential(
 ) -> AxResult<BatchCredentialResponse> {
     req.credential_issuer = format!("http://{}", host);
     req.access_token = auth.0.token().to_string();
-    endpoint.batch(req).await.into()
+    endpoint.batch(&req).await.into()
 }
 
 // Metadata endpoint
@@ -231,7 +231,7 @@ async fn metadata(
             .and_then(|v| v.to_str().ok())
             .map(|v| v.to_string()),
     };
-    endpoint.metadata(req).await.into()
+    endpoint.metadata(&req).await.into()
 }
 
 // ----------------------------------------------------------------------------

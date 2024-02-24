@@ -31,10 +31,8 @@ where
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
     pub async fn deferred(
-        &self, request: impl Into<DeferredCredentialRequest>,
+        &self, request: &DeferredCredentialRequest,
     ) -> Result<DeferredCredentialResponse> {
-        let request = request.into();
-
         let Ok(buf) = StateManager::get(&self.provider, &request.access_token).await else {
             err!(Err::AccessDenied, "invalid access token");
         };
@@ -91,7 +89,7 @@ impl super::Context for Context {
         cred_req.credential_issuer = request.credential_issuer.clone();
         cred_req.access_token = request.access_token.clone();
 
-        let response = Endpoint::new(provider.clone()).credential(cred_req).await?;
+        let response = Endpoint::new(provider.clone()).credential(&cred_req).await?;
 
         Ok(DeferredCredentialResponse {
             credential_response: response,
@@ -197,7 +195,7 @@ mod tests {
         };
 
         let response =
-            Endpoint::new(provider.clone()).deferred(request).await.expect("response is valid");
+            Endpoint::new(provider.clone()).deferred(&request).await.expect("response is valid");
         assert_snapshot!("response", response, {
             ".credential" => "[credential]",
             ".c_nonce" => "[c_nonce]",

@@ -30,11 +30,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
-    pub async fn credential(
-        &self, request: impl Into<CredentialRequest>,
-    ) -> Result<CredentialResponse> {
-        let request = request.into();
-
+    pub async fn credential(&self, request: &CredentialRequest) -> Result<CredentialResponse> {
         let Ok(buf) = StateManager::get(&self.provider, &request.access_token).await else {
             err!(Err::AccessDenied, "invalid access token");
         };
@@ -76,7 +72,7 @@ impl super::Context for Context {
             access_token: request.access_token.clone(),
             credential_requests: vec![request.clone()],
         };
-        let batch_res = Endpoint::new(provider.clone()).batch(batch_req).await?;
+        let batch_res = Endpoint::new(provider.clone()).batch(&batch_req).await?;
 
         // set c_nonce and c_nonce_expires_at - batch endpoint sets them in the
         // top-level response, not each credential response
@@ -169,7 +165,7 @@ mod tests {
         request.access_token = access_token.to_string();
 
         let response =
-            Endpoint::new(provider.clone()).credential(request).await.expect("response is valid");
+            Endpoint::new(provider.clone()).credential(&request).await.expect("response is valid");
         assert_snapshot!("response", response, {
             ".credential" => "[credential]",
             ".c_nonce" => "[c_nonce]",

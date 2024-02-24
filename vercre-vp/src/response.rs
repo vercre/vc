@@ -46,12 +46,11 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
-    pub async fn response(&self, request: impl Into<ResponseRequest>) -> Result<ResponseResponse> {
+    pub async fn response(&self, request: &ResponseRequest) -> Result<ResponseResponse> {
         // TODO: handle case where Wallet returns error instead of subm
-        let req = request.into();
 
         // get state by client state key
-        let Some(state_key) = &req.state else {
+        let Some(state_key) = &request.state else {
             err!(Err::InvalidRequest, "client state not found");
         };
         let Ok(buf) = StateManager::get(&self.provider, state_key).await else {
@@ -62,7 +61,7 @@ where
             state: State::try_from(buf)?,
         };
 
-        self.handle_request(req, ctx).await
+        self.handle_request(request, ctx).await
     }
 }
 
@@ -301,7 +300,7 @@ mod tests {
         });
 
         let request = serde_json::from_value::<ResponseRequest>(body).expect("should deserialize");
-        let response = Endpoint::new(provider).response(request).await.expect("response is ok");
+        let response = Endpoint::new(provider).response(&request).await.expect("response is ok");
 
         let redirect = response.redirect_uri.as_ref().expect("has redirect_uri");
         assert_eq!(redirect, "http://localhost:3000/cb");
