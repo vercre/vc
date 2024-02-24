@@ -98,17 +98,14 @@ pub mod token;
 
 use std::fmt::Debug;
 
-use tracing::instrument;
-use vercre_core::callback::{Payload, Status};
-use vercre_core::error::Error;
-use vercre_core::{Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager};
+use vercre_core::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
 
 /// Endpoint is used to surface the public Verifiable Presentation endpoints to
 /// clients.
 #[derive(Debug)]
 pub struct Endpoint<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Debug,
+    P: Callback + Debug,
 {
     provider: P,
 }
@@ -129,101 +126,24 @@ where
     pub fn new(provider: P) -> Self {
         Self { provider }
     }
-
-    /// Wrap the processing of individual requests for shared handling of callbacks,
-    /// errors, etc..
-    ///
-    /// Each endpoint implements a request-specific `Endpoint::call` method which then
-    /// calls `Endpoint::handle_request` to handle shared functionality.
-    #[instrument]
-    async fn handle_request<R, C, U>(&self, request: &R, ctx: C) -> Result<U>
-    where
-        C: Context<Request = R, Response = U>,
-        R: Default + Clone + Debug + Send + Sync,
-    {
-        if let Some(callback_id) = ctx.callback_id() {
-            let pl = Payload {
-                id: callback_id.clone(),
-                status: Status::PresentationRequested,
-                context: String::new(),
-            };
-            self.provider.callback(&pl).await?;
-        }
-
-        let res = match ctx.verify(&self.provider, request).await {
-            Ok(res) => res,
-            Err(e) => {
-                tracing::error!(target:"Endpoint::verify", ?e);
-                self.try_callback(ctx, &e).await?;
-                return Err(e);
-            }
-        };
-
-        match res.process(&self.provider, request).await {
-            Ok(res) => Ok(res),
-            Err(e) => {
-                tracing::error!(target:"Endpoint::process", ?e);
-                self.try_callback(ctx, &e).await?;
-                Err(e)
-            }
-        }
-    }
-
-    /// Try to send a callback to the client. If the callback fails, log the error.
-    #[instrument]
-    async fn try_callback<R, C, U>(&self, ctx: C, e: &Error) -> anyhow::Result<()>
-    where
-        C: Context<Request = R, Response = U>,
-        R: Default + Clone + Send + Sync + Debug,
-    {
-        if let Some(callback_id) = ctx.callback_id() {
-            tracing::trace!("Endpoint::try_callback");
-
-            let pl = Payload {
-                id: callback_id.clone(),
-                status: Status::Error,
-                context: format!("{e}"),
-            };
-            return self.provider.callback(&pl).await;
-        }
-        Ok(())
-    }
 }
 
-/// Context is implemented by every endpoint to set up a context for each
-/// request.
-#[allow(async_fn_in_trait)]
-trait Context: Send + Sync + Debug {
-    /// The request type for the request context.
-    type Request;
+impl<P> vercre_core::Endpoint for Endpoint<P>
+where
+    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
+{
+    type Provider = P;
 
-    /// The response type for the request context.
-    type Response;
-
-    /// Callback ID is used to identify the initial request when sending status
-    /// updates to the client.
-    fn callback_id(&self) -> Option<String>;
-
-    /// Verify the request.
-    #[allow(clippy::unused_async)]
-    async fn verify<P>(&self, _: &P, _: &Self::Request) -> Result<&Self>
-    where
-        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
-    {
-        Ok(self)
+    fn provider(&self) -> &P {
+        &self.provider
     }
-
-    /// Process the request.
-    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
-    where
-        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug;
 }
 
 #[cfg(test)]
 mod tests {
     use test_utils::vci_provider::Provider;
-    use vercre_core::err;
     use vercre_core::error::Err;
+    use vercre_core::{err, Result};
 
     use super::*;
 
@@ -258,20 +178,23 @@ mod tests {
         P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
     {
         async fn test(&mut self, request: &TestRequest) -> Result<TestResponse> {
-            self.handle_request(request, Context::new()).await
+            let ctx = Context {
+                _p: std::marker::PhantomData,
+            };
+            vercre_core::Endpoint::handle_request(self, request, ctx).await
         }
     }
 
     #[derive(Debug)]
-    pub(super) struct Context;
-
-    impl Context {
-        pub fn new() -> Self {
-            Self {}
-        }
+    struct Context<P> {
+        _p: std::marker::PhantomData<P>,
     }
 
-    impl super::Context for Context {
+    impl<P> vercre_core::Context for Context<P>
+    where
+        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
+    {
+        type Provider = P;
         type Request = TestRequest;
         type Response = TestResponse;
 
@@ -279,10 +202,9 @@ mod tests {
             Some("callback_id".to_string())
         }
 
-        async fn process<P>(&self, _provider: &P, request: &Self::Request) -> Result<Self::Response>
-        where
-            P: Client + StateManager + Debug,
-        {
+        async fn process(
+            &self, _provider: &Self::Provider, request: &Self::Request,
+        ) -> Result<Self::Response> {
             match request.return_ok {
                 true => Ok(TestResponse {}),
                 false => err!(Err::InvalidRequest, "invalid request"),

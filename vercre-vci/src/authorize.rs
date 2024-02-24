@@ -69,8 +69,6 @@ where
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
     pub async fn authorize(&self, request: &AuthorizationRequest) -> Result<AuthorizationResponse> {
-        //let request = request.into();
-
         // attempt to get callback_id from state, if pre-auth flow
         let callback_id = if let Some(state_key) = &request.issuer_state {
             let buf = StateManager::get(&self.provider, state_key).await?;
@@ -86,19 +84,25 @@ where
         let ctx = Context {
             callback_id,
             credential_configuration_ids: cfg_ids,
+            _p: std::marker::PhantomData,
         };
 
-        self.handle_request(request, ctx).await
+        vercre_core::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
 #[derive(Debug)]
-struct Context {
+struct Context<P> {
     callback_id: Option<String>,
     credential_configuration_ids: Vec<String>,
+    _p: std::marker::PhantomData<P>,
 }
 
-impl super::Context for Context {
+impl<P> vercre_core::Context for Context<P>
+where
+    P: Client + Issuer + Server + Holder + StateManager + Debug,
+{
+    type Provider = P;
     type Request = AuthorizationRequest;
     type Response = AuthorizationResponse;
 
@@ -107,10 +111,7 @@ impl super::Context for Context {
     }
 
     #[instrument]
-    async fn verify<P>(&self, provider: &P, request: &Self::Request) -> Result<&Self>
-    where
-        P: Client + Issuer + Server + Holder + StateManager + Debug,
-    {
+    async fn verify(&self, provider: &Self::Provider, request: &Self::Request) -> Result<&Self> {
         trace!("Context::verify");
 
         let Ok(client_meta) = Client::metadata(provider, &request.client_id).await else {
@@ -241,10 +242,9 @@ impl super::Context for Context {
     }
 
     #[instrument]
-    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
-    where
-        P: Client + Issuer + Server + Holder + StateManager + Debug,
-    {
+    async fn process(
+        &self, provider: &Self::Provider, request: &Self::Request,
+    ) -> Result<Self::Response> {
         trace!("Context::process");
 
         // save authorization state

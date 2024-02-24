@@ -23,28 +23,33 @@ where
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
     pub async fn register(&self, request: &RegistrationRequest) -> Result<RegistrationResponse> {
-        self.handle_request(request, Context {}).await
+        let ctx = Context {
+            _p: std::marker::PhantomData,
+        };
+        vercre_core::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
 #[derive(Debug)]
-struct Context;
+struct Context<P> {
+    _p: std::marker::PhantomData<P>,
+}
 
-impl super::Context for Context {
+impl<P> vercre_core::Context for Context<P>
+where
+    P: Client + Issuer + Server + Holder + StateManager + Signer,
+{
+    type Provider = P;
     type Request = RegistrationRequest;
     type Response = RegistrationResponse;
 
     // TODO: get callback_id from state
     fn callback_id(&self) -> Option<String> {
-        // self.callback_id.clone()
         None
     }
 
     #[instrument]
-    async fn verify<P>(&self, provider: &P, request: &Self::Request) -> Result<&Self>
-    where
-        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
-    {
+    async fn verify(&self, provider: &Self::Provider, request: &Self::Request) -> Result<&Self> {
         trace!("Context::verify");
 
         let buf = match StateManager::get(provider, &request.access_token).await {
@@ -63,10 +68,9 @@ impl super::Context for Context {
     }
 
     #[instrument]
-    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
-    where
-        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
-    {
+    async fn process(
+        &self, provider: &Self::Provider, request: &Self::Request,
+    ) -> Result<Self::Response> {
         trace!("Context::process");
 
         let Ok(client_meta) = provider.register(&request.client_metadata).await else {

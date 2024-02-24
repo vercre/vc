@@ -42,18 +42,24 @@ where
 
         let ctx = Context {
             callback_id: state.callback_id.clone(),
+            _p: std::marker::PhantomData,
         };
 
-        self.handle_request(request, ctx).await
+        vercre_core::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
 #[derive(Debug)]
-struct Context {
+struct Context<P> {
     callback_id: Option<String>,
+    _p: std::marker::PhantomData<P>,
 }
 
-impl super::Context for Context {
+impl<P> vercre_core::Context for Context<P>
+where
+    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+{
+    type Provider = P;
     type Request = DeferredCredentialRequest;
     type Response = DeferredCredentialResponse;
 
@@ -63,10 +69,9 @@ impl super::Context for Context {
     }
 
     #[instrument]
-    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
-    where
-        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
-    {
+    async fn process(
+        &self, provider: &Self::Provider, request: &Self::Request,
+    ) -> Result<Self::Response> {
         trace!("Context::process");
 
         // retrieve deferred credential request from state

@@ -51,19 +51,25 @@ where
         let ctx = Context {
             callback_id: state.callback_id.clone(),
             state,
+            _p: std::marker::PhantomData,
         };
 
-        self.handle_request(request, ctx).await
+        vercre_core::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
 #[derive(Debug)]
-struct Context {
+struct Context<P> {
     callback_id: Option<String>,
     state: State,
+    _p: std::marker::PhantomData<P>,
 }
 
-impl super::Context for Context {
+impl<P> vercre_core::Context for Context<P>
+where
+    P: Client + Issuer + Server + Holder + StateManager + Signer + Debug,
+{
+    type Provider = P;
     type Request = TokenRequest;
     type Response = TokenResponse;
 
@@ -73,10 +79,7 @@ impl super::Context for Context {
 
     /// Verify the token request.
     #[instrument]
-    async fn verify<P>(&self, provider: &P, request: &Self::Request) -> Result<&Self>
-    where
-        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
-    {
+    async fn verify(&self, provider: &Self::Provider, request: &Self::Request) -> Result<&Self> {
         trace!("Context::verify");
 
         let Ok(server_meta) = Server::metadata(provider, &request.credential_issuer).await else {
@@ -136,10 +139,9 @@ impl super::Context for Context {
     /// Exchange auth code (authorization or pre-authorized) for access token,
     /// updating state along the way.
     #[instrument]
-    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
-    where
-        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
-    {
+    async fn process(
+        &self, provider: &Self::Provider, request: &Self::Request,
+    ) -> Result<Self::Response> {
         trace!("Context::process");
 
         // remove authorization state to prevent auth code reuse

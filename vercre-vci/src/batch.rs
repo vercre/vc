@@ -55,21 +55,27 @@ where
             state,
             issuer_meta: Issuer::metadata(&self.provider, &request.credential_issuer).await?,
             holder_did: Arc::new(Mutex::new(String::new())),
+            _p: std::marker::PhantomData,
         };
 
-        self.handle_request(request, ctx).await
+        vercre_core::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
 #[derive(Debug)]
-struct Context {
+struct Context<P> {
     callback_id: Option<String>,
     issuer_meta: IssuerMetadata,
     state: State,
     holder_did: Arc<Mutex<String>>,
+    _p: std::marker::PhantomData<P>,
 }
 
-impl super::Context for Context {
+impl<P> vercre_core::Context for Context<P>
+where
+    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+{
+    type Provider = P;
     type Request = BatchCredentialRequest;
     type Response = BatchCredentialResponse;
 
@@ -78,10 +84,7 @@ impl super::Context for Context {
     }
 
     #[instrument]
-    async fn verify<P>(&self, provider: &P, request: &Self::Request) -> Result<&Self>
-    where
-        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
-    {
+    async fn verify(&self, provider: &P, request: &Self::Request) -> Result<&Self> {
         trace!("Context::verify");
 
         let Some(token_state) = &self.state.token else {
@@ -178,10 +181,7 @@ impl super::Context for Context {
     }
 
     #[instrument]
-    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
-    where
-        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
-    {
+    async fn process(&self, provider: &P, request: &Self::Request) -> Result<Self::Response> {
         trace!("Context::process");
 
         // process credential requests
@@ -219,15 +219,15 @@ impl super::Context for Context {
     }
 }
 
-impl Context {
+impl<P> Context<P>
+where
+    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+{
     // Processes the Credential Request to generate a Credential Response.
     #[instrument]
-    async fn make_response<P>(
+    async fn make_response(
         &self, provider: &P, request: &CredentialRequest,
-    ) -> Result<CredentialResponse>
-    where
-        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
-    {
+    ) -> Result<CredentialResponse> {
         trace!("Context::make_response");
 
         // Try to create a VC. If None, then return a deferred issuance response.
@@ -270,12 +270,9 @@ impl Context {
     // Request. May return `None` if the credential is not ready to be issued because the request
     // for Holder is pending.
     #[instrument]
-    async fn make_vc<P>(
+    async fn make_vc(
         &self, provider: &P, request: &CredentialRequest,
-    ) -> Result<Option<VerifiableCredential>>
-    where
-        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
-    {
+    ) -> Result<Option<VerifiableCredential>> {
         trace!("Context::make_vc");
 
         let cred_def = self.credential_definition(request)?;
@@ -385,10 +382,7 @@ impl Context {
 
     /// Creates, stores, and returns new `c_nonce` and `c_nonce_expires`_in values
     /// for use in `Err::InvalidProof` errors, as per specification.
-    async fn err_nonce<P>(&self, provider: &P) -> Result<(String, i64)>
-    where
-        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
-    {
+    async fn err_nonce(&self, provider: &P) -> Result<(String, i64)> {
         // generate nonce and update state
         let mut state = self.state.clone();
         let Some(mut token_state) = state.token else {
