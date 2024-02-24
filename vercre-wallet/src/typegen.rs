@@ -88,7 +88,6 @@ mod test {
 
     use super::*;
 
-    
     #[test]
     fn test_generate() {
         let gen_dir = "src/gen";
