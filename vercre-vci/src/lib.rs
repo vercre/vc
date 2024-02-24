@@ -86,19 +86,6 @@
 //! [OpenID Connect]: https://openid.net/specs/openid-connect-core-1_0.html
 //! [RFC6749]: https://www.rfc-editor.org/rfc/rfc6749.html
 
-// // #[doc(no_inline)]
-// pub use vercre_core::vci::{
-//     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationRequest, AuthorizationResponse,
-//     BatchCredentialRequest, BatchCredentialResponse, CredentialOffer, CredentialRequest,
-//     CredentialResponse, DeferredCredentialRequest, DeferredCredentialResponse, Grants,
-//     InvokeRequest, InvokeResponse, MetadataRequest, MetadataResponse, PreAuthorizedCodeGrant,
-//     Proof, ProofClaims, RegistrationRequest, RegistrationResponse, TokenRequest, TokenResponse,
-// };
-
-//! Endpoints for Verifiable Credential Issuance API.
-//!
-//! See [OpenID for Verifiable Credential Issuance](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html).
-
 pub mod authorize;
 pub mod batch;
 pub mod credential;

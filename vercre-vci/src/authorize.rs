@@ -134,11 +134,6 @@ impl super::Context for Context {
             err!(Err::AuthorizationPending, "missing holder subject");
         }
 
-        // FIXME: implement `Holder::authorize`
-        // if Holder::authorize(provider, &request.holder_id, &self.credential_configuration_ids).await.is_err() {
-        //     err!(Err::AuthorizationPending, "holder is not authorized");
-        // }
-
         // has a credential been requested?
         if request.authorization_details.is_none() && request.scope.is_none() {
             err!(Err::InvalidRequest, "no credentials requested");
@@ -204,6 +199,14 @@ impl super::Context for Context {
                 err!(Err::InvalidRequest, "scope item {item} is unsupported");
             }
         }
+
+        // TODO: implement `Holder::authorize`
+        // - for each requested credential_configuration_id, check if the holder is authorized
+        // - save auth_det/scope item for each authorized credential_configuration_id
+
+        // if Holder::authorize(provider, &request.holder_id, &self.credential_configuration_ids).await.is_err() {
+        //     err!(Err::AuthorizationPending, "holder is not authorized");
+        // }
 
         // redirect_uri
         let Some(redirect_uri) = &request.redirect_uri else {
