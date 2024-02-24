@@ -116,7 +116,7 @@ impl super::Context for Context {
         trace!("Context::verify");
 
         let Ok(client_meta) = Client::metadata(provider, &request.client_id).await else {
-            err!(Err::InvalidClient, "Invalid client_id");
+            err!(Err::InvalidClient, "invalid client_id");
         };
         let server_meta = Server::metadata(provider, &request.credential_issuer).await?;
         let issuer_meta = Issuer::metadata(provider, &request.credential_issuer).await?;
@@ -133,83 +133,94 @@ impl super::Context for Context {
 
         // holder authorized?
         if request.holder_id.is_empty() {
-            err!(Err::AuthorizationPending, "Missing holder subject");
+            err!(Err::AuthorizationPending, "missing holder subject");
         }
 
         // FIXME: implement `Holder::authorize`
         // if Holder::authorize(provider, &request.holder_id, &self.credential_configuration_ids).await.is_err() {
-        //     err!(Err::AuthorizationPending, "Holder is not authorized");
+        //     err!(Err::AuthorizationPending, "holder is not authorized");
         // }
 
         // has a credential been requested?
         if request.authorization_details.is_none() && request.scope.is_none() {
-            err!(Err::InvalidRequest, "No credentials requested");
+            err!(Err::InvalidRequest, "no credentials requested");
         }
 
-        // authorization_details
-        for auth_det in request.authorization_details.as_ref().unwrap_or(&vec![]) {
-            // this server only supports `openid_credential` authorization details
+        // verify authorization_details
+        'verify_details: for auth_det in request.authorization_details.as_ref().unwrap_or(&vec![]) {
+            // we only support `openid_credential` authorization detail requests
             if auth_det.type_ != "openid_credential" {
-                err!(Err::InvalidRequest, "Invalid authorization_details type");
+                err!(Err::InvalidRequest, "invalid authorization_details type");
             }
 
-            if let Some(cfg_id) = auth_det.credential_configuration_id.clone() {
-                // `format` must not be specified
-                if auth_det.format.is_some() {
-                    err!(
-                        Err::InvalidRequest,
-                        "`credential_configuration_id` and `format` cannot both be specified"
-                    );
-                }
+            let cfg_id_opt = &auth_det.credential_configuration_id;
+            let format_opt = &auth_det.format;
 
-                // check if requested credential_configuration_id is supported
-                if issuer_meta.credential_configurations_supported.get(&cfg_id).is_none() {
-                    err!(Err::InvalidRequest, "Unsupported credential_configuration_id");
-                }
-            } else if let Some(format) = &auth_det.format {
-                // check if requested is supported
-                let mut found = false;
-                for (_cfg_id, cred_cfg) in issuer_meta.credential_configurations_supported.clone() {
-                    // credential_definition must be present
-                    if &cred_cfg.format == format {
-                        let cfg_def = cred_cfg.credential_definition.clone();
-                        let auth_def = auth_det.credential_definition.clone().unwrap_or_default();
+            // verify that only one of `credential_configuration_id` or `format` is specified
+            if cfg_id_opt.is_some() && format_opt.is_some() {
+                err!(
+                    Err::InvalidRequest,
+                    "`credential_configuration_id` and `format` cannot both be set"
+                );
+            }
+            if cfg_id_opt.is_none() && format_opt.is_none() {
+                err!(Err::InvalidRequest, "`credential_configuration_id` or `format` must be set");
+            }
 
-                        if cfg_def.type_.unwrap_or_default() == auth_def.type_.unwrap_or_default() {
-                            found = true;
-                            break;
-                        }
+            // EITHER: verify requested `credential_configuration_id` is supported
+            if let Some(cfg_id) = cfg_id_opt {
+                if issuer_meta.credential_configurations_supported.get(cfg_id).is_none() {
+                    err!(Err::InvalidRequest, "unsupported credential_configuration_id");
+                }
+                continue 'verify_details;
+            }
+
+            // OR: verify requested `format` and `type` are supported
+            if let Some(format) = format_opt {
+                let Some(auth_def) = auth_det.credential_definition.as_ref() else {
+                    err!(Err::InvalidRequest, "no `credential_definition` specified")
+                };
+
+                // check all supported `credential_configurations`
+                for cred_cfg in issuer_meta.credential_configurations_supported.values() {
+                    if &cred_cfg.format == format
+                        && cred_cfg.credential_definition.type_ == auth_def.type_
+                    {
+                        continue 'verify_details;
                     }
                 }
 
-                if !found {
-                    err!(
-                        Err::InvalidRequest,
-                        "one of `credential_configuration_id` or `format` must be specified"
-                    );
+                // couldn't find a matching credential_configuration
+                err!(Err::InvalidRequest, "unsupported credential `format` or `type`");
+            }
+        }
+
+        // verify scope items
+        if let Some(scope) = &request.scope {
+            'verify_scope: for item in scope.split_whitespace().collect::<Vec<&str>>() {
+                for cred_cfg in issuer_meta.credential_configurations_supported.values() {
+                    if cred_cfg.scope == Some(item.to_string()) {
+                        continue 'verify_scope;
+                    }
                 }
-            } else {
-                err!(
-                    Err::InvalidRequest,
-                    "one of `credential_configuration_id` or `format` must be specified"
-                );
+                err!(Err::InvalidRequest, "scope item {item} is unsupported");
             }
         }
 
         // redirect_uri
         let Some(redirect_uri) = &request.redirect_uri else {
-            err!(Err::InvalidRequest, "No redirect_uri specified");
+            err!(Err::InvalidRequest, "no redirect_uri specified");
         };
         let Some(redirect_uris) = client_meta.redirect_uris else {
-            err!(Err::InvalidRequest, "No redirect_uris specified for client");
+            err!(Err::InvalidRequest, "no redirect_uris specified for client");
         };
         if !redirect_uris.contains(redirect_uri) {
-            err!(Err::InvalidRequest, "Request redirect_uri is not registered");
+            err!(Err::InvalidRequest, "request redirect_uri is not registered");
         }
 
         // response_type
         if !client_meta.response_types.unwrap_or_default().contains(&request.response_type) {
-            err!(Err::UnsupportedResponseType, "The response_type not supported by client");
+            err!(Err::UnsupportedResponseType, "the response_type not supported by client");
         }
         if !server_meta.response_types_supported.contains(&request.response_type) {
             err!(Err::UnsupportedResponseType, "response_type not supported by server");
@@ -219,7 +230,7 @@ impl super::Context for Context {
         // N.B. while optional in the spec, we require it
         let challenge_methods = server_meta.code_challenge_methods_supported.unwrap_or_default();
         if !challenge_methods.contains(&request.code_challenge_method) {
-            err!(Err::InvalidRequest, "Unsupported code_challenge_method");
+            err!(Err::InvalidRequest, "unsupported code_challenge_method");
         }
         if request.code_challenge.len() < 43 || request.code_challenge.len() > 128 {
             err!(Err::InvalidRequest, "code_challenge must be between 43 and 128 characters");
@@ -249,7 +260,7 @@ impl super::Context for Context {
 
         // save `redirect_uri` and verify in `token` endpoint
         let Some(redirect_uri) = &request.redirect_uri else {
-            err!(Err::InvalidRequest, "No redirect_uri specified");
+            err!(Err::InvalidRequest, "no redirect_uri specified");
         };
         let Ok(mut auth_state) = AuthState::builder()
             .redirect_uri(redirect_uri.clone())
