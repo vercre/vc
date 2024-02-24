@@ -42,9 +42,9 @@
 // LATER: implement `SlowDown` checks/errors
 
 use std::fmt::Debug;
+// use std::sync::Arc;
 use std::vec;
 
-use anyhow::anyhow;
 use chrono::Utc;
 use tracing::{instrument, trace};
 use vercre_core::error::Err;
@@ -83,12 +83,12 @@ where
             None
         };
 
-        // let issuer_meta = Issuer::metadata(&self.provider, &request.credential_issuer).await?;
-        // let cfg_ids = credential_configuration_ids(&request, &issuer_meta)?;
+        let issuer_meta = Issuer::metadata(&self.provider, &request.credential_issuer).await?;
+        let cfg_ids = credential_configuration_ids(&request, &issuer_meta)?;
 
         let ctx = Context {
             callback_id,
-            // credential_configuration_ids: cfg_ids,
+            credential_configuration_ids: cfg_ids,
         };
 
         self.handle_request(request, ctx).await
@@ -98,7 +98,7 @@ where
 #[derive(Debug)]
 struct Context {
     callback_id: Option<String>,
-    // credential_configuration_ids: Vec<String>,
+    credential_configuration_ids: Vec<String>,
 }
 
 impl super::Context for Context {
@@ -248,28 +248,22 @@ impl super::Context for Context {
         trace!("Context::process");
 
         // save authorization state
-        let mut state = State::builder()
-            .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credential_issuer(request.credential_issuer.clone())
-            .client_id(request.client_id.clone())
-            // .credential_configuration_ids(self.credential_configuration_ids.clone())
-            .holder_id(Some(request.holder_id.clone()))
-            .build()
-            .map_err(|e| Err::ServerError(anyhow!(e)))?;
-
-        // save `redirect_uri` and verify in `token` endpoint
-        let Some(redirect_uri) = &request.redirect_uri else {
-            // we should never get here, as this is already verified in `verify`
-            err!(Err::InvalidRequest, "no redirect_uri specified");
+        let mut state = State {
+            expires_at: Utc::now() + Expire::AuthCode.duration(),
+            credential_issuer: request.credential_issuer.clone(),
+            client_id: Some(request.client_id.clone()),
+            credential_configuration_ids: self.credential_configuration_ids.clone(),
+            holder_id: Some(request.holder_id.clone()),
+            ..Default::default()
         };
 
-        let mut auth_state = AuthState::builder()
-            .redirect_uri(redirect_uri.clone())
-            .code_challenge(request.code_challenge.clone())
-            .code_challenge_method(request.code_challenge_method.clone())
-            .scope(request.scope.clone())
-            .build()
-            .map_err(|e| Err::ServerError(anyhow!(e)))?;
+        let mut auth_state = AuthState {
+            redirect_uri: request.redirect_uri.clone(),
+            code_challenge: Some(request.code_challenge.clone()),
+            code_challenge_method: Some(request.code_challenge_method.clone()),
+            scope: request.scope.clone(),
+            ..Default::default()
+        };
 
         // add `authorization_details` into state
         if let Some(auth_dets) = &request.authorization_details {
@@ -298,7 +292,7 @@ impl super::Context for Context {
         Ok(AuthorizationResponse {
             code,
             state: request.state.clone(),
-            redirect_uri: redirect_uri.clone(),
+            redirect_uri: request.redirect_uri.clone().unwrap_or_default(),
         })
     }
 }
