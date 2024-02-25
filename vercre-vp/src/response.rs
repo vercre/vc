@@ -86,7 +86,9 @@ where
 
     // Verfiy the vp_token and presentation subm
     #[instrument]
-    async fn verify(&self, provider: &Self::Provider, request: &Self::Request) -> Result<&Self> {
+    async fn verify(
+        &mut self, provider: &Self::Provider, request: &Self::Request,
+    ) -> Result<&Self> {
         trace!("Context::verify");
 
         // TODO:

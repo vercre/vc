@@ -76,9 +76,9 @@ impl Server for Provider {
 impl Holder for Provider {
     /// Authorize issuance of the specified credential for the holder.
     async fn authorize(
-        &self, holder_id: &str, credential_identifiers: &[String],
-    ) -> anyhow::Result<()> {
-        self.holder.authorize(holder_id, credential_identifiers)
+        &self, holder_id: &str, credential_configuration_id: &str,
+    ) -> anyhow::Result<bool> {
+        self.holder.authorize(holder_id, credential_configuration_id)
     }
 
     async fn claims(
@@ -227,11 +227,13 @@ impl HolderStore {
         }
     }
 
-    fn authorize(&self, holder_id: &str, _identifiers: &[String]) -> anyhow::Result<()> {
+    fn authorize(
+        &self, holder_id: &str, _credential_configuration_id: &str,
+    ) -> anyhow::Result<bool> {
         if self.holders.lock().expect("should lock").get(holder_id).is_none() {
             return Err(anyhow!("no matching holder_id"));
         };
-        Ok(())
+        Ok(true)
     }
 
     fn get_claims(

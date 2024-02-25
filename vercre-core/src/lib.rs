@@ -26,12 +26,11 @@ use crate::metadata::{
     Server as ServerMetadata,
 };
 
-// LATER: reduce cloning by refactoring larger structs into smaller, 'composed' structs
-//        see https://rust-unofficial.github.io/patterns/patterns/structural/compose-structs.html
+/// LATER: investigate `async_fn_in_trait` warning
 
 /// Result type for `OpenID` for Verifiable Credential Issuance and Verifiable
 /// Presentations.
-pub type Result<T, E = error::Error> = core::result::Result<T, E>;
+pub type Result<T, E = error::Error> = std::result::Result<T, E>;
 
 /// The Client trait is used by implementers to provide Client metadata to the
 /// library.
@@ -87,10 +86,11 @@ pub trait Callback: Send + Sync {
 /// provided by implementers.
 #[allow(async_fn_in_trait)]
 pub trait Holder: Send + Sync {
-    /// Authorize issuance of the specified credential for the holder.
+    /// Authorize issuance of the credential specified by `credential_configuration_id`.
+    /// Returns `true` if the holder is authorized.
     async fn authorize(
-        &self, holder_id: &str, credential_identifiers: &[String],
-    ) -> anyhow::Result<()>;
+        &self, holder_id: &str, credential_configuration_id: &str,
+    ) -> anyhow::Result<bool>;
 
     /// Returns a populated `Claims` object for the given holder and credential
     /// definition.
@@ -166,7 +166,7 @@ pub trait Context: Send + Sync + Debug {
 
     /// Verify the request.
     #[allow(clippy::unused_async)]
-    async fn verify(&self, _: &Self::Provider, _: &Self::Request) -> Result<&Self> {
+    async fn verify(&mut self, _: &Self::Provider, _: &Self::Request) -> Result<&Self> {
         Ok(self)
     }
 
@@ -176,6 +176,7 @@ pub trait Context: Send + Sync + Debug {
     ) -> Result<Self::Response>;
 }
 
+// TODO: replace async fn in trait with async trait
 pub trait Endpoint: Debug {
     type Provider: Callback;
 
@@ -188,7 +189,7 @@ pub trait Endpoint: Debug {
     /// calls `Endpoint::handle_request` to handle shared functionality.
     #[allow(async_fn_in_trait)]
     #[instrument]
-    async fn handle_request<R, C, U>(&self, request: &R, ctx: C) -> Result<U>
+    async fn handle_request<R, C, U>(&self, request: &R, mut ctx: C) -> Result<U>
     where
         C: Context<Request = R, Response = U, Provider = Self::Provider>,
         R: Default + Clone + Debug + Send + Sync,

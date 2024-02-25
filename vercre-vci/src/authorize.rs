@@ -41,13 +41,14 @@
 
 // LATER: implement `SlowDown` checks/errors
 
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::vec;
 
+use anyhow::anyhow;
 use chrono::Utc;
 use tracing::{instrument, trace};
 use vercre_core::error::Err;
-use vercre_core::metadata::Issuer as IssuerMetadata;
 pub use vercre_core::vci::{
     AuthorizationDetail, AuthorizationRequest, AuthorizationResponse, TokenAuthorizationDetail,
 };
@@ -78,12 +79,13 @@ where
             None
         };
 
-        let issuer_meta = Issuer::metadata(&self.provider, &request.credential_issuer).await?;
-        let cfg_ids = credential_configuration_ids(request, &issuer_meta)?;
+        // let issuer_meta = Issuer::metadata(&self.provider, &request.credential_issuer).await?;
+        // let cfg_ids = credential_configuration_ids(request, &issuer_meta)?;
 
         let ctx = Context {
             callback_id,
-            credential_configuration_ids: cfg_ids,
+            auth_dets: HashMap::new(),
+            scope_items: HashMap::new(),
             _p: std::marker::PhantomData,
         };
 
@@ -94,7 +96,8 @@ where
 #[derive(Debug)]
 struct Context<P> {
     callback_id: Option<String>,
-    credential_configuration_ids: Vec<String>,
+    auth_dets: HashMap<String, AuthorizationDetail>,
+    scope_items: HashMap<String, String>,
     _p: std::marker::PhantomData<P>,
 }
 
@@ -111,7 +114,9 @@ where
     }
 
     #[instrument]
-    async fn verify(&self, provider: &Self::Provider, request: &Self::Request) -> Result<&Self> {
+    async fn verify(
+        &mut self, provider: &Self::Provider, request: &Self::Request,
+    ) -> Result<&Self> {
         trace!("Context::verify");
 
         let Ok(client_meta) = Client::metadata(provider, &request.client_id).await else {
@@ -166,6 +171,9 @@ where
                 if issuer_meta.credential_configurations_supported.get(cfg_id).is_none() {
                     err!(Err::InvalidRequest, "unsupported credential_configuration_id");
                 }
+
+                // save auth_det by `credential_configuration_id` for later use
+                self.auth_dets.insert(cfg_id.clone(), auth_det.clone());
                 continue 'verify_details;
             }
 
@@ -176,10 +184,12 @@ where
                 };
 
                 // check all supported `credential_configurations`
-                for cred_cfg in issuer_meta.credential_configurations_supported.values() {
+                for (cfg_id, cred_cfg) in &issuer_meta.credential_configurations_supported {
                     if &cred_cfg.format == format
                         && cred_cfg.credential_definition.type_ == auth_def.type_
                     {
+                        // save auth_det by `credential_configuration_id` for later use
+                        self.auth_dets.insert(cfg_id.to_string(), auth_det.clone());
                         continue 'verify_details;
                     }
                 }
@@ -192,22 +202,16 @@ where
         // verify scope items
         if let Some(scope) = &request.scope {
             'verify_scope: for item in scope.split_whitespace().collect::<Vec<&str>>() {
-                for cred_cfg in issuer_meta.credential_configurations_supported.values() {
+                for (cfg_id, cred_cfg) in &issuer_meta.credential_configurations_supported {
                     if cred_cfg.scope == Some(item.to_string()) {
+                        // save scope item by `credential_configuration_id` for later use
+                        self.scope_items.insert(cfg_id.to_string(), item.to_string());
                         continue 'verify_scope;
                     }
                 }
                 err!(Err::InvalidRequest, "scope item {item} is unsupported");
             }
         }
-
-        // TODO: implement `Holder::authorize`
-        // - for each requested credential_configuration_id, check if the holder is authorized
-        // - save auth_det/scope item for each authorized credential_configuration_id
-
-        // if Holder::authorize(provider, &request.holder_id, &self.credential_configuration_ids).await.is_err() {
-        //     err!(Err::AuthorizationPending, "holder is not authorized");
-        // }
 
         // redirect_uri
         let Some(redirect_uri) = &request.redirect_uri else {
@@ -241,44 +245,79 @@ where
         Ok(self)
     }
 
+    // Authorize Wallet request:
+    // - check which requested `credential_configuration_id`s the holder is
+    //   authorized for
+    // - save related auth_dets/scope items in state
     #[instrument]
     async fn process(
         &self, provider: &Self::Provider, request: &Self::Request,
     ) -> Result<Self::Response> {
         trace!("Context::process");
 
+        let mut clean_scope_items = vec![];
+        let mut clean_auth_dets = vec![];
+        let mut clean_cfg_ids = vec![];
+
+        // check which requested `scope` items the holder is authorized for
+        for (cfg_id, item) in &self.scope_items {
+            let auth = Holder::authorize(provider, &request.holder_id, cfg_id)
+                .await
+                .map_err(|e| Err::ServerError(anyhow!("issue checking authorization: {e}")))?;
+            if auth {
+                clean_scope_items.push(item.clone());
+                clean_cfg_ids.push(cfg_id.clone());
+            }
+        }
+        let scope = if clean_scope_items.is_empty() {
+            None
+        } else {
+            Some(clean_scope_items.join(" "))
+        };
+
+        // check which requested `authorization_detail` entries the holder is authorized for
+        for (cfg_id, auth_det) in &self.auth_dets {
+            let auth = Holder::authorize(provider, &request.holder_id, cfg_id)
+                .await
+                .map_err(|e| Err::ServerError(anyhow!("issue checking authorization: {e}")))?;
+            if auth {
+                let tkn_auth_det = TokenAuthorizationDetail {
+                    authorization_detail: auth_det.clone(),
+                    credential_identifiers: None,
+                };
+                clean_auth_dets.push(tkn_auth_det.clone());
+                clean_cfg_ids.push(cfg_id.clone());
+            }
+        }
+        let auth_dets = if clean_auth_dets.is_empty() {
+            None
+        } else {
+            Some(clean_auth_dets)
+        };
+
+        // error if holder is authorized for any requested credentials
+        if auth_dets.is_none() && scope.is_none() {
+            err!(Err::AccessDenied, "holder is not authorized for any requested credentials");
+        }
+
         // save authorization state
         let mut state = State {
             expires_at: Utc::now() + Expire::AuthCode.duration(),
             credential_issuer: request.credential_issuer.clone(),
             client_id: Some(request.client_id.clone()),
-            credential_configuration_ids: self.credential_configuration_ids.clone(),
+            credential_configuration_ids: clean_cfg_ids,
             holder_id: Some(request.holder_id.clone()),
             ..Default::default()
         };
 
-        let mut auth_state = AuthState {
+        let auth_state = AuthState {
             redirect_uri: request.redirect_uri.clone(),
             code_challenge: Some(request.code_challenge.clone()),
             code_challenge_method: Some(request.code_challenge_method.clone()),
-            scope: request.scope.clone(),
+            authorization_details: auth_dets,
+            scope, // request.scope.clone(),
             ..Default::default()
         };
-
-        // add `authorization_details` into state
-        if let Some(auth_dets) = &request.authorization_details {
-            let mut tkn_auth_dets = vec![];
-
-            for auth_det in auth_dets {
-                let tkn_auth_det = TokenAuthorizationDetail {
-                    authorization_detail: auth_det.clone(),
-                    credential_identifiers: None,
-                };
-                tkn_auth_dets.push(tkn_auth_det.clone());
-            }
-            auth_state.authorization_details = Some(tkn_auth_dets);
-        }
-
         state.auth = Some(auth_state);
 
         let code = gen::auth_code();
@@ -297,76 +336,76 @@ where
     }
 }
 
-#[instrument]
-fn credential_configuration_ids(
-    request: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
-) -> Result<Vec<String>> {
-    trace!("credential_configuration_ids");
+// #[instrument]
+// fn credential_configuration_ids(
+//     request: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
+// ) -> Result<Vec<String>> {
+//     trace!("credential_configuration_ids");
 
-    let mut cfg_ids = auth_cfg_ids(request, issuer_meta)?;
-    cfg_ids.extend(scope_cfg_ids(request, issuer_meta)?);
+//     let mut cfg_ids = auth_cfg_ids(request, issuer_meta)?;
+//     cfg_ids.extend(scope_cfg_ids(request, issuer_meta)?);
 
-    Ok(cfg_ids)
-}
+//     Ok(cfg_ids)
+// }
 
-#[instrument]
-fn auth_cfg_ids(
-    request: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
-) -> Result<Vec<String>> {
-    trace!("auth_cfg_ids");
+// #[instrument]
+// fn auth_cfg_ids(
+//     request: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
+// ) -> Result<Vec<String>> {
+//     trace!("auth_cfg_ids");
 
-    let Some(authorization_details) = &request.authorization_details else {
-        return Ok(vec![]);
-    };
+//     let Some(authorization_details) = &request.authorization_details else {
+//         return Ok(vec![]);
+//     };
 
-    let mut cfg_ids = vec![];
+//     let mut cfg_ids = vec![];
 
-    for auth_det in authorization_details {
-        if let Some(cfg_id) = auth_det.credential_configuration_id.clone() {
-            // check if requested credential_configuration_id is supported
-            if issuer_meta.credential_configurations_supported.get(&cfg_id).is_some() {
-                cfg_ids.push(cfg_id);
-            }
-        } else if let Some(format) = &auth_det.format {
-            // check if requested is supported
-            for (cfg_id, cred_cfg) in &issuer_meta.credential_configurations_supported {
-                // credential_definition must be present
-                if &cred_cfg.format == format {
-                    let cfg_def = cred_cfg.credential_definition.clone();
-                    let auth_def = auth_det.credential_definition.clone().unwrap_or_default();
+//     for auth_det in authorization_details {
+//         if let Some(cfg_id) = auth_det.credential_configuration_id.clone() {
+//             // check if requested credential_configuration_id is supported
+//             if issuer_meta.credential_configurations_supported.get(&cfg_id).is_some() {
+//                 cfg_ids.push(cfg_id);
+//             }
+//         } else if let Some(format) = &auth_det.format {
+//             // check if requested is supported
+//             for (cfg_id, cred_cfg) in &issuer_meta.credential_configurations_supported {
+//                 // credential_definition must be present
+//                 if &cred_cfg.format == format {
+//                     let cfg_def = cred_cfg.credential_definition.clone();
+//                     let auth_def = auth_det.credential_definition.clone().unwrap_or_default();
 
-                    if cfg_def.type_.unwrap_or_default() == auth_def.type_.unwrap_or_default() {
-                        cfg_ids.push(cfg_id.clone());
-                    }
-                }
-            }
-        }
-    }
+//                     if cfg_def.type_.unwrap_or_default() == auth_def.type_.unwrap_or_default() {
+//                         cfg_ids.push(cfg_id.clone());
+//                     }
+//                 }
+//             }
+//         }
+//     }
 
-    Ok(cfg_ids)
-}
+//     Ok(cfg_ids)
+// }
 
-#[instrument]
-fn scope_cfg_ids(
-    request: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
-) -> Result<Vec<String>> {
-    trace!("scope_identifiers");
+// #[instrument]
+// fn scope_cfg_ids(
+//     request: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
+// ) -> Result<Vec<String>> {
+//     trace!("scope_identifiers");
 
-    let Some(scope) = &request.scope else {
-        return Ok(vec![]);
-    };
-    let mut cfg_ids = vec![];
+//     let Some(scope) = &request.scope else {
+//         return Ok(vec![]);
+//     };
+//     let mut cfg_ids = vec![];
 
-    for item in scope.split_whitespace().collect::<Vec<&str>>() {
-        for (id, cred) in &issuer_meta.credential_configurations_supported {
-            if cred.scope == Some(item.to_string()) {
-                cfg_ids.push(id.to_owned());
-            }
-        }
-    }
+//     for item in scope.split_whitespace().collect::<Vec<&str>>() {
+//         for (id, cred) in &issuer_meta.credential_configurations_supported {
+//             if cred.scope == Some(item.to_string()) {
+//                 cfg_ids.push(id.to_owned());
+//             }
+//         }
+//     }
 
-    Ok(cfg_ids)
-}
+//     Ok(cfg_ids)
+// }
 
 #[cfg(test)]
 mod tests {

@@ -121,7 +121,7 @@ where
     }
 
     #[instrument]
-    async fn verify(&self, provider: &P, request: &Self::Request) -> Result<&Self> {
+    async fn verify(&mut self, provider: &P, request: &Self::Request) -> Result<&Self> {
         trace!("Context::verify");
 
         let issuer_meta = Issuer::metadata(provider, &request.credential_issuer).await?;

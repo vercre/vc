@@ -10,7 +10,6 @@
 
 use std::fmt::Debug;
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
 use chrono::Utc;
@@ -54,7 +53,7 @@ where
             callback_id: state.callback_id.clone(),
             state,
             issuer_meta: Issuer::metadata(&self.provider, &request.credential_issuer).await?,
-            holder_did: Arc::new(Mutex::new(String::new())),
+            holder_did: String::new(),
             _p: std::marker::PhantomData,
         };
 
@@ -67,7 +66,7 @@ struct Context<P> {
     callback_id: Option<String>,
     issuer_meta: IssuerMetadata,
     state: State,
-    holder_did: Arc<Mutex<String>>,
+    holder_did: String,
     _p: std::marker::PhantomData<P>,
 }
 
@@ -84,7 +83,7 @@ where
     }
 
     #[instrument]
-    async fn verify(&self, provider: &P, request: &Self::Request) -> Result<&Self> {
+    async fn verify(&mut self, provider: &P, request: &Self::Request) -> Result<&Self> {
         trace!("Context::verify");
 
         let Some(token_state) = &self.state.token else {
@@ -174,7 +173,7 @@ where
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(Err::InvalidProof(nonce, expires_in), "Proof JWT DID is invalid");
             };
-            *self.holder_did.lock().unwrap() = did.to_string();
+            self.holder_did = did.to_string();
         }
 
         Ok(self)
@@ -257,7 +256,7 @@ where
 
         // transform to JWT
         let mut vc_jwt = vc.to_jwt()?;
-        vc_jwt.claims.sub = self.holder_did.lock().unwrap().clone();
+        vc_jwt.claims.sub = self.holder_did.clone();
         let signed = vc_jwt.sign(provider.clone()).await?;
 
         Ok(CredentialResponse {
@@ -324,7 +323,7 @@ where
             .add_type(types[1].clone())
             .issuer(credential_issuer.clone())
             .add_subject(CredentialSubject {
-                id: Some(self.holder_did.lock().unwrap().clone()),
+                id: Some(self.holder_did.clone()),
                 claims: holder_claims.claims,
             })
             .add_proof(proof)

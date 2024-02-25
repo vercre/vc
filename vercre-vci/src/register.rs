@@ -49,7 +49,9 @@ where
     }
 
     #[instrument]
-    async fn verify(&self, provider: &Self::Provider, request: &Self::Request) -> Result<&Self> {
+    async fn verify(
+        &mut self, provider: &Self::Provider, request: &Self::Request,
+    ) -> Result<&Self> {
         trace!("Context::verify");
 
         let buf = match StateManager::get(provider, &request.access_token).await {

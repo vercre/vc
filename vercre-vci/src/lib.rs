@@ -171,7 +171,7 @@ mod tests {
         return_ok: bool,
     }
 
-     struct TestResponse {}
+    struct TestResponse {}
 
     impl<P> Endpoint<P>
     where

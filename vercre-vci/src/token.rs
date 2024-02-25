@@ -79,7 +79,9 @@ where
 
     /// Verify the token request.
     #[instrument]
-    async fn verify(&self, provider: &Self::Provider, request: &Self::Request) -> Result<&Self> {
+    async fn verify(
+        &mut self, provider: &Self::Provider, request: &Self::Request,
+    ) -> Result<&Self> {
         trace!("Context::verify");
 
         let Ok(server_meta) = Server::metadata(provider, &request.credential_issuer).await else {
