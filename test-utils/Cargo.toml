@@ -1,7 +1,6 @@
 [package]
 description = "Test utilities"
-licence.workspace = true
-# license = "MIT OR Apache-2.0"
+license = "MIT OR Apache-2.0"
 name = "test-utils"
 # readme = "README.md"
 
@@ -11,7 +10,6 @@ edition.workspace = true
 exclude.workspace = true
 homepage.workspace = true
 keywords.workspace = true
-# licence.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 version.workspace = true
