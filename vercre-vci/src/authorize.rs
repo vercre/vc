@@ -203,7 +203,11 @@ where
         if let Some(scope) = &request.scope {
             'verify_scope: for item in scope.split_whitespace().collect::<Vec<&str>>() {
                 for (cfg_id, cred_cfg) in &issuer_meta.credential_configurations_supported {
-                    if cred_cfg.scope == Some(item.to_string()) {
+                    // credential request in `authorization_details` takes precedence
+                    // over request in `scope`
+                    if !self.auth_dets.contains_key(cfg_id)
+                        && cred_cfg.scope == Some(item.to_string())
+                    {
                         // save scope item by `credential_configuration_id` for later use
                         self.scope_items.insert(cfg_id.to_string(), item.to_string());
                         continue 'verify_scope;
@@ -259,22 +263,6 @@ where
         let mut clean_auth_dets = vec![];
         let mut clean_cfg_ids = vec![];
 
-        // check which requested `scope` items the holder is authorized for
-        for (cfg_id, item) in &self.scope_items {
-            let auth = Holder::authorize(provider, &request.holder_id, cfg_id)
-                .await
-                .map_err(|e| Err::ServerError(anyhow!("issue checking authorization: {e}")))?;
-            if auth {
-                clean_scope_items.push(item.clone());
-                clean_cfg_ids.push(cfg_id.clone());
-            }
-        }
-        let scope = if clean_scope_items.is_empty() {
-            None
-        } else {
-            Some(clean_scope_items.join(" "))
-        };
-
         // check which requested `authorization_detail` entries the holder is authorized for
         for (cfg_id, auth_det) in &self.auth_dets {
             let auth = Holder::authorize(provider, &request.holder_id, cfg_id)
@@ -295,7 +283,23 @@ where
             Some(clean_auth_dets)
         };
 
-        // error if holder is authorized for any requested credentials
+        // check which requested `scope` items the holder is authorized for
+        for (cfg_id, item) in &self.scope_items {
+            let auth = Holder::authorize(provider, &request.holder_id, cfg_id)
+                .await
+                .map_err(|e| Err::ServerError(anyhow!("issue checking authorization: {e}")))?;
+            if auth {
+                clean_scope_items.push(item.clone());
+                clean_cfg_ids.push(cfg_id.clone());
+            }
+        }
+        let scope = if clean_scope_items.is_empty() {
+            None
+        } else {
+            Some(clean_scope_items.join(" "))
+        };
+
+        // error if holder is not authorized for any requested credentials
         if auth_dets.is_none() && scope.is_none() {
             err!(Err::AccessDenied, "holder is not authorized for any requested credentials");
         }
