@@ -309,8 +309,7 @@ mod tests {
                         credential_subject: None,
                         ..Default::default()
                     }),
-                    credential_configuration_id: None,
-                    locations: None,
+                    ..Default::default()
                 },
                 credential_identifiers: Some(vec!["EmployeeID_JWT".to_string()]),
             }]),

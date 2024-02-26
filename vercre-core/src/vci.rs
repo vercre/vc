@@ -1,5 +1,6 @@
 //! # `OpenID` for Verifiable Credential Issuance
 
+use std::collections::HashMap;
 use std::io::Cursor;
 use std::str::FromStr;
 
@@ -10,7 +11,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::error::{self, Err};
-use crate::metadata::{Client as ClientMetadata, CredentialDefinition, Issuer as IssuerMetadata};
+use crate::metadata::{
+    Claim, Client as ClientMetadata, CredentialDefinition, Issuer as IssuerMetadata,
+};
 use crate::proof::Jwk;
 use crate::{err, stringify, Result};
 
@@ -376,8 +379,7 @@ pub struct AuthorizationDetail {
 
     /// Specifies the unique identifier of the Credential being described in the
     /// `credential_configurations_supported` map in the Credential Issuer Metadata.
-    /// REQUIRED when `format` parameter is not set. MUST NOT be set if `format`
-    /// parameter is set.
+    /// REQUIRED when `format` parameter is not set, otherwise MUST NOT be set.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_configuration_id: Option<String>,
 
@@ -387,9 +389,21 @@ pub struct AuthorizationDetail {
     /// REQUIRED when `credential_configuration_id` parameter is not set. MUST NOT be
     /// set if `credential_configuration_id` parameter is set.
     ///
-    /// One of "jwt_vc_json", "jwt_vc_json-ld", or "ldp_vc".
+    /// One of "jwt_vc_json", "jwt_vc_json-ld", "ldp_vc", or "vc+sd-jwt".
     #[serde(skip_serializing_if = "Option::is_none")]
     pub format: Option<String>,
+
+    /// Contains the type values the Wallet requests authorization for at the Credential
+    /// Issuer.
+    /// REQUIRED if format is "vc+sd-jwt", otherwise, it MUST not be set.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vct: Option<String>,
+
+    /// Used by the Wallet to indicate which claims it wants to be included in the
+    /// issued Credential.
+    /// OPTIONAL when format is "vc+sd-jwt", otherwise, it MUST not be set.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub claims: Option<HashMap<String, Claim>>,
 
     /// The detailed description of the credential type requested. At a minimum,
     /// the Credential Definition 'type' field MUST be set.
@@ -868,8 +882,7 @@ mod tests {
                     ]),
                     credential_subject: None,
                 }),
-                locations: None,
-                credential_configuration_id: None,
+                ..Default::default()
             }]),
             scope: None,
             resource: None,

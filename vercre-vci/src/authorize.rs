@@ -17,7 +17,7 @@
 //! with `credential_configuration_id`:
 //!
 //! ```json
-//! [
+//! "authorization_details":[
 //!    {
 //!       "type": "openid_credential",
 //!       "credential_configuration_id": "UniversityDegreeCredential"
@@ -28,7 +28,7 @@
 //! with `format`:
 //!
 //! ```json
-//! [
+//! "authorization_details":[
 //!     {
 //!         "type": "openid_credential",
 //!         "format": "vc+sd-jwt",
@@ -44,7 +44,7 @@
 //!   - `credentialSubject` is OPTIONAL.
 //!
 //! ```json
-// ! [
+// ! "authorization_details":[
 // !     {
 // !         "type": "openid_credential",
 // !         "credential_configuration_id": "UniversityDegreeCredential",
@@ -226,9 +226,9 @@ where
     ) -> Result<Self::Response> {
         trace!("Context::process");
 
-        let mut clean_scope_items = vec![];
-        let mut clean_auth_dets = vec![];
-        let mut clean_cfg_ids = vec![];
+        let mut authzd_scope_items = vec![];
+        let mut authzd_auth_dets = vec![];
+        let mut authzd_cfg_ids = vec![];
 
         // check which requested `authorization_detail` entries the holder is authorized for
         for (cfg_id, auth_det) in &self.auth_dets {
@@ -240,14 +240,14 @@ where
                     authorization_detail: auth_det.clone(),
                     credential_identifiers: None,
                 };
-                clean_auth_dets.push(tkn_auth_det.clone());
-                clean_cfg_ids.push(cfg_id.clone());
+                authzd_auth_dets.push(tkn_auth_det.clone());
+                authzd_cfg_ids.push(cfg_id.clone());
             }
         }
-        let auth_dets = if clean_auth_dets.is_empty() {
+        let auth_dets = if authzd_auth_dets.is_empty() {
             None
         } else {
-            Some(clean_auth_dets)
+            Some(authzd_auth_dets)
         };
 
         // check which requested `scope` items the holder is authorized for
@@ -256,14 +256,14 @@ where
                 .await
                 .map_err(|e| Err::ServerError(anyhow!("issue checking authorization: {e}")))?;
             if auth {
-                clean_scope_items.push(item.clone());
-                clean_cfg_ids.push(cfg_id.clone());
+                authzd_scope_items.push(item.clone());
+                authzd_cfg_ids.push(cfg_id.clone());
             }
         }
-        let scope = if clean_scope_items.is_empty() {
+        let scope = if authzd_scope_items.is_empty() {
             None
         } else {
-            Some(clean_scope_items.join(" "))
+            Some(authzd_scope_items.join(" "))
         };
 
         // error if holder is not authorized for any requested credentials
@@ -276,7 +276,7 @@ where
             expires_at: Utc::now() + Expire::AuthCode.duration(),
             credential_issuer: request.credential_issuer.clone(),
             client_id: Some(request.client_id.clone()),
-            credential_configuration_ids: clean_cfg_ids,
+            credential_configuration_ids: authzd_cfg_ids,
             holder_id: Some(request.holder_id.clone()),
             ..Default::default()
         };
