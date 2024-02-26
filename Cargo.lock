@@ -1345,6 +1345,9 @@ name = "fastrand"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "25cbce373ec4653f1a01a31e8a5e5ec0c622dc27ff9c4e6606eefef5cbbed4a5"
+dependencies = [
+ "getrandom 0.2.12",
+]
 
 [[package]]
 name = "fdeflate"
@@ -2674,15 +2677,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca3129af7b92a17112d59ad498c6f81eaf463253766b90396d39ea7a39d6613c"
 dependencies = [
  "rand_core 0.5.1",
-]
-
-[[package]]
-name = "random-string"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f70fd13c3024ae3f17381bb5c4d409c6dc9ea6895c08fa2147aba305bea3c4af"
-dependencies = [
- "fastrand 1.9.0",
 ]
 
 [[package]]
@@ -4016,12 +4010,12 @@ dependencies = [
  "derive_builder 0.20.0",
  "ecdsa",
  "ed25519-dalek",
+ "fastrand 2.0.1",
  "image",
  "insta",
  "k256",
  "lazy_static",
  "qrcode-rs",
- "random-string",
  "regex",
  "serde",
  "serde_json",

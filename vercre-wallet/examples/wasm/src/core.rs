@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use futures_util::TryStreamExt;
 use gloo_console::log;
-use vercre_wallet::{App, Capabilities, Effect, Event};
+use vercre_wallet::{http::protocol::HttpResult, App, Capabilities, Effect, Event};
 use yew::platform::spawn_local;
 use yew::Callback;
 
@@ -39,8 +39,8 @@ pub fn process_effect(core: &Core, effect: Effect, callback: &Callback<Message>)
 
                 async move {
                     let response = http::request(&request.operation).await.unwrap();
-
-                    for effect in core.resolve(&mut request, response) {
+                    
+                    for effect in core.resolve(&mut request, HttpResult::Ok(response)) {
                         process_effect(&core, effect, &callback);
                     }
                 }
