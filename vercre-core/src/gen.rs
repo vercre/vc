@@ -19,42 +19,51 @@ const STATE_LEN: usize = 32;
 /// Generates a base64 encoded random string for authorization code.
 #[must_use]
 pub fn auth_code() -> String {
-    let rnd = random_string::generate(STATE_LEN, SAFE_CHARS);
+    let rnd = random_string(STATE_LEN, SAFE_CHARS);
     Base64UrlUnpadded::encode_string(rnd.as_bytes())
 }
 
 /// Generates a base64 encoded random string for token
 #[must_use]
 pub fn token() -> String {
-    let rnd = random_string::generate(STATE_LEN, SAFE_CHARS);
+    let rnd = random_string(STATE_LEN, SAFE_CHARS);
     Base64UrlUnpadded::encode_string(rnd.as_bytes())
 }
 
 /// Generates a base64 encoded random string for deferred issuance `transaction_id`.
 #[must_use]
 pub fn transaction_id() -> String {
-    let rnd = random_string::generate(STATE_LEN, SAFE_CHARS);
+    let rnd = random_string(STATE_LEN, SAFE_CHARS);
     Base64UrlUnpadded::encode_string(rnd.as_bytes())
 }
 
 /// Generates a base64 encoded random string for nonce
 #[must_use]
 pub fn nonce() -> String {
-    let rnd = random_string::generate(STATE_LEN, SAFE_CHARS);
+    let rnd = random_string(STATE_LEN, SAFE_CHARS);
     Base64UrlUnpadded::encode_string(rnd.as_bytes())
 }
 
 /// Generates a base64 encoded random string for `issuer_state`
 #[must_use]
 pub fn state_key() -> String {
-    let rnd = random_string::generate(STATE_LEN, SAFE_CHARS);
+    let rnd = random_string(STATE_LEN, SAFE_CHARS);
     Base64UrlUnpadded::encode_string(rnd.as_bytes())
 }
 
 /// Generates a use PIN code.
 #[must_use]
 pub fn user_code() -> String {
-    random_string::generate(PIN_LEN, PIN_CHARS).to_string()
+    random_string(PIN_LEN, PIN_CHARS).to_string()
+}
+
+// Generates a random string from a given set of characters. Uses fastrand so is not
+// cryptographically secure.
+fn random_string(len: usize, charset: &str) -> String {
+    let chars: Vec<char> = charset.chars().collect();
+    (0..len)
+        .map(|_| chars[fastrand::usize(..chars.len())])
+        .collect()
 }
 
 // ///

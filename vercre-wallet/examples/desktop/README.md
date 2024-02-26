@@ -1,4 +1,6 @@
-# Tauri + React + Typescript
+# Desktop Wallet
+
+Tauri + React + Typescript
 
 ## Getting Started
 
