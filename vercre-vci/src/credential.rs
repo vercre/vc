@@ -8,6 +8,40 @@
 //! multiple Credential Requests to request issuance of multiple Credentials of
 //! different types bound to the same proof, or multiple Credentials of the same
 //! type bound to different proofs.
+//!
+//! ## Credential Requests
+//!
+//! - One (and only one) of `credential_identifier` or `format` is REQUIRED.
+//! - `credential_identifier` is REQUIRED when `credential_identifiers` parameter
+//!   was returned from the Token Response. MUST NOT be used otherwise.
+//! - When `format` is set, `credential_definition` is REQUIRED.
+//!
+//! **VC Signed as a JWT, Not Using JSON-LD**
+//!
+//! - `format` is `"jwt_vc_json"`. REQUIRED.
+//! - `credential_definition`. REQUIRED.
+//!   - `type`. REQUIRED.
+//!   - `credentialSubject`. OPTIONAL.
+//!
+//! ## Example
+//!
+//! ```json
+// ! {
+// !    "format": "jwt_vc_json",
+// !    "credential_definition": {
+// !       "type": [
+// !          "VerifiableCredential",
+// !          "UniversityDegreeCredential"
+// !       ],
+// !       "credentialSubject": {
+// !          "given_name": {},
+// !          "family_name": {},
+// !          "degree": {}
+// !       }
+// !    },
+// !    ...
+// ! }
+//! ```
 
 use std::fmt::Debug;
 
@@ -157,7 +191,13 @@ mod tests {
         let signed_jwt = format!("{jwt_enc}.{sig_enc}");
 
         let body = json!({
-            "credential_identifier": "EmployeeID_JWT",
+            "format": "jwt_vc_json",
+            "credential_definition": {
+                "type": [
+                    "VerifiableCredential",
+                    "EmployeeIDCredential"
+                ]
+            },
             "proof":{
                 "proof_type": "jwt",
                 "jwt": signed_jwt

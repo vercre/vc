@@ -1,43 +1,71 @@
 //! # Authorization Endpoint
 //!
-//! The Authorization Endpoint is used in the same manner as defined in [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html).
+//! The Authorization Endpoint is used by Wallets to request access to the Credential
+//! Endpoint, that is, to request issuance of a Credential. The endpoint is used in
+//! the same manner as defined in [RFC6749].
 //!
-//! An Authorization Request is used to request to grant access to the Credential
-//! Endpoint.
+//! Wallets can request authorization for issuance of a Credential using
+//! `authorization_details` (as defined in [RFC9396]) or `scope` parameters (or both).
 //!
-//! There are two possible ways to request issuance of a specific Credential type in an
-//! Authorization Request:
+//! ## Authorization Requests
 //!
-//! 1. Use of the `authorization_details` parameter as defined in [RFC9396](https://www.rfc-editor.org/rfc/rfc9396):
+//! - One (and only one) of `credential_configuration_id` or `format` is REQUIRED.
+//! - `credential_definition` is OPTIONAL.
+
+//! ## Example
+//!
+//! with `credential_configuration_id`:
 //!
 //! ```json
 //! [
 //!    {
 //!       "type": "openid_credential",
-//!       "format": "jwt_vc_json",
-//!       "credential_definition": {
-//!          "type": [
-//!             "VerifiableCredential",
-//!             "UniversityDegreeCredential"
-//!          ]
-//!       }
+//!       "credential_configuration_id": "UniversityDegreeCredential"
 //!    }
 //! ]
 //! ```
 //!
-//! 2. Use OAuth 2.0 `scope` parameter:
+//! with `format`:
 //!
-//! ```http
-//! GET /authorize?
-//!   response_type=code
-//!   &scope=UniversityDegreeCredential
-//!   &resource=https://credential-issuer.example.com
-//!   &client_id=s6BhdRkqt3
-//!   &code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM
-//!   &code_challenge_method=S256
-//!   &redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb
-//! Host: https://server.example.com
+//! ```json
+//! [
+//!     {
+//!         "type": "openid_credential",
+//!         "format": "vc+sd-jwt",
+//!         "vct": "SD_JWT_VC_example_in_OpenID4VCI"
+//!     }
+//! ]
 //! ```
+//!
+//! **VC Signed as a JWT, Not Using JSON-LD**
+//!
+//! - `credential_definition` is OPTIONAL.
+//!   - `type` is OPTIONAL.
+//!   - `credentialSubject` is OPTIONAL.
+//!
+//! ```json
+// ! [
+// !     {
+// !         "type": "openid_credential",
+// !         "credential_configuration_id": "UniversityDegreeCredential",
+// !         "credential_definition": {
+// !             "credentialSubject": {
+// !                 "given_name": {},
+// !                 "family_name": {},
+// !                 "degree": {}
+// !             }
+// !         }
+// !     }
+// ! ]
+//! ```
+//! 
+//! [RFC6749]: https://www.rfc-editor.org/rfc/rfc6749.html
+//! [RFC9396]: https://www.rfc-editor.org/rfc/rfc9396
+
+// LATER: add support for "ldp_vc" format
+// LATER: add support for "jwt_vc_json-ld" format
+// LATER: add support for "vc+sd-jwt" format
+// LATER: add support for "mso_mdoc" format
 
 // LATER: implement `SlowDown` checks/errors
 
@@ -159,11 +187,11 @@ where
             if cfg_id_opt.is_some() && format_opt.is_some() {
                 err!(
                     Err::InvalidRequest,
-                    "`credential_configuration_id` and `format` cannot both be set"
+                    "'credential_configuration_id and format cannot both be set"
                 );
             }
             if cfg_id_opt.is_none() && format_opt.is_none() {
-                err!(Err::InvalidRequest, "`credential_configuration_id` or `format` must be set");
+                err!(Err::InvalidRequest, "credential_configuration_id or format must be set");
             }
 
             // EITHER: verify requested `credential_configuration_id` is supported
@@ -339,77 +367,6 @@ where
         })
     }
 }
-
-// #[instrument]
-// fn credential_configuration_ids(
-//     request: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
-// ) -> Result<Vec<String>> {
-//     trace!("credential_configuration_ids");
-
-//     let mut cfg_ids = auth_cfg_ids(request, issuer_meta)?;
-//     cfg_ids.extend(scope_cfg_ids(request, issuer_meta)?);
-
-//     Ok(cfg_ids)
-// }
-
-// #[instrument]
-// fn auth_cfg_ids(
-//     request: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
-// ) -> Result<Vec<String>> {
-//     trace!("auth_cfg_ids");
-
-//     let Some(authorization_details) = &request.authorization_details else {
-//         return Ok(vec![]);
-//     };
-
-//     let mut cfg_ids = vec![];
-
-//     for auth_det in authorization_details {
-//         if let Some(cfg_id) = auth_det.credential_configuration_id.clone() {
-//             // check if requested credential_configuration_id is supported
-//             if issuer_meta.credential_configurations_supported.get(&cfg_id).is_some() {
-//                 cfg_ids.push(cfg_id);
-//             }
-//         } else if let Some(format) = &auth_det.format {
-//             // check if requested is supported
-//             for (cfg_id, cred_cfg) in &issuer_meta.credential_configurations_supported {
-//                 // credential_definition must be present
-//                 if &cred_cfg.format == format {
-//                     let cfg_def = cred_cfg.credential_definition.clone();
-//                     let auth_def = auth_det.credential_definition.clone().unwrap_or_default();
-
-//                     if cfg_def.type_.unwrap_or_default() == auth_def.type_.unwrap_or_default() {
-//                         cfg_ids.push(cfg_id.clone());
-//                     }
-//                 }
-//             }
-//         }
-//     }
-
-//     Ok(cfg_ids)
-// }
-
-// #[instrument]
-// fn scope_cfg_ids(
-//     request: &AuthorizationRequest, issuer_meta: &IssuerMetadata,
-// ) -> Result<Vec<String>> {
-//     trace!("scope_identifiers");
-
-//     let Some(scope) = &request.scope else {
-//         return Ok(vec![]);
-//     };
-//     let mut cfg_ids = vec![];
-
-//     for item in scope.split_whitespace().collect::<Vec<&str>>() {
-//         for (id, cred) in &issuer_meta.credential_configurations_supported {
-//             if cred.scope == Some(item.to_string()) {
-//                 cfg_ids.push(id.to_owned());
-//             }
-//         }
-//     }
-
-//     Ok(cfg_ids)
-// }
 
 #[cfg(test)]
 mod tests {

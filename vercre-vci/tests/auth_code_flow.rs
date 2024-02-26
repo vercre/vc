@@ -147,7 +147,6 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
 
     // TODO: get identifier from token
     let body = json!({
-        // "credential_identifier": identifiers[0],
         "format": auth_det.format.unwrap(),
         "credential_definition": auth_det.credential_definition,
         "proof":{

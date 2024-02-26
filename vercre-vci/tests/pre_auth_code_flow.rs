@@ -107,7 +107,13 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     let signed_jwt = format!("{jwt_enc}.{sig_enc}");
 
     let body = json!({
-        "credential_identifier": "EmployeeID_JWT",
+        "format": "jwt_vc_json",
+        "credential_definition": {
+            "type": [
+                "VerifiableCredential",
+                "EmployeeIDCredential"
+            ]
+        },
         "proof":{
             "proof_type": "jwt",
             "jwt": signed_jwt

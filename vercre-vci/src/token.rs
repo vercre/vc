@@ -77,7 +77,7 @@ where
         self.callback_id.clone()
     }
 
-    /// Verify the token request.
+    // Verify the token request.
     #[instrument]
     async fn verify(
         &mut self, provider: &Self::Provider, request: &Self::Request,
@@ -146,14 +146,13 @@ where
     ) -> Result<Self::Response> {
         trace!("Context::process");
 
-        // remove authorization state to prevent auth code reuse
+        // prevent auth code reuse
         StateManager::purge(provider, &auth_state_key(request)?).await?;
 
-        // clone authorization state, update, then save as token state
+        // copy existing state for token state
         let mut state = self.state.clone();
 
-        // we need a copy of auth_state in order to return authorization_details
-        // in TokenResponse
+        // get auth state to return `authorization_details` and `scope`
         let Some(auth_state) = state.auth else {
             err!("Auth state not set");
         };
@@ -162,13 +161,13 @@ where
         let token = gen::token();
         let c_nonce = gen::nonce();
 
-        let token_state = TokenState::builder()
-            .access_token(token.clone())
-            .c_nonce(c_nonce.clone())
-            .build()
-            .map_err(|e| Err::ServerError(anyhow!(e)))?;
-
-        state.token = Some(token_state);
+        state.token = Some(
+            TokenState::builder()
+                .access_token(token.clone())
+                .c_nonce(c_nonce.clone())
+                .build()
+                .map_err(|e| Err::ServerError(anyhow!(e)))?,
+        );
         StateManager::put(provider, &token, state.to_vec(), state.expires_at).await?;
 
         Ok(TokenResponse {
@@ -177,9 +176,8 @@ where
             expires_in: Expire::Access.duration().num_seconds(),
             c_nonce: Some(c_nonce),
             c_nonce_expires_in: Some(Expire::Nonce.duration().num_seconds()),
-            authorization_details: auth_state.authorization_details,
-            // LATER: implement this
-            scope: None,
+            authorization_details: auth_state.authorization_details.clone(),
+            scope: auth_state.scope.clone(),
         })
     }
 }

@@ -292,36 +292,6 @@ pub struct CredentialResponseEncryption {
     pub encryption_required: bool,
 }
 
-impl Issuer {
-    /// Create a new `Issuer` with the specified `credential_issuer` and
-    /// `credential_endpoint`.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the JSON does not serialize to an `Issuer` object
-    #[must_use]
-    pub fn sample() -> Self {
-        const ISSUER_URI: &str = "http://credibil.io";
-
-        let issuer = serde_json::json!({
-            "credential_issuer": ISSUER_URI,
-            "credential_endpoint": format!("{ISSUER_URI}/credential"),
-            "batch_credential_endpoint": format!("{ISSUER_URI}/batch"),
-            "deferred_credential_endpoint": format!("{ISSUER_URI}/deferred"),
-            "display": {
-                "name": "Credibil",
-                "locale": "en-NZ"
-            },
-            "credential_configurations_supported": {
-                "EmployeeID_JWT": CredentialConfiguration::sample(),
-                "Developer_JWT": CredentialConfiguration::sample2(),
-            },
-        });
-
-        serde_json::from_value(issuer).expect("should serialize to Issuer")
-    }
-}
-
 /// Language-based display properties for Issuer or Claim.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Display {
@@ -426,6 +396,314 @@ pub struct CredentialConfiguration {
 
     /// Language-based display properties for the associated Credential Definition.
     pub credential_definition: CredentialDefinition,
+}
+
+/// `ProofTypesSupported` describes specifics of the key proof(s) that the Credential
+/// Issuer supports. This object contains a list of name/value pairs, where each name
+/// is a unique identifier of the supported proof type(s). Valid values are defined in
+/// Section 7.2.1, other values MAY be used. This identifier is also used by the Wallet
+/// in the Credential Request as defined in Section 7.2. The value in the name/value
+/// pair is an object that contains metadata about the key proof.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct ProofTypesSupported {
+    /// One or more case sensitive strings that identify the algorithms that the Issuer
+    /// supports for this proof type. The Wallet uses one of them to sign the proof.
+    /// Algorithm names used are determined by the key proof type.
+    ///
+    /// For example, for JWT, the algorithm names are defined in IANA JOSE Algorithms
+    /// Registry.
+    ///
+    /// # Example
+    ///
+    /// ```json
+    /// "proof_signing_alg_values_supported": ["ES256K", "EdDSA"]
+    /// ```
+    pub proof_signing_alg_values_supported: Vec<String>,
+}
+
+/// `CredentialDisplay` holds language-based display properties of the supported
+/// credential.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct CredentialDisplay {
+    /// The value to use when displaying the name of the `Credential` for the
+    /// specified locale. If no locale is set, then this is the default value.
+    pub name: String,
+
+    /// A BCP47 [RFC5646](https://www.rfc-editor.org/rfc/rfc5646) language tag identifying the display language.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub locale: Option<String>,
+
+    /// Information about the logo of the Credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub logo: Option<Image>,
+
+    /// Description of the Credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+
+    /// Background color of the Credential using CSS Color Module Level 37
+    /// values.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub background_color: Option<String>,
+
+    /// Information about the background image of the Credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub background_image: Option<Image>,
+
+    /// Text color color of the Credential using CSS Color Module Level 37
+    /// values.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub text_color: Option<String>,
+}
+
+/// Image contains information about the logo of the Credential.
+/// N.B. The list is non-exhaustive and may be extended in the future.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Image {
+    /// URL where the Wallet can obtain a logo of the Credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub uri: Option<String>,
+
+    /// Alternative text of a logo image.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alt_text: Option<String>,
+}
+
+/// `CredentialDefinition` defines a Supported Credential that may requested by
+/// Wallets.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct CredentialDefinition {
+    /// The @context property is used to map property URIs into short-form aliases,
+    /// in accordance with the W3C Verifiable Credentials Data Model.
+    ///
+    /// REQUIRED when 'format' is "jwt_vc_json-ld" or "ldp_vc".
+    #[cfg_attr(not(feature = "typegen"), serde(rename = "@context"))]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub context: Option<Vec<String>>,
+
+    /// Uniquely identifies the credential type the Credential Definition display
+    /// properties are for, in accordance with the W3C Verifiable Credentials Data
+    /// Model.
+    /// Contains the type values the Wallet requests authorization for at the
+    /// Credential Issuer. It MUST be present if the claim format is present in the
+    /// root of the authorization details object. It MUST not be present otherwise.
+    #[serde(rename = "type")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub type_: Option<Vec<String>>,
+
+    /// A list of name/value pairs identifying claims offered in the Credential.
+    /// A value can be another such object (nested data structures), or an array of
+    /// objects.
+    /// Each claim defines language-based display properties for credentialSubject
+    /// fields.
+    #[serde(rename = "credentialSubject")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_subject: Option<HashMap<String, Claim>>,
+}
+
+/// Claim is used to hold language-based display properties for a
+/// credentialSubject field.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(default)]
+pub struct Claim {
+    /// When true, indicates that the Credential Issuer will always include this claim
+    /// in the issued Credential. When false, the claim is not included in the issued
+    /// Credential if the wallet did not request the inclusion of the claim, and/or if
+    /// the Credential Issuer chose to not include the claim. If the mandatory parameter
+    /// is omitted, the default value is false. Defaults to false.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mandatory: Option<bool>,
+
+    /// The type of value of the claim. Defaults to string.
+    /// Supported values include `string`, `number`, and `image` media types
+    /// such as image/jpeg. See the [IANA media type registry](https://www.iana.org/assignments/media-types/media-types.xhtml#image)
+    /// for a complete list.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value_type: Option<String>,
+
+    /// Language-based display properties of the field.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display: Option<Vec<Display>>,
+
+    /// A list nested claims.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub claim_nested: Option<HashMap<String, Box<Claim>>>,
+}
+
+/// OAuth 2.0 Authorization Server metadata.
+/// See RFC 8414 - Authorization Server Metadata
+#[derive(Default, Debug, Clone, Deserialize, Serialize)]
+pub struct Server {
+    /// The authorization server's issuer identifier (URL). MUST be identical to
+    /// the issuer identifier value in the well-known URI:
+    /// `{issuer}/.well-known/oauth-authorization-server``.
+    pub issuer: String,
+
+    /// URL of the authorization server's authorization endpoint.
+    pub authorization_endpoint: String,
+
+    /// URL of the authorization server's token endpoint.
+    pub token_endpoint: String,
+
+    /// URL of the authorization server's JWK Set document.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub jwks_uri: Option<String>,
+
+    /// URL of the authorization server's Dynamic Client Registration endpoint.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub registration_endpoint: Option<String>,
+
+    /// List of scope values the authorization server supports. RECOMMENDED.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scopes_supported: Option<Vec<String>>,
+
+    /// List of `response_type` values the authorization server supports.
+    pub response_types_supported: Vec<String>,
+
+    /// A list of `response_mode` values the authorization server supports.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub response_modes_supported: Option<Vec<String>>,
+
+    /// A list of grant types supported. Values are the same as the Dynamic
+    /// Client Registration "grant_types"
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub grant_types_supported: Option<Vec<String>>,
+
+    /// A list of client authentication methods supported by the token endpoint.
+    /// The same as those used with the "grant_types" parameter defined by the
+    /// OAuth 2.0 Dynamic Client Registration Protocol specification.
+    /// Values can be one of: "none", "client_secret_post",
+    /// "client_secret_basic"
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub token_endpoint_auth_methods_supported: Option<Vec<String>>,
+
+    /// A list of the JWS algorithms supported by the token endpoint for the
+    /// signature on the JWT used to authenticate the client at the endpoint
+    /// for the "private_key_jwt" and "client_secret_jwt" authentication
+    /// methods.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub token_endpoint_auth_signing_alg_values_supported: Option<Vec<String>>,
+
+    /// URL to information developers might need when using the authorization
+    /// server.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub service_documentation: Option<String>,
+
+    /// Languages supported for the user interface.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ui_locales_supported: Option<Vec<String>>,
+
+    /// URL provided to the person registering a client regarding how the
+    /// authorization server's data may be used.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub op_policy_uri: Option<String>,
+
+    /// URL provided to the person registering the client to read about the
+    /// authorization server's terms of service.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub op_tos_uri: Option<String>,
+
+    /// URL of the authorization server's revocation endpoint.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub revocation_endpoint: Option<String>,
+
+    /// A list of client authentication methods supported by this revocation
+    /// endpoint.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub revocation_endpoint_auth_methods_supported: Option<Vec<String>>,
+
+    /// A list of the JWS algorithms supported by the revocation endpoint for
+    /// the signature on the JWT used to authenticate the client at the
+    /// endpoint for the "private_key_jwt" and "client_secret_jwt"
+    /// authentication methods.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub revocation_endpoint_auth_signing_alg_values_supported: Option<Vec<String>>,
+
+    /// URL of the authorization server's introspection endpoint.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub introspection_endpoint: Option<String>,
+
+    /// A list of client authentication methods supported by this introspection
+    /// endpoint.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub introspection_endpoint_auth_methods_supported: Option<Vec<String>>,
+
+    /// A list of the JWS algorithms supported by the introspection endpoint for
+    /// the signature on the JWT used to authenticate the client at the
+    /// endpoint for the "private_key_jwt" and "client_secret_jwt"
+    /// authentication methods.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub introspection_endpoint_auth_signing_alg_values_supported: Option<Vec<String>>,
+
+    /// Proof Key for Code Exchange (PKCE) code challenge methods supported.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub code_challenge_methods_supported: Option<Vec<String>>,
+
+    /// Metadata values MAY also be provided as a "signed_metadata" value, which
+    /// is a JSON Web Token (JWT) that asserts metadata values about the
+    /// authorization server as a bundle.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signed_metadata: Option<String>,
+
+    /// OpenID4VCI
+    /// Indicates whether the issuer accepts a Token Request with a
+    /// Pre-Authorized Code but without a client id. Defaults to false.
+    #[serde(rename = "pre-authorized_grant_anonymous_access_supported")]
+    pub pre_authorized_grant_anonymous_access_supported: bool,
+
+    /// OpenID.Wallet
+    /// Specifies whether the Wallet supports the transfer of
+    /// presentation_definition by reference, with true indicating support.
+    /// If omitted, the default value is true.
+    pub presentation_definition_uri_supported: bool,
+
+    /// OpenID.Wallet
+    /// A list of key value pairs, where the key identifies a Credential format
+    /// supported by the Wallet.
+    pub vp_formats_supported: Option<HashMap<String, SupportedVpFormat>>,
+}
+
+/// Credential format supported by the Wallet.
+/// Valid Credential format identifier values are defined in Annex E of
+/// [OpenID4VCI](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html).
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct SupportedVpFormat {
+    /// An object where the value is an array of case sensitive strings that
+    /// identify the cryptographic suites that are supported. Parties will
+    /// need to agree upon the meanings of the values used, which may be
+    /// context-specific.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alg_values_supported: Option<Vec<String>>,
+}
+
+impl Issuer {
+    /// Create a new `Issuer` with the specified `credential_issuer` and
+    /// `credential_endpoint`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the JSON does not serialize to an `Issuer` object
+    #[must_use]
+    pub fn sample() -> Self {
+        const ISSUER_URI: &str = "http://credibil.io";
+
+        let issuer = serde_json::json!({
+            "credential_issuer": ISSUER_URI,
+            "credential_endpoint": format!("{ISSUER_URI}/credential"),
+            "batch_credential_endpoint": format!("{ISSUER_URI}/batch"),
+            "deferred_credential_endpoint": format!("{ISSUER_URI}/deferred"),
+            "display": {
+                "name": "Credibil",
+                "locale": "en-NZ"
+            },
+            "credential_configurations_supported": {
+                "EmployeeID_JWT": CredentialConfiguration::sample(),
+                "Developer_JWT": CredentialConfiguration::sample2(),
+            },
+        });
+
+        serde_json::from_value(issuer).expect("should serialize to Issuer")
+    }
 }
 
 impl CredentialConfiguration {
@@ -628,272 +906,6 @@ impl CredentialConfiguration {
     }
 }
 
-/// `ProofTypesSupported` describes specifics of the key proof(s) that the Credential
-/// Issuer supports. This object contains a list of name/value pairs, where each name
-/// is a unique identifier of the supported proof type(s). Valid values are defined in
-/// Section 7.2.1, other values MAY be used. This identifier is also used by the Wallet
-/// in the Credential Request as defined in Section 7.2. The value in the name/value
-/// pair is an object that contains metadata about the key proof.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct ProofTypesSupported {
-    /// One or more case sensitive strings that identify the algorithms that the Issuer
-    /// supports for this proof type. The Wallet uses one of them to sign the proof.
-    /// Algorithm names used are determined by the key proof type.
-    ///
-    /// For example, for JWT, the algorithm names are defined in IANA JOSE Algorithms
-    /// Registry.
-    ///
-    /// # Example
-    ///
-    /// ```json
-    /// "proof_signing_alg_values_supported": ["ES256K", "EdDSA"]
-    /// ```
-    pub proof_signing_alg_values_supported: Vec<String>,
-}
-
-/// `CredentialDisplay` holds language-based display properties of the supported
-/// credential.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct CredentialDisplay {
-    /// The value to use when displaying the name of the `Credential` for the
-    /// specified locale. If no locale is set, then this is the default value.
-    pub name: String,
-
-    /// A BCP47 [RFC5646](https://www.rfc-editor.org/rfc/rfc5646) language tag identifying the display language.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub locale: Option<String>,
-
-    /// Information about the logo of the Credential.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub logo: Option<Image>,
-
-    /// Description of the Credential.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-
-    /// Background color of the Credential using CSS Color Module Level 37
-    /// values.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub background_color: Option<String>,
-
-    /// Information about the background image of the Credential.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub background_image: Option<Image>,
-
-    /// Text color color of the Credential using CSS Color Module Level 37
-    /// values.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub text_color: Option<String>,
-}
-
-/// Image contains information about the logo of the Credential.
-/// N.B. The list is non-exhaustive and may be extended in the future.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Image {
-    /// URL where the Wallet can obtain a logo of the Credential.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub uri: Option<String>,
-
-    /// Alternative text of a logo image.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub alt_text: Option<String>,
-}
-
-/// `CredentialDefinition` defines a Supported Credential that may requested by
-/// Wallets.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct CredentialDefinition {
-    /// The @context property is used to map property URIs into short-form aliases,
-    /// in accordance with the W3C Verifiable Credentials Data Model.
-    ///
-    /// REQUIRED when 'format' is "jwt_vc_json-ld" or "ldp_vc".
-    #[cfg_attr(not(feature = "typegen"), serde(rename = "@context"))]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub context: Option<Vec<String>>,
-
-    /// Uniquely identifies the credential type the Credential Definition display
-    /// properties are for, in accordance with the W3C Verifiable Credentials Data
-    /// Model.
-    ///
-    /// Contains the type values the Wallet requests authorization for at the
-    /// Credential Issuer. It MUST be present if the claim format is present in the
-    /// root of the authorization details object. It MUST not be present otherwise.
-    #[serde(rename = "type")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub type_: Option<Vec<String>>,
-
-    /// A list of name/value pairs identifying claims offered in the Credential.
-    /// A value can be another such object (nested data structures), or an array of
-    /// objects.
-    /// Each claim defines language-based display properties for credentialSubject
-    /// fields.
-    #[serde(rename = "credentialSubject")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_subject: Option<HashMap<String, Claim>>,
-}
-
-/// Claim is used to hold language-based display properties for a
-/// credentialSubject field.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(default)]
-pub struct Claim {
-    /// When true, indicates that the Credential Issuer will always include this claim
-    /// in the issued Credential. When false, the claim is not included in the issued
-    /// Credential if the wallet did not request the inclusion of the claim, and/or if
-    /// the Credential Issuer chose to not include the claim. If the mandatory parameter
-    /// is omitted, the default value is false. Defaults to false.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub mandatory: Option<bool>,
-
-    /// The type of value of the claim. Defaults to string.
-    /// Supported values include `string`, `number`, and `image` media types
-    /// such as image/jpeg. See the [IANA media type registry](https://www.iana.org/assignments/media-types/media-types.xhtml#image)
-    /// for a complete list.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub value_type: Option<String>,
-
-    /// Language-based display properties of the field.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub display: Option<Vec<Display>>,
-
-    /// A list nested claims.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub claim_nested: Option<HashMap<String, Box<Claim>>>,
-}
-
-/// OAuth 2.0 Authorization Server metadata.
-/// See RFC 8414 - Authorization Server Metadata
-#[derive(Default, Debug, Clone, Deserialize, Serialize)]
-pub struct Server {
-    /// The authorization server's issuer identifier (URL). MUST be identical to
-    /// the issuer identifier value in the well-known URI:
-    /// `{issuer}/.well-known/oauth-authorization-server``.
-    pub issuer: String,
-
-    /// URL of the authorization server's authorization endpoint.
-    pub authorization_endpoint: String,
-
-    /// URL of the authorization server's token endpoint.
-    pub token_endpoint: String,
-
-    /// URL of the authorization server's JWK Set document.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub jwks_uri: Option<String>,
-
-    /// URL of the authorization server's Dynamic Client Registration endpoint.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub registration_endpoint: Option<String>,
-
-    /// List of scope values the authorization server supports. RECOMMENDED.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub scopes_supported: Option<Vec<String>>,
-
-    /// List of `response_type` values the authorization server supports.
-    pub response_types_supported: Vec<String>,
-
-    /// A list of `response_mode` values the authorization server supports.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub response_modes_supported: Option<Vec<String>>,
-
-    /// A list of grant types supported. Values are the same as the Dynamic
-    /// Client Registration "grant_types"
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub grant_types_supported: Option<Vec<String>>,
-
-    /// A list of client authentication methods supported by the token endpoint.
-    /// The same as those used with the "grant_types" parameter defined by the
-    /// OAuth 2.0 Dynamic Client Registration Protocol specification.
-    /// Values can be one of: "none", "client_secret_post",
-    /// "client_secret_basic"
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub token_endpoint_auth_methods_supported: Option<Vec<String>>,
-
-    /// A list of the JWS algorithms supported by the token endpoint for the
-    /// signature on the JWT used to authenticate the client at the endpoint
-    /// for the "private_key_jwt" and "client_secret_jwt" authentication
-    /// methods.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub token_endpoint_auth_signing_alg_values_supported: Option<Vec<String>>,
-
-    /// URL to information developers might need when using the authorization
-    /// server.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub service_documentation: Option<String>,
-
-    /// Languages supported for the user interface.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ui_locales_supported: Option<Vec<String>>,
-
-    /// URL provided to the person registering a client regarding how the
-    /// authorization server's data may be used.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub op_policy_uri: Option<String>,
-
-    /// URL provided to the person registering the client to read about the
-    /// authorization server's terms of service.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub op_tos_uri: Option<String>,
-
-    /// URL of the authorization server's revocation endpoint.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub revocation_endpoint: Option<String>,
-
-    /// A list of client authentication methods supported by this revocation
-    /// endpoint.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub revocation_endpoint_auth_methods_supported: Option<Vec<String>>,
-
-    /// A list of the JWS algorithms supported by the revocation endpoint for
-    /// the signature on the JWT used to authenticate the client at the
-    /// endpoint for the "private_key_jwt" and "client_secret_jwt"
-    /// authentication methods.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub revocation_endpoint_auth_signing_alg_values_supported: Option<Vec<String>>,
-
-    /// URL of the authorization server's introspection endpoint.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub introspection_endpoint: Option<String>,
-
-    /// A list of client authentication methods supported by this introspection
-    /// endpoint.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub introspection_endpoint_auth_methods_supported: Option<Vec<String>>,
-
-    /// A list of the JWS algorithms supported by the introspection endpoint for
-    /// the signature on the JWT used to authenticate the client at the
-    /// endpoint for the "private_key_jwt" and "client_secret_jwt"
-    /// authentication methods.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub introspection_endpoint_auth_signing_alg_values_supported: Option<Vec<String>>,
-
-    /// Proof Key for Code Exchange (PKCE) code challenge methods supported.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub code_challenge_methods_supported: Option<Vec<String>>,
-
-    /// Metadata values MAY also be provided as a "signed_metadata" value, which
-    /// is a JSON Web Token (JWT) that asserts metadata values about the
-    /// authorization server as a bundle.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub signed_metadata: Option<String>,
-
-    /// OpenID4VCI
-    /// Indicates whether the issuer accepts a Token Request with a
-    /// Pre-Authorized Code but without a client id. Defaults to false.
-    #[serde(rename = "pre-authorized_grant_anonymous_access_supported")]
-    pub pre_authorized_grant_anonymous_access_supported: bool,
-
-    /// OpenID.Wallet
-    /// Specifies whether the Wallet supports the transfer of
-    /// presentation_definition by reference, with true indicating support.
-    /// If omitted, the default value is true.
-    pub presentation_definition_uri_supported: bool,
-
-    /// OpenID.Wallet
-    /// A list of key value pairs, where the key identifies a Credential format
-    /// supported by the Wallet.
-    pub vp_formats_supported: Option<HashMap<String, SupportedVpFormat>>,
-}
-
 impl Server {
     /// Create a new `Issuer` with the specified `credential_issuer` and
     /// `credential_endpoint`.
@@ -945,17 +957,4 @@ impl Server {
             // ])),
         }
     }
-}
-
-/// Credential format supported by the Wallet.
-/// Valid Credential format identifier values are defined in Annex E of
-/// [OpenID4VCI](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html).
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct SupportedVpFormat {
-    /// An object where the value is an array of case sensitive strings that
-    /// identify the cryptographic suites that are supported. Parties will
-    /// need to agree upon the meanings of the values used, which may be
-    /// context-specific.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub alg_values_supported: Option<Vec<String>>,
 }

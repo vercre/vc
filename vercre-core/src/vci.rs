@@ -575,35 +575,40 @@ pub struct CredentialRequest {
     #[serde(skip)]
     pub access_token: String,
 
-    /// REQUIRED when a 'credential_identifier' was returned in the Token Response.
-    /// MUST NOT be used otherwise.
-    ///
-    /// Identifies the Credential being requested. When this parameter is used, the
-    /// format parameter and any other Credential format specific set of parameters
-    /// MUST NOT be present.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_identifier: Option<String>,
-
-    /// REQUIRED when 'credential_identifier' was not returned from the Token
-    /// Response. Otherwise, MUST NOT be used.
-    ///
     /// Determines the format of the Credential to be issued, which may determine
     /// the type and any other information related to the Credential to be issued.
     /// Credential Format Profiles consisting of the Credential format specific set
     /// of parameters are defined in Appendix E. When this parameter is used,
-    /// 'credential_identifier' parameter MUST NOT be present.
+    /// `credential_identifier` parameter MUST NOT be present.
+    ///
+    /// REQUIRED when `credential_identifiers` was not returned from the Token
+    /// Response. Otherwise, MUST NOT be used.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub format: Option<String>,
 
-    /// REQUIRED when 'format' is "jwt_vc_json", "jwt_vc_json-ld", or "ldp_vc".
-    ///
-    /// The detailed description of the credential type requested.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_definition: Option<CredentialDefinition>,
-
     /// Wallet's proof of possession of cryptographic key material the issued Credential
     /// will be bound to.
-    pub proof: Proof,
+    ///
+    /// REQUIRED if the `proof_types_supported` parameter is non-empty and present in
+    /// the `credential_configurations_supported` parameter of the Issuer metadata for
+    /// the requested Credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub proof: Option<Proof>,
+
+    /// Identifies the Credential being requested. When this parameter is used, the
+    /// format parameter and any other Credential format specific set of parameters
+    /// MUST NOT be present.
+    ///
+    /// REQUIRED when a `credential_identifiers` was returned in the Token Response.
+    /// MUST NOT be used otherwise.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_identifier: Option<String>,
+
+    /// The detailed description of the credential type requested.
+    ///
+    /// REQUIRED when `format` is "jwt_vc_json", "jwt_vc_json-ld", or "ldp_vc".
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_definition: Option<CredentialDefinition>,
 
     /// If present, specifies how the Credential Response should be encrypted. If not
     /// present.

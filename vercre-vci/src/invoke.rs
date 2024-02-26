@@ -192,8 +192,7 @@ where
             pre_auth_grant = Some(PreAuthorizedCodeGrant {
                 pre_authorized_code: pre_auth_code.clone(),
                 tx_code,
-                interval: None,
-                authorization_server: None,
+                ..Default::default()
             });
 
             if request.tx_code_required {

@@ -8,10 +8,6 @@ Use `cargo-release` to release a new version of the crate.
 cargo install cargo-release
 ```
 
-```sh
-cargo install cargo-smart-release
-```
-
 ## Dry run
 
 Set the release level using one of `release`, `major`, `minor`, `patch`, `alpha`, `beta`, `rc`
@@ -34,4 +30,28 @@ Release to crates.io:
 
 ```sh
 cargo-release minor --execute
+```
+
+# Release-plz
+
+<https://release-plz.ieni.dev/docs/usage/installation>
+
+```sh
+cargo install cargo-release-plz --locked
+```
+
+
+# Smart Release
+
+```sh
+brew install cmake
+cargo install cargo-smart-release
+```
+
+```sh
+cargo install cargo-smart-release
+cargo smart-release vercre-core
+cargo smart-release --dry-run-cargo-publish
+cargo changelog vercre-core vercre-vci vercre-vp vercre-wallet
+cargo changelog vercre-core --write
 ```

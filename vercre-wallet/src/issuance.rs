@@ -210,13 +210,17 @@ impl crux_core::App for App {
             }
             Event::Signed(Ok(signed_jwt)) => {
                 // request each offered credential
-                for identifier in model.offered.clone().keys() {
-                    let req_jwt = model.credential_request(identifier, &signed_jwt);
+                for cfg_id in model.offered.clone().keys() {
+                    let Ok(request) = model.credential_request(cfg_id, &signed_jwt) else {
+                        let msg = "Issue building credential request".to_string();
+                        self.update(Event::Fail(msg), model, caps);
+                        return;
+                    };
 
                     caps.http
                         .post(format!("{}/credential", model.offer.credential_issuer))
                         .header("authorization", format!("Bearer {}", model.token.access_token))
-                        .body(req_jwt)
+                        .body(request)
                         .expect_json()
                         .send(Event::Credential);
                 }
@@ -478,6 +482,10 @@ mod tests {
 
         // setup the model
         model.new_offer(&OFFER.to_string()).expect("Offer to be processed");
+        let md: MetadataResponse =
+            serde_json::from_value(METADATA.to_owned()).expect("should deserialize");
+        let http_resp = ResponseBuilder::ok().body(md.clone()).build();
+        model.metadata_response(http_resp).expect("Metadata to be processed");
         let signed_jwt = "a-signed-jwt.signature".to_string();
 
         let mut update = app.update(Event::Signed(signer::Result::Ok(signed_jwt)), &mut model);

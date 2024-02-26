@@ -1,6 +1,6 @@
 ---
 source: vercre-vci/src/invoke.rs
-assertion_line: 289
+assertion_line: 286
 expression: state
 ---
 expires_at: "[expires_at]"

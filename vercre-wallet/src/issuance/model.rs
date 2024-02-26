@@ -102,13 +102,13 @@ impl Model {
             &metadata.credential_issuer.credential_configurations_supported;
 
         // add metadata to each expected credential
-        for (identifier, supported) in &mut self.offered {
+        for (cfg_id, cred_cfg) in &mut self.offered {
             // find supported credential in metadata
-            let Some(found) = credential_configurations_supported.get(identifier) else {
+            let Some(found) = credential_configurations_supported.get(cfg_id) else {
                 self.status = Status::Failed("Unsupported credential type".to_string());
                 return Err(anyhow!("Unsupported credential type"));
             };
-            *supported = found.clone();
+            *cred_cfg = found.clone();
         }
 
         self.status = Status::Ready;
@@ -202,18 +202,28 @@ impl Model {
         }
     }
 
-    pub(super) fn credential_request(&mut self, identifier: &str, signed_jwt: &str) -> Value {
+    pub(super) fn credential_request(
+        &mut self, cfg_id: &str, signed_jwt: &str,
+    ) -> anyhow::Result<Value> {
         self.status = Status::Requested;
+
+        let Some(cred_cfg) = self.offered.get(cfg_id) else {
+            return Err(anyhow!("Credential configuration not found"));
+        };
 
         // TODO: build credential subject from metadata
         // "credentialSubject": &metadata.credential_definition.credential_subject,
-        json!({
-            "credential_identifier": identifier,
+
+        Ok(json!({
+            "format": cred_cfg.format.clone(),
+            "credential_definition": {
+                "type": cred_cfg.credential_definition.type_.clone(),
+            },
             "proof":{
                 "proof_type": "jwt",
                 "jwt": signed_jwt
             }
-        })
+        }))
     }
 
     /// Process a `CredentialResponse`, adding the returned credential to the

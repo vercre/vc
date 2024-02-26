@@ -69,52 +69,6 @@ pub(crate) struct State {
     pub(crate) deferred: Option<DeferredState>,
 }
 
-impl State {
-    /// Returns a new [`StateBuilder`], which can be used to build a [State]
-    #[must_use]
-    pub(crate) fn builder() -> StateBuilder {
-        StateBuilder::default()
-    }
-
-    /// Serializes this [`State`] object into a byte array.
-    pub(crate) fn to_vec(&self) -> Vec<u8> {
-        // TODO: return Result instead of panicking
-        match serde_json::to_vec(self) {
-            Ok(res) => res,
-            Err(e) => panic!("Failed to serialize state: {e}"),
-        }
-    }
-
-    /// Determines whether state has expired or not.
-    pub(crate) fn expired(&self) -> bool {
-        self.expires_at.signed_duration_since(Utc::now()).num_seconds() < 0
-    }
-}
-
-impl TryFrom<&[u8]> for State {
-    type Error = vercre_core::error::Error;
-
-    fn try_from(value: &[u8]) -> Result<Self> {
-        match serde_json::from_slice::<Self>(value) {
-            Ok(res) => {
-                if res.expired() {
-                    err!(Err::InvalidRequest, "state has expired");
-                }
-                Ok(res)
-            }
-            Err(e) => err!(Err::ServerError(e.into()), "Failed to deserialize state"),
-        }
-    }
-}
-
-impl TryFrom<Vec<u8>> for State {
-    type Error = vercre_core::error::Error;
-
-    fn try_from(value: Vec<u8>) -> Result<Self> {
-        State::try_from(value.as_slice())
-    }
-}
-
 /// `AuthState` is used to store authorization state.
 #[derive(Builder, Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[builder(default)]
@@ -163,6 +117,52 @@ pub(crate) struct TokenState {
     /// Number denoting the lifetime in seconds of the c_nonce.
     #[builder(default = "Utc::now() + Expire::Nonce.duration()")]
     pub(crate) c_nonce_expires_at: DateTime<Utc>,
+}
+
+impl State {
+    /// Returns a new [`StateBuilder`], which can be used to build a [State]
+    #[must_use]
+    pub(crate) fn builder() -> StateBuilder {
+        StateBuilder::default()
+    }
+
+    /// Serializes this [`State`] object into a byte array.
+    pub(crate) fn to_vec(&self) -> Vec<u8> {
+        // TODO: return Result instead of panicking
+        match serde_json::to_vec(self) {
+            Ok(res) => res,
+            Err(e) => panic!("Failed to serialize state: {e}"),
+        }
+    }
+
+    /// Determines whether state has expired or not.
+    pub(crate) fn expired(&self) -> bool {
+        self.expires_at.signed_duration_since(Utc::now()).num_seconds() < 0
+    }
+}
+
+impl TryFrom<&[u8]> for State {
+    type Error = vercre_core::error::Error;
+
+    fn try_from(value: &[u8]) -> Result<Self> {
+        match serde_json::from_slice::<Self>(value) {
+            Ok(res) => {
+                if res.expired() {
+                    err!(Err::InvalidRequest, "state has expired");
+                }
+                Ok(res)
+            }
+            Err(e) => err!(Err::ServerError(e.into()), "Failed to deserialize state"),
+        }
+    }
+}
+
+impl TryFrom<Vec<u8>> for State {
+    type Error = vercre_core::error::Error;
+
+    fn try_from(value: Vec<u8>) -> Result<Self> {
+        State::try_from(value.as_slice())
+    }
 }
 
 impl TokenState {
