@@ -77,6 +77,7 @@ use anyhow::anyhow;
 use chrono::Utc;
 use tracing::{instrument, trace};
 use vercre_core::error::Err;
+use vercre_core::metadata::Issuer as IssuerMetadata;
 pub use vercre_core::vci::{
     AuthorizationDetail, AuthorizationRequest, AuthorizationResponse, TokenAuthorizationDetail,
 };
@@ -107,11 +108,12 @@ where
             None
         };
 
-        // let issuer_meta = Issuer::metadata(&self.provider, &request.credential_issuer).await?;
+        let issuer_meta = Issuer::metadata(&self.provider, &request.credential_issuer).await?;
         // let cfg_ids = credential_configuration_ids(request, &issuer_meta)?;
 
         let ctx = Context {
             callback_id,
+            issuer_meta,
             auth_dets: HashMap::new(),
             scope_items: HashMap::new(),
             _p: std::marker::PhantomData,
@@ -124,6 +126,7 @@ where
 #[derive(Debug)]
 struct Context<P> {
     callback_id: Option<String>,
+    issuer_meta: IssuerMetadata,
     auth_dets: HashMap<String, AuthorizationDetail>,
     scope_items: HashMap<String, String>,
     _p: std::marker::PhantomData<P>,
@@ -151,7 +154,6 @@ where
             err!(Err::InvalidClient, "invalid client_id");
         };
         let server_meta = Server::metadata(provider, &request.credential_issuer).await?;
-        let issuer_meta = Issuer::metadata(provider, &request.credential_issuer).await?;
 
         // 'authorization_code' grant_type allowed (client and server)?
         let client_grant_types = client_meta.grant_types.unwrap_or_default();
@@ -163,7 +165,7 @@ where
             err!(Err::InvalidRequest, "authorization_code grant not supported for server");
         }
 
-        // holder authorized?
+        // is holder identified (authenticated)?
         if request.holder_id.is_empty() {
             err!(Err::AuthorizationPending, "missing holder subject");
         }
@@ -174,75 +176,12 @@ where
         }
 
         // verify authorization_details
-        'verify_details: for auth_det in request.authorization_details.as_ref().unwrap_or(&vec![]) {
-            // we only support `openid_credential` authorization detail requests
-            if auth_det.type_ != "openid_credential" {
-                err!(Err::InvalidRequest, "invalid authorization_details type");
-            }
-
-            let cfg_id_opt = &auth_det.credential_configuration_id;
-            let format_opt = &auth_det.format;
-
-            // verify that only one of `credential_configuration_id` or `format` is specified
-            if cfg_id_opt.is_some() && format_opt.is_some() {
-                err!(
-                    Err::InvalidRequest,
-                    "'credential_configuration_id and format cannot both be set"
-                );
-            }
-            if cfg_id_opt.is_none() && format_opt.is_none() {
-                err!(Err::InvalidRequest, "credential_configuration_id or format must be set");
-            }
-
-            // EITHER: verify requested `credential_configuration_id` is supported
-            if let Some(cfg_id) = cfg_id_opt {
-                if issuer_meta.credential_configurations_supported.get(cfg_id).is_none() {
-                    err!(Err::InvalidRequest, "unsupported credential_configuration_id");
-                }
-
-                // save auth_det by `credential_configuration_id` for later use
-                self.auth_dets.insert(cfg_id.clone(), auth_det.clone());
-                continue 'verify_details;
-            }
-
-            // OR: verify requested `format` and `type` are supported
-            if let Some(format) = format_opt {
-                let Some(auth_def) = auth_det.credential_definition.as_ref() else {
-                    err!(Err::InvalidRequest, "no `credential_definition` specified")
-                };
-
-                // check all supported `credential_configurations`
-                for (cfg_id, cred_cfg) in &issuer_meta.credential_configurations_supported {
-                    if &cred_cfg.format == format
-                        && cred_cfg.credential_definition.type_ == auth_def.type_
-                    {
-                        // save auth_det by `credential_configuration_id` for later use
-                        self.auth_dets.insert(cfg_id.to_string(), auth_det.clone());
-                        continue 'verify_details;
-                    }
-                }
-
-                // couldn't find a matching credential_configuration
-                err!(Err::InvalidRequest, "unsupported credential `format` or `type`");
-            }
+        if let Some(authorization_details) = &request.authorization_details {
+            self.verify_authorization_details(authorization_details)?;
         }
-
-        // verify scope items
+        // verify scope
         if let Some(scope) = &request.scope {
-            'verify_scope: for item in scope.split_whitespace().collect::<Vec<&str>>() {
-                for (cfg_id, cred_cfg) in &issuer_meta.credential_configurations_supported {
-                    // credential request in `authorization_details` takes precedence
-                    // over request in `scope`
-                    if !self.auth_dets.contains_key(cfg_id)
-                        && cred_cfg.scope == Some(item.to_string())
-                    {
-                        // save scope item by `credential_configuration_id` for later use
-                        self.scope_items.insert(cfg_id.to_string(), item.to_string());
-                        continue 'verify_scope;
-                    }
-                }
-                err!(Err::InvalidRequest, "scope item {item} is unsupported");
-            }
+            self.verify_scope(scope)?;
         }
 
         // redirect_uri
@@ -347,7 +286,7 @@ where
             code_challenge: Some(request.code_challenge.clone()),
             code_challenge_method: Some(request.code_challenge_method.clone()),
             authorization_details: auth_dets,
-            scope, // request.scope.clone(),
+            scope,
             ..Default::default()
         };
         state.auth = Some(auth_state);
@@ -365,6 +304,97 @@ where
             state: request.state.clone(),
             redirect_uri: request.redirect_uri.clone().unwrap_or_default(),
         })
+    }
+}
+
+impl<P> Context<P>
+where
+    P: Client + Issuer + Server + Holder + StateManager + Debug,
+{
+    // Verify Credentials requested in `authorization_details` are supported.
+    //
+    // N.B. has side effect of saving valid `authorization_detail` objects into context
+    // for later use.
+    fn verify_authorization_details(
+        &mut self, authorization_details: &[AuthorizationDetail],
+    ) -> Result<()> {
+        'verify_details: for auth_det in authorization_details {
+            // we only support `openid_credential` authorization detail requests
+            if auth_det.type_ != "openid_credential" {
+                err!(Err::InvalidRequest, "invalid authorization_details type");
+            }
+
+            let cfg_id_opt = &auth_det.credential_configuration_id;
+            let format_opt = &auth_det.format;
+
+            // verify that only one of `credential_configuration_id` or `format` is specified
+            if cfg_id_opt.is_some() && format_opt.is_some() {
+                err!(
+                    Err::InvalidRequest,
+                    "'credential_configuration_id and format cannot both be set"
+                );
+            }
+            if cfg_id_opt.is_none() && format_opt.is_none() {
+                err!(Err::InvalidRequest, "credential_configuration_id or format must be set");
+            }
+
+            // EITHER: verify requested `credential_configuration_id` is supported
+            if let Some(cfg_id) = cfg_id_opt {
+                if self.issuer_meta.credential_configurations_supported.get(cfg_id).is_none() {
+                    err!(Err::InvalidRequest, "unsupported credential_configuration_id");
+                }
+
+                // save auth_det by `credential_configuration_id` for later use
+                self.auth_dets.insert(cfg_id.clone(), auth_det.clone());
+                continue 'verify_details;
+            }
+
+            // OR: verify requested `format` and `type` are supported
+            if let Some(format) = format_opt {
+                let Some(auth_def) = auth_det.credential_definition.as_ref() else {
+                    err!(Err::InvalidRequest, "no `credential_definition` specified")
+                };
+
+                // find matching `CredentialConfiguration`
+                for (cfg_id, cred_cfg) in &self.issuer_meta.credential_configurations_supported {
+                    if &cred_cfg.format == format
+                        && cred_cfg.credential_definition.type_ == auth_def.type_
+                    {
+                        // save auth_det by `credential_configuration_id` for later use
+                        self.auth_dets.insert(cfg_id.to_string(), auth_det.clone());
+                        continue 'verify_details;
+                    }
+                }
+
+                // no matching credential_configuration
+                err!(Err::InvalidRequest, "unsupported credential `format` or `type`");
+            }
+        }
+
+        Ok(())
+    }
+
+    // Verify Credentials requested in `scope` are supported.
+    //
+    // N.B. has side effect of saving valid scope items into context for later use.
+    fn verify_scope(&mut self, scope: &str) -> Result<()> {
+        'verify_scope: for item in scope.split_whitespace().collect::<Vec<&str>>() {
+            for (cfg_id, cred_cfg) in &self.issuer_meta.credential_configurations_supported {
+                // `authorization_details` credential request  takes precedence `scope` request
+                if self.auth_dets.contains_key(cfg_id) {
+                    continue;
+                }
+
+                if cred_cfg.scope == Some(item.to_string()) {
+                    // save scope item by `credential_configuration_id` for later use
+                    self.scope_items.insert(cfg_id.to_string(), item.to_string());
+                    continue 'verify_scope;
+                }
+            }
+            err!(Err::InvalidRequest, "scope item {item} is unsupported");
+        }
+
+        Ok(())
     }
 }
 
