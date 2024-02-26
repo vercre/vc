@@ -6,7 +6,7 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
-anyhow = "1.0.79"
+anyhow = "1.0.80"
 # futures = "0.3.30"
 futures-util = "0.3.30"
 gloo-console = "0.3.0"
