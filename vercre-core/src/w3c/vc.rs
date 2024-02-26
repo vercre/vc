@@ -708,13 +708,27 @@ impl From<VerifiableCredential> for VcClaims {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Once;
+
     use serde_json::json;
+    use tracing_subscriber::FmtSubscriber;
 
     use super::*;
 
+    // initalise tracing once for all tests
+    static INIT: Once = Once::new();
+
+    // Initialise tracing for tests.
+    fn init_tracer() {
+        INIT.call_once(|| {
+            let subscriber = FmtSubscriber::builder().with_max_level(Level::ERROR).finish();
+            tracing::subscriber::set_global_default(subscriber).expect("subscriber set");
+        });
+    }
+
     #[test]
     fn test_builder() {
-        test_utils::init_tracer();
+        init_tracer();
 
         let vc = build_vc().expect("should build vc");
 
@@ -762,7 +776,7 @@ mod tests {
 
     #[test]
     fn test_flexvec() {
-        test_utils::init_tracer();
+        init_tracer();
 
         let mut vc = build_vc().expect("should build vc");
 
@@ -798,7 +812,7 @@ mod tests {
 
     #[test]
     fn test_flexobj() {
-        test_utils::init_tracer();
+        init_tracer();
 
         let mut vc = build_vc().expect("should build vc");
 

@@ -66,8 +66,7 @@
 // LATER: add support for "jwt_vc_json-ld" format
 // LATER: add support for "vc+sd-jwt" format
 // LATER: add support for "mso_mdoc" format
-
-// LATER: implement `SlowDown` checks/errors
+// LATER: implement `Interval` and `SlowDown` checks/errors
 
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -109,7 +108,6 @@ where
         };
 
         let issuer_meta = Issuer::metadata(&self.provider, &request.credential_issuer).await?;
-        // let cfg_ids = credential_configuration_ids(request, &issuer_meta)?;
 
         let ctx = Context {
             callback_id,
@@ -226,7 +224,6 @@ where
     ) -> Result<Self::Response> {
         trace!("Context::process");
 
-        let mut authzd_scope_items = vec![];
         let mut authzd_auth_dets = vec![];
         let mut authzd_cfg_ids = vec![];
 
@@ -249,6 +246,8 @@ where
         } else {
             Some(authzd_auth_dets)
         };
+
+        let mut authzd_scope_items = vec![];
 
         // check which requested `scope` items the holder is authorized for
         for (cfg_id, item) in &self.scope_items {

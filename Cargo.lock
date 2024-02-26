@@ -4022,9 +4022,9 @@ dependencies = [
  "serde_json_path",
  "serde_qs 0.12.0",
  "signature",
- "test-utils",
  "thiserror",
  "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

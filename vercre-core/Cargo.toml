@@ -50,6 +50,4 @@ fastrand = { version = "2.0.1", features = ["js"] }
 [dev-dependencies]
 insta = { version = "1.35.1", features = ["filters", "redactions", "yaml"] }
 lazy_static = "1.4.0"
-
-# TODO: remove this to fix cyclic depdency issue
-test-utils = { path = "../test-utils" }
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
