@@ -61,9 +61,7 @@ pub fn user_code() -> String {
 // cryptographically secure.
 fn random_string(len: usize, charset: &str) -> String {
     let chars: Vec<char> = charset.chars().collect();
-    (0..len)
-        .map(|_| chars[fastrand::usize(..chars.len())])
-        .collect()
+    (0..len).map(|_| chars[fastrand::usize(..chars.len())]).collect()
 }
 
 // ///

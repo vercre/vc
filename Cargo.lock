@@ -461,9 +461,9 @@ dependencies = [
 
 [[package]]
 name = "axum-test"
-version = "14.3.0"
+version = "14.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc431b62ab307c833af24700936485eb5f9a8ac18a19347fe37dd4f7ae3dffe9"
+checksum = "2c6506ef982ef1ad758695ef4372b8f3d21b9a08048a50144603f9993eb5c926"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -655,9 +655,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.0.87"
+version = "1.0.88"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3286b845d0fccbdd15af433f61c5970e711987036cb468f437ff6badd70f4e24"
+checksum = "02f341c093d19155a6e41631ce5971aac4e9a868262212153124c15fa22d1cdc"
 
 [[package]]
 name = "cfg-if"
@@ -1701,9 +1701,9 @@ checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
 name = "hermit-abi"
-version = "0.3.6"
+version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd5256b483761cd23699d0da46cc6fd2ee3be420bbe6d020ae4a091e70b7e9fd"
+checksum = "379dada1584ad501b383485dd706b8afb7a70fcbc7f4da7d780638a5a6124a60"
 
 [[package]]
 name = "hkdf"
@@ -1861,7 +1861,7 @@ dependencies = [
  "httpdate",
  "itoa",
  "pin-project-lite",
- "socket2 0.5.6",
+ "socket2 0.4.10",
  "tokio",
  "tower-service",
  "tracing",
