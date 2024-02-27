@@ -25,13 +25,11 @@ typegen = []
 anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true
-derive_builder.workspace = true
 ecdsa.workspace = true
 ed25519-dalek = "2.1.1"
 image = { version = "0.24.9", default-features = false, features = ["png"] }
 k256 = { workspace = true, features = ["jwk"] }
 qrcode-rs = { version = "0.1.2", default-features = false, features = ["image"] }
-#random-string = "1.1.0"
 regex = "1.10.3"
 serde.workspace = true
 serde_json.workspace = true

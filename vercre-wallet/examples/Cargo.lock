@@ -1023,7 +1023,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "crux_core",
- "derive_builder 0.13.1",
+ "derive_builder",
  "futures-util",
  "http-types-red-badger-temporary-fork",
  "pin-project-lite",
@@ -1257,16 +1257,7 @@ version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f59169f400d8087f238c5c0c7db6a28af18681717f3b623227d92f397e938c7"
 dependencies = [
- "derive_builder_macro 0.13.1",
-]
-
-[[package]]
-name = "derive_builder"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0350b5cb0331628a5916d6c5c0b72e97393b8b6b03b47a9284f4e7f5a405ffd7"
-dependencies = [
- "derive_builder_macro 0.20.0",
+ "derive_builder_macro",
 ]
 
 [[package]]
@@ -1282,35 +1273,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "derive_builder_core"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d48cda787f839151732d396ac69e3473923d54312c070ee21e9effcaa8ca0b1d"
-dependencies = [
- "darling 0.20.8",
- "proc-macro2",
- "quote",
- "syn 2.0.51",
-]
-
-[[package]]
 name = "derive_builder_macro"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "870368c3fb35b8031abb378861d4460f573b92238ec2152c927a21f77e3e0127"
 dependencies = [
- "derive_builder_core 0.13.1",
+ "derive_builder_core",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "derive_builder_macro"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "206868b8242f27cecce124c19fd88157fbd0dd334df2587f36417bafbc85097b"
-dependencies = [
- "derive_builder_core 0.20.0",
- "syn 2.0.51",
 ]
 
 [[package]]
@@ -1338,7 +1307,6 @@ dependencies = [
  "lazy_static",
  "log",
  "reqwest",
- "rust-argon2 2.1.0",
  "serde",
  "serde_json",
  "tauri",
@@ -3066,7 +3034,7 @@ dependencies = [
  "bincode",
  "hkdf",
  "iota-crypto",
- "rust-argon2 1.0.0",
+ "rust-argon2",
  "serde",
  "stronghold-derive",
  "stronghold-utils",
@@ -4550,17 +4518,6 @@ dependencies = [
  "blake2b_simd",
  "constant_time_eq 0.1.5",
  "crossbeam-utils",
-]
-
-[[package]]
-name = "rust-argon2"
-version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d9848531d60c9cbbcf9d166c885316c24bc0e2a9d3eba0956bb6cbbd79bc6e8"
-dependencies = [
- "base64 0.21.7",
- "blake2b_simd",
- "constant_time_eq 0.3.0",
 ]
 
 [[package]]
@@ -6482,7 +6439,6 @@ dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
- "derive_builder 0.20.0",
  "ecdsa",
  "ed25519-dalek",
  "fastrand 2.0.1",

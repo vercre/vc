@@ -3288,7 +3288,6 @@ dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
- "derive_builder 0.20.0",
  "ecdsa",
  "ed25519-dalek",
  "fastrand 2.0.1",

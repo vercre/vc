@@ -31,13 +31,21 @@ lint:
 	@cargo clippy -- -Dclippy::all -Dclippy::pedantic
 
 .PHONY: audit
-audit: fmt lint
+audit: 
 	@cargo audit
 
 .PHONY: unused
 unused:
 	# -cargo install cargo-machete > /dev/null
-	@cargo machete
+	@cargo machete --skip-target-dir
+
+.PHONY: check
+check: fmt lint audit unused
+
+.PHONY: breaking
+breaking:
+	# cargo install cargo-semver-checks --locked
+	@cargo semver-checks
 
 .PHONY: pub-check
 pub-check:
@@ -45,8 +53,6 @@ pub-check:
 	@cargo publish --dry-run --package vercre-vci
 	@cargo publish --dry-run --package vercre-vp
 	@cargo publish --dry-run --package vercre-wallet
-	
-	# 	cargo publish --package $e
 
 # test-miri:
 # 	MIRIFLAGS="-Zmiri-disable-isolation -Zmiri-panic-on-unsupported" cargo miri test -- --nocapture --color=always
