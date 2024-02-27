@@ -5,7 +5,7 @@ use crux_core::testing::AppTester;
 //
 use crux_http::protocol::{HttpResponse, HttpResult};
 use crux_http::testing::ResponseBuilder;
-use http_types::Body;
+// use http_types::Body;
 use insta::assert_yaml_snapshot as assert_snapshot;
 // use insta::internals::Redaction;
 use lazy_static::lazy_static;
@@ -163,8 +163,8 @@ async fn cross_device_flow() {
     // assert_eq!(request.operation.url, model.request.unwrap().response_uri.unwrap());
 
     // simulate the HttpResponse from our mock vercre-vp server
-    let body = Body::from_bytes(request.operation.body.clone());
-    let form: ResponseRequest = body.into_form().await.expect("should deserialize");
+    let body = request.operation.body.clone();
+    let form = serde_urlencoded::from_bytes::<ResponseRequest>(&body).expect("should deserialize");
     let res = verifier.post("/post").form(&form).expect_success().await;
 
     let resp: Value = res.json();

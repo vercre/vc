@@ -5,7 +5,6 @@ use axum_test::http::header::{HeaderValue, AUTHORIZATION};
 use crux_core::testing::AppTester; // assert_effect,
 use crux_http::protocol::{HttpResponse, HttpResult};
 use crux_http::testing::ResponseBuilder;
-use http_types::Body;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::{json, Value};
 use test_utils::vci_provider::NORMAL_USER;
@@ -114,8 +113,8 @@ async fn receive_offer() {
     assert_eq!(request.operation.url, format!("{}/token", &offer.credential_issuer));
 
     // make real token request
-    let body = Body::from_bytes(request.operation.body.clone());
-    let form: TokenRequest = body.into_form().await.expect("should deserialize");
+    let body = request.operation.body.clone();
+    let form = serde_urlencoded::from_bytes::<TokenRequest>(&body).expect("should deserialize");
     let resp = issuer.post("/token").form(&form).expect_success().await;
 
     // resolve the app request with a ~~simulated~~ response from the server
