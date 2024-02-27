@@ -38,10 +38,10 @@ In order to track changes to each crate independently, we need a branch containi
 
 Manually:
 
-1. Create a new branch with the name of the crate.
-2. Delete all files and folders except the folder for the crate to release.
-3. Use Github to create a release **on the new branch**
-4. Push this new branch
+1. Create a new branch (use crate name).
+2. Delete all files and folders except the crate to release.
+3. Push the new branch
+4. Use Github to create a release **on the new branch**
 
 CLI:
 
