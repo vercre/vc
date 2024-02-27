@@ -34,7 +34,7 @@ cargo-release minor --execute
 
 ## [TO REVIEW] Github Release
 
-To track changes to each crate independently, create a branch containing only the contents of the crate we want to release:
+In order to track changes to each crate independently, we need a branch containing only the contents of the crate we want to release:
 
 Manually:
 
