@@ -1,0 +1,129 @@
+$gt-ultra-median: './GT-Ultra-Median-Light.woff2';
+$gt-ultra-standard: './GT-Ultra-Standard-Light.woff2';
+
+@font-face {
+        font-family: 'GT Ultra Standard Light';
+        font-style: normal;
+        font-weight: 300;
+        src: local('GT Ultra Standard Light'), local('GTUltraStandard-Light'),
+            url($gt-ultra-standard) format('woff2');
+        font-display: swap;
+}
+
+@font-face {
+        font-family: 'GT Ultra Median Light';
+        font-style: normal;
+        font-weight: 300;
+        src: local('GT Ultra Median Light'), local('GTUltraMedian-Light'),
+            url($gt-ultra-median) format('woff2');
+        font-display: swap;
+}
+
+$system-font: ('Roboto', sans-serif);
+$brand-title-font: ('GT Ultra Median Light', sans-serif);
+$brand-copy-font: ('GT Ultra Standard Light', sans-serif);
+
+$body-font-size: 1rem;
+$body-font-weight: 400;
+$body-line-height: 1.25;
+$body-letter-spacing: 0.00938em;
+
+@mixin level1 {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1.375;
+    letter-spacing: -0.0625rem;
+}
+.level1 {
+    @include level1;
+}
+
+@mixin level2 {
+    font-size: 2.625rem;
+    font-weight: 500;
+    line-height: 1.375;
+    letter-spacing: -0.0625rem;
+}
+.level2 {
+    @include level2;
+}
+
+
+//     level3: (
+//         font-size: 2rem,
+//         font-weight: 700,
+//         line-height: 1.375,
+//         letter-spacing: 0em,
+//     ),
+//     level4: (
+//         font-family: $brand-title-font,
+//         font-size: 1.625rem,
+//         font-weight: 700,
+//         line-height: 1.375,
+//         letter-spacing: 0.00735em
+//     ),
+//     level5: (
+//         font-size: 1rem,
+//         font-weight: 700,
+//         line-height: 1.375,
+//         letter-spacing: 0em,
+//         text-transform: uppercase,
+//     ),
+//     level6: (
+//         font-size: 0.875rem,
+//         font-weight: 500,
+//         line-height: 1.375,
+//         letter-spacing: 0.0075em,
+//         text-transform: uppercase,
+//     ),
+//     subtitle1: (
+//         font-size: 1rem,
+//         font-weight: 700,
+//         line-height: 1.375,
+//         letter-spacing: 0.00928em,
+//     ),
+//     subtitle2: (
+//         font-size: 0.875rem,
+//         font-weight: 500,
+//         line-height: 1.375,
+//         letter-spacing: 0.00714em,
+//     ),
+//     body1: (
+//         font-size: 1rem,
+//         font-weight: 400,
+//         line-height: 1.25,
+//         letter-spacing: 0.00938em,
+//     ),
+//     body2: (
+//         font-size: 0.875rem,
+//         font-weight: 300,
+//         line-height: 1.43,
+//         letter-spacing: 0.01071em,
+//     ),
+//     brand1: (
+//         font-family: $brand-title-font,
+//         font-size: 2rem,
+//         font-weight: 700,
+//         letter-spacing: 0em,
+//         text-transform: uppercase,
+//     ),
+//     brand2: {
+//         fontFamily: brandCopyFont,
+//         fontSize: '1.625rem',
+//         fontWeight: 400,
+//         textTransform: 'uppercase' as const,
+//     },
+//     caption: {
+//         fontSize: '0.825rem',
+//         fontWeight: 300,
+//     },
+//     fineprint: {
+//         fontSize: '0.75rem',
+//         fontWeight: 200,
+//     },
+//     body3: {
+//         fontSize: '0.875rem',
+//         fontWeight: 300,
+//         lineHeight: 1.3,
+//     },
+// );
