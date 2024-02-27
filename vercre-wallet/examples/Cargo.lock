@@ -1017,9 +1017,7 @@ dependencies = [
 [[package]]
 name = "crux_http"
 version = "0.8.0"
-version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ab019e1c3867f6dada95df7bd6844fadc8e4739ae3b517ca9cff96b29aff485"
 checksum = "7ab019e1c3867f6dada95df7bd6844fadc8e4739ae3b517ca9cff96b29aff485"
 dependencies = [
  "anyhow",
@@ -5164,7 +5162,7 @@ checksum = "b7c388c1b5e93756d0c740965c41e8822f866621d41acbdf6336a6a168f8840c"
 
 [[package]]
 name = "socket2"
-version = "0.5.5"
+version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "05ffd9c0a93b7543e062e759284fcf5f5e3b098501104bfbdde4d404db792871"
 dependencies = [
@@ -5598,7 +5596,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "syn 2.0.50",
+ "syn 2.0.51",
  "tauri-utils",
  "thiserror",
  "time",
