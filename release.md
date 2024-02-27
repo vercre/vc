@@ -1,8 +1,8 @@
 # Release Process
 
-## Pre-requisites
+Use [cargo-release](https://github.com/crate-ci/cargo-release) to release a new version of each crate.
 
-Use `cargo-release` to release a new version of the crate.
+## Pre-requisites
 
 ```sh
 cargo install cargo-release
@@ -20,9 +20,9 @@ cargo-release minor
 
 ## Changelog
 
-```sh
-cargo changelog
-```
+All notable changes should be documented in the project's CHANGELOG.md file.
+Per [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) recommendations, changes are a manually
+documented, high-level summary of changes in a release.
 
 ## Publish
 
@@ -32,26 +32,30 @@ Release to crates.io:
 cargo-release minor --execute
 ```
 
-# Release-plz
+## [TO REVIEW] Github Release
 
-<https://release-plz.ieni.dev/docs/usage/installation>
+To track changes to each crate independently, create a branch containing only the contents of the crate we want to release:
 
-```sh
-cargo install cargo-release-plz --locked
-```
+Manually:
 
+1. Create a new branch with the name of the crate.
+2. Delete all files and folders except the folder for the crate to release.
+3. Use Github to create a release **on the new branch**
+4. Push this new branch
 
-# Smart Release
-
-```sh
-brew install cmake
-cargo install cargo-smart-release
-```
+CLI:
 
 ```sh
-cargo install cargo-smart-release
-cargo smart-release vercre-core
-cargo smart-release --dry-run-cargo-publish
-cargo changelog vercre-core vercre-vci vercre-vp vercre-wallet
-cargo changelog vercre-core --write
+# create a new branch from `main` and check out
+git checkout -b serde-from-v0.1.0
+
+# stage and commit changes
+git add . 
+git  commit -a -m "serde-from-v0.1.0"
+
+# tag the branch
+git tag v0.1.0 -m "v0.1.0 release"
+
+# push new branch
+git push --set-upstream origin serde-from-v0.1.0
 ```
