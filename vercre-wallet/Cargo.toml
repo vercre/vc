@@ -26,6 +26,7 @@ path = "uniffi-bindgen.rs"
 
 [features]
 typegen = ["crux_core/typegen", "vercre-core/typegen"]
+wasm = ["vercre-core/wasm"]
 
 [build-dependencies]
 uniffi = { version = "0.26.1", features = ["build"] }
