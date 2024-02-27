@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 by val**.
 - The `credential_identifiers` attribute is not supported in credential requests until use
 is clarified in the Pre-Authorized Code Flow.
+- A not insignificant number of public struct fields have been added, renamed, or removed to
+  support on [Draft 13] changes. The examples have been updated to reflect these changes.
 
 ### Added
 
