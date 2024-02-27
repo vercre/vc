@@ -30,9 +30,13 @@ lint:
 	@rustup component add clippy 2> /dev/null
 	@cargo clippy -- -Dclippy::all -Dclippy::pedantic
 
+.PHONY: audit
+audit: fmt lint
+	@cargo audit
+
 .PHONY: unused
 unused:
-	-cargo install cargo-machete > /dev/null
+	# -cargo install cargo-machete > /dev/null
 	@cargo machete
 
 .PHONY: pub-check
