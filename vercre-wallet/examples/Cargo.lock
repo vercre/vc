@@ -1307,6 +1307,7 @@ dependencies = [
  "lazy_static",
  "log",
  "reqwest",
+ "rust-argon2 2.1.0",
  "serde",
  "serde_json",
  "tauri",
@@ -3034,7 +3035,7 @@ dependencies = [
  "bincode",
  "hkdf",
  "iota-crypto",
- "rust-argon2",
+ "rust-argon2 1.0.0",
  "serde",
  "stronghold-derive",
  "stronghold-utils",
@@ -4518,6 +4519,17 @@ dependencies = [
  "blake2b_simd",
  "constant_time_eq 0.1.5",
  "crossbeam-utils",
+]
+
+[[package]]
+name = "rust-argon2"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d9848531d60c9cbbcf9d166c885316c24bc0e2a9d3eba0956bb6cbbd79bc6e8"
+dependencies = [
+ "base64 0.21.7",
+ "blake2b_simd",
+ "constant_time_eq 0.3.0",
 ]
 
 [[package]]
