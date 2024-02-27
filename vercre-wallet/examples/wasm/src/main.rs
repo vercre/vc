@@ -46,7 +46,7 @@ impl Component for RootComponent {
             <>
                 <section class="section has-text-centered">
                     <h1>{"Credibil Wallet"}</h1>
-                    <p class="level2">{"Rust Core, Rust Shell (Yew)"}</p>
+                    <p>{"Rust Core, Rust Shell (Yew)"}</p>
                 </section>
                 <section class="container has-text-centered">
                     // <p class="is-size-5">{&view.offer.credential_issuer}</p>

@@ -24,5 +24,5 @@ trunk serve --open
 
 (`--open` will open your default browser. Omit if you prefer to open manually.)
 
-You should see the wallet application running at `http://127.0.0.1:8080`.
+You should see the wallet application running at `http://127.0.0.1:3000`.
 
