@@ -8,5 +8,8 @@ target/
 # rustfmt backups
 **/*.rs.bk
 
+# generated files
+gen/
+
 # local env file(s)
 .env
