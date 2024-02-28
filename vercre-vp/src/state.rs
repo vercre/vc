@@ -26,7 +26,7 @@ pub(crate) struct State {
     #[builder(default = "Utc::now() + Expire::Request.duration()")]
     pub(crate) expires_at: DateTime<Utc>,
 
-    /// The Verifier's Request Object. Saved for use by the 'request_uri' endpoint
+    /// The Verifier's Request Object. Saved for use by the `request_uri` endpoint
     /// and in comparing the Presentation Definition to the Presentation Submission.
     pub(crate) request_object: RequestObject,
 

@@ -33,7 +33,7 @@ pub struct VerifiablePresentation {
     // LATER: add support for @context objects
     #[allow(rustdoc::bare_urls)]
     /// The @context property is used to map property URIs into short-form
-    /// aliases. It is an ordered set where the first item is "https://www.w3.org/2018/credentials/v1".
+    /// aliases. It is an ordered set where the first item is `"https://www.w3.org/2018/credentials/v1"`.
     /// Subsequent items MUST express context information and can be either URIs
     /// or objects. Each URI, if dereferenced, should result in a document
     /// containing machine-readable information about the @context.
@@ -45,7 +45,7 @@ pub struct VerifiablePresentation {
     pub id: Option<String>,
 
     /// The type property is required and expresses the type of presentation,
-    /// such as VerifiablePresentation. Consists of 'VerifiablePresentation'
+    /// such as `VerifiablePresentation`. Consists of `VerifiablePresentation`
     /// and, optionally, a more specific verifiable presentation type.
     /// e.g. `"type": ["VerifiablePresentation",
     /// "CredentialManagerPresentation"]`
@@ -96,12 +96,15 @@ pub struct PresentationDefinition {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub purpose: Option<String>,
 
-    /// One or more registered Claim Format Designation objects (e.g., jwt,
-    /// jwt_vc, jwt_vp, etc.). Used to inform the Holder of the Claim
+    /// One or more registered Claim Format Designation objects (e.g., `jwt`,
+    /// `jwt_vc`, `jwt_vp`, etc.). Used to inform the Holder of the Claim
     /// formats the Verifier can process. For example,
+    ///
+    /// ```json
     ///   "jwt": {
     ///     "alg": ["EdDSA", "ES256K", "ES384"]
     ///   },
+    /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
     pub format: Option<HashMap<String, Format>>,
 }
@@ -168,7 +171,7 @@ pub struct Constraints {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fields: Option<Vec<Field>>,
 
-    ///If present, limit_disclosure MUST be one of the following strings:
+    ///If present, `limit_disclosure` MUST be one of the following strings:
     /// "required" - indicates that the Conformant Consumer MUST limit submitted
     /// fields  to those listed in the fields array (if present). Conformant
     /// Consumers are not required  to implement support for this value, but
@@ -196,7 +199,7 @@ pub struct Field {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
 
-    /// One or more JSONPath expressions that select a target value from the
+    /// One or more `JSONPath` expressions that select a target value from the
     /// input. The array MUST be evaluated in order, breaking as soon as a
     /// Field Query Result is found. The ability to use multiple expressions
     /// allows the Verifier to account for differences in credential
@@ -205,7 +208,7 @@ pub struct Field {
     pub path: Vec<String>,
 
     /// If present, it MUST be a JSON Schema descriptor used to filter against
-    /// the values returned from evaluation of the JSONPath expressions in
+    /// the values returned from evaluation of the `JSONPath` expressions in
     /// the path array.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub filter: Option<Filter>,
@@ -307,10 +310,10 @@ pub struct DescriptorMap {
     /// Designations specified in the Input Descriptor.
     pub format: String,
 
-    /// A JSONPath string expression that indicates the Claim submitted in
+    /// A `JSONPath` string expression that indicates the Claim submitted in
     /// relation to the Input Descriptor, when executed against the
     /// top-level of the object the Presentation Submission.
-    /// For the OpenID4VP specification, this value MUST be:
+    /// For the `OpenID4VP` specification, this value MUST be:
     ///  - $ when only one Verifiable Presentation
     ///  - $\[n\] when there are multiple Verifiable Presentations, where n is the
     ///    vp's index.
@@ -478,11 +481,11 @@ impl FromStr for VerifiablePresentation {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Claims {
     /// MUST be the verifiable credential's `expirationDate`, encoded as a
-    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) NumericDate).
+    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
     pub exp: i64,
 
     /// MUST be the verifiable credential's `expirationDate`, encoded as a
-    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) NumericDate).
+    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
     pub iat: i64,
 
     /// MUST be the `issuer` property of a verifiable credential or the `holder`
@@ -492,7 +495,7 @@ pub struct Claims {
     pub iss: String,
 
     // /// MUST be the verifiable credential's `issuanceDate`, encoded as a
-    // /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) NumericDate).
+    // /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
     // pub nbf: i64,
     /// MUST be the `id` property of the verifiable credential or verifiable
     /// presentation.

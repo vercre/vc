@@ -34,7 +34,7 @@ pub(crate) struct State {
     /// The URL of the Credential Issuer.
     pub(crate) credential_issuer: String,
 
-    /// The client_id of the Wallet requesting issuance.
+    /// The `client_id` of the Wallet requesting issuance.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(setter(into, strip_option), default)]
     pub(crate) client_id: Option<String>,
@@ -114,7 +114,7 @@ pub(crate) struct TokenState {
     /// the key proof.
     pub(crate) c_nonce: String,
 
-    /// Number denoting the lifetime in seconds of the c_nonce.
+    /// Number denoting the lifetime in seconds of the `c_nonce`.
     #[builder(default = "Utc::now() + Expire::Nonce.duration()")]
     pub(crate) c_nonce_expires_at: DateTime<Utc>,
 }
@@ -182,7 +182,7 @@ pub(crate) struct DeferredState {
     /// state persistence key.
     pub(crate) transaction_id: String,
 
-    /// Save the CredentialRequest when issuance is deferred.
+    /// Save the Credential request when issuance is deferred.
     pub(crate) credential_request: CredentialRequest,
 }
 

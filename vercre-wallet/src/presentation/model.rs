@@ -33,7 +33,7 @@ pub struct Model {
     /// Definition).
     pub(super) credentials: Vec<Credential>,
 
-    /// The JSONPath query used to match credentials to the verifier's request.
+    /// The `JSONPath` query used to match credentials to the verifier's request.
     pub(super) filter: Option<Constraints>,
 
     /// The presentation submission token.

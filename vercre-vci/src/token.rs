@@ -19,11 +19,10 @@ use sha2::{Digest, Sha256};
 use tracing::{instrument, trace};
 use vercre_core::error::Err;
 use vercre_core::metadata::{AUTH_CODE_GRANT_TYPE, PRE_AUTH_GRANT_TYPE};
+use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vci::{TokenRequest, TokenResponse};
-use vercre_core::{
-    err, gen, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager,
-};
+use vercre_core::{err, gen, Result};
 
 use super::Endpoint;
 use crate::state::{Expire, State, TokenState};

@@ -56,7 +56,7 @@ pub enum Event {
     #[serde(skip)]
     Proof(signer::Result<(String, String)>),
 
-    /// Callback from the Signer capability with a signed vp_token.
+    /// Callback from the Signer capability with a signed `vp_token`.
     #[serde(skip)]
     Signed(signer::Result<String>),
 

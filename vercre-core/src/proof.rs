@@ -24,7 +24,7 @@ pub struct Jwk {
     /// X coordinate.
     pub x: String,
 
-    /// Y coordinate. Not required for EdDSA verification keys.
+    /// Y coordinate. Not required for `EdDSA` verification keys.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub y: Option<String>,
 

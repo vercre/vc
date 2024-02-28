@@ -77,12 +77,11 @@ use chrono::Utc;
 use tracing::{instrument, trace};
 use vercre_core::error::Err;
 use vercre_core::metadata::Issuer as IssuerMetadata;
+use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
 pub use vercre_core::vci::{
     AuthorizationDetail, AuthorizationRequest, AuthorizationResponse, TokenAuthorizationDetail,
 };
-use vercre_core::{
-    err, gen, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager,
-};
+use vercre_core::{err, gen, Result};
 
 use super::Endpoint;
 use crate::state::{AuthState, Expire, State};
@@ -339,7 +338,7 @@ where
 
             // EITHER: verify requested `credential_configuration_id` is supported
             if let Some(cfg_id) = cfg_id_opt {
-                if self.issuer_meta.credential_configurations_supported.get(cfg_id).is_none() {
+                if !self.issuer_meta.credential_configurations_supported.contains_key(cfg_id) {
                     err!(Err::InvalidRequest, "unsupported credential_configuration_id");
                 }
 

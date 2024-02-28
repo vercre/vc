@@ -38,8 +38,7 @@ pub enum Event {
 
     // TODO: is an offer and 'all or nothing' thing or can the user select
     // which credentials to accept?
-    /// AcceptOffer is set when the user has accepted selected credentials
-    /// for issuance.
+    /// Accept is set when the user has accepted selected credentials for issuance.
     Accept,
 
     /// Set from the shell when the user has entered their pin.
@@ -67,13 +66,13 @@ pub enum Event {
     #[serde(skip)]
     Proof(signer::Result<(String, String)>),
 
-    /// Callback from the Signer capability with a signed vp_token.
+    /// Callback from the Signer capability with a signed `vp_token`.
     #[serde(skip)]
     Signed(signer::Result<String>),
 
-    /// CredentialReceived receives the results of the credential request. Will send
+    /// `CredentialReceived` receives the results of the credential request. Will send
     /// a `GetLogo` event if the credential information includes a logo, or will
-    /// send an AddCredential event if no logo is present to store the credential.
+    /// send an `SaveCredential` event if no logo is present to store the credential.
     #[serde(skip)]
     Credential(crux_http::Result<crux_http::Response<CredentialResponse>>),
 
@@ -81,7 +80,7 @@ pub enum Event {
     #[serde(skip)]
     Logo(credential::Credential, crux_http::Result<crux_http::Response<Vec<u8>>>),
 
-    // AddCredential adds the supplied credential to the model.
+    // SaveCredential adds the supplied credential to the model.
     #[serde(skip)]
     SaveCredential(credential::Credential),
 
@@ -100,7 +99,7 @@ pub enum Event {
 #[serde(rename = "IssuanceView")]
 pub struct ViewModel {
     #[allow(rustdoc::bare_urls)]
-    /// The credential issuer's URI (e.g. "https://credibil.io").
+    /// The credential issuer's URI (e.g. "`https://credibil.io`").
     pub issuer: String,
 
     /// A list of credentials being offered by the issuer.

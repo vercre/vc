@@ -15,7 +15,7 @@ pub struct Credential {
     /// The credential issuer.
     pub issuer: String,
 
-    /// The unpacked Verifiable Credential. Used to display VC details and for JSONPath
+    /// The unpacked Verifiable Credential. Used to display VC details and for `JSONPath`
     /// Presentation Definition queries.
     pub vc: VerifiableCredential,
 

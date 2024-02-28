@@ -13,9 +13,10 @@ use std::fmt::Debug;
 use anyhow::anyhow;
 use tracing::{instrument, trace};
 use vercre_core::error::Err;
+use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vci::{DeferredCredentialRequest, DeferredCredentialResponse};
-use vercre_core::{err, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager};
+use vercre_core::{err, Result};
 
 use super::Endpoint;
 use crate::state::State;

@@ -70,14 +70,13 @@ use anyhow::anyhow;
 use chrono::Utc;
 use tracing::{instrument, trace};
 use vercre_core::error::Err;
+use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vci::{
     AuthorizationCodeGrant, CredentialOffer, Grants, InvokeRequest, InvokeResponse,
     PreAuthorizedCodeGrant, TxCode,
 };
-use vercre_core::{
-    err, gen, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager,
-};
+use vercre_core::{err, gen, Result};
 
 use super::Endpoint;
 use crate::state::{AuthState, Expire, State};

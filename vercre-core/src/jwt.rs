@@ -26,7 +26,8 @@ use serde::{Deserialize, Serialize};
 use tracing::{instrument, trace};
 
 use crate::error::{self, Err};
-use crate::{err, proof, Result, Signer};
+use crate::provider::Signer;
+use crate::{err, proof, Result};
 
 /// Represents a JWT as used for proof and credential presentation.
 #[derive(Clone, Debug, Default, Serialize, PartialEq, Eq)]

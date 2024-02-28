@@ -53,16 +53,16 @@ pub struct Client {
 
     /// Authentication method for the token endpoint.
     /// Values are:
-    /// - "none": The client is public and does not have a secret
-    /// - ~~"client_secret_post": The client uses RFC6749 HTTP POST parameters.~~
-    /// - ~~"client_secret_basic": The client uses HTTP Basic.~~
+    /// - "`none`": The client is public and does not have a secret
+    /// - ~~"`client_secret_post`": The client uses RFC6749 HTTP POST parameters.~~
+    /// - ~~"`client_secret_basic`": The client uses HTTP Basic.~~
     #[serde(skip_serializing_if = "Option::is_none")]
     pub token_endpoint_auth_method: Option<String>,
 
     /// OAuth 2.0 grant types the client can use at the token endpoint.
     /// Supported grant types are:
-    /// - "authorization_code": RFC6749 Authorization Code Grant
-    /// - "urn:ietf:params:oauth:grant-type:pre-authorized_code": OpenID4VCI
+    /// - "`authorization_code`" = RFC6749 Authorization Code Grant
+    /// - "`urn:ietf:params:oauth:grant-type:pre-authorized_code`" =
     ///   Pre-Authorized Code Grant
     #[serde(skip_serializing_if = "Option::is_none")]
     pub grant_types: Option<Vec<String>>,
@@ -126,14 +126,14 @@ pub struct Client {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub software_version: Option<String>,
 
-    /// OpenID4VCI
-    /// Used by the Wallet to publish its Credential Offer Handler. The
-    /// Credential Issuer should use `openid-credential-offer://` if unable
-    /// to perform discovery of the endpoint.
+    /// **`OpenID4VCI`**
+    /// Used by the Wallet to publish its Credential Offer endpoint. The Credential
+    /// Issuer should use "`openid-credential-offer://`" if unable to perform discovery
+    /// of the endpoint.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_offer_endpoint: Option<String>,
 
-    /// REQUIRED for OpenID4VP
+    /// **`OpenID4VP`**
     /// An object defining the formats and proof types of Verifiable Presentations
     /// and Verifiable Credentials that a Verifier supports. For specific values that
     /// can be used.
@@ -233,9 +233,9 @@ pub struct Issuer {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_response_encryption: Option<CredentialResponseEncryption>,
 
-    /// Specifies whether the Credential Issuer supports returning 'credential_identifiers'
-    /// parameter in the authorization_details Token Response parameter, with true
-    /// indicating support. The default value is false.
+    /// Specifies whether the Credential Issuer supports returning `credential_identifiers`
+    /// parameter in the `authorization_details` Token Response parameter, with true
+    /// indicating support. The default value is "false".
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_identifiers_supported: Option<bool>,
 
@@ -278,7 +278,7 @@ pub struct CredentialResponseEncryption {
 
     /// JWE [RFC7516](https://www.rfc-editor.org/rfc/rfc7516) enc algorithm
     /// [RFC7518](https://www.rfc-editor.org/rfc/rfc7518) REQUIRED for encrypting
-    /// Credential Responses. If credential_response_encryption_alg is specified,
+    /// Credential Responses. If `credential_response_encryption_alg` is specified,
     /// the default for this value is A256GCM.
     pub enc_values_supported: Vec<String>,
 
@@ -306,21 +306,22 @@ pub struct Display {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(default)]
 pub struct CredentialConfiguration {
-    /// Identifies the format of the credential, e.g. jwt_vc_json or ldp_vc.
+    /// Identifies the format of the credential, e.g. "`jwt_vc_json`" or "`ldp_vc`".
     /// Each object will contain further elements defining the type and
     /// claims the credential MAY contain, as well as information on how to
     /// display the credential.
     ///
-    /// See Appendix E of the OpenID4VCI specification for Credential Format
+    /// See [Appendix A of the OpenID4VCI](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
+    /// specification for Credential Format
     /// Profiles.
     pub format: String,
 
     /// Identifies the scope value that this Credential Issuer supports for this
     /// particular credential. The value can be the same accross multiple
-    /// 'credential_configurations_supported' objects. The Authorization Server MUST be able to
+    /// `credential_configurations_supported` objects. The Authorization Server MUST be able to
     /// uniquely identify the Credential Issuer based on the scope value. The Wallet
     /// can use this value in the Authorization Request Scope values in this
-    /// Credential Issuer metadata MAY duplicate those in the scopes_supported
+    /// Credential Issuer metadata MAY duplicate those in the `scopes_supported`
     /// parameter of the Authorization Server.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scope: Option<String>,
@@ -332,9 +333,10 @@ pub struct CredentialConfiguration {
     /// Identifies how the Credential should be bound to the identifier of the
     /// End-User who possesses the Credential. Is case sensitive.
     ///
-    /// Support for keys in JWK format [RFC7517](https://www.rfc-editor.org/rfc/rfc7517) is indicated by the value jwk.
-    /// Support for keys expressed as a COSE Key object [RFC8152](https://www.rfc-editor.org/rfc/rfc8152) (for example, used
-    /// in [ISO.18013-5]) is indicated by the value 'cose_key'.
+    /// Support for keys in JWK format [RFC7517](https://www.rfc-editor.org/rfc/rfc7517)
+    /// is indicated by the value jwk. Support for keys expressed as a COSE Key object
+    /// [RFC8152](https://www.rfc-editor.org/rfc/rfc8152) (for example, used in
+    /// [ISO.18013-5]) is indicated by the value `cose_key`.
     ///
     /// When Cryptographic Binding Method is a DID, valid values MUST be a did: prefix
     /// followed by a method-name using a syntax as defined in Section 3.1 of [DID-Core],
@@ -346,9 +348,9 @@ pub struct CredentialConfiguration {
     pub cryptographic_binding_methods_supported: Option<Vec<String>>,
 
     /// Case sensitive strings that identify the cryptographic suites supported for
-    /// the 'cryptographic_binding_methods_supported'. Cryptographic algorithms for
-    /// Credentials in jwt_vc format should use algorithm names defined in IANA JOSE
-    /// Algorithms Registry. Cryptographic algorithms for Credentials in ldp_vc format
+    /// the `cryptographic_binding_methods_supported`. Cryptographic algorithms for
+    /// Credentials in `jwt_vc` format should use algorithm names defined in IANA JOSE
+    /// Algorithms Registry. Cryptographic algorithms for Credentials in `ldp_vc` format
     /// should use signature suites names defined in Linked Data Cryptographic Suite
     /// Registry.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -362,13 +364,13 @@ pub struct CredentialConfiguration {
     /// pair is an object that contains metadata about the key proof and contains
     /// the following parameters defined by this specification:
     ///
-    ///  - jwt: A JWT [RFC7519] is used as proof of possession. A proof object MUST
+    ///  - `jwt`: A JWT [RFC7519] is used as proof of possession. A proof object MUST
     ///    include a jwt claim containing a JWT defined in Section 7.2.1.1.
     ///
-    ///  - cwt: A CWT [RFC8392] is used as proof of possession. A proof object MUST
+    ///  - `cwt`: A CWT [RFC8392] is used as proof of possession. A proof object MUST
     ///    include a cwt claim containing a CWT defined in Section 7.2.1.3.
     ///
-    ///  - ldp_vp: A W3C Verifiable Presentation object signed using the Data Integrity
+    ///  - `ldp_vp`: A W3C Verifiable Presentation object signed using the Data Integrity
     ///    Proof as defined in [VC_DATA_2.0] or [VC_DATA], and where the proof of
     ///    possession MUST be done in accordance with [VC_Data_Integrity]. When
     ///    `proof_type` is set to `ldp_vp`, the proof object MUST include a `ldp_vp`
@@ -385,6 +387,12 @@ pub struct CredentialConfiguration {
     ///     }
     /// }
     /// ```
+    /// [RFC7519]: https://www.rfc-editor.org/rfc/rfc7519
+    /// [RFC8392]: https://www.rfc-editor.org/rfc/rfc8392
+    /// [VC_DATA]: https://www.w3.org/TR/vc-data-model/
+    /// [VC_DATA_2.0]: https://www.w3.org/TR/vc-data-model-2.0/
+    /// [VC_Data_Integrity]: https://www.w3.org/TR/vc-data-integrity/
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub proof_types_supported: Option<HashMap<String, ProofTypesSupported>>,
 
@@ -474,7 +482,7 @@ pub struct CredentialDefinition {
     /// The @context property is used to map property URIs into short-form aliases,
     /// in accordance with the W3C Verifiable Credentials Data Model.
     ///
-    /// REQUIRED when 'format' is "jwt_vc_json-ld" or "ldp_vc".
+    /// REQUIRED when `format` is "`jwt_vc_json-ld`" or "`ldp_vc`".
     #[cfg_attr(not(feature = "typegen"), serde(rename = "@context"))]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub context: Option<Vec<String>>,
@@ -534,7 +542,7 @@ pub struct Claim {
 pub struct Server {
     /// The authorization server's issuer identifier (URL). MUST be identical to
     /// the issuer identifier value in the well-known URI:
-    /// `{issuer}/.well-known/oauth-authorization-server``.
+    /// `{issuer}/.well-known/oauth-authorization-server`.
     pub issuer: String,
 
     /// URL of the authorization server's authorization endpoint.
@@ -563,21 +571,21 @@ pub struct Server {
     pub response_modes_supported: Option<Vec<String>>,
 
     /// A list of grant types supported. Values are the same as the Dynamic
-    /// Client Registration "grant_types"
+    /// Client Registration `grant_types`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub grant_types_supported: Option<Vec<String>>,
 
     /// A list of client authentication methods supported by the token endpoint.
-    /// The same as those used with the "grant_types" parameter defined by the
+    /// The same as those used with the `grant_types` parameter defined by the
     /// OAuth 2.0 Dynamic Client Registration Protocol specification.
-    /// Values can be one of: "none", "client_secret_post",
-    /// "client_secret_basic"
+    /// Values can be one of: "`none`", "`client_secret_post`",
+    /// "`client_secret_basic`".
     #[serde(skip_serializing_if = "Option::is_none")]
     pub token_endpoint_auth_methods_supported: Option<Vec<String>>,
 
     /// A list of the JWS algorithms supported by the token endpoint for the
     /// signature on the JWT used to authenticate the client at the endpoint
-    /// for the "private_key_jwt" and "client_secret_jwt" authentication
+    /// for the `private_key_jwt` and `client_secret_jwt` authentication
     /// methods.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub token_endpoint_auth_signing_alg_values_supported: Option<Vec<String>>,
@@ -612,7 +620,7 @@ pub struct Server {
 
     /// A list of the JWS algorithms supported by the revocation endpoint for
     /// the signature on the JWT used to authenticate the client at the
-    /// endpoint for the "private_key_jwt" and "client_secret_jwt"
+    /// endpoint for the `private_key_jwt` and `client_secret_jwt`
     /// authentication methods.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub revocation_endpoint_auth_signing_alg_values_supported: Option<Vec<String>>,
@@ -628,7 +636,7 @@ pub struct Server {
 
     /// A list of the JWS algorithms supported by the introspection endpoint for
     /// the signature on the JWT used to authenticate the client at the
-    /// endpoint for the "private_key_jwt" and "client_secret_jwt"
+    /// endpoint for the `private_key_jwt` and `client_secret_jwt`
     /// authentication methods.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub introspection_endpoint_auth_signing_alg_values_supported: Option<Vec<String>>,
@@ -637,25 +645,25 @@ pub struct Server {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub code_challenge_methods_supported: Option<Vec<String>>,
 
-    /// Metadata values MAY also be provided as a "signed_metadata" value, which
+    /// Metadata values MAY also be provided as a `signed_metadata` value, which
     /// is a JSON Web Token (JWT) that asserts metadata values about the
     /// authorization server as a bundle.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub signed_metadata: Option<String>,
 
-    /// OpenID4VCI
+    /// **`OpenID4VCI`**
     /// Indicates whether the issuer accepts a Token Request with a
     /// Pre-Authorized Code but without a client id. Defaults to false.
     #[serde(rename = "pre-authorized_grant_anonymous_access_supported")]
     pub pre_authorized_grant_anonymous_access_supported: bool,
 
-    /// OpenID.Wallet
+    /// **`OpenID.Wallet`**
     /// Specifies whether the Wallet supports the transfer of
-    /// presentation_definition by reference, with true indicating support.
+    /// `presentation_definition` by reference, with true indicating support.
     /// If omitted, the default value is true.
     pub presentation_definition_uri_supported: bool,
 
-    /// OpenID.Wallet
+    /// **`OpenID.Wallet`**
     /// A list of key value pairs, where the key identifies a Credential format
     /// supported by the Wallet.
     pub vp_formats_supported: Option<HashMap<String, SupportedVpFormat>>,

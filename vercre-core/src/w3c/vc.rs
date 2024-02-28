@@ -32,7 +32,7 @@ pub struct VerifiableCredential {
     // LATER: add support for @context objects
     #[allow(rustdoc::bare_urls)]
     /// The @context property is used to map property URIs into short-form aliases.
-    /// It is an ordered set where the first item is "https://www.w3.org/2018/credentials/v1".
+    /// It is an ordered set where the first item is "`https://www.w3.org/2018/credentials/v1`".
     /// Subsequent items MUST express context information and can be either URIs or
     /// objects. Each URI, if dereferenced, should result in a document containing
     /// machine-readable information about the @context.
@@ -42,7 +42,7 @@ pub struct VerifiableCredential {
     #[allow(rustdoc::bare_urls)]
     /// The credential's URI. It is RECOMMENDED that if dereferenced, the URI
     /// results in a document containing machine-readable information about
-    /// the id (a schema). For example, "http://example.edu/credentials/3732".
+    /// the id (a schema). For example, "`http://example.edu/credentials/3732`".
     pub id: String,
 
     /// The type property is used to uniquely identify the type of the credential.
@@ -96,7 +96,7 @@ pub struct VerifiableCredential {
     #[serde(with = "option_flexvec")]
     pub credential_schema: Option<Vec<CredentialSchema>>,
 
-    /// RefreshService can be used to provide a link to the issuer's refresh
+    /// `RefreshService` can be used to provide a link to the issuer's refresh
     /// service so Holder's can refresh (manually or automatically) an
     /// expired credential.
     #[serde(rename = "refreshService")]
@@ -313,15 +313,15 @@ impl FromStr for CredentialSubject {
 #[serde(default)]
 pub struct Proof {
     /// An optional identifier for the proof. MUST be a URL, such as a UUID as a
-    /// URN e.g. urn:uuid:6a1676b8-b51f-11ed-937b-d76685a20ff5.
+    /// URN e.g. "`urn:uuid:6a1676b8-b51f-11ed-937b-d76685a20ff5`".
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
 
     /// The specific proof type. MUST map to a URL. Examples include
-    /// DataIntegrityProof and Ed25519Signature2020. The type determines the
+    /// "`DataIntegrityProof`" and "`Ed25519Signature2020`". The type determines the
     /// other fields required to secure and verify the proof.
     ///
-    /// When set to "DataIntegrityProof", the `cryptosuite` and the `proofValue`
+    /// When set to "`DataIntegrityProof`", the `cryptosuite` and the `proofValue`
     /// properties MUST be set.
     #[serde(rename = "type")]
     pub type_: String,
@@ -424,7 +424,7 @@ pub struct CredentialSchema {
     pub id: String,
 
     /// Refers to the status method used to provide the (machine readable)
-    /// status of the credential. e.g. JsonSchemaValidator2018
+    /// status of the credential. e.g. "`JsonSchemaValidator2018`"
     #[serde(rename = "type")]
     pub type_: String,
 }
@@ -515,7 +515,7 @@ pub struct Evidence {
     pub id: Option<String>,
 
     /// Type identifies the evidence scheme used for the instance of evidence.
-    /// For example, "DriversLicense" or "Passport".
+    /// For example, "`DriversLicense`" or "`Passport`".
     #[serde(rename = "type")]
     pub type_: Vec<String>,
 
@@ -665,7 +665,7 @@ pub struct VcClaims {
     pub sub: String,
 
     /// MUST be the verifiable credential's `issuanceDate`, encoded as a
-    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) NumericDate).
+    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
     pub nbf: i64,
 
     /// MUST be the `issuer` property of a verifiable credential or the `holder`
@@ -675,7 +675,7 @@ pub struct VcClaims {
     pub iss: String,
 
     /// MUST be the verifiable credential's `issuanceDate`, encoded as a
-    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) NumericDate).
+    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
     pub iat: i64,
 
     /// MUST be the `id` property of the verifiable credential or verifiable
@@ -683,7 +683,7 @@ pub struct VcClaims {
     pub jti: String,
 
     /// MUST be the verifiable credential's `expirationDate`, encoded as a
-    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) NumericDate).
+    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub exp: Option<i64>,
 
