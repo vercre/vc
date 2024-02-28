@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use anyhow::Result;
 use assert_let_bind::assert_let;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
@@ -9,14 +10,11 @@ use lazy_static::lazy_static;
 use serde_json::json;
 use test_utils::vci_provider::{Provider, ISSUER, NORMAL_USER};
 use test_utils::wallet;
-use vercre_core::jwt::{self, Jwt};
-use vercre_core::vci::ProofClaims;
-use vercre_core::w3c::vc::VcClaims;
-use vercre_core::Result;
 use vercre_vci::credential::{CredentialRequest, CredentialResponse};
 use vercre_vci::invoke::{InvokeRequest, InvokeResponse};
+use vercre_vci::jwt::{self, Jwt};
 use vercre_vci::token::{TokenRequest, TokenResponse};
-use vercre_vci::Endpoint;
+use vercre_vci::{Endpoint, ProofClaims, VcClaims};
 
 lazy_static! {
     static ref PROVIDER: Provider = Provider::new();

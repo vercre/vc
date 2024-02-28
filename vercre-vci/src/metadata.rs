@@ -24,6 +24,7 @@
 //! ```
 
 use tracing::{instrument, trace};
+pub use vercre_core::metadata as types;
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vci::{MetadataRequest, MetadataResponse};
 use vercre_core::{Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager};

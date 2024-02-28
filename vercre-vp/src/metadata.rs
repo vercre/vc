@@ -8,6 +8,7 @@
 use std::fmt::Debug;
 
 use tracing::{instrument, trace};
+pub use vercre_core::metadata as types;
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{MetadataRequest, MetadataResponse};
 use vercre_core::{Callback, Client, Result, Signer, StateManager};

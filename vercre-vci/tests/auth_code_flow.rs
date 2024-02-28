@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use anyhow::Result;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
 use futures::future::TryFutureExt;
@@ -9,14 +10,11 @@ use serde_json::json;
 use sha2::{Digest, Sha256};
 use test_utils::vci_provider::{Provider, ISSUER, NORMAL_USER};
 use test_utils::wallet;
-use vercre_core::jwt::{self, Jwt};
-use vercre_core::vci::ProofClaims;
-use vercre_core::w3c::vc::VcClaims;
-use vercre_core::Result;
 use vercre_vci::authorize::{AuthorizationRequest, AuthorizationResponse};
 use vercre_vci::credential::{CredentialRequest, CredentialResponse};
+use vercre_vci::jwt::{self, Jwt};
 use vercre_vci::token::{TokenRequest, TokenResponse};
-use vercre_vci::Endpoint;
+use vercre_vci::{Endpoint, ProofClaims, VcClaims};
 
 lazy_static! {
     static ref PROVIDER: Provider = Provider::new();

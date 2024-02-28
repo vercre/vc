@@ -18,10 +18,10 @@ use uuid::Uuid;
 use vercre_core::error::{Ancillary as _, Err};
 use vercre_core::jwt::Jwt;
 use vercre_core::metadata::{CredentialDefinition, Issuer as IssuerMetadata};
+use vercre_core::vci::ProofClaims;
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vci::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialRequest, CredentialResponse,
-    ProofClaims,
 };
 use vercre_core::w3c::{self, CredentialSubject, VerifiableCredential};
 use vercre_core::{

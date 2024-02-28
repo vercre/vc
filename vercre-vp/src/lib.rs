@@ -165,7 +165,7 @@ mod state;
 
 use std::fmt::Debug;
 
-use vercre_core::{Callback, Client, Signer, StateManager};
+pub use vercre_core::{callback, Algorithm, Callback, Client, Signer, StateManager};
 
 // TODO: remove double borrow for traits (i.e. &self -> self)
 // TODO: reintroduce impl Provider trait + lifetimes for Endpoint

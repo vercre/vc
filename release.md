@@ -47,15 +47,18 @@ CLI:
 
 ```sh
 # create a new branch from `main` and check out
-git checkout -b serde-from-v0.1.0
+git checkout -b serde-from-v0.2.0
+
+# delete all files and folders except the crate to release
 
 # stage and commit changes
 git add . 
-git  commit -a -m "serde-from-v0.1.0"
+git  commit -a -m "serde-from-v0.2.0"
 
 # tag the branch
-git tag v0.1.0 -m "v0.1.0 release"
+git tag v0.2.0 -m "v0.2.0 release"
 
 # push new branch
-git push --set-upstream origin serde-from-v0.1.0
+git push --set-upstream origin serde-from-v0.2.0
+git push --tags
 ```

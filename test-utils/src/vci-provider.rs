@@ -9,11 +9,11 @@ use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
 use serde_json::Value;
 use uuid::Uuid;
-use vercre_core::callback::Payload;
-use vercre_core::metadata::{
+use vercre_vci::callback::Payload;
+use vercre_vci::metadata::types::{
     self, CredentialDefinition, AUTH_CODE_GRANT_TYPE, PRE_AUTH_GRANT_TYPE,
 };
-use vercre_core::{
+use vercre_vci::{
     holder, Algorithm, Callback, Client, Holder, Issuer, Server, Signer, StateManager,
 };
 
@@ -52,23 +52,23 @@ impl Provider {
 }
 
 impl Client for Provider {
-    async fn metadata(&self, client_id: &str) -> anyhow::Result<metadata::Client> {
+    async fn metadata(&self, client_id: &str) -> anyhow::Result<types::Client> {
         self.client.get(client_id)
     }
 
-    async fn register(&self, client_meta: &metadata::Client) -> anyhow::Result<metadata::Client> {
+    async fn register(&self, client_meta: &types::Client) -> anyhow::Result<types::Client> {
         self.client.add(client_meta)
     }
 }
 
 impl Issuer for Provider {
-    async fn metadata(&self, issuer_id: &str) -> anyhow::Result<metadata::Issuer> {
+    async fn metadata(&self, issuer_id: &str) -> anyhow::Result<types::Issuer> {
         self.issuer.get(issuer_id)
     }
 }
 
 impl Server for Provider {
-    async fn metadata(&self, server_id: &str) -> anyhow::Result<metadata::Server> {
+    async fn metadata(&self, server_id: &str) -> anyhow::Result<types::Server> {
         self.server.get(server_id)
     }
 }
@@ -130,14 +130,14 @@ impl Callback for Provider {
 //-----------------------------------------------------------------------------
 #[derive(Default, Clone, Debug)]
 struct ClientStore {
-    clients: Arc<Mutex<HashMap<String, metadata::Client>>>,
+    clients: Arc<Mutex<HashMap<String, types::Client>>>,
 }
 
 impl ClientStore {
     fn new() -> Self {
         let client_id = wallet::did();
 
-        let client = metadata::Client {
+        let client = types::Client {
             client_id: client_id.clone(),
             redirect_uris: Some(vec!["http://localhost:3000/callback".to_string()]),
             grant_types: Some(vec![
@@ -156,7 +156,7 @@ impl ClientStore {
         }
     }
 
-    fn get(&self, client_id: &str) -> anyhow::Result<metadata::Client> {
+    fn get(&self, client_id: &str) -> anyhow::Result<types::Client> {
         match self.clients.lock().expect("should lock").get(client_id) {
             Some(data) => Ok(data.clone()),
             None => Err(anyhow!("client not found")),
@@ -164,8 +164,8 @@ impl ClientStore {
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn add(&self, client_meta: &metadata::Client) -> anyhow::Result<metadata::Client> {
-        let client_meta = metadata::Client {
+    fn add(&self, client_meta: &types::Client) -> anyhow::Result<types::Client> {
+        let client_meta = types::Client {
             client_id: Uuid::new_v4().to_string(),
             ..client_meta.to_owned()
         };
@@ -319,12 +319,12 @@ impl StateStore {
 //-----------------------------------------------------------------------------
 #[derive(Default, Clone, Debug)]
 struct IssuerStore {
-    issuers: HashMap<String, metadata::Issuer>,
+    issuers: HashMap<String, types::Issuer>,
 }
 
 impl IssuerStore {
     fn new() -> Self {
-        let issuer = metadata::Issuer::sample();
+        let issuer = types::Issuer::sample();
 
         Self {
             issuers: HashMap::from([
@@ -334,7 +334,7 @@ impl IssuerStore {
         }
     }
 
-    fn get(&self, issuer_id: &str) -> anyhow::Result<metadata::Issuer> {
+    fn get(&self, issuer_id: &str) -> anyhow::Result<types::Issuer> {
         let Some(issuer) = self.issuers.get(issuer_id) else {
             return Err(anyhow!("issuer not found"));
         };
@@ -344,12 +344,12 @@ impl IssuerStore {
 
 #[derive(Default, Clone, Debug)]
 struct ServerStore {
-    servers: HashMap<String, metadata::Server>,
+    servers: HashMap<String, types::Server>,
 }
 
 impl ServerStore {
     fn new() -> Self {
-        let server = metadata::Server::sample();
+        let server = types::Server::sample();
         Self {
             servers: HashMap::from([
                 ("http://localhost:8080".to_string(), server.clone()),
@@ -358,7 +358,7 @@ impl ServerStore {
         }
     }
 
-    fn get(&self, server_id: &str) -> anyhow::Result<metadata::Server> {
+    fn get(&self, server_id: &str) -> anyhow::Result<types::Server> {
         let Some(server) = self.servers.get(server_id) else {
             return Err(anyhow!("issuer not found"));
         };

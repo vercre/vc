@@ -7,9 +7,9 @@ use chrono::{DateTime, Utc};
 use ecdsa::signature::Signer as _;
 use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
-use vercre_core::callback::Payload;
-use vercre_core::metadata::{self, VpFormat};
-use vercre_core::{Algorithm, Callback, Client, Signer, StateManager};
+use vercre_vp::callback::Payload;
+use vercre_vp::metadata::types::{self, VpFormat};
+use vercre_vp::{Algorithm, Callback, Client, Signer, StateManager};
 
 pub const VERIFIER: &str = "http://credibil.io";
 pub const VERIFIER_DID: &str ="did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJwdWJsaWNLZXlNb2RlbDFJZCIsInB1YmxpY0tleUp3ayI6eyJjcnYiOiJzZWNwMjU2azEiLCJrdHkiOiJFQyIsIngiOiJ0WFNLQl9ydWJYUzdzQ2pYcXVwVkpFelRjVzNNc2ptRXZxMVlwWG45NlpnIiwieSI6ImRPaWNYcWJqRnhvR0otSzAtR0oxa0hZSnFpY19EX09NdVV3a1E3T2w2bmsifSwicHVycG9zZXMiOlsiYXV0aGVudGljYXRpb24iLCJrZXlBZ3JlZW1lbnQiXSwidHlwZSI6IkVjZHNhU2VjcDI1NmsxVmVyaWZpY2F0aW9uS2V5MjAxOSJ9XSwic2VydmljZXMiOlt7ImlkIjoic2VydmljZTFJZCIsInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly93d3cuc2VydmljZTEuY29tIiwidHlwZSI6InNlcnZpY2UxVHlwZSJ9XX19XSwidXBkYXRlQ29tbWl0bWVudCI6IkVpREtJa3dxTzY5SVBHM3BPbEhrZGI4Nm5ZdDBhTnhTSFp1MnItYmhFem5qZEEifSwic3VmZml4RGF0YSI6eyJkZWx0YUhhc2giOiJFaUNmRFdSbllsY0Q5RUdBM2RfNVoxQUh1LWlZcU1iSjluZmlxZHo1UzhWRGJnIiwicmVjb3ZlcnlDb21taXRtZW50IjoiRWlCZk9aZE10VTZPQnc4UGs4NzlRdFotMkotOUZiYmpTWnlvYUFfYnFENHpoQSJ9fQ";
@@ -35,11 +35,11 @@ impl Provider {
 }
 
 impl Client for Provider {
-    async fn metadata(&self, client_id: &str) -> anyhow::Result<metadata::Client> {
+    async fn metadata(&self, client_id: &str) -> anyhow::Result<types::Client> {
         self.client.get(client_id)
     }
 
-    async fn register(&self, _: &metadata::Client) -> anyhow::Result<metadata::Client> {
+    async fn register(&self, _: &types::Client) -> anyhow::Result<types::Client> {
         unimplemented!("register not implemented")
     }
 }
@@ -87,12 +87,12 @@ impl Callback for Provider {
 
 #[derive(Clone, Debug, Default)]
 struct ClientStore {
-    clients: HashMap<String, metadata::Client>,
+    clients: HashMap<String, types::Client>,
 }
 
 impl ClientStore {
     fn new() -> Self {
-        let client_meta = metadata::Client {
+        let client_meta = types::Client {
             client_id: "http://credibil.io".to_string(),
             redirect_uris: Some(vec!["http://localhost:3000/callback".to_string()]),
             grant_types: Some(vec!["authorization_code".to_string()]),
@@ -141,7 +141,7 @@ impl ClientStore {
         Self { clients }
     }
 
-    fn get(&self, client_id: &str) -> anyhow::Result<metadata::Client> {
+    fn get(&self, client_id: &str) -> anyhow::Result<types::Client> {
         let Some(client) = self.clients.get(client_id) else {
             return Err(anyhow!("verifier not found"));
         };

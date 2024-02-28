@@ -3,6 +3,7 @@ description = "Test utilities"
 license = "MIT OR Apache-2.0"
 name = "test-utils"
 # readme = "README.md"
+publish = false
 
 authors.workspace = true
 categories.workspace = true
@@ -29,4 +30,6 @@ serde_json.workspace = true
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 tracing.workspace = true
 uuid.workspace = true
-vercre-core.workspace = true
+# vercre-core.workspace = true
+vercre-vci = { path = "../vercre-vci" }
+vercre-vp = { path = "../vercre-vp" }
