@@ -35,12 +35,12 @@ pub struct Client {
     pub client_id_issued_at: Option<i64>,
 
     /// OAuth 2.0 client secret string. If issued, this MUST be unique for each
-    /// 'client_id' and SHOULD be unique for multiple instances of a client
-    /// using the same 'client_id'.
+    /// `client_id` and SHOULD be unique for multiple instances of a client
+    /// using the same `client_id`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub client_secret: Option<String>,
 
-    /// Required if 'client_secret' is issued. Time at which the client secret
+    /// Required if `client_secret` is issued. Time at which the client secret
     /// will expire (Unix time) or 0 if it will not expire.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub client_secret_expires_at: Option<i64>,
@@ -54,8 +54,7 @@ pub struct Client {
     /// Authentication method for the token endpoint.
     /// Values are:
     /// - "none": The client is public and does not have a secret
-    /// - ~~"client_secret_post": The client uses RFC6749 HTTP POST
-    ///   parameters.~~
+    /// - ~~"client_secret_post": The client uses RFC6749 HTTP POST parameters.~~
     /// - ~~"client_secret_basic": The client uses HTTP Basic.~~
     #[serde(skip_serializing_if = "Option::is_none")]
     pub token_endpoint_auth_method: Option<String>,
@@ -123,8 +122,7 @@ pub struct Client {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub software_id: Option<String>,
 
-    /// A version identifier string for the client software identified by
-    /// "software_id"
+    /// A version identifier string for the client software identified by `software_id`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub software_version: Option<String>,
 

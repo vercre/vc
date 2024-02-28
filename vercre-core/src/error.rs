@@ -220,11 +220,11 @@ pub enum Err {
     /// request, the Wallet MUST wait at least the number of seconds specified by the
     /// interval claim of the Credential Offer or the authorization response, or 5
     /// seconds if none was provided, and respect any increase in the polling interval
-    /// required by the "slow_down" error.
+    /// required by the "`slow_down`" error.
     #[error("authorization_pending")]
     AuthorizationPending,
 
-    /// A variant of 'authorization_pending' error code, the authorization request is
+    /// A variant of `authorization_pending` error code, the authorization request is
     /// still pending and polling should continue, but the interval MUST be increased
     /// by 5 seconds for this and all subsequent requests.
     #[error("slow_down")]
@@ -247,7 +247,7 @@ pub enum Err {
     UnsupportedCredentialFormat,
 
     /// Credential Request did not contain a proof, or proof was invalid, i.e. it was
-    /// not bound to a Credential Issuer provided c_nonce. The error response contains
+    /// not bound to a Credential Issuer provided `c_nonce`. The error response contains
     /// new `c_nonce` as well as `c_nonce_expires_in` values to be used by the Wallet
     /// when creating another proof of possession of key material.
     #[error("invalid_proof")]
@@ -270,8 +270,8 @@ pub enum Err {
     #[error("issuance_pending")]
     IssuancePending,
 
-    /// The Deferred Credential Request contains an invalid transaction_id. This error
-    /// occurs when the transaction_id was not issued by the respective Credential
+    /// The Deferred Credential Request contains an invalid `transaction_id`. This error
+    /// occurs when the `transaction_id` was not issued by the respective Credential
     /// Issuer or it was already used to obtain the Credential.
     #[error("invalid_transaction_id")]
     InvalidTransactionId,
@@ -281,7 +281,7 @@ pub enum Err {
     /// ------------------------------
 
     /// The Wallet does not support any of the formats requested by the
-    /// Verifier, such as those included in the vp_formats registration
+    /// Verifier, such as those included in the `vp_formats` registration
     /// parameter.
     #[error("vp_formats_not_supported")]
     VpFormatsNotSupported,
@@ -291,7 +291,7 @@ pub enum Err {
     InvalidPresentationDefinitionUri,
 
     /// The Presentation Definition URL can be reached, but the specified
-    /// presentation_definition cannot be found at the URL.
+    /// `presentation_definition` cannot be found at the URL.
     #[error("invalid_presentation_definition_reference")]
     InvalidPresentationDefinitionReference,
 }
