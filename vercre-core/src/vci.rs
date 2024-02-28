@@ -847,8 +847,8 @@ mod tests {
     #[test]
     fn credential_offer() {
         let offer = CredentialOffer {
-            credential_issuer: "https://example.com".to_string(),
-            credential_configuration_ids: vec!["UniversityDegree_JWT".to_string()],
+            credential_issuer: String::from("https://example.com"),
+            credential_configuration_ids: vec![String::from("UniversityDegree_JWT")],
             grants: None,
         };
 
@@ -862,23 +862,23 @@ mod tests {
     fn authorization_request() {
         let auth_req = AuthorizationRequest {
             credential_issuer: String::new(),
-            response_type: "code".to_string(),
-            client_id: "1234".to_string(),
-            redirect_uri: Some("http://localhost:3000/callback".to_string()),
-            state: Some("1234".to_string()),
-            code_challenge: "1234".to_string(),
-            code_challenge_method: "S256".to_string(),
+            response_type: String::from("code"),
+            client_id: String::from("1234"),
+            redirect_uri: Some(String::from("http://localhost:3000/callback")),
+            state: Some(String::from("1234")),
+            code_challenge: String::from("1234"),
+            code_challenge_method: String::from("S256"),
             authorization_details: Some(vec![AuthorizationDetail {
-                type_: "openid_credential".to_string(),
-                format: Some("jwt_vc_json".to_string()),
+                type_: String::from("openid_credential"),
+                format: Some(String::from("jwt_vc_json")),
                 credential_definition: Some(CredentialDefinition {
                     context: Some(vec![
-                        "https://www.w3.org/2018/credentials/v1".to_string(),
-                        "https://www.w3.org/2018/credentials/examples/v1".to_string(),
+                        String::from("https://www.w3.org/2018/credentials/v1"),
+                        String::from("https://www.w3.org/2018/credentials/examples/v1"),
                     ]),
                     type_: Some(vec![
-                        "VerifiableCredential".to_string(),
-                        "EmployeeIDCredential".to_string(),
+                        String::from("VerifiableCredential"),
+                        String::from("EmployeeIDCredential"),
                     ]),
                     credential_subject: None,
                 }),
@@ -886,8 +886,8 @@ mod tests {
             }]),
             scope: None,
             resource: None,
-            holder_id: "1234".to_string(),
-            wallet_issuer: Some("1234".to_string()),
+            holder_id: String::from("1234"),
+            wallet_issuer: Some(String::from("1234")),
             user_hint: None,
             issuer_state: None,
         };

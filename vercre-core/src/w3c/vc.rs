@@ -156,7 +156,7 @@ impl VerifiableCredential {
         Ok(jwt::Jwt {
             // TODO: build Header in signing module
             header: jwt::Header {
-                typ: "JWT".to_string(),
+                typ: String::from("JWT"),
                 alg: alg.to_string(),
                 kid: proof.verification_method.clone(),
             },
@@ -171,25 +171,25 @@ impl VerifiableCredential {
 
         VerifiableCredential {
             context: vec![
-                "https://www.w3.org/2018/credentials/v1".to_string(),
-                "http://credibil.io/credentials/v1".to_string(),
+                String::from("https://www.w3.org/2018/credentials/v1"),
+                String::from("http://credibil.io/credentials/v1"),
             ],
-            type_: vec!["VerifiableCredential".to_string(), "EmployeeIDCredential".to_string()],
+            type_: vec![String::from("VerifiableCredential"), String::from("EmployeeIDCredential")],
             issuer: Issuer {
-                id: "http://credibil.io".to_string(),
+                id: String::from("http://credibil.io"),
                 extra: None,
             },
-            id: "http://credibil.io/credentials/1234".to_string(),
+            id: String::from("http://credibil.io/credentials/1234"),
             issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
             credential_subject: vec![CredentialSubject {
-                id: Some("did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJwdWJsaWNLZXlNb2RlbDFJZCIsInB1YmxpY0tleUp3ayI6eyJjcnYiOiJzZWNwMjU2azEiLCJrdHkiOiJFQyIsIngiOiJ0WFNLQl9ydWJYUzdzQ2pYcXVwVkpFelRjVzNNc2ptRXZxMVlwWG45NlpnIiwieSI6ImRPaWNYcWJqRnhvR0otSzAtR0oxa0hZSnFpY19EX09NdVV3a1E3T2w2bmsifSwicHVycG9zZXMiOlsiYXV0aGVudGljYXRpb24iLCJrZXlBZ3JlZW1lbnQiXSwidHlwZSI6IkVjZHNhU2VjcDI1NmsxVmVyaWZpY2F0aW9uS2V5MjAxOSJ9XSwic2VydmljZXMiOlt7ImlkIjoic2VydmljZTFJZCIsInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly93d3cuc2VydmljZTEuY29tIiwidHlwZSI6InNlcnZpY2UxVHlwZSJ9XX19XSwidXBkYXRlQ29tbWl0bWVudCI6IkVpREtJa3dxTzY5SVBHM3BPbEhrZGI4Nm5ZdDBhTnhTSFp1MnItYmhFem5qZEEifSwic3VmZml4RGF0YSI6eyJkZWx0YUhhc2giOiJFaUNmRFdSbllsY0Q5RUdBM2RfNVoxQUh1LWlZcU1iSjluZmlxZHo1UzhWRGJnIiwicmVjb3ZlcnlDb21taXRtZW50IjoiRWlCZk9aZE10VTZPQnc4UGs4NzlRdFotMkotOUZiYmpTWnlvYUFfYnFENHpoQSJ9fQ".to_string()),
-                claims: HashMap::from([("claim1".to_string(), serde_json::json!("claim"))]),
+                id: Some(String::from("did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJwdWJsaWNLZXlNb2RlbDFJZCIsInB1YmxpY0tleUp3ayI6eyJjcnYiOiJzZWNwMjU2azEiLCJrdHkiOiJFQyIsIngiOiJ0WFNLQl9ydWJYUzdzQ2pYcXVwVkpFelRjVzNNc2ptRXZxMVlwWG45NlpnIiwieSI6ImRPaWNYcWJqRnhvR0otSzAtR0oxa0hZSnFpY19EX09NdVV3a1E3T2w2bmsifSwicHVycG9zZXMiOlsiYXV0aGVudGljYXRpb24iLCJrZXlBZ3JlZW1lbnQiXSwidHlwZSI6IkVjZHNhU2VjcDI1NmsxVmVyaWZpY2F0aW9uS2V5MjAxOSJ9XSwic2VydmljZXMiOlt7ImlkIjoic2VydmljZTFJZCIsInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly93d3cuc2VydmljZTEuY29tIiwidHlwZSI6InNlcnZpY2UxVHlwZSJ9XX19XSwidXBkYXRlQ29tbWl0bWVudCI6IkVpREtJa3dxTzY5SVBHM3BPbEhrZGI4Nm5ZdDBhTnhTSFp1MnItYmhFem5qZEEifSwic3VmZml4RGF0YSI6eyJkZWx0YUhhc2giOiJFaUNmRFdSbllsY0Q5RUdBM2RfNVoxQUh1LWlZcU1iSjluZmlxZHo1UzhWRGJnIiwicmVjb3ZlcnlDb21taXRtZW50IjoiRWlCZk9aZE10VTZPQnc4UGs4NzlRdFotMkotOUZiYmpTWnlvYUFfYnFENHpoQSJ9fQ")),
+                claims: HashMap::from([(String::from("claim1"), serde_json::json!("claim"))]),
             }],
             proof: Some(vec![Proof{
-                type_:"Ed25519Signature2020".to_string(),
-                cryptosuite: Some("EcdsaSecp256k1VerificationKey2019".to_string()),
-                proof_purpose: "assertionMethod".to_string(),
-                verification_method:"did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJwdWJsaWNLZXlNb2RlbDFJZCIsInB1YmxpY0tleUp3ayI6eyJjcnYiOiJzZWNwMjU2azEiLCJrdHkiOiJFQyIsIngiOiJ0WFNLQl9ydWJYUzdzQ2pYcXVwVkpFelRjVzNNc2ptRXZxMVlwWG45NlpnIiwieSI6ImRPaWNYcWJqRnhvR0otSzAtR0oxa0hZSnFpY19EX09NdVV3a1E3T2w2bmsifSwicHVycG9zZXMiOlsiYXV0aGVudGljYXRpb24iLCJrZXlBZ3JlZW1lbnQiXSwidHlwZSI6IkVjZHNhU2VjcDI1NmsxVmVyaWZpY2F0aW9uS2V5MjAxOSJ9XSwic2VydmljZXMiOlt7ImlkIjoic2VydmljZTFJZCIsInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly93d3cuc2VydmljZTEuY29tIiwidHlwZSI6InNlcnZpY2UxVHlwZSJ9XX19XSwidXBkYXRlQ29tbWl0bWVudCI6IkVpREtJa3dxTzY5SVBHM3BPbEhrZGI4Nm5ZdDBhTnhTSFp1MnItYmhFem5qZEEifSwic3VmZml4RGF0YSI6eyJkZWx0YUhhc2giOiJFaUNmRFdSbllsY0Q5RUdBM2RfNVoxQUh1LWlZcU1iSjluZmlxZHo1UzhWRGJnIiwicmVjb3ZlcnlDb21taXRtZW50IjoiRWlCZk9aZE10VTZPQnc4UGs4NzlRdFotMkotOUZiYmpTWnlvYUFfYnFENHpoQSJ9fQ#publicKeyModel1Id".to_string(),
+                type_:String::from("Ed25519Signature2020"),
+                cryptosuite: Some(String::from("EcdsaSecp256k1VerificationKey2019")),
+                proof_purpose: String::from("assertionMethod"),
+                verification_method:String::from("did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJwdWJsaWNLZXlNb2RlbDFJZCIsInB1YmxpY0tleUp3ayI6eyJjcnYiOiJzZWNwMjU2azEiLCJrdHkiOiJFQyIsIngiOiJ0WFNLQl9ydWJYUzdzQ2pYcXVwVkpFelRjVzNNc2ptRXZxMVlwWG45NlpnIiwieSI6ImRPaWNYcWJqRnhvR0otSzAtR0oxa0hZSnFpY19EX09NdVV3a1E3T2w2bmsifSwicHVycG9zZXMiOlsiYXV0aGVudGljYXRpb24iLCJrZXlBZ3JlZW1lbnQiXSwidHlwZSI6IkVjZHNhU2VjcDI1NmsxVmVyaWZpY2F0aW9uS2V5MjAxOSJ9XSwic2VydmljZXMiOlt7ImlkIjoic2VydmljZTFJZCIsInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly93d3cuc2VydmljZTEuY29tIiwidHlwZSI6InNlcnZpY2UxVHlwZSJ9XX19XSwidXBkYXRlQ29tbWl0bWVudCI6IkVpREtJa3dxTzY5SVBHM3BPbEhrZGI4Nm5ZdDBhTnhTSFp1MnItYmhFem5qZEEifSwic3VmZml4RGF0YSI6eyJkZWx0YUhhc2giOiJFaUNmRFdSbllsY0Q5RUdBM2RfNVoxQUh1LWlZcU1iSjluZmlxZHo1UzhWRGJnIiwicmVjb3ZlcnlDb21taXRtZW50IjoiRWlCZk9aZE10VTZPQnc4UGs4NzlRdFotMkotOUZiYmpTWnlvYUFfYnFENHpoQSJ9fQ#publicKeyModel1Id"),
                 ..Default::default()
             }]),
 
@@ -558,8 +558,8 @@ impl VcBuilder {
         let mut builder: Self = VcBuilder::default();
 
         // set some sensibile defaults
-        builder.vc.context.push("https://www.w3.org/2018/credentials/v1".to_string());
-        builder.vc.type_.push("VerifiableCredential".to_string());
+        builder.vc.context.push(String::from("https://www.w3.org/2018/credentials/v1"));
+        builder.vc.type_.push(String::from("VerifiableCredential"));
         builder.vc.issuance_date = chrono::Utc::now(); //.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
 
         builder
@@ -828,8 +828,8 @@ mod tests {
             serde_json::from_value(vc_json).expect("should deserialize");
         assert_eq!(vc_de.issuer, vc.issuer);
         vc.issuer.extra = Some(HashMap::from([(
-            "name".to_string(),
-            Value::String("Example University".to_string()),
+            String::from("name"),
+            Value::String(String::from("Example University")),
         )]));
 
         // serialize
@@ -848,14 +848,14 @@ mod tests {
 
     fn build_vc() -> Result<VerifiableCredential> {
         let mut subj = CredentialSubject::default();
-        subj.id = Some("did:example:ebfeb1f712ebc6f1c276e12ec21".to_string());
-        subj.claims.insert("employeeID".to_string(), json!("1234567890"));
+        subj.id = Some(String::from("did:example:ebfeb1f712ebc6f1c276e12ec21"));
+        subj.claims.insert(String::from("employeeID"), json!("1234567890"));
 
         VerifiableCredential::builder()
-            .add_context("https://www.w3.org/2018/credentials/examples/v1".to_string())
-            .id("https://example.com/credentials/3732".to_string())
-            .add_type("EmployeeIDCredential".to_string())
-            .issuer("https://example.com/issuers/14".to_string())
+            .add_context(String::from("https://www.w3.org/2018/credentials/examples/v1"))
+            .id(String::from("https://example.com/credentials/3732"))
+            .add_type(String::from("EmployeeIDCredential"))
+            .issuer(String::from("https://example.com/issuers/14"))
             .add_subject(subj)
             .build()
     }

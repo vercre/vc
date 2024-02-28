@@ -269,7 +269,7 @@ mod tests {
         type Response = TestResponse;
 
         fn callback_id(&self) -> Option<String> {
-            Some("callback_id".to_string())
+            Some(String::from("callback_id"))
         }
 
         async fn process(

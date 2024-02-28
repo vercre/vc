@@ -105,7 +105,7 @@ impl Model {
         for (cfg_id, cred_cfg) in &mut self.offered {
             // find supported credential in metadata
             let Some(found) = credential_configurations_supported.get(cfg_id) else {
-                self.status = Status::Failed("Unsupported credential type".to_string());
+                self.status = Status::Failed(String::from("Unsupported credential type"));
                 return Err(anyhow!("Unsupported credential type"));
             };
             *cred_cfg = found.clone();
@@ -156,7 +156,7 @@ impl Model {
         let req = TokenRequest {
             credential_issuer: self.offer.credential_issuer.clone(),
             client_id: CLIENT_ID.to_owned(),
-            grant_type: "urn:ietf:params:oauth:grant-type:pre-authorized_code".to_string(),
+            grant_type: String::from("urn:ietf:params:oauth:grant-type:pre-authorized_code"),
             pre_authorized_code: Some(preauth.pre_authorized_code.clone()),
             user_code: self.pin.clone(),
 
@@ -189,7 +189,7 @@ impl Model {
 
         Jwt {
             header: jwt::Header {
-                typ: "vercre-vci-proof+jwt".to_string(),
+                typ: String::from("vercre-vci-proof+jwt"),
                 alg,
                 kid,
             },

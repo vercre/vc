@@ -97,9 +97,9 @@ where
             let ctx = self.context.clone();
 
             let Ok(ser) = serde_json::to_vec(&credential) else {
-                return ctx.update_app(make_event(Err(Error::InvalidRequest(
-                    "error serializing credential".to_string(),
-                ))));
+                return ctx.update_app(make_event(Err(Error::InvalidRequest(String::from(
+                    "error serializing credential",
+                )))));
             };
 
             async move {
@@ -111,9 +111,9 @@ where
                         ctx.update_app(make_event(Err(Error::InvalidRequest(err))));
                     }
                     StoreResponse::List(_) => {
-                        ctx.update_app(make_event(Err(Error::InvalidRequest(
-                            "unexpected response from store".to_string(),
-                        ))));
+                        ctx.update_app(make_event(Err(Error::InvalidRequest(String::from(
+                            "unexpected response from store",
+                        )))));
                     }
                 }
             }
@@ -171,9 +171,9 @@ where
                     }
                     // we should never get here
                     StoreResponse::Ok => {
-                        ctx.update_app(make_event(Err(Error::InvalidRequest(
-                            "unexpected response from store".to_string(),
-                        ))));
+                        ctx.update_app(make_event(Err(Error::InvalidRequest(String::from(
+                            "unexpected response from store",
+                        )))));
                     }
                 }
             }
@@ -198,9 +198,9 @@ where
                         ctx.update_app(make_event(Err(Error::InvalidRequest(err))));
                     }
                     StoreResponse::List(_) => {
-                        ctx.update_app(make_event(Err(Error::InvalidRequest(
-                            "unexpected response from store".to_string(),
-                        ))));
+                        ctx.update_app(make_event(Err(Error::InvalidRequest(String::from(
+                            "unexpected response from store",
+                        )))));
                     }
                 }
             }

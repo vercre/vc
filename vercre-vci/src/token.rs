@@ -220,7 +220,7 @@ mod tests {
         let provider = Provider::new();
 
         // set up state
-        let credentials = vec!["EmployeeID_JWT".to_string()];
+        let credentials = vec![String::from("EmployeeID_JWT")];
 
         let mut state = State::builder()
             .credential_issuer(ISSUER.to_string())
@@ -233,7 +233,7 @@ mod tests {
         let pre_auth_code = "ABCDEF";
 
         state.auth = Some(AuthState {
-            user_code: Some("1234".to_string()),
+            user_code: Some(String::from("1234")),
             ..Default::default()
         });
 
@@ -278,7 +278,7 @@ mod tests {
         let provider = Provider::new();
 
         // set up state
-        let credentials = vec!["EmployeeID_JWT".to_string()];
+        let credentials = vec![String::from("EmployeeID_JWT")];
 
         let mut state = State::builder()
             .credential_issuer(ISSUER.to_string())
@@ -294,24 +294,24 @@ mod tests {
         let verifier_hash = Sha256::digest(verifier);
 
         state.auth = Some(AuthState {
-            redirect_uri: Some("https://example.com".to_string()),
+            redirect_uri: Some(String::from("https://example.com")),
             code_challenge: Some(Base64UrlUnpadded::encode_string(&verifier_hash)),
-            code_challenge_method: Some("S256".to_string()),
+            code_challenge_method: Some(String::from("S256")),
             authorization_details: Some(vec![TokenAuthorizationDetail {
                 authorization_detail: AuthorizationDetail {
-                    type_: "openid_credential".to_string(),
-                    format: Some("jwt_vc_json".to_string()),
+                    type_: String::from("openid_credential"),
+                    format: Some(String::from("jwt_vc_json")),
                     credential_definition: Some(CredentialDefinition {
                         type_: Some(vec![
-                            "VerifiableCredential".to_string(),
-                            "EmployeeIDCredential".to_string(),
+                            String::from("VerifiableCredential"),
+                            String::from("EmployeeIDCredential"),
                         ]),
                         credential_subject: None,
                         ..Default::default()
                     }),
                     ..Default::default()
                 },
-                credential_identifiers: Some(vec!["EmployeeID_JWT".to_string()]),
+                credential_identifiers: Some(vec![String::from("EmployeeID_JWT")]),
             }]),
             ..Default::default()
         });

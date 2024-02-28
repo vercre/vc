@@ -238,7 +238,7 @@ where
             // TODO: add response to state using `response_code` so Wallet can fetch full response
             // TODO: align redirct_uri to spec
             // redirect_uri: Some(format!("http://localhost:3000/cb#response_code={}", "1234")),
-            redirect_uri: Some("http://localhost:3000/cb".to_string()),
+            redirect_uri: Some(String::from("http://localhost:3000/cb")),
             response_code: None,
         })
     }
@@ -263,21 +263,21 @@ mod tests {
         let provider = Provider::new();
         let pres_def = serde_json::from_value::<PresentationDefinition>(DEFINITION.to_owned())
             .expect("definition to deserialize");
-        let state_key = "1234ABCD".to_string();
-        let nonce = "ABCDEFG".to_string();
+        let state_key = String::from("1234ABCD");
+        let nonce = String::from("ABCDEFG");
 
         let req_obj = RequestObject {
-            response_type: "vp_token".to_string(),
+            response_type: String::from("vp_token"),
             client_id: CLIENT_ID.to_string(),
             redirect_uri: None,
             scope: None,
             state: Some(state_key.clone()),
             nonce: nonce.clone(),
-            response_mode: Some("direct_post.jwt".to_string()),
+            response_mode: Some(String::from("direct_post.jwt")),
             response_uri: Some(format!("{CLIENT_ID}/direct_post.jwt")),
             presentation_definition: Some(pres_def.clone()),
             presentation_definition_uri: None,
-            client_id_scheme: Some("did".to_string()),
+            client_id_scheme: Some(String::from("did")),
             client_metadata: None,
             client_metadata_uri: None,
         };

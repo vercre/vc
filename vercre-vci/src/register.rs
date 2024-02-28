@@ -111,7 +111,7 @@ mod tests {
 
         state.token = Some(TokenState {
             access_token: access_token.to_string(),
-            token_type: "Bearer".to_string(),
+            token_type: String::from("Bearer"),
             ..Default::default()
         });
 

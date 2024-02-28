@@ -129,7 +129,7 @@ impl crux_core::App for App {
 
                 // request contains `request_uri` — fetch `RequestObject` from Verifier
                 let Ok(request_uri) = urlencoding::decode(&request) else {
-                    self.update(Event::Fail("Issue decoding offer".to_string()), model, caps);
+                    self.update(Event::Fail(String::from("Issue decoding offer")), model, caps);
                     return;
                 };
                 caps.http.get(request_uri).expect_json().send(Event::Fetched);
@@ -155,7 +155,7 @@ impl crux_core::App for App {
                 log::info!("Proof");
                 // create and sign vp_token
                 let Ok(vp_token) = model.vp_token(&alg, kid) else {
-                    let msg = "Issue creating vp_token".to_string();
+                    let msg = String::from("Issue creating vp_token");
                     self.update(Event::Fail(msg), model, caps);
                     return;
                 };
@@ -168,7 +168,7 @@ impl crux_core::App for App {
                 // TODO: cater more than 1 vp_token in response
 
                 let Ok((response_uri, form)) = model.submission_request(signed) else {
-                    let msg = "Issue creating response body".to_string();
+                    let msg = String::from("Issue creating response body");
                     self.update(Event::Fail(msg), model, caps);
                     return;
                 };
@@ -298,7 +298,7 @@ mod tests {
 
         let jwt = Jwt {
             header: jwt::Header {
-                typ: "JWT".to_string(),
+                typ: String::from("JWT"),
                 alg: wallet::alg(),
                 kid: wallet::kid(),
             },

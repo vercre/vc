@@ -185,7 +185,7 @@ impl crux_core::App for App {
                 log::info!("GetToken");
                 // generate access token request
                 let Ok(req) = model.token_request() else {
-                    let msg = "Issue building token request".to_string();
+                    let msg = String::from("Issue building token request");
                     self.update(Event::Fail(msg), model, caps);
                     return;
                 };
@@ -212,7 +212,7 @@ impl crux_core::App for App {
                 // request each offered credential
                 for cfg_id in model.offered.clone().keys() {
                     let Ok(request) = model.credential_request(cfg_id, &signed_jwt) else {
-                        let msg = "Issue building credential request".to_string();
+                        let msg = String::from("Issue building credential request");
                         self.update(Event::Fail(msg), model, caps);
                         return;
                     };
@@ -228,7 +228,7 @@ impl crux_core::App for App {
             Event::Credential(Ok(response)) => {
                 log::info!("Credential: {response:?}");
                 let Ok(credential) = model.credential_response(response) else {
-                    let msg = "Issue processing credential response".to_string();
+                    let msg = String::from("Issue processing credential response");
                     self.update(Event::Fail(msg), model, caps);
                     return;
                 };
@@ -246,7 +246,7 @@ impl crux_core::App for App {
             Event::Logo(mut credential, Ok(response)) => {
                 log::info!("Logo: {response:?}");
                 let Some(logo) = model::logo_response(&response) else {
-                    let msg = "Issue processing logo response".to_string();
+                    let msg = String::from("Issue processing logo response");
                     self.update(Event::Fail(msg), model, caps);
                     return;
                 };
@@ -431,10 +431,10 @@ mod tests {
         let offer = OFFER.to_string();
         model.new_offer(&offer).expect("Offer to be processed");
 
-        let mut update = app.update(Event::Pin("123456".to_string()), &mut model);
+        let mut update = app.update(Event::Pin(String::from("123456")), &mut model);
 
         // check the model was updated correctly
-        assert_eq!(model.pin, Some("123456".to_string()));
+        assert_eq!(model.pin, Some(String::from("123456")));
         assert_eq!(model.status, Status::Accepted);
 
         // check that the app emitted an HTTP request
@@ -486,7 +486,7 @@ mod tests {
             serde_json::from_value(METADATA.to_owned()).expect("should deserialize");
         let http_resp = ResponseBuilder::ok().body(md.clone()).build();
         model.metadata_response(http_resp).expect("Metadata to be processed");
-        let signed_jwt = "a-signed-jwt.signature".to_string();
+        let signed_jwt = String::from("a-signed-jwt.signature");
 
         let mut update = app.update(Event::Signed(signer::Result::Ok(signed_jwt)), &mut model);
 

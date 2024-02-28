@@ -19,7 +19,7 @@ where
         }
         SignerRequest::Verification => {
             // FIXME: implement
-            let alg = "EdDSA".to_string(); // "ES256K".to_string();
+            let alg = String::from("EdDSA"); // String::from("ES256K");
             let Ok(kid) = stronghold.verifiction() else {
                 unimplemented!("error")
             };
@@ -174,7 +174,7 @@ mod test {
         // set up store
         let app = create_app(mock_builder());
 
-        let msg = "hello world".to_string();
+        let msg = String::from("hello world");
         let req = SignerRequest::Sign(msg.into_bytes());
         let resp = request(&req, app.app_handle()).await.expect("should be ok");
 

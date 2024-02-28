@@ -93,37 +93,37 @@ struct ClientStore {
 impl ClientStore {
     fn new() -> Self {
         let client_meta = types::Client {
-            client_id: "http://credibil.io".to_string(),
-            redirect_uris: Some(vec!["http://localhost:3000/callback".to_string()]),
-            grant_types: Some(vec!["authorization_code".to_string()]),
-            response_types: Some(vec!["vp_token".to_string(), "id_token vp_token".to_string()]),
+            client_id: String::from("http://credibil.io"),
+            redirect_uris: Some(vec![String::from("http://localhost:3000/callback")]),
+            grant_types: Some(vec![String::from("authorization_code")]),
+            response_types: Some(vec![String::from("vp_token"), String::from("id_token vp_token")]),
             vp_formats: Some(HashMap::from([
                 (
-                    "jwt_vc_json".to_string(),
+                    String::from("jwt_vc_json"),
                     VpFormat {
-                        alg: Some(vec!["ES256K".to_string()]),
-                        proof_type: Some(vec!["JsonWebSignature2020".to_string()]),
+                        alg: Some(vec![String::from("ES256K")]),
+                        proof_type: Some(vec![String::from("JsonWebSignature2020")]),
                     },
                 ),
                 (
-                    "jwt_vp_json".to_string(),
+                    String::from("jwt_vp_json"),
                     VpFormat {
-                        alg: Some(vec!["ES256K".to_string()]),
-                        proof_type: Some(vec!["JsonWebSignature2020".to_string()]),
+                        alg: Some(vec![String::from("ES256K")]),
+                        proof_type: Some(vec![String::from("JsonWebSignature2020")]),
                     },
                 ),
                 // (
-                //     "ldp_vc".to_string(),
+                //     String::from("ldp_vc"),
                 //     VpFormat {
-                //         alg: Some(vec!["ES256K".to_string()]),
-                //         proof_type: Some(vec!["Ed25519Signature2018".to_string()]),
+                //         alg: Some(vec![String::from("ES256K")]),
+                //         proof_type: Some(vec![String::from("Ed25519Signature2018")]),
                 //     },
                 // ),
                 // (
-                //     "ldp_vp".to_string(),
+                //     String::from("ldp_vp"),
                 //     VpFormat {
-                //         alg: Some(vec!["ES256K".to_string()]),
-                //         proof_type: Some(vec!["Ed25519Signature2018".to_string()]),
+                //         alg: Some(vec![String::from("ES256K")]),
+                //         proof_type: Some(vec![String::from("Ed25519Signature2018")]),
                 //     },
                 // ),
             ])),
@@ -131,7 +131,7 @@ impl ClientStore {
         };
 
         let mut local_client = client_meta.clone();
-        local_client.client_id = "http://localhost:8080".to_string();
+        local_client.client_id = String::from("http://localhost:8080");
 
         let clients = HashMap::from([
             (client_meta.client_id.clone(), client_meta),

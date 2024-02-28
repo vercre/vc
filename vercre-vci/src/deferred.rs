@@ -126,14 +126,14 @@ mod tests {
 
         let provider = Provider::new();
         let access_token = "tkn-ABCDEF";
-        let c_nonce = "1234ABCD".to_string();
+        let c_nonce = String::from("1234ABCD");
         let transaction_id = "txn-ABCDEF";
-        let credentials = vec!["EmployeeID_JWT".to_string()];
+        let credentials = vec![String::from("EmployeeID_JWT")];
 
         // create CredentialRequest to 'send' to the app
         let jwt_enc = Jwt {
             header: jwt::Header {
-                typ: "vercre-vci-proof+jwt".to_string(),
+                typ: String::from("vercre-vci-proof+jwt"),
                 alg: wallet::alg(),
                 kid: wallet::kid(),
             },
@@ -180,7 +180,7 @@ mod tests {
         // state entry 1: token state keyed by access_token
         state.token = Some(TokenState {
             access_token: access_token.to_string(),
-            token_type: "Bearer".to_string(),
+            token_type: String::from("Bearer"),
             c_nonce,
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             ..Default::default()

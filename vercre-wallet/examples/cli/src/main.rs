@@ -29,7 +29,7 @@ enum Command {
 impl From<Command> for Event {
     fn from(cmd: Command) -> Self {
         match cmd {
-            // Command::Pin => Event::Pin("1234".to_string()),
+            // Command::Pin => Event::Pin(String::from("1234")),
             Command::AcceptOffer => Event::Accept,
             // Command::Get => Event::Get,
             // Command::Inc => Event::Increment,

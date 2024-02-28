@@ -23,7 +23,7 @@ fn request(b: &mut Bencher) {
     });
 
     let mut request = serde_json::from_value::<InvokeRequest>(body).expect("should deserialize");
-    request.client_id = "http://credibil.io".to_string();
+    request.client_id = String::from("http://credibil.io");
 
     // run benchmark test
     b.iter(|| block_on(endpoint.invoke(&request)));

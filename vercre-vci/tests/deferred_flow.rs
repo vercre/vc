@@ -91,7 +91,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     // create CredentialRequest to 'send' to the app
     let jwt_enc = Jwt {
         header: jwt::Header {
-            typ: "vercre-vci-proof+jwt".to_string(),
+            typ: String::from("vercre-vci-proof+jwt"),
             alg: wallet::alg(),
             kid: wallet::kid(),
         },

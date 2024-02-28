@@ -127,8 +127,8 @@ impl Model {
 
         // presentation with 2 VCs: one as JSON, one as base64url encoded JWT
         let mut builder = VerifiablePresentation::builder()
-            .add_context("https://www.w3.org/2018/credentials/examples/v1".to_string())
-            .add_type("EmployeeIDPresentation".to_string())
+            .add_context(String::from("https://www.w3.org/2018/credentials/examples/v1"))
+            .add_type(String::from("EmployeeIDPresentation"))
             .holder(holder_did.to_string());
 
         for c in credentials {
@@ -179,16 +179,16 @@ impl Model {
 
             let dm = DescriptorMap {
                 id: in_desc.id.clone(),
-                path: "$".to_string(),
+                path: String::from("$"),
                 path_nested: PathNested {
-                    format: "jwt_vc_json".to_string(),
+                    format: String::from("jwt_vc_json"),
                     // URGENT: index matched VCs not input descriptors!!
                     // path: format!("$.verifiableCredential[{n}]"),
-                    path: "$.verifiableCredential[0]".to_string(),
+                    path: String::from("$.verifiableCredential[0]"),
                 },
 
                 // TODO: set format dynamically
-                format: "jwt_vc_json".to_string(),
+                format: String::from("jwt_vc_json"),
             };
             desc_map.push(dm);
         }
@@ -212,11 +212,11 @@ impl Model {
         // TODO: cater for unsigned vp_tokens (JSON objects) in resposne
         // TODO: cater more than 1 vp_token in response
         let Ok(vp_token) = serde_json::to_value(signed) else {
-            return Err(anyhow!("Issue deserializing vp_token".to_string()));
+            return Err(anyhow!(String::from("Issue deserializing vp_token")));
         };
 
         let Some(request) = &self.request else {
-            return Err(anyhow!("Missing request".to_string()));
+            return Err(anyhow!(String::from("Missing request")));
         };
 
         let req = ResponseRequest {

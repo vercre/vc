@@ -102,7 +102,7 @@ pub(crate) struct TokenState {
     pub(crate) access_token: String,
 
     /// The type of token issued (should be "Bearer")
-    #[builder(setter(into), default = "\"Bearer\".to_string()")]
+    #[builder(setter(into), default = "String::from(\"Bearer\")")]
     pub(crate) token_type: String,
 
     /// The refresh token, issued

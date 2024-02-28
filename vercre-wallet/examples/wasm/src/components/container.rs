@@ -9,7 +9,7 @@ pub struct ContainerProps {
 
 fn container_style(width: u16) -> String {
     if width == 0 {
-        return "width: 100%;".to_string();
+        return String::from("width: 100%;");
     }
     format!("width: 100%; max-width: {width}px;")
 }

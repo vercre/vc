@@ -425,7 +425,7 @@ mod tests {
         let provider = Provider::new();
         let access_token = "ABCDEF";
         let c_nonce = "1234ABCD";
-        let credentials = vec!["EmployeeID_JWT".to_string()];
+        let credentials = vec![String::from("EmployeeID_JWT")];
 
         // set up state
         let mut state = State::builder()
@@ -438,7 +438,7 @@ mod tests {
 
         state.token = Some(TokenState {
             access_token: access_token.to_string(),
-            token_type: "Bearer".to_string(),
+            token_type: String::from("Bearer"),
             c_nonce: c_nonce.to_string(),
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             ..Default::default()
@@ -451,7 +451,7 @@ mod tests {
         // create BatchCredentialRequest to 'send' to the app
         let jwt_enc = Jwt {
             header: jwt::Header {
-                typ: "vercre-vci-proof+jwt".to_string(),
+                typ: String::from("vercre-vci-proof+jwt"),
                 alg: wallet::alg(),
                 kid: wallet::kid(),
             },
@@ -528,7 +528,7 @@ mod tests {
     //     let provider = Provider::new();
     //     let access_token = "ABCDEF";
     //     let c_nonce = "1234ABCD";
-    //     let identifiers = vec!["EmployeeID_JWT".to_string()];
+    //     let identifiers = vec![String::from("EmployeeID_JWT")];
 
     //     // set up state
     //     let mut state = State::builder()
@@ -540,7 +540,7 @@ mod tests {
 
     //     state.token = Some(TokenState {
     //         access_token: access_token.to_string(),
-    //         token_type: "Bearer".to_string(),
+    //         token_type: String::from("Bearer"),
     //         c_nonce: c_nonce.to_string(),
     //         c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
     //         ..Default::default()
@@ -553,7 +553,7 @@ mod tests {
     //     // create BatchCredentialRequest to 'send' to the app
     //     let jwt_enc = Jwt {
     //         header: jwt::Header {
-    //             typ: "vercre-vci-proof+jwt".to_string(),
+    //             typ: String::from("vercre-vci-proof+jwt"),
     //             alg: wallet::alg(),
     //             kid: wallet::kid(),
     //         },

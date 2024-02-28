@@ -112,14 +112,14 @@ mod tests {
         let nonce = "1234567890";
 
         let req_obj = RequestObject {
-            response_type: "vp_token".to_string(),
+            response_type: String::from("vp_token"),
             client_id: format!("{VERIFIER}/post"),
             state: Some(state_key.to_string()),
             nonce: nonce.to_string(),
-            response_mode: Some("direct_post".to_string()),
+            response_mode: Some(String::from("direct_post")),
             response_uri: Some(format!("{VERIFIER}/post")),
             presentation_definition: None, // Some(pd.clone()),
-            client_id_scheme: Some("redirect_uri".to_string()),
+            client_id_scheme: Some(String::from("redirect_uri")),
             client_metadata: None, // Some(self.client_meta.clone()),
 
             // TODO: populate these

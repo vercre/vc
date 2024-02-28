@@ -155,11 +155,11 @@ where
 
         // 'authorization_code' grant_type allowed (client and server)?
         let client_grant_types = client_meta.grant_types.unwrap_or_default();
-        if !client_grant_types.contains(&"authorization_code".to_string()) {
+        if !client_grant_types.contains(&String::from("authorization_code")) {
             err!(Err::InvalidRequest, "authorization_code grant not supported for client");
         }
         let server_grant_types = server_meta.grant_types_supported.unwrap_or_default();
-        if !server_grant_types.contains(&"authorization_code".to_string()) {
+        if !server_grant_types.contains(&String::from("authorization_code")) {
             err!(Err::InvalidRequest, "authorization_code grant not supported for server");
         }
 

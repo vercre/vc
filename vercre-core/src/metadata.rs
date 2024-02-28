@@ -715,86 +715,86 @@ impl CredentialConfiguration {
     #[must_use]
     pub fn sample() -> Self {
         CredentialConfiguration {
-            format: "jwt_vc_json".to_string(),
-            scope: Some("EmployeeIDCredential".to_string()),
+            format: String::from("jwt_vc_json"),
+            scope: Some(String::from("EmployeeIDCredential")),
             cryptographic_binding_methods_supported: Some(vec![
-                "did:jwk".to_string(),
-                "did:ion".to_string(),
+                String::from("did:jwk"),
+                String::from("did:ion"),
             ]),
             credential_signing_alg_values_supported: Some(vec![
-                "ES256K".to_string(),
-                "EdDSA".to_string(),
+                String::from("ES256K"),
+                String::from("EdDSA"),
             ]),
             proof_types_supported: Some(HashMap::from([(
-                "jwt".to_string(),
+                String::from("jwt"),
                 ProofTypesSupported {
                     proof_signing_alg_values_supported: vec![
-                        "ES256K".to_string(),
-                        "EdDSA".to_string(),
+                        String::from("ES256K"),
+                        String::from("EdDSA"),
                     ],
                 },
             )])),
             display: Some(vec![CredentialDisplay {
-                name: "Employee ID".to_string(),
-                description: Some("Credibil employee ID credential".to_string()),
-                locale: Some("en-NZ".to_string()),
+                name: String::from("Employee ID"),
+                description: Some(String::from("Credibil employee ID credential")),
+                locale: Some(String::from("en-NZ")),
                 logo: Some(Image {
-                    uri: Some(
-                        "https://credibil.github.io/assets/credibil-logo-reversed.png".to_string(),
-                    ),
-                    alt_text: Some("Credibil Logo".to_string()),
+                    uri: Some(String::from(
+                        "https://credibil.github.io/assets/credibil-logo-reversed.png",
+                    )),
+                    alt_text: Some(String::from("Credibil Logo")),
                 }),
-                text_color: Some("#ffffff".to_string()),
-                background_color: Some("#323ed2".to_string()),
+                text_color: Some(String::from("#ffffff")),
+                background_color: Some(String::from("#323ed2")),
                 background_image: Some(Image {
-                    uri: Some(
-                        "https://credibil.github.io/assets/credibil-background.png".to_string(),
-                    ),
-                    alt_text: Some("Credibil Background".to_string()),
+                    uri: Some(String::from(
+                        "https://credibil.github.io/assets/credibil-background.png",
+                    )),
+                    alt_text: Some(String::from("Credibil Background")),
                 }),
             }]),
             credential_definition: CredentialDefinition {
                 context: Some(vec![
-                    "https://www.w3.org/2018/credentials/v1".to_string(),
-                    "https://www.w3.org/2018/credentials/examples/v1".to_string(),
+                    String::from("https://www.w3.org/2018/credentials/v1"),
+                    String::from("https://www.w3.org/2018/credentials/examples/v1"),
                 ]),
                 type_: Some(vec![
-                    "VerifiableCredential".to_string(),
-                    "EmployeeIDCredential".to_string(),
+                    String::from("VerifiableCredential"),
+                    String::from("EmployeeIDCredential"),
                 ]),
                 credential_subject: Some(HashMap::from([
                     (
-                        "email".to_string(),
+                        String::from("email"),
                         Claim {
                             mandatory: Some(true),
-                            value_type: Some("string".to_string()),
+                            value_type: Some(String::from("string")),
                             display: Some(vec![Display {
-                                name: "Email".to_string(),
-                                locale: Some("en-NZ".to_string()),
+                                name: String::from("Email"),
+                                locale: Some(String::from("en-NZ")),
                             }]),
                             claim_nested: None,
                         },
                     ),
                     (
-                        "familyName".to_string(),
+                        String::from("familyName"),
                         Claim {
                             mandatory: Some(true),
-                            value_type: Some("string".to_string()),
+                            value_type: Some(String::from("string")),
                             display: Some(vec![Display {
-                                name: "Family name".to_string(),
-                                locale: Some("en-NZ".to_string()),
+                                name: String::from("Family name"),
+                                locale: Some(String::from("en-NZ")),
                             }]),
                             claim_nested: None,
                         },
                     ),
                     (
-                        "givenName".to_string(),
+                        String::from("givenName"),
                         Claim {
                             mandatory: Some(true),
-                            value_type: Some("string".to_string()),
+                            value_type: Some(String::from("string")),
                             display: Some(vec![Display {
-                                name: "Given name".to_string(),
-                                locale: Some("en-NZ".to_string()),
+                                name: String::from("Given name"),
+                                locale: Some(String::from("en-NZ")),
                             }]),
                             claim_nested: None,
                         },
@@ -814,88 +814,88 @@ impl CredentialConfiguration {
     #[must_use]
     pub fn sample2() -> Self {
         CredentialConfiguration {
-            format: "jwt_vc_json".to_string(),
-            scope: Some("DeveloperCredential".to_string()),
+            format: String::from("jwt_vc_json"),
+            scope: Some(String::from("DeveloperCredential")),
             cryptographic_binding_methods_supported: Some(vec![
-                "did:jwk".to_string(),
-                "did:ion".to_string(),
+                String::from("did:jwk"),
+                String::from("did:ion"),
             ]),
             credential_signing_alg_values_supported: Some(vec![
-                "ES256K".to_string(),
-                "EdDSA".to_string(),
+                String::from("ES256K"),
+                String::from("EdDSA"),
             ]),
             proof_types_supported: Some(HashMap::from([(
-                "jwt".to_string(),
+                String::from("jwt"),
                 ProofTypesSupported {
                     proof_signing_alg_values_supported: vec![
-                        "ES256K".to_string(),
-                        "EdDSA".to_string(),
+                        String::from("ES256K"),
+                        String::from("EdDSA"),
                     ],
                 },
             )])),
             display: Some(vec![CredentialDisplay {
-                name: "Developer".to_string(),
-                description: Some("Propellerhead certified developer credential".to_string()),
-                locale: Some("en-NZ".to_string()),
+                name: String::from("Developer"),
+                description: Some(String::from("Propellerhead certified developer credential")),
+                locale: Some(String::from("en-NZ")),
                 logo: Some(Image {
                     uri: Some(
                         "https://credibil.github.io/assets/propellerhead-logo-reversed.png"
                             .to_string(),
                     ),
-                    alt_text: Some("Propellerhead Logo".to_string()),
+                    alt_text: Some(String::from("Propellerhead Logo")),
                 }),
-                text_color: Some("#ffffff".to_string()),
-                background_color: Some("#010100".to_string()),
+                text_color: Some(String::from("#ffffff")),
+                background_color: Some(String::from("#010100")),
                 background_image: Some(Image {
                     uri: Some(
                         "https://credibil.github.io/assets/propellerhead-background.png"
                             .to_string(),
                     ),
-                    alt_text: Some("Propellerhead Background".to_string()),
+                    alt_text: Some(String::from("Propellerhead Background")),
                 }),
             }]),
             credential_definition: CredentialDefinition {
                 context: Some(vec![
-                    "https://www.w3.org/2018/credentials/v1".to_string(),
-                    "https://www.w3.org/2018/credentials/examples/v1".to_string(),
+                    String::from("https://www.w3.org/2018/credentials/v1"),
+                    String::from("https://www.w3.org/2018/credentials/examples/v1"),
                 ]),
                 type_: Some(vec![
-                    "VerifiableCredential".to_string(),
-                    "DeveloperCredential".to_string(),
+                    String::from("VerifiableCredential"),
+                    String::from("DeveloperCredential"),
                 ]),
                 credential_subject: Some(HashMap::from([
                     (
-                        "proficiency".to_string(),
+                        String::from("proficiency"),
                         Claim {
                             mandatory: Some(true),
-                            value_type: Some("number".to_string()),
+                            value_type: Some(String::from("number")),
                             display: Some(vec![Display {
-                                name: "Proficiency".to_string(),
-                                locale: Some("en-NZ".to_string()),
+                                name: String::from("Proficiency"),
+                                locale: Some(String::from("en-NZ")),
                             }]),
                             claim_nested: None,
                         },
                     ),
                     (
-                        "familyName".to_string(),
+                        String::from("familyName"),
                         Claim {
                             mandatory: Some(true),
-                            value_type: Some("string".to_string()),
+                            value_type: Some(String::from("string")),
                             display: Some(vec![Display {
-                                name: "Family name".to_string(),
-                                locale: Some("en-NZ".to_string()),
+                                name: String::from("Family name"),
+                                locale: Some(String::from("en-NZ")),
                             }]),
                             claim_nested: None,
                         },
                     ),
                     (
-                        "givenName".to_string(),
+                        String::from("givenName"),
                         Claim {
                             mandatory: Some(true),
-                            value_type: Some("string".to_string()),
+                            value_type: Some(String::from("string")),
                             display: Some(vec![Display {
-                                name: "Given name".to_string(),
-                                locale: Some("en-NZ".to_string()),
+                                name: String::from("Given name"),
+                                locale: Some(String::from("en-NZ")),
                             }]),
                             claim_nested: None,
                         },
@@ -912,17 +912,17 @@ impl Server {
     #[must_use]
     pub fn sample() -> Self {
         Self {
-            issuer: "http://credibil.io".to_string(),
-            authorization_endpoint: "/auth".to_string(),
-            token_endpoint: "/token".to_string(),
-            scopes_supported: Some(vec!["openid".to_string()]),
-            response_types_supported: vec!["code".to_string()],
-            response_modes_supported: Some(vec!["query".to_string()]),
+            issuer: String::from("http://credibil.io"),
+            authorization_endpoint: String::from("/auth"),
+            token_endpoint: String::from("/token"),
+            scopes_supported: Some(vec![String::from("openid")]),
+            response_types_supported: vec![String::from("code")],
+            response_modes_supported: Some(vec![String::from("query")]),
             grant_types_supported: Some(vec![
                 AUTH_CODE_GRANT_TYPE.to_string(),
                 PRE_AUTH_GRANT_TYPE.to_string(),
             ]),
-            code_challenge_methods_supported: Some(vec!["S256".to_string()]),
+            code_challenge_methods_supported: Some(vec![String::from("S256")]),
             pre_authorized_grant_anonymous_access_supported: true,
             presentation_definition_uri_supported: false,
             jwks_uri: None,
@@ -943,15 +943,15 @@ impl Server {
             vp_formats_supported: None,
             // vp_formats_supported: Some(HashMap::from([
             //     (
-            //         "jwt_vc_json".to_string(),
+            //         String::from("jwt_vc_json"),
             //         SupportedVpFormat {
-            //             alg_values_supported: Some(vec!["ES256K".to_string(), "EdDSA".to_string()]),
+            //             alg_values_supported: Some(vec![String::from("ES256K"), String::from("EdDSA")]),
             //         },
             //     ),
             //     (
-            //         "jwt_vp_json".to_string(),
+            //         String::from("jwt_vp_json"),
             //         SupportedVpFormat {
-            //             alg_values_supported: Some(vec!["ES256K".to_string(), "EdDSA".to_string()]),
+            //             alg_values_supported: Some(vec![String::from("ES256K"), String::from("EdDSA")]),
             //         },
             //     ),
             // ])),
