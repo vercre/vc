@@ -98,13 +98,13 @@ pub mod token;
 
 use std::fmt::Debug;
 
-pub use vercre_core::provider::{
-    Algorithm, Callback, Client, Holder, Issuer, Server, Signer, StateManager,
+use vercre_core::provider::{
+    Callback, Client, Holder, Issuer, Server, Signer, StateManager,
 };
 // TODO: move tClaims into jwt module
 pub use vercre_core::vci::ProofClaims;
 pub use vercre_core::w3c::vc::VcClaims;
-pub use vercre_core::{callback, holder, jwt};
+pub use vercre_core::{callback, holder, jwt, provider};
 
 /// Endpoint is used to surface the public Verifiable Presentation endpoints to
 /// clients.
