@@ -81,10 +81,10 @@
 //! }
 //! ```
 //!
-//! [OpenID for Verifiable Credential Issuance]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
-//! [OpenID4VCI]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
-//! [OpenID Connect]: https://openid.net/specs/openid-connect-core-1_0.html
-//! [RFC6749]: https://www.rfc-editor.org/rfc/rfc6749.html
+//! [OpenID for Verifiable Credential Issuance]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
+//! [OpenID4VCI]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
+//! [OpenID Connect]: (https://openid.net/specs/openid-connect-core-1_0.html)
+//! [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
 
 pub mod authorize;
 pub mod batch;
@@ -98,9 +98,7 @@ pub mod token;
 
 use std::fmt::Debug;
 
-use vercre_core::provider::{
-    Callback, Client, Holder, Issuer, Server, Signer, StateManager,
-};
+use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
 // TODO: move tClaims into jwt module
 pub use vercre_core::vci::ProofClaims;
 pub use vercre_core::w3c::vc::VcClaims;

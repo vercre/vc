@@ -153,9 +153,9 @@
 //! }
 //! ```
 //!
-//! [OpenID for Verifiable Presentations]: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
-//! [OpenID4VP]: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
-//! [JWT VC Presentation Profile]: https://identity.foundation/jwt-vc-presentation-profile
+//! [OpenID for Verifiable Presentations]: (https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
+//! [OpenID4VP]: (https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
+//! [JWT VC Presentation Profile]: (https://identity.foundation/jwt-vc-presentation-profile)
 
 pub mod invoke;
 pub mod metadata;

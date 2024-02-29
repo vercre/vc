@@ -59,8 +59,8 @@
 // ! ]
 //! ```
 //! 
-//! [RFC6749]: https://www.rfc-editor.org/rfc/rfc6749.html
-//! [RFC9396]: https://www.rfc-editor.org/rfc/rfc9396
+//! [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
+//! [RFC9396]: (https://www.rfc-editor.org/rfc/rfc9396)
 
 // LATER: add support for "ldp_vc" format
 // LATER: add support for "jwt_vc_json-ld" format
@@ -317,7 +317,7 @@ where
         &mut self, authorization_details: &[AuthorizationDetail],
     ) -> Result<()> {
         'verify_details: for auth_det in authorization_details {
-            // we only support `openid_credential` authorization detail requests
+            // we only support "`openid_credential`" authorization detail requests
             if auth_det.type_ != "openid_credential" {
                 err!(Err::InvalidRequest, "invalid authorization_details type");
             }

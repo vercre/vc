@@ -1,11 +1,10 @@
 //! # W3C Verifiable Credentials Data Model
 //!
-//! An implementation of W3C Verifiable Credentials Data Model v1.1.
+//! An implementation of W3C [Verifiable Credentials Data Model v1.1].
 //!
-//! See [specification] and[implementation guidelines].
+//! See [implementation guidelines].
 //!
-//! [Verifiable Credentials Data Model v1.1]: https://www.w3.org/TR/vc-data-model
-//! [specification]: (https://www.w3.org/TR/vc-data-model)
+//! [Verifiable Credentials Data Model v1.1]: (https://www.w3.org/TR/vc-data-model)
 //! [implementation guidelines]: (https://w3c.github.io/vc-imp-guide)
 
 use std::collections::HashMap;

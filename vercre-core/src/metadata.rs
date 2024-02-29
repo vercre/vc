@@ -105,15 +105,19 @@ pub struct Client {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub policy_uri: Option<String>,
 
-    /// URL referencing the client's JSON Web Key (JWK) Set [RFC7517](https://www.rfc-editor.org/rfc/rfc7517) document,
+    /// URL referencing the client's JSON Web Key (JWK) Set [RFC7517] document,
     /// containing the client's public keys. MUST NOT both be set if the`jwks`
     /// parameter is set.
+    ///
+    /// [RFC7517]: (https://www.rfc-editor.org/rfc/rfc7517)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub jwks_uri: Option<String>,
 
-    /// Client's JSON Web Key Set [RFC7517](https://www.rfc-editor.org/rfc/rfc7517), containing the client's public
-    /// keys. MUST be a JSON object containing a valid JWK Set. MUST NOT be
-    /// set if the `jwks_uri` parameter is set.
+    /// Client's JSON Web Key Set [RFC7517], containing the client's public keys.
+    /// MUST be a JSON object containing a valid JWK Set. MUST NOT be set if the
+    /// `jwks_uri` parameter is set.
+    ///
+    /// [RFC7517]: (https://www.rfc-editor.org/rfc/rfc7517)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub jwks: Option<String>,
 
@@ -271,15 +275,19 @@ pub struct Issuer {
 /// top of TLS.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredentialResponseEncryption {
-    /// JWE [RFC7516](https://www.rfc-editor.org/rfc/rfc7516) alg algorithm
-    /// [RFC7518](https://www.rfc-editor.org/rfc/rfc7518) REQUIRED for encrypting
-    /// Credential Responses.
+    /// JWE [RFC7516] alg algorithm [RFC7518] REQUIRED for encrypting Credential
+    /// Responses.
+    ///
+    /// [RFC7516]: (https://www.rfc-editor.org/rfc/rfc7516)
+    /// [RFC7518]: (https://www.rfc-editor.org/rfc/rfc7518)
     pub alg_values_supported: Vec<String>,
 
-    /// JWE [RFC7516](https://www.rfc-editor.org/rfc/rfc7516) enc algorithm
-    /// [RFC7518](https://www.rfc-editor.org/rfc/rfc7518) REQUIRED for encrypting
-    /// Credential Responses. If `credential_response_encryption_alg` is specified,
-    /// the default for this value is A256GCM.
+    /// JWE [RFC7516] enc algorithm [RFC7518] REQUIRED for encrypting Credential
+    /// Responses. If `credential_response_encryption_alg` is specified, the default
+    /// for this value is "`A256GCM`".
+    ///
+    /// [RFC7516]: (https://www.rfc-editor.org/rfc/rfc7516)
+    /// [RFC7518]: (https://www.rfc-editor.org/rfc/rfc7518)
     pub enc_values_supported: Vec<String>,
 
     /// Specifies whether the Credential Issuer requires the additional encryption
@@ -297,7 +305,9 @@ pub struct Display {
     /// specified locale. If no locale is set, then this value is the default value.
     pub name: String,
 
-    /// A BCP47 [RFC5646](https://www.rfc-editor.org/rfc/rfc5646) language tag identifying the display language.
+    /// A BCP47 [RFC5646] language tag identifying the display language.
+    ///
+    /// [RFC5646]: (https://www.rfc-editor.org/rfc/rfc5646)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub locale: Option<String>,
 }
@@ -311,9 +321,10 @@ pub struct CredentialConfiguration {
     /// claims the credential MAY contain, as well as information on how to
     /// display the credential.
     ///
-    /// See [Appendix A of the OpenID4VCI](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
-    /// specification for Credential Format
+    /// See [Appendix A] of the `OpenID4VCI` specification for Credential Format
     /// Profiles.
+    ///
+    /// [Appendix A]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles
     pub format: String,
 
     /// Identifies the scope value that this Credential Issuer supports for this
@@ -333,17 +344,23 @@ pub struct CredentialConfiguration {
     /// Identifies how the Credential should be bound to the identifier of the
     /// End-User who possesses the Credential. Is case sensitive.
     ///
-    /// Support for keys in JWK format [RFC7517](https://www.rfc-editor.org/rfc/rfc7517)
-    /// is indicated by the value jwk. Support for keys expressed as a COSE Key object
-    /// [RFC8152](https://www.rfc-editor.org/rfc/rfc8152) (for example, used in
-    /// [ISO.18013-5]) is indicated by the value `cose_key`.
+    /// Support for keys in JWK format [RFC7517] is indicated by the value "`jwk`".
+    /// Support for keys expressed as a COSE Key object [RFC8152] (for example, used in
+    /// [ISO.18013-5]) is indicated by the value "`cose_key`".
     ///
-    /// When Cryptographic Binding Method is a DID, valid values MUST be a did: prefix
-    /// followed by a method-name using a syntax as defined in Section 3.1 of [DID-Core],
-    /// but without a :and method-specific-id. For example, support for the DID method
-    /// with a method-name "example" would be represented by did:example. Support for
-    /// all DID methods listed in Section 13 of [DID Specification Registries](https://www.w3.org/TR/did-spec-registries/)
-    /// is indicated by sending a DID without any method-name.
+    /// When Cryptographic Binding Method is a DID, valid values MUST be a "did:" prefix
+    /// followed by a method-name using a syntax as defined in Section 3.1 of
+    /// [DID-Core], but without a ":" and method-specific-id. For example, support for
+    /// the DID method with a method-name "example" would be represented by
+    /// "did:example". Support for all DID methods listed in Section 13 of
+    /// [DID Specification Registries] is indicated by sending a DID without any
+    /// method-name.
+    ///
+    /// [RFC7517]: (https://www.rfc-editor.org/rfc/rfc7517)
+    /// [RFC8152]: (https://www.rfc-editor.org/rfc/rfc8152)
+    /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
+    /// [DID-Core]: (https://www.w3.org/TR/did-core/)
+    /// [DID Specification Registries]: (https://www.w3.org/TR/did-spec-registries/)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cryptographic_binding_methods_supported: Option<Vec<String>>,
 
@@ -387,12 +404,12 @@ pub struct CredentialConfiguration {
     ///     }
     /// }
     /// ```
-    /// [RFC7519]: https://www.rfc-editor.org/rfc/rfc7519
-    /// [RFC8392]: https://www.rfc-editor.org/rfc/rfc8392
-    /// [VC_DATA]: https://www.w3.org/TR/vc-data-model/
-    /// [VC_DATA_2.0]: https://www.w3.org/TR/vc-data-model-2.0/
-    /// [VC_Data_Integrity]: https://www.w3.org/TR/vc-data-integrity/
-
+    ///
+    /// [RFC7519]: (https://www.rfc-editor.org/rfc/rfc7519)
+    /// [RFC8392]: (https://www.rfc-editor.org/rfc/rfc8392)
+    /// [VC_DATA]: (https://www.w3.org/TR/vc-data-model/)
+    /// [VC_DATA_2.0]: (https://www.w3.org/TR/vc-data-model-2.0/)
+    /// [VC_Data_Integrity]: (https://www.w3.org/TR/vc-data-integrity/)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub proof_types_supported: Option<HashMap<String, ProofTypesSupported>>,
 
@@ -435,7 +452,9 @@ pub struct CredentialDisplay {
     /// specified locale. If no locale is set, then this is the default value.
     pub name: String,
 
-    /// A BCP47 [RFC5646](https://www.rfc-editor.org/rfc/rfc5646) language tag identifying the display language.
+    /// A BCP47 [RFC5646] language tag identifying the display language.
+    ///
+    /// [RFC5646]: (https://www.rfc-editor.org/rfc/rfc5646)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub locale: Option<String>,
 
@@ -522,8 +541,9 @@ pub struct Claim {
 
     /// The type of value of the claim. Defaults to string.
     /// Supported values include `string`, `number`, and `image` media types
-    /// such as image/jpeg. See the [IANA media type registry](https://www.iana.org/assignments/media-types/media-types.xhtml#image)
-    /// for a complete list.
+    /// such as image/jpeg. See the [IANA media type registry] for a complete list.
+    ///
+    /// [IANA media type registry]: (https://www.iana.org/assignments/media-types/media-types.xhtml#image)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub value_type: Option<String>,
 
@@ -670,8 +690,9 @@ pub struct Server {
 }
 
 /// Credential format supported by the Wallet.
-/// Valid Credential format identifier values are defined in Annex E of
-/// [OpenID4VCI](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html).
+/// Valid Credential format identifier values are defined in Annex E of [OpenID4VCI].
+///
+/// [OpenID4VCI]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct SupportedVpFormat {
     /// An object where the value is an array of case sensitive strings that

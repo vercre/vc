@@ -90,10 +90,12 @@ pub struct InvokeResponse {
     pub request_uri: Option<String>,
 }
 
-/// The Authorization Request follows the definition given in [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html).
-/// The Verifier may send an Authorization Request as Request Object by value or
-/// by reference as defined in JWT-Secured Authorization Request (JAR)
-/// [RFC9101](https://www.rfc-editor.org/rfc/rfc9101).
+/// The Authorization Request follows the definition given in [RFC6749]. The Verifier
+/// may send an Authorization Request as Request Object by value or by reference as
+/// defined in JWT-Secured Authorization Request (JAR) [RFC9101].
+///
+/// [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
+/// [RFC9101]:https://www.rfc-editor.org/rfc/rfc9101
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(default)]
 pub struct RequestObject {
@@ -103,7 +105,7 @@ pub struct RequestObject {
     /// If Response Type is:
     ///  - "`vp_token`": a VP Token is returned in an Authorization Response.
     ///
-    ///  - "`vp_token id_token`" AND the `scope` parameter contains "openid": a
+    ///  - "`vp_token id_token`" AND the `scope` parameter contains "`openid`": a
     ///    VP Token and a Self-Issued ID Token are returned in an Authorization
     ///    Response.
     ///
@@ -139,7 +141,9 @@ pub struct RequestObject {
     /// Response Mode "`direct_post.jwt`" causes the Wallet to send the Authorization
     /// Response as an HTTPS POST request (as for "`direct_post`") except the Wallet
     /// sets a `response` parameter to a JWT containing the Authorization Response.
-    /// See [JARM](https://openid.net/specs/oauth-v2-jarm-final.html) for more detail.
+    /// See [JARM] for more detail.
+    ///
+    /// [JARM]: (https://openid.net/specs/oauth-v2-jarm-final.html)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub response_mode: Option<String>,
 
@@ -159,7 +163,9 @@ pub struct RequestObject {
     pub response_uri: Option<String>,
 
     /// The Wallet MAY allow Verifiers to request presentation of Verifiable
-    /// Credentials by utilizing a pre-defined scope value. Defined in [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html).
+    /// Credentials by utilizing a pre-defined scope value. Defined in [RFC6749].
+    ///
+    /// [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scope: Option<String>,
 
@@ -228,10 +234,10 @@ pub struct RequestObject {
     ///
     ///  - "`pre-registered`": Unsupported.
     ///    The Client Identifier is already known to the Wallet.
-    ///    This value represents the [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html) default behavior, i.e. the Client
+    ///    This value represents the [RFC6749] default behavior, i.e. the Client
     ///    Identifier needs to be known to the Wallet in advance of the Authorization
     ///    Request. Verifier metadata is obtained from metadata endpoint
-    ///    [RFC7591](https://www.rfc-editor.org/rfc/rfc7591) or out-of-band an mechanism.
+    ///    [RFC7591] or out-of-band an mechanism.
     ///
     ///  - "`entity_id`": Unsupported.
     ///    The Client Identifier is an OpenID.Federation Entity ID.
@@ -242,20 +248,23 @@ pub struct RequestObject {
     ///
     /// - "`x509_san_dns`": Unsupported.
     ///    The Client Identifier is a DNS name.
-    ///    The DNS name MUST match a dNSName Subject Alternative Name (SAN) [RFC5280](https://www.rfc-editor.org/rfc/rfc5280)
+    ///    The DNS name MUST match a dNSName Subject Alternative Name (SAN) [RFC5280]
     ///    entry in the leaf certificate passed with the request.
     ///  
     /// - "`x509_san_uri`": Unsupported.
     ///   The Client Identifier is a URI.
     ///   The URI MUST match a uniformResourceIdentifier Subject Alternative Name (SAN)
-    ///   [RFC5280](https://www.rfc-editor.org/rfc/rfc5280) entry in the leaf certificate passed with the request.
+    ///   [RFC5280] entry in the leaf certificate passed with the request.
     ///
     /// If the parameter is not present, the Wallet MUST behave as specified in
-    /// [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html). If the same Client Identifier is used with different Client
+    /// [RFC6749]. If the same Client Identifier is used with different Client
     /// Identifier schemes, those occurrences MUST be treated as different Verifiers.
     /// The Verifier needs to determine which Client Identifier schemes the Wallet
     /// supports prior to sending the Authorization Request in order to choose a
     /// supported scheme.
+    ///
+    /// [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
+    /// [RFC5280]: (https://www.rfc-editor.org/rfc/rfc5280)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub client_id_scheme: Option<String>,
 
@@ -437,7 +446,7 @@ pub struct ResponseRequest {
     ///
     /// When a single Verifiable Presentation is returned, array syntax MUST NOT be used.
     ///
-    /// [OpenID4VCI]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
+    /// [OpenID4VCI]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
     #[serde(skip_serializing_if = "Option::is_none")]
     // #[serde(deserialize_with = "vp_token::deserialize")]
     #[serde(with = "stringify")]

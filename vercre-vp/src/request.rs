@@ -11,7 +11,7 @@
 //! Per the [JWT VC Presentation Profile], the Request Object MUST be returned as an
 //! encoded JWT.
 //!
-//! [JWT VC Presentation Profile]: https://identity.foundation/jwt-vc-presentation-profile
+//! [JWT VC Presentation Profile]: (https://identity.foundation/jwt-vc-presentation-profile)
 
 use std::fmt::Debug;
 

@@ -37,7 +37,7 @@ pub struct InvokeRequest {
     /// Whether the Issuer should provide a pre-authorized offer or not. If not
     /// pre-authorized, the Wallet must request authorization to fulfill the
     /// offer.
-    /// When set to 'true', only the 'urn:ietf:params:oauth:grant-type:pre-authorized_code'
+    /// When set to `true`, only the `urn:ietf:params:oauth:grant-type:pre-authorized_code`
     /// Grant Type will be set in the returned Credential Offer.
     #[serde(rename = "pre-authorize")]
     pub pre_authorize: bool,
@@ -46,8 +46,8 @@ pub struct InvokeRequest {
     /// during the Pre-Authorized Code Flow.
     pub tx_code_required: bool,
 
-    /// Identifies the (previously authenticated) Holder to the Issuer for the
-    /// in order that they can authorize credential issuance.
+    /// Identifies the (previously authenticated) Holder in order that Issuer can
+    /// authorize credential issuance.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub holder_id: Option<String>,
 
@@ -101,11 +101,10 @@ pub struct CredentialOffer {
     /// ```
     pub credential_configuration_ids: Vec<String>,
 
-    /// Indicates to the Wallet the Grant Types the Credential Issuer is
-    /// prepared to process for this credential offer.
-    /// If not present, the Wallet MUST determine the Grant Types the Credential
-    /// Issuer supports using the Issuer metadata. When multiple grants are
-    /// present, it's at the Wallet's discretion which one to use.
+    /// Indicates to the Wallet the Grant Types the Credential Issuer is prepared to 
+    /// process for this credential offer. If not present, the Wallet MUST determine 
+    /// the Grant Types the Credential Issuer supports using the Issuer metadata. When 
+    /// multiple grants are present, it's at the Wallet's discretion which one to use.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub grants: Option<Grants>,
 }
@@ -122,7 +121,7 @@ impl FromStr for CredentialOffer {
 }
 
 impl CredentialOffer {
-    /// Generate qrcode for the Credential Offer.
+    /// Generate a qrcode for the Credential Offer.
     /// Use the `endpoint` parameter to specify vercre-wallet's endpoint using deep link or
     /// direct call format.
     ///
@@ -253,13 +252,14 @@ pub struct PreAuthorizedCodeGrant {
     pub authorization_server: Option<String>,
 }
 
-/// `TxCode` is used to specify whether the Authorization Server expects presentation
-/// of a Transaction Code by the End-User along with the Token Request in a
-/// Pre-Authorized Code Flow. If the Authorization Server does not expect a Transaction
-/// Code, this object is absent; this is the default. The Transaction Code is intended
-/// to bind the Pre-Authorized Code to a certain transaction to prevent replay of this
-/// code by an attacker that, for example, scanned the QR code while standing behind
-/// the legitimate End-User. It is RECOMMENDED to send the Transaction Code via a
+/// Specifies whether the Authorization Server expects presentation of a Transaction
+/// Code by the End-User along with the Token Request in a Pre-Authorized Code Flow.
+/// If the Authorization Server does not expect a Transaction Code, this object is 
+/// absent; this is the default. 
+///
+/// The Transaction Code is used to bind the Pre-Authorized Code to a transaction to 
+/// prevent replay of the code by an attacker that, for example, scanned the QR code 
+/// while standing behind the legitimate End-User. It is RECOMMENDED to send the Transaction Code via a
 /// separate channel. If the Wallet decides to use the Pre-Authorized Code Flow, the
 /// Transaction Code value MUST be sent in the `tx_code` parameter with the respective
 /// Token Request as defined in Section 6.1. If no length or description is given, this
@@ -288,8 +288,10 @@ pub struct TxCode {
 }
 
 /// An Authorization Request is an OAuth 2.0 Authorization Request as defined in
-/// section 4.1.1 of [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html), which requests to grant access to the Credential
+/// section 4.1.1 of [RFC6749], which requests to grant access to the Credential
 /// Endpoint.
+///
+/// [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(default)]
 pub struct AuthorizationRequest {
@@ -337,8 +339,10 @@ pub struct AuthorizationRequest {
     pub scope: Option<String>,
 
     /// The Credential Issuer's identifier to allow the Authorization Server to
-    /// differentiate between Issuers. [RFC8707](https://www.rfc-editor.org/rfc/rfc8707): The target resource to which
+    /// differentiate between Issuers. [RFC8707]: The target resource to which
     /// access is being requested. MUST be an absolute URI.
+    ///
+    /// [RFC8707]: (https://www.rfc-editor.org/rfc/rfc8707)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resource: Option<String>,
 
@@ -349,9 +353,10 @@ pub struct AuthorizationRequest {
     pub holder_id: String,
 
     /// The Wallet's `OpenID` Connect issuer URL. The Credential Issuer can use
-    /// the discovery process as defined in [SIOPv2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html) to determine the
-    /// Wallet's capabilities and endpoints. RECOMMENDED in Dynamic
-    /// Credential Requests.
+    /// the discovery process as defined in [SIOPv2] to determine the Wallet's
+    /// capabilities and endpoints. RECOMMENDED in Dynamic Credential Requests.
+    ///
+    /// [SIOPv2]: (https://openid.net/specs/openid-connect-self-issued-v2-1_0.html)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub wallet_issuer: Option<String>,
 
@@ -427,7 +432,9 @@ pub struct AuthorizationDetail {
     pub locations: Option<Vec<String>>,
 }
 
-/// Authorization Response as defined in [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html).
+/// Authorization Response as defined in [RFC6749].
+///
+/// [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AuthorizationResponse {
     /// Authorization code.
@@ -443,8 +450,10 @@ pub struct AuthorizationResponse {
 }
 
 /// Upon receiving a successful Authorization Response, a Token Request is made
-/// as defined in [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html) with extensions to support the Pre-Authorized Code
+/// as defined in [RFC6749] with extensions to support the Pre-Authorized Code
 /// Flow.
+///
+/// [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(default)]
 pub struct TokenRequest {
@@ -504,7 +513,9 @@ pub struct TokenRequest {
     pub user_code: Option<String>,
 }
 
-/// Token Response as defined in [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html).
+/// Token Response as defined in [RFC6749].
+///
+/// [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct TokenResponse {
     /// An OAuth 2.0 Access Token that can subsequently be used to request one
@@ -658,8 +669,9 @@ pub struct ProofClaims {
     pub aud: String,
 
     /// The time at which the proof was issued, as
-    /// [RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`.
-    /// For example, "1541493724".
+    /// [RFC7519] `NumericDate`. For example, "1541493724".
+    ///
+    /// [RFC7519]: (https://www.rfc-editor.org/rfc/rfc7519)
     pub iat: i64,
 
     /// The nonce value provided by the Credential Issuer.
@@ -674,14 +686,16 @@ pub struct CredentialResponseEncryption {
     /// The public key used for encrypting the Credential Response.
     pub jwk: Jwk,
 
-    /// JWE [RFC7516](https://www.rfc-editor.org/rfc/rfc7516) alg algorithm
-    /// [RFC7518](https://www.rfc-editor.org/rfc/rfc7518) for encrypting
-    /// Credential Response.
+    /// JWE [RFC7516] alg algorithm [RFC7518] for encrypting Credential Response.
+    ///
+    /// [RFC7516]: (https://www.rfc-editor.org/rfc/rfc7516)
+    /// [RFC7518]: (https://www.rfc-editor.org/rfc/rfc7518)
     pub alg: String,
 
-    /// JWE [RFC7516](https://www.rfc-editor.org/rfc/rfc7516) enc algorithm
-    /// [RFC7518](https://www.rfc-editor.org/rfc/rfc7518) for encrypting
-    /// Credential Response.
+    /// JWE [RFC7516] enc algorithm [RFC7518] for encoding Credential Response.
+    ///
+    /// [RFC7516]: (https://www.rfc-editor.org/rfc/rfc7516)
+    /// [RFC7518]: (https://www.rfc-editor.org/rfc/rfc7518)
     pub enc: String,
 }
 
@@ -797,8 +811,10 @@ pub struct MetadataRequest {
     #[serde(skip)]
     pub credential_issuer: String,
 
-    /// The language(s) set in HTTP Accept-Language Headers.
-    /// MUST be values defined in [RFC3066](https://www.rfc-editor.org/rfc/rfc3066).
+    /// The language(s) set in HTTP Accept-Language Headers. MUST be values defined
+    /// in [RFC3066].
+    ///
+    /// [RFC3066]: (https://www.rfc-editor.org/rfc/rfc3066)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub languages: Option<String>,
 }
