@@ -1,6 +1,7 @@
 //! # `OpenID` Core
 
 use std::fmt::{Debug, Display};
+use std::future::Future;
 
 use chrono::{DateTime, Utc};
 
@@ -80,7 +81,7 @@ pub trait Holder: Send + Sync {
 /// Signer is used by implementers to provide signing functionality for
 /// Verifiable Credential issuance and Verifiable Presentation submissions.
 #[allow(async_fn_in_trait)]
-pub trait Signer: Send + Debug {
+pub trait Signer: Send + Sync + Debug {
     /// Algorithm returns the algorithm used by the signer.
     fn algorithm(&self) -> Algorithm;
 
@@ -94,7 +95,7 @@ pub trait Signer: Send + Debug {
     }
 
     /// `TrySign` is the fallible version of Sign.
-    async fn try_sign(&self, msg: &[u8]) -> anyhow::Result<Vec<u8>>;
+    fn try_sign(&self, msg: &[u8]) -> impl Future<Output = anyhow::Result<Vec<u8>>>; //anyhow::Result<Vec<u8>>;
 }
 
 /// Algorithm is used to specify the signing algorithm used by the signer.

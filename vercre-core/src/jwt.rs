@@ -15,7 +15,7 @@
 
 // TODO: replace this with `jsonwebtoken` library or similar.
 
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 use std::marker::PhantomData;
 use std::str::FromStr;
 use std::{fmt, str};
@@ -60,7 +60,7 @@ pub struct Header {
 
 impl<T> Jwt<T>
 where
-    T: Serialize + Default + Send + fmt::Debug,
+    T: Serialize + Default + Send + Sync + Debug,
 {
     /// Signs the JWT using the provided Signer
     #[instrument]
@@ -91,7 +91,7 @@ where
 
 impl<T> Display for Jwt<T>
 where
-    T: Serialize + Default + fmt::Debug,
+    T: Serialize + Default + Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let header_raw = serde_json::to_vec(&self.header).map_err(|_| std::fmt::Error)?;
