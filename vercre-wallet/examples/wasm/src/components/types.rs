@@ -18,13 +18,34 @@ impl Display for Direction {
 
 // Preset widths for various screen sizes.
 #[derive(Clone, Copy, PartialEq)]
-#[non_exhaustive]
-pub(crate) struct MediaWidth;
+pub(crate) enum MediaWidth {
+    Xs,
+    Sm,
+    Md,
+    Lg,
+    Xl,
+}
 
 impl MediaWidth {
-    pub const EXTRA_SMALL: u16 = 0;
-    pub const SMALL: u16 = 600;
-    pub const MEDIUM: u16 = 900;
-    pub const LARGE: u16 = 1200;
-    pub const EXTRA_LARGE: u16 = 1536;
+    // Converts the enum to a minimum width class string.
+    pub(crate) fn min_width(&self) -> String {
+        match self {
+            MediaWidth::Xs => "min-w-xs",
+            MediaWidth::Sm => "min-w-sm",
+            MediaWidth::Md => "min-w-md",
+            MediaWidth::Lg => "min-w-lg",
+            MediaWidth::Xl => "min-w-xl",
+        }.to_string()
+    }
+
+    // Converts the enum to a maximum width class string.
+    pub(crate) fn max_width(&self) -> String {
+        match self {
+            MediaWidth::Xs => "max-w-xs",
+            MediaWidth::Sm => "max-w-sm",
+            MediaWidth::Md => "max-w-md",
+            MediaWidth::Lg => "max-w-lg",
+            MediaWidth::Xl => "max-w-xl",
+        }.to_string()
+    }
 }

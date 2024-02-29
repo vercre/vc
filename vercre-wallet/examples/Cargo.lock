@@ -6576,9 +6576,15 @@ name = "wasm"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "base64ct",
+ "ecdsa",
  "futures-util",
  "gloo-console 0.3.0",
  "gloo-net 0.5.0",
+ "k256",
+ "serde",
+ "serde_json",
+ "sha2",
  "vercre-wallet",
  "yew",
 ]

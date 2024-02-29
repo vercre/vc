@@ -1,25 +1,19 @@
 use yew::prelude::*;
 
+use crate::components::types::MediaWidth;
+
 #[derive(Properties, PartialEq)]
 pub struct ContainerProps {
     pub children: Html,
-    #[prop_or_default]
-    pub max_width: u16,
-}
-
-fn container_style(width: u16) -> String {
-    if width == 0 {
-        return String::from("width: 100%;");
-    }
-    format!("width: 100%; max-width: {width}px;")
+    #[prop_or(MediaWidth::Md)]
+    pub min_width: MediaWidth,
 }
 
 #[function_component(Container)]
 pub fn container(props: &ContainerProps) -> Html {
     html! {
         <div
-            class={classes!("mui-container-fluid")}
-            style={container_style(props.max_width)}
+            class={classes!("mui-container-fluid", props.min_width.min_width())}
         >
             {props.children.clone()}
         </div>

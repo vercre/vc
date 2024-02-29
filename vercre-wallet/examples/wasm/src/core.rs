@@ -2,11 +2,12 @@ use std::rc::Rc;
 
 use futures_util::TryStreamExt;
 use gloo_console::log;
-use vercre_wallet::{http::protocol::HttpResult, App, Capabilities, Effect, Event};
+use vercre_wallet::{http::protocol::HttpResult, signer::SignerResponse, App, Capabilities, Effect, Event};
 use yew::platform::spawn_local;
-use yew::Callback;
+use yew::{callback, Callback};
 
 use crate::http;
+use crate::signer;
 
 pub type Core = Rc<vercre_wallet::Core<Effect, App>>;
 
@@ -38,8 +39,10 @@ pub fn process_effect(core: &Core, effect: Effect, callback: &Callback<Message>)
                 let callback = callback.clone();
 
                 async move {
-                    let response = http::request(&request.operation).await.unwrap();
-                    
+                    let response = http::request(&request.operation)
+                        .await
+                        .expect("error processing http effect");
+
                     for effect in core.resolve(&mut request, HttpResult::Ok(response)) {
                         process_effect(&core, effect, &callback);
                     }
@@ -62,11 +65,37 @@ pub fn process_effect(core: &Core, effect: Effect, callback: &Callback<Message>)
                 }
             });
         }
-        Effect::Signer(_) => {
-            todo!("implement effect")
+        Effect::Signer(mut request) => {
+            spawn_local({
+                let core = core.clone();
+                let callback = callback.clone();
+
+                async move {
+                    let response = match signer::request(&request.operation).await {
+                        Ok(resp) => resp,
+                        Err(err) => SignerResponse::Err(err.unwrap_or_default()),
+                    };
+                    for effect in core.resolve(&mut request, response) {
+                        process_effect(&core, effect, &callback);
+                    }
+                }
+            });
         }
-        Effect::Delay(duration) => {
-            todo!("implement effect")
+        Effect::Delay(mut request) => {
+            spawn_local({
+                let core = core.clone();
+                let callback = callback.clone();
+
+                async move {
+                    let response = ();
+                    std::thread::sleep(std::time::Duration::from_millis(
+                        request.operation.delay_ms,
+                    ));
+                    for effect in core.resolve(&mut request, response) {
+                        process_effect(&core, effect, &callback);
+                    }
+                }
+            });
         }
     }
 }

@@ -7,6 +7,7 @@ mod components;
 mod core;
 mod http;
 mod shell;
+mod signer;
 
 use yew::prelude::*;
 

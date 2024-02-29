@@ -22,3 +22,10 @@ $gt-ultra-standard: './GT-Ultra-Standard-Light.woff2';
 $system-font: ('Roboto', sans-serif);
 $brand-title-font: ('GT Ultra Median Light', sans-serif);
 $brand-copy-font: ('GT Ultra Standard Light', sans-serif);
+
+.brand-title {
+    font-family: $brand-title-font;
+    font-size: 1.625rem;
+    font-weight: 700;
+    line-height: 1.375;
+}

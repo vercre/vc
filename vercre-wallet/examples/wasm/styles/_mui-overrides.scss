@@ -1,0 +1,7 @@
+@use 'palette';
+@use 'typography';
+
+body {
+    color: palette.$body-color;
+    font-family: typography.$system-font;
+}
