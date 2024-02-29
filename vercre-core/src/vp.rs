@@ -333,7 +333,7 @@ impl RequestObject {
     /// # Errors
     ///
     /// Returns an `Err::ServerError` error if the Request Object cannot be serialized.
-    pub fn to_jwt(&self) -> Result<Jwt<RequestObject>> {
+    pub fn to_jwt(&self) -> Result<Jwt<Self>> {
         Ok(jwt::Jwt {
             header: jwt::Header::default(),
             claims: self.clone(),
@@ -437,7 +437,7 @@ impl<'de> Deserialize<'de> for RequestObjectResponse {
 
 /// Authorization Response request object is used by Wallets to send a VP Token
 /// and Presentation Submission to the Verifier who initiated the verification.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq,Eq)]
 pub struct ResponseRequest {
     /// One or more Verifiable Presentations represented as base64url encoded strings
     /// and/or JSON objects. The VP format determines the encoding. The encoding follows

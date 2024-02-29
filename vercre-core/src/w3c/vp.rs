@@ -268,7 +268,7 @@ pub enum FilterValue {
 
 impl Default for FilterValue {
     fn default() -> Self {
-        FilterValue::Const(String::new())
+        Self::Const(String::new())
     }
 }
 
@@ -294,7 +294,7 @@ impl FromStr for PresentationSubmission {
     type Err = error::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(serde_json::from_str::<PresentationSubmission>(s)?)
+        Ok(serde_json::from_str::<Self>(s)?)
     }
 }
 
@@ -403,7 +403,7 @@ impl VpBuilder {
     /// Returns a new [`VpBuilder`]
     #[must_use]
     pub fn new() -> Self {
-        let mut builder: Self = VpBuilder::default();
+        let mut builder: Self = Self::default();
 
         // sensibile defaults
         builder.vp.context.push(String::from("https://www.w3.org/2018/credentials/v1"));
@@ -528,12 +528,12 @@ impl TryFrom<VerifiablePresentation> for Claims {
         let proof = &proofs[0];
         vp.proof = None;
 
-        let mut claims = Claims {
+        let mut claims = Self {
             iat: Utc::now().timestamp(),
             vp: vp.clone(),
             ..Default::default()
         };
-        if let Some(holder) = vp.holder.clone() {
+        if let Some(holder) = vp.holder {
             claims.iss = holder;
         }
         if let Some(id) = proof.id.clone() {

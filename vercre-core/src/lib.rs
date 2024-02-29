@@ -23,7 +23,7 @@ use crate::callback::{Payload, Status};
 use crate::error::Error;
 use crate::provider::Callback;
 
-/// LATER: investigate `async_fn_in_trait` warning
+// LATER: investigate `async_fn_in_trait` warning
 
 /// Result type for `OpenID` for Verifiable Credential Issuance and Verifiable
 /// Presentations.

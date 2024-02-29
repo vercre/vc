@@ -36,10 +36,10 @@ where
         where
             E: de::Error,
         {
-            match T::from_str(value) {
-                Ok(res) => Ok(res),
-                Err(_) => Err(de::Error::invalid_value(de::Unexpected::Str(value), &self)),
-            }
+            T::from_str(value).map_or_else(
+                |_| Err(de::Error::invalid_value(de::Unexpected::Str(value), &self)),
+                |res| Ok(res),
+            )
         }
 
         // deserialize object to T

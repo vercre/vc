@@ -28,7 +28,10 @@ fmt:
 .PHONY: lint
 lint:
 	@rustup component add clippy 2> /dev/null
-	@cargo clippy -- -Dclippy::all -Dclippy::pedantic
+	@cargo clippy -- -Dclippy::all -Dclippy::pedantic -Dclippy::nursery
+
+	# clippy::all = correctness, suspicious, style, complexity, perf
+	# not using (yet) -Dclippy::restriction
 
 .PHONY: audit
 audit: 

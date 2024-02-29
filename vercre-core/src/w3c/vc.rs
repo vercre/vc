@@ -168,7 +168,7 @@ impl VerifiableCredential {
     pub fn sample() -> Self {
         use chrono::TimeZone;
 
-        VerifiableCredential {
+        Self {
             context: vec![
                 String::from("https://www.w3.org/2018/credentials/v1"),
                 String::from("http://credibil.io/credentials/v1"),
@@ -245,7 +245,7 @@ impl FromStr for Issuer {
     type Err = Infallible;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Issuer {
+        Ok(Self {
             id: s.to_string(),
             extra: None,
         })
@@ -554,7 +554,7 @@ impl VcBuilder {
     pub fn new() -> Self {
         trace!("VcBuilder::new");
 
-        let mut builder: Self = VcBuilder::default();
+        let mut builder: Self = Self::default();
 
         // set some sensibile defaults
         builder.vc.context.push(String::from("https://www.w3.org/2018/credentials/v1"));

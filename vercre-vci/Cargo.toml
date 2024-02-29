@@ -30,8 +30,6 @@ path = "benches/bench.rs"
 [lints]
 workspace = true
 
-# [lints.clippy]
-
 [dependencies]
 anyhow.workspace = true
 base64ct.workspace = true

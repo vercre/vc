@@ -54,7 +54,7 @@ pub fn state_key() -> String {
 /// Generates a use PIN code.
 #[must_use]
 pub fn user_code() -> String {
-    random_string(PIN_LEN, PIN_CHARS).to_string()
+    random_string(PIN_LEN, PIN_CHARS)
 }
 
 // Generates a random string from a given set of characters. Uses fastrand so is not

@@ -90,9 +90,9 @@ impl FilterValue {
     /// `FilterValue`.
     fn matched(&self, vc_node: &Value) -> Result<bool> {
         match self {
-            FilterValue::Const(_) => match_const(self, vc_node),
-            FilterValue::Pattern(_) => match_pattern(self, vc_node),
-            FilterValue::Format(_) => match_format(self, vc_node),
+            Self::Const(_) => match_const(self, vc_node),
+            Self::Pattern(_) => match_pattern(self, vc_node),
+            Self::Format(_) => match_format(self, vc_node),
         }
     }
 }

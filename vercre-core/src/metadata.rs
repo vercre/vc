@@ -741,7 +741,7 @@ impl CredentialConfiguration {
     /// Panics if the JSON does not serialize to an `CredentialConfiguration` object
     #[must_use]
     pub fn sample() -> Self {
-        CredentialConfiguration {
+        Self {
             format: String::from("jwt_vc_json"),
             scope: Some(String::from("EmployeeIDCredential")),
             cryptographic_binding_methods_supported: Some(vec![
@@ -840,7 +840,7 @@ impl CredentialConfiguration {
     /// Panics if the JSON does not serialize to an `CredentialConfiguration` object.
     #[must_use]
     pub fn sample2() -> Self {
-        CredentialConfiguration {
+        Self {
             format: String::from("jwt_vc_json"),
             scope: Some(String::from("DeveloperCredential")),
             cryptographic_binding_methods_supported: Some(vec![

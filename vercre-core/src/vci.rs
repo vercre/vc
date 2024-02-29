@@ -113,7 +113,7 @@ impl FromStr for CredentialOffer {
     type Err = error::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let Ok(res) = serde_json::from_str::<CredentialOffer>(s) else {
+        let Ok(res) = serde_json::from_str::<Self>(s) else {
             err!(Err::InvalidRequest, "issue deserializing CredentialOffer");
         };
         Ok(res)

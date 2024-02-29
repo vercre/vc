@@ -60,7 +60,7 @@ pub struct Header {
 
 impl<T> Jwt<T>
 where
-    T: Serialize + Default + fmt::Debug,
+    T: Serialize + Default + Send + fmt::Debug,
 {
     /// Signs the JWT using the provided Signer
     #[instrument]
@@ -120,7 +120,7 @@ where
             err!(Err::InvalidRequest, "invalid proof JWT format");
         }
 
-        let jwt = Jwt {
+        let jwt = Self {
             header: serde_json::from_slice(&Base64UrlUnpadded::decode_vec(parts[0])?)?,
             claims: serde_json::from_slice(&Base64UrlUnpadded::decode_vec(parts[1])?)?,
         };
@@ -139,7 +139,7 @@ impl<'de, T> Deserialize<'de> for Jwt<T>
 where
     T: DeserializeOwned + Default,
 {
-    fn deserialize<D>(deserializer: D) -> Result<Jwt<T>, D::Error>
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -158,10 +158,10 @@ where
     }
 
     fn visit_str<E: de::Error>(self, value: &str) -> Result<Self::Value, E> {
-        match Jwt::from_str(value) {
-            Ok(jwt) => Ok(jwt),
-            Err(_) => Err(de::Error::invalid_value(de::Unexpected::Str(value), &self)),
-        }
+        Jwt::from_str(value).map_or_else(
+            |_| Err(de::Error::invalid_value(de::Unexpected::Str(value), &self)),
+            |jwt| Ok(jwt),
+        )
     }
 
     fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>

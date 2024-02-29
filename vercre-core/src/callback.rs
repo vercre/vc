@@ -6,7 +6,7 @@
 use std::fmt::{self, Display, Formatter};
 
 /// Indication of the status of an issuance or presentation flow.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Status {
     /// The vercre-wallet has received an issuance offer and has decided to action.
     IssuanceRequested,
@@ -28,11 +28,11 @@ pub enum Status {
 impl Display for Status {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Status::IssuanceRequested => write!(f, "issuance_requested"),
-            Status::CredentialIssued => write!(f, "credential_issued"),
-            Status::PresentationRequested => write!(f, "presentation_requested"),
-            Status::PresentationVerified => write!(f, "presentation_verified"),
-            Status::Error => write!(f, "error"),
+            Self::IssuanceRequested => write!(f, "issuance_requested"),
+            Self::CredentialIssued => write!(f, "credential_issued"),
+            Self::PresentationRequested => write!(f, "presentation_requested"),
+            Self::PresentationVerified => write!(f, "presentation_verified"),
+            Self::Error => write!(f, "error"),
         }
     }
 }

@@ -80,7 +80,7 @@ pub trait Holder: Send + Sync {
 /// Signer is used by implementers to provide signing functionality for
 /// Verifiable Credential issuance and Verifiable Presentation submissions.
 #[allow(async_fn_in_trait)]
-pub trait Signer: Debug {
+pub trait Signer: Send + Debug {
     /// Algorithm returns the algorithm used by the signer.
     fn algorithm(&self) -> Algorithm;
 
@@ -109,8 +109,8 @@ pub enum Algorithm {
 impl Display for Algorithm {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Algorithm::ES256K => write!(f, "ES256K"),
-            Algorithm::EdDSA => write!(f, "EdDSA"),
+            Self::ES256K => write!(f, "ES256K"),
+            Self::EdDSA => write!(f, "EdDSA"),
         }
     }
 }
@@ -120,8 +120,8 @@ impl Algorithm {
     #[must_use]
     pub fn proof_type(&self) -> String {
         match self {
-            Algorithm::ES256K => String::from("EcdsaSecp256k1VerificationKey2019"),
-            Algorithm::EdDSA => String::from("JsonWebKey2020"),
+            Self::ES256K => String::from("EcdsaSecp256k1VerificationKey2019"),
+            Self::EdDSA => String::from("JsonWebKey2020"),
         }
     }
 }
