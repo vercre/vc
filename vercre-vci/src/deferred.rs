@@ -119,7 +119,7 @@ mod tests {
     use vercre_core::w3c::vc::VcClaims;
 
     use super::*;
-    use crate::state::{DeferredState, Expire, TokenState};
+    use crate::state::{Deferred, Expire, Token};
 
     #[tokio::test]
     async fn deferred_ok() {
@@ -179,7 +179,7 @@ mod tests {
             .expect("should build state");
 
         // state entry 1: token state keyed by access_token
-        state.token = Some(TokenState {
+        state.token = Some(Token {
             access_token: access_token.to_string(),
             token_type: String::from("Bearer"),
             c_nonce,
@@ -192,7 +192,7 @@ mod tests {
 
         // state entry 2: deferred state keyed by transaction_id
         state.token = None;
-        state.deferred = Some(DeferredState {
+        state.deferred = Some(Deferred {
             transaction_id: transaction_id.to_string(),
             credential_request: cred_req.clone(),
         });

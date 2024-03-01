@@ -28,7 +28,7 @@ use vercre_core::w3c::{self, CredentialSubject, VerifiableCredential};
 use vercre_core::{err, gen, Result};
 
 use super::Endpoint;
-use crate::state::{DeferredState, Expire, State};
+use crate::state::{Deferred, Expire, State};
 
 impl<P> Endpoint<P>
 where
@@ -241,7 +241,7 @@ where
             let txn_id = gen::transaction_id();
 
             // save credential request in state for later use in a deferred request.
-            state.deferred = Some(DeferredState {
+            state.deferred = Some(Deferred {
                 transaction_id: txn_id.clone(),
                 credential_request: request.clone(),
             });
@@ -413,7 +413,7 @@ mod tests {
     use vercre_core::w3c::vc::VcClaims;
 
     use super::*;
-    use crate::state::TokenState;
+    use crate::state::Token;
 
     #[tokio::test]
     async fn authorization_details() {
@@ -433,7 +433,7 @@ mod tests {
             .build()
             .expect("should build state");
 
-        state.token = Some(TokenState {
+        state.token = Some(Token {
             access_token: access_token.to_string(),
             token_type: String::from("Bearer"),
             c_nonce: c_nonce.to_string(),
@@ -535,7 +535,7 @@ mod tests {
     //         .build()
     //         .expect("should build state");
 
-    //     state.token = Some(TokenState {
+    //     state.token = Some(Token {
     //         access_token: access_token.to_string(),
     //         token_type: String::from("Bearer"),
     //         c_nonce: c_nonce.to_string(),

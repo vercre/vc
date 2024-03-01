@@ -84,7 +84,7 @@ pub use vercre_core::vci::{
 use vercre_core::{err, gen, Result};
 
 use super::Endpoint;
-use crate::state::{AuthState, Expire, State};
+use crate::state::{Auth, Expire, State};
 
 impl<P> Endpoint<P>
 where
@@ -279,7 +279,7 @@ where
             ..Default::default()
         };
 
-        let auth_state = AuthState {
+        let auth_state = Auth {
             redirect_uri: request.redirect_uri.clone(),
             code_challenge: Some(request.code_challenge.clone()),
             code_challenge_method: Some(request.code_challenge_method.clone()),

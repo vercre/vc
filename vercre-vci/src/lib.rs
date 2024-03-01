@@ -93,7 +93,7 @@ pub mod deferred;
 pub mod invoke;
 pub mod metadata;
 pub mod register;
-pub mod state;
+mod state;
 pub mod token;
 
 use std::fmt::Debug;

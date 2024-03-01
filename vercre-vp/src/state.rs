@@ -7,13 +7,13 @@ use vercre_core::error::Err;
 use vercre_core::vp::RequestObject;
 use vercre_core::{err, Result};
 
-pub(crate) enum Expire {
+pub enum Expire {
     Request,
     // Nonce,
 }
 
 impl Expire {
-    pub(crate) const fn duration(&self) -> Duration {
+    pub const fn duration(&self) -> Duration {
         match self {
             Self::Request => Duration::minutes(5),
         }
@@ -21,30 +21,30 @@ impl Expire {
 }
 
 #[derive(Builder, Clone, Debug, Default, Deserialize, Serialize)]
-pub(crate) struct State {
+pub struct State {
     /// The time this state item should expire.
     #[builder(default = "Utc::now() + Expire::Request.duration()")]
-    pub(crate) expires_at: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
 
     /// The Verifier's Request Object. Saved for use by the `request_uri` endpoint
     /// and in comparing the Presentation Definition to the Presentation Submission.
-    pub(crate) request_object: RequestObject,
+    pub request_object: RequestObject,
 
     // The callback ID for the current request.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default)]
-    pub(crate) callback_id: Option<String>,
+    pub callback_id: Option<String>,
 }
 
 impl State {
     /// Returns a new [`StateBuilder`], which can be used to build a [State]
     #[must_use]
-    pub(crate) fn builder() -> StateBuilder {
+    pub fn builder() -> StateBuilder {
         StateBuilder::default()
     }
 
     /// Serializes this [`State`] object into a byte array.
-    pub(crate) fn to_vec(&self) -> Vec<u8> {
+    pub fn to_vec(&self) -> Vec<u8> {
         // TODO: return Result instead of panicking
         match serde_json::to_vec(self) {
             Ok(res) => res,
@@ -52,7 +52,7 @@ impl State {
         }
     }
 
-    pub(crate) fn from_slice(value: &[u8]) -> Result<Self> {
+    pub fn from_slice(value: &[u8]) -> Result<Self> {
         match serde_json::from_slice::<Self>(value) {
             Ok(res) => {
                 if res.expired() {
@@ -65,7 +65,7 @@ impl State {
     }
 
     /// Determines whether state has expired or not.
-    pub(crate) fn expired(&self) -> bool {
+    pub fn expired(&self) -> bool {
         self.expires_at.signed_duration_since(Utc::now()).num_seconds() < 0
     }
 }

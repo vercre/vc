@@ -140,7 +140,7 @@ mod tests {
     use vercre_core::w3c::vc::VcClaims;
 
     use super::*;
-    use crate::state::{Expire, TokenState};
+    use crate::state::{Expire, Token};
 
     #[tokio::test]
     async fn credential_ok() {
@@ -160,7 +160,7 @@ mod tests {
             .build()
             .expect("should build state");
 
-        state.token = Some(TokenState {
+        state.token = Some(Token {
             access_token: access_token.to_string(),
             token_type: String::from("Bearer"),
             c_nonce: c_nonce.to_string(),

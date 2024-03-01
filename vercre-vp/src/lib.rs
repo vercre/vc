@@ -161,7 +161,7 @@ pub mod invoke;
 pub mod metadata;
 pub mod request;
 pub mod response;
-pub mod state;
+ mod state;
 
 use std::fmt::Debug;
 

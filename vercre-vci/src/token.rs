@@ -25,7 +25,7 @@ pub use vercre_core::vci::{TokenRequest, TokenResponse};
 use vercre_core::{err, gen, Result};
 
 use super::Endpoint;
-use crate::state::{Expire, State, TokenState};
+use crate::state::{Expire, State, Token};
 
 impl<P> Endpoint<P>
 where
@@ -161,7 +161,7 @@ where
         let c_nonce = gen::nonce();
 
         state.token = Some(
-            TokenState::builder()
+            Token::builder()
                 .access_token(token.clone())
                 .c_nonce(c_nonce.clone())
                 .build()
@@ -210,7 +210,7 @@ mod tests {
     use vercre_core::vci::{AuthorizationDetail, TokenAuthorizationDetail};
 
     use super::*;
-    use crate::state::AuthState;
+    use crate::state::Auth;
 
     #[tokio::test]
     async fn simple_token() {
@@ -231,7 +231,7 @@ mod tests {
 
         let pre_auth_code = "ABCDEF";
 
-        state.auth = Some(AuthState {
+        state.auth = Some(Auth {
             user_code: Some(String::from("1234")),
             ..Default::default()
         });
@@ -292,7 +292,7 @@ mod tests {
         let verifier = "ABCDEF12345";
         let verifier_hash = Sha256::digest(verifier);
 
-        state.auth = Some(AuthState {
+        state.auth = Some(Auth {
             redirect_uri: Some(String::from("https://example.com")),
             code_challenge: Some(Base64UrlUnpadded::encode_string(&verifier_hash)),
             code_challenge_method: Some(String::from("S256")),
