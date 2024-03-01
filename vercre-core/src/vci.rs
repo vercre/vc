@@ -101,9 +101,9 @@ pub struct CredentialOffer {
     /// ```
     pub credential_configuration_ids: Vec<String>,
 
-    /// Indicates to the Wallet the Grant Types the Credential Issuer is prepared to 
-    /// process for this credential offer. If not present, the Wallet MUST determine 
-    /// the Grant Types the Credential Issuer supports using the Issuer metadata. When 
+    /// Indicates to the Wallet the Grant Types the Credential Issuer is prepared to
+    /// process for this credential offer. If not present, the Wallet MUST determine
+    /// the Grant Types the Credential Issuer supports using the Issuer metadata. When
     /// multiple grants are present, it's at the Wallet's discretion which one to use.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub grants: Option<Grants>,
@@ -254,11 +254,11 @@ pub struct PreAuthorizedCodeGrant {
 
 /// Specifies whether the Authorization Server expects presentation of a Transaction
 /// Code by the End-User along with the Token Request in a Pre-Authorized Code Flow.
-/// If the Authorization Server does not expect a Transaction Code, this object is 
-/// absent; this is the default. 
+/// If the Authorization Server does not expect a Transaction Code, this object is
+/// absent; this is the default.
 ///
-/// The Transaction Code is used to bind the Pre-Authorized Code to a transaction to 
-/// prevent replay of the code by an attacker that, for example, scanned the QR code 
+/// The Transaction Code is used to bind the Pre-Authorized Code to a transaction to
+/// prevent replay of the code by an attacker that, for example, scanned the QR code
 /// while standing behind the legitimate End-User. It is RECOMMENDED to send the Transaction Code via a
 /// separate channel. If the Wallet decides to use the Pre-Authorized Code Flow, the
 /// Transaction Code value MUST be sent in the `tx_code` parameter with the respective
