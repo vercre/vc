@@ -343,18 +343,16 @@ where
         if let Some(mut cred_def) = request.credential_definition.clone() {
             // add credential subject when not present
             if cred_def.credential_subject.is_none() {
-                let maybe_supported = match &request.credential_identifier {
-                    // get supported_credential by credential_identifier
-                    Some(id) => self.issuer_meta.credential_configurations_supported.get(id),
-
-                    // find supported_credential by matching format and type
-                    None => {
+                let maybe_supported = request.credential_identifier.as_ref().map_or_else(
+                    || {
                         self.issuer_meta.credential_configurations_supported.values().find(|v| {
                             Some(&v.format) == request.format.as_ref()
                                 && v.credential_definition.type_ == cred_def.type_
                         })
-                    }
-                };
+                    },
+                    |id| self.issuer_meta.credential_configurations_supported.get(id),
+                );
+
                 let Some(supported) = maybe_supported else {
                     err!(Err::InvalidCredentialRequest, "credential is not supported");
                 };

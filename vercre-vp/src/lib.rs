@@ -161,7 +161,7 @@ pub mod invoke;
 pub mod metadata;
 pub mod request;
 pub mod response;
-mod state;
+pub mod state;
 
 use std::fmt::Debug;
 
@@ -194,7 +194,7 @@ where
     P: Client + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Create a new endpoint instance.
-    pub fn new(provider: P) -> Self {
+    pub const fn new(provider: P) -> Self {
         Self { provider }
     }
 }

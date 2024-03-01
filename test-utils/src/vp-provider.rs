@@ -172,10 +172,11 @@ impl StateStore {
     }
 
     fn get(&self, key: &str) -> anyhow::Result<Vec<u8>> {
-        match self.store.lock().expect("should lock").get(key) {
-            Some(data) => Ok(data.clone()),
-            None => Err(anyhow!("no matching documents found")),
-        }
+        self.store
+            .lock()
+            .expect("should lock")
+            .get(key)
+            .map_or_else(|| Err(anyhow!("no matching documents found")), |data| Ok(data.clone()))
     }
 
     #[allow(clippy::unnecessary_wraps)]
@@ -201,7 +202,7 @@ impl CallbackHook {
         }
     }
 
-    #[allow(clippy::unnecessary_wraps, clippy::unused_self)]
+    #[allow(clippy::unnecessary_wraps, clippy::unused_self, clippy::missing_const_for_fn)]
     fn callback(&self, _: &Payload) -> anyhow::Result<()> {
         Ok(())
     }

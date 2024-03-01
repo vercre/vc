@@ -14,11 +14,11 @@ pub(crate) enum Expire {
 }
 
 impl Expire {
-    pub(crate) fn duration(&self) -> Duration {
+    pub(crate) const fn duration(&self) -> Duration {
         match self {
-            Expire::AuthCode => Duration::minutes(5),
-            Expire::Access => Duration::minutes(15),
-            Expire::Nonce => Duration::minutes(10),
+            Self::AuthCode => Duration::minutes(5),
+            Self::Access => Duration::minutes(15),
+            Self::Nonce => Duration::minutes(10),
         }
     }
 }
@@ -161,7 +161,7 @@ impl TryFrom<Vec<u8>> for State {
     type Error = vercre_core::error::Error;
 
     fn try_from(value: Vec<u8>) -> Result<Self> {
-        State::try_from(value.as_slice())
+        Self::try_from(value.as_slice())
     }
 }
 

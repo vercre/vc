@@ -26,7 +26,7 @@ where
 {
     /// Create a new Delay capability context.
     #[must_use]
-    pub fn new(context: CapabilityContext<DelayOperation, Ev>) -> Self {
+    pub const fn new(context: CapabilityContext<DelayOperation, Ev>) -> Self {
         Self { context }
     }
 

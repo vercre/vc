@@ -1,5 +1,4 @@
-// #![warn(missing_docs)]
-#![warn(unused_extern_crates)]
+#![allow(clippy::missing_const_for_fn)]
 #![feature(let_chains)]
 
 //! # `OpenID` Wallet

@@ -85,7 +85,7 @@ impl Holder for Provider {
     async fn claims(
         &self, holder_id: &str, credential: &CredentialDefinition,
     ) -> anyhow::Result<holder::Claims> {
-        self.holder.get_claims(holder_id, credential)
+        Ok(self.holder.get_claims(holder_id, credential))
     }
 }
 
@@ -158,10 +158,11 @@ impl ClientStore {
     }
 
     fn get(&self, client_id: &str) -> anyhow::Result<types::Client> {
-        match self.clients.lock().expect("should lock").get(client_id) {
-            Some(data) => Ok(data.clone()),
-            None => Err(anyhow!("client not found")),
-        }
+        self.clients
+            .lock()
+            .expect("should lock")
+            .get(client_id)
+            .map_or_else(|| Err(anyhow!("client not found")), |data| Ok(data.clone()))
     }
 
     #[allow(clippy::unnecessary_wraps)]
@@ -237,18 +238,10 @@ impl HolderStore {
         Ok(true)
     }
 
-    fn get_claims(
-        &self, holder_id: &str, credential: &CredentialDefinition,
-    ) -> anyhow::Result<holder::Claims> {
+    fn get_claims(&self, holder_id: &str, credential: &CredentialDefinition) -> holder::Claims {
         // get holder while allowing mutex to go out of scope and release
         // lock so we can take another lock for insert further down
-        let holder = {
-            let store = self.holders.lock().expect("should lock");
-            let Some(holder) = store.get(holder_id) else {
-                return Err(anyhow!("no matching holder_id"));
-            };
-            holder.clone()
-        };
+        let holder = self.holders.lock().expect("should lock").get(holder_id).unwrap().clone();
 
         // populate requested claims for holder
         let mut claims = HashMap::new();
@@ -272,10 +265,10 @@ impl HolderStore {
         updated.pending = false;
         self.holders.lock().expect("should lock").insert(holder_id.to_string(), updated);
 
-        Ok(holder::Claims {
+        holder::Claims {
             claims,
             pending: holder.pending,
-        })
+        }
     }
 }
 
@@ -302,10 +295,11 @@ impl StateStore {
     }
 
     fn get(&self, key: &str) -> anyhow::Result<Vec<u8>> {
-        match self.store.lock().expect("should lock").get(key) {
-            Some(data) => Ok(data.clone()),
-            None => Err(anyhow!("state entry not found")),
-        }
+        self.store
+            .lock()
+            .expect("should lock")
+            .get(key)
+            .map_or_else(|| Err(anyhow!("state entry not found")), |data| Ok(data.clone()))
     }
 
     #[allow(clippy::unnecessary_wraps)]
@@ -383,7 +377,7 @@ impl CallbackHook {
         }
     }
 
-    #[allow(clippy::unnecessary_wraps, clippy::unused_self)]
+    #[allow(clippy::unnecessary_wraps, clippy::unused_self, clippy::missing_const_for_fn)]
     fn callback(&self, _: &Payload) -> anyhow::Result<()> {
         Ok(())
     }

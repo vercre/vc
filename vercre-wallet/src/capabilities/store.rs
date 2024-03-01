@@ -80,7 +80,7 @@ where
 {
     /// Create a new Store capability context.
     #[must_use]
-    pub fn new(context: CapabilityContext<StoreRequest, Ev>) -> Self {
+    pub const fn new(context: CapabilityContext<StoreRequest, Ev>) -> Self {
         Self { context }
     }
 

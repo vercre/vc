@@ -43,7 +43,7 @@ pub struct Model {
 impl Model {
     /// Reset the `Model` to its default state.
     pub fn reset(&mut self) {
-        *self = Self { ..Default::default() };
+        *self = Self::default();
     }
 
     /// Populate the `Model` from a new `RequestObject`. Verifies the
@@ -199,7 +199,7 @@ impl Model {
             descriptor_map: desc_map,
         };
 
-        self.submission = Some(submission.clone());
+        self.submission = Some(submission);
 
         Ok(())
     }

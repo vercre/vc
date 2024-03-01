@@ -376,7 +376,7 @@ where
     //
     // N.B. has side effect of saving valid scope items into context for later use.
     fn verify_scope(&mut self, scope: &str) -> Result<()> {
-        'verify_scope: for item in scope.split_whitespace().collect::<Vec<&str>>() {
+        'verify_scope: for item in scope.split_whitespace() {
             for (cfg_id, cred_cfg) in &self.issuer_meta.credential_configurations_supported {
                 // `authorization_details` credential request  takes precedence `scope` request
                 if self.auth_dets.contains_key(cfg_id) {

@@ -93,13 +93,13 @@ pub mod deferred;
 pub mod invoke;
 pub mod metadata;
 pub mod register;
-mod state;
+pub mod state;
 pub mod token;
 
 use std::fmt::Debug;
 
 use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
-// TODO: move tClaims into jwt module
+// TODO: move Claims into jwt module
 pub use vercre_core::vci::ProofClaims;
 pub use vercre_core::w3c::vc::VcClaims;
 pub use vercre_core::{callback, holder, jwt, provider};
@@ -127,7 +127,7 @@ where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Create a new endpoint instance.
-    pub fn new(provider: P) -> Self {
+    pub const fn new(provider: P) -> Self {
         Self { provider }
     }
 }

@@ -1,7 +1,7 @@
 //! # `OpenID` Core
 
 use std::fmt::{Debug, Display};
-use std::future::Future;
+use std::future::{Future, IntoFuture};
 
 use chrono::{DateTime, Utc};
 
@@ -13,74 +13,77 @@ use crate::{callback, holder};
 
 /// The Client trait is used by implementers to provide Client metadata to the
 /// library.
-#[allow(async_fn_in_trait)]
 pub trait Client: Send + Sync {
     /// Returns client metadata for the specified client.
-    async fn metadata(&self, client_id: &str) -> anyhow::Result<ClientMetadata>;
+    fn metadata(
+        &self, client_id: &str,
+    ) -> impl Future<Output = anyhow::Result<ClientMetadata>> + Send;
 
     /// Used by OAuth 2.0 clients to dynamically register with the authorization
     /// server.
-    async fn register(&self, client_meta: &ClientMetadata) -> anyhow::Result<ClientMetadata>;
+    fn register(
+        &self, client_meta: &ClientMetadata,
+    ) -> impl Future<Output = anyhow::Result<ClientMetadata>> + Send;
 }
 
 /// The Issuer trait is used by implementers to provide Credential Issuer
 /// metadata.
-#[allow(async_fn_in_trait)]
 pub trait Issuer: Send + Sync {
     /// Returns the Credential Issuer's metadata.
-    async fn metadata(&self, issuer_id: &str) -> anyhow::Result<IssuerMetadata>;
+    fn metadata(
+        &self, issuer_id: &str,
+    ) -> impl Future<Output = anyhow::Result<IssuerMetadata>> + Send;
 }
 
 /// The Issuer trait is used by implementers to provide Authorization Server
 /// metadata.
-#[allow(async_fn_in_trait)]
 pub trait Server: Send + Sync {
     /// Returns the Authorization Server's metadata.
-    async fn metadata(&self, server_id: &str) -> anyhow::Result<ServerMetadata>;
+    fn metadata(
+        &self, server_id: &str,
+    ) -> impl Future<Output = anyhow::Result<ServerMetadata>> + Send;
 }
 
 /// `StateManager` is used to store and manage server state.
-#[allow(async_fn_in_trait)]
 pub trait StateManager: Send + Sync {
     /// `StateStore` data (state) by provided key. The expiry parameter indicates
     /// when data can be expunged removed from the state store.
-    async fn put(&self, key: &str, data: Vec<u8>, expiry: DateTime<Utc>) -> anyhow::Result<()>;
+    fn put(
+        &self, key: &str, data: Vec<u8>, expiry: DateTime<Utc>,
+    ) -> impl Future<Output = anyhow::Result<()>> + Send;
 
     /// Retrieve data using the provided key.
-    async fn get(&self, key: &str) -> anyhow::Result<Vec<u8>>;
+    fn get(&self, key: &str) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
 
     /// Remove data using the key provided.
-    async fn purge(&self, key: &str) -> anyhow::Result<()>;
+    fn purge(&self, key: &str) -> impl Future<Output = anyhow::Result<()>> + Send;
 }
 
 /// Callback describes behaviours required for notifying a client application of
 /// issuance or presentation flow status.
-#[allow(async_fn_in_trait)]
 pub trait Callback: Send + Sync {
     /// Callback method to process status updates.
-    async fn callback(&self, pl: &callback::Payload) -> anyhow::Result<()>;
+    fn callback(&self, pl: &callback::Payload) -> impl Future<Output = anyhow::Result<()>> + Send;
 }
 
 /// The Holder trait specifies how the library expects user information to be
 /// provided by implementers.
-#[allow(async_fn_in_trait)]
 pub trait Holder: Send + Sync {
     /// Authorize issuance of the credential specified by `credential_configuration_id`.
     /// Returns `true` if the holder is authorized.
-    async fn authorize(
+    fn authorize(
         &self, holder_id: &str, credential_configuration_id: &str,
-    ) -> anyhow::Result<bool>;
+    ) -> impl Future<Output = anyhow::Result<bool>> + Send;
 
     /// Returns a populated `Claims` object for the given holder and credential
     /// definition.
-    async fn claims(
+    fn claims(
         &self, holder_id: &str, credential: &CredentialDefinition,
-    ) -> anyhow::Result<holder::Claims>;
+    ) -> impl Future<Output = anyhow::Result<holder::Claims>> + Send;
 }
 
 /// Signer is used by implementers to provide signing functionality for
 /// Verifiable Credential issuance and Verifiable Presentation submissions.
-#[allow(async_fn_in_trait)]
 pub trait Signer: Send + Sync + Debug {
     /// Algorithm returns the algorithm used by the signer.
     fn algorithm(&self) -> Algorithm;
@@ -90,12 +93,13 @@ pub trait Signer: Send + Sync + Debug {
     fn verification_method(&self) -> String;
 
     /// Sign is a convenience method for infallible Signer implementations.
-    async fn sign(&self, msg: &[u8]) -> Vec<u8> {
-        self.try_sign(msg).await.expect("should sign")
+    fn sign(&self, msg: &[u8]) -> impl Future<Output = Vec<u8>> + Send {
+        let v = async { self.try_sign(msg).await.expect("should sign") };
+        v.into_future()
     }
 
     /// `TrySign` is the fallible version of Sign.
-    fn try_sign(&self, msg: &[u8]) -> impl Future<Output = anyhow::Result<Vec<u8>>>; //anyhow::Result<Vec<u8>>;
+    fn try_sign(&self, msg: &[u8]) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send; //anyhow::Result<Vec<u8>>;
 }
 
 /// Algorithm is used to specify the signing algorithm used by the signer.

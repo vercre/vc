@@ -118,7 +118,7 @@ pub struct Capabilities {
 // Use credential::App as a sub-app
 impl From<&Capabilities> for credential::Capabilities {
     fn from(incoming: &Capabilities) -> Self {
-        credential::Capabilities {
+        Self {
             render: incoming.render.map_event(Event::Credential),
             http: incoming.http.map_event(Event::Credential),
             store: incoming.store.map_event(Event::Credential),
@@ -131,7 +131,7 @@ impl From<&Capabilities> for credential::Capabilities {
 // Use issuance::App as a sub-app
 impl From<&Capabilities> for issuance::Capabilities {
     fn from(incoming: &Capabilities) -> Self {
-        issuance::Capabilities {
+        Self {
             render: incoming.render.map_event(Event::Issuance),
             http: incoming.http.map_event(Event::Issuance),
             store: incoming.store.map_event(Event::Issuance),
@@ -144,7 +144,7 @@ impl From<&Capabilities> for issuance::Capabilities {
 // Use presentation::App as a sub-app
 impl From<&Capabilities> for presentation::Capabilities {
     fn from(incoming: &Capabilities) -> Self {
-        presentation::Capabilities {
+        Self {
             render: incoming.render.map_event(Event::Presentation),
             http: incoming.http.map_event(Event::Presentation),
             store: incoming.store.map_event(Event::Presentation),

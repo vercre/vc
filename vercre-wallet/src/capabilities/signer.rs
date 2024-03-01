@@ -28,8 +28,8 @@ impl Serialize for Error {
 }
 
 impl From<serde_json::Error> for Error {
-    fn from(err: serde_json::Error) -> Error {
-        Error::InvalidRequest(err.to_string())
+    fn from(err: serde_json::Error) -> Self {
+        Self::InvalidRequest(err.to_string())
     }
 }
 
@@ -86,7 +86,7 @@ where
 {
     /// Create a new Signer capability context.
     #[must_use]
-    pub fn new(context: CapabilityContext<SignerRequest, Ev>) -> Self {
+    pub const fn new(context: CapabilityContext<SignerRequest, Ev>) -> Self {
         Self { context }
     }
 

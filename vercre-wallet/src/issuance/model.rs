@@ -50,7 +50,7 @@ pub struct Model {
 impl Model {
     /// Reset the model to it's default state.
     pub(crate) fn reset(&mut self) {
-        *self = Self { ..Default::default() };
+        *self = Self::default();
     }
 
     /// Populate the `Model` from a new `CredentialOffer`. Verifies the

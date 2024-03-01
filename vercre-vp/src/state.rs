@@ -13,9 +13,9 @@ pub(crate) enum Expire {
 }
 
 impl Expire {
-    pub(crate) fn duration(&self) -> Duration {
+    pub(crate) const fn duration(&self) -> Duration {
         match self {
-            Expire::Request => Duration::minutes(5),
+            Self::Request => Duration::minutes(5),
         }
     }
 }
@@ -74,7 +74,7 @@ impl TryFrom<&[u8]> for State {
     type Error = vercre_core::error::Error;
 
     fn try_from(value: &[u8]) -> Result<Self> {
-        State::from_slice(value)
+        Self::from_slice(value)
     }
 }
 
@@ -82,6 +82,6 @@ impl TryFrom<Vec<u8>> for State {
     type Error = vercre_core::error::Error;
 
     fn try_from(value: Vec<u8>) -> Result<Self> {
-        State::try_from(value.as_slice())
+        Self::try_from(value.as_slice())
     }
 }
