@@ -7,7 +7,6 @@
 use std::fmt;
 use std::marker::PhantomData;
 
-// use std::str::FromStr;
 use serde::de::{self, Deserialize, DeserializeOwned, Deserializer, MapAccess, Visitor};
 use serde::ser::{self, Serialize, Serializer};
 
@@ -47,7 +46,6 @@ where
 /// be deserialized into the target type.
 pub fn deserialize<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
 where
-    // T: Deserialize<'de> + FromStr,
     T: DeserializeOwned,
     D: Deserializer<'de>,
 {
@@ -55,7 +53,6 @@ where
 
     impl<'de, T> Visitor<'de> for VisitorImpl<Option<T>>
     where
-        // T: Deserialize<'de> + FromStr,
         T: DeserializeOwned,
     {
         type Value = Option<T>;
