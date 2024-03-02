@@ -108,7 +108,9 @@ pub trait Endpoint: Debug {
     /// Try to send a callback to the client. If the callback fails, log the error.
     #[allow(async_fn_in_trait)]
     #[instrument]
-    async fn try_callback<R, C, U>(&self, ctx: C, e: &Error) -> anyhow::Result<()>
+    async fn try_callback<R, C, U>(
+        &self, ctx: C, e: &Error,
+    ) -> std::result::Result<(), provider::Error>
     where
         C: Context<Request = R, Response = U>,
         R: Default + Clone + Send + Sync + Debug,

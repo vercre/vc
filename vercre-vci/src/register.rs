@@ -57,7 +57,7 @@ where
 
         let buf = match StateManager::get(provider, &request.access_token).await {
             Ok(buf) => buf,
-            Err(e) => err!(Err::ServerError(e), "State not found"),
+            Err(e) => err!(Err::ServerError(anyhow::anyhow!(e)), "State not found"),
         };
         let state = State::try_from(buf)?;
 

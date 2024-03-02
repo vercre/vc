@@ -92,17 +92,6 @@ impl Display for Error {
     }
 }
 
-// // Customise Debug output to pretty print stack trace.
-// impl Debug for Error {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         write!(
-//             f,
-//             "Error {{ {:?}, {:?}, {:?},\n\nbacktrace:\n{} }}",
-//             self.source, self.hint, self.state, self.backtrace,
-//         )
-//     }
-// }
-
 impl Serialize for Error {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         #[derive(Serialize)]
@@ -426,6 +415,18 @@ impl From<std::convert::Infallible> for Error {
         }
     }
 }
+
+impl From<crate::provider::Error> for Error {
+    fn from(err: crate::provider::Error) -> Self {
+        Self {
+            source: Err::ServerError(anyhow::anyhow!(err)),
+            backtrace: Backtrace::capture(),
+            hint: None,
+            state: None,
+        }
+    }
+}
+
 
 /// Simplify creation of errors with tracing.
 ///
