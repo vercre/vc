@@ -4,44 +4,42 @@ use std::fmt::{Debug, Display};
 use std::future::{Future, IntoFuture};
 
 use chrono::{DateTime, Utc};
+pub use error::ProviderError as Error;
 
+use crate::callback;
+use crate::holder::Claims;
 use crate::metadata::{
     Client as ClientMetadata, CredentialDefinition, Issuer as IssuerMetadata,
     Server as ServerMetadata,
 };
-use crate::{callback, holder};
+
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// The Client trait is used by implementers to provide Client metadata to the
 /// library.
 pub trait Client: Send + Sync {
     /// Returns client metadata for the specified client.
-    fn metadata(
-        &self, client_id: &str,
-    ) -> impl Future<Output = anyhow::Result<ClientMetadata>> + Send;
+    fn metadata(&self, client_id: &str) -> impl Future<Output = Result<ClientMetadata>> + Send;
 
     /// Used by OAuth 2.0 clients to dynamically register with the authorization
     /// server.
     fn register(
         &self, client_meta: &ClientMetadata,
-    ) -> impl Future<Output = anyhow::Result<ClientMetadata>> + Send;
+    ) -> impl Future<Output = Result<ClientMetadata>> + Send;
 }
 
 /// The Issuer trait is used by implementers to provide Credential Issuer
 /// metadata.
 pub trait Issuer: Send + Sync {
     /// Returns the Credential Issuer's metadata.
-    fn metadata(
-        &self, issuer_id: &str,
-    ) -> impl Future<Output = anyhow::Result<IssuerMetadata>> + Send;
+    fn metadata(&self, issuer_id: &str) -> impl Future<Output = Result<IssuerMetadata>> + Send;
 }
 
 /// The Issuer trait is used by implementers to provide Authorization Server
 /// metadata.
 pub trait Server: Send + Sync {
     /// Returns the Authorization Server's metadata.
-    fn metadata(
-        &self, server_id: &str,
-    ) -> impl Future<Output = anyhow::Result<ServerMetadata>> + Send;
+    fn metadata(&self, server_id: &str) -> impl Future<Output = Result<ServerMetadata>> + Send;
 }
 
 /// `StateManager` is used to store and manage server state.
@@ -50,20 +48,20 @@ pub trait StateManager: Send + Sync {
     /// when data can be expunged removed from the state store.
     fn put(
         &self, key: &str, data: Vec<u8>, expiry: DateTime<Utc>,
-    ) -> impl Future<Output = anyhow::Result<()>> + Send;
+    ) -> impl Future<Output = Result<()>> + Send;
 
     /// Retrieve data using the provided key.
-    fn get(&self, key: &str) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
+    fn get(&self, key: &str) -> impl Future<Output = Result<Vec<u8>>> + Send;
 
     /// Remove data using the key provided.
-    fn purge(&self, key: &str) -> impl Future<Output = anyhow::Result<()>> + Send;
+    fn purge(&self, key: &str) -> impl Future<Output = Result<()>> + Send;
 }
 
 /// Callback describes behaviours required for notifying a client application of
 /// issuance or presentation flow status.
 pub trait Callback: Send + Sync {
     /// Callback method to process status updates.
-    fn callback(&self, pl: &callback::Payload) -> impl Future<Output = anyhow::Result<()>> + Send;
+    fn callback(&self, pl: &callback::Payload) -> impl Future<Output = Result<()>> + Send;
 }
 
 /// The Holder trait specifies how the library expects user information to be
@@ -73,13 +71,13 @@ pub trait Holder: Send + Sync {
     /// Returns `true` if the holder is authorized.
     fn authorize(
         &self, holder_id: &str, credential_configuration_id: &str,
-    ) -> impl Future<Output = anyhow::Result<bool>> + Send;
+    ) -> impl Future<Output = Result<bool>> + Send;
 
     /// Returns a populated `Claims` object for the given holder and credential
     /// definition.
     fn claims(
         &self, holder_id: &str, credential: &CredentialDefinition,
-    ) -> impl Future<Output = anyhow::Result<holder::Claims>> + Send;
+    ) -> impl Future<Output = Result<Claims>> + Send;
 }
 
 /// Signer is used by implementers to provide signing functionality for
@@ -99,7 +97,7 @@ pub trait Signer: Send + Sync + Debug {
     }
 
     /// `TrySign` is the fallible version of Sign.
-    fn try_sign(&self, msg: &[u8]) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send; //anyhow::Result<Vec<u8>>;
+    fn try_sign(&self, msg: &[u8]) -> impl Future<Output = Result<Vec<u8>>> + Send;
 }
 
 /// Algorithm is used to specify the signing algorithm used by the signer.
@@ -127,6 +125,43 @@ impl Algorithm {
         match self {
             Self::ES256K => String::from("EcdsaSecp256k1VerificationKey2019"),
             Self::EdDSA => String::from("JsonWebKey2020"),
+        }
+    }
+}
+
+mod error {
+    //! The `Error` type is used to allow `Provider` trait implementers to return errors
+    //! that can readily be converted to the `vercre_core::Error` type.
+
+    use std::backtrace::Backtrace;
+    use std::error::Error;
+    use std::fmt;
+
+    use thiserror::Error;
+
+    #[allow(clippy::module_name_repetitions)]
+    #[derive(Error, Debug)]
+    pub enum ProviderError {
+        Anyhow {
+            #[from]
+            source: anyhow::Error,
+            backtrace: Backtrace,
+        },
+        Base64 {
+            #[from]
+            source: base64ct::Error,
+            backtrace: Backtrace,
+        },
+        Ecdsa {
+            #[from]
+            source: ecdsa::Error,
+            backtrace: Backtrace,
+        },
+    }
+
+    impl fmt::Display for ProviderError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "{}", self.source().unwrap())
         }
     }
 }

@@ -36,25 +36,25 @@ impl Provider {
 }
 
 impl Client for Provider {
-    async fn metadata(&self, client_id: &str) -> anyhow::Result<types::Client> {
+    async fn metadata(&self, client_id: &str) -> Result<types::Client> {
         self.client.get(client_id)
     }
 
-    async fn register(&self, _: &types::Client) -> anyhow::Result<types::Client> {
+    async fn register(&self, _: &types::Client) -> Result<types::Client> {
         unimplemented!("register not implemented")
     }
 }
 
 impl StateManager for Provider {
-    async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> anyhow::Result<()> {
+    async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
         self.state_store.put(key, state, dt)
     }
 
-    async fn get(&self, key: &str) -> anyhow::Result<Vec<u8>> {
+    async fn get(&self, key: &str) -> Result<Vec<u8>> {
         self.state_store.get(key)
     }
 
-    async fn purge(&self, key: &str) -> anyhow::Result<()> {
+    async fn purge(&self, key: &str) -> Result<()> {
         self.state_store.purge(key)
     }
 }
@@ -68,7 +68,7 @@ impl Signer for Provider {
         format!("{VERIFIER_DID}#{VERIFY_KEY_ID}")
     }
 
-    async fn try_sign(&self, msg: &[u8]) -> anyhow::Result<Vec<u8>> {
+    async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
         let decoded = Base64UrlUnpadded::decode_vec(JWK_D)?;
         let signing_key: SigningKey<Secp256k1> = SigningKey::from_slice(&decoded)?;
         let sig: Signature<Secp256k1> = signing_key.sign(msg);
@@ -77,7 +77,7 @@ impl Signer for Provider {
 }
 
 impl Callback for Provider {
-    async fn callback(&self, pl: &Payload) -> anyhow::Result<()> {
+    async fn callback(&self, pl: &Payload) -> Result<()> {
         self.callback.callback(pl)
     }
 }
@@ -128,9 +128,9 @@ impl ClientStore {
         Self { clients }
     }
 
-    fn get(&self, client_id: &str) -> anyhow::Result<types::Client> {
+    fn get(&self, client_id: &str) -> Result<types::Client> {
         let Some(client) = self.clients.get(client_id) else {
-            return Err(anyhow!("verifier not found"));
+            return Err(anyhow!("verifier not found").into());
         };
         Ok(client.clone())
     }
@@ -153,21 +153,20 @@ impl StateStore {
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn put(&self, key: &str, state: Vec<u8>, _: DateTime<Utc>) -> anyhow::Result<()> {
+    fn put(&self, key: &str, state: Vec<u8>, _: DateTime<Utc>) -> Result<()> {
         self.store.lock().expect("should lock").insert(key.to_string(), state);
         Ok(())
     }
 
-    fn get(&self, key: &str) -> anyhow::Result<Vec<u8>> {
-        self.store
-            .lock()
-            .expect("should lock")
-            .get(key)
-            .map_or_else(|| Err(anyhow!("no matching documents found")), |data| Ok(data.clone()))
+    fn get(&self, key: &str) -> Result<Vec<u8>> {
+        let Some(state) = self.store.lock().expect("should lock").get(key).cloned() else {
+            return Err(anyhow!("state not found for key: {key}").into());
+        };
+        Ok(state)
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn purge(&self, key: &str) -> anyhow::Result<()> {
+    fn purge(&self, key: &str) -> Result<()> {
         self.store.lock().expect("should lock").remove(key);
         Ok(())
     }
@@ -190,7 +189,7 @@ impl CallbackHook {
     }
 
     #[allow(clippy::unnecessary_wraps, clippy::unused_self, clippy::missing_const_for_fn)]
-    fn callback(&self, _: &Payload) -> anyhow::Result<()> {
+    fn callback(&self, _: &Payload) -> Result<()> {
         Ok(())
     }
 }
