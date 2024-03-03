@@ -171,24 +171,24 @@ impl VerifiableCredential {
         Self {
             context: vec![
                 String::from("https://www.w3.org/2018/credentials/v1"),
-                String::from("http://credibil.io/credentials/v1"),
+                String::from("https://www.w3.org/2018/credentials/examples/v1"),
             ],
             type_: vec![String::from("VerifiableCredential"), String::from("EmployeeIDCredential")],
             issuer: Issuer {
-                id: String::from("http://credibil.io"),
+                id: String::from("https://example.com/issuers/14"),
                 extra: None,
             },
-            id: String::from("http://credibil.io/credentials/1234"),
+            id: String::from("https://example.com/credentials/3732"),
             issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
             credential_subject: vec![CredentialSubject {
-                id: Some(String::from("did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJwdWJsaWNLZXlNb2RlbDFJZCIsInB1YmxpY0tleUp3ayI6eyJjcnYiOiJzZWNwMjU2azEiLCJrdHkiOiJFQyIsIngiOiJ0WFNLQl9ydWJYUzdzQ2pYcXVwVkpFelRjVzNNc2ptRXZxMVlwWG45NlpnIiwieSI6ImRPaWNYcWJqRnhvR0otSzAtR0oxa0hZSnFpY19EX09NdVV3a1E3T2w2bmsifSwicHVycG9zZXMiOlsiYXV0aGVudGljYXRpb24iLCJrZXlBZ3JlZW1lbnQiXSwidHlwZSI6IkVjZHNhU2VjcDI1NmsxVmVyaWZpY2F0aW9uS2V5MjAxOSJ9XSwic2VydmljZXMiOlt7ImlkIjoic2VydmljZTFJZCIsInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly93d3cuc2VydmljZTEuY29tIiwidHlwZSI6InNlcnZpY2UxVHlwZSJ9XX19XSwidXBkYXRlQ29tbWl0bWVudCI6IkVpREtJa3dxTzY5SVBHM3BPbEhrZGI4Nm5ZdDBhTnhTSFp1MnItYmhFem5qZEEifSwic3VmZml4RGF0YSI6eyJkZWx0YUhhc2giOiJFaUNmRFdSbllsY0Q5RUdBM2RfNVoxQUh1LWlZcU1iSjluZmlxZHo1UzhWRGJnIiwicmVjb3ZlcnlDb21taXRtZW50IjoiRWlCZk9aZE10VTZPQnc4UGs4NzlRdFotMkotOUZiYmpTWnlvYUFfYnFENHpoQSJ9fQ")),
-                claims: HashMap::from([(String::from("claim1"), serde_json::json!("claim"))]),
+                id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".to_string()),
+                claims: HashMap::from([(String::from("employeeId"), serde_json::json!("1234567890"))]),
             }],
             proof: Some(vec![Proof{
-                type_:String::from("Ed25519Signature2020"),
-                cryptosuite: Some(String::from("EcdsaSecp256k1VerificationKey2019")),
+                type_: String::from("Ed25519Signature2020"),
+                cryptosuite: Some("EcdsaSecp256k1VerificationKey2019".to_string()),
                 proof_purpose: String::from("assertionMethod"),
-                verification_method:String::from("did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJwdWJsaWNLZXlNb2RlbDFJZCIsInB1YmxpY0tleUp3ayI6eyJjcnYiOiJzZWNwMjU2azEiLCJrdHkiOiJFQyIsIngiOiJ0WFNLQl9ydWJYUzdzQ2pYcXVwVkpFelRjVzNNc2ptRXZxMVlwWG45NlpnIiwieSI6ImRPaWNYcWJqRnhvR0otSzAtR0oxa0hZSnFpY19EX09NdVV3a1E3T2w2bmsifSwicHVycG9zZXMiOlsiYXV0aGVudGljYXRpb24iLCJrZXlBZ3JlZW1lbnQiXSwidHlwZSI6IkVjZHNhU2VjcDI1NmsxVmVyaWZpY2F0aW9uS2V5MjAxOSJ9XSwic2VydmljZXMiOlt7ImlkIjoic2VydmljZTFJZCIsInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly93d3cuc2VydmljZTEuY29tIiwidHlwZSI6InNlcnZpY2UxVHlwZSJ9XX19XSwidXBkYXRlQ29tbWl0bWVudCI6IkVpREtJa3dxTzY5SVBHM3BPbEhrZGI4Nm5ZdDBhTnhTSFp1MnItYmhFem5qZEEifSwic3VmZml4RGF0YSI6eyJkZWx0YUhhc2giOiJFaUNmRFdSbllsY0Q5RUdBM2RfNVoxQUh1LWlZcU1iSjluZmlxZHo1UzhWRGJnIiwicmVjb3ZlcnlDb21taXRtZW50IjoiRWlCZk9aZE10VTZPQnc4UGs4NzlRdFotMkotOUZiYmpTWnlvYUFfYnFENHpoQSJ9fQ#publicKeyModel1Id"),
+                verification_method: String::from("did:example:ebfeb1f712ebc6f1c276e12ec21"),
                 ..Default::default()
             }]),
 
@@ -729,7 +729,7 @@ mod tests {
     fn test_builder() {
         init_tracer();
 
-        let vc = build_vc().expect("should build vc");
+        let vc = VerifiableCredential::sample();
 
         // serialize
         let vc_json = serde_json::to_value(&vc).expect("should serialize to json");
@@ -751,7 +751,7 @@ mod tests {
         );
         assert_eq!(
             *vc_json.get("credentialSubject").expect("credentialSubject should be set"),
-            json!({"employeeID":"1234567890","id":"did:example:ebfeb1f712ebc6f1c276e12ec21"})
+            json!({"employeeId":"1234567890","id":"did:example:ebfeb1f712ebc6f1c276e12ec21"})
         );
         assert_eq!(
             *vc_json.get("issuer").expect("issuer should be set"),
@@ -777,7 +777,7 @@ mod tests {
     fn test_flexvec() {
         init_tracer();
 
-        let mut vc = build_vc().expect("should build vc");
+        let mut vc = VerifiableCredential::sample();
 
         vc.proof = Some(vec![Proof { ..Default::default() }]);
 
@@ -813,7 +813,7 @@ mod tests {
     fn test_flexobj() {
         init_tracer();
 
-        let mut vc = build_vc().expect("should build vc");
+        let mut vc = VerifiableCredential::sample();
 
         // serialize with just issuer 'id' field set
         let vc_json = serde_json::to_value(&vc).expect("should serialize to json");
@@ -843,19 +843,5 @@ mod tests {
         let vc_de: VerifiableCredential =
             serde_json::from_value(vc_json).expect("should deserialize");
         assert_eq!(vc_de.issuer, vc.issuer, "issuer 'extra' fields should be populated");
-    }
-
-    fn build_vc() -> Result<VerifiableCredential> {
-        let mut subj = CredentialSubject::default();
-        subj.id = Some(String::from("did:example:ebfeb1f712ebc6f1c276e12ec21"));
-        subj.claims.insert(String::from("employeeID"), json!("1234567890"));
-
-        VerifiableCredential::builder()
-            .add_context(String::from("https://www.w3.org/2018/credentials/examples/v1"))
-            .id(String::from("https://example.com/credentials/3732"))
-            .add_type(String::from("EmployeeIDCredential"))
-            .issuer(String::from("https://example.com/issuers/14"))
-            .add_subject(subj)
-            .build()
     }
 }
