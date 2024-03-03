@@ -15,12 +15,12 @@ base64ct = { version = "1.6.0", default-features = false, features = ["std"] }
 http = "1.0.0"
 iota_stronghold = "2.0.0"
 lazy_static = "1.4.0"
-log = "^0.4.20"
+log = "^0.4.21"
 reqwest = { version = "0.11.24", features = ["json"] }
 rust-argon2 = "2.1.0"
 serde = "1.0.197"
 serde_json = "1.0.114"
-tauri = { version = "2.0.0-beta.6", features = ["test"] }
+tauri = { version = "2.0.0-beta.8", features = ["test"] }
 tauri-plugin-deep-link = "2.0.0-beta.0"
 tauri-plugin-http = "2.0.0-beta.0"
 tauri-plugin-log = "2.0.0-beta.0"
@@ -36,7 +36,7 @@ assert_let_bind = "0.1.1"
 tokio = { version = "1.36.0", default-features = false, features = ["fs", "macros", "rt"] }
 
 [build-dependencies]
-tauri-build = { version = "2.0.0-beta.4", features = [] }
+tauri-build = { version = "2.0.0-beta.6", features = [] }
 
 [features]
 # by default Tauri runs in production mode

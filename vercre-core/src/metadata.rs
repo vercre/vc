@@ -322,8 +322,7 @@ pub struct CredentialConfiguration {
     /// claims the credential MAY contain, as well as information on how to
     /// display the credential.
     ///
-    /// See [Appendix A] of the `OpenID4VCI` specification for Credential Format
-    /// Profiles.
+    /// See [Credential Format Profiles] in the `OpenID4VCI` specification.
     ///
     /// [Appendix A]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles
     pub format: Format,
@@ -519,9 +518,12 @@ pub struct CredentialDefinition {
 
     /// A list of name/value pairs identifying claims offered in the Credential.
     /// A value can be another such object (nested data structures), or an array of
-    /// objects.
-    /// Each claim defines language-based display properties for credentialSubject
-    /// fields.
+    /// objects. Each claim defines language-based display properties for
+    /// `credentialSubject` fields.
+    ///
+    /// N.B. This property is used by the Wallet to specify which claims it is
+    /// requesting to be issued out of all the claims the Credential Issuer is capable
+    /// of issuing for this particular Credential (data minimization).
     #[serde(rename = "credentialSubject")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_subject: Option<HashMap<String, Claim>>,

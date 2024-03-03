@@ -34,37 +34,73 @@ pub enum GrantType {
     PreAuthorizedCode,
 }
 
-/// The `OpenID4VCI` specification defines a number of commonly used Credential formats
-/// that implementers can choose to support. See [Appendix A] of the `OpenID4VCI`
-/// specification for Credential Format Profiles.
+/// The `OpenID4VCI` specification defines commonly used [Credential Format Profiles]
+/// to support.  The profiles define Credential format specific parameters or claims
+/// used to support a particular format.
 ///
-/// [Appendix A]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
+///
+/// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq, Hash)]
 pub enum Format {
-    /// W3C Verifiable Credential.
+    /// A W3C Verifiable Credential.
+    ///
+    /// When this format is specified, Credential Offer, Authorization Details,
+    /// Credential Request, and Credential Issuer metadata, including
+    /// `credential_definition` object, MUST NOT be processed using JSON-LD rules.
     #[default]
     #[serde(rename = "jwt_vc_json")]
     JwtVcJson,
 
-    /// W3C Verifiable Credential.
-    #[serde(rename = "jwt_vc_json-ld")]
-    JwtVcJsonLd,
-
-    /// W3C Verifiable Credential.
+    /// A W3C Verifiable Credential.
+    ///
+    /// When using this format, data MUST NOT be processed using JSON-LD rules.
+    ///
+    /// N.B. The `@context` value in the `credential_definition` object can be used by
+    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
+    /// could apply JSON-LD processing to the Credential issued.
     #[serde(rename = "ldp-vc")]
     LdpVc,
 
-    /// ISO mDL
+    /// A W3C Verifiable Credential.
+    ///
+    /// When using this format, data MUST NOT be processed using JSON-LD rules.
+    ///
+    /// N.B. The `@context` value in the `credential_definition` object can be used by
+    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
+    /// could apply JSON-LD processing to the Credential issued.
+    #[serde(rename = "jwt_vc_json-ld")]
+    JwtVcJsonLd,
+
+    /// ISO mDL.
+    ///
+    /// A Credential Format Profile for Credentials complying with [ISO.18013-5] —
+    /// ISO-compliant driving licence specification.
+    ///
+    /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
     #[serde(rename = "mso_mdoc")]
     MsoDoc,
 
-    /// IETF SD-JWT VC
+    /// IETF SD-JWT VC.
+    ///
+    /// A Credential Format Profile for Credentials complying with
+    /// [I-D.ietf-oauth-sd-jwt-vc] — SD-JWT-based Verifiable Credentials for
+    /// selective disclosure.
+    ///
+    /// [I-D.ietf-oauth-sd-jwt-vc]: (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-01)
     #[serde(rename = "vc+sd-jwt")]
     VcSdJwt,
 
     /// W3C Verifiable Credential.
     #[serde(rename = "jwt_vp_json")]
     JwtVpJson,
+}
+
+impl Format{
+    /// Generate a sample `Format` for testing.
+    #[must_use]
+    pub fn sample() -> Self {
+        Self::JwtVcJson
+    }
 }
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
