@@ -137,7 +137,7 @@ where
 
         // requested credential is supported
         for cred_id in &request.credential_configuration_ids {
-            let Some(_) = issuer_meta.credential_configurations_supported.get(cred_id) else {
+            if !issuer_meta.credential_configurations_supported.contains_key(cred_id) {
                 err!(Err::UnsupportedCredentialType, "requested credential is unsupported");
             };
         }
