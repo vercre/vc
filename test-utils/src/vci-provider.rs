@@ -10,13 +10,13 @@ use k256::Secp256k1;
 use serde_json::Value;
 use uuid::Uuid;
 use vercre_vci::callback::Payload;
+use vercre_vci::holder;
 use vercre_vci::metadata::types::{
     self, CredentialDefinition, AUTH_CODE_GRANT_TYPE, PRE_AUTH_GRANT_TYPE,
 };
 use vercre_vci::provider::{
-    Algorithm, Callback, Client, Error, Holder, Issuer, Server, Signer, StateManager,
+    Algorithm, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager,
 };
-use vercre_vci::{holder, provider};
 
 use crate::wallet;
 
@@ -53,52 +53,50 @@ impl Provider {
 }
 
 impl Client for Provider {
-    async fn metadata(&self, client_id: &str) -> provider::Result<types::Client> {
+    async fn metadata(&self, client_id: &str) -> Result<types::Client> {
         self.client.get(client_id)
     }
 
-    async fn register(&self, client_meta: &types::Client) -> provider::Result<types::Client> {
+    async fn register(&self, client_meta: &types::Client) -> Result<types::Client> {
         self.client.add(client_meta)
     }
 }
 
 impl Issuer for Provider {
-    async fn metadata(&self, issuer_id: &str) -> provider::Result<types::Issuer> {
+    async fn metadata(&self, issuer_id: &str) -> Result<types::Issuer> {
         self.issuer.get(issuer_id)
     }
 }
 
 impl Server for Provider {
-    async fn metadata(&self, server_id: &str) -> provider::Result<types::Server> {
+    async fn metadata(&self, server_id: &str) -> Result<types::Server> {
         self.server.get(server_id)
     }
 }
 
 impl Holder for Provider {
     /// Authorize issuance of the specified credential for the holder.
-    async fn authorize(
-        &self, holder_id: &str, credential_configuration_id: &str,
-    ) -> provider::Result<bool> {
+    async fn authorize(&self, holder_id: &str, credential_configuration_id: &str) -> Result<bool> {
         self.holder.authorize(holder_id, credential_configuration_id)
     }
 
     async fn claims(
         &self, holder_id: &str, credential: &CredentialDefinition,
-    ) -> provider::Result<holder::Claims> {
+    ) -> Result<holder::Claims> {
         Ok(self.holder.get_claims(holder_id, credential))
     }
 }
 
 impl StateManager for Provider {
-    async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> provider::Result<()> {
+    async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
         self.state_store.put(key, state, dt)
     }
 
-    async fn get(&self, key: &str) -> provider::Result<Vec<u8>> {
+    async fn get(&self, key: &str) -> Result<Vec<u8>> {
         self.state_store.get(key)
     }
 
-    async fn purge(&self, key: &str) -> provider::Result<()> {
+    async fn purge(&self, key: &str) -> Result<()> {
         self.state_store.purge(key)
     }
 }
@@ -112,7 +110,7 @@ impl Signer for Provider {
         format!("{ISSUER_DID}#{VERIFY_KEY_ID}")
     }
 
-    async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>, Error> {
+    async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
         let decoded = Base64UrlUnpadded::decode_vec(JWK_D)?;
         let signing_key: SigningKey<Secp256k1> = SigningKey::from_slice(&decoded)?;
         let sig: Signature<Secp256k1> = signing_key.sign(msg);
@@ -121,7 +119,7 @@ impl Signer for Provider {
 }
 
 impl Callback for Provider {
-    async fn callback(&self, pl: &Payload) -> provider::Result<()> {
+    async fn callback(&self, pl: &Payload) -> Result<()> {
         self.callback.callback(pl)
     }
 }
@@ -157,16 +155,15 @@ impl ClientStore {
         }
     }
 
-    fn get(&self, client_id: &str) -> provider::Result<types::Client> {
-        self.clients
-            .lock()
-            .expect("should lock")
-            .get(client_id)
-            .map_or_else(|| Err(anyhow!("client not found").into()), |data| Ok(data.clone()))
+    fn get(&self, client_id: &str) -> Result<types::Client> {
+        let Some(client) = self.clients.lock().expect("should lock").get(client_id).cloned() else {
+            return Err(anyhow!("client not found for client_id: {client_id}").into());
+        };
+        Ok(client)
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn add(&self, client_meta: &types::Client) -> provider::Result<types::Client> {
+    fn add(&self, client_meta: &types::Client) -> Result<types::Client> {
         let client_meta = types::Client {
             client_id: Uuid::new_v4().to_string(),
             ..client_meta.to_owned()
@@ -229,9 +226,7 @@ impl HolderStore {
         }
     }
 
-    fn authorize(
-        &self, holder_id: &str, _credential_configuration_id: &str,
-    ) -> provider::Result<bool> {
+    fn authorize(&self, holder_id: &str, _credential_configuration_id: &str) -> Result<bool> {
         if self.holders.lock().expect("should lock").get(holder_id).is_none() {
             return Err(anyhow!("no matching holder_id").into());
         };
@@ -289,21 +284,20 @@ impl StateStore {
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn put(&self, key: &str, state: Vec<u8>, _: DateTime<Utc>) -> provider::Result<()> {
+    fn put(&self, key: &str, state: Vec<u8>, _: DateTime<Utc>) -> Result<()> {
         self.store.lock().expect("should lock").insert(key.to_string(), state);
         Ok(())
     }
 
-    fn get(&self, key: &str) -> provider::Result<Vec<u8>> {
-        self.store
-            .lock()
-            .expect("should lock")
-            .get(key)
-            .map_or_else(|| Err(anyhow!("state entry not found").into()), |data| Ok(data.clone()))
+    fn get(&self, key: &str) -> Result<Vec<u8>> {
+        let Some(state) = self.store.lock().expect("should lock").get(key).cloned() else {
+            return Err(anyhow!("state not found for key: {key}").into());
+        };
+        Ok(state)
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn purge(&self, key: &str) -> provider::Result<()> {
+    fn purge(&self, key: &str) -> Result<()> {
         self.store.lock().expect("should lock").remove(key);
         Ok(())
     }
@@ -329,7 +323,7 @@ impl IssuerStore {
         }
     }
 
-    fn get(&self, issuer_id: &str) -> provider::Result<types::Issuer> {
+    fn get(&self, issuer_id: &str) -> Result<types::Issuer> {
         let Some(issuer) = self.issuers.get(issuer_id) else {
             return Err(anyhow!("issuer not found").into());
         };
@@ -353,7 +347,7 @@ impl ServerStore {
         }
     }
 
-    fn get(&self, server_id: &str) -> provider::Result<types::Server> {
+    fn get(&self, server_id: &str) -> Result<types::Server> {
         let Some(server) = self.servers.get(server_id) else {
             return Err(anyhow!("issuer not found").into());
         };
@@ -378,7 +372,7 @@ impl CallbackHook {
     }
 
     #[allow(clippy::unnecessary_wraps, clippy::unused_self, clippy::missing_const_for_fn)]
-    fn callback(&self, _: &Payload) -> provider::Result<()> {
+    fn callback(&self, _: &Payload) -> Result<()> {
         Ok(())
     }
 }

@@ -419,14 +419,13 @@ impl From<std::convert::Infallible> for Error {
 impl From<crate::provider::Error> for Error {
     fn from(err: crate::provider::Error) -> Self {
         Self {
-            source: Err::ServerError(anyhow::anyhow!(err)),
+            source: Err::ServerError(err.into()),
             backtrace: Backtrace::capture(),
             hint: None,
             state: None,
         }
     }
 }
-
 
 /// Simplify creation of errors with tracing.
 ///

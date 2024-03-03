@@ -4,16 +4,15 @@ use std::fmt::{Debug, Display};
 use std::future::{Future, IntoFuture};
 
 use chrono::{DateTime, Utc};
+pub use error::ProviderError as Error;
 
+use crate::callback;
+use crate::holder::Claims;
 use crate::metadata::{
     Client as ClientMetadata, CredentialDefinition, Issuer as IssuerMetadata,
     Server as ServerMetadata,
 };
-use crate::{callback, holder};
 
-/// The `Error` type is used to allow `Provider` trait implementers to return errors
-/// that can readily be converted to the `vercre_core::Error` type.
-pub type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// The Client trait is used by implementers to provide Client metadata to the
@@ -78,7 +77,7 @@ pub trait Holder: Send + Sync {
     /// definition.
     fn claims(
         &self, holder_id: &str, credential: &CredentialDefinition,
-    ) -> impl Future<Output = Result<holder::Claims>> + Send;
+    ) -> impl Future<Output = Result<Claims>> + Send;
 }
 
 /// Signer is used by implementers to provide signing functionality for
@@ -126,6 +125,43 @@ impl Algorithm {
         match self {
             Self::ES256K => String::from("EcdsaSecp256k1VerificationKey2019"),
             Self::EdDSA => String::from("JsonWebKey2020"),
+        }
+    }
+}
+
+mod error {
+    //! The `Error` type is used to allow `Provider` trait implementers to return errors
+    //! that can readily be converted to the `vercre_core::Error` type.
+
+    use std::backtrace::Backtrace;
+    use std::error::Error;
+    use std::fmt;
+
+    use thiserror::Error;
+
+    #[allow(clippy::module_name_repetitions)]
+    #[derive(Error, Debug)]
+    pub enum ProviderError {
+        Anyhow {
+            #[from]
+            source: anyhow::Error,
+            backtrace: Backtrace,
+        },
+        Base64 {
+            #[from]
+            source: base64ct::Error,
+            backtrace: Backtrace,
+        },
+        Ecdsa {
+            #[from]
+            source: ecdsa::Error,
+            backtrace: Backtrace,
+        },
+    }
+
+    impl fmt::Display for ProviderError {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "{}", self.source().unwrap())
         }
     }
 }
