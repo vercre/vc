@@ -11,6 +11,7 @@
 use crux_core::bridge::Request;
 use crux_core::typegen::TypeGen;
 use crux_http::HttpError;
+use vercre_core::vci::Format;
 
 use crate::credential::Credential;
 use crate::{app, credential, issuance, presentation};
@@ -29,12 +30,11 @@ pub fn generate(lang: Language, gen_dir: &str) {
     // register FFI types
     gen.register_type::<Request<app::EffectFfi>>().expect("should register");
     gen.register_type::<app::EffectFfi>().expect("should register");
+    gen.register_type::<HttpError>().expect("should register");
 
     // register credential type
-    gen.register_samples::<Credential>(vec![Credential::sample()])
-        .expect("should register Credential");
-
-    gen.register_type::<HttpError>().expect("should register");
+    gen.register_type::<Format>().expect("should register");
+    gen.register_samples::<Credential>(vec![Credential::sample()]).expect("should register");
 
     // register issuance app
     gen.register_app::<issuance::App>().expect("should register issuance::App");
