@@ -25,12 +25,15 @@ use crate::{err, stringify, Result};
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub enum GrantType {
     /// The OAuth 2.0 Grant Type for Authorization Code Flow.
-    #[serde(rename = "authorization_code")]
+    #[cfg_attr(not(feature = "typegen"), serde(rename = "authorization_code"))]
     AuthorizationCode,
 
     /// The OAuth 2.0 Grant Type for Pre-Authorized Code Flow.
     #[default]
-    #[serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")]
+    #[cfg_attr(
+        not(feature = "typegen"),
+        serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")
+    )]
     PreAuthorizedCode,
 }
 
@@ -48,7 +51,7 @@ pub enum Format {
     /// Credential Request, and Credential Issuer metadata, including
     /// `credential_definition` object, MUST NOT be processed using JSON-LD rules.
     #[default]
-    #[serde(rename = "jwt_vc_json")]
+    #[cfg_attr(not(feature = "typegen"), serde(rename = "jwt_vc_json"))]
     JwtVcJson,
 
     /// A W3C Verifiable Credential.
@@ -58,7 +61,7 @@ pub enum Format {
     /// N.B. The `@context` value in the `credential_definition` object can be used by
     /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
     /// could apply JSON-LD processing to the Credential issued.
-    #[serde(rename = "ldp-vc")]
+    #[cfg_attr(not(feature = "typegen"), serde(rename = "ldp-vc"))]
     LdpVc,
 
     /// A W3C Verifiable Credential.
@@ -68,7 +71,7 @@ pub enum Format {
     /// N.B. The `@context` value in the `credential_definition` object can be used by
     /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
     /// could apply JSON-LD processing to the Credential issued.
-    #[serde(rename = "jwt_vc_json-ld")]
+    #[cfg_attr(not(feature = "typegen"), serde(rename = "jwt_vc_json-ld"))]
     JwtVcJsonLd,
 
     /// ISO mDL.
@@ -77,7 +80,7 @@ pub enum Format {
     /// ISO-compliant driving licence specification.
     ///
     /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
-    #[serde(rename = "mso_mdoc")]
+    #[cfg_attr(not(feature = "typegen"), serde(rename = "mso_mdoc"))]
     MsoDoc,
 
     /// IETF SD-JWT VC.
@@ -87,15 +90,15 @@ pub enum Format {
     /// selective disclosure.
     ///
     /// [I-D.ietf-oauth-sd-jwt-vc]: (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-01)
-    #[serde(rename = "vc+sd-jwt")]
+    #[cfg_attr(not(feature = "typegen"), serde(rename = "vc+sd-jwt"))]
     VcSdJwt,
 
     /// W3C Verifiable Credential.
-    #[serde(rename = "jwt_vp_json")]
+    #[cfg_attr(not(feature = "typegen"), serde(rename = "jwt_vp_json"))]
     JwtVpJson,
 }
 
-impl Format{
+impl Format {
     /// Generate a sample `Format` for testing.
     #[must_use]
     pub fn sample() -> Self {
