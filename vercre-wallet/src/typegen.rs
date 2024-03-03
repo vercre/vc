@@ -3,8 +3,7 @@
 //!
 //! N.B. Due to the way the type generator works, types cannot use `serde` macros
 //! that lead to asymmetry between serialization and deserialization. For example,
-//! using `#[serde(skip_serializing_if = "Option::is_none")]` will lead to issues
-//! generating a type.
+//! using `#[serde(flatten)]` will lead to issues generating a type.
 
 #![cfg(feature = "typegen")]
 
@@ -95,11 +94,12 @@ mod test {
 
         generate(lang, gen_dir);
 
-        let path = PathBuf::from(gen_dir);
+        let path = PathBuf::from(gen_dir).join("typescript/types/shared_types.ts");
         assert!(path.exists());
 
         let content = fs::read_to_string(path).unwrap();
-        assert!(content.contains("package io.credibil.shared_types;"));
-        assert!(content.contains("public class Request<T> {"));
+        assert!(content.contains("export class Credential"));
+
+        fs::remove_dir_all(gen_dir).unwrap();
     }
 }
