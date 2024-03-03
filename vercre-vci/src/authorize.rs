@@ -78,6 +78,7 @@ use tracing::{instrument, trace};
 use vercre_core::error::Err;
 use vercre_core::metadata::Issuer as IssuerMetadata;
 use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
+use vercre_core::vci::GrantType;
 pub use vercre_core::vci::{
     AuthorizationDetail, AuthorizationRequest, AuthorizationResponse, TokenAuthorizationDetail,
 };
@@ -154,11 +155,11 @@ where
 
         // 'authorization_code' grant_type allowed (client and server)?
         let client_grant_types = client_meta.grant_types.unwrap_or_default();
-        if !client_grant_types.contains(&String::from("authorization_code")) {
+        if !client_grant_types.contains(&GrantType::AuthorizationCode) {
             err!(Err::InvalidRequest, "authorization_code grant not supported for client");
         }
         let server_grant_types = server_meta.grant_types_supported.unwrap_or_default();
-        if !server_grant_types.contains(&String::from("authorization_code")) {
+        if !server_grant_types.contains(&GrantType::AuthorizationCode) {
             err!(Err::InvalidRequest, "authorization_code grant not supported for server");
         }
 

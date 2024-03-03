@@ -12,7 +12,8 @@ use serde_json::{json, Value};
 use vercre_core::jwt::{self, Jwt};
 use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::vci::{
-    CredentialOffer, CredentialResponse, MetadataResponse, ProofClaims, TokenRequest, TokenResponse,
+    CredentialOffer, CredentialResponse, GrantType, MetadataResponse, ProofClaims, TokenRequest,
+    TokenResponse,
 };
 use vercre_core::w3c::VerifiableCredential;
 
@@ -156,7 +157,7 @@ impl Model {
         let req = TokenRequest {
             credential_issuer: self.offer.credential_issuer.clone(),
             client_id: CLIENT_ID.to_owned(),
-            grant_type: String::from("urn:ietf:params:oauth:grant-type:pre-authorized_code"),
+            grant_type: GrantType::PreAuthorizedCode,
             pre_authorized_code: Some(preauth.pre_authorized_code.clone()),
             user_code: self.pin.clone(),
 

@@ -10,13 +10,11 @@ use k256::Secp256k1;
 use serde_json::Value;
 use uuid::Uuid;
 use vercre_vci::callback::Payload;
-use vercre_vci::holder;
-use vercre_vci::metadata::types::{
-    self, CredentialDefinition, AUTH_CODE_GRANT_TYPE, PRE_AUTH_GRANT_TYPE,
-};
+use vercre_vci::metadata::types::{self, CredentialDefinition};
 use vercre_vci::provider::{
     Algorithm, Callback, Client, Holder, Issuer, Server, Signer, StateManager,
 };
+use vercre_vci::{holder, GrantType};
 
 use crate::wallet;
 
@@ -142,8 +140,8 @@ impl ClientStore {
             client_id: client_id.clone(),
             redirect_uris: Some(vec![String::from("http://localhost:3000/callback")]),
             grant_types: Some(vec![
-                AUTH_CODE_GRANT_TYPE.to_string(),
-                PRE_AUTH_GRANT_TYPE.to_string(),
+                GrantType::AuthorizationCode,
+                GrantType::PreAuthorizedCode,
             ]),
             response_types: Some(vec![String::from("code")]),
             scope: Some(String::from("openid credential")),

@@ -9,18 +9,19 @@ use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 
 use crate::error::Err;
+use crate::vci::{Format, GrantType};
 use crate::{err, error, Result};
 
-/// OAuth 2.0 Authorization Code grant type.
-pub const AUTH_CODE_GRANT_TYPE: &str = "authorization_code";
+// /// OAuth 2.0 Authorization Code grant type.
+// pub const AUTH_CODE_GRANT_TYPE: &str = "authorization_code";
 
-/// `OpenID4VCI` Pre-Authorized Code grant type.
-pub const PRE_AUTH_GRANT_TYPE: &str = "urn:ietf:params:oauth:grant-type:pre-authorized_code";
+// /// `OpenID4VCI` Pre-Authorized Code grant type.
+// pub const PRE_AUTH_GRANT_TYPE: &str = "urn:ietf:params:oauth:grant-type:pre-authorized_code";
 
 /// OAuth 2 client metadata used for registering clients of the issuance and
 /// vercre-wallet authorization servers.
 ///
-/// In the case of Credential Issuance, the Wallet is the Client and the Issuer
+/// In the case of Credential issuance, the Wallet is the Client and the Issuer
 /// is the Authorization Server.
 ///
 /// In the case of Wallet Authorization, the Wallet is the Authorization Server
@@ -65,7 +66,7 @@ pub struct Client {
     /// - "`urn:ietf:params:oauth:grant-type:pre-authorized_code`" =
     ///   Pre-Authorized Code Grant
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub grant_types: Option<Vec<String>>,
+    pub grant_types: Option<Vec<GrantType>>,
 
     /// OAuth 2.0 response types the client can use at the authorization
     /// endpoint. MUST be "code".
@@ -152,7 +153,7 @@ pub struct Client {
     /// }
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub vp_formats: Option<HashMap<String, VpFormat>>,
+    pub vp_formats: Option<HashMap<Format, VpFormat>>,
 }
 
 /// Used to define the format and proof types of Verifiable Presentations and
@@ -325,7 +326,7 @@ pub struct CredentialConfiguration {
     /// Profiles.
     ///
     /// [Appendix A]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles
-    pub format: String,
+    pub format: Format,
 
     /// Identifies the scope value that this Credential Issuer supports for this
     /// particular credential. The value can be the same accross multiple
@@ -539,13 +540,13 @@ pub struct Claim {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mandatory: Option<bool>,
 
-    /// The type of value of the claim. Defaults to string.
-    /// Supported values include `string`, `number`, and `image` media types
-    /// such as image/jpeg. See the [IANA media type registry] for a complete list.
+    /// The type of value of the claim. Defaults to string. Supported values include
+    /// `string`, `number`, and `image` media types such as image/jpeg. See
+    /// [IANA media type registry] for a complete list of media types.
     ///
     /// [IANA media type registry]: (https://www.iana.org/assignments/media-types/media-types.xhtml#image)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub value_type: Option<String>,
+    pub value_type: Option<ValueType>,
 
     /// Language-based display properties of the field.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -554,6 +555,15 @@ pub struct Claim {
     /// A list nested claims.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub claim_nested: Option<HashMap<String, Box<Claim>>>,
+}
+
+#[derive(Default, Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ValueType {
+    #[default]
+    String,
+    Number,
+    Image,
 }
 
 /// OAuth 2.0 Authorization Server metadata.
@@ -593,7 +603,7 @@ pub struct Server {
     /// A list of grant types supported. Values are the same as the Dynamic
     /// Client Registration `grant_types`.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub grant_types_supported: Option<Vec<String>>,
+    pub grant_types_supported: Option<Vec<GrantType>>,
 
     /// A list of client authentication methods supported by the token endpoint.
     /// The same as those used with the `grant_types` parameter defined by the
@@ -742,7 +752,7 @@ impl CredentialConfiguration {
     #[must_use]
     pub fn sample() -> Self {
         Self {
-            format: String::from("jwt_vc_json"),
+            format: Format::JwtVcJson,
             scope: Some(String::from("EmployeeIDCredential")),
             cryptographic_binding_methods_supported: Some(vec![
                 String::from("did:jwk"),
@@ -794,7 +804,7 @@ impl CredentialConfiguration {
                         String::from("email"),
                         Claim {
                             mandatory: Some(true),
-                            value_type: Some(String::from("string")),
+                            value_type: Some(ValueType::String),
                             display: Some(vec![Display {
                                 name: String::from("Email"),
                                 locale: Some(String::from("en-NZ")),
@@ -806,7 +816,7 @@ impl CredentialConfiguration {
                         String::from("familyName"),
                         Claim {
                             mandatory: Some(true),
-                            value_type: Some(String::from("string")),
+                            value_type: Some(ValueType::String),
                             display: Some(vec![Display {
                                 name: String::from("Family name"),
                                 locale: Some(String::from("en-NZ")),
@@ -818,7 +828,7 @@ impl CredentialConfiguration {
                         String::from("givenName"),
                         Claim {
                             mandatory: Some(true),
-                            value_type: Some(String::from("string")),
+                            value_type: Some(ValueType::String),
                             display: Some(vec![Display {
                                 name: String::from("Given name"),
                                 locale: Some(String::from("en-NZ")),
@@ -841,7 +851,7 @@ impl CredentialConfiguration {
     #[must_use]
     pub fn sample2() -> Self {
         Self {
-            format: String::from("jwt_vc_json"),
+            format: Format::JwtVcJson,
             scope: Some(String::from("DeveloperCredential")),
             cryptographic_binding_methods_supported: Some(vec![
                 String::from("did:jwk"),
@@ -895,7 +905,7 @@ impl CredentialConfiguration {
                         String::from("proficiency"),
                         Claim {
                             mandatory: Some(true),
-                            value_type: Some(String::from("number")),
+                            value_type: Some(ValueType::Number),
                             display: Some(vec![Display {
                                 name: String::from("Proficiency"),
                                 locale: Some(String::from("en-NZ")),
@@ -907,7 +917,7 @@ impl CredentialConfiguration {
                         String::from("familyName"),
                         Claim {
                             mandatory: Some(true),
-                            value_type: Some(String::from("string")),
+                            value_type: Some(ValueType::String),
                             display: Some(vec![Display {
                                 name: String::from("Family name"),
                                 locale: Some(String::from("en-NZ")),
@@ -919,7 +929,7 @@ impl CredentialConfiguration {
                         String::from("givenName"),
                         Claim {
                             mandatory: Some(true),
-                            value_type: Some(String::from("string")),
+                            value_type: Some(ValueType::String),
                             display: Some(vec![Display {
                                 name: String::from("Given name"),
                                 locale: Some(String::from("en-NZ")),
@@ -946,8 +956,8 @@ impl Server {
             response_types_supported: vec![String::from("code")],
             response_modes_supported: Some(vec![String::from("query")]),
             grant_types_supported: Some(vec![
-                AUTH_CODE_GRANT_TYPE.to_string(),
-                PRE_AUTH_GRANT_TYPE.to_string(),
+                GrantType::AuthorizationCode,
+                GrantType::PreAuthorizedCode,
             ]),
             code_challenge_methods_supported: Some(vec![String::from("S256")]),
             pre_authorized_grant_anonymous_access_supported: true,

@@ -100,7 +100,7 @@ use std::fmt::Debug;
 
 use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
 // TODO: move Claims into jwt module
-pub use vercre_core::vci::ProofClaims;
+pub use vercre_core::vci::{GrantType, ProofClaims};
 pub use vercre_core::w3c::vc::VcClaims;
 pub use vercre_core::{callback, holder, jwt, provider};
 

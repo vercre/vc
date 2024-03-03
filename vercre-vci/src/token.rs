@@ -18,8 +18,8 @@ use base64ct::{Base64UrlUnpadded, Encoding};
 use sha2::{Digest, Sha256};
 use tracing::{instrument, trace};
 use vercre_core::error::Err;
-use vercre_core::metadata::{AUTH_CODE_GRANT_TYPE, PRE_AUTH_GRANT_TYPE};
 use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
+use vercre_core::vci::{GrantType, TokenType};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vci::{TokenRequest, TokenResponse};
 use vercre_core::{err, gen, Result};
@@ -91,8 +91,8 @@ where
         };
 
         // grant_type
-        match request.grant_type.as_str() {
-            AUTH_CODE_GRANT_TYPE => {
+        match request.grant_type {
+            GrantType::AuthorizationCode => {
                 // client_id is the same as the one used to obtain the authorization code
                 if Some(&request.client_id) != self.state.client_id.as_ref() {
                     err!(Err::InvalidGrant, "client_id differs from authorized one");
@@ -117,7 +117,7 @@ where
                     err!(Err::AccessDenied, "code_verifier is invalid");
                 }
             }
-            PRE_AUTH_GRANT_TYPE => {
+            GrantType::PreAuthorizedCode => {
                 // anonymous access allowed?
                 if request.client_id.is_empty()
                     && !server_meta.pre_authorized_grant_anonymous_access_supported
@@ -128,9 +128,6 @@ where
                 if request.user_code != auth_state.user_code {
                     err!(Err::InvalidGrant, "invalid user_code provided");
                 }
-            }
-            _ => {
-                err!(Err::UnsupportedGrantType, "grant {} is not supported", request.grant_type)
             }
         }
 
@@ -171,7 +168,7 @@ where
 
         Ok(TokenResponse {
             access_token: token,
-            token_type: String::from("Bearer"),
+            token_type: TokenType::Bearer,
             expires_in: Expire::Access.duration().num_seconds(),
             c_nonce: Some(c_nonce),
             c_nonce_expires_in: Some(Expire::Nonce.duration().num_seconds()),
@@ -185,12 +182,9 @@ where
 // Authorization state is stored by either 'code' or 'pre_authorized_code',
 // depending on grant_type.
 fn auth_state_key(request: &TokenRequest) -> Result<String> {
-    let state_key = match request.grant_type.as_str() {
-        AUTH_CODE_GRANT_TYPE => request.code.as_ref(),
-        PRE_AUTH_GRANT_TYPE => request.pre_authorized_code.as_ref(),
-        _ => {
-            err!(Err::UnsupportedGrantType, "grant {} is not supported", request.grant_type)
-        }
+    let state_key = match request.grant_type {
+        GrantType::AuthorizationCode => request.code.as_ref(),
+        GrantType::PreAuthorizedCode => request.pre_authorized_code.as_ref(),
     };
     let Some(state_key) = state_key else {
         err!(Err::InvalidRequest, "missing state key");
@@ -207,7 +201,7 @@ mod tests {
     use test_utils::vci_provider::{Provider, ISSUER, NORMAL_USER};
     use test_utils::wallet;
     use vercre_core::metadata::CredentialDefinition;
-    use vercre_core::vci::{AuthorizationDetail, TokenAuthorizationDetail};
+    use vercre_core::vci::{AuthorizationDetail, Format, TokenAuthorizationDetail};
 
     use super::*;
     use crate::state::Auth;
@@ -299,7 +293,7 @@ mod tests {
             authorization_details: Some(vec![TokenAuthorizationDetail {
                 authorization_detail: AuthorizationDetail {
                     type_: String::from("openid_credential"),
-                    format: Some(String::from("jwt_vc_json")),
+                    format: Some(Format::JwtVcJson),
                     credential_definition: Some(CredentialDefinition {
                         type_: Some(vec![
                             String::from("VerifiableCredential"),

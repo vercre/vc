@@ -17,6 +17,54 @@ use crate::metadata::{
 use crate::proof::Jwk;
 use crate::{err, stringify, Result};
 
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// TODO: find a home for these shared types
+
+/// Grant Types supported by the Authorization Server.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub enum GrantType {
+    /// The OAuth 2.0 Grant Type for Authorization Code Flow.
+    #[serde(rename = "authorization_code")]
+    AuthorizationCode,
+
+    /// The OAuth 2.0 Grant Type for Pre-Authorized Code Flow.
+    #[default]
+    #[serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")]
+    PreAuthorizedCode,
+}
+
+/// The `OpenID4VCI` specification defines a number of commonly used Credential formats
+/// that implementers can choose to support. See [Appendix A] of the `OpenID4VCI`
+/// specification for Credential Format Profiles.
+///
+/// [Appendix A]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq, Hash)]
+pub enum Format {
+    /// W3C Verifiable Credential.
+    #[default]
+    #[serde(rename = "jwt_vc_json")]
+    JwtVcJson,
+
+    /// W3C Verifiable Credential.
+    #[serde(rename = "jwt_vc_json-ld")]
+    JwtVcJsonLd,
+
+    /// W3C Verifiable Credential.
+    #[serde(rename = "ldp-vc")]
+    LdpVc,
+
+    /// ISO mDL
+    #[serde(rename = "mso_mdoc")]
+    MsoDoc,
+
+    /// IETF SD-JWT VC
+    #[serde(rename = "vc+sd-jwt")]
+    VcSdJwt,
+}
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+
 /// Request a Credential Offer for a Credential Issuer.
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
 pub struct InvokeRequest {
@@ -395,7 +443,7 @@ pub struct AuthorizationDetail {
     ///
     /// One of "`jwt_vc_json`", "`jwt_vc_json`-ld", "`ldp_vc`", or "`vc+sd-jwt`".
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub format: Option<String>,
+    pub format: Option<Format>,
 
     /// Contains the type values the Wallet requests authorization for at the Credential
     /// Issuer.
@@ -471,10 +519,8 @@ pub struct TokenRequest {
     /// code.
     pub client_id: String,
 
-    /// The authorization grant type. One of:
-    ///  - "`authorization_code`"
-    ///  - "`urn:ietf:params:oauth:grant-type:pre-authorized_code`"
-    pub grant_type: String,
+    /// The authorization grant type. One of `PreAuthorizedCode` or `AuthorizationCode`.
+    pub grant_type: GrantType,
 
     /// The authorization code received from the authorization server when the
     /// Wallet use the Authorization Code Flow.
@@ -523,7 +569,7 @@ pub struct TokenResponse {
     pub access_token: String,
 
     /// The type of the token issued. Must be "`Bearer`".
-    pub token_type: String,
+    pub token_type: TokenType,
 
     /// The lifetime in seconds of the access token.
     pub expires_in: i64,
@@ -553,6 +599,12 @@ pub struct TokenResponse {
     /// of the scope of the access token issued.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scope: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub enum TokenType {
+    #[default]
+    Bearer,
 }
 
 /// Authorization Details object specifically for use in successful Access Token
@@ -608,7 +660,7 @@ pub struct CredentialRequest {
     /// REQUIRED when `credential_identifiers` was not returned from the Token
     /// Response. Otherwise, MUST NOT be used.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub format: Option<String>,
+    pub format: Option<Format>,
 
     /// Wallet's proof of possession of cryptographic key material the issued Credential
     /// will be bound to.
@@ -885,7 +937,7 @@ mod tests {
             code_challenge_method: String::from("S256"),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: String::from("openid_credential"),
-                format: Some(String::from("jwt_vc_json")),
+                format: Some(Format::JwtVcJson),
                 credential_definition: Some(CredentialDefinition {
                     context: Some(vec![
                         String::from("https://www.w3.org/2018/credentials/v1"),
