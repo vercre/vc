@@ -1,6 +1,6 @@
 ---
 source: vercre-vp/src/metadata.rs
-assertion_line: 75
+assertion_line: 84
 expression: response
 ---
 client_id: "http://credibil.io"
@@ -13,11 +13,6 @@ response_types:
   - id_token vp_token
 vp_formats:
   jwt_vc_json:
-    alg:
-      - ES256K
-    proof_type:
-      - JsonWebSignature2020
-  jwt_vp_json:
     alg:
       - ES256K
     proof_type:

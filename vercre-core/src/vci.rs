@@ -61,6 +61,10 @@ pub enum Format {
     /// IETF SD-JWT VC
     #[serde(rename = "vc+sd-jwt")]
     VcSdJwt,
+
+    /// W3C Verifiable Credential.
+    #[serde(rename = "jwt_vp_json")]
+    JwtVpJson,
 }
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------

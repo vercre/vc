@@ -9,7 +9,7 @@ use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
 use vercre_vp::callback::Payload;
 use vercre_vp::metadata::types::{self, VpFormat};
-use vercre_vp::provider::{Algorithm, Callback, Client, Signer, StateManager};
+use vercre_vp::provider::{Algorithm, Callback, Client, Result, Signer, StateManager};
 use vercre_vp::{Format, GrantType};
 
 pub const VERIFIER: &str = "http://credibil.io";
