@@ -1,6 +1,11 @@
 // TODO: replace the hard-coded sample code with a call to a hosted storage service
 
+use std::vec;
+
 use chrono::{DateTime, Utc};
+use gloo_console::log;
+use serde::ser::SerializeMap;
+use serde_json::ser;
 use test_utils::vci_provider::ISSUER;
 use vercre_core::provider::{Holder, Issuer, Signer};
 use vercre_core::w3c::vc::Proof;
@@ -10,7 +15,7 @@ use vercre_wallet::store::{StoreRequest, StoreResponse};
 pub async fn request(op: &StoreRequest) -> Result<StoreResponse, Option<String>> {
     match op {
         StoreRequest::Add(id, value) => add(id, value),
-        StoreRequest::List => list(),
+        StoreRequest::List => list().await,
         StoreRequest::Delete(id) => delete(id),
     }
 }
@@ -19,8 +24,8 @@ fn add(id: &str, value: &[u8]) -> Result<StoreResponse, Option<String>> {
     Ok(StoreResponse::Ok)
 }
 
-fn list() -> Result<StoreResponse, Option<String>> {
-    Ok(StoreResponse::List(hard_coded_credentials()))
+async fn list() -> Result<StoreResponse, Option<String>> {
+    Ok(StoreResponse::List(hard_coded_credentials().await))
 }
 
 fn delete(id: &str) -> Result<StoreResponse, Option<String>> {
@@ -29,7 +34,7 @@ fn delete(id: &str) -> Result<StoreResponse, Option<String>> {
 
 // TODO: remove this when real back-end storage is called.
 
-async fn hard_coded_credentials() -> Vec<(String, Vec<u8>)> {
+async fn hard_coded_credentials() -> Vec<u8> {
     use vercre_wallet::credential::{Credential, Logo};
 
     let dt = DateTime::parse_from_rfc3339("2024-02-29T00:26:45Z")
@@ -97,5 +102,7 @@ async fn hard_coded_credentials() -> Vec<(String, Vec<u8>)> {
         logo: None,
     };
 
-    vec![(c1.id.clone(), serde_json::to_vec(&c1).expect("failed to serialize credential"))]
+    let list = vec![c1.clone()];
+    log!("hard_coded_credentials: {c1.id}", c1.id);
+    serde_json::to_vec(&list).expect("failed to serialize credentials")
 }

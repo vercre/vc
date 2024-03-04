@@ -1023,7 +1023,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "crux_core",
- "derive_builder",
+ "derive_builder 0.13.1",
  "futures-util",
  "http-types-red-badger-temporary-fork",
  "pin-project-lite",
@@ -1257,7 +1257,16 @@ version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f59169f400d8087f238c5c0c7db6a28af18681717f3b623227d92f397e938c7"
 dependencies = [
- "derive_builder_macro",
+ "derive_builder_macro 0.13.1",
+]
+
+[[package]]
+name = "derive_builder"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0350b5cb0331628a5916d6c5c0b72e97393b8b6b03b47a9284f4e7f5a405ffd7"
+dependencies = [
+ "derive_builder_macro 0.20.0",
 ]
 
 [[package]]
@@ -1273,13 +1282,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "derive_builder_core"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d48cda787f839151732d396ac69e3473923d54312c070ee21e9effcaa8ca0b1d"
+dependencies = [
+ "darling 0.20.8",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.52",
+]
+
+[[package]]
 name = "derive_builder_macro"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "870368c3fb35b8031abb378861d4460f573b92238ec2152c927a21f77e3e0127"
 dependencies = [
- "derive_builder_core",
+ "derive_builder_core 0.13.1",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "derive_builder_macro"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "206868b8242f27cecce124c19fd88157fbd0dd334df2587f36417bafbc85097b"
+dependencies = [
+ "derive_builder_core 0.20.0",
+ "syn 2.0.52",
 ]
 
 [[package]]
@@ -1534,6 +1565,7 @@ checksum = "4a3daa8e81a3963a60642bcc1f90a670680bd4a77535faa384e9d1c79d620871"
 dependencies = [
  "curve25519-dalek 4.1.2",
  "ed25519",
+ "rand_core 0.6.4",
  "serde",
  "sha2",
  "subtle",
@@ -5803,6 +5835,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "test-utils"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "ecdsa",
+ "ed25519-dalek",
+ "k256",
+ "serde_json",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "vercre-vci",
+ "vercre-vp",
+]
+
+[[package]]
 name = "textwrap"
 version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6449,6 +6499,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "vercre-vci"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "derive_builder 0.20.0",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tracing",
+ "uuid",
+ "vercre-core",
+]
+
+[[package]]
+name = "vercre-vp"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "derive_builder 0.20.0",
+ "serde",
+ "serde_json",
+ "serde_json_path",
+ "tracing",
+ "uuid",
+ "vercre-core",
+]
+
+[[package]]
 name = "vercre-wallet"
 version = "0.1.0-alpha.4"
 dependencies = [
@@ -6547,6 +6628,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "base64ct",
+ "chrono",
  "ecdsa",
  "futures-util",
  "gloo-console 0.3.0",
@@ -6555,6 +6637,8 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "test-utils",
+ "vercre-core",
  "vercre-wallet",
  "yew",
 ]

@@ -9,6 +9,7 @@ mod credentials;
 mod http;
 mod shell;
 mod signer;
+mod store;
 
 use yew::prelude::*;
 

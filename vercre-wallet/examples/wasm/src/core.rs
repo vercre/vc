@@ -2,12 +2,14 @@ use std::rc::Rc;
 
 use futures_util::TryStreamExt;
 use gloo_console::log;
-use vercre_wallet::{http::protocol::HttpResult, signer::SignerResponse, App, Capabilities, Effect, Event};
+use vercre_wallet::http::protocol::HttpResult;
+use vercre_wallet::signer::SignerResponse;
+use vercre_wallet::store::StoreResponse;
+use vercre_wallet::{App, Capabilities, Effect, Event};
 use yew::platform::spawn_local;
 use yew::{callback, Callback};
 
-use crate::http;
-use crate::signer;
+use crate::{http, signer, store};
 
 pub type Core = Rc<vercre_wallet::Core<Effect, App>>;
 
@@ -21,7 +23,7 @@ pub fn new() -> Core {
 }
 
 pub fn update(core: &Core, event: Event, callback: &Callback<Message>) {
-    log!(format!("event: {:?}", event));
+    log!(format!("update event: {:?}", event));
 
     for effect in core.process_event(event) {
         process_effect(core, effect, callback);
@@ -49,19 +51,19 @@ pub fn process_effect(core: &Core, effect: Effect, callback: &Callback<Message>)
                 }
             });
         }
-        Effect::Store(mut _request) => {
+        Effect::Store(mut request) => {
             spawn_local({
                 let core = core.clone();
                 let callback = callback.clone();
 
                 async move {
-                    //   let mut stream = sse::request(&request.operation).await.unwrap();
-
-                    //   while let Ok(Some(response)) = stream.try_next().await {
-                    //       for effect in core.resolve(&mut request, response) {
-                    //           process_effect(&core, effect, &callback);
-                    //       }
-                    //   }
+                    let response = match store::request(&request.operation).await {
+                        Ok(resp) => resp,
+                        Err(err) => StoreResponse::Err(err.unwrap_or_default()),
+                    };
+                    for effect in core.resolve(&mut request, response) {
+                        process_effect(&core, effect, &callback);
+                    }
                 }
             });
         }
