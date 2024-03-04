@@ -141,14 +141,6 @@ impl crux_core::App for App {
             Event::Listed(Ok(response)) => {
                 model.credentials = response;
             }
-            // Event::Add(credential) => {
-            //     caps.store.add(credential.clone(), Event::Added);
-            //     model.credentials.push(credential);
-            // }
-            // Event::Added(Ok(())) => {
-            //     // do nothing
-            //     dbg!("Credential added");
-            // }
             Event::Delete(id) => {
                 caps.store.delete(&id, Event::Deleted);
             }
@@ -160,10 +152,6 @@ impl crux_core::App for App {
             // ----------------------------------------------------------------
             // Error handling
             // ----------------------------------------------------------------
-            // Event::Added(Err(e)) => {
-            //     let msg = format!("Issue adding credential: {e:?}");
-            //     self.update(Event::Fail(msg), model, caps);
-            // }
             Event::Listed(Err(e)) => {
                 let msg = format!("Issue retrieving credentials: {e:?}");
                 self.update(Event::Fail(msg), model, caps);

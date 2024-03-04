@@ -15,7 +15,7 @@ pub(crate) struct CredentialsProps {
 #[function_component(Credentials)]
 pub(crate) fn credentials(props: &CredentialsProps) -> Html {
 
-    props.clone().on_load_credentials.emit(());
+    // props.clone().on_load_credentials.emit(());
 
     html! {
         <ul>
