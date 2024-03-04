@@ -5,6 +5,7 @@
 mod app;
 mod components;
 mod core;
+mod credentials;
 mod http;
 mod shell;
 mod signer;

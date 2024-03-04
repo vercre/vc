@@ -3,7 +3,8 @@ mod header;
 use yew::prelude::*;
 
 use crate::components::{types::MediaWidth, Container, Stack};
-use header::{Header, HeaderProps};
+use header::Header;
+pub use header::HeaderProps;
 
 #[derive(Properties, PartialEq)]
 pub(crate) struct ShellProps {

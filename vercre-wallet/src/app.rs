@@ -83,11 +83,11 @@ pub enum View {
 /// The view model represents the App's 'external' state to the shell.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct ViewModel {
-    credential: credential::ViewModel,
-    issuance: issuance::ViewModel,
-    presentation: presentation::ViewModel,
-    error: Option<String>,
-    view: View,
+    pub credential: credential::ViewModel,
+    pub issuance: issuance::ViewModel,
+    pub presentation: presentation::ViewModel,
+    pub error: Option<String>,
+    pub view: View,
 }
 
 /// App `Capabilities` allow the app to interface with the shell and external

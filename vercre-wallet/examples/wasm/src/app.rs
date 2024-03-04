@@ -1,28 +1,27 @@
 use gloo_console::log;
+use vercre_wallet::app::View;
 use yew::prelude::*;
 
 use crate::core::{Core, Message, self};
-use crate::shell::Shell;
+use crate::credentials::{Credentials, CredentialsProps};
+use crate::shell::{HeaderProps, Shell, ShellProps};
 
 #[function_component(App)]
 pub(crate) fn app() -> Html {
-    // let core = use_state(|| core::new());
-    let wibble = use_state(|| [0, 0]);
+    let core = use_state(|| core::new());
 
-    use_effect_with(wibble.clone(), |wibble| {
-        log!("effect");
-        if wibble[0] == 0 {
-            log!("setting wibble");
-            wibble.set([1, 2]);
-        }
+    use_effect_with(core.view(), |view| {
+        log!("app effect");
+        log!(format!("view: {:?}", view));
     });
 
     html! {
         <Shell>
             <h1>{"Credibil Wallet"}</h1>
             <p>{"Rust Core, Rust Shell (Yew)"}</p>
-            <p>{wibble[0]}</p>
-            <p>{wibble[1]}</p>
+            if core.view().view == View::Credential {
+                <Credentials credentials={core.view().credential.credentials.clone()} />
+            }
         </Shell>
     }
 }
