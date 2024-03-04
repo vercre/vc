@@ -265,7 +265,7 @@ mod tests {
         request.credential_issuer = ISSUER.to_string();
         let response =
             Endpoint::new(provider.clone()).invoke(&request).await.expect("response is ok");
-        assert_snapshot!("invoke", response, {
+        assert_snapshot!("invoke", &response, {
             ".credential_offer.grants.authorization_code.issuer_state" => "[state]",
             ".credential_offer.grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
             ".user_code" => "[user_code]"
@@ -282,7 +282,7 @@ mod tests {
         let buf = StateManager::get(&provider, state_key).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
 
-        assert_snapshot!("state", state, {
+        assert_snapshot!("state", &state, {
             ".expires_at" => "[expires_at]",
             ".auth.code"=>"[code]",
             ".auth.issuer_state" => "[issuer_state]",

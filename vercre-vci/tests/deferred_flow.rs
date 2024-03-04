@@ -28,7 +28,7 @@ async fn deferred_flow() {
     let token_resp = get_offer().and_then(get_token).await.expect("Ok");
     let credential_resp = get_credential(token_resp.clone()).await.expect("Ok");
 
-    assert_snapshot!("credential-response", credential_resp, {
+    assert_snapshot!("credential-response", &credential_resp, {
         ".transaction_id" => "[transaction_id]",
         ".c_nonce" => "[c_nonce]",
         ".c_nonce_expires_in" => "[c_nonce_expires_in]"

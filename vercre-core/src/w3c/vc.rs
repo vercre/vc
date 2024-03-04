@@ -182,9 +182,12 @@ impl VerifiableCredential {
             issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
             credential_subject: vec![CredentialSubject {
                 id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".to_string()),
-                claims: HashMap::from([(String::from("employeeId"), serde_json::json!("1234567890"))]),
+                claims: HashMap::from([(
+                    String::from("employeeId"),
+                    serde_json::json!("1234567890"),
+                )]),
             }],
-            proof: Some(vec![Proof{
+            proof: Some(vec![Proof {
                 type_: String::from("Ed25519Signature2020"),
                 cryptosuite: Some("EcdsaSecp256k1VerificationKey2019".to_string()),
                 proof_purpose: String::from("assertionMethod"),

@@ -104,7 +104,7 @@ async fn get_token(input: AuthorizationResponse) -> Result<TokenResponse> {
     let endpoint = Endpoint::new(PROVIDER.to_owned());
     let response = endpoint.token(&request).await?;
 
-    assert_snapshot!("token", response, {
+    assert_snapshot!("token", &response, {
         ".access_token" => "[access_token]",
         ".c_nonce" => "[c_nonce]"
     });

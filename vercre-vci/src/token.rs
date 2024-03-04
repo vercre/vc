@@ -247,7 +247,7 @@ mod tests {
         request.credential_issuer = ISSUER.to_string();
         let response =
             Endpoint::new(provider.clone()).token(&request).await.expect("response is valid");
-        assert_snapshot!("simpl-token", response, {
+        assert_snapshot!("simpl-token", &response, {
             ".access_token" => "[access_token]",
             ".c_nonce" => "[c_nonce]"
         });
@@ -327,7 +327,7 @@ mod tests {
         request.credential_issuer = ISSUER.to_string();
         let response =
             Endpoint::new(provider.clone()).token(&request).await.expect("response is valid");
-        assert_snapshot!("authzn-token", response, {
+        assert_snapshot!("authzn-token", &response, {
             ".access_token" => "[access_token]",
             ".c_nonce" => "[c_nonce]"
         });

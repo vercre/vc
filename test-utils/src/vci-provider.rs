@@ -137,10 +137,7 @@ impl ClientStore {
         let client = types::Client {
             client_id: client_id.clone(),
             redirect_uris: Some(vec![String::from("http://localhost:3000/callback")]),
-            grant_types: Some(vec![
-                GrantType::AuthorizationCode,
-                GrantType::PreAuthorizedCode,
-            ]),
+            grant_types: Some(vec![GrantType::AuthorizationCode, GrantType::PreAuthorizedCode]),
             response_types: Some(vec![String::from("code")]),
             scope: Some(String::from("openid credential")),
             credential_offer_endpoint: Some(String::from("openid-credential-offer://")),

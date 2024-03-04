@@ -97,14 +97,6 @@ pub enum Format {
     #[cfg_attr(not(feature = "typegen"), serde(rename = "jwt_vp_json"))]
     JwtVpJson,
 }
-
-impl Format {
-    /// Generate a sample `Format` for testing.
-    #[must_use]
-    pub fn sample() -> Self {
-        Self::JwtVcJson
-    }
-}
 // ----------------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
@@ -1003,7 +995,7 @@ mod tests {
         };
 
         let auth_req_str = serde_qs::to_string(&auth_req).expect("should serialize to string");
-        assert_snapshot!("authzn-ok", auth_req_str, {
+        assert_snapshot!("authzn-ok", &auth_req_str, {
             ".code" => "[code]",
         });
 

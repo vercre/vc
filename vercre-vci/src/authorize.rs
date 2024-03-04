@@ -453,7 +453,7 @@ mod tests {
         let response =
             Endpoint::new(provider.clone()).authorize(&request).await.expect("response is ok");
 
-        assert_snapshot!("authzn-ok", response, {
+        assert_snapshot!("authzn-ok", &response, {
             ".code" => "[code]",
         });
 
@@ -493,7 +493,7 @@ mod tests {
 
         let response =
             Endpoint::new(provider.clone()).authorize(&request).await.expect("response is ok");
-        assert_snapshot!("scope-ok", response, {
+        assert_snapshot!("scope-ok", &response, {
             ".code" => "[code]",
         });
 

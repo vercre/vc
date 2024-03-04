@@ -488,7 +488,7 @@ mod tests {
 
         let response =
             Endpoint::new(provider.clone()).batch(&request).await.expect("response is valid");
-        assert_snapshot!("ad-response", response, {
+        assert_snapshot!("ad-response", &response, {
             ".credential_responses[0]" => "[credential]",
             ".c_nonce" => "[c_nonce]",
             ".c_nonce_expires_in" => "[c_nonce_expires_in]"

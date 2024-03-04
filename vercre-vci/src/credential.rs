@@ -212,7 +212,7 @@ mod tests {
 
         let response =
             Endpoint::new(provider.clone()).credential(&request).await.expect("response is valid");
-        assert_snapshot!("response", response, {
+        assert_snapshot!("response", &response, {
             ".credential" => "[credential]",
             ".c_nonce" => "[c_nonce]",
             ".c_nonce_expires_in" => "[c_nonce_expires_in]"
