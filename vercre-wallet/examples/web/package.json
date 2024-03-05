@@ -1,0 +1,45 @@
+{
+  "name": "vercre-wallet-web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm run wasm:build && vite",
+    "build": "pnpm run wasm:build && tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "wasm:build": "cd ../.. && wasm-pack build --target web --features wasm"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.15.6",
+    "@mui/lab": "^5.0.0-alpha.162",
+    "@mui/material": "^5.15.6",
+    "globals": "^13.24.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.21.3",
+    "shared_types": "link:types/gen/typescript",
+    "vercre-wallet": "link:../../pkg"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.13",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.56.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-typescript": "^3.0.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vite-plugin-csp": "^1.1.2",
+    "vite-plugin-mkcert": "^1.17.3"
+  }
+}

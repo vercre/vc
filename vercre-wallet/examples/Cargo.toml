@@ -1,6 +1,6 @@
 [workspace]
-default-members = ["desktop/types", "mobile/types", "wasm"]
-members = ["desktop/src-tauri", "desktop/types", "mobile/types", "wasm"]
+default-members = ["desktop/types", "mobile/types", "wasm", "web/types"]
+members = ["desktop/src-tauri", "desktop/types", "mobile/types", "web/types", "wasm"]
 resolver = "2"
 
 [workspace.package]

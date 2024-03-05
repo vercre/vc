@@ -1,0 +1,14 @@
+[package]
+authors.workspace = true
+edition.workspace = true
+name = "web-types"
+rust-version.workspace = true
+version.workspace = true
+
+[features]
+typegen = []
+
+[dependencies]
+
+[build-dependencies]
+vercre-wallet = { workspace = true, features = ["typegen"] }

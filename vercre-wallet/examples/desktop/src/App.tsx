@@ -14,7 +14,7 @@ import { ShellStateProvider } from './Shell/Context';
 import Splash from "./Splash";
 import { theme } from "./theme";
 
-export const App = () => {
+const App = () => {
     const [viewModel, setViewModel] = useState<ViewModel>();
     const start = useRef<boolean>(true);
 

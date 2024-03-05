@@ -6,7 +6,7 @@ use std::str::FromStr;
 
 use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
-use qrcode_rs::QrCode;
+use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 

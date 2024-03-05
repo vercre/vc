@@ -5,7 +5,7 @@ use std::io::Cursor;
 
 use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
-use qrcode_rs::QrCode;
+use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
