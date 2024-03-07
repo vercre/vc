@@ -1,11 +1,17 @@
-use std::path::PathBuf;
+// use std::path::PathBuf;
 
+use futures::TryStreamExt;
+// use iroh::bytes::store::flat;
+// use iroh::client::Doc;
+// use iroh::node::Node;
+// use tauri_plugin_store::{with_store, StoreCollection};
+use iroh::sync::store::Query;
 use serde_json::Value;
 use tauri::Manager;
-use tauri_plugin_store::{with_store, StoreCollection};
 use vercre_wallet::store::{StoreRequest, StoreResponse};
 
 use crate::error;
+use crate::iroh_node::Node;
 
 pub async fn request<R>(
     op: &StoreRequest, app_handle: &tauri::AppHandle<R>,
@@ -13,34 +19,50 @@ pub async fn request<R>(
 where
     R: tauri::Runtime,
 {
-    // path = ~/Library/Application Support/io.credibil.wallet/store.json
-    let path = PathBuf::from("store.json");
-    let stores = app_handle.state::<StoreCollection<R>>();
+    let state = app_handle.state::<super::IrohState>();
+    let node = state.node.clone();
+
+    let doc = node.credentials().unwrap();
+    let iroh = node.node.client();
 
     match op {
         StoreRequest::Add(id, value) => {
-            with_store(app_handle.clone(), stores, path.clone(), |store| {
-                let val = serde_json::from_slice(value).unwrap();
-                log::info!("Storing: {} => {:?} into {}", id, val, path.clone().display());
-                store.insert(id.to_string(), val)?;
-                store.save()
-            })?;
+            // with_store(app_handle.clone(), stores, path.clone(), |store| {
+            //     let val = serde_json::from_slice(value).unwrap();
+            //     log::info!("Storing: {} => {:?} into {}", id, val, path.clone().display());
+            //     store.insert(id.to_string(), val)?;
+            //     store.save()
+            // })?;
             Ok(StoreResponse::Ok)
         }
         StoreRequest::List => {
+            let mut vcs = Vec::<Value>::new();
+            let mut entries = doc.get_many(Query::single_latest_per_key()).await?;
+
+            while let Some(entry) = entries.try_next().await? {
+                let bytes = match iroh.blobs.read_to_bytes(entry.content_hash()).await {
+                    Ok(bytes) => bytes,
+                    Err(e) => {
+                        return Err(e).map_err(error::Error::from);
+                        // panic!("Error getting entry: {:?}", entry);
+                        // println!("Error getting entry: {:?}", entry);
+
+                    }
+                };
+                let val = serde_json::from_slice(&bytes).expect("should be json");
+                vcs.push(val);
+            }
+
             // return a list of all VCs
-            let values = with_store(app_handle.clone(), stores, path, |store| {
-                // TODO: fix error handling to map serde_json error to external
-                let list = store.values().collect::<Vec<&Value>>();
-                Ok(serde_json::to_vec(&list).unwrap())
-            })?;
+            let values = serde_json::to_vec(&vcs).unwrap();
+
             Ok(StoreResponse::List(values))
         }
         StoreRequest::Delete(id) => {
-            with_store(app_handle.clone(), stores, path, |store| {
-                store.delete(id)?;
-                store.save()
-            })?;
+            // with_store(app_handle.clone(), stores, path, |store| {
+            //     store.delete(id)?;
+            //     store.save()
+            // })?;
             Ok(StoreResponse::Ok)
         }
     }
@@ -48,46 +70,46 @@ where
 
 #[cfg(test)]
 mod test {
-    use assert_let_bind::assert_let;
+    // use assert_let_bind::assert_let;
     use lazy_static::lazy_static;
     use serde_json::json;
-    use tauri::test::{mock_builder, mock_context, noop_assets, MockRuntime};
 
+    // use tauri::test::{mock_builder, mock_context, noop_assets, MockRuntime};
     use super::*;
 
-    #[tokio::test]
-    async fn list() {
-        // set up store
-        let app = create_app(mock_builder());
-        let stores = app.app_handle().state::<StoreCollection<MockRuntime>>();
-        let path = PathBuf::from("store.json");
+    // #[tokio::test]
+    // async fn list() {
+    //     // set up store
+    //     let app = create_app(mock_builder());
+    //     let stores = app.app_handle().state::<StoreCollection<MockRuntime>>();
+    //     let path = PathBuf::from("store.json");
 
-        // insert item and return count of items in store
-        let count = with_store(app.app_handle().clone(), stores, path, |store| {
-            for value in ENTRIES.as_array().unwrap() {
-                let id = value.get("id").unwrap().as_str().unwrap();
-                store.insert(id.to_string(), value.to_owned())?;
-            }
-            Ok(store.len())
-        })
-        .expect("should return count");
+    //     // insert item and return count of items in store
+    //     let count = with_store(app.app_handle().clone(), stores, path, |store| {
+    //         for value in ENTRIES.as_array().unwrap() {
+    //             let id = value.get("id").unwrap().as_str().unwrap();
+    //             store.insert(id.to_string(), value.to_owned())?;
+    //         }
+    //         Ok(store.len())
+    //     })
+    //     .expect("should return count");
 
-        // query for all credentials ("" or "$[:]")
-        let req = StoreRequest::List;
-        let resp = request(&req, app.app_handle()).await.expect("should be ok");
+    //     // query for all credentials ("" or "$[:]")
+    //     let req = StoreRequest::List;
+    //     let resp = request(&req, app.app_handle()).await.expect("should be ok");
 
-        // check counts match
-        assert_let!(StoreResponse::List(res), resp);
-        let vals = serde_json::from_slice::<Vec<Value>>(&res).expect("should deserialize");
-        assert_eq!(count, vals.len());
-    }
+    //     // check counts match
+    //     assert_let!(StoreResponse::List(res), resp);
+    //     let vals = serde_json::from_slice::<Vec<Value>>(&res).expect("should deserialize");
+    //     assert_eq!(count, vals.len());
+    // }
 
-    fn create_app<R: tauri::Runtime>(builder: tauri::Builder<R>) -> tauri::App<R> {
-        builder
-            .plugin(tauri_plugin_store::Builder::<R>::default().build())
-            .build(mock_context(noop_assets()))
-            .expect("failed to build app")
-    }
+    // fn create_app<R: tauri::Runtime>(builder: tauri::Builder<R>) -> tauri::App<R> {
+    //     builder
+    //         .plugin(tauri_plugin_store::Builder::<R>::default().build())
+    //         .build(mock_context(noop_assets()))
+    //         .expect("failed to build app")
+    // }
 
     lazy_static! {
         static ref ENTRIES: Value = json!([

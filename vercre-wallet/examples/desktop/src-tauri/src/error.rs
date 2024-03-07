@@ -16,7 +16,7 @@ pub enum Error {
     HttpConfig(String),
 
     #[error(transparent)]
-    Store(#[from] tauri_plugin_store::Error),
+    Store(#[from] anyhow::Error),
 }
 
 // manually implement serde::Serialize

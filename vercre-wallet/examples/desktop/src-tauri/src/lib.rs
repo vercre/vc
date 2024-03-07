@@ -1,6 +1,7 @@
 mod error;
 #[path = "http.rs"]
 mod http_loc;
+mod iroh_node;
 mod signer;
 mod store;
 
@@ -24,25 +25,17 @@ pub fn run() {
         .plugin(
             tauri_plugin_log::Builder::default()
                 .targets([Target::new(TargetKind::Stdout), Target::new(TargetKind::Webview)])
-                .level(log::LevelFilter::Info)
+                .level(log::LevelFilter::Warn)
                 .build(),
         )
-        .plugin(tauri_plugin_store::Builder::default().build())
+        // .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
             let handle = app.handle().clone();
 
-            // initialise stronghold
-            // FIXME: get passphrase from user and salt from file(?)
-            let passphrase = b"pass-phrase";
-            let salt = b"randomsalt";
-            let hash = argon2::hash_raw(passphrase, salt, &argon2::Config::default())?;
-
-            // open/initialize Stronghold snapshot
-            let path = handle.path().app_local_data_dir()?.join("stronghold.bin");
-            let stronghold = signer::Stronghold::new(&path, hash)?;
-            handle.manage(stronghold);
+            init_store(handle.clone())?;
+            init_stronghold(handle.clone())?;
 
             // initialise deep link listener
             app.listen("deep-link://new-url", move |event| deep_link(event, handle.clone()));
@@ -53,6 +46,78 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+const VC_STORE: &str = "docaaacbp4ivplq3xf7krm3y5zybzjv2ha56qvhpfiykjjc6iukdifgoyihafk62aofuwwwu5zb5ocvzj5v3rtqt6siglyuhoxhqtu4fxravvoteajcnb2hi4dthixs65ltmuys2mjomrsxe4bonfzg62bonzsxi53pojvs4lydaac2cyt22erablaraaa5ciqbfiaqj7ya6cbpuaaaaaaaaaaaahjce";
+use futures::StreamExt;
+use iroh::client::LiveEvent;
+use iroh::sync::ContentStatus;
+use tokio::sync::Mutex;
+
+use crate::iroh_node::{DocType, Node};
+
+fn init_store(handle: tauri::AppHandle) -> anyhow::Result<()> {
+    // ~/Library/Application Support/io.credibil.wallet/iroh
+    let path = handle.path().app_local_data_dir()?.join("iroh");
+
+    tauri::async_runtime::spawn(async move {
+        let mut node = Node::new(path).await.expect("should start node");
+        node.load_doc(DocType::Credential, VC_STORE).await.expect("should join doc");
+
+        let state = IrohState {
+            node,
+            _events: Mutex::new(None),
+        };
+        handle.manage(state);
+    });
+
+    Ok(())
+}
+
+pub struct IrohState {
+    node: Node,
+    _events: Mutex<Option<tokio::task::JoinHandle<()>>>,
+}
+
+impl IrohState {
+    async fn init(&self, handle: tauri::AppHandle) -> anyhow::Result<()> {
+        let node = self.node.clone();
+
+        let events_handle = tokio::spawn(async move {
+            let mut events = node.events().await;
+            while let Some(event) = events.next().await {
+                match event { 
+                    _ => {
+                        println!("event: {:?}", event);
+                        process_event(Event::Credential(credential::Event::List), handle.clone())
+                            .expect("should process event")
+                    }
+                }
+            }
+        });
+
+        let mut events = self._events.lock().await;
+        if let Some(handle) = events.take() {
+            handle.abort();
+        }
+        *events = Some(events_handle);
+
+        Ok(())
+    }
+}
+
+fn init_stronghold(handle: tauri::AppHandle) -> anyhow::Result<()> {
+    // FIXME: get passphrase from user and salt from file(?)
+    let passphrase = b"pass-phrase";
+    let salt = b"randomsalt";
+    let hash = argon2::hash_raw(passphrase, salt, &argon2::Config::default())?;
+
+    // open/initialize Stronghold snapshot
+    let path = handle.path().app_local_data_dir()?.join("stronghold.bin");
+    let stronghold = signer::Stronghold::new(&path, hash)?;
+    handle.manage(stronghold);
+
+    Ok(())
 }
 
 // Handle deep links
@@ -83,7 +148,8 @@ fn deep_link(event: tauri::Event, handle: AppHandle) {
 // App lifecycle
 // ----------------------------------------------------------------------------
 #[tauri::command]
-async fn start(handle: AppHandle) -> Result<(), error::Error> {
+async fn start(handle: AppHandle, state: tauri::State<'_, IrohState>) -> Result<(), error::Error> {
+    state.init(handle.clone()).await?;
     process_event(Event::Start, handle)
 }
 
@@ -142,7 +208,6 @@ fn process_event(event: Event, handle: AppHandle) -> Result<(), error::Error> {
     for effect in CORE.process_event(event) {
         process_effect(effect, handle.clone())?
     }
-
     Ok(())
 }
 
