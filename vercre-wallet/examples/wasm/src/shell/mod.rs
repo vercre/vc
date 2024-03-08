@@ -1,10 +1,11 @@
 mod header;
 
-use yew::prelude::*;
-
-use crate::components::{types::MediaWidth, Container, Stack};
 use header::Header;
 pub use header::HeaderProps;
+use yew::prelude::*;
+
+use crate::components::types::MediaWidth;
+use crate::components::{Container, Stack};
 
 #[derive(Properties, PartialEq)]
 pub(crate) struct ShellProps {
@@ -24,4 +25,3 @@ pub(crate) fn shell(props: &ShellProps) -> Html {
         </Stack>
     }
 }
-

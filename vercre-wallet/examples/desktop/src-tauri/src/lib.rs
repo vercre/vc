@@ -1,7 +1,7 @@
 mod error;
 #[path = "http.rs"]
 mod http_loc;
-mod iroh_node;
+mod iroh;
 mod signer;
 mod store;
 
@@ -13,6 +13,8 @@ use tauri_plugin_log::{Target, TargetKind};
 use vercre_wallet::signer::SignerResponse;
 use vercre_wallet::store::StoreResponse;
 use vercre_wallet::{credential, issuance, presentation, App, Capabilities, Core, Effect, Event};
+
+// TODO:  Iroh VC doc ticket should come from user (somehow)
 
 lazy_static! {
     static ref CORE: Arc<Core<Effect, App>> = Arc::new(Core::new::<Capabilities>());
@@ -31,9 +33,16 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
+            // initialise the store
             let handle = app.handle().clone();
+            store::init(handle.clone(), move |event| {
+                println!("{event}");
+                process_event(Event::Credential(credential::Event::List), handle.clone())
+                    .expect("should process event")
+            })?;
 
-            init_store(handle.clone())?;
+            // initialise the Stronghold key vault
+            let handle = app.handle().clone();
             init_stronghold(handle.clone())?;
 
             // initialise deep link listener
@@ -47,62 +56,7 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
-const VC_STORE: &str = "docaaacbp4ivplq3xf7krm3y5zybzjv2ha56qvhpfiykjjc6iukdifgoyihafk62aofuwwwu5zb5ocvzj5v3rtqt6siglyuhoxhqtu4fxravvoteajcnb2hi4dthixs65ltmuys2mjomrsxe4bonfzg62bonzsxi53pojvs4lydaac2cyt22erablaraaa5ciqbfiaqj7ya6cbpuaaaaaaaaaaaahjce";
-use futures::StreamExt;
-use tokio::sync::Mutex;
-
-use crate::iroh_node::{DocType, Node};
-
-fn init_store(handle: tauri::AppHandle) -> anyhow::Result<()> {
-    // ~/Library/Application Support/io.credibil.wallet/iroh
-    let path = handle.path().app_local_data_dir()?.join("iroh");
-
-    tauri::async_runtime::spawn(async move {
-        let mut node = Node::new(path).await.expect("should start node");
-        node.load_doc(DocType::Credential, VC_STORE).await.expect("should join doc");
-
-        let state = IrohState {
-            node,
-            _events: Mutex::new(None),
-        };
-        handle.manage(state);
-    });
-
-    Ok(())
-}
-
-pub struct IrohState {
-    node: Node,
-    _events: Mutex<Option<tokio::task::JoinHandle<()>>>,
-}
-
-impl IrohState {
-    async fn init(&self, handle: tauri::AppHandle) -> anyhow::Result<()> {
-        let node = self.node.clone();
-
-        let events_handle = tokio::spawn(async move {
-            let mut events = node.events().await;
-            while let Some(event) = events.next().await {
-                match event {
-                    _ => {
-                        println!("{:?}", event);
-                        process_event(Event::Credential(credential::Event::List), handle.clone())
-                            .expect("should process event")
-                    }
-                }
-            }
-        });
-
-        let mut events = self._events.lock().await;
-        if let Some(handle) = events.take() {
-            handle.abort();
-        }
-        *events = Some(events_handle);
-
-        Ok(())
-    }
-}
-
+// initialise the Stronghold key store
 fn init_stronghold(handle: tauri::AppHandle) -> anyhow::Result<()> {
     // FIXME: get passphrase from user and salt from file(?)
     let passphrase = b"pass-phrase";
@@ -145,8 +99,7 @@ fn deep_link(event: tauri::Event, handle: AppHandle) {
 // App lifecycle
 // ----------------------------------------------------------------------------
 #[tauri::command]
-async fn start(handle: AppHandle, state: tauri::State<'_, IrohState>) -> Result<(), error::Error> {
-    state.init(handle.clone()).await?;
+async fn start(handle: AppHandle) -> Result<(), error::Error> {
     process_event(Event::Start, handle)
 }
 
@@ -160,7 +113,6 @@ async fn cancel(handle: AppHandle) -> Result<(), error::Error> {
 // ----------------------------------------------------------------------------
 #[tauri::command]
 async fn get_list(_filter: String, handle: AppHandle) -> Result<(), error::Error> {
-    // TODO: build filter from query string
     process_event(Event::Credential(credential::Event::List), handle)
 }
 

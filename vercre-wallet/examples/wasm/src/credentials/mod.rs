@@ -1,10 +1,11 @@
 use std::rc::Rc;
 
 use gloo_console::log;
-use vercre_wallet::{credential::{Credential, CredentialDisplay, self}, Event};
+use vercre_wallet::credential::{self, Credential, CredentialDisplay};
+use vercre_wallet::Event;
 use yew::prelude::*;
 
-use crate::core::{Message, update};
+use crate::core::{update, Message};
 
 #[derive(Clone, PartialEq, Properties)]
 pub(crate) struct CredentialsProps {
@@ -14,7 +15,6 @@ pub(crate) struct CredentialsProps {
 
 #[function_component(Credentials)]
 pub(crate) fn credentials(props: &CredentialsProps) -> Html {
-
     // props.clone().on_load_credentials.emit(());
 
     html! {
@@ -36,7 +36,7 @@ fn display_props(credential: Credential) -> VcCardProps {
         for d in display {
             if let Some(locale) = d.locale.clone() {
                 if locale == "en-NZ" {
-                    config = d.clone(); 
+                    config = d.clone();
                     break;
                 }
             }

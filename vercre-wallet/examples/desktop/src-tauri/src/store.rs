@@ -1,7 +1,50 @@
+use futures::StreamExt;
+use serde_json::Value;
 use tauri::Manager;
+use tokio::sync::Mutex;
 use vercre_wallet::store::{StoreRequest, StoreResponse};
 
 use crate::error;
+use crate::iroh::{Node, DocType};
+
+const VC_STORE: &str = "docaaacbp4ivplq3xf7krm3y5zybzjv2ha56qvhpfiykjjc6iukdifgoyihafk62aofuwwwu5zb5ocvzj5v3rtqt6siglyuhoxhqtu4fxravvoteajcnb2hi4dthixs65ltmuys2mjomrsxe4bonfzg62bonzsxi53pojvs4lydaac2cyt22erablaraaa5ciqbfiaqj7ya6cbpuaaaaaaaaaaaahjce";
+
+struct IrohState {
+    node: Node,
+    _events: Mutex<Option<tokio::task::JoinHandle<()>>>,
+}
+
+// initialise the Iroh node
+pub fn init<F>(handle: tauri::AppHandle, callback: F) -> anyhow::Result<()>
+where
+    F: Fn(String) + Send + 'static, // -> () + Send + 'static,
+{
+    // ~/Library/Application Support/io.credibil.wallet/iroh
+    let path = handle.path().app_local_data_dir()?.join("iroh");
+
+    tauri::async_runtime::spawn(async move {
+        // start Iroh node and load credential store
+        let mut node = Node::new(path).await.expect("should start node");
+        node.join_doc(DocType::Credential, VC_STORE).await.expect("should join doc");
+
+        // listen for document events
+        let node2 = node.clone();
+        let jh = tokio::spawn(async move {
+            while let Some(event) = node2.events().await.next().await {
+                callback(event);
+            }
+        });
+
+        // save node and event listener to state
+        let state = IrohState {
+            node,
+            _events: Mutex::new(Some(jh)),
+        };
+        handle.manage(state);
+    });
+
+    Ok(())
+}
 
 pub async fn request<R>(
     op: &StoreRequest, app_handle: &tauri::AppHandle<R>,
@@ -9,7 +52,7 @@ pub async fn request<R>(
 where
     R: tauri::Runtime,
 {
-    let state = app_handle.state::<super::IrohState>();
+    let state = app_handle.state::<IrohState>();
     let node = state.node.clone();
 
     match op {
@@ -23,9 +66,15 @@ where
             Ok(StoreResponse::Ok)
         }
         StoreRequest::List => {
-            let entries = node.credentials().await.unwrap();
-            let values = serde_json::to_vec(&entries).unwrap();
-            Ok(StoreResponse::List(values))
+            let mut values = vec![];
+            let entries = node.doc(DocType::Credential).unwrap().entries().await?;
+
+            for entry in entries {
+                let val: Value = serde_json::from_slice(&entry).expect("should be json");
+                values.push(val);
+            }
+            let values_vec = serde_json::to_vec(&values).unwrap();
+            Ok(StoreResponse::List(values_vec))
         }
         StoreRequest::Delete(_id) => {
             // with_store(app_handle.clone(), stores, path, |store| {

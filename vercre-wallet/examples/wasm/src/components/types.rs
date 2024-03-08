@@ -35,7 +35,8 @@ impl MediaWidth {
             MediaWidth::Md => "min-w-md",
             MediaWidth::Lg => "min-w-lg",
             MediaWidth::Xl => "min-w-xl",
-        }.to_string()
+        }
+        .to_string()
     }
 
     // Converts the enum to a maximum width class string.
@@ -46,6 +47,7 @@ impl MediaWidth {
             MediaWidth::Md => "max-w-md",
             MediaWidth::Lg => "max-w-lg",
             MediaWidth::Xl => "max-w-xl",
-        }.to_string()
+        }
+        .to_string()
     }
 }

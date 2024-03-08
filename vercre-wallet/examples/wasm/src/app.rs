@@ -4,7 +4,7 @@ use vercre_wallet::app::View;
 use vercre_wallet::{credential, Event};
 use yew::prelude::*;
 
-use crate::core::{Core, Message, self};
+use crate::core::{self, Core, Message};
 use crate::credentials::{Credentials, CredentialsProps};
 use crate::shell::{HeaderProps, Shell, ShellProps};
 
@@ -43,7 +43,7 @@ impl Component for App {
                 <h1>{"Credibil Wallet"}</h1>
                 <p>{"Rust Core, Rust Shell (Yew)"}</p>
                 if view.view  == View::Credential {
-                    <Credentials 
+                    <Credentials
                         credentials={view.credential.credentials.clone()}
                         on_load_credentials={link.callback(|_| Message::Event(Event::Credential(credential::Event::List)))}
                     />
