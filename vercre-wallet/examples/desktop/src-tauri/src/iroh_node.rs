@@ -3,28 +3,28 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use anyhow::Result;
-use futures::{future, Stream, StreamExt};
-use iroh::bytes::store::{flat, mem};
+use futures::{future, Stream, StreamExt, TryStreamExt};
+use iroh::bytes::store::flat;
 use iroh::client::{Doc, LiveEvent};
 // use iroh::net::key::SecretKey;
 use iroh::node;
 use iroh::rpc_protocol::{
     BlobDownloadRequest, DocTicket, DownloadLocation, ProviderRequest, ProviderResponse,
-    SetTagOption, ShareMode,
+    SetTagOption,
 };
-use iroh::sync::store::{fs, memory}; // Query
+use iroh::sync::store::{fs, Query};
 use iroh::sync::ContentStatus;
 use iroh::ticket::BlobTicket;
 use iroh::util::path::IrohPaths;
 use quic_rpc::transport::flume::FlumeConnection;
+// use tokio_util::bytes::Bytes;
 use tokio_util::task::LocalPoolHandle;
 
 // const DEF_RPC_PORT: u16 = 0x1337;
 
 #[derive(Clone, Debug)]
 pub struct Node {
-    // pub node: iroh::node::Node<flat::Store>,
-    pub node: iroh::node::Node<mem::Store>,
+    pub node: iroh::node::Node<flat::Store>,
     docs: HashMap<DocType, Doc<FlumeConnection<ProviderResponse, ProviderRequest>>>,
 }
 
@@ -36,19 +36,21 @@ pub enum DocType {
 
 impl Node {
     pub async fn new(data_root: impl Into<PathBuf>) -> Result<Self> {
-        // let repo = PathBuf::from("./data");
         let repo = data_root.into();
-        let flat_dir = repo.join(IrohPaths::BaoFlatStoreDir);
+        let blob_dir = repo.join(IrohPaths::BaoFlatStoreDir);
         let docs_dir = repo.join(IrohPaths::DocsDatabase);
 
-        // let blob_store = flat::Store::load(&flat_dir).await?;
-        // let doc_store = fs::Store::new(docs_dir)?;
-        let blob_store = mem::Store::new();
-        let doc_store = memory::Store::default();
+        let blob_store = flat::Store::load(&blob_dir).await?;
+        let doc_store = fs::Store::new(docs_dir)?;
+        // let blob_store = mem::Store::new();
+        // let doc_store = memory::Store::default();
 
         let rt = LocalPoolHandle::new(1);
-
-        let node = node::Node::builder(blob_store, doc_store).local_pool(&rt).spawn().await?;
+        let node = node::Node::builder(blob_store, doc_store)
+            // .peers_data_path(blob_dir)
+            .local_pool(&rt)
+            .spawn()
+            .await?;
 
         Ok(Node {
             node,
@@ -68,60 +70,71 @@ impl Node {
 
         let doc = iroh.docs.import(doc_ticket.clone()).await?;
         doc.start_sync(doc_ticket.nodes).await?;
-        doc.share(ShareMode::Write).await?;
 
         self.docs.insert(doc_type, doc);
 
         Ok(())
     }
 
-    pub fn credentials(&self) -> Option<&Doc<FlumeConnection<ProviderResponse, ProviderRequest>>> {
-        self.docs.get(&DocType::Credential)
+    // pub async fn credentials(&self) -> Result<Vec<u8>> {
+    pub async fn credentials(&self) -> Result<Vec<serde_json::Value>> {
+        let doc = self.docs.get(&DocType::Credential).unwrap();
+        let iroh = self.node.client();
+
+        let mut entries = doc.get_many(Query::single_latest_per_key()).await?;
+
+        let mut vcs = Vec::new();
+        while let Some(entry) = entries.try_next().await? {
+            match iroh.blobs.read_to_bytes(entry.content_hash()).await {
+                Ok(bytes) => {
+                    let val: serde_json::Value =
+                        serde_json::from_slice(&bytes).expect("should be json");
+                    vcs.push(val);
+                }
+                Err(e) => {
+                    println!("Error getting entry {entry:?}: {e}");
+                }
+            };
+        }
+
+        Ok(vcs)
     }
+
+    // pub async fn node_events(&self, ticket: &str) {
+    //     let doc_ticket = DocTicket::from_str(ticket)?;
+
+    //     let node = doc_ticket.nodes[0].clone();
+    //     node.
+    //         .subscribe(move |event| {
+    //             println!("Got event: {:?}", event);
+    //             Box::pin(async move {
+    //                 // sender.send(event).unwrap();
+    //             })
+    //         })
+    //         .await
+    //         .expect("should subscribe");
+    // }
 
     pub async fn events(&self) -> impl Stream<Item = String> {
         // pub async fn events(&self) -> impl Iterator<Item = String> {
-        let doc = self.credentials().expect("should have credentials");
-        // doc.subscribe().await
 
+        let doc = self.docs.get(&DocType::Credential).unwrap();
         let events = doc.subscribe().await.expect("should subscribe");
 
-        return events.map(|event| {
-            match event.unwrap() {
-                LiveEvent::InsertRemote { content_status, .. } => {
-                    // if content_status == ContentStatus::Complete {
-                    String::from("insert remote")
-                    // }
-                }
+        events.map(|event| {
+            let event = event.expect("should get event");
+            match event {
+                LiveEvent::InsertRemote { content_status, .. } => match content_status {
+                    ContentStatus::Complete => String::from("remote added"),
+                    ContentStatus::Missing => String::from("remote deleted"),
+                    _ => String::from("insert remote"),
+                },
                 LiveEvent::InsertLocal { .. } => String::from("insert local"),
-                LiveEvent::ContentReady { hash } => String::from("content ready"),
+                LiveEvent::ContentReady { .. } => String::from("content ready"),
                 LiveEvent::SyncFinished(sync) => String::from(format!("sync finished: {:?}", sync)),
-                _ => String::from(""),
+                _ => String::from(format!("other event: {:?}", event)),
             }
-        });
-
-        // while let Some(Ok(event)) = events.next().await {
-        //     match event {
-        //         LiveEvent::InsertRemote { content_status, .. } => {
-        //             // only update if we already have the content
-        //             if content_status == ContentStatus::Complete {
-        //                 println!("insert remote");
-        //                 return String::from("");
-        //             }
-        //         }
-        //         LiveEvent::InsertLocal { .. } => {
-        //             println!("insert local");
-        //             return String::from("");
-        //         }
-        //         LiveEvent::ContentReady { hash } => {
-        //             println!("content ready");
-        //             let bytes = iroh.blobs.read_to_bytes(hash).await.expect("should get bytes");
-        //             println!("Got bytes: {:?}", bytes.len());
-        //             return String::from("");
-        //         }
-        //         _ => {}
-        //     }
-        // }
+        })
     }
 
     // async fn import_doc(

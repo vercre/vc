@@ -25,10 +25,9 @@ pub fn run() {
         .plugin(
             tauri_plugin_log::Builder::default()
                 .targets([Target::new(TargetKind::Stdout), Target::new(TargetKind::Webview)])
-                .level(log::LevelFilter::Warn)
+                .level(log::LevelFilter::Error)
                 .build(),
         )
-        // .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
@@ -50,8 +49,6 @@ pub fn run() {
 
 const VC_STORE: &str = "docaaacbp4ivplq3xf7krm3y5zybzjv2ha56qvhpfiykjjc6iukdifgoyihafk62aofuwwwu5zb5ocvzj5v3rtqt6siglyuhoxhqtu4fxravvoteajcnb2hi4dthixs65ltmuys2mjomrsxe4bonfzg62bonzsxi53pojvs4lydaac2cyt22erablaraaa5ciqbfiaqj7ya6cbpuaaaaaaaaaaaahjce";
 use futures::StreamExt;
-use iroh::client::LiveEvent;
-use iroh::sync::ContentStatus;
 use tokio::sync::Mutex;
 
 use crate::iroh_node::{DocType, Node};
@@ -86,9 +83,9 @@ impl IrohState {
         let events_handle = tokio::spawn(async move {
             let mut events = node.events().await;
             while let Some(event) = events.next().await {
-                match event { 
+                match event {
                     _ => {
-                        println!("event: {:?}", event);
+                        println!("{:?}", event);
                         process_event(Event::Credential(credential::Event::List), handle.clone())
                             .expect("should process event")
                     }

@@ -1,17 +1,7 @@
-// use std::path::PathBuf;
-
-use futures::TryStreamExt;
-// use iroh::bytes::store::flat;
-// use iroh::client::Doc;
-// use iroh::node::Node;
-// use tauri_plugin_store::{with_store, StoreCollection};
-use iroh::sync::store::Query;
-use serde_json::Value;
 use tauri::Manager;
 use vercre_wallet::store::{StoreRequest, StoreResponse};
 
 use crate::error;
-use crate::iroh_node::Node;
 
 pub async fn request<R>(
     op: &StoreRequest, app_handle: &tauri::AppHandle<R>,
@@ -22,11 +12,8 @@ where
     let state = app_handle.state::<super::IrohState>();
     let node = state.node.clone();
 
-    let doc = node.credentials().unwrap();
-    let iroh = node.node.client();
-
     match op {
-        StoreRequest::Add(id, value) => {
+        StoreRequest::Add(_id, _value) => {
             // with_store(app_handle.clone(), stores, path.clone(), |store| {
             //     let val = serde_json::from_slice(value).unwrap();
             //     log::info!("Storing: {} => {:?} into {}", id, val, path.clone().display());
@@ -36,29 +23,11 @@ where
             Ok(StoreResponse::Ok)
         }
         StoreRequest::List => {
-            let mut vcs = Vec::<Value>::new();
-            let mut entries = doc.get_many(Query::single_latest_per_key()).await?;
-
-            while let Some(entry) = entries.try_next().await? {
-                let bytes = match iroh.blobs.read_to_bytes(entry.content_hash()).await {
-                    Ok(bytes) => bytes,
-                    Err(e) => {
-                        return Err(e).map_err(error::Error::from);
-                        // panic!("Error getting entry: {:?}", entry);
-                        // println!("Error getting entry: {:?}", entry);
-
-                    }
-                };
-                let val = serde_json::from_slice(&bytes).expect("should be json");
-                vcs.push(val);
-            }
-
-            // return a list of all VCs
-            let values = serde_json::to_vec(&vcs).unwrap();
-
+            let entries = node.credentials().await.unwrap();
+            let values = serde_json::to_vec(&entries).unwrap();
             Ok(StoreResponse::List(values))
         }
-        StoreRequest::Delete(id) => {
+        StoreRequest::Delete(_id) => {
             // with_store(app_handle.clone(), stores, path, |store| {
             //     store.delete(id)?;
             //     store.save()
@@ -72,10 +41,10 @@ where
 mod test {
     // use assert_let_bind::assert_let;
     use lazy_static::lazy_static;
-    use serde_json::json;
+    use serde_json::{json, Value};
 
     // use tauri::test::{mock_builder, mock_context, noop_assets, MockRuntime};
-    use super::*;
+    // use super::*;
 
     // #[tokio::test]
     // async fn list() {
