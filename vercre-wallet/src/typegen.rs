@@ -10,6 +10,7 @@
 use crux_core::bridge::Request;
 use crux_core::typegen::TypeGen;
 use crux_http::HttpError;
+use vercre_core::metadata::ValueType;
 use vercre_core::vci::Format;
 
 use crate::credential::Credential;
@@ -33,6 +34,7 @@ pub fn generate(lang: Language, gen_dir: &str) {
 
     // register credential type
     gen.register_type::<Format>().expect("should register");
+    gen.register_type::<ValueType>().expect("should register");
     gen.register_samples::<Credential>(vec![Credential::sample()]).expect("should register");
 
     // register issuance app

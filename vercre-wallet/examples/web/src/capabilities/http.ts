@@ -1,4 +1,4 @@
-import { HttpHeader, HttpRequest, HttpResponse } from "shared_types/types/shared_types";
+import { HttpHeader, HttpRequest, HttpResponse } from 'shared_types/types/shared_types';
 
 export const request = async ({
     url,
@@ -9,6 +9,7 @@ export const request = async ({
         method,
         headers: headers.map((header) => [header.name, header.value]),
     });
+    console.log('http', request);
 
     const response = await fetch(request);
 
