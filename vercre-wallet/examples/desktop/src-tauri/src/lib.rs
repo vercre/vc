@@ -1,7 +1,7 @@
 mod error;
-#[path = "http.rs"]
-mod http_loc;
 mod iroh;
+#[path = "http.rs"]
+mod mod_http;
 mod signer;
 mod store;
 
@@ -38,7 +38,7 @@ pub fn run() {
             let handle = app.handle().clone();
 
             init_iroh(handle.clone())?;
-            // store::init(handle.clone())?;
+            store::init(handle.clone())?;
 
             // initialise the Stronghold key vault
             let handle = app.handle().clone();
@@ -55,39 +55,37 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
-use futures::StreamExt;
-
 pub struct IrohState {
-    node: iroh::Node,
-    _events: Mutex<Option<tokio::task::JoinHandle<()>>>,
+    node: Mutex<iroh::Node>,
+    events: Mutex<Option<tauri::async_runtime::JoinHandle<()>>>,
 }
 
-// initialise the Stronghold key store
+// start local Iroh node
+// ~/Library/Application Support/io.credibil.wallet/iroh
 fn init_iroh(handle: tauri::AppHandle) -> anyhow::Result<()> {
-    // ~/Library/Application Support/io.credibil.wallet/iroh
+    // start node
     let path = handle.path().app_local_data_dir()?.join("iroh");
-
-    tauri::async_runtime::spawn(async move {
-        let node = iroh::Node::new(path).await.expect("should start node");
-
-        // listen for document events
-        let node2 = node.clone();
-        let handle2 = handle.clone();
-        let jh = tokio::spawn(async move {
-            while let Some(event) = node2.events().await.next().await {
-                println!("{event}");
-                process_event(Event::Credential(credential::Event::List), handle2.clone())
-                    .expect("should process event")
-            }
-        });
-
-        // save node and event listener to state
-        let state = IrohState {
-            node,
-            _events: Mutex::new(Some(jh)),
-        };
-        handle.manage(state);
+    let node = tauri::async_runtime::block_on(async {
+        iroh::Node::new(path).await.expect("should start node")
     });
+
+    // start separate process to listen for document events
+    // let node2 = node.clone();
+    // let handle2 = handle.clone();
+    // let jh = tauri::async_runtime::spawn(async move {
+    //     while let Some(event) = node2.events().await.next().await {
+    //         println!("{event}");
+    //         process_event(Event::Credential(credential::Event::List), handle2.clone())
+    //             .expect("should process event")
+    //     }
+    // });
+
+    // save node and event listener to Tauri state
+    let state = IrohState {
+        node: Mutex::new(node),
+        events: Mutex::new(None),
+    };
+    handle.manage(state);
 
     Ok(())
 }
@@ -148,7 +146,7 @@ async fn cancel(handle: AppHandle) -> Result<(), error::Error> {
 // Credential management
 // ----------------------------------------------------------------------------
 #[tauri::command]
-async fn get_list(_filter: String, handle: AppHandle) -> Result<(), error::Error> {
+async fn get_list(handle: AppHandle) -> Result<(), error::Error> {
     process_event(Event::Credential(credential::Event::List), handle)
 }
 
@@ -203,7 +201,7 @@ fn process_effect(effect: Effect, handle: AppHandle) -> Result<(), error::Error>
         Effect::Http(mut request) => {
             tauri::async_runtime::spawn({
                 async move {
-                    let result = http_loc::request(&request.operation)
+                    let result = mod_http::request(&request.operation)
                         .await
                         .expect("error processing Http effect");
 

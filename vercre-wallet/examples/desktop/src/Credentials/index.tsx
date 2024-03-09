@@ -45,7 +45,7 @@ export const Credentials = (props: CredentialsProps) => {
         }
         initialLoad.current = false;
         setShellState({...listShellState});
-        invoke("get_list", { filter: "" });
+        invoke("get_list");
     }, [listShellState, setShellState]);
 
     const handleSelect = (c: Credential) => {
