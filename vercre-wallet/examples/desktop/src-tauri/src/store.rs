@@ -1,46 +1,21 @@
-use futures::StreamExt;
 use serde_json::Value;
+use tauri::async_runtime::block_on;
 use tauri::Manager;
-use tokio::sync::Mutex;
 use vercre_wallet::store::{StoreRequest, StoreResponse};
 
-use crate::error;
-use crate::iroh::{Node, DocType};
+use crate::iroh::DocType;
+use crate::{error, IrohState};
 
 const VC_STORE: &str = "docaaacbp4ivplq3xf7krm3y5zybzjv2ha56qvhpfiykjjc6iukdifgoyihafk62aofuwwwu5zb5ocvzj5v3rtqt6siglyuhoxhqtu4fxravvoteajcnb2hi4dthixs65ltmuys2mjomrsxe4bonfzg62bonzsxi53pojvs4lydaac2cyt22erablaraaa5ciqbfiaqj7ya6cbpuaaaaaaaaaaaahjce";
 
-struct IrohState {
-    node: Node,
-    _events: Mutex<Option<tokio::task::JoinHandle<()>>>,
-}
-
 // initialise the Iroh node
-pub fn init<F>(handle: tauri::AppHandle, callback: F) -> anyhow::Result<()>
-where
-    F: Fn(String) + Send + 'static, // -> () + Send + 'static,
-{
-    // ~/Library/Application Support/io.credibil.wallet/iroh
-    let path = handle.path().app_local_data_dir()?.join("iroh");
+pub fn init(handle: tauri::AppHandle) -> anyhow::Result<()> {
+    // start Iroh node and load credential store
+    let state = handle.state::<IrohState>();
+    let mut node = state.node.clone();
 
-    tauri::async_runtime::spawn(async move {
-        // start Iroh node and load credential store
-        let mut node = Node::new(path).await.expect("should start node");
+    block_on(async {
         node.join_doc(DocType::Credential, VC_STORE).await.expect("should join doc");
-
-        // listen for document events
-        let node2 = node.clone();
-        let jh = tokio::spawn(async move {
-            while let Some(event) = node2.events().await.next().await {
-                callback(event);
-            }
-        });
-
-        // save node and event listener to state
-        let state = IrohState {
-            node,
-            _events: Mutex::new(Some(jh)),
-        };
-        handle.manage(state);
     });
 
     Ok(())

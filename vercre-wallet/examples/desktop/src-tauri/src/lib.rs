@@ -10,6 +10,7 @@ use std::sync::Arc;
 use lazy_static::lazy_static;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_log::{Target, TargetKind};
+use tokio::sync::Mutex;
 use vercre_wallet::signer::SignerResponse;
 use vercre_wallet::store::StoreResponse;
 use vercre_wallet::{credential, issuance, presentation, App, Capabilities, Core, Effect, Event};
@@ -35,11 +36,9 @@ pub fn run() {
         .setup(|app| {
             // initialise the store
             let handle = app.handle().clone();
-            store::init(handle.clone(), move |event| {
-                println!("{event}");
-                process_event(Event::Credential(credential::Event::List), handle.clone())
-                    .expect("should process event")
-            })?;
+
+            init_iroh(handle.clone())?;
+            store::init(handle.clone())?;
 
             // initialise the Stronghold key vault
             let handle = app.handle().clone();
@@ -54,6 +53,43 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+use futures::StreamExt;
+
+pub struct IrohState {
+    node: iroh::Node,
+    _events: Mutex<Option<tokio::task::JoinHandle<()>>>,
+}
+
+// initialise the Stronghold key store
+fn init_iroh(handle: tauri::AppHandle) -> anyhow::Result<()> {
+    // ~/Library/Application Support/io.credibil.wallet/iroh
+    let path = handle.path().app_local_data_dir()?.join("iroh");
+
+    tauri::async_runtime::spawn(async move {
+        let node = iroh::Node::new(path).await.expect("should start node");
+
+        // listen for document events
+        let node2 = node.clone();
+        let handle2 = handle.clone();
+        let jh = tokio::spawn(async move {
+            while let Some(event) = node2.events().await.next().await {
+                println!("{event}");
+                process_event(Event::Credential(credential::Event::List), handle2.clone())
+                    .expect("should process event")
+            }
+        });
+
+        // save node and event listener to state
+        let state = IrohState {
+            node,
+            _events: Mutex::new(Some(jh)),
+        };
+        handle.manage(state);
+    });
+
+    Ok(())
 }
 
 // initialise the Stronghold key store
