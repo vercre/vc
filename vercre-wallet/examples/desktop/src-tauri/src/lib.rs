@@ -38,7 +38,7 @@ pub fn run() {
             let handle = app.handle().clone();
 
             init_iroh(handle.clone())?;
-            store::init(handle.clone())?;
+            // store::init(handle.clone())?;
 
             // initialise the Stronghold key vault
             let handle = app.handle().clone();

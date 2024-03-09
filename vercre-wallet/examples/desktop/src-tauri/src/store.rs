@@ -28,7 +28,8 @@ where
     R: tauri::Runtime,
 {
     let state = app_handle.state::<IrohState>();
-    let node = state.node.clone();
+    let mut node = state.node.clone();
+    node.join_doc(DocType::Credential, VC_STORE).await.expect("should join doc");
 
     match op {
         StoreRequest::Add(_id, _value) => {
