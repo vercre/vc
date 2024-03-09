@@ -4,13 +4,13 @@ use std::time::Duration;
 use anyhow::{anyhow, bail, Result};
 use surf::http::Method;
 use surf::{Client, Config, Url};
-use vercre_wallet::http::protocol::{HttpRequest, HttpResponse};
+use vercre_wallet::http::protocol::{HttpRequest, HttpResponse, HttpResult};
 
 pub(crate) async fn request(
     HttpRequest {
         url, method, headers, ..
     }: &HttpRequest,
-) -> Result<HttpResponse> {
+) -> Result<HttpResult> {
     let method = Method::from_str(method).expect("unknown http method");
     let url = Url::parse(url)?;
     let headers = headers.clone();
@@ -28,7 +28,7 @@ pub(crate) async fn request(
     let status = response.status().into();
 
     match response.body_bytes().await {
-        Ok(body) => Ok(HttpResponse::status(status).body(body).build()),
+        Ok(body) => Ok(HttpResult::Ok(HttpResponse::status(status).body(body).build())),
         Err(e) => bail!("{method} {url}: error {e}"),
     }
 }

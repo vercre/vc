@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use async_std::task::spawn;
 use crossbeam_channel::Sender;
 use futures::TryStreamExt;
-use tracing::error;
+use tracing::{debug, error};
 use vercre_wallet::issuance::{App, Capabilities, Effect, Event};
 use vercre_wallet::store;
 

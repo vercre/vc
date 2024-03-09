@@ -1,12 +1,8 @@
 [package]
-authors.workspace = true
 edition.workspace = true
-name = "desktop-types"
+name = "mobile-types"
 rust-version.workspace = true
 version.workspace = true
-
-[features]
-typegen = []
 
 [dependencies]
 

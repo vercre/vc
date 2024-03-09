@@ -45,11 +45,11 @@
             "name": "Tauri",
             "type": "lldb",
             "request": "launch",
-            "cwd": "${workspaceFolder}/vercre-wallet/examples/desktop/tauri",
+            "cwd": "${workspaceFolder}/vercre-wallet/examples/desktop",
             "cargo": {
                 "args": [
                     "build",
-                    "--manifest-path=${workspaceFolder}/vercre-wallet/examples/desktop/tauri/src-tauri/Cargo.toml",
+                    "--manifest-path=${workspaceFolder}/vercre-wallet/examples/desktop/src-tauri/Cargo.toml",
                     "--no-default-features"
                 ]
             },

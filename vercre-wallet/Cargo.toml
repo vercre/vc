@@ -24,12 +24,19 @@ crate-type = ["cdylib", "lib", "staticlib"]
 name = "uniffi-bindgen"
 path = "uniffi-bindgen.rs"
 
+# [[example]]
+# name = "cli"
+# path = "examples/cli/src/main.rs"
+# test = false
+
+# [[example]]
+# name = "desktop"
+# path = "examples/desktop/src-tauri/src/main.rs"
+# test = true
+
 [features]
 typegen = ["crux_core/typegen", "vercre-core/typegen"]
 wasm = ["vercre-core/wasm"]
-
-[build-dependencies]
-uniffi = { version = "0.26.1", features = ["build"] }
 
 [dependencies]
 anyhow.workspace = true
@@ -64,6 +71,9 @@ tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 tracing.workspace = true
 vercre-vci = { path = "../vercre-vci" }
 vercre-vp = { path = "../vercre-vp" }
+
+[build-dependencies]
+uniffi = { version = "0.26.1", features = ["build"] }
 
 [target.uniffi-bindgen.dependencies]
 uniffi = { version = "0.26.1", features = ["cli"] }

@@ -2,12 +2,10 @@
 .PHONY: build
 build:
 	@cargo build
-	# cargo build --manifest-path ./vercre-wallet/examples/Cargo.toml
 
 .PHONY: clean
 clean:
 	@cargo clean
-	@cargo clean --target-dir=vercre-wallet/examples/target
 
 # TESTS = ""
 .PHONY: test

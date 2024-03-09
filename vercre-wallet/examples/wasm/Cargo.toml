@@ -1,9 +1,10 @@
+[workspace]
+
 [package]
-authors.workspace = true
-edition.workspace = true
+edition = "2021"
 name = "wasm"
-rust-version.workspace = true
-version.workspace = true
+rust-version = "1.72"
+version = "0.1.0"
 
 [dependencies]
 anyhow = "1.0.80"
@@ -17,7 +18,7 @@ k256 = "0.13.3"
 serde = "1.0.197"
 serde_json = "1.0.114"
 sha2 = "0.10.8"
+test-utils = { path = "../../../test-utils" }
 vercre-core = { path = "../../../vercre-core", features = ["wasm"] }
 vercre-wallet = { path = "../../../vercre-wallet", features = ["wasm"] }
-test-utils = { path = "../../../test-utils" }
 yew = { version = "0.21.0", features = ["csr"] }
