@@ -1,6 +1,6 @@
 //! State is used by the library to persist request information between steps
 //! in the issuance process.
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, TimeDelta, Utc};
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use vercre_core::error::Err;
@@ -13,9 +13,9 @@ pub enum Expire {
 }
 
 impl Expire {
-    pub const fn duration(&self) -> Duration {
+    pub fn duration(&self) -> TimeDelta {
         match self {
-            Self::Request => Duration::minutes(5),
+            Self::Request => TimeDelta::try_minutes(5).unwrap_or_default(),
         }
     }
 }

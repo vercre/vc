@@ -43,6 +43,6 @@ thiserror = "1.0.57"
 tracing.workspace = true
 
 [dev-dependencies]
-insta = { version = "1.36.0", features = ["filters", "redactions", "yaml"] }
+insta = { version = "1.36.1", features = ["filters", "redactions", "yaml"] }
 lazy_static = "1.4.0"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }

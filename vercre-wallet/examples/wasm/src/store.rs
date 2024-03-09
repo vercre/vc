@@ -2,7 +2,7 @@
 
 use std::vec;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, TimeDelta, Utc};
 use gloo_console::log;
 use serde::ser::SerializeMap;
 use serde_json::ser;
@@ -51,7 +51,7 @@ async fn hard_coded_credentials() -> Vec<u8> {
         type_: Signer::algorithm(&provider).proof_type(),
         verification_method: Signer::verification_method(&provider),
         created: Some(dt_utc),
-        expires: dt_utc.checked_add_signed(chrono::Duration::hours(1)),
+        expires: dt_utc.checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
         ..Default::default()
     };
     let iss = issuer.clone();

@@ -12,7 +12,7 @@ use std::fmt::Debug;
 use std::str::FromStr;
 
 use anyhow::anyhow;
-use chrono::Utc;
+use chrono::{TimeDelta, Utc};
 use tracing::{instrument, trace};
 use uuid::Uuid;
 use vercre_core::error::{Ancillary as _, Err};
@@ -259,7 +259,7 @@ where
 
         // transform to JWT
         let mut vc_jwt = vc.to_jwt()?;
-        vc_jwt.claims.sub = self.holder_did.clone();
+        vc_jwt.claims.sub.clone_from(&self.holder_did);
         let signed = vc_jwt.sign(provider.clone()).await?;
 
         Ok(CredentialResponse {
@@ -305,7 +305,7 @@ where
             type_: Signer::algorithm(provider).proof_type(),
             verification_method: Signer::verification_method(provider),
             created: Some(Utc::now()),
-            expires: Utc::now().checked_add_signed(chrono::Duration::hours(1)),
+            expires: Utc::now().checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
             //domain: Some(vec![request.client_id.clone()]),
             ..Default::default()
         };
@@ -358,8 +358,9 @@ where
                 };
 
                 // copy credential subject
-                cred_def.credential_subject =
-                    supported.credential_definition.credential_subject.clone();
+                cred_def
+                    .credential_subject
+                    .clone_from(&supported.credential_definition.credential_subject);
             };
 
             Ok(cred_def)
@@ -390,7 +391,7 @@ where
         };
 
         let c_nonce = gen::nonce();
-        token_state.c_nonce = c_nonce.clone();
+        token_state.c_nonce.clone_from(&c_nonce);
         token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
         state.token = Some(token_state.clone());
 

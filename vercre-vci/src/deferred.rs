@@ -92,8 +92,8 @@ where
 
         // make credential request
         let mut cred_req = deferred_state.credential_request;
-        cred_req.credential_issuer = request.credential_issuer.clone();
-        cred_req.access_token = request.access_token.clone();
+        cred_req.credential_issuer.clone_from(&request.credential_issuer);
+        cred_req.access_token.clone_from(&request.access_token);
 
         let response = Endpoint::new(provider.clone()).credential(&cred_req).await?;
 
