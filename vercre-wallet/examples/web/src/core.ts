@@ -9,16 +9,18 @@ import {
     // EffectVariantDelay,
     // EffectVariantHttp,
     // EffectVariantSigner,
-    // EffectVariantStore,
+    EffectVariantStore,
     Event,
     HttpResponse,
     Request,
+    StoreResponse,
     ViewModel
 } from 'shared_types/types/shared_types';
 import { handle_response, process_event, view } from 'vercre-wallet';
 import { request as http } from './capabilities/http';
+import { store } from './capabilities/store';
 
-type Response = HttpResponse;
+type Response = HttpResponse | StoreResponse;
 
 export const update = (event: Event, callback: Dispatch<SetStateAction<ViewModel>>): void => {
     console.log('update', event);
@@ -48,6 +50,12 @@ const processEffect = async (
         case EffectVariantHttp: {
             const request = (effect as EffectVariantHttp).value;
             const response = await http(request);
+            respond(uuid, response, callback);
+            break;
+        }
+        case EffectVariantStore: {
+            const request = (effect as EffectVariantStore).value;
+            const response = await store(request);
             respond(uuid, response, callback);
             break;
         }

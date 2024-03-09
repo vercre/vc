@@ -1,9 +1,10 @@
+[workspace]
+
 [package]
-authors.workspace = true
-edition.workspace = true
+edition = "2021"
 name = "cli"
-rust-version.workspace = true
-version.workspace = true
+rust-version = "1.72"
+version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
@@ -17,5 +18,5 @@ futures = "0.3"
 surf = "2.3.2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-vercre-core.workspace = true
-vercre-wallet.workspace = true
+vercre-core = { path = "../../../vercre-core" }
+vercre-wallet = { path = "../../../vercre-wallet" }

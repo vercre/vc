@@ -21,7 +21,7 @@ Further documentation can be found at the [Vercre website](https://vercre.io).
 Example impementations for credential issuance, verifiable presentation, and a basic wallet can be
 found at:
 
-- [Wallet](./vercre-wallet/examples/desktop/tauri)
+- [Wallet](./vercre-wallet/examples/desktop)
 - [Credential Issuance API](./vercre-vci/examples/http)
 - [Verifiable Presentation API](./vercre-vp/examples/http)
 

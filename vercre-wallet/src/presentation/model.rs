@@ -1,7 +1,7 @@
 //! # Credential Model Flow
 
 use anyhow::anyhow;
-use chrono::Utc;
+use chrono::{TimeDelta, Utc};
 use crux_http::Response;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -148,7 +148,7 @@ impl Model {
             type_: proof_type.to_string(),
             verification_method: kid,
             created: Some(Utc::now()),
-            expires: Utc::now().checked_add_signed(chrono::Duration::hours(1)),
+            expires: Utc::now().checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
             domain: Some(vec![request.client_id.clone()]),
             challenge: Some(request.nonce.clone()),
             ..Default::default()
