@@ -9,7 +9,7 @@
         "./vercre-wallet/examples/web/Cargo.toml",
     ],
     "rust-analyzer.cargo.features": [
-        // "typegen",
+       //  "typegen",
     ],
     "todo-tree.tree.showBadges": true,
     // See https://github.com/vadimcn/codelldb/blob/v1.10.0/MANUAL.md
@@ -21,5 +21,7 @@
         {
             "pattern": "./vercre-wallet/examples/desktop/*/"
         }
-    ]
+    ],
+    // "rust-analyzer.check.allTargets": true,
+    // "rust-analyzer.check.features": "all",
 }

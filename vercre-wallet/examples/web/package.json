@@ -1,7 +1,8 @@
 {
   "name": "vercre-wallet-web",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "type": "module",
   "scripts": {
     "dev": "pnpm run wasm:build && vite",
     "build": "pnpm run wasm:build && tsc && vite build",
