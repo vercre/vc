@@ -4,6 +4,21 @@ use vercre_wallet::signer::{SignerRequest, SignerResponse};
 
 use crate::error;
 
+// initialise the Stronghold key store
+pub fn init(handle: tauri::AppHandle) -> anyhow::Result<()> {
+    // FIXME: get passphrase from user and salt from file(?)
+    let passphrase = b"pass-phrase";
+    let salt = b"randomsalt";
+    let hash = argon2::hash_raw(passphrase, salt, &argon2::Config::default())?;
+
+    // open/initialize Stronghold snapshot
+    let path = handle.path().app_local_data_dir()?.join("stronghold.bin");
+    let stronghold = Stronghold::new(&path, hash)?;
+    handle.manage(stronghold);
+
+    Ok(())
+}
+
 pub async fn request<R>(
     op: &SignerRequest, app_handle: &tauri::AppHandle<R>,
 ) -> Result<SignerResponse, error::Error>

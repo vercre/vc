@@ -8,7 +8,8 @@ mod store;
 use std::sync::Arc;
 
 use lazy_static::lazy_static;
-use tauri::{AppHandle, Manager};
+use tauri::async_runtime::{block_on, JoinHandle};
+use tauri::{generate_context, generate_handler, AppHandle, Manager};
 use tauri_plugin_log::{Target, TargetKind};
 use tokio::sync::Mutex;
 use vercre_wallet::signer::SignerResponse;
@@ -34,30 +35,26 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
-            // initialise the store
             let handle = app.handle().clone();
 
             init_iroh(handle.clone())?;
             store::init(handle.clone())?;
-
-            // initialise the Stronghold key vault
-            let handle = app.handle().clone();
-            init_stronghold(handle.clone())?;
+            signer::init(handle.clone())?;
 
             // initialise deep link listener
             app.listen("deep-link://new-url", move |event| deep_link(event, handle.clone()));
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![
+        .invoke_handler(generate_handler![
             accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
         ])
-        .run(tauri::generate_context!())
+        .run(generate_context!())
         .expect("error while running tauri application");
 }
 
 pub struct IrohState {
     node: Mutex<iroh::Node>,
-    events: Mutex<Option<tauri::async_runtime::JoinHandle<()>>>,
+    events: Mutex<Option<JoinHandle<()>>>,
 }
 
 // start local Iroh node
@@ -65,20 +62,7 @@ pub struct IrohState {
 fn init_iroh(handle: tauri::AppHandle) -> anyhow::Result<()> {
     // start node
     let path = handle.path().app_local_data_dir()?.join("iroh");
-    let node = tauri::async_runtime::block_on(async {
-        iroh::Node::new(path).await.expect("should start node")
-    });
-
-    // start separate process to listen for document events
-    // let node2 = node.clone();
-    // let handle2 = handle.clone();
-    // let jh = tauri::async_runtime::spawn(async move {
-    //     while let Some(event) = node2.events().await.next().await {
-    //         println!("{event}");
-    //         process_event(Event::Credential(credential::Event::List), handle2.clone())
-    //             .expect("should process event")
-    //     }
-    // });
+    let node = block_on(async { iroh::Node::new(path).await.expect("should start node") });
 
     // save node and event listener to Tauri state
     let state = IrohState {
@@ -86,21 +70,6 @@ fn init_iroh(handle: tauri::AppHandle) -> anyhow::Result<()> {
         events: Mutex::new(None),
     };
     handle.manage(state);
-
-    Ok(())
-}
-
-// initialise the Stronghold key store
-fn init_stronghold(handle: tauri::AppHandle) -> anyhow::Result<()> {
-    // FIXME: get passphrase from user and salt from file(?)
-    let passphrase = b"pass-phrase";
-    let salt = b"randomsalt";
-    let hash = argon2::hash_raw(passphrase, salt, &argon2::Config::default())?;
-
-    // open/initialize Stronghold snapshot
-    let path = handle.path().app_local_data_dir()?.join("stronghold.bin");
-    let stronghold = signer::Stronghold::new(&path, hash)?;
-    handle.manage(stronghold);
 
     Ok(())
 }

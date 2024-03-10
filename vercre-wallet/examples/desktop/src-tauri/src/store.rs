@@ -12,18 +12,14 @@ const VC_STORE: &str = "docaaacbp4ivplq3xf7krm3y5zybzjv2ha56qvhpfiykjjc6iukdifgo
 
 // initialise the credential store on the Iroh node
 pub fn init(handle: tauri::AppHandle) -> anyhow::Result<()> {
-    let state = handle.state::<IrohState>();
-    // let  node = state.node;
-
-    // load credential store
     block_on(async {
-        let mut node = state.node.lock().await;
-        node.join_doc(DocType::Credential, VC_STORE).await?;
+        let state = handle.state::<IrohState>();
+        let node = state.node.lock().await;
+        let doc = node.join_doc(DocType::Credential, VC_STORE).await?;
 
-        let node2 = node.clone();
         let handle2 = handle.clone();
         let jh = spawn(async move {
-            while let Some(event) = node2.events().await.next().await {
+            while let Some(event) = doc.events().await.next().await {
                 println!("{event}");
                 super::get_list(handle2.clone()).await.expect("should process event");
             }
@@ -49,18 +45,21 @@ where
     let node = state.node.lock().await;
 
     match op {
-        StoreRequest::Add(_id, _value) => {
+        StoreRequest::Add(_id, value) => {
             // with_store(app_handle.clone(), stores, path.clone(), |store| {
             //     let val = serde_json::from_slice(value).unwrap();
             //     log::info!("Storing: {} => {:?} into {}", id, val, path.clone().display());
             //     store.insert(id.to_string(), val)?;
             //     store.save()
             // })?;
+            node.add_doc(DocType::Credential,value).await?;
+
             Ok(StoreResponse::Ok)
         }
         StoreRequest::List => {
+            let doc = node.doc(&DocType::Credential).unwrap();
+            let entries = doc.entries().await?;
             let mut values = vec![];
-            let entries = node.doc(DocType::Credential).unwrap().entries().await?;
 
             for entry in entries {
                 let val: Value = serde_json::from_slice(&entry).expect("should be json");
