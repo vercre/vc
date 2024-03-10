@@ -3,6 +3,8 @@ import { Dispatch, SetStateAction } from 'react';
 
 import { BincodeSerializer, BincodeDeserializer } from 'shared_types/bincode/mod';
 import {
+    CredentialConfiguration,
+    CredentialView,
     Effect,
     EffectVariantHttp,
     EffectVariantRender,
@@ -12,15 +14,30 @@ import {
     EffectVariantStore,
     Event,
     HttpResponse,
+    IssuanceStatusVariantInactive,
+    IssuanceView,
+    PresentationStatusVariantInactive,
+    PresentationView,
     Request,
     StoreResponse,
-    ViewModel
+    ViewModel,
+    ViewVariantSplash,
 } from 'shared_types/types/shared_types';
-import { handle_response, process_event, view } from 'vercre-wallet';
+import { handle_response, process_event, view } from 'vercre-wallet/vercre_wallet';
 import { request as http } from './capabilities/http';
 import { store } from './capabilities/store';
 
 type Response = HttpResponse | StoreResponse;
+
+export const initView = (): ViewModel => {
+    return new ViewModel(
+        new CredentialView([]),
+        new IssuanceView('', new Map<string, CredentialConfiguration>(), new IssuanceStatusVariantInactive()),
+        new PresentationView([], new PresentationStatusVariantInactive()),
+        null,
+        new ViewVariantSplash(),
+    );
+};
 
 export const update = (event: Event, callback: Dispatch<SetStateAction<ViewModel>>): void => {
     console.log('update', event);
