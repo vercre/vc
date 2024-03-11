@@ -45,15 +45,8 @@ where
     let node = state.node.lock().await;
 
     match op {
-        StoreRequest::Add(_id, value) => {
-            // with_store(app_handle.clone(), stores, path.clone(), |store| {
-            //     let val = serde_json::from_slice(value).unwrap();
-            //     log::info!("Storing: {} => {:?} into {}", id, val, path.clone().display());
-            //     store.insert(id.to_string(), val)?;
-            //     store.save()
-            // })?;
-            node.add_doc(DocType::Credential,value).await?;
-
+        StoreRequest::Add(id, value) => {
+            node.add_doc(DocType::Credential, id.to_owned(), value.to_owned()).await?;
             Ok(StoreResponse::Ok)
         }
         StoreRequest::List => {
@@ -68,11 +61,8 @@ where
             let values_vec = serde_json::to_vec(&values).unwrap();
             Ok(StoreResponse::List(values_vec))
         }
-        StoreRequest::Delete(_id) => {
-            // with_store(app_handle.clone(), stores, path, |store| {
-            //     store.delete(id)?;
-            //     store.save()
-            // })?;
+        StoreRequest::Delete(id) => {
+            node.delete_doc(DocType::Credential, id.to_owned()).await?;
             Ok(StoreResponse::Ok)
         }
     }

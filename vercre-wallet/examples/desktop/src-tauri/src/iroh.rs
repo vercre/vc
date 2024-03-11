@@ -59,18 +59,27 @@ impl Node {
         })
     }
 
-    pub async fn add_doc(&self, doc_type: DocType, value: &[u8]) -> Result<Doc> {
+    pub async fn add_doc(&self, doc_type: DocType, key: String, value: Vec<u8>) -> Result<Doc> {
         let iroh = self.node.client();
 
-        let iroh_doc = iroh.docs.create().await?;
-        let doc = Doc { doc: iroh_doc, iroh };
-        self.docs.lock().expect("should lock").insert(doc_type, doc.clone());
+        let Some(doc) = self.doc(&doc_type) else {
+            panic!("doc not found");
+            // let iroh_doc = iroh.docs.create().await?;
+            // let doc = Doc { doc: iroh_doc, iroh };
+            // self.docs.lock().expect("should lock").insert(doc_type, doc.clone());
+            // doc
+        };
+
+        let author = iroh.authors.create().await?;
+        let iroh_doc = &doc.doc;
+        iroh_doc.set_bytes(author, key.to_owned(), value).await?;
 
         Ok(doc)
     }
 
     pub async fn join_doc(&self, doc_type: DocType, ticket: &str) -> Result<Doc> {
         let iroh = self.node.client();
+        println!("join_doc: {:?}", iroh.authors.list().await?.try_next().await?);
 
         let doc_ticket = DocTicket::from_str(ticket)?;
         let iroh_doc = iroh.docs.import(doc_ticket.clone()).await?;
@@ -78,6 +87,24 @@ impl Node {
 
         let doc = Doc { doc: iroh_doc, iroh };
         self.docs.lock().expect("should lock").insert(doc_type, doc.clone());
+
+        Ok(doc)
+    }
+
+    pub async fn delete_doc(&self, doc_type: DocType, key: String) -> Result<Doc> {
+        let iroh = self.node.client();
+
+        let Some(doc) = self.doc(&doc_type) else {
+            panic!("doc not found");
+            // let iroh_doc = iroh.docs.create().await?;
+            // let doc = Doc { doc: iroh_doc, iroh };
+            // self.docs.lock().expect("should lock").insert(doc_type, doc.clone());
+            // doc
+        };
+
+        let author = iroh.authors.create().await?;
+        let iroh_doc = &doc.doc;
+        iroh_doc.del(author, key).await?;
 
         Ok(doc)
     }
