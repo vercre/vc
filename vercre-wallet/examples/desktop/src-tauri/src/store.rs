@@ -18,23 +18,13 @@ pub fn init(handle: &tauri::AppHandle) -> anyhow::Result<()> {
         let doc = state.node.lock().await.join_doc(DocType::Credential, VC_STORE).await?;
 
         let handle2 = handle.clone();
-        let jh = spawn(async move {
-            while let Some(event) = doc.events().await.next().await {
-                match event {
-                    DocEvent::Insert | DocEvent::Delete => {
-                        let () = get_list(handle2.clone()).await.expect("should process event");
-                    }
-                    DocEvent::Other(evt) => println!("{evt:?}"),
+        spawn(async move {
+            while let Some(update) = doc.updates().await.next().await {
+                if update == DocEvent::Updated {
+                    get_list(handle2.clone()).await.expect("should process event");
                 }
             }
         });
-
-        let mut events = state.events.lock().await;
-        if let Some(handle) = events.take() {
-            handle.abort();
-        }
-        *events = Some(jh);
-        drop(events);
 
         Ok(())
     })

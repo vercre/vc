@@ -8,7 +8,7 @@ mod store;
 use std::sync::Arc;
 
 use lazy_static::lazy_static;
-use tauri::async_runtime::{block_on, JoinHandle};
+use tauri::async_runtime::block_on;
 use tauri::{generate_context, generate_handler, AppHandle, Manager};
 use tauri_plugin_log::{Target, TargetKind};
 use tokio::sync::Mutex;
@@ -58,7 +58,6 @@ pub fn run() {
 
 pub struct IrohState {
     node: Mutex<iroh::Node>,
-    events: Mutex<Option<JoinHandle<()>>>,
 }
 
 // start local Iroh node
@@ -71,7 +70,6 @@ fn init_iroh(handle: &tauri::AppHandle) -> anyhow::Result<()> {
     // save node and event listener to Tauri state
     let state = IrohState {
         node: Mutex::new(node),
-        events: Mutex::new(None),
     };
     handle.manage(state);
 

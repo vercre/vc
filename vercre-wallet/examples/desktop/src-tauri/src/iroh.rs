@@ -47,6 +47,7 @@ impl Node {
         })
     }
 
+    #[allow(dead_code)]
     pub async fn create_doc(&self, doc_type: DocType, key: String, value: Vec<u8>) -> Result<Doc> {
         let iroh = self.node.client();
 
@@ -91,11 +92,10 @@ pub enum DocType {
     // Stronghold,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum DocEvent {
-    Insert,
-    Delete,
-    Other(String),
+    Updated,
+    Error(String),
 }
 
 impl Doc {
@@ -123,26 +123,30 @@ impl Doc {
         Ok(vcs)
     }
 
-    pub async fn events(&self) -> impl Stream<Item = DocEvent> {
+    pub async fn updates(&self) -> impl Stream<Item = DocEvent> {
+        use futures::future;
+
         let events = self.doc.subscribe().await.expect("should subscribe");
+        events
+            .filter(|event| {
+                // println!("filter: {event:?}");
+                let retain = match event {
+                    Ok(LiveEvent::InsertRemote { content_status, .. }) => match content_status {
+                        ContentStatus::Complete | ContentStatus::Missing => true, // doc set,  doc del
+                        ContentStatus::Incomplete => false,
+                    },
+                    Err(_) => true,
+                    _ => false,
+                };
 
-        events.map(|event| {
-            let event = match event {
-                Ok(event) => event,
-                Err(e) => return DocEvent::Other(format!("error: {e}")),
-            };
-
-            println!("{event}");
-
-            match event {
-                LiveEvent::InsertRemote { content_status, .. } => match content_status {
-                    ContentStatus::Complete => DocEvent::Insert,
-                    ContentStatus::Missing => DocEvent::Delete,
-                    ContentStatus::Incomplete => DocEvent::Other(String::from("remote incomplete")),
-                },
-                LiveEvent::InsertLocal { .. } | LiveEvent::ContentReady { .. } => DocEvent::Insert,
-                _ => DocEvent::Other(format!("event: {event:?}")),
-            }
-        })
+                future::ready(retain)
+            })
+            .map(|event| {
+                // println!("map: {event:?}");
+                match event {
+                    Ok(_) => DocEvent::Updated,
+                    Err(e) => DocEvent::Error(format!("error: {e}")),
+                }
+            })
     }
 }
