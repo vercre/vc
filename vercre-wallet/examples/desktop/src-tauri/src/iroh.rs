@@ -36,7 +36,7 @@ pub enum DocType {
 }
 
 impl Node {
-    pub async fn new(data_dir: impl Into<PathBuf>) -> Result<Self> {
+    pub async fn new(data_dir: impl Into<PathBuf> + Send) -> Result<Self> {
         let repo = data_dir.into();
         let blob_dir = repo.join(IrohPaths::BaoFlatStoreDir);
         let docs_dir = repo.join(IrohPaths::DocsDatabase);
@@ -53,29 +53,29 @@ impl Node {
             .spawn()
             .await?;
 
-        Ok(Node {
+        Ok(Self {
             node,
             docs: Arc::new(Mutex::new(HashMap::new())),
         })
     }
 
-    pub async fn add_doc(&self, doc_type: DocType, key: String, value: Vec<u8>) -> Result<Doc> {
-        let iroh = self.node.client();
+    // pub async fn add_doc(&self, doc_type: DocType, key: String, value: Vec<u8>) -> Result<Doc> {
+    //     let iroh = self.node.client();
 
-        let Some(doc) = self.doc(&doc_type) else {
-            panic!("doc not found");
-            // let iroh_doc = iroh.docs.create().await?;
-            // let doc = Doc { doc: iroh_doc, iroh };
-            // self.docs.lock().expect("should lock").insert(doc_type, doc.clone());
-            // doc
-        };
+    //     let Some(doc) = self.doc(&doc_type) else {
+    //         panic!("doc not found");
+    //         // let iroh_doc = iroh.docs.create().await?;
+    //         // let doc = Doc { doc: iroh_doc, iroh };
+    //         // self.docs.lock().expect("should lock").insert(doc_type, doc.clone());
+    //         // doc
+    //     };
 
-        let author = iroh.authors.create().await?;
-        let iroh_doc = &doc.doc;
-        iroh_doc.set_bytes(author, key.to_owned(), value).await?;
+    //     let author = iroh.authors.create().await?;
+    //     let iroh_doc = &doc.doc;
+    //     iroh_doc.set_bytes(author, key.to_owned(), value).await?;
 
-        Ok(doc)
-    }
+    //     Ok(doc)
+    // }
 
     pub async fn join_doc(&self, doc_type: DocType, ticket: &str) -> Result<Doc> {
         let iroh = self.node.client();
@@ -91,26 +91,8 @@ impl Node {
         Ok(doc)
     }
 
-    pub async fn delete_doc(&self, doc_type: DocType, key: String) -> Result<Doc> {
-        let iroh = self.node.client();
-
-        let Some(doc) = self.doc(&doc_type) else {
-            panic!("doc not found");
-            // let iroh_doc = iroh.docs.create().await?;
-            // let doc = Doc { doc: iroh_doc, iroh };
-            // self.docs.lock().expect("should lock").insert(doc_type, doc.clone());
-            // doc
-        };
-
-        let author = iroh.authors.create().await?;
-        let iroh_doc = &doc.doc;
-        iroh_doc.del(author, key).await?;
-
-        Ok(doc)
-    }
-
-    pub fn doc(&self, doc_type: &DocType) -> Option<Doc> {
-        self.docs.lock().expect("should lock").get(doc_type).cloned()
+    pub fn doc(&self, doc_type: DocType) -> Option<Doc> {
+        self.docs.lock().expect("should lock").get(&doc_type).cloned()
     }
 
     // pub async fn download_blob(&self, ticket: &str) -> Result<()> {
@@ -156,6 +138,22 @@ impl Doc {
         Ok(vcs)
     }
 
+    pub async fn add_entry(&self, key: String, value: Vec<u8>) -> Result<()> {
+        let author = self.iroh.authors.create().await?;
+        let iroh_doc = &self.doc;
+        iroh_doc.set_bytes(author, key, value).await?;
+
+        Ok(())
+    }
+
+    pub async fn delete_entry(&self, key: String) -> Result<()> {
+        let author = self.iroh.authors.create().await?;
+        let iroh_doc = &self.doc;
+        iroh_doc.del(author, key).await?;
+
+        Ok(())
+    }
+
     pub async fn events(&self) -> impl Stream<Item = String> {
         let events = self.doc.subscribe().await.expect("should subscribe");
 
@@ -165,12 +163,12 @@ impl Doc {
                 LiveEvent::InsertRemote { content_status, .. } => match content_status {
                     ContentStatus::Complete => String::from("remote added"),
                     ContentStatus::Missing => String::from("remote deleted"),
-                    _ => String::from("insert remote"),
+                    ContentStatus::Incomplete => String::from("insert remote"),
                 },
                 LiveEvent::InsertLocal { .. } => String::from("insert local"),
                 LiveEvent::ContentReady { .. } => String::from("content ready"),
-                LiveEvent::SyncFinished(sync) => String::from(format!("sync finished: {:?}", sync)),
-                _ => String::from(format!("other event: {:?}", event)),
+                LiveEvent::SyncFinished(sync) => format!("sync finished: {sync:?}"),
+                _ => format!("other event: {event:?}"),
             }
         })
     }

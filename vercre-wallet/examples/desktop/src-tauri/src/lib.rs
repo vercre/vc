@@ -23,6 +23,10 @@ lazy_static! {
 }
 
 /// Tauri entry point
+///
+/// # Panics
+///
+/// TODO: add panics
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -37,12 +41,12 @@ pub fn run() {
         .setup(|app| {
             let handle = app.handle().clone();
 
-            init_iroh(handle.clone())?;
-            store::init(handle.clone())?;
-            signer::init(handle.clone())?;
+            init_iroh(&handle)?;
+            store::init(&handle)?;
+            signer::init(&handle)?;
 
             // initialise deep link listener
-            app.listen("deep-link://new-url", move |event| deep_link(event, handle.clone()));
+            app.listen("deep-link://new-url", move |event| deep_link(&event, &handle));
             Ok(())
         })
         .invoke_handler(generate_handler![
@@ -59,7 +63,7 @@ pub struct IrohState {
 
 // start local Iroh node
 // ~/Library/Application Support/io.credibil.wallet/iroh
-fn init_iroh(handle: tauri::AppHandle) -> anyhow::Result<()> {
+fn init_iroh(handle: &tauri::AppHandle) -> anyhow::Result<()> {
     // start node
     let path = handle.path().app_local_data_dir()?.join("iroh");
     let node = block_on(async { iroh::Node::new(path).await.expect("should start node") });
@@ -75,7 +79,7 @@ fn init_iroh(handle: tauri::AppHandle) -> anyhow::Result<()> {
 }
 
 // Handle deep links
-fn deep_link(event: tauri::Event, handle: AppHandle) {
+fn deep_link(event: &tauri::Event, handle: &AppHandle) {
     // credential offer
     const OFFER_PREFIX: &str = "openid-vc://credential_offer?credential_offer=";
     const REQUEST_PREFIX: &str = "openid-vc://request_uri=";
@@ -103,12 +107,12 @@ fn deep_link(event: tauri::Event, handle: AppHandle) {
 // ----------------------------------------------------------------------------
 #[tauri::command]
 async fn start(handle: AppHandle) -> Result<(), error::Error> {
-    process_event(Event::Start, handle)
+    process_event(Event::Start, &handle)
 }
 
 #[tauri::command]
 async fn cancel(handle: AppHandle) -> Result<(), error::Error> {
-    process_event(Event::Cancel, handle)
+    process_event(Event::Cancel, &handle)
 }
 
 // ----------------------------------------------------------------------------
@@ -116,12 +120,12 @@ async fn cancel(handle: AppHandle) -> Result<(), error::Error> {
 // ----------------------------------------------------------------------------
 #[tauri::command]
 async fn get_list(handle: AppHandle) -> Result<(), error::Error> {
-    process_event(Event::Credential(credential::Event::List), handle)
+    process_event(Event::Credential(credential::Event::List), &handle)
 }
 
 #[tauri::command]
 async fn delete(id: String, handle: AppHandle) -> Result<(), error::Error> {
-    process_event(Event::Credential(credential::Event::Delete(id)), handle)
+    process_event(Event::Credential(credential::Event::Delete(id)), &handle)
 }
 
 // ----------------------------------------------------------------------------
@@ -129,17 +133,17 @@ async fn delete(id: String, handle: AppHandle) -> Result<(), error::Error> {
 // ----------------------------------------------------------------------------
 #[tauri::command]
 async fn offer(url: String, handle: AppHandle) -> Result<(), error::Error> {
-    process_event(Event::Issuance(issuance::Event::Offer(url)), handle)
+    process_event(Event::Issuance(issuance::Event::Offer(url)), &handle)
 }
 
 #[tauri::command]
 async fn accept(handle: AppHandle) -> Result<(), error::Error> {
-    process_event(Event::Issuance(issuance::Event::Accept), handle)
+    process_event(Event::Issuance(issuance::Event::Accept), &handle)
 }
 
 #[tauri::command]
 async fn set_pin(pin: String, handle: AppHandle) -> Result<(), error::Error> {
-    process_event(Event::Issuance(issuance::Event::Pin(pin)), handle)
+    process_event(Event::Issuance(issuance::Event::Pin(pin)), &handle)
 }
 
 // ----------------------------------------------------------------------------
@@ -147,18 +151,18 @@ async fn set_pin(pin: String, handle: AppHandle) -> Result<(), error::Error> {
 // ----------------------------------------------------------------------------
 #[tauri::command]
 async fn present(url: String, handle: AppHandle) -> Result<(), error::Error> {
-    process_event(Event::Presentation(presentation::Event::Requested(url)), handle)
+    process_event(Event::Presentation(presentation::Event::Requested(url)), &handle)
 }
 
 #[tauri::command]
 async fn authorize(handle: AppHandle) -> Result<(), error::Error> {
-    process_event(Event::Presentation(presentation::Event::Authorized), handle)
+    process_event(Event::Presentation(presentation::Event::Authorized), &handle)
 }
 
 // Trigger an App event and process the resulting effects.
-fn process_event(event: Event, handle: AppHandle) -> Result<(), error::Error> {
+fn process_event(event: Event, handle: &AppHandle) -> Result<(), error::Error> {
     for effect in CORE.process_event(event) {
-        process_effect(effect, handle.clone())?
+        process_effect(effect, handle.clone())?;
     }
     Ok(())
 }
@@ -201,7 +205,7 @@ fn process_effect(effect: Effect, handle: AppHandle) -> Result<(), error::Error>
         Effect::Signer(mut request) => {
             tauri::async_runtime::spawn({
                 async move {
-                    let response = match signer::request(&request.operation, &handle).await {
+                    let response = match signer::request(&request.operation, &handle) {
                         Ok(resp) => resp,
                         Err(err) => SignerResponse::Err(err.to_string()),
                     };

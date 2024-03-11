@@ -1,11 +1,12 @@
-pub(crate) use stronghold::Stronghold;
+use anyhow::anyhow;
+use stronghold::Stronghold;
 use tauri::Manager;
 use vercre_wallet::signer::{SignerRequest, SignerResponse};
 
 use crate::error;
 
 // initialise the Stronghold key store
-pub fn init(handle: tauri::AppHandle) -> anyhow::Result<()> {
+pub fn init(handle: &tauri::AppHandle) -> anyhow::Result<()> {
     // FIXME: get passphrase from user and salt from file(?)
     let passphrase = b"pass-phrase";
     let salt = b"randomsalt";
@@ -13,13 +14,13 @@ pub fn init(handle: tauri::AppHandle) -> anyhow::Result<()> {
 
     // open/initialize Stronghold snapshot
     let path = handle.path().app_local_data_dir()?.join("stronghold.bin");
-    let stronghold = Stronghold::new(&path, hash)?;
+    let stronghold = Stronghold::new(path, hash)?;
     handle.manage(stronghold);
 
     Ok(())
 }
 
-pub async fn request<R>(
+pub fn request<R>(
     op: &SignerRequest, app_handle: &tauri::AppHandle<R>,
 ) -> Result<SignerResponse, error::Error>
 where
@@ -29,14 +30,14 @@ where
 
     match op {
         SignerRequest::Sign(msg) => {
-            let signed = stronghold.sign(msg.to_vec()).unwrap();
+            let signed = stronghold.sign(msg.clone()).unwrap();
             Ok(SignerResponse::Signature(signed))
         }
         SignerRequest::Verification => {
             // FIXME: implement
             let alg = String::from("EdDSA"); // String::from("ES256K");
             let Ok(kid) = stronghold.verifiction() else {
-                unimplemented!("error")
+                return Err(error::Error::Other(anyhow!("verification failed")));
             };
             Ok(SignerResponse::Verification { alg, kid })
         }
@@ -59,7 +60,7 @@ pub mod stronghold {
     const VAULT: &[u8] = b"signing_key_vault";
     const SIGNING_KEY: &[u8] = b"signing_key";
 
-    pub(crate) struct Stronghold {
+    pub struct Stronghold {
         key_location: Location,
         client: Client,
     }
@@ -73,7 +74,7 @@ pub mod stronghold {
         /// the vault.
         ///
         /// The snapshot is encrypted using the password provided.
-        pub(crate) fn new(path: impl AsRef<Path>, password: Vec<u8>) -> Result<Self> {
+        pub fn new(path: impl AsRef<Path>, password: Vec<u8>) -> Result<Self> {
             let stronghold = iota_stronghold::Stronghold::default();
 
             let keyprovider = KeyProvider::try_from(Zeroizing::new(password))?;
@@ -191,7 +192,7 @@ mod test {
 
         let msg = String::from("hello world");
         let req = SignerRequest::Sign(msg.into_bytes());
-        let resp = request(&req, app.app_handle()).await.expect("should be ok");
+        let resp = request(&req, app.app_handle()).expect("should be ok");
 
         // // check counts match
         assert_let!(SignerResponse::Signature(res), resp);

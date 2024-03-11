@@ -11,11 +11,10 @@ use crate::{error, IrohState};
 const VC_STORE: &str = "docaaacbp4ivplq3xf7krm3y5zybzjv2ha56qvhpfiykjjc6iukdifgoyihafk62aofuwwwu5zb5ocvzj5v3rtqt6siglyuhoxhqtu4fxravvoteajcnb2hi4dthixs65ltmuys2mjomrsxe4bonfzg62bonzsxi53pojvs4lydaac2cyt22erablaraaa5ciqbfiaqj7ya6cbpuaaaaaaaaaaaahjce";
 
 // initialise the credential store on the Iroh node
-pub fn init(handle: tauri::AppHandle) -> anyhow::Result<()> {
+pub fn init(handle: &tauri::AppHandle) -> anyhow::Result<()> {
     block_on(async {
         let state = handle.state::<IrohState>();
-        let node = state.node.lock().await;
-        let doc = node.join_doc(DocType::Credential, VC_STORE).await?;
+        let doc = state.node.lock().await.join_doc(DocType::Credential, VC_STORE).await?;
 
         let handle2 = handle.clone();
         let jh = spawn(async move {
@@ -30,6 +29,7 @@ pub fn init(handle: tauri::AppHandle) -> anyhow::Result<()> {
             handle.abort();
         }
         *events = Some(jh);
+        drop(events);
 
         Ok(())
     })
@@ -42,27 +42,31 @@ where
     R: tauri::Runtime,
 {
     let state = app_handle.state::<IrohState>();
-    let node = state.node.lock().await;
+    let doc = state.node.lock().await.doc(DocType::Credential).unwrap();
 
     match op {
         StoreRequest::Add(id, value) => {
-            node.add_doc(DocType::Credential, id.to_owned(), value.to_owned()).await?;
+            doc.add_entry(id.to_owned(), value.to_owned()).await?;
             Ok(StoreResponse::Ok)
         }
         StoreRequest::List => {
-            let doc = node.doc(&DocType::Credential).unwrap();
             let entries = doc.entries().await?;
-            let mut values = vec![];
+            // let mut values = vec![];
 
-            for entry in entries {
-                let val: Value = serde_json::from_slice(&entry).expect("should be json");
-                values.push(val);
-            }
+            let values = entries
+                .iter()
+                .map(|e| serde_json::from_slice::<Value>(e).expect("should be json"))
+                .collect::<Vec<Value>>();
+
+            // for entry in entries {
+            //     let val: Value = serde_json::from_slice(&entry).expect("should be json");
+            //     values.push(val);
+            // }
             let values_vec = serde_json::to_vec(&values).unwrap();
             Ok(StoreResponse::List(values_vec))
         }
         StoreRequest::Delete(id) => {
-            node.delete_doc(DocType::Credential, id.to_owned()).await?;
+            doc.delete_entry(id.to_owned()).await?;
             Ok(StoreResponse::Ok)
         }
     }

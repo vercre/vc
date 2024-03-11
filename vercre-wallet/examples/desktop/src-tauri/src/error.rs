@@ -16,7 +16,7 @@ pub enum Error {
     HttpConfig(String),
 
     #[error(transparent)]
-    Store(#[from] anyhow::Error),
+    Other(#[from] anyhow::Error),
 }
 
 // manually implement serde::Serialize
