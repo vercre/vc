@@ -5,7 +5,7 @@ use tauri::Manager;
 use vercre_wallet::store::{StoreRequest, StoreResponse};
 
 use super::get_list;
-use crate::iroh::{DocEvent, DocType};
+use crate::iroh::DocType;
 use crate::{error, IrohState};
 
 // Iroh document ticket for the credential store
@@ -19,10 +19,8 @@ pub fn init(handle: &tauri::AppHandle) -> anyhow::Result<()> {
 
         let handle2 = handle.clone();
         spawn(async move {
-            while let Some(update) = doc.updates().await.next().await {
-                if update == DocEvent::Updated {
-                    get_list(handle2.clone()).await.expect("should process event");
-                }
+            while let Some(_) = doc.updates().await.next().await {
+                get_list(handle2.clone()).await.expect("should process event");
             }
         });
 

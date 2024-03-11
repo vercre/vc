@@ -4,7 +4,7 @@ use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
-use futures::{Stream, StreamExt, TryStreamExt};
+use futures::{future, Stream, StreamExt, TryStreamExt};
 use iroh::bytes::store::flat;
 use iroh::client::LiveEvent;
 use iroh::node;
@@ -92,11 +92,11 @@ pub enum DocType {
     // Stronghold,
 }
 
-#[derive(Debug, Eq, PartialEq)]
-pub enum DocEvent {
-    Updated,
-    Error(String),
-}
+// #[derive(Debug, Eq, PartialEq)]
+// pub enum DocEvent {
+//     Updated,
+//     Error(String),
+// }
 
 impl Doc {
     pub async fn add_entry(&self, key: String, value: Vec<u8>) -> Result<()> {
@@ -123,30 +123,37 @@ impl Doc {
         Ok(vcs)
     }
 
-    pub async fn updates(&self) -> impl Stream<Item = DocEvent> {
-        use futures::future;
-
-        let events = self.doc.subscribe().await.expect("should subscribe");
-        events
+    // Filter document events to retain only remote events, mapping the result to
+    // ()
+    // pub async fn updates(&self) -> impl Stream<Item = DocEvent> {
+    pub async fn updates(&self) -> impl Stream<Item = ()> {
+        self.doc
+            .subscribe()
+            .await
+            .expect("should subscribe")
+            // filter out uninteresting events
             .filter(|event| {
-                // println!("filter: {event:?}");
-                let retain = match event {
-                    Ok(LiveEvent::InsertRemote { content_status, .. }) => match content_status {
-                        ContentStatus::Complete | ContentStatus::Missing => true, // doc set,  doc del
-                        ContentStatus::Incomplete => false,
-                    },
-                    Err(_) => true,
-                    _ => false,
-                };
-
-                future::ready(retain)
-            })
-            .map(|event| {
-                // println!("map: {event:?}");
+                // debug!("filter: {event:?}");
                 match event {
-                    Ok(_) => DocEvent::Updated,
-                    Err(e) => DocEvent::Error(format!("error: {e}")),
+                    Ok(LiveEvent::InsertRemote { content_status, .. }) => match content_status {
+                        ContentStatus::Complete | ContentStatus::Missing => future::ready(true), // doc set,  doc del
+                        ContentStatus::Incomplete => future::ready(false),
+                    },
+                    Err(e) => {
+                        println!("Error event: {event:?}: {e}");
+                        future::ready(true)
+                    }
+                    _ => future::ready(false),
                 }
             })
+            .map(|_| ())
+
+        // .map(|event| {
+        //     debug!("map: {event:?}");
+        //     match event {
+        //         Ok(_) => DocEvent::Updated,
+        //         Err(e) => DocEvent::Error(format!("error: {e}")),
+        //     }
+        // })
     }
 }
