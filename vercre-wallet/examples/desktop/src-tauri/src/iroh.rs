@@ -23,18 +23,6 @@ pub struct Node {
     docs: Arc<Mutex<HashMap<DocType, Doc>>>,
 }
 
-#[derive(Clone, Debug)]
-pub struct Doc {
-    doc: iroh::client::Doc<FlumeConnection<ProviderResponse, ProviderRequest>>,
-    iroh: iroh::client::mem::Iroh,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum DocType {
-    Credential,
-    // Stronghold,
-}
-
 impl Node {
     pub async fn new(data_dir: impl Into<PathBuf> + Send) -> Result<Self> {
         let repo = data_dir.into();
@@ -59,23 +47,18 @@ impl Node {
         })
     }
 
-    // pub async fn add_doc(&self, doc_type: DocType, key: String, value: Vec<u8>) -> Result<Doc> {
-    //     let iroh = self.node.client();
+    pub async fn create_doc(&self, doc_type: DocType, key: String, value: Vec<u8>) -> Result<Doc> {
+        let iroh = self.node.client();
 
-    //     let Some(doc) = self.doc(&doc_type) else {
-    //         panic!("doc not found");
-    //         // let iroh_doc = iroh.docs.create().await?;
-    //         // let doc = Doc { doc: iroh_doc, iroh };
-    //         // self.docs.lock().expect("should lock").insert(doc_type, doc.clone());
-    //         // doc
-    //     };
+        let iroh_doc = iroh.docs.create().await?;
+        let author = iroh.authors.create().await?;
+        iroh_doc.set_bytes(author, key, value).await?;
 
-    //     let author = iroh.authors.create().await?;
-    //     let iroh_doc = &doc.doc;
-    //     iroh_doc.set_bytes(author, key.to_owned(), value).await?;
+        let doc = Doc { doc: iroh_doc, iroh };
+        self.docs.lock().expect("should lock").insert(doc_type, doc.clone());
 
-    //     Ok(doc)
-    // }
+        Ok(doc)
+    }
 
     pub async fn join_doc(&self, doc_type: DocType, ticket: &str) -> Result<Doc> {
         let iroh = self.node.client();
@@ -94,81 +77,71 @@ impl Node {
     pub fn doc(&self, doc_type: DocType) -> Option<Doc> {
         self.docs.lock().expect("should lock").get(&doc_type).cloned()
     }
+}
 
-    // pub async fn download_blob(&self, ticket: &str) -> Result<()> {
-    //     let iroh = self.node.client();
+#[derive(Clone, Debug)]
+pub struct Doc {
+    doc: iroh::client::Doc<FlumeConnection<ProviderResponse, ProviderRequest>>,
+    iroh: iroh::client::mem::Iroh,
+}
 
-    //     let ticket = BlobTicket::from_str(ticket)?;
-    //     let req = BlobDownloadRequest {
-    //         hash: ticket.hash(),
-    //         format: ticket.format(),
-    //         peer: ticket.node_addr().clone(),
-    //         tag: SetTagOption::Auto,
-    //         out: DownloadLocation::Internal,
-    //     };
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum DocType {
+    Credential,
+    // Stronghold,
+}
 
-    //     let stream = iroh.blobs.download(req).await?;
-    //     let _ = stream
-    //         .for_each(|item| {
-    //             println!("Got item: {:?}", item);
-    //             future::ready(())
-    //         })
-    //         .await;
-
-    //     Ok(())
-    // }
+#[derive(Debug)]
+pub enum DocEvent {
+    Insert,
+    Delete,
+    Other(String),
 }
 
 impl Doc {
+    pub async fn add_entry(&self, key: String, value: Vec<u8>) -> Result<()> {
+        let author = self.iroh.authors.create().await?;
+        self.doc.set_bytes(author, key, value).await.map(|_| ())
+    }
+
+    pub async fn delete_entry(&self, key: String) -> Result<()> {
+        let author = self.iroh.authors.create().await?;
+        self.doc.del(author, key).await.map(|_| ())
+    }
+
     pub async fn entries(&self) -> Result<Vec<Vec<u8>>> {
         let mut entries = self.doc.get_many(Query::single_latest_per_key()).await?;
 
         let mut vcs = Vec::new();
         while let Some(entry) = entries.try_next().await? {
             match self.iroh.blobs.read_to_bytes(entry.content_hash()).await {
-                Ok(bytes) => {
-                    vcs.push(bytes.to_vec());
-                }
-                Err(e) => {
-                    println!("Error getting entry {entry:?}: {e}");
-                }
+                Ok(bytes) => vcs.push(bytes.to_vec()),
+                Err(e) => println!("Error getting entry {entry:?}: {e}"),
             };
         }
 
         Ok(vcs)
     }
 
-    pub async fn add_entry(&self, key: String, value: Vec<u8>) -> Result<()> {
-        let author = self.iroh.authors.create().await?;
-        let iroh_doc = &self.doc;
-        iroh_doc.set_bytes(author, key, value).await?;
-
-        Ok(())
-    }
-
-    pub async fn delete_entry(&self, key: String) -> Result<()> {
-        let author = self.iroh.authors.create().await?;
-        let iroh_doc = &self.doc;
-        iroh_doc.del(author, key).await?;
-
-        Ok(())
-    }
-
-    pub async fn events(&self) -> impl Stream<Item = String> {
+    pub async fn events(&self) -> impl Stream<Item = DocEvent> {
         let events = self.doc.subscribe().await.expect("should subscribe");
 
         events.map(|event| {
-            let event = event.expect("should get event");
+            let event = match event {
+                Ok(event) => event,
+                Err(e) => return DocEvent::Other(format!("error: {e}")),
+            };
+
+            println!("{event}");
+
             match event {
                 LiveEvent::InsertRemote { content_status, .. } => match content_status {
-                    ContentStatus::Complete => String::from("remote added"),
-                    ContentStatus::Missing => String::from("remote deleted"),
-                    ContentStatus::Incomplete => String::from("insert remote"),
+                    ContentStatus::Complete => DocEvent::Insert,
+                    ContentStatus::Missing => DocEvent::Delete,
+                    ContentStatus::Incomplete => DocEvent::Other(String::from("remote incomplete")),
                 },
-                LiveEvent::InsertLocal { .. } => String::from("insert local"),
-                LiveEvent::ContentReady { .. } => String::from("content ready"),
-                LiveEvent::SyncFinished(sync) => format!("sync finished: {sync:?}"),
-                _ => format!("other event: {event:?}"),
+                LiveEvent::InsertLocal { .. } | LiveEvent::ContentReady { .. } => DocEvent::Insert,
+                _ => DocEvent::Other(format!("event: {event:?}")),
             }
         })
     }

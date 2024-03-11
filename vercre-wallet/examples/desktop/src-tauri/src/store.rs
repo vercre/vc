@@ -4,7 +4,8 @@ use tauri::async_runtime::{block_on, spawn};
 use tauri::Manager;
 use vercre_wallet::store::{StoreRequest, StoreResponse};
 
-use crate::iroh::DocType;
+use super::get_list;
+use crate::iroh::{DocEvent, DocType};
 use crate::{error, IrohState};
 
 // Iroh document ticket for the credential store
@@ -19,8 +20,12 @@ pub fn init(handle: &tauri::AppHandle) -> anyhow::Result<()> {
         let handle2 = handle.clone();
         let jh = spawn(async move {
             while let Some(event) = doc.events().await.next().await {
-                println!("{event}");
-                super::get_list(handle2.clone()).await.expect("should process event");
+                match event {
+                    DocEvent::Insert | DocEvent::Delete => {
+                        let () = get_list(handle2.clone()).await.expect("should process event");
+                    }
+                    DocEvent::Other(evt) => println!("{evt:?}"),
+                }
             }
         });
 
@@ -50,20 +55,15 @@ where
             Ok(StoreResponse::Ok)
         }
         StoreRequest::List => {
-            let entries = doc.entries().await?;
-            // let mut values = vec![];
-
-            let values = entries
+            let values = doc
+                .entries()
+                .await?
                 .iter()
-                .map(|e| serde_json::from_slice::<Value>(e).expect("should be json"))
+                .map(|e| serde_json::from_slice(e).expect("should deserialize"))
                 .collect::<Vec<Value>>();
+            let bytes = serde_json::to_vec(&values).expect("should serialize");
 
-            // for entry in entries {
-            //     let val: Value = serde_json::from_slice(&entry).expect("should be json");
-            //     values.push(val);
-            // }
-            let values_vec = serde_json::to_vec(&values).unwrap();
-            Ok(StoreResponse::List(values_vec))
+            Ok(StoreResponse::List(bytes))
         }
         StoreRequest::Delete(id) => {
             doc.delete_entry(id.to_owned()).await?;
