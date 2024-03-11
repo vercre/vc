@@ -1,25 +1,24 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
 import {
     EventVariantCancel,
-    ViewModel,
     ViewVariantCredential,
     ViewVariantIssuance,
     ViewVariantPresentation,
 } from 'shared_types/types/shared_types';
 import init_core from 'vercre-wallet/vercre_wallet';
 
-import { update, initView } from './core';
 import Credentials from './Credentials';
 import Shell from './Shell';
 import { ShellStateProvider } from './Shell/Context';
 import { theme } from './theme';
+import { useViewState } from './ViewState';
 
 const App = () => {
     const start = useRef<boolean>(true);
-    const [viewModel, setViewModel] = useState<ViewModel>(initView());
+    const { viewModel, update } = useViewState();
 
     console.log('viewModel', viewModel);
 
@@ -29,7 +28,7 @@ const App = () => {
         }
         start.current = false;
         init_core().then(() => {
-            update(new EventVariantCancel(), setViewModel);
+            update(new EventVariantCancel());
         });
     }, [])
 
