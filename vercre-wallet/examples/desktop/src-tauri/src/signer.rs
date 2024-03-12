@@ -49,8 +49,6 @@ pub mod stronghold {
 
     use anyhow::Result;
     use base64ct::{Base64UrlUnpadded, Encoding};
-    use iota_stronghold::engine::snapshot::KEY_SIZE;
-    // use iota_stronghold::engine::vault::Base64Encodable;
     use iota_stronghold::procedures::{
         Ed25519Sign, GenerateKey, KeyType, PublicKey, StrongholdProcedure,
     };
@@ -91,16 +89,34 @@ pub mod stronghold {
                     )?;
 
                     // --------------------------------------------------------
-                    use lazy_static::__Deref;
-                    let buffer = keyprovider.try_unlock().expect("should unlock");
-                    let buffer_borrow = buffer.borrow();
-                    let buffer_ref = buffer_borrow.deref().try_into().unwrap();
-                    let _snapshot = iota_stronghold::Snapshot::read_from_snapshot(
-                        &snapshot_path,
-                        buffer_ref,
-                        None,
-                    )
-                    .expect("should load");
+                    // use crypto::keys::x25519;
+                    // use lazy_static::__Deref;
+                    // use iota_stronghold::engine::snapshot::KEY_SIZE;
+
+                    // let buffer = keyprovider.try_unlock().expect("should unlock");
+                    // let buffer_borrow = buffer.borrow();
+                    // let buffer_ref = buffer_borrow.deref().try_into().unwrap();
+                    // let _snapshot = iota_stronghold::Snapshot::read_from_snapshot(
+                    //     &snapshot_path,
+                    //     buffer_ref,
+                    //     None,
+                    // )
+                    // .expect("should load");
+
+                    // // get public key
+                    // let proc = StrongholdProcedure::PublicKey(PublicKey {
+                    //     ty: KeyType::Ed25519,
+                    //     private_key: key_location.clone(),
+                    // });
+                    // let output = client.execute_procedure(proc)?;
+                    // let x_bytes: Vec<u8> = output.into();
+                    // let vault = HashMap::from((vault_id, Vec<T>));
+
+                    // // let select=HashMap::new(client.id, HashMap::new(vault_id), Vec<T>>>
+                    // let pk = crypto::keys::x25519::PublicKey::try_from_slice(&x_bytes)
+                    //     .expect("should convert");
+
+                    // _snapshot.export_to_serialized_state(select, pk);
                     // --------------------------------------------------------
 
                     client
@@ -150,18 +166,6 @@ pub mod stronghold {
 
         /// Sign message using the snapshot's signing key.
         pub(super) fn sign(&self, msg: Vec<u8>) -> Result<Vec<u8>> {
-            // let proc = StrongholdProcedure::Secp256k1EcdsaSign(Secp256k1EcdsaSign {
-            //     flavor: Secp256k1EcdsaFlavor::Sha256,
-            //     msg,
-            //     private_key: self.key_location.clone(),
-            // });
-            // let output = self.client.execute_procedure(proc)?;
-
-            // // remove trailing 0
-            // let mut signed_bytes: Vec<u8> = output.into();
-            // signed_bytes.truncate(signed_bytes.len() - 1);
-            // Ok(signed_bytes)
-
             let proc = StrongholdProcedure::Ed25519Sign(Ed25519Sign {
                 msg,
                 private_key: self.key_location.clone(),

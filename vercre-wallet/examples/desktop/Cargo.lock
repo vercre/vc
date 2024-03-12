@@ -1569,6 +1569,7 @@ dependencies = [
  "base64ct",
  "futures",
  "http 1.1.0",
+ "iota-crypto",
  "iota_stronghold",
  "iroh",
  "lazy_static",
