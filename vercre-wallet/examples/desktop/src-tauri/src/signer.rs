@@ -49,6 +49,7 @@ pub mod stronghold {
 
     use anyhow::Result;
     use base64ct::{Base64UrlUnpadded, Encoding};
+    use iota_stronghold::engine::snapshot::KEY_SIZE;
     // use iota_stronghold::engine::vault::Base64Encodable;
     use iota_stronghold::procedures::{
         Ed25519Sign, GenerateKey, KeyType, PublicKey, StrongholdProcedure,
@@ -83,7 +84,26 @@ pub mod stronghold {
 
             let client = {
                 if snapshot_path.exists() {
-                    stronghold.load_client_from_snapshot(CLIENT, &keyprovider, &snapshot_path)?
+                    let client = stronghold.load_client_from_snapshot(
+                        CLIENT,
+                        &keyprovider,
+                        &snapshot_path,
+                    )?;
+
+                    // --------------------------------------------------------
+                    use lazy_static::__Deref;
+                    let buffer = keyprovider.try_unlock().expect("should unlock");
+                    let buffer_borrow = buffer.borrow();
+                    let buffer_ref = buffer_borrow.deref().try_into().unwrap();
+                    let _snapshot = iota_stronghold::Snapshot::read_from_snapshot(
+                        &snapshot_path,
+                        buffer_ref,
+                        None,
+                    )
+                    .expect("should load");
+                    // --------------------------------------------------------
+
+                    client
                 } else {
                     // --------------------------------------------------------
                     // HACK: Override encryption work factor
