@@ -2874,6 +2874,7 @@ dependencies = [
  "uuid",
  "vercre-core",
  "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]

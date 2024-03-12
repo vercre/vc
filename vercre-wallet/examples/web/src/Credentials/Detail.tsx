@@ -8,7 +8,7 @@ import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { Optional } from 'shared_types/serde/types';
-import { Credential, CredentialEventVariantDelete } from "shared_types/types/shared_types";
+import { Credential, CredentialEventVariantDelete, EventVariantCredential } from "shared_types/types/shared_types";
 
 import { dateFromIso, domainFromUrl } from '.';
 import Delete from './Delete';
@@ -57,7 +57,7 @@ const Detail = (props: DetailProps) => {
         if (!id) {
             return;
         }
-        update(new CredentialEventVariantDelete(id));
+        update(new EventVariantCredential(new CredentialEventVariantDelete(id)));
         onClose();
     };
 

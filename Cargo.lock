@@ -3395,6 +3395,7 @@ dependencies = [
  "vercre-vci",
  "vercre-vp",
  "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]

@@ -9,6 +9,7 @@ use crux_core::render::Render;
 use crux_core::Capability;
 use crux_http::Http;
 use serde::{Deserialize, Serialize};
+use web_sys::console;
 
 use crate::capabilities::delay::Delay;
 use crate::capabilities::signer::Signer;
@@ -165,6 +166,7 @@ impl crux_core::App for App {
         match event {
             Event::Credential(ev) => {
                 // delegate to credential sub-app
+                console::log_1(&"Credential event".into());
                 self.credential.update(ev, &mut model.credential, &caps.into());
             }
             Event::Issuance(ev) => {

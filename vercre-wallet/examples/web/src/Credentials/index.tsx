@@ -8,7 +8,7 @@ import IconButton from '@mui/material/IconButton';
 import Slide from '@mui/material/Slide';
 import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
-import { Credential, CredentialEventVariantList } from 'shared_types/types/shared_types';
+import { Credential, CredentialEventVariantList, EventVariantCredential } from 'shared_types/types/shared_types';
 
 import Add from './Add';
 import Detail from './Detail';
@@ -46,7 +46,7 @@ const Credentials = () => {
         }
         initialLoad.current = false;
         setShellState({...listShellState});
-        update(new CredentialEventVariantList());
+        update(new EventVariantCredential(new CredentialEventVariantList));
     }, []);
 
     // If the user clicks on a credential card, show the detail view of that credential.

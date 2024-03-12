@@ -9,7 +9,10 @@ import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { PresentationEventVariantRequested } from 'shared_types/types/shared_types';
+import {
+    EventVariantPresentation,
+    PresentationEventVariantRequested
+} from 'shared_types/types/shared_types';
 
 import { useShellState } from '../Shell/Context';
 import { useViewState } from "../ViewState";
@@ -56,7 +59,7 @@ const Present = (props: PresentProps) => {
             return;
         }
         const encoded = encodeURIComponent(request);
-        update(new PresentationEventVariantRequested(encoded));
+        update(new EventVariantPresentation(new PresentationEventVariantRequested(encoded)));
     };
 
     return (
