@@ -9,20 +9,18 @@ import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import {
-    IssuanceEventVariantOffer,
-} from 'shared_types/types/shared_types';
+import { PresentationEventVariantRequested } from 'shared_types/types/shared_types';
 
 import { useShellState } from '../Shell/Context';
 import { useViewState } from "../ViewState";
 
-export type AddProps = {
+export type PresentProps = {
     onClose: () => void;
 };
 
-const Add = (props: AddProps) => {
+const Present = (props: PresentProps) => {
     const { onClose } = props;
-    const [offer, setOffer] = useState<string>("");
+    const [request, setRequest] = useState<string>('');
     const [error, setError] = useState<string | undefined>(undefined);
     const { setShellState } = useShellState();
     const { update } = useViewState();
@@ -35,7 +33,7 @@ const Add = (props: AddProps) => {
         }
         initialLoad.current = false;
         setShellState({
-            title: 'Add Credential',
+            title: 'Present Credential',
             action: (
                 <IconButton onClick={onClose} size="large">
                     <ArrowBackIosIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
@@ -47,40 +45,38 @@ const Add = (props: AddProps) => {
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const val = e.target.value.trim();
-        setOffer(val);
-        if (val === "") {
-            setError("Offer is required");
+        setRequest(val);
+        if (val === '') {
+            setError('Request is required');
         }
     };
 
     const handleSubmit = () => {
-        if (offer === "") {
+        if (request === '') {
             return;
         }
-        const encoded = encodeURIComponent(offer);
-        update(new IssuanceEventVariantOffer(encoded));
+        const encoded = encodeURIComponent(request);
+        update(new PresentationEventVariantRequested(encoded));
     };
 
     return (
         <Stack>
             <Typography gutterBottom>
-                Paste the Verifiable Credential offer.
+                Paste the presentation request URL.
             </Typography>
-            <Alert severity="info">You will have a chance to review the Credential before it is added</Alert>
+            <Alert severity="info">You will have a chance to authorize the presentation before it is sent</Alert>
             <TextField
                 error={!!error}
                 fullWidth
                 helperText={error}
                 inputProps={{ maxLength: 1024 }}
-                label="Offer"
+                label="Presentation request URL"
                 margin="normal"
-                multiline
-                name="offer"
+                name="request"
                 onChange={handleChange}
                 required
-                rows={10}
                 size="small"
-                value={offer}
+                value={request}
                 variant="outlined"
             />
             <Box
@@ -92,15 +88,15 @@ const Add = (props: AddProps) => {
             >
                 <Button
                     color="primary"
-                    disabled={!!error || offer === ""}
+                    disabled={!!error || request === ""}
                     onClick={handleSubmit}
                     variant="contained"
                 >
-                    Review
+                    Present
                 </Button>
             </Box>
         </Stack>
     );
 };
 
-export default Add;
+export default Present;

@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useCallback, useContext, useReducer } from 'react';
+import { createContext, ReactNode, useContext, useReducer } from 'react';
 
 import { BincodeSerializer, BincodeDeserializer } from 'shared_types/bincode/mod';
 import {
@@ -133,7 +133,7 @@ export const useViewState = () => {
         }
     };
 
-    const update = useCallback((event: Event) => {
+    const update = (event: Event) => {
         console.log('update', event);
 
         const serializer = new BincodeSerializer();
@@ -145,7 +145,7 @@ export const useViewState = () => {
         for (const request of requests) {
             processEffect(request.uuid, request.effect, dispatch);
         }
-    }, [dispatch]);
+    };
 
     return {
         viewModel: context.state.viewModel,

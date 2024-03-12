@@ -20,14 +20,9 @@ export type VcCardProps = {
     logoUrl?: string;
     name?: string;
     onSelect?: (selected: boolean) => void;
-    size?: 'small' | 'medium' | 'large';
 };
 
-const cardSize = {
-    small: { width: 150, body2: '0.5rem', h5: '1rem' },
-    medium: { width: 220, body2: '0.75rem', h5: '1.25rem' },
-    large: { width: 300, body2: '0.875rem', h5: '1.5rem' },
-};
+const cardWidth = 300;
 const ratio = 1.59;
 
 export const VcCard = (props: VcCardProps) => {
@@ -39,9 +34,7 @@ export const VcCard = (props: VcCardProps) => {
         logoUrl,
         name,
         onSelect,
-        size = 'large'
     } = props;
-    const specs = cardSize[size];
     const [selected, setSelected] = useState(false);
     const theme = useTheme();
 
@@ -60,8 +53,8 @@ export const VcCard = (props: VcCardProps) => {
                 background: `linear-gradient(135deg, ${bg} 30%, ${shadeColor})`,
                 color: color || theme.palette.primary.contrastText,
                 cursor: 'pointer',
-                height: specs.width / ratio,
-                width: specs.width,
+                height: cardWidth / ratio,
+                width: cardWidth,
             }}
             onClick={handleSelect}
         >
