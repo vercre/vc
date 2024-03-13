@@ -38,7 +38,7 @@ const App = () => {
             <ShellStateProvider>
                 <Shell>
                     {viewModel.view.constructor === ViewVariantCredential && (
-                        <Credentials credentials={viewModel.credential.credentials} />
+                        <Credentials />
                     )}
                     {viewModel.view.constructor === ViewVariantIssuance && (
                         <div>Issuance</div>
