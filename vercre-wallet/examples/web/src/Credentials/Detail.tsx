@@ -8,7 +8,7 @@ import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { Optional } from 'shared_types/serde/types';
-import { Credential, CredentialEventVariantDelete, EventVariantCredential } from "shared_types/types/shared_types";
+import * as st from "shared_types/types/shared_types";
 
 import { dateFromIso, domainFromUrl } from '.';
 import Delete from './Delete';
@@ -17,7 +17,7 @@ import { useShellState } from '../Shell/Context';
 import { useViewState } from '../ViewState';
 
 export type DetailProps = {
-    credential: Credential;
+    credential: st.Credential;
     onClose: () => void;
 };
 
@@ -57,7 +57,7 @@ const Detail = (props: DetailProps) => {
         if (!id) {
             return;
         }
-        update(new EventVariantCredential(new CredentialEventVariantDelete(id)));
+        update(new st.EventVariantCredential(new st.CredentialEventVariantDelete(id)));
         onClose();
     };
 

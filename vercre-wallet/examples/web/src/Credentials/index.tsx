@@ -8,7 +8,7 @@ import IconButton from '@mui/material/IconButton';
 import Slide from '@mui/material/Slide';
 import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
-import { Credential, CredentialEventVariantList, EventVariantCredential } from 'shared_types/types/shared_types';
+import * as st from 'shared_types/types/shared_types';
 
 import Add from './Add';
 import Detail from './Detail';
@@ -18,7 +18,7 @@ import { useShellState } from '../Shell/Context';
 import { useViewState } from "../ViewState";
 
 const Credentials = () => {
-    const [selected, setSelected] = useState<Credential | undefined>(undefined);
+    const [selected, setSelected] = useState<st.Credential | undefined>(undefined);
     const [viewMode, setViewMode] = useState<'list' | 'detail' | 'add' | 'present'>('list');
     const { setShellState } = useShellState();
     const { viewModel, update } = useViewState();
@@ -46,11 +46,11 @@ const Credentials = () => {
         }
         initialLoad.current = false;
         setShellState({...listShellState});
-        update(new EventVariantCredential(new CredentialEventVariantList));
+        update(new st.EventVariantCredential(new st.CredentialEventVariantList));
     }, []);
 
     // If the user clicks on a credential card, show the detail view of that credential.
-    const handleSelect = (c: Credential) => {
+    const handleSelect = (c: st.Credential) => {
         setSelected(c);
         setViewMode('detail');
     };
@@ -69,7 +69,7 @@ const Credentials = () => {
     };
 
     // Determine the props to display for a specific credential card.
-    const displayProps = (credential: Credential) : VcCardProps => {
+    const displayProps = (credential: st.Credential) : VcCardProps => {
         const locale = navigator.language; // TODO: use user preference from settings
         const display = credential.metadata.display?.find(d => d.locale === locale);
         return {

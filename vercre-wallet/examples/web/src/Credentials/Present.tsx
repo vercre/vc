@@ -9,10 +9,7 @@ import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import {
-    EventVariantPresentation,
-    PresentationEventVariantRequested
-} from 'shared_types/types/shared_types';
+import * as st from 'shared_types/types/shared_types';
 
 import { useShellState } from '../Shell/Context';
 import { useViewState } from "../ViewState";
@@ -39,7 +36,10 @@ const Present = (props: PresentProps) => {
             title: 'Present Credential',
             action: (
                 <IconButton onClick={onClose} size="large">
-                    <ArrowBackIosIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
+                    <ArrowBackIosIcon
+                        fontSize="large"
+                        sx={{ color: theme.palette.primary.contrastText}}
+                    />
                 </IconButton>
             ),
             secondaryAction: undefined,
@@ -59,7 +59,7 @@ const Present = (props: PresentProps) => {
             return;
         }
         const encoded = encodeURIComponent(request);
-        update(new EventVariantPresentation(new PresentationEventVariantRequested(encoded)));
+        update(new st.EventVariantPresentation(new st.PresentationEventVariantRequested(encoded)));
     };
 
     return (
@@ -67,7 +67,9 @@ const Present = (props: PresentProps) => {
             <Typography gutterBottom>
                 Paste the presentation request URL.
             </Typography>
-            <Alert severity="info">You will have a chance to authorize the presentation before it is sent</Alert>
+            <Alert severity="info">
+                You will have a chance to authorize the presentation before it is sent
+            </Alert>
             <TextField
                 error={!!error}
                 fullWidth

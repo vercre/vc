@@ -7,7 +7,7 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import { EncodedLogo } from "shared_types/types/shared_types";
+import * as st from "shared_types/types/shared_types";
 import tinycolor from 'tinycolor2';
 
 import { domainFromUrl } from ".";
@@ -16,7 +16,7 @@ export type VcCardProps = {
     backgroundColor?: string;
     color?: string;
     issuer?: string;
-    logo?: EncodedLogo;
+    logo?: st.EncodedLogo;
     logoUrl?: string;
     name?: string;
     onSelect?: (selected: boolean) => void;
@@ -84,7 +84,7 @@ export const VcCard = (props: VcCardProps) => {
 
 type CardHeaderProps = {
     issuer?: string;
-    logo?: EncodedLogo;
+    logo?: st.EncodedLogo;
     logoUrl?: string;
     name?: string;
 }

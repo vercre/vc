@@ -9,10 +9,7 @@ import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import {
-    EventVariantIssuance,
-    IssuanceEventVariantOffer,
-} from 'shared_types/types/shared_types';
+import * as st from 'shared_types/types/shared_types';
 
 import { useShellState } from '../Shell/Context';
 import { useViewState } from "../ViewState";
@@ -59,7 +56,7 @@ const Add = (props: AddProps) => {
             return;
         }
         const encoded = encodeURIComponent(offer);
-        update(new EventVariantIssuance(new IssuanceEventVariantOffer(encoded)));
+        update(new st.EventVariantIssuance(new st.IssuanceEventVariantOffer(encoded)));
     };
 
     return (
