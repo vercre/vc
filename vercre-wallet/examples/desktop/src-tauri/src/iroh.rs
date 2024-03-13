@@ -10,7 +10,7 @@ use iroh::client::LiveEvent;
 use iroh::node;
 use iroh::rpc_protocol::{DocTicket, ProviderRequest, ProviderResponse};
 use iroh::sync::store::{fs, Query};
-use iroh::sync::ContentStatus;
+use iroh::sync::{AuthorId, ContentStatus};
 use iroh::util::path::IrohPaths;
 use quic_rpc::transport::flume::FlumeConnection;
 use tokio_util::task::LocalPoolHandle;
@@ -21,6 +21,7 @@ use tokio_util::task::LocalPoolHandle;
 pub struct Node {
     node: iroh::node::Node<flat::Store>,
     docs: Arc<Mutex<HashMap<DocType, Doc>>>,
+    author_id: AuthorId,
 }
 
 impl Node {
@@ -41,9 +42,17 @@ impl Node {
             .spawn()
             .await?;
 
+        // load (or create) author for node
+        let iroh = node.client();
+        let author_id = match iroh.authors.list().await?.try_next().await {
+            Ok(Some(author_id)) => author_id,
+            _ => iroh.authors.create().await?,
+        };
+
         Ok(Self {
             node,
             docs: Arc::new(Mutex::new(HashMap::new())),
+            author_id,
         })
     }
 
@@ -52,10 +61,13 @@ impl Node {
         let iroh = self.node.client();
 
         let iroh_doc = iroh.docs.create().await?;
-        let author = iroh.authors.create().await?;
-        iroh_doc.set_bytes(author, key, value).await?;
+        iroh_doc.set_bytes(self.author_id, key, value).await?;
 
-        let doc = Doc { doc: iroh_doc, iroh };
+        let doc = Doc {
+            doc: iroh_doc,
+            iroh,
+            author_id: self.author_id,
+        };
         self.docs.lock().expect("should lock").insert(doc_type, doc.clone());
 
         Ok(doc)
@@ -63,13 +75,16 @@ impl Node {
 
     pub async fn join_doc(&self, doc_type: DocType, ticket: &str) -> Result<Doc> {
         let iroh = self.node.client();
-        println!("join_doc: {:?}", iroh.authors.list().await?.try_next().await?);
 
         let doc_ticket = DocTicket::from_str(ticket)?;
         let iroh_doc = iroh.docs.import(doc_ticket.clone()).await?;
         iroh_doc.start_sync(doc_ticket.nodes).await?;
 
-        let doc = Doc { doc: iroh_doc, iroh };
+        let doc = Doc {
+            doc: iroh_doc,
+            iroh,
+            author_id: self.author_id,
+        };
         self.docs.lock().expect("should lock").insert(doc_type, doc.clone());
 
         Ok(doc)
@@ -84,47 +99,41 @@ impl Node {
 pub struct Doc {
     doc: iroh::client::Doc<FlumeConnection<ProviderResponse, ProviderRequest>>,
     iroh: iroh::client::mem::Iroh,
+    author_id: AuthorId,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DocType {
     Credential,
-    // Stronghold,
+    KeyVault,
 }
-
-// #[derive(Debug, Eq, PartialEq)]
-// pub enum DocEvent {
-//     Updated,
-//     Error(String),
-// }
 
 impl Doc {
     pub async fn add_entry(&self, key: String, value: Vec<u8>) -> Result<()> {
-        let author = self.iroh.authors.create().await?;
-        self.doc.set_bytes(author, key, value).await.map(|_| ())
+        self.doc.set_bytes(self.author_id, key, value).await.map(|_| ())
     }
 
     pub async fn delete_entry(&self, key: String) -> Result<()> {
-        let author = self.iroh.authors.create().await?;
-        self.doc.del(author, key).await.map(|_| ())
+        self.doc.del(self.author_id, key).await.map(|_| ())
     }
 
     pub async fn entries(&self) -> Result<Vec<Vec<u8>>> {
         let mut entries = self.doc.get_many(Query::single_latest_per_key()).await?;
 
-        let mut vcs = Vec::new();
+        let mut list = Vec::new();
         while let Some(entry) = entries.try_next().await? {
             match self.iroh.blobs.read_to_bytes(entry.content_hash()).await {
-                Ok(bytes) => vcs.push(bytes.to_vec()),
+                Ok(bytes) => list.push(bytes.to_vec()),
                 Err(e) => println!("Error getting entry {entry:?}: {e}"),
-            };
+            }
         }
 
-        Ok(vcs)
+        Ok(list)
     }
 
-    // Filter document events to retain only remote events, mapping the result to
-    // ()
+    // Filter document events to retain only remote events, mapping the result to '()'.
+    // That is, we only need to signal to the consumer that the document has been
+    // updated.
     // pub async fn updates(&self) -> impl Stream<Item = DocEvent> {
     pub async fn updates(&self) -> impl Stream<Item = ()> {
         self.doc

@@ -3,7 +3,10 @@ use stronghold::Stronghold;
 use tauri::Manager;
 use vercre_wallet::signer::{SignerRequest, SignerResponse};
 
-use crate::error;
+use crate::iroh::DocType;
+use crate::{error, IrohState};
+
+const KEY_VAULT: &str = "docaaacaopj7u7mkmrbxv536p2j4ihk3t3qn36oycl27po2orshfl2srd3bafk62aofuwwwu5zb5ocvzj5v3rtqt6siglyuhoxhqtu4fxravvoteajcnb2hi4dthixs65ltmuys2mjomrsxe4bonfzg62bonzsxi53pojvs4lydaac2cyt22erablaraaa5ciqbfiaqj7ya6cbpuaaaaaaaaaaaahjce";
 
 // initialise the Stronghold key store
 pub fn init(handle: &tauri::AppHandle) -> anyhow::Result<()> {
