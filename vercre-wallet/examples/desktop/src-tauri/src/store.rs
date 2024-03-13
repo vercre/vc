@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use serde_json::Value;
 use tauri::Manager;
 use tauri_plugin_store::{with_store, StoreCollection};
-use vercre_wallet::store::{StoreRequest, StoreResponse};
+use vercre_wallet::store::{StoreEntry, StoreRequest, StoreResponse};
 
 use crate::error;
 
@@ -32,7 +32,7 @@ where
             let values = with_store(app_handle.clone(), stores, path, |store| {
                 // TODO: fix error handling to map serde_json error to external
                 let list = store.values().collect::<Vec<&Value>>();
-                Ok(serde_json::to_vec(&list).unwrap())
+                Ok(list.iter().map(|v| StoreEntry::from(serde_json::to_vec(v).unwrap())).collect())
             })?;
             Ok(StoreResponse::List(values))
         }
@@ -78,8 +78,7 @@ mod test {
 
         // check counts match
         assert_let!(StoreResponse::List(res), resp);
-        let vals = serde_json::from_slice::<Vec<Value>>(&res).expect("should deserialize");
-        assert_eq!(count, vals.len());
+        assert_eq!(count, res.len());
     }
 
     fn create_app<R: tauri::Runtime>(builder: tauri::Builder<R>) -> tauri::App<R> {

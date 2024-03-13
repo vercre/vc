@@ -9,7 +9,6 @@ use crux_core::render::Render;
 use crux_core::Capability;
 use crux_http::Http;
 use serde::{Deserialize, Serialize};
-use web_sys::console;
 
 use crate::capabilities::delay::Delay;
 use crate::capabilities::signer::Signer;
@@ -166,7 +165,6 @@ impl crux_core::App for App {
         match event {
             Event::Credential(ev) => {
                 // delegate to credential sub-app
-                console::log_1(&"Credential event".into());
                 self.credential.update(ev, &mut model.credential, &caps.into());
             }
             Event::Issuance(ev) => {
@@ -231,6 +229,7 @@ mod tests {
     use crate::capabilities::delay::DelayOperation;
     use crate::capabilities::store::{self, StoreResponse};
     use crate::credential::Credential;
+    use crate::store::StoreEntry;
 
     /// Test that a `credential::Event::Find` event causes the app to fetch
     /// credentials specified in the query.
@@ -247,15 +246,17 @@ mod tests {
         assert_let!(Effect::Store(request), &mut update.effects[0]);
         assert_eq!(request.operation, store::StoreRequest::List);
 
-        let credentials = Vec::<Credential>::new();
-        let values = serde_json::to_vec(&credentials).expect("should serialize");
-        let response = StoreResponse::List(values.clone());
+        let credential = Credential::default();
+        let value = serde_json::to_vec(&credential).expect("should serialize");
+        let credentials = vec![StoreEntry(value)];
+        let response = StoreResponse::List(credentials.clone());
 
         // resolving request should trigger credential Event::Listed event
+        let credentials_as_vec = vec![credential];
         let update = app.resolve(request, response).expect("should resolve");
         assert_eq!(
             update.events[0],
-            Event::Credential(credential::Event::Listed(Ok(credentials.clone())))
+            Event::Credential(credential::Event::Listed(Ok(credentials_as_vec.clone())))
         );
     }
 
