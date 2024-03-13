@@ -6,6 +6,7 @@ import * as st from 'shared_types/types/shared_types';
 import init_core from 'vercre-wallet/vercre_wallet';
 
 import Credentials from './Credentials';
+import Issuance from './Issuance';
 import Shell from './Shell';
 import { ShellStateProvider } from './Shell/Context';
 import { theme } from './theme';
@@ -36,8 +37,7 @@ const App = () => {
                         <Credentials />
                     )}
                     {viewModel.view.constructor === st.ViewVariantIssuance && (
-                        <div>Issuance</div>
-                    
+                        <Issuance />                    
                     )}
                     {viewModel.view.constructor === st.ViewVariantPresentation && (
                         <div>Presentation</div>
