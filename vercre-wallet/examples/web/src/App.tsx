@@ -7,6 +7,7 @@ import init_core from 'vercre-wallet/vercre_wallet';
 
 import Credentials from './Credentials';
 import Issuance from './Issuance';
+import Presentation from './Presentation';
 import Shell from './Shell';
 import { ShellStateProvider } from './Shell/Context';
 import { theme } from './theme';
@@ -40,7 +41,7 @@ const App = () => {
                         <Issuance />                    
                     )}
                     {viewModel.view.constructor === st.ViewVariantPresentation && (
-                        <div>Presentation</div>
+                        <Presentation />
                     )}
                 </Shell>
             </ShellStateProvider>
