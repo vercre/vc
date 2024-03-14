@@ -15,9 +15,9 @@ export default defineConfig({
     wasm(),
   ],
   server: {
-    // https: true,
+    
     port: 3000,
-    host: 'dev.vercre.io',
+    // host: 'dev.vercre.io',
     fs: {
       allow: [
         searchForWorkspaceRoot(process.cwd()),
