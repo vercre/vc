@@ -1,24 +1,43 @@
-use anyhow::anyhow;
-use stronghold::Stronghold;
+use anyhow::{anyhow, Error, Result};
+use futures::StreamExt;
+use tauri::async_runtime::{block_on, spawn};
 use tauri::Manager;
 use vercre_wallet::signer::{SignerRequest, SignerResponse};
 
-use crate::iroh::DocType;
+use crate::iroh::{Doc, DocType};
+use crate::stronghold::Stronghold;
 use crate::{error, IrohState};
 
 const KEY_VAULT: &str = "docaaacaopj7u7mkmrbxv536p2j4ihk3t3qn36oycl27po2orshfl2srd3bafk62aofuwwwu5zb5ocvzj5v3rtqt6siglyuhoxhqtu4fxravvoteajcnb2hi4dthixs65ltmuys2mjomrsxe4bonfzg62bonzsxi53pojvs4lydaac2cyt22erablaraaa5ciqbfiaqj7ya6cbpuaaaaaaaaaaaahjce";
 
 // initialise the Stronghold key store
-pub fn init(handle: &tauri::AppHandle) -> anyhow::Result<()> {
+pub fn init(handle: &tauri::AppHandle) -> Result<()> {
     // FIXME: get passphrase from user and salt from file(?)
     let passphrase = b"pass-phrase";
     let salt = b"randomsalt";
-    let hash = argon2::hash_raw(passphrase, salt, &argon2::Config::default())?;
+    let password = argon2::hash_raw(passphrase, salt, &argon2::Config::default())?;
+
+    let doc = block_on(async {
+        let state = handle.state::<IrohState>();
+        let doc: Doc = state.node.lock().await.join_doc(DocType::KeyVault, KEY_VAULT).await?;
+
+        let mut stream = doc.updates().await;
+        spawn(async move {
+            while let Some(_) = stream.next().await {
+                println!("should process event");
+            }
+        });
+
+        Ok::<Doc, Error>(doc)
+    })?;
 
     // open/initialize Stronghold snapshot
-    let path = handle.path().app_local_data_dir()?.join("stronghold.bin");
-    let stronghold = Stronghold::new(path, hash)?;
-    handle.manage(stronghold);
+    let values = block_on(async { doc.entries().await.expect("should find an entry") });
+    if values.len() > 0 {
+        let snapshot = &values[0];
+        let stronghold = Stronghold::new(password, Some(snapshot))?;
+        handle.manage(stronghold);
+    }
 
     Ok(())
 }
@@ -43,162 +62,6 @@ where
                 return Err(error::Error::Other(anyhow!("verification failed")));
             };
             Ok(SignerResponse::Verification { alg, kid })
-        }
-    }
-}
-
-pub mod stronghold {
-    use std::path::Path;
-
-    use anyhow::Result;
-    use base64ct::{Base64UrlUnpadded, Encoding};
-    use iota_stronghold::procedures::{
-        Ed25519Sign, GenerateKey, KeyType, PublicKey, StrongholdProcedure,
-    };
-    use iota_stronghold::{engine, Client, KeyProvider, Location, SnapshotPath};
-    use zeroize::Zeroizing;
-
-    const CLIENT: &[u8] = b"signing_client";
-    const VAULT: &[u8] = b"signing_key_vault";
-    const SIGNING_KEY: &[u8] = b"signing_key";
-
-    pub struct Stronghold {
-        key_location: Location,
-        client: Client,
-    }
-
-    impl Stronghold {
-        /// Create new Stronghold instance.
-        /// The method will attempt to load a Stronghold snapshot from the given path,
-        /// or create a new one if it does not exist.
-        ///
-        /// When creating a new snapshot, a signing key will be generated and saved to
-        /// the vault.
-        ///
-        /// The snapshot is encrypted using the password provided.
-        pub fn new(path: impl AsRef<Path>, password: Vec<u8>) -> Result<Self> {
-            let stronghold = iota_stronghold::Stronghold::default();
-
-            let keyprovider = KeyProvider::try_from(Zeroizing::new(password))?;
-            let snapshot_path = SnapshotPath::from_path(path);
-            let key_location = Location::generic(VAULT, SIGNING_KEY);
-
-            let client = {
-                if snapshot_path.exists() {
-                    let client = stronghold.load_client_from_snapshot(
-                        CLIENT,
-                        &keyprovider,
-                        &snapshot_path,
-                    )?;
-
-                    // --------------------------------------------------------
-                    // use crypto::keys::x25519;
-                    // use lazy_static::__Deref;
-                    // use iota_stronghold::engine::snapshot::KEY_SIZE;
-
-                    // let buffer = keyprovider.try_unlock().expect("should unlock");
-                    // let buffer_borrow = buffer.borrow();
-                    // let buffer_ref = buffer_borrow.deref().try_into().unwrap();
-                    // let _snapshot = iota_stronghold::Snapshot::read_from_snapshot(
-                    //     &snapshot_path,
-                    //     buffer_ref,
-                    //     None,
-                    // )
-                    // .expect("should load");
-
-                    // // get public key
-                    // let proc = StrongholdProcedure::PublicKey(PublicKey {
-                    //     ty: KeyType::Ed25519,
-                    //     private_key: key_location.clone(),
-                    // });
-                    // let output = client.execute_procedure(proc)?;
-                    // let x_bytes: Vec<u8> = output.into();
-                    // let vault = HashMap::from((vault_id, Vec<T>));
-
-                    // // let select=HashMap::new(client.id, HashMap::new(vault_id), Vec<T>>>
-                    // let pk = crypto::keys::x25519::PublicKey::try_from_slice(&x_bytes)
-                    //     .expect("should convert");
-
-                    // _snapshot.export_to_serialized_state(select, pk);
-                    // --------------------------------------------------------
-
-                    client
-                } else {
-                    // --------------------------------------------------------
-                    // HACK: Override encryption work factor
-                    // --------------------------------------------------------
-                    // ```rust
-                    //  pub const RECOMMENDED_MAXIMUM_DECRYPT_WORK_FACTOR: u8 = 23;
-                    // ```
-                    //
-                    // `iota_snapshot` uses a 'work factor' of 23 for password protected files.
-                    // This means encryption/decrytion takes ~45 sec, so we override here for
-                    // performance during development.
-                    // N.B. (AW) actually can take more like 90 sec!!
-
-                    // From `iota_snapshot` code comments:
-                    //
-                    // Work factor is used to strengthen weak low-entropy (password-based) keys.
-                    // Recommended value for such keys is approx. 20, ie. key derivation should
-                    // take approx. 1 second. Key derivation time grows exponentially with work
-                    // factor.
-                    //
-                    // Strong keys generated with cryptographically secure RNG do not need
-                    // strengthening and can use minimal (0) work factor.
-                    // --------------------------------------------------------
-                    engine::snapshot::try_set_encrypt_work_factor(0)?;
-
-                    let client = stronghold.create_client(CLIENT)?;
-
-                    // generate signing key
-                    let proc = StrongholdProcedure::GenerateKey(GenerateKey {
-                        // ty: KeyType::Secp256k1Ecdsa,
-                        ty: KeyType::Ed25519,
-                        output: key_location.clone(),
-                    });
-                    let _ = client.execute_procedure(proc)?;
-
-                    // save snapshot (+ client and vault)
-                    stronghold.commit_with_keyprovider(&snapshot_path, &keyprovider)?;
-                    client
-                }
-            };
-
-            Ok(Self { key_location, client })
-        }
-
-        /// Sign message using the snapshot's signing key.
-        pub(super) fn sign(&self, msg: Vec<u8>) -> Result<Vec<u8>> {
-            let proc = StrongholdProcedure::Ed25519Sign(Ed25519Sign {
-                msg,
-                private_key: self.key_location.clone(),
-            });
-            let output = self.client.execute_procedure(proc)?;
-            Ok(output.into())
-        }
-
-        /// Get the signing key's public key from the snapshot.
-        pub(super) fn verifiction(&self) -> Result<String> {
-            // get public key
-            let proc = StrongholdProcedure::PublicKey(PublicKey {
-                ty: KeyType::Ed25519,
-                private_key: self.key_location.clone(),
-            });
-            let output = self.client.execute_procedure(proc)?;
-
-            // convert to did:jwk
-            let x_bytes: Vec<u8> = output.into();
-
-            let jwk = serde_json::json!({
-                "kty": "OKP",
-                "crv": "X25519",
-                "use": "enc",
-                "x": Base64UrlUnpadded::encode_string(&x_bytes),
-            });
-            let jwk_str = jwk.to_string();
-            let jwk_b64 = Base64UrlUnpadded::encode_string(jwk_str.as_bytes());
-
-            Ok(format!("did:jwk:{jwk_b64}#0"))
         }
     }
 }

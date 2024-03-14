@@ -4,7 +4,7 @@ use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
-use futures::{future, Stream, StreamExt, TryStreamExt};
+use futures::{future, Stream, StreamExt, TryFutureExt, TryStreamExt};
 use iroh::bytes::store::flat;
 use iroh::client::LiveEvent;
 use iroh::node;
@@ -117,12 +117,20 @@ impl Doc {
         self.doc.del(self.author_id, key).await.map(|_| ())
     }
 
+    pub async fn entry(&self, key: String) -> Result<Vec<u8>> {
+        let Some(entry) = self.doc.get_exact(self.author_id, key, false).await? else {
+            return Err(anyhow::anyhow!("entry not found"));
+        };
+
+        entry.content_bytes(&self.doc).map_ok(|bytes| bytes.to_vec()).await
+    }
+
     pub async fn entries(&self) -> Result<Vec<Vec<u8>>> {
         let mut entries = self.doc.get_many(Query::single_latest_per_key()).await?;
 
         let mut list = Vec::new();
         while let Some(entry) = entries.try_next().await? {
-            match self.iroh.blobs.read_to_bytes(entry.content_hash()).await {
+            match entry.content_bytes(&self.doc).await {
                 Ok(bytes) => list.push(bytes.to_vec()),
                 Err(e) => println!("Error getting entry {entry:?}: {e}"),
             }
@@ -140,16 +148,15 @@ impl Doc {
             .subscribe()
             .await
             .expect("should subscribe")
-            // filter out uninteresting events
             .filter(|event| {
-                // debug!("filter: {event:?}");
+                println!("filter: {event:?}");
                 match event {
                     Ok(LiveEvent::InsertRemote { content_status, .. }) => match content_status {
                         ContentStatus::Complete | ContentStatus::Missing => future::ready(true), // doc set,  doc del
                         ContentStatus::Incomplete => future::ready(false),
                     },
-                    Err(e) => {
-                        println!("Error event: {event:?}: {e}");
+                    Err(_) => {
+                        // println!("Error event: {event:?}: {e}");
                         future::ready(true)
                     }
                     _ => future::ready(false),
