@@ -10,7 +10,12 @@ import * as st from 'shared_types/types/shared_types';
 import { useShellState } from '../Shell/Context';
 import { useViewState } from '../ViewState';
 
-const Error = () => {
+export type ErrorProps = {
+    title: string,
+    message: string,
+};
+
+const Error = (props: ErrorProps) => {
     const { setShellState } = useShellState();
     const { update } = useViewState();
     const initialLoad = useRef<boolean>(true);
@@ -22,20 +27,23 @@ const Error = () => {
         }
         initialLoad.current = false;
         setShellState({
-            title: 'Accept Credential',
+            title: props.title,
             action: (
                 <IconButton onClick={() => update(new st.EventVariantCancel())} size="large">
-                    <ArrowBackIosIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
+                    <ArrowBackIosIcon
+                        fontSize="large"
+                        sx={{ color: theme.palette.primary.contrastText}}
+                    />
                 </IconButton>
             ),
             secondaryAction: undefined,
         });
-    }, [setShellState, theme.palette.primary.contrastText]);
+    }, [props.title, setShellState, theme.palette.primary.contrastText]);
     
     return (
         <Stack spacing={2} sx={{ my: 2 }}>
             <Alert severity="error">
-                An error occurred. Please try again or contact the credential issuer.
+                {props.message}
             </Alert>
         </Stack>
     );

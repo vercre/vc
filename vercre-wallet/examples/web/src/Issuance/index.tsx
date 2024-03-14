@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from "react";
 
 import Box from '@mui/material/Box';
 import Slide from '@mui/material/Slide';
+import * as st from "shared_types/types/shared_types";
 
 import Accept from './Accept';
 import EnterPin from './EnterPin';
-import Error from './Error';
-import Request from './Request';
+import Error from '../components/Error';
+import RequestStatus from '../components/RequestStatus';
 import { useShellState } from '../Shell/Context';
 import { useViewState } from '../ViewState';
 
@@ -64,10 +65,20 @@ export const Issuance = () => {
                 </Box>
             </Slide>
             {mode === 'request' &&
-                <Request />
+                <RequestStatus
+                    title="Retrieving credentials..."
+                    status={
+                        model.status.constructor === st.IssuanceStatusVariantRequested
+                        ? 'pending'
+                        : 'complete'
+                    }
+                />
             }
             {mode === 'error' &&
-                <Error />
+                <Error
+                    title="Accept Credential"
+                    message="An error occurred. Please try again or contact the credential issuer."
+                />
             }
         </Box>
     );

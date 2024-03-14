@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 
 import Box from '@mui/material/Box';
+import * as st from "shared_types/types/shared_types";
 
 import Authorize from './Authorize';
-import Error from './Error';
-import Request from './Request';
+import Error from '../components/Error';
+import RequestStatus from '../components/RequestStatus';
 import { useShellState } from '../Shell/Context';
 import { useViewState } from '../ViewState';
 
@@ -54,10 +55,20 @@ export const Presentation = () => {
                 <Authorize />
             }
             { mode === 'request' &&
-                <Request />
+                <RequestStatus
+                    title="Verifying credentials..."
+                    status={
+                        model.status.constructor === st.PresentationStatusVariantRequested
+                        ? 'pending'
+                        : 'complete'
+                    }
+                />
             }
             { mode === 'error' &&
-                <Error />
+                <Error
+                    title="Present Credential"
+                    message="An error occurred. Please try again or contact the verifier."
+                />
             }
         </Box>
     );

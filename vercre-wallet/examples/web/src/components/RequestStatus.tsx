@@ -4,21 +4,21 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import * as st from "shared_types/types/shared_types";
 
-import { useViewState } from '../ViewState';
+export type RequestStatusProps = {
+    status: 'pending' | 'complete',
+    title: string,
+};
 
-export const Request = () => {
-    const { viewModel } = useViewState();
-
-    const status = viewModel.issuance.status;
+export const RequestStatus = (props: RequestStatusProps) => {
 
     return (
         <Stack spacing={2} sx={{ pt: 2 }}>
             <Typography sx={{ pb: 2, textAlign: 'center' }}>
-                Retrieving credentials...
+                {props.title}
             </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'center'}}>
+
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <Box sx={{ display: 'inline-flex', position: 'relative' }}>
                     <CircularProgress
                         size={68}
@@ -30,7 +30,7 @@ export const Request = () => {
                             zIndex: 1,
                         }}
                     />
-                    {status.constructor === st.IssuanceStatusVariantRequested
+                    {props.status === 'pending'
                         ? <DownloadingIcon color="secondary" />
                         : <CheckIcon color="success" />
                     }
@@ -38,6 +38,6 @@ export const Request = () => {
             </Box>
         </Stack>
     );
-}
+};
 
-export default Request;
+export default RequestStatus;
