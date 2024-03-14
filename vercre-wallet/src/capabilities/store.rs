@@ -169,7 +169,7 @@ where
                             Ok(list) => list,
                             Err(e) => {
                                 #[cfg(feature = "wasm")]
-                                web_sys::console::error_1(&e.to_string().into());
+                                web_sys::console::error_2(&"store capability list error:".into(), &e.to_string().into());
                                 return ctx.update_app(make_event(Err(e)));
                             }
                         };

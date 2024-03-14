@@ -215,6 +215,8 @@ impl crux_core::App for App {
         } else if model.presentation.status != presentation::Status::Inactive {
             vm.view = View::Presentation;
         }
+        #[cfg(feature = "wasm")]
+        web_sys::console::debug_2(&"app view".into(), &format!("{vm:?}").into());
         vm
     }
 }

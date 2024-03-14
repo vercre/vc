@@ -70,7 +70,10 @@ export const useViewState = () => {
     };
     
     const deserializeView = (bytes: Uint8Array): st.ViewModel => {
-        return st.ViewModel.deserialize(new bin.BincodeDeserializer(bytes));
+        console.log("attempt to deserialize view", Array.from(bytes));
+        const vm = st.ViewModel.deserialize(new bin.BincodeDeserializer(bytes));
+        console.log("deserialised:", vm);
+        return vm;
     };    
 
     const respond = (
