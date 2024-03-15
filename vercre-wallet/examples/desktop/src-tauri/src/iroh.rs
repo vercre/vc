@@ -19,7 +19,7 @@ use tokio_util::task::LocalPoolHandle;
 
 #[derive(Clone, Debug)]
 pub struct Node {
-    node: iroh::node::Node<flat::Store>,
+    inner: iroh::node::Node<flat::Store>,
     docs: Arc<Mutex<HashMap<DocType, Doc>>>,
     author_id: AuthorId,
 }
@@ -36,21 +36,21 @@ impl Node {
         // let doc_store = memory::Store::default();
 
         let rt = LocalPoolHandle::new(1);
-        let node = node::Node::builder(blob_store, doc_store)
+        let inner = node::Node::builder(blob_store, doc_store)
             // .peers_data_path(blob_dir)
             .local_pool(&rt)
             .spawn()
             .await?;
 
         // load (or create) author for node
-        let iroh = node.client();
+        let iroh = inner.client();
         let author_id = match iroh.authors.list().await?.try_next().await {
             Ok(Some(author_id)) => author_id,
             _ => iroh.authors.create().await?,
         };
 
         Ok(Self {
-            node,
+            inner,
             docs: Arc::new(Mutex::new(HashMap::new())),
             author_id,
         })
@@ -58,14 +58,13 @@ impl Node {
 
     #[allow(dead_code)]
     pub async fn create_doc(&self, doc_type: DocType, key: String, value: Vec<u8>) -> Result<Doc> {
-        let iroh = self.node.client();
+        let iroh = self.inner.client();
 
         let iroh_doc = iroh.docs.create().await?;
         iroh_doc.set_bytes(self.author_id, key, value).await?;
 
         let doc = Doc {
-            doc: iroh_doc,
-            iroh,
+            inner: iroh_doc,
             author_id: self.author_id,
         };
         self.docs.lock().expect("should lock").insert(doc_type, doc.clone());
@@ -74,15 +73,14 @@ impl Node {
     }
 
     pub async fn join_doc(&self, doc_type: DocType, ticket: &str) -> Result<Doc> {
-        let iroh = self.node.client();
+        let iroh = self.inner.client();
 
         let doc_ticket = DocTicket::from_str(ticket)?;
         let iroh_doc = iroh.docs.import(doc_ticket.clone()).await?;
         iroh_doc.start_sync(doc_ticket.nodes).await?;
 
         let doc = Doc {
-            doc: iroh_doc,
-            iroh,
+            inner: iroh_doc,
             author_id: self.author_id,
         };
         self.docs.lock().expect("should lock").insert(doc_type, doc.clone());
@@ -97,8 +95,7 @@ impl Node {
 
 #[derive(Clone, Debug)]
 pub struct Doc {
-    doc: iroh::client::Doc<FlumeConnection<ProviderResponse, ProviderRequest>>,
-    iroh: iroh::client::mem::Iroh,
+    inner: iroh::client::Doc<FlumeConnection<ProviderResponse, ProviderRequest>>,
     author_id: AuthorId,
 }
 
@@ -110,27 +107,27 @@ pub enum DocType {
 
 impl Doc {
     pub async fn add_entry(&self, key: String, value: Vec<u8>) -> Result<()> {
-        self.doc.set_bytes(self.author_id, key, value).await.map(|_| ())
+        self.inner.set_bytes(self.author_id, key, value).await.map(|_| ())
     }
 
     pub async fn delete_entry(&self, key: String) -> Result<()> {
-        self.doc.del(self.author_id, key).await.map(|_| ())
+        self.inner.del(self.author_id, key).await.map(|_| ())
     }
 
     pub async fn entry(&self, key: String) -> Result<Vec<u8>> {
-        let Some(entry) = self.doc.get_exact(self.author_id, key, false).await? else {
+        let Some(entry) = self.inner.get_exact(self.author_id, key, false).await? else {
             return Err(anyhow::anyhow!("entry not found"));
         };
 
-        entry.content_bytes(&self.doc).map_ok(|bytes| bytes.to_vec()).await
+        entry.content_bytes(&self.inner).map_ok(|bytes| bytes.to_vec()).await
     }
 
     pub async fn entries(&self) -> Result<Vec<Vec<u8>>> {
-        let mut entries = self.doc.get_many(Query::single_latest_per_key()).await?;
+        let mut entries = self.inner.get_many(Query::single_latest_per_key()).await?;
 
         let mut list = Vec::new();
         while let Some(entry) = entries.try_next().await? {
-            match entry.content_bytes(&self.doc).await {
+            match entry.content_bytes(&self.inner).await {
                 Ok(bytes) => list.push(bytes.to_vec()),
                 Err(e) => println!("Error getting entry {entry:?}: {e}"),
             }
@@ -144,7 +141,7 @@ impl Doc {
     // updated.
     // pub async fn updates(&self) -> impl Stream<Item = DocEvent> {
     pub async fn updates(&self) -> impl Stream<Item = ()> {
-        self.doc
+        self.inner
             .subscribe()
             .await
             .expect("should subscribe")

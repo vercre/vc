@@ -19,7 +19,7 @@ pub fn init(handle: &tauri::AppHandle) -> anyhow::Result<()> {
 
         let handle2 = handle.clone();
         spawn(async move {
-            while let Some(_) = doc.updates().await.next().await {
+            while doc.updates().await.next().await.is_some() {
                 get_list(handle2.clone()).await.expect("should process event");
             }
         });

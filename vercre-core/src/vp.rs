@@ -311,7 +311,7 @@ impl RequestObject {
         let img_buf = qr_code.render::<image::Luma<u8>>().build();
         let mut buffer: Vec<u8> = Vec::new();
         let mut writer = Cursor::new(&mut buffer);
-        if let Err(e) = img_buf.write_to(&mut writer, image::ImageOutputFormat::Png) {
+        if let Err(e) = img_buf.write_to(&mut writer, image::ImageFormat::Png) {
             err!(Err::ServerError(e.into()), "Failed to create QR code");
         }
 

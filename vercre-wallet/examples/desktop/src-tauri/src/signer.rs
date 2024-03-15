@@ -23,7 +23,7 @@ pub fn init(handle: &tauri::AppHandle) -> Result<()> {
 
         let mut stream = doc.updates().await;
         spawn(async move {
-            while let Some(_) = stream.next().await {
+            while stream.next().await.is_some() {
                 println!("should process event");
             }
         });
@@ -33,9 +33,9 @@ pub fn init(handle: &tauri::AppHandle) -> Result<()> {
 
     // open/initialize Stronghold snapshot
     let values = block_on(async { doc.entries().await.expect("should find an entry") });
-    if values.len() > 0 {
+    if !values.is_empty() {
         // TODO: move this to iroh module
-        let snapshot = values.get(0).expect("should have a value").clone();
+        let snapshot = values.first().expect("should have a value").clone();
         let stronghold = Stronghold::new(password, Some(snapshot))?;
         handle.manage(stronghold);
     }
