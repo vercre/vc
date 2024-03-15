@@ -33,8 +33,8 @@ impl Stronghold {
         );
 
         let client = {
-            if let Some(snap_bytes) = snapshot {
-                let source = Resource::Memory(snap_bytes);
+            if let Some(bytes) = snapshot {
+                let source = Resource::Memory(bytes);
                 stronghold.load_client_from_snapshot(CLIENT, &keyprovider, &source)?
             } else {
                 let client = stronghold.create_client(CLIENT)?;

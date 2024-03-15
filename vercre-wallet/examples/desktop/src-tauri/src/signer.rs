@@ -17,22 +17,22 @@ pub fn init(handle: &tauri::AppHandle) -> Result<()> {
     let salt = b"randomsalt";
     let password = argon2::hash_raw(passphrase, salt, &argon2::Config::default())?;
 
-    let doc = block_on(async {
+    let vault_doc = block_on(async {
         let state = handle.state::<IrohState>();
-        let doc: Doc = state.node.lock().await.join_doc(DocType::KeyVault, KEY_VAULT).await?;
+        let vault_doc: Doc = state.node.lock().await.join_doc(DocType::KeyVault, KEY_VAULT).await?;
 
-        let mut stream = doc.updates().await;
+        let mut stream = vault_doc.updates().await;
         spawn(async move {
-            while stream.next().await.is_some() {
-                println!("should process event");
+            while vault_doc.updates().await.next().await.is_some() {
+                println!("key vault event");
             }
         });
 
-        Ok::<Doc, Error>(doc)
+        Ok::<Doc, Error>(vault_doc)
     })?;
 
     // open/initialize Stronghold snapshot
-    let values = block_on(async { doc.entries().await.expect("should find an entry") });
+    let values = block_on(async { vault_doc.entries().await.expect("should find an entry") });
     if !values.is_empty() {
         // TODO: move this to iroh module
         let snapshot = values.first().expect("should have a value").clone();

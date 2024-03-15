@@ -15,11 +15,11 @@ const VC_STORE: &str = "docaaacbp4ivplq3xf7krm3y5zybzjv2ha56qvhpfiykjjc6iukdifgo
 pub fn init(handle: &tauri::AppHandle) -> anyhow::Result<()> {
     block_on(async {
         let state = handle.state::<IrohState>();
-        let doc = state.node.lock().await.join_doc(DocType::Credential, VC_STORE).await?;
+        let vc_doc = state.node.lock().await.join_doc(DocType::Credential, VC_STORE).await?;
 
         let handle2 = handle.clone();
         spawn(async move {
-            while doc.updates().await.next().await.is_some() {
+            while vc_doc.updates().await.next().await.is_some() {
                 get_list(handle2.clone()).await.expect("should process event");
             }
         });
@@ -35,15 +35,15 @@ where
     R: tauri::Runtime,
 {
     let state = app_handle.state::<IrohState>();
-    let doc = state.node.lock().await.doc(DocType::Credential).unwrap();
+    let vc_doc = state.node.lock().await.doc(DocType::Credential).unwrap();
 
     match op {
         StoreRequest::Add(id, value) => {
-            doc.add_entry(id.to_owned(), value.to_owned()).await?;
+            vc_doc.add_entry(id.to_owned(), value.to_owned()).await?;
             Ok(StoreResponse::Ok)
         }
         StoreRequest::List => {
-            let values = doc
+            let values = vc_doc
                 .entries()
                 .await?
                 .iter()
@@ -54,7 +54,7 @@ where
             Ok(StoreResponse::List(bytes))
         }
         StoreRequest::Delete(id) => {
-            doc.delete_entry(id.to_owned()).await?;
+            vc_doc.delete_entry(id.to_owned()).await?;
             Ok(StoreResponse::Ok)
         }
     }
