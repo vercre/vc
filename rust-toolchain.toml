@@ -1,4 +1,5 @@
 [toolchain]
+# channel = "stable"
 channel = "nightly"
 components = ["clippy", "rust-src", "rustfmt"]
 targets = [
