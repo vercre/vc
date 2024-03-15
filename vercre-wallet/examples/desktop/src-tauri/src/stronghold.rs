@@ -1,13 +1,9 @@
-use std::ops::Deref;
-
 use anyhow::Result;
 use base64ct::{Base64UrlUnpadded, Encoding};
-use stronghold_engine::snapshot::{self, Key};
-use stronghold_engine::vault::ClientId;
 use iota_stronghold::procedures::{
     Ed25519Sign, GenerateKey, KeyType, PublicKey, StrongholdProcedure,
 };
-use iota_stronghold::{Client, KeyProvider, LoadFromPath, Location, Snapshot};
+use iota_stronghold::{Client, KeyProvider, Location, Resource};
 
 const CLIENT: &[u8] = b"signing_client";
 const VAULT: &[u8] = b"signing_key_vault";
@@ -27,36 +23,19 @@ impl Stronghold {
     /// the vault.
     ///
     /// The snapshot is encrypted using the password provided.
-    pub fn new(password: Vec<u8>, snapshot: Option<&[u8]>) -> Result<Self> {
+    pub fn new(password: Vec<u8>, snapshot: Option<Vec<u8>>) -> Result<Self> {
         let stronghold = iota_stronghold::Stronghold::default();
 
         let keyprovider = KeyProvider::try_from(password)?;
         let key_location = Location::generic(VAULT, SIGNING_KEY);
-        // let snapshot_path = iota_stronghold::SnapshotPath::from_path(
-        //     "/Users/andrewweston/Library/Application Support/io.credibil.wallet/stronghold.bin",
-        // );
+        let snapshot_path = iota_stronghold::SnapshotPath::from_path(
+            "/Users/andrewweston/Library/Application Support/io.credibil.wallet/stronghold.bin",
+        );
 
         let client = {
-            if let Some(mut snap_bytes) = snapshot {
-                // Load Stronghold snapshot from Iroh bytes
-                let key_buffer = &keyprovider.try_unlock().expect("should unlock");
-                let key_bytes: Key = key_buffer.borrow().deref().try_into().unwrap();
-
-                // trim first 7 bytes — ??
-                snap_bytes = &snap_bytes[7..];
-
-                let pt = snapshot::read(&mut snap_bytes, &key_bytes, &[])?;
-                let data = snapshot::decompress(&pt)?;
-                let state = bincode::deserialize(&data)?;
-                let snapshot = Snapshot::from_state(state, key_bytes, None)?;
-
-                // Load client from snapshot
-                let mut client = Client::default();
-                let client_id = ClientId::load_from_path(CLIENT, CLIENT);
-                let client_state = snapshot.get_state(client_id)?;
-                client.restore(client_state, client_id)?;
-
-                client
+            if let Some(snap_bytes) = snapshot {
+                let source = Resource::Memory(snap_bytes);
+                stronghold.load_client_from_snapshot(CLIENT, &keyprovider, &source)?
             } else {
                 let client = stronghold.create_client(CLIENT)?;
 
@@ -68,7 +47,8 @@ impl Stronghold {
                 let _ = client.execute_procedure(proc)?;
 
                 // save snapshot (+ client and vault)
-                stronghold.commit_with_keyprovider(&snapshot_path, &keyprovider)?;
+                let target = Resource::File(snapshot_path);
+                let output = stronghold.commit_with_keyprovider(&target, &keyprovider)?;
                 client
             }
         };

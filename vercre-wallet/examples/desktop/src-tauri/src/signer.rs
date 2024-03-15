@@ -34,7 +34,8 @@ pub fn init(handle: &tauri::AppHandle) -> Result<()> {
     // open/initialize Stronghold snapshot
     let values = block_on(async { doc.entries().await.expect("should find an entry") });
     if values.len() > 0 {
-        let snapshot = &values[0];
+        // TODO: move this to iroh module
+        let snapshot = values.get(0).expect("should have a value").clone();
         let stronghold = Stronghold::new(password, Some(snapshot))?;
         handle.manage(stronghold);
     }
