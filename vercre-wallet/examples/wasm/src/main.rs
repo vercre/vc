@@ -20,7 +20,6 @@ fn main() {
     yew::Renderer::<App>::new().render();
 }
 
-
 // #[derive(Default)]
 // struct RootComponent {
 //     core: Core,
@@ -76,4 +75,3 @@ fn main() {
 //         }
 //     }
 // }
-

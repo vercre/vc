@@ -1,27 +1,27 @@
 {
     "rust-analyzer.linkedProjects": [
-        "./Cargo.toml",
-        
-        "./vercre-wallet/examples/cli/Cargo.toml",
-        "./vercre-wallet/examples/desktop/Cargo.toml",
-        "./vercre-wallet/examples/mobile/Cargo.toml",
-        "./vercre-wallet/examples/wasm/Cargo.toml",
-        "./vercre-wallet/examples/web/Cargo.toml",
+        "Cargo.toml",
+        "vercre-wallet/examples/cli/Cargo.toml",
+        "vercre-wallet/examples/desktop/Cargo.toml",
+        "vercre-wallet/examples/mobile/Cargo.toml",
+        "vercre-wallet/examples/wasm/Cargo.toml",
+        "vercre-wallet/examples/web/Cargo.toml",
     ],
     "rust-analyzer.cargo.features": [
        //  "typegen",
     ],
-    "todo-tree.tree.showBadges": true,
+    "rust-analyzer.cargo.extraEnv": {
+        "PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
+    },
     // See https://github.com/vadimcn/codelldb/blob/v1.10.0/MANUAL.md
     "lldb.launch.envFile": "${workspaceFolder}/.env",
     "lldb.launch.env": {
         "INSTA_WORKSPACE_ROOT": "${workspaceFolder}",
     },
+    "todo-tree.tree.showBadges": true,
     "eslint.workingDirectories": [
         {
-            "pattern": "./vercre-wallet/examples/desktop/*/"
+            "pattern": "vercre-wallet/examples/desktop/*/"
         }
     ],
-    // "rust-analyzer.check.allTargets": true,
-    // "rust-analyzer.check.features": "all",
 }

@@ -6,10 +6,8 @@
 use core::str;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
-use ecdsa::{
-    signature::{Signer as EcdsaSigner, Verifier},
-    Signature, SigningKey, VerifyingKey,
-};
+use ecdsa::signature::{Signer as EcdsaSigner, Verifier};
+use ecdsa::{Signature, SigningKey, VerifyingKey};
 use k256::Secp256k1;
 use serde::Serialize;
 use serde_json::json;
@@ -30,7 +28,10 @@ pub async fn request(op: &SignerRequest) -> Result<SignerResponse, Option<String
                 Ok(ak) => ak,
                 Err(err) => return Err(err),
             };
-            Ok(SignerResponse::Verification{alg: ak.alg, kid: ak.kid})
+            Ok(SignerResponse::Verification {
+                alg: ak.alg,
+                kid: ak.kid,
+            })
         }
     }
 }
@@ -69,8 +70,7 @@ impl SignKey {
 }
 
 fn sign(msg: &[u8]) -> Result<Vec<u8>, Option<String>> {
-    let hdr_b = serde_json::to_vec(&json!({"alg": "ES256K"}))
-        .expect("failed to serialize");
+    let hdr_b = serde_json::to_vec(&json!({"alg": "ES256K"})).expect("failed to serialize");
     let hdr_64 = Base64UrlUnpadded::encode_string(&hdr_b);
     let msg_64 = Base64UrlUnpadded::encode_string(msg);
     let mut payload = [hdr_64.as_bytes(), b".", msg_64.as_bytes()].concat();
@@ -78,8 +78,7 @@ fn sign(msg: &[u8]) -> Result<Vec<u8>, Option<String>> {
 
     let sign_key = SignKey::new();
     let d_b = Base64UrlUnpadded::decode_vec(&sign_key.d).expect("failed to decode");
-    let key: SigningKey<Secp256k1> =
-        SigningKey::from_slice(&d_b).expect("failed to create key");
+    let key: SigningKey<Secp256k1> = SigningKey::from_slice(&d_b).expect("failed to create key");
     let sig: Signature<Secp256k1> = key.sign(&digest);
     let encoded_sig = Base64UrlUnpadded::encode_string(&sig.to_bytes());
 
