@@ -4,6 +4,9 @@ use iota_stronghold::procedures::{
     Ed25519Sign, GenerateKey, KeyType, PublicKey, StrongholdProcedure,
 };
 use iota_stronghold::{Client, KeyProvider, Location, Resource};
+use tauri::async_runtime::block_on;
+
+use crate::iroh;
 
 const CLIENT: &[u8] = b"signing_client";
 const VAULT: &[u8] = b"signing_key_vault";
@@ -23,18 +26,19 @@ impl Stronghold {
     /// the vault.
     ///
     /// The snapshot is encrypted using the password provided.
-    pub fn new(password: Vec<u8>, snapshot: Option<Vec<u8>>) -> Result<Self> {
+    // pub fn new(password: Vec<u8>, snapshot: Option<Vec<u8>>) -> Result<Self> {
+    pub fn new(password: Vec<u8>, vault_doc: iroh::Doc) -> Result<Self> {
         let stronghold = iota_stronghold::Stronghold::default();
-
         let keyprovider = KeyProvider::try_from(password)?;
         let key_location = Location::generic(VAULT, SIGNING_KEY);
-        let snapshot_path = iota_stronghold::SnapshotPath::from_path(
-            "/Users/andrewweston/Library/Application Support/io.credibil.wallet/stronghold.bin",
-        );
+
+        let Ok(snapshot) = block_on(async { vault_doc.entry("stronghold.bin").await }) else {
+            panic!("should get snapshot");
+        };
 
         let client = {
-            if let Some(bytes) = snapshot {
-                let source = Resource::Memory(bytes);
+            if !snapshot.is_empty() {
+                let source = Resource::Memory(snapshot);
                 stronghold.load_client_from_snapshot(CLIENT, &keyprovider, &source)?
             } else {
                 let client = stronghold.create_client(CLIENT)?;
@@ -47,8 +51,15 @@ impl Stronghold {
                 let _ = client.execute_procedure(proc)?;
 
                 // save snapshot (+ client and vault)
-                let target = Resource::File(snapshot_path);
+                let target = Resource::Memory(Vec::new());
                 let output = stronghold.commit_with_keyprovider(&target, &keyprovider)?;
+                let Resource::Memory(bytes) = output else {
+                    panic!("should get snapshot");
+                };
+                block_on(async {
+                    vault_doc.add_entry(String::from("stronghold.bin"), bytes).await
+                })?;
+
                 client
             }
         };

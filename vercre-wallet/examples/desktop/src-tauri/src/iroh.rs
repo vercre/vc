@@ -114,11 +114,10 @@ impl Doc {
         self.inner.del(self.author_id, key).await.map(|_| ())
     }
 
-    pub async fn entry(&self, key: String) -> Result<Vec<u8>> {
+    pub async fn entry(&self, key: &str) -> Result<Vec<u8>> {
         let Some(entry) = self.inner.get_exact(self.author_id, key, false).await? else {
             return Err(anyhow::anyhow!("entry not found"));
         };
-
         entry.content_bytes(&self.inner).map_ok(|bytes| bytes.to_vec()).await
     }
 
