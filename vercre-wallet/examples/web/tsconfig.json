@@ -8,19 +8,21 @@
 
     /* Bundler mode */
     "allowJs": false,
-    "moduleResolution": "Bundler",
+    "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
     "esModuleInterop": false,
+    "incremental": true,
+    "allowSyntheticDefaultImports": true,
 
     /* Linting */
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    /* "noUnusedLocals": true, */
+    /* "noUnusedParameters": true, */
     "noFallthroughCasesInSwitch": true,
   },
   "include": ["src", "eslint.config.js"],
