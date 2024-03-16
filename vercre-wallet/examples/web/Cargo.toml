@@ -10,5 +10,3 @@ version = "0.1.0"
 [workspace.dependencies]
 vercre-wallet = { path = "../../../vercre-wallet" }
 
-[workspace.metadata.bin]
-cargo-xcode = { version = "=1.7.0" }
