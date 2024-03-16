@@ -1,6 +1,6 @@
 [package]
 edition.workspace = true
-name = "desktop"
+name = "src-tauri"
 rust-version.workspace = true
 version.workspace = true
 
