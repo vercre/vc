@@ -1,6 +1,6 @@
 [package]
 edition.workspace = true
-name = "mobile-types"
+name = "types"
 rust-version.workspace = true
 version.workspace = true
 
