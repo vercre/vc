@@ -51,17 +51,17 @@ pub enum StoreRequest {
 #[allow(clippy::module_name_repetitions)]
 pub struct StoreEntry(pub Vec<u8>);
 
-/// Convert a Vec<u8> to a StoreEntry
+/// Convert a Vec<u8> to a `StoreEntry`
 impl From<Vec<u8>> for StoreEntry {
     fn from(bytes: Vec<u8>) -> Self {
         Self(bytes)
     }
 }
 
-/// Convert a StoreEntry to a Vec<u8>
-impl Into<Vec<u8>> for StoreEntry {
-    fn into(self) -> Vec<u8> {
-        self.0
+/// Convert a `StoreEntry` to a Vec<u8>
+impl From<StoreEntry> for Vec<u8> {
+    fn from(val: StoreEntry) -> Self {
+        val.0
     }
 }
 
@@ -169,7 +169,10 @@ where
                             Ok(list) => list,
                             Err(e) => {
                                 #[cfg(feature = "wasm")]
-                                web_sys::console::error_2(&"store capability list error:".into(), &e.to_string().into());
+                                web_sys::console::error_2(
+                                    &"store capability list error:".into(),
+                                    &e.to_string().into(),
+                                );
                                 return ctx.update_app(make_event(Err(e)));
                             }
                         };
