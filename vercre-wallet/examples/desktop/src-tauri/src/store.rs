@@ -1,13 +1,12 @@
 use std::path::PathBuf;
 
-use serde_json::Value;
 use tauri::Manager;
 use tauri_plugin_store::{with_store, StoreCollection};
 use vercre_wallet::store::{StoreEntry, StoreRequest, StoreResponse};
 
 use crate::error;
 
-pub async fn request<R>(
+pub fn request<R>(
     op: &StoreRequest, app_handle: &tauri::AppHandle<R>,
 ) -> Result<StoreResponse, error::Error>
 where
@@ -31,8 +30,9 @@ where
             // return a list of all VCs
             let values = with_store(app_handle.clone(), stores, path, |store| {
                 // TODO: fix error handling to map serde_json error to external
-                let list = store.values().collect::<Vec<&Value>>();
-                Ok(list.iter().map(|v| StoreEntry::from(serde_json::to_vec(v).unwrap())).collect())
+                let values =
+                    store.values().map(|v| StoreEntry(serde_json::to_vec(v).unwrap())).collect();
+                Ok(values)
             })?;
             Ok(StoreResponse::List(values))
         }
@@ -50,7 +50,7 @@ where
 mod test {
     use assert_let_bind::assert_let;
     use lazy_static::lazy_static;
-    use serde_json::json;
+    use serde_json::{json, Value};
     use tauri::test::{mock_builder, mock_context, noop_assets, MockRuntime};
 
     use super::*;
@@ -74,7 +74,7 @@ mod test {
 
         // query for all credentials ("" or "$[:]")
         let req = StoreRequest::List;
-        let resp = request(&req, app.app_handle()).await.expect("should be ok");
+        let resp = request(&req, app.app_handle()).expect("should be ok");
 
         // check counts match
         assert_let!(StoreResponse::List(res), resp);
