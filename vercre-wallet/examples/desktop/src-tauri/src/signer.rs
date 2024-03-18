@@ -1,10 +1,10 @@
-pub(crate) use stronghold::Stronghold;
+pub use stronghold::Stronghold;
 use tauri::Manager;
 use vercre_wallet::signer::{SignerRequest, SignerResponse};
 
 use crate::error;
 
-pub async fn request<R>(
+pub fn request<R>(
     op: &SignerRequest, app_handle: &tauri::AppHandle<R>,
 ) -> Result<SignerResponse, error::Error>
 where
@@ -14,7 +14,7 @@ where
 
     match op {
         SignerRequest::Sign(msg) => {
-            let signed = stronghold.sign(msg.to_vec()).unwrap();
+            let signed = stronghold.sign(msg.clone()).unwrap();
             Ok(SignerResponse::Signature(signed))
         }
         SignerRequest::Verification => {
@@ -44,7 +44,7 @@ pub mod stronghold {
     const VAULT: &[u8] = b"signing_key_vault";
     const SIGNING_KEY: &[u8] = b"signing_key";
 
-    pub(crate) struct Stronghold {
+    pub struct Stronghold {
         key_location: Location,
         client: Client,
     }
@@ -176,7 +176,7 @@ mod test {
 
         let msg = String::from("hello world");
         let req = SignerRequest::Sign(msg.into_bytes());
-        let resp = request(&req, app.app_handle()).await.expect("should be ok");
+        let resp = request(&req, app.app_handle()).expect("should be ok");
 
         // // check counts match
         assert_let!(SignerResponse::Signature(res), resp);
