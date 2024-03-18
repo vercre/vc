@@ -7,17 +7,17 @@ import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import { Optional } from 'shared_types/serde/types';
 import * as st from "shared_types/types/shared_types";
 
 import { dateFromIso, domainFromUrl } from '.';
 import Delete from './Delete';
 import VcCard, { VcCardProps } from "./VcCard";
+import { Credential } from '../model/credential';
 import { useShellState } from '../Shell/Context';
 import { useViewState } from '../ViewState';
 
 export type DetailProps = {
-    credential: st.Credential;
+    credential: Credential;
     onClose: () => void;
 };
 
@@ -118,7 +118,7 @@ const Detail = (props: DetailProps) => {
 
 export default Detail;
 
-const ClaimEntry = (props: { name: string, value: Optional<string> | undefined }) => {
+const ClaimEntry = (props: { name: string, value?: string | object }) => {
     return (<>
         {props.name === 'id' ? null :
             <Box>
@@ -126,7 +126,7 @@ const ClaimEntry = (props: { name: string, value: Optional<string> | undefined }
                     {props.name}
                 </Typography>
                 <Typography variant="body1">
-                    {props.value}
+                    {typeof props.value === 'string' ? props.value : JSON.stringify(props.value)}
                 </Typography>
             </Box>
         }

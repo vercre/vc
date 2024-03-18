@@ -6,26 +6,36 @@ import { handle_response, process_event, view } from 'vercre-wallet/vercre_walle
 
 import { request as http } from './capabilities/http';
 import { store } from './capabilities/store';
+import { localView, LocalViewModel } from './model';
+import { CredentialConfiguration } from './model/credential';
 
 type Response = st.HttpResponse | st.StoreResponse;
 
-const initView = (): st.ViewModel => {
-    return new st.ViewModel(
-        new st.CredentialView([]),
-        new st.IssuanceView('', new Map<string, st.CredentialConfiguration>(), new st.IssuanceStatusVariantInactive()),
-        new st.PresentationView([], new st.PresentationStatusVariantInactive()),
-        null,
-        new st.ViewVariantSplash(),
-    );
+const initView = (): LocalViewModel => {
+    return {
+        credential: {
+            credentials: [],
+        },
+        issuance: {
+            issuer: '',
+            offered: new Map<string, CredentialConfiguration>(),
+            status: '',
+        },
+        presentation: {
+            credentials: [],
+            status: '',
+        },
+        view: 'Splash',
+    };
 };
 
 export type ViewState = {
-    viewModel: st.ViewModel,
+    viewModel: LocalViewModel,
 };
 
 export type Action = {
     type: 'set',
-    payload: st.ViewModel,
+    payload: LocalViewModel,
 };
 
 type Dispatch = (action: Action) => void;
@@ -99,7 +109,8 @@ export const useViewState = () => {
     
         switch (effect.constructor) {
             case st.EffectVariantRender: {
-                dispatch({ type: 'set', payload: deserializeView(view())});
+                const vm = deserializeView(view());
+                dispatch({ type: 'set', payload: localView(vm)});
                 break;
             }
             case st.EffectVariantHttp: {

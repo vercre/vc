@@ -7,16 +7,16 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
-import * as st from "shared_types/types/shared_types";
 import tinycolor from 'tinycolor2';
 
 import { domainFromUrl } from ".";
+import { Logo } from '../model/credential';
 
 export type VcCardProps = {
     backgroundColor?: string;
     color?: string;
     issuer?: string;
-    logo?: st.EncodedLogo;
+    logo?: Logo;
     logoUrl?: string;
     name?: string;
     onSelect?: (selected: boolean) => void;
@@ -84,7 +84,7 @@ export const VcCard = (props: VcCardProps) => {
 
 type CardHeaderProps = {
     issuer?: string;
-    logo?: st.EncodedLogo;
+    logo?: Logo;
     logoUrl?: string;
     name?: string;
 }
@@ -96,7 +96,7 @@ const CardHeader = (props: CardHeaderProps) => {
             <Box sx={{ height: 36, maxWidth: '50%' }}>
                 {logo    
                     ? <img
-                        src={`data:${logo.media_type};charset=utf-8;base64, ${logo.image}`}
+                        src={`data:${logo.mediaType};charset=utf-8;base64, ${logo.image}`}
                         alt={issuer}
                         style={{ maxHeight: '100%', maxWidth: '100%' }}
                     />

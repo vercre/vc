@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 
 import Box from '@mui/material/Box';
 import Slide from '@mui/material/Slide';
-import * as st from "shared_types/types/shared_types";
 
 import Accept from './Accept';
 import EnterPin from './EnterPin';
@@ -34,12 +33,11 @@ export const Issuance = () => {
 
     // translate status to mode
     useEffect(() => {
-        const status = Object(model.status);
-        if (Object.prototype.hasOwnProperty.call(status, 'Failed')) {
+        if (model.status.startsWith('Failed')) {
             setMode('error');
             return;
         }
-        switch (String(model.status)) {
+        switch (model.status) {
             case 'PendingPin':
                 setMode('pin');
                 break;
@@ -68,7 +66,7 @@ export const Issuance = () => {
                 <RequestStatus
                     title="Retrieving credentials..."
                     status={
-                        model.status.constructor === st.IssuanceStatusVariantRequested
+                        model.status === 'Requested'
                         ? 'pending'
                         : 'complete'
                     }

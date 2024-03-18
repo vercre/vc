@@ -14,11 +14,12 @@ import Add from './Add';
 import Detail from './Detail';
 import Present from './Present';
 import VcCard, { VcCardProps } from './VcCard';
+import { Credential } from '../model/credential';
 import { useShellState } from '../Shell/Context';
 import { useViewState } from "../ViewState";
 
 const Credentials = () => {
-    const [selected, setSelected] = useState<st.Credential | undefined>(undefined);
+    const [selected, setSelected] = useState<Credential | undefined>(undefined);
     const [viewMode, setViewMode] = useState<'list' | 'detail' | 'add' | 'present'>('list');
     const { setShellState } = useShellState();
     const { viewModel, update } = useViewState();
@@ -50,7 +51,7 @@ const Credentials = () => {
     }, []);
 
     // If the user clicks on a credential card, show the detail view of that credential.
-    const handleSelect = (c: st.Credential) => {
+    const handleSelect = (c: Credential) => {
         setSelected(c);
         setViewMode('detail');
     };
@@ -69,7 +70,7 @@ const Credentials = () => {
     };
 
     // Determine the props to display for a specific credential card.
-    const displayProps = (credential: st.Credential) : VcCardProps => {
+    const displayProps = (credential: Credential) : VcCardProps => {
         const locale = navigator.language; // TODO: use user preference from settings
         const display = credential.metadata.display?.find(d => d.locale === locale);
         return {

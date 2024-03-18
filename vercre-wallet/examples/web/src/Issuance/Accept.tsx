@@ -50,7 +50,9 @@ export const Accept = () => {
                     Cancel
                 </Button>
                 <Button
-                    onClick={() => update(new st.EventVariantIssuance(new st.IssuanceEventVariantAccept()))}
+                    onClick={
+                        () => update(new st.EventVariantIssuance(new st.IssuanceEventVariantAccept()))
+                    }
                     variant="contained"
                 >
                     Accept

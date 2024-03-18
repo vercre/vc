@@ -5,13 +5,14 @@ import Typography from '@mui/material/Typography';
 import * as st from 'shared_types/types/shared_types';
 
 import VcCard, { VcCardProps } from '../Credentials/VcCard';
+import { Credential } from '../model/credential';
 import { useViewState } from '../ViewState';
 
 export const Authorize = () => {
     const { viewModel, update } = useViewState();
     const model = viewModel.presentation;
 
-    const displayProps = (credential: st.Credential) : VcCardProps => {
+    const displayProps = (credential: Credential) : VcCardProps => {
         const display = credential.metadata.display?.at(0);
         return {
             backgroundColor: display?.background_color || undefined,

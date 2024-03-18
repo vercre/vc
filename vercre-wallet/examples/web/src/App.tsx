@@ -34,13 +34,13 @@ const App = () => {
             <CssBaseline />
             <ShellStateProvider>
                 <Shell>
-                    {viewModel.view.constructor === st.ViewVariantCredential && (
+                    {viewModel.view === 'Credential' && (
                         <Credentials />
                     )}
-                    {viewModel.view.constructor === st.ViewVariantIssuance && (
+                    {viewModel.view === 'Issuance' && (
                         <Issuance />                    
                     )}
-                    {viewModel.view.constructor === st.ViewVariantPresentation && (
+                    {viewModel.view === 'Presentation' && (
                         <Presentation />
                     )}
                 </Shell>

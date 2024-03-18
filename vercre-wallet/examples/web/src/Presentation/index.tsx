@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
 import Box from '@mui/material/Box';
-import * as st from "shared_types/types/shared_types";
 
 import Authorize from './Authorize';
 import Error from '../components/Error';
@@ -33,14 +32,13 @@ export const Presentation = () => {
 
     // translate status to mode
     useEffect(() => {
-        const status = Object(model.status);
-        if (Object.prototype.hasOwnProperty.call(status, 'Failed')) {
+        if (model.status.startsWith('Failed')) {
             setMode('error');
             return;
         }
-        switch (String(model.status)) {
-            case "Authorized":
-            case "Completed":
+        switch (model.status) {
+            case 'Authorized':
+            case 'Completed':
                 setMode('request');
                 break;
             default:
@@ -58,7 +56,7 @@ export const Presentation = () => {
                 <RequestStatus
                     title="Verifying credentials..."
                     status={
-                        model.status.constructor === st.PresentationStatusVariantRequested
+                        model.status === 'Requested'
                         ? 'pending'
                         : 'complete'
                     }
