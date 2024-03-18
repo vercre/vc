@@ -158,7 +158,10 @@ impl crux_core::App for App {
             Event::Metadata(Ok(response)) => {
                 log::info!("Metadata: {response:?}");
                 #[cfg(feature = "wasm")]
-                web_sys::console::debug_2(&"Event::Metadata Ok".into(), &format!("{response:?}").into());
+                web_sys::console::debug_2(
+                    &"Event::Metadata Ok".into(),
+                    &format!("{response:?}").into(),
+                );
                 // process metadata response
                 if let Err(e) = model.metadata_response(response) {
                     self.update(Event::Fail(e.to_string()), model, caps);
@@ -269,7 +272,10 @@ impl crux_core::App for App {
             // ----------------------------------------------------------------
             Event::Metadata(Err(e)) => {
                 #[cfg(feature = "wasm")]
-                web_sys::console::error_2(&"Event::Metadata Error".into(), &format!("{e:?}").into());
+                web_sys::console::error_2(
+                    &"Event::Metadata Error".into(),
+                    &format!("{e:?}").into(),
+                );
                 self.update(Event::Fail(format!("Issue fetching metadata: {e:?}")), model, caps);
             }
             Event::Token(Err(e)) => {
@@ -306,7 +312,8 @@ impl crux_core::App for App {
     // invoked by the `render()` method of the Render capability.
     fn view(&self, model: &Self::Model) -> Self::ViewModel {
         let mut buf = Vec::new();
-        let mut ser = serde_json::Serializer::with_formatter(&mut buf, olpc_cjson::CanonicalFormatter::new());
+        let mut ser =
+            serde_json::Serializer::with_formatter(&mut buf, olpc_cjson::CanonicalFormatter::new());
         model.offered.serialize(&mut ser).expect("should serialize");
         ViewModel {
             issuer: model.offer.credential_issuer.clone(),

@@ -56,7 +56,7 @@ pub mod stronghold {
         /// the vault.
         ///
         /// The snapshot is encrypted using the password provided.
-        pub(crate) fn new(path: impl AsRef<Path>, password: Vec<u8>) -> Result<Self> {
+        pub fn new(path: impl AsRef<Path>, password: Vec<u8>) -> Result<Self> {
             let stronghold = iota_stronghold::Stronghold::default();
 
             let keyprovider = KeyProvider::try_from(password)?;
