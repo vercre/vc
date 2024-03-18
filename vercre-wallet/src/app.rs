@@ -69,17 +69,6 @@ pub struct Model {
     error: Option<String>,
 }
 
-/// Explicit views for the app. This is a convenience so each shell does not need to repeat code to
-/// infer the view from state.
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-pub enum View {
-    // #[default]
-    Credential,
-    Issuance,
-    Presentation,
-    Splash,
-}
-
 /// The view model represents the App's 'external' state to the shell.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct ViewModel {
@@ -87,7 +76,7 @@ pub struct ViewModel {
     pub issuance: issuance::ViewModel,
     pub presentation: presentation::ViewModel,
     pub error: Option<String>,
-    pub view: View,
+    pub view: String,
 }
 
 /// App `Capabilities` allow the app to interface with the shell and external
@@ -206,14 +195,14 @@ impl crux_core::App for App {
             issuance: issuance::App::view(&self.issuance, &model.issuance),
             presentation: presentation::App::view(&self.presentation, &model.presentation),
             error: model.error.clone(),
-            view: View::Credential,
+            view: "Credential".to_string(),
         };
         if model.starting {
-            vm.view = View::Splash;
+            vm.view = "Splash".to_string();
         } else if model.issuance.status != issuance::Status::Inactive {
-            vm.view = View::Issuance;
+            vm.view = "Issuance".to_string();
         } else if model.presentation.status != presentation::Status::Inactive {
-            vm.view = View::Presentation;
+            vm.view = "Presentation".to_string();
         }
         #[cfg(feature = "wasm")]
         web_sys::console::debug_2(&"app view".into(), &format!("{vm:?}").into());
@@ -274,7 +263,7 @@ mod tests {
         assert!(model.starting);
 
         let vm = app.view(&model);
-        assert_eq!(vm.view, View::Splash);
+        assert_eq!(vm.view, "Splash");
 
         let mut request = requests.next().expect("should have request");
         assert_let!(DelayOperation { delay_ms: 3000 }, request.operation.clone());
@@ -287,6 +276,6 @@ mod tests {
         }
 
         let vm = app.view(&model);
-        assert_eq!(vm.view, View::Credential);
+        assert_eq!(vm.view, "Credential");
     }
 }

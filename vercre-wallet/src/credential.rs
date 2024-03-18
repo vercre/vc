@@ -89,7 +89,7 @@ pub struct Model {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename = "CredentialView")]
 pub struct ViewModel {
-    pub credentials: Vec<model::Credential>,
+    pub credentials: String,
 
     #[serde(skip)]
     pub error: Option<String>,
@@ -173,8 +173,12 @@ impl crux_core::App for App {
     // Typically, this is invoked by the `render()` method of the Render
     // capability.
     fn view(&self, model: &Self::Model) -> Self::ViewModel {
+        let mut buf = Vec::new();
+        let mut ser =
+            serde_json::Serializer::with_formatter(&mut buf, olpc_cjson::CanonicalFormatter::new());
+        model.credentials.serialize(&mut ser).expect("should serialize");
         ViewModel {
-            credentials: model.credentials.clone(),
+            credentials: String::from_utf8(buf).expect("should convert to string"),
             error: model.error.clone(),
         }
     }

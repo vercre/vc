@@ -1,13 +1,16 @@
+// TODO: Combine this with Presentation/Request.tsx as a shared component. (See web example).
+
 import CheckIcon from '@mui/icons-material/Check';
 import DownloadingIcon from '@mui/icons-material/Downloading';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { IssuanceView } from "shared_types/types/shared_types";
+
+import { IssuanceViewModel } from '../model/issuance';
 
 export type RequestProps = {
-    model: IssuanceView | undefined;
+    model: IssuanceViewModel | undefined;
 };
 
 export const Request = (props: RequestProps) => {

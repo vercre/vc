@@ -4,8 +4,5 @@ assertion_line: 54
 expression: app.view(&model)
 ---
 issuer: "http://credibil.io"
-offered:
-  EmployeeID_JWT:
-    format: jwt_vc_json
-    credential_definition: {}
+offered: "{\"EmployeeID_JWT\":{\"credential_definition\":{},\"format\":\"jwt_vc_json\"}}"
 status: Offered

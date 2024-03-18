@@ -3,12 +3,13 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from "@mui/material/Typography";
 import { invoke } from '@tauri-apps/api/core';
-import { IssuanceView, CredentialConfiguration } from "shared_types/types/shared_types";
 
 import VcCard, { VcCardProps } from '../Credentials/VcCard';
+import { CredentialConfiguration } from '../model/credential';
+import { IssuanceViewModel } from '../model/issuance';
 
 export type AcceptProps = {
-    model: IssuanceView;
+    model: IssuanceViewModel;
 };
 
 export const Accept = (props: AcceptProps) => {

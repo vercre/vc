@@ -42,8 +42,12 @@ pub fn generate(lang: Language, gen_dir: &str) {
     // register issuance app
     let ivm = issuance::ViewModel {
         issuer: "https://example.com".to_string(),
-        offered: HashMap::from([("EmployeeID_JWT".to_string(), CredentialConfiguration::sample())]),
-        status: issuance::Status::Offered,
+        offered: serde_json::to_string(&HashMap::from([(
+            "EmployeeID_JWT".to_string(),
+            CredentialConfiguration::sample(),
+        )]))
+        .expect("should serialize"),
+        status: issuance::Status::Offered.to_string(),
     };
     gen.register_samples::<issuance::ViewModel>(vec![ivm.clone()])
         .expect("should register issuance::ViewModel");
@@ -53,8 +57,8 @@ pub fn generate(lang: Language, gen_dir: &str) {
     // register presentation app
     // HACK: workaround for serde_reflection issues with Credential
     let pvm = presentation::ViewModel {
-        credentials: vec![Credential::sample()],
-        status: presentation::Status::Authorized,
+        credentials: serde_json::to_string(&vec![Credential::sample()]).expect("should serialize"),
+        status: presentation::Status::Authorized.to_string(),
     };
     gen.register_samples::<presentation::ViewModel>(vec![pvm.clone()])
         .expect("should register presentation::ViewModel");
@@ -64,7 +68,7 @@ pub fn generate(lang: Language, gen_dir: &str) {
     // register credential app
     // HACK: workaround for serde_reflection issues with Credential
     let cvm = credential::ViewModel {
-        credentials: vec![Credential::sample()],
+        credentials: serde_json::to_string(&vec![Credential::sample()]).expect("should serialize"),
         error: Some(String::new()),
     };
     gen.register_samples::<credential::ViewModel>(vec![cvm.clone()])
@@ -77,11 +81,10 @@ pub fn generate(lang: Language, gen_dir: &str) {
         issuance: ivm,
         presentation: pvm,
         error: Some(String::new()),
-        view: app::View::Issuance,
+        view: "Issuance".to_string(),
     };
     gen.register_samples::<app::ViewModel>(vec![vm]).expect("should register app::ViewModel");
     gen.register_app::<app::App>().expect("should register app::App");
-    gen.register_type::<app::View>().expect("should register app::View");
 
     // generate specified type
     // let gen_dir = PathBuf::from(path);

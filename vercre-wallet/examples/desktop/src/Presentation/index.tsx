@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 
 import Box from '@mui/material/Box';
-import { PresentationView } from "shared_types/types/shared_types";
 
 import Authorize from "./Authorize";
 import Error from "./Error";
 import Request from "./Request";
+import { PresentationViewModel } from "../model/presentation";
 import { useShellState } from '../Shell/Context';
 
 export type PresentationProps = {
-    model: PresentationView
+    model: PresentationViewModel
 }
 
 export const Presentation = (props: PresentationProps) => {

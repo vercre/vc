@@ -524,7 +524,7 @@ pub struct Evidence {
     /// A URI identifying the credential issuer (i.e. verifier of evidence).
     pub verifier: String,
 
-    /// Tyupe identifies the evidence scheme.
+    /// Evidence document identifies the evidence scheme.
     #[serde(rename = "evidenceDocument")]
     pub evidence_document: String,
 

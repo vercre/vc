@@ -49,6 +49,7 @@ pub struct Logo {
     pub image: String,
 
     /// Content type. e.g. "image/png"
+    #[serde(rename = "mediaType")]
     pub media_type: String,
 }
 

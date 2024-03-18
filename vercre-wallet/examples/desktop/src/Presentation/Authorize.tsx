@@ -3,12 +3,13 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from "@mui/material/Typography";
 import { invoke } from '@tauri-apps/api/core';
-import { Credential, PresentationView } from "shared_types/types/shared_types";
 
 import VcCard, { VcCardProps } from "../Credentials/VcCard";
+import { Credential } from "../model/credential";
+import { PresentationViewModel } from '../model/presentation';
 
 export type AuthorizeProps = {
-    model: PresentationView;
+    model: PresentationViewModel;
 };
 
 export const Authorize = (props: AuthorizeProps) => {

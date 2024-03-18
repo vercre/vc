@@ -325,6 +325,42 @@ pub enum Status {
     Failed(String),
 }
 
+/// Get a string representation of the `Status`.
+impl std::fmt::Display for Status {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Inactive => write!(f, "Inactive"),
+            Self::Offered => write!(f, "Offered"),
+            Self::Ready => write!(f, "Ready"),
+            Self::PendingPin => write!(f, "PendingPin"),
+            Self::Accepted => write!(f, "Accepted"),
+            Self::Requested => write!(f, "Requested"),
+            Self::Failed(s) => write!(f, "Failed: {s}"),
+        }
+    }
+}
+
+/// Parse a `Status` from a string.
+impl FromStr for Status {
+    // TODO: strongly typed error
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.starts_with("Failed") {
+            return Ok(Self::Failed(s[8..].to_string()));
+        }
+        match s {
+            "Inactive" => Ok(Self::Inactive),
+            "Offered" => Ok(Self::Offered),
+            "Ready" => Ok(Self::Ready),
+            "PendingPin" => Ok(Self::PendingPin),
+            "Accepted" => Ok(Self::Accepted),
+            "Requested" => Ok(Self::Requested),
+            _ => Err(anyhow!("Invalid status: {s}")),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -2,16 +2,16 @@ import { useEffect, useRef, useState } from "react";
 
 import Box from '@mui/material/Box';
 import Slide from '@mui/material/Slide';
-import { IssuanceView } from 'shared_types/types/shared_types';
 
 import Accept from './Accept';
 import EnterPin from './EnterPin';
 import Error from './Error';
 import Request from './Request';
+import { IssuanceViewModel } from '../model/issuance';
 import { useShellState } from '../Shell/Context';
 
 export type IssuanceProps = {
-    model: IssuanceView
+    model: IssuanceViewModel
 }
 
 export const Issuance = (props: IssuanceProps) => {

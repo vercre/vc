@@ -1,6 +1,5 @@
 use gloo_console::log;
 use vercre_core::callback;
-use vercre_wallet::app::View;
 use vercre_wallet::{credential, Event};
 use yew::prelude::*;
 
@@ -42,9 +41,9 @@ impl Component for App {
             <Shell>
                 <h1>{"Credibil Wallet"}</h1>
                 <p>{"Rust Core, Rust Shell (Yew)"}</p>
-                if view.view  == View::Credential {
+                if view.view  == "Credential" {
                     <Credentials
-                        credentials={view.credential.credentials.clone()}
+                        credentials={serde_json::from_str::<Vec<credential::Credential>>(&view.credential.credentials).expect("should deserialize")}
                         on_load_credentials={link.callback(|_| Message::Event(Event::Credential(credential::Event::List)))}
                     />
                 }

@@ -4,8 +4,6 @@
 
 pub(crate) mod model;
 
-use std::collections::HashMap;
-
 use crux_core::macros::Effect;
 #[cfg(feature = "typegen")]
 use crux_core::macros::Export;
@@ -13,7 +11,6 @@ use crux_core::render::Render;
 use crux_http::Http;
 pub use model::{Model, Status};
 use serde::{Deserialize, Serialize};
-use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::vci::{CredentialResponse, MetadataResponse, TokenResponse};
 
 use crate::capabilities::delay::Delay;
@@ -103,10 +100,10 @@ pub struct ViewModel {
     pub issuer: String,
 
     /// A list of credentials being offered by the issuer.
-    pub offered: HashMap<String, CredentialConfiguration>,
+    pub offered: String,
 
     /// The current status of the issuance flow.
-    pub status: Status,
+    pub status: String,
 }
 
 /// Capabilities required by the issuance App.
@@ -308,10 +305,13 @@ impl crux_core::App for App {
     // Called by the shell to render the current state of the app. Typically, this is
     // invoked by the `render()` method of the Render capability.
     fn view(&self, model: &Self::Model) -> Self::ViewModel {
+        let mut buf = Vec::new();
+        let mut ser = serde_json::Serializer::with_formatter(&mut buf, olpc_cjson::CanonicalFormatter::new());
+        model.offered.serialize(&mut ser).expect("should serialize");
         ViewModel {
             issuer: model.offer.credential_issuer.clone(),
-            offered: model.offered.clone(),
-            status: model.status.clone(),
+            offered: String::from_utf8(buf).expect("should convert to string"),
+            status: model.status.clone().to_string(),
         }
     }
 }

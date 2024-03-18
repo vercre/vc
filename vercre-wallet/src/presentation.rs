@@ -76,10 +76,10 @@ pub enum Event {
 pub struct ViewModel {
     /// The list of credentials matching the verifier's request (Presentation
     /// Definition).
-    pub credentials: Vec<Credential>,
+    pub credentials: String,
 
     /// The current status of the presentation flow.
-    pub status: Status,
+    pub status: String,
 }
 
 /// Capabilities required by the presentation App.
@@ -228,9 +228,13 @@ impl crux_core::App for App {
     /// Typically, this is invoked by the `render()` method of the Render
     /// capability.
     fn view(&self, model: &Self::Model) -> Self::ViewModel {
+        let mut buf = Vec::new();
+        let mut ser =
+            serde_json::Serializer::with_formatter(&mut buf, olpc_cjson::CanonicalFormatter::new());
+        model.credentials.serialize(&mut ser).expect("should serialize");
         ViewModel {
-            credentials: model.credentials.clone(),
-            status: model.status.clone(),
+            credentials: String::from_utf8(buf).expect("should convert to string"),
+            status: model.status.to_string(),
         }
     }
 }

@@ -9,20 +9,20 @@ import Slide from '@mui/material/Slide';
 import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import { invoke } from "@tauri-apps/api/core";
-import { Credential } from "shared_types/types/shared_types";
 
 import Add from './Add';
 import Detail from './Detail';
 import Present from './Present';
 import VcCard, { VcCardProps } from './VcCard';
+import { Credential, CredentialViewModel } from '../model/credential';
 import { useShellState } from '../Shell/Context';
 
 export type CredentialsProps = {
-    credentials: Credential[] | undefined;
+    model: CredentialViewModel | undefined;
 }
 
 export const Credentials = (props: CredentialsProps) => {
-    const { credentials } = props;
+    const credentials = props.model?.credentials || [];
     const [selected, setSelected] = useState<Credential | undefined>(undefined);
     const [viewMode, setViewMode] = useState<'list' | 'detail' | 'add' | 'present'>('list');
     const { setShellState } = useShellState();

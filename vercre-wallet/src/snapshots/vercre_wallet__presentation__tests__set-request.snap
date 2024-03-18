@@ -1,8 +1,7 @@
 ---
 source: vercre-wallet/src/presentation.rs
-assertion_line: 284
+assertion_line: 321
 expression: app.view(&model)
 ---
-credentials: []
+credentials: "[]"
 status: Requested
-

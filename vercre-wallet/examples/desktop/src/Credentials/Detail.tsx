@@ -8,12 +8,11 @@ import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { invoke } from "@tauri-apps/api/core";
-import { Optional } from 'shared_types/serde/types';
-import { Credential } from "shared_types/types/shared_types";
 
 import { dateFromIso, domainFromUrl } from '.';
 import Delete from './Delete';
 import VcCard, { VcCardProps } from "./VcCard";
+import { Credential } from '../model/credential';
 import { useShellState } from '../Shell/Context';
 
 export type DetailProps = {
@@ -118,7 +117,7 @@ const Detail = (props: DetailProps) => {
 
 export default Detail;
 
-const ClaimEntry = (props: { name: string, value: Optional<string> | undefined }) => {
+const ClaimEntry = (props: { name: string, value?: string | object }) => {
     return (<>
         {props.name === 'id' ? null :
             <Box>
@@ -126,7 +125,7 @@ const ClaimEntry = (props: { name: string, value: Optional<string> | undefined }
                     {props.name}
                 </Typography>
                 <Typography variant="body1">
-                    {props.value}
+                    {typeof props.value === 'string' ? props.value : JSON.stringify(props.value, null, 2)}
                 </Typography>
             </Box>
         }

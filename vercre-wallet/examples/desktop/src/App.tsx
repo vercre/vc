@@ -8,6 +8,7 @@ import { ViewModel } from "shared_types/types/shared_types";
 
 import Credentials from "./Credentials";
 import Issuance from "./Issuance";
+import { LocalViewModel, localView } from "./model";
 import Presentation from "./Presentation";
 import Shell from './Shell';
 import { ShellStateProvider } from './Shell/Context';
@@ -15,7 +16,7 @@ import Splash from "./Splash";
 import { theme } from "./theme";
 
 const App = () => {
-    const [viewModel, setViewModel] = useState<ViewModel>();
+    const [viewModel, setViewModel] = useState<LocalViewModel>();
     const start = useRef<boolean>(true);
 
     // register listener for Crux render events
@@ -29,7 +30,7 @@ const App = () => {
         let unlisten: UnlistenFn;
         const init = async () => {
             unlisten = await listen<ViewModel>("render", ({ payload }) => {
-                setViewModel(payload);
+                setViewModel(localView(payload));
             });
         }
         init();
@@ -56,8 +57,8 @@ const App = () => {
 
 export default App;
 
-const view = (viewModel: ViewModel | undefined): ReactNode => {
-    const viewName = String(viewModel?.view) || "Credential";
+const view = (viewModel: LocalViewModel | undefined): ReactNode => {
+    const viewName = viewModel?.view || "Credential";
 
     switch (viewName) {
         case "Issuance":
@@ -71,6 +72,6 @@ const view = (viewModel: ViewModel | undefined): ReactNode => {
             }
             break;
     }
-    return <Credentials credentials={viewModel?.credential.credentials} />
+    return <Credentials model={viewModel?.credential} />
 };
 

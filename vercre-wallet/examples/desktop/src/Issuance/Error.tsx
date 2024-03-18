@@ -1,3 +1,5 @@
+// TODO: Combine with Presentation/Error.tsx as a shared component. (See web example).
+
 import { useEffect, useRef } from "react";
 
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';

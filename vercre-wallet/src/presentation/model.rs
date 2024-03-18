@@ -257,3 +257,33 @@ pub enum Status {
     /// The authorization request has failed, with an error message.
     Failed(String),
 }
+
+/// Get a string representation of the `Status`.
+impl std::fmt::Display for Status {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Inactive => write!(f, "Inactive"),
+            Self::Requested => write!(f, "Requested"),
+            Self::Authorized => write!(f, "Authorized"),
+            Self::Failed(e) => write!(f, "Failed: {e}"),
+        }
+    }
+}
+
+/// Parse a `Status` from a string.
+impl std::str::FromStr for Status {
+    // TODO: strongly typed error
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> anyhow::Result<Self> {
+        if s.starts_with("Failed") {
+            return Ok(Self::Failed(s[8..].to_string()));
+        }
+        match s {
+            "Inactive" => Ok(Self::Inactive),
+            "Requested" => Ok(Self::Requested),
+            "Authorized" => Ok(Self::Authorized),
+            _ => Err(anyhow!("Invalid status: {s}")),
+        }
+    }
+}
