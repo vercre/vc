@@ -33,12 +33,10 @@ pub mod stronghold {
 
     use anyhow::Result;
     use base64ct::{Base64UrlUnpadded, Encoding};
-    // use iota_stronghold::engine::vault::Base64Encodable;
     use iota_stronghold::procedures::{
         Ed25519Sign, GenerateKey, KeyType, PublicKey, StrongholdProcedure,
     };
-    use iota_stronghold::{engine, Client, KeyProvider, Location, SnapshotPath};
-    use zeroize::Zeroizing;
+    use iota_stronghold::{Client, KeyProvider, Location, SnapshotPath};
 
     const CLIENT: &[u8] = b"signing_client";
     const VAULT: &[u8] = b"signing_key_vault";
@@ -61,7 +59,7 @@ pub mod stronghold {
         pub(crate) fn new(path: impl AsRef<Path>, password: Vec<u8>) -> Result<Self> {
             let stronghold = iota_stronghold::Stronghold::default();
 
-            let keyprovider = KeyProvider::try_from(Zeroizing::new(password))?;
+            let keyprovider = KeyProvider::try_from(password)?;
             let snapshot_path = SnapshotPath::from_path(path);
             let key_location = Location::generic(VAULT, SIGNING_KEY);
 
@@ -69,30 +67,6 @@ pub mod stronghold {
                 if snapshot_path.exists() {
                     stronghold.load_client_from_snapshot(CLIENT, &keyprovider, &snapshot_path)?
                 } else {
-                    // --------------------------------------------------------
-                    // HACK: Override encryption work factor
-                    // --------------------------------------------------------
-                    // ```rust
-                    //  pub const RECOMMENDED_MAXIMUM_DECRYPT_WORK_FACTOR: u8 = 23;
-                    // ```
-                    //
-                    // `iota_snapshot` uses a 'work factor' of 23 for password protected files.
-                    // This means encryption/decrytion takes ~45 sec, so we override here for
-                    // performance during development.
-                    // N.B. (AW) actually can take more like 90 sec!!
-
-                    // From `iota_snapshot` code comments:
-                    //
-                    // Work factor is used to strengthen weak low-entropy (password-based) keys.
-                    // Recommended value for such keys is approx. 20, ie. key derivation should
-                    // take approx. 1 second. Key derivation time grows exponentially with work
-                    // factor.
-                    //
-                    // Strong keys generated with cryptographically secure RNG do not need
-                    // strengthening and can use minimal (0) work factor.
-                    // --------------------------------------------------------
-                    engine::snapshot::try_set_encrypt_work_factor(0)?;
-
                     let client = stronghold.create_client(CLIENT)?;
 
                     // generate signing key

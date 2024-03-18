@@ -49,7 +49,7 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--manifest-path=${workspaceRoot}/vercre-wallet/examples/desktop/src-tauriCargo.toml",
+                    "--manifest-path=${workspaceRoot}/vercre-wallet/examples/desktop/src-tauri/Cargo.toml",
                     "--no-default-features"
                 ]
             },
