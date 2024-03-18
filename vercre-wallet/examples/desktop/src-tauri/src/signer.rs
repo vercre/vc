@@ -88,18 +88,6 @@ pub mod stronghold {
 
         /// Sign message using the snapshot's signing key.
         pub(super) fn sign(&self, msg: Vec<u8>) -> Result<Vec<u8>> {
-            // let proc = StrongholdProcedure::Secp256k1EcdsaSign(Secp256k1EcdsaSign {
-            //     flavor: Secp256k1EcdsaFlavor::Sha256,
-            //     msg,
-            //     private_key: self.key_location.clone(),
-            // });
-            // let output = self.client.execute_procedure(proc)?;
-
-            // // remove trailing 0
-            // let mut signed_bytes: Vec<u8> = output.into();
-            // signed_bytes.truncate(signed_bytes.len() - 1);
-            // Ok(signed_bytes)
-
             let proc = StrongholdProcedure::Ed25519Sign(Ed25519Sign {
                 msg,
                 private_key: self.key_location.clone(),
@@ -136,6 +124,8 @@ pub mod stronghold {
 
 #[cfg(test)]
 mod test {
+    use std::path::PathBuf;
+
     use assert_let_bind::assert_let;
     use lazy_static::lazy_static;
     use serde_json::json;
@@ -153,17 +143,21 @@ mod test {
         let resp = request(&req, app.app_handle()).expect("should be ok");
 
         // // check counts match
-        assert_let!(SignerResponse::Signature(res), resp);
-        println!("res: {:?}", res);
-        // let vals = serde_json::from_slice::<Vec<Value>>(&res).expect("should deserialize");
-        // assert_eq!(count, vals.len());
+        assert_let!(SignerResponse::Signature(sig), resp);
+        assert_eq!(sig.len(), 64);
     }
 
     fn create_app<R: tauri::Runtime>(builder: tauri::Builder<R>) -> tauri::App<R> {
-        builder
-            // .plugin(tauri_plugin_store::Builder::<R>::default().build())
-            .build(mock_context(noop_assets()))
-            .expect("failed to build app")
+        let app = builder.build(mock_context(noop_assets())).expect("failed to build app");
+
+        // add stronghold to state
+        let path = PathBuf::from("stronghold.bin");
+        let hash =
+            argon2::hash_raw(b"pass-phrase", b"randomsalt", &argon2::Config::default()).unwrap();
+        let stronghold = stronghold::Stronghold::new(path, hash).expect("should create stronghold");
+        app.handle().manage(stronghold);
+
+        app
     }
 
     lazy_static! {
