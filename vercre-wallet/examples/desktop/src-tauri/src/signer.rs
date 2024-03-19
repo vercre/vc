@@ -127,8 +127,6 @@ mod test {
     use std::path::PathBuf;
 
     use assert_let_bind::assert_let;
-    use lazy_static::lazy_static;
-    use serde_json::json;
     use tauri::test::{mock_builder, mock_context, noop_assets};
 
     use super::*;
@@ -158,11 +156,5 @@ mod test {
         app.handle().manage(stronghold);
 
         app
-    }
-
-    lazy_static! {
-        static ref ENTRIES: serde_json::Value = json!({
-                "id": "https://credibil.io/credentials/3732",
-        });
     }
 }
