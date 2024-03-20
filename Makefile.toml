@@ -96,3 +96,10 @@ command = "cargo"
 args = ["${@}"]
 command = "cargo"
 install_crate = "cargo-release"
+
+[tasks.publish]
+args = ["${0}", "--execute"]
+command = "cargo"
+install_crate = "cargo-release"
+
+#  
