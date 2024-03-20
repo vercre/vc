@@ -11,6 +11,9 @@ skip_crate_env_info = true
 skip_git_env_info = true
 skip_rust_env_info = true
 
+# -----------------------------------------------------------------------------
+# Build and test
+# -----------------------------------------------------------------------------
 
 [tasks.clean]
 args = ["clean"]
@@ -27,7 +30,9 @@ command = "cargo"
 dependencies = ["clean"]
 env = { RUSTFLAGS = "-Dwarnings" }
 
-# basic hygene tasks
+# -----------------------------------------------------------------------------
+# Basic hygiene
+# -----------------------------------------------------------------------------
 
 [tasks.fmt]
 args = ["fmt", "--all"]   # "--", "--emit=files"]
@@ -57,3 +62,31 @@ install_crate = "cargo-outdated"
 
 [tasks.check]
 dependencies = ["fmt", "lint", "audit", "outdated", "unused"]
+
+# -----------------------------------------------------------------------------
+# Publishing
+# -----------------------------------------------------------------------------
+
+[tasks.breaking]
+args = ["semver-checks"]
+command = "cargo"
+install_crate = "cargo-semver-checks"
+
+[tasks.pre-pub]
+run_task = { name = ["pre-pub-core", "pre-pub-vci", "pre-pub-vp", "pre-pub-wallet"], parallel = true }
+
+[tasks.pre-pub-core]
+args = ["publish", "--dry-run", "--allow-dirty", "--package", "vercre-core"]
+command = "cargo"
+
+[tasks.pre-pub-vci]
+args = ["publish", "--dry-run", "--allow-dirty", "--package", "vercre-vci"]
+command = "cargo"
+
+[tasks.pre-pub-vp]
+args = ["publish", "--dry-run", "--allow-dirty", "--package", "vercre-vp"]
+command = "cargo"
+
+[tasks.pre-pub-wallet]
+args = ["publish", "--dry-run", "--allow-dirty", "--package", "vercre-wallet"]
+command = "cargo"
