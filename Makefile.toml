@@ -90,3 +90,9 @@ command = "cargo"
 [tasks.pre-pub-wallet]
 args = ["publish", "--dry-run", "--allow-dirty", "--package", "vercre-wallet"]
 command = "cargo"
+
+# args = release level: one of `release`, `major`, `minor`, `patch`, `alpha`, `beta`, `rc`
+[tasks.release]
+args = ["${@}"]
+command = "cargo"
+install_crate = "cargo-release"

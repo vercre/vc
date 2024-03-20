@@ -1,18 +1,24 @@
-# Release Process
+# Releasing Updates
 
 ## Overview
 
+
+
 ![Release Process](images/release.png)
+
+
+
+## Preparing to release
 
 Use [cargo-release](https://github.com/crate-ci/cargo-release) to release a new version of each crate.
 
-## Pre-requisites
+### Changelog
 
-```sh
-cargo install cargo-release
-```
+All notable changes should be documented in the project's CHANGELOG.md file.
+Per [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) recommendations, changes are a manually
+documented, high-level summary of changes in a release.
 
-## Dry run
+### Dry run
 
 Set the release level using one of `release`, `major`, `minor`, `patch`, `alpha`, `beta`, `rc`
 
@@ -22,13 +28,7 @@ For example, to release a minor version:
 cargo-release minor
 ```
 
-## Changelog
-
-All notable changes should be documented in the project's CHANGELOG.md file.
-Per [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) recommendations, changes are a manually
-documented, high-level summary of changes in a release.
-
-## Publish
+### Publish
 
 Release to crates.io:
 
@@ -36,7 +36,7 @@ Release to crates.io:
 cargo-release minor --execute
 ```
 
-## [TO REVIEW] Github Release
+### [TO REVIEW] Github Release
 
 In order to track changes to each crate independently, we need a branch containing only the contents of the crate we want to release:
 
