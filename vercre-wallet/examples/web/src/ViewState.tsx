@@ -5,6 +5,7 @@ import * as st from 'shared_types/types/shared_types';
 import { handle_response, process_event, view } from 'vercre-wallet/vercre_wallet';
 
 import { request as http } from './capabilities/http';
+import { signer } from './capabilities/signer';
 import { store } from './capabilities/store';
 import { localView, LocalViewModel } from './model';
 import { CredentialConfiguration } from './model/credential';
@@ -123,6 +124,16 @@ export const useViewState = () => {
                 const request = (effect as st.EffectVariantStore).value;
                 const response = await store(request);
                 respond(uuid, response, dispatch);
+                break;
+            }
+            case st.EffectVariantSigner: {
+                const request = (effect as st.EffectVariantSigner).value;
+                const response = await signer(request);
+                respond(uuid, response, dispatch);
+                break;
+            }
+            case st.EffectVariantDelay: {
+                const request = (effect as st.EffectVariantDelay).value;
                 break;
             }
         }

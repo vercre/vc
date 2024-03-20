@@ -4,10 +4,12 @@ export const request = async ({
     url,
     method,
     headers,
+    body,
 }: st.HttpRequest): Promise<st.HttpResult> => {
     const request = new Request(url, {
         method,
         headers: headers.map((header) => [header.name, header.value]),
+        body: body && method === 'POST' ? new Uint8Array(body) : undefined,
     });
     console.log('http request:', request);
 
@@ -19,14 +21,16 @@ export const request = async ({
         ([name, value]) => new st.HttpHeader(name, value),
     );
 
-    const body = await response.arrayBuffer();
-    console.log('http response body:', body);
+    const resBody = await response.arrayBuffer();
+    const bodyBytes = new Uint8Array(resBody);
+    var debug = new TextDecoder().decode(bodyBytes);
+    console.log('http response body:', debug);
 
     return new st.HttpResultVariantOk(
         new st.HttpResponse(
             response.status,
             responseHeaders,
-            Array.from(new Uint8Array(body)),
+            Array.from(bodyBytes),
         )
     );
 };

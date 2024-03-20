@@ -3,6 +3,7 @@ import DownloadingIcon from '@mui/icons-material/Downloading';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
+import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
 export type RequestStatusProps = {
@@ -13,7 +14,8 @@ export type RequestStatusProps = {
 export const RequestStatus = (props: RequestStatusProps) => {
 
     return (
-        <Stack spacing={2} sx={{ pt: 2 }}>
+        <Stack spacing={2} sx={{ pt: 2, alignItems: 'center' }}>
+            <Toolbar />
             <Typography sx={{ pb: 2, textAlign: 'center' }}>
                 {props.title}
             </Typography>
