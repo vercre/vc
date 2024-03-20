@@ -147,6 +147,8 @@ impl crux_core::App for App {
                     self.update(Event::Fail(e.to_string()), model, caps);
                     return;
                 };
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_2(&"model:".into(), &format!("{model:?}").into());
                 caps.http
                     .get(format!(
                         "{}/.well-known/openid-credential-issuer",
@@ -164,15 +166,23 @@ impl crux_core::App for App {
                 );
                 // process metadata response
                 if let Err(e) = model.metadata_response(response) {
+                    #[cfg(feature = "wasm")]
+                    web_sys::console::debug_2(&"model:".into(), &format!("{model:?}").into());
                     self.update(Event::Fail(e.to_string()), model, caps);
                 }
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_2(&"model:".into(), &format!("{model:?}").into());
             }
             Event::Accept => {
                 log::info!("Accept");
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_1(&"Event::Accept".into());
                 if let Err(e) = model.accept() {
                     self.update(Event::Fail(e.to_string()), model, caps);
                     return;
                 }
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_2(&"model:".into(), &format!("{model:?}").into());
 
                 // if no user pin is required, make request
                 if model.status == Status::Accepted {
@@ -180,18 +190,29 @@ impl crux_core::App for App {
                 }
             }
             Event::Pin(pin) => {
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_2(&"Event::Pin".into(), &format!("{pin}").into());
                 log::info!("Pin: {pin}");
                 model.pin(pin);
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_2(&"model:".into(), &format!("{model:?}").into());
                 self.update(Event::GetToken, model, caps);
             }
             Event::GetToken => {
                 log::info!("GetToken");
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_1(&"Event::GetToken".into());
                 // generate access token request
                 let Ok(req) = model.token_request() else {
                     let msg = String::from("Issue building token request");
                     self.update(Event::Fail(msg), model, caps);
                     return;
                 };
+                #[cfg(feature = "wasm")]
+                {
+                    web_sys::console::debug_2(&"model:".into(), &format!("{model:?}").into());
+                    web_sys::console::debug_2(&"req:".into(), &format!("{req}").into());
+                }
                 caps.http
                     .post(format!("{}/token", model.offer.credential_issuer))
                     .content_type("application/x-www-form-urlencoded")
@@ -201,17 +222,35 @@ impl crux_core::App for App {
             }
             Event::Token(Ok(response)) => {
                 log::info!("Token: {response:?}");
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_2(
+                    &"Event::Token Ok".into(),
+                    &format!("{response:?}").into(),
+                );
                 // process token response
                 if let Err(e) = model.token_response(response) {
                     self.update(Event::Fail(e.to_string()), model, caps);
                 };
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_2(&"model:".into(), &format!("{model:?}").into());
                 caps.signer.verification(Event::Proof);
             }
             Event::Proof(Ok((alg, kid))) => {
                 log::info!("Proof");
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_2(
+                    &"Event::Proof Ok".into(),
+                    &format!("{{ alg: {alg}, kid {kid} }}").into(),
+                );
                 caps.signer.sign(&model.request_jwt(alg, kid), Event::Signed);
             }
             Event::Signed(Ok(signed_jwt)) => {
+                log::info!("Signed: {signed_jwt}");
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_2(
+                    &"Event::Signed Ok".into(),
+                    &format!("{signed_jwt}").into(),
+                );
                 // request each offered credential
                 for cfg_id in model.offered.clone().keys() {
                     let Ok(request) = model.credential_request(cfg_id, &signed_jwt) else {
@@ -219,6 +258,8 @@ impl crux_core::App for App {
                         self.update(Event::Fail(msg), model, caps);
                         return;
                     };
+                    #[cfg(feature = "wasm")]
+                    web_sys::console::debug_2(&"model:".into(), &format!("{model:?}").into());
 
                     caps.http
                         .post(format!("{}/credential", model.offer.credential_issuer))
@@ -230,11 +271,18 @@ impl crux_core::App for App {
             }
             Event::Credential(Ok(response)) => {
                 log::info!("Credential: {response:?}");
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_2(
+                    &"Event::Credential Ok".into(),
+                    &format!("{response:?}").into(),
+                );
                 let Ok(credential) = model.credential_response(response) else {
                     let msg = String::from("Issue processing credential response");
                     self.update(Event::Fail(msg), model, caps);
                     return;
                 };
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_2(&"model:".into(), &format!("{model:?}").into());
 
                 let Some(url) = model::logo_url(&credential) else {
                     self.update(Event::SaveCredential(credential), model, caps);
@@ -248,6 +296,11 @@ impl crux_core::App for App {
             }
             Event::Logo(mut credential, Ok(response)) => {
                 log::info!("Logo: {response:?}");
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_2(
+                    &"Event::Logo Ok".into(),
+                    &format!("{response:?}").into(),
+                );
                 let Some(logo) = model::logo_response(&response) else {
                     let msg = String::from("Issue processing logo response");
                     self.update(Event::Fail(msg), model, caps);
@@ -259,12 +312,21 @@ impl crux_core::App for App {
             }
             Event::SaveCredential(credential) => {
                 log::info!("SaveCredential: {credential:?}");
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_2(
+                    &"Event::SaveCredential".into(),
+                    &format!("{credential:?}").into(),
+                );
                 caps.store.add(credential, Event::CredentialSaved);
             }
             Event::CredentialSaved(Ok(())) => {
                 log::info!("CredentialSaved");
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_1(&"Event::CredentialSaved".into());
                 // TODO: check for outstanding requests before marking flow as complete
                 model.reset();
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_2(&"model reset:".into(), &format!("{model:?}").into());
             }
 
             // ----------------------------------------------------------------
@@ -273,34 +335,71 @@ impl crux_core::App for App {
             Event::Metadata(Err(e)) => {
                 #[cfg(feature = "wasm")]
                 web_sys::console::error_2(
-                    &"Event::Metadata Error".into(),
+                    &"Event::Metadata Err".into(),
                     &format!("{e:?}").into(),
                 );
                 self.update(Event::Fail(format!("Issue fetching metadata: {e:?}")), model, caps);
             }
             Event::Token(Err(e)) => {
+                #[cfg(feature = "wasm")]
+                web_sys::console::error_2(
+                    &"Event::Token Err".into(),
+                    &format!("{e:?}").into(),
+                );
                 self.update(Event::Fail(format!("Issue fetching token: {e:?}")), model, caps);
             }
             Event::Proof(Err(e)) => {
+                #[cfg(feature = "wasm")]
+                web_sys::console::error_2(
+                    &"Event::Proof Err".into(),
+                    &format!("{e:?}").into(),
+                );
                 self.update(Event::Fail(format!("Issue fetching proof: {e:?}")), model, caps);
             }
             Event::Signed(Err(e)) => {
+                #[cfg(feature = "wasm")]
+                web_sys::console::error_2(
+                    &"Event::Signed Err".into(),
+                    &format!("{e:?}").into(),
+                );
                 self.update(Event::Fail(format!("Issue signing proof JWT: {e:?}")), model, caps);
             }
             Event::Credential(Err(e)) => {
+                #[cfg(feature = "wasm")]
+                web_sys::console::error_2(
+                    &"Event::Credential Err".into(),
+                    &format!("{e:?}").into(),
+                );
                 self.update(Event::Fail(format!("Issue fetching credential: {e:?}")), model, caps);
             }
             Event::CredentialSaved(Err(e)) => {
+                #[cfg(feature = "wasm")]
+                web_sys::console::error_2(
+                    &"Event::CredentialSaved Err".into(),
+                    &format!("{e:?}").into(),
+                );
                 self.update(Event::Fail(format!("Issue storing credential: {e:?}")), model, caps);
             }
             Event::Logo(credential, Err(e)) => {
                 // Just store the credential without the logo
                 log::error!("Error fetching logo: {e:?}");
+                #[cfg(feature = "wasm")]
+                web_sys::console::error_2(
+                    &"Event::Logo Err".into(),
+                    &format!("{e:?}").into(),
+                );
                 caps.store.add(credential, Event::CredentialSaved);
             }
             Event::Fail(msg) => {
                 log::error!("{}", msg);
+                #[cfg(feature = "wasm")]
+                web_sys::console::error_2(
+                    &"Event::Fail".into(),
+                    &format!("{msg}").into(),
+                );
                 model.status = Status::Failed(msg);
+                #[cfg(feature = "wasm")]
+                web_sys::console::debug_2(&"model:".into(), &format!("{model:?}").into());
             }
         }
 

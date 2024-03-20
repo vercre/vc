@@ -42,7 +42,8 @@ async fn main() {
     tracing::subscriber::set_global_default(subscriber).expect("set subscriber");
 
     let endpoint = Arc::new(Endpoint::new(Provider::new()));
-    let cors = CorsLayer::new().allow_methods(Any).allow_origin(Any);
+    // CORS. Just an example for local development. Set this properly in production.
+    let cors = CorsLayer::new().allow_methods(Any).allow_origin(Any).allow_headers(Any);
 
     let router = Router::new()
         .route("/invoke", post(invoke))
