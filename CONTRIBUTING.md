@@ -1,12 +1,12 @@
 # Contribution Guide
 
-Credibil welcomes community contributions to the `credential` library.
+Vercre welcomes community contributions to the `vercre` library.
 
-Since the project is still unstable, there are specific priorities for development. Pull requests that do not address these priorities will not be accepted until Credentials is production ready.
+Since the project is still unstable, there are specific priorities for development. Pull requests that do not address these priorities will not be accepted until Vercre is production ready.
 
 Please familiarize yourself with the Contribution Guidelines and Project Roadmap before contributing.
 
-There are many ways to help Credentials besides contributing code:
+There are many ways to help Vercre besides contributing code:
 
 - Fix bugs or file issues
 - Improve the documentation
@@ -21,7 +21,7 @@ There are many ways to help Credentials besides contributing code:
 
 ## Contributing Code
 
-Unless you are fixing a known bug, we **strongly** recommend discussing it with the core team via a GitHub issue before getting started to ensure your work is consistent with Credentials's roadmap and architecture.
+Unless you are fixing a known bug, we **strongly** recommend discussing it with the core team via a GitHub issue before getting started to ensure your work is consistent with Vercre's roadmap and architecture.
 
 All contributions are made via pull request. Note that **all patches from all contributors get reviewed**. After a pull request is made other contributors will offer feedback, and if the patch passes review a maintainer will accept it with a comment. When pull requests fail testing, authors are expected to update their pull requests to address the failures until the tests pass and the pull request merges successfully.
 
@@ -33,7 +33,7 @@ Reviewers should leave a "LGTM" comment once they are satisfied with the patch. 
 
 Please follow these guidelines when formatting source code:
 
-- Go code should match the output of `gofmt -s`
+- Rust code should match the output of `clippy -- -Dclippy::all -Dclippy::nursery -Dclippy::pedantic`
 
 ## Developer’s Certificate of Origin
 
@@ -109,7 +109,7 @@ Whether you are a regular contributor or a newcomer, we care about making this c
 - Please avoid using nicknames that might detract from a friendly, safe and welcoming environment for all.
 - Be kind and courteous. There is no need to be mean or rude.
 - We will exclude you from interaction if you insult, demean or harass anyone. In particular, we do not tolerate behavior that excludes people in socially marginalized groups.
-- Private harassment is also unacceptable. No matter who you are, if you feel you have been or are being harassed or made uncomfortable by a community member, please contact one of the channel ops or a member of the Credentials core team immediately.
+- Private harassment is also unacceptable. No matter who you are, if you feel you have been or are being harassed or made uncomfortable by a community member, please contact one of the channel ops or a member of the Vercre core team immediately.
 - Likewise any spamming, trolling, flaming, baiting or other attention-stealing behaviour is not welcome.
 
 We welcome discussion about creating a welcoming, safe, and productive environment for the community. If you have any questions, feedback, or concerns please let us know with a GitHub issue.

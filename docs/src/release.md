@@ -1,5 +1,11 @@
 # Release Process
 
+## Overview
+
+<iframe src="https://link.excalidraw.com/readonly/xN3c0M46OiIPhUg1CKAi" width="100%" height="100%" style="border: none;"></iframe>
+
+![Release Process](images/release.svg)
+
 Use [cargo-release](https://github.com/crate-ci/cargo-release) to release a new version of each crate.
 
 ## Pre-requisites
