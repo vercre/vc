@@ -8,6 +8,8 @@
 
 # Development Guide
 
+- [Release Process](./release.md)
+
 - [Issuance](./issuance/index.md)
 
 - [Presentation](./presentation/index.md)
