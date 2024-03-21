@@ -12,10 +12,29 @@
     "lldb.launch.env": {
         "INSTA_WORKSPACE_ROOT": "${workspaceFolder}",
     },
-    "todo-tree.tree.showBadges": true,
     "eslint.workingDirectories": [
         {
             "pattern": "vercre-wallet/examples/desktop/*/"
         }
     ],
+    // "evenBetterToml.formatter.reorderArrays": true,
+    // "evenBetterToml.formatter.reorderKeys": true,
+    // "evenBetterToml.formatter.arrayAutoExpand": false,
+    // "evenBetterToml.formatter.arrayAutoCollapse": true,
+    // "evenBetterToml.formatter.columnWidth": 100,
+    // "evenBetterToml.formatter.allowedBlankLines": 1,
+    // "evenBetterToml.rules": [
+    //     {
+    //         "include": [
+    //             "Cargo.toml"
+    //         ],
+    //         "keys": [
+    //             "dependencies",
+    //             "workspace.dependencies"
+    //         ],
+    //         "formatting": {
+    //             "reorderKeys": true
+    //         }
+    //     }
+    // ],
 }

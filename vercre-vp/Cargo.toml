@@ -49,6 +49,6 @@ futures = "0.3.30"
 insta = { version = "1.36.1", features = ["redactions", "yaml"] }
 lazy_static = "1.4.0"
 test-utils = { path = "../test-utils" }
-tokio = { version = "1.36.0", features = [ "rt-multi-thread"] }
+tokio = { version = "1.36.0", features = ["rt-multi-thread"] }
 tower-http = { version = "0.5.2", features = ["trace"] }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }

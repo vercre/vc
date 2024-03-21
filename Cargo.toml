@@ -5,6 +5,7 @@ resolver = "2"
 [workspace.package]
 authors = ["Vercre"]
 categories = ["decentralized identity", "openid for verifiable data", "privacy", "security", "verifiable credentials"]
+
 # documentation = <use docs.rs>
 edition = "2021"
 exclude = [".*", "/docs", "snapshots/"]
