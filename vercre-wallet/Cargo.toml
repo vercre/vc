@@ -59,8 +59,8 @@ insta = { version = "1.36.1", features = ["redactions", "yaml"] }
 test-utils = { path = "../test-utils" }
 tokio = { version = "1.36.0", default-features = false, features = ["fs", "macros", "rt"] }
 tower-http = { version = "0.5.2", features = ["trace"] }
-tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 tracing.workspace = true
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 vercre-vci = { path = "../vercre-vci" }
 vercre-vp = { path = "../vercre-vp" }
 
