@@ -1,10 +1,7 @@
 {
     "rust-analyzer.linkedProjects": [
         "Cargo.toml",
-        "vercre-wallet/examples/cli/Cargo.toml",
         "vercre-wallet/examples/desktop/Cargo.toml",
-        "vercre-wallet/examples/mobile/Cargo.toml",
-        "vercre-wallet/examples/wasm/Cargo.toml",
         "vercre-wallet/examples/web/Cargo.toml",
     ],
     "rust-analyzer.cargo.features": [
