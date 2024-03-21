@@ -28,13 +28,41 @@ Development is undertaken on `feature` branches. Branches should be as short-liv
 
 If possible, larger changes should be broken down into smaller, more manageable changes, and developed on separate branches.
 
+Every feature change should be added to the manually curated CHANGELOG.md for the relevant crate.
+
 ### Publishing a release
 
-The publishing process is initiated by creating a new, short-lived, `release` branch from `main`. More comprehensive integration testing is undertaken on this branch, with any changes merged back into `main`.
+The publishing process is initiated by creating a new, short-lived, `release` branch from `main`. The branch should be named for the release version, e.g. `release-v0.2.0`.
 
-Once the release is ready, the code is tagged, published, and the branch deleted.
+Create a new branch from `main` and check out:
 
-## Process
+```sh
+git checkout -b release-v0.2.0
+```
+
+The new version number can be determined by running a a semver check on the codebase to establish the whether this is a major, minor, or patch release.
+
+```sh
+cargo make semver
+```
+
+Comprehensive integration testing is undertaken on this branch, with any changes merged back into `main`. Once the release is ready, the code is tagged, published, and the branch deleted.
+
+Create release tag and push the branch and tag to the remote repository:
+
+```sh
+git tag v0.2.0 -m "v0.2.0 release"
+
+# push new branch
+git push --set-upstream origin release-v0.2.0
+git push --tags
+```
+
+TODO: Add a section on how to create a release on Github.
+
+```
+cargo make release minor
+```
 
 ### Changelog
 
@@ -60,6 +88,7 @@ Release to crates.io:
 cargo make publish minor
 ```
 
+<!-- 
 ### [TO REVIEW] Github Release
 
 In order to track changes to each crate independently, we need a branch containing only the contents of the crate we want to release:
@@ -75,18 +104,18 @@ CLI:
 
 ```sh
 # create a new branch from `main` and check out
-git checkout -b serde-from-v0.2.0
+git checkout -b release-v0.2.0
 
 # delete all files and folders except the crate to release
 
 # stage and commit changes
 git add . 
-git  commit -a -m "serde-from-v0.2.0"
+git  commit -a -m "release-v0.2.0"
 
 # tag the branch
 git tag v0.2.0 -m "v0.2.0 release"
 
 # push new branch
-git push --set-upstream origin serde-from-v0.2.0
+git push --set-upstream origin release-v0.2.0
 git push --tags
-```
+``` -->

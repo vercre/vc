@@ -67,7 +67,7 @@ dependencies = ["fmt", "lint", "audit", "outdated", "unused"]
 # Publishing
 # -----------------------------------------------------------------------------
 
-[tasks.breaking]
+[tasks.semver]
 args = ["semver-checks"]
 command = "cargo"
 install_crate = "cargo-semver-checks"
