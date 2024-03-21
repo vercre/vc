@@ -5965,7 +5965,6 @@ dependencies = [
  "chrono",
  "crux_core",
  "crux_http",
- "futures",
  "lazy_static",
  "log",
  "olpc-cjson",
@@ -6054,7 +6053,6 @@ dependencies = [
  "thiserror",
  "tokio",
  "vercre-wallet",
- "zeroize",
 ]
 
 [[package]]
