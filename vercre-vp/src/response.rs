@@ -255,7 +255,7 @@ mod tests {
 
     use super::*;
 
-    const CLIENT_ID: &str = "http://credibil.io";
+    const CLIENT_ID: &str = "http://vercre.io";
 
     #[tokio::test]
     async fn send_response() {

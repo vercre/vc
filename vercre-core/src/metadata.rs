@@ -724,7 +724,7 @@ impl Issuer {
     /// Panics if the JSON does not serialize to an `Issuer` object
     #[must_use]
     pub fn sample() -> Self {
-        const ISSUER_URI: &str = "http://credibil.io";
+        const ISSUER_URI: &str = "http://vercre.io";
 
         let issuer = serde_json::json!({
             "credential_issuer": ISSUER_URI,
@@ -732,7 +732,7 @@ impl Issuer {
             "batch_credential_endpoint": format!("{ISSUER_URI}/batch"),
             "deferred_credential_endpoint": format!("{ISSUER_URI}/deferred"),
             "display": {
-                "name": "Credibil",
+                "name": "Vercre",
                 "locale": "en-NZ"
             },
             "credential_configurations_supported": {
@@ -775,21 +775,21 @@ impl CredentialConfiguration {
             )])),
             display: Some(vec![CredentialDisplay {
                 name: String::from("Employee ID"),
-                description: Some(String::from("Credibil employee ID credential")),
+                description: Some(String::from("Vercre employee ID credential")),
                 locale: Some(String::from("en-NZ")),
                 logo: Some(Image {
                     uri: Some(String::from(
-                        "https://credibil.github.io/assets/credibil-logo-reversed.png",
+                        "https://vercre.github.io/assets/vercre-logo-reversed.png",
                     )),
-                    alt_text: Some(String::from("Credibil Logo")),
+                    alt_text: Some(String::from("Vercre Logo")),
                 }),
                 text_color: Some(String::from("#ffffff")),
                 background_color: Some(String::from("#323ed2")),
                 background_image: Some(Image {
                     uri: Some(String::from(
-                        "https://credibil.github.io/assets/credibil-background.png",
+                        "https://vercre.github.io/assets/vercre-background.png",
                     )),
-                    alt_text: Some(String::from("Credibil Background")),
+                    alt_text: Some(String::from("Vercre Background")),
                 }),
             }]),
             credential_definition: CredentialDefinition {
@@ -878,7 +878,7 @@ impl CredentialConfiguration {
                 locale: Some(String::from("en-NZ")),
                 logo: Some(Image {
                     uri: Some(
-                        "https://credibil.github.io/assets/propellerhead-logo-reversed.png"
+                        "https://vercre.github.io/assets/propellerhead-logo-reversed.png"
                             .to_string(),
                     ),
                     alt_text: Some(String::from("Propellerhead Logo")),
@@ -887,8 +887,7 @@ impl CredentialConfiguration {
                 background_color: Some(String::from("#010100")),
                 background_image: Some(Image {
                     uri: Some(
-                        "https://credibil.github.io/assets/propellerhead-background.png"
-                            .to_string(),
+                        "https://vercre.github.io/assets/propellerhead-background.png".to_string(),
                     ),
                     alt_text: Some(String::from("Propellerhead Background")),
                 }),
@@ -951,7 +950,7 @@ impl Server {
     #[must_use]
     pub fn sample() -> Self {
         Self {
-            issuer: String::from("http://credibil.io"),
+            issuer: String::from("http://vercre.io"),
             authorization_endpoint: String::from("/auth"),
             token_endpoint: String::from("/token"),
             scopes_supported: Some(vec![String::from("openid")]),

@@ -368,7 +368,7 @@ mod tests {
     #[test]
     fn test_logo_response() {
         let mut filename = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        filename.push("src/credential/credibil-logo-reversed.png");
+        filename.push("src/credential/vercre-logo-reversed.png");
         let input = std::fs::read(&filename).unwrap();
 
         let response = crux_http::testing::ResponseBuilder::ok()

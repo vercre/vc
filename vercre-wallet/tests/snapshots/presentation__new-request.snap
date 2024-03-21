@@ -20,9 +20,9 @@ credentials:
         - name: Employee ID
           locale: en-NZ
           logo:
-            url: "https://credibil.io/logo.png"
-            alt_text: Credibil Logo
-          description: Credibil employee ID credential
+            url: "https://vercre.io/logo.png"
+            alt_text: Vercre Logo
+          description: Vercre employee ID credential
           background_color: "#12107c"
           text_color: "#ffffff"
       credentialSubject:

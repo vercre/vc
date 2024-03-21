@@ -4,7 +4,7 @@ assertion_line: 620
 expression: state
 ---
 expires_at: "[expires_at]"
-credential_issuer: "http://credibil.io"
+credential_issuer: "http://vercre.io"
 credential_configuration_ids:
   - EmployeeID_JWT
 holder_id: normal_user

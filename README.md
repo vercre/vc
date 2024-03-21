@@ -21,11 +21,11 @@ Further documentation can be found at the [Vercre website](https://vercre.io).
 Example impementations for credential issuance, verifiable presentation, and a basic wallet can be
 found at:
 
-- [Wallet](./vercre-wallet/examples/desktop)
+- [Wallet](./vercre-wallet/examples/app)
 - [Credential Issuance API](./vercre-vci/examples/http)
 - [Verifiable Presentation API](./vercre-vp/examples/http)
 
-The wallet example is a desktop application built with [Tauri](https://tauri.studio/) and provides an end-to-end example of how to use the `vercre` libraries to issue and present verifiable credentials.
+The wallet example is a app application built with [Tauri](https://tauri.studio/) and provides an end-to-end example of how to use the `vercre` libraries to issue and present verifiable credentials.
 
 Additionally, end to end client examples can be found in each crate's `/tests` directory.
 

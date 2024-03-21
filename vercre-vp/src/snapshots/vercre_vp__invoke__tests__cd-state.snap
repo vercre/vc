@@ -6,9 +6,9 @@ expression: state
 expires_at: "[expires_at]"
 request_object:
   response_type: vp_token
-  client_id: "http://credibil.io/post"
+  client_id: "http://vercre.io/post"
   response_mode: direct_post
-  response_uri: "http://credibil.io/post"
+  response_uri: "http://vercre.io/post"
   nonce: "[nonce]"
   state: "[state]"
   presentation_definition: "[presentation_definition]"

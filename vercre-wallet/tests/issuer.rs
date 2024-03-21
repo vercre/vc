@@ -34,7 +34,7 @@ use vercre_vci::Endpoint;
 pub fn new() -> TestServer {
     // set host header for all requests
     let mut server = TestServer::new(app()).expect("new server");
-    server.add_header(HOST, HeaderValue::from_static("credibil.io"));
+    server.add_header(HOST, HeaderValue::from_static("vercre.io"));
     server
 }
 

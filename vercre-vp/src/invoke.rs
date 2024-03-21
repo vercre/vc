@@ -224,7 +224,7 @@ mod tests {
 
         let mut request =
             serde_json::from_value::<InvokeRequest>(body).expect("should deserialize");
-        request.client_id = String::from("http://credibil.io");
+        request.client_id = String::from("http://vercre.io");
 
         let response =
             Endpoint::new(provider.clone()).invoke(&request).await.expect("response is ok");
@@ -275,7 +275,7 @@ mod tests {
 
         let mut request =
             serde_json::from_value::<InvokeRequest>(body).expect("should deserialize");
-        request.client_id = String::from("http://credibil.io");
+        request.client_id = String::from("http://vercre.io");
 
         let response =
             Endpoint::new(provider.clone()).invoke(&request).await.expect("response is ok");

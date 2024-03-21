@@ -3,6 +3,6 @@ source: vercre-wallet/tests/issuance.rs
 assertion_line: 54
 expression: app.view(&model)
 ---
-issuer: "http://credibil.io"
+issuer: "http://vercre.io"
 offered: "{\"EmployeeID_JWT\":{\"credential_definition\":{},\"format\":\"jwt_vc_json\"}}"
 status: Offered

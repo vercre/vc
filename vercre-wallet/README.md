@@ -6,7 +6,7 @@ using Mozilla's Foreign Function Interface (FFI) library,
 
 This library contains the wallet's core business logic and FFI bindings. Developers can
 use it to build their own UIs in Swift, Kotlin, or TypeScript. Alternatively, simply
-clone the [Vercre Wallet](<https://github.com/vercre/vercre/vercre-wallet/examples/desktop>) for a quicker start.
+clone the [Vercre Wallet](<https://github.com/vercre/vercre/vercre-wallet/examples/app>) for a quicker start.
 
 ## Cross-platform with Crux
 
@@ -27,7 +27,7 @@ data structures are passed both ways between the Rust **Core** and [Swift|Kotlin
 
 <!-- TODO: add `examples/tauri` -->
 
-See the [Vercre Wallet](<https://github.com/vercre/vercre/vercre-wallet/examples/desktop>).
+See the [Vercre Wallet](<https://github.com/vercre/vercre/vercre-wallet/examples/app>).
 
 ## Development
 

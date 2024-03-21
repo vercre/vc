@@ -11,7 +11,7 @@ const Footer = () => {
         <AppBar
             elevation={0}
             position="fixed"
-            sx = {{
+            sx={{
                 backgroundColor: theme => theme.palette.background.paper,
                 borderTop: '1px solid rgba(0, 0, 0, 0.12)',
                 bottom: 0,
@@ -28,12 +28,12 @@ const Footer = () => {
                     &copy;  {new Date().getFullYear()}&nbsp;
                     <Link
                         color="inherit"
-                        href="https://www.credibil.io/"
+                        href="https://www.vercre.io/"
                         rel="noopener"
                         target="_blank"
                         underline="hover"
                     >
-                        Credibil
+                        Vercre
                     </Link>
                 </Typography>
             </Toolbar>

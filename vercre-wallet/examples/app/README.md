@@ -1,4 +1,4 @@
-# Desktop Wallet
+# Wallet App
 
 Tauri + React + Typescript
 

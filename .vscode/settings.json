@@ -1,7 +1,7 @@
 {
     "rust-analyzer.linkedProjects": [
         "Cargo.toml",
-        "vercre-wallet/examples/desktop/Cargo.toml",
+        "vercre-wallet/examples/app/Cargo.toml",
         "vercre-wallet/examples/web/Cargo.toml",
     ],
     "rust-analyzer.cargo.features": [
@@ -14,7 +14,7 @@
     },
     "eslint.workingDirectories": [
         {
-            "pattern": "vercre-wallet/examples/desktop/*/"
+            "pattern": "vercre-wallet/examples/*/"
         }
     ],
 }

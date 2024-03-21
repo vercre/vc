@@ -3,7 +3,7 @@ source: vercre-wallet/tests/issuance.rs
 assertion_line: 88
 expression: app.view(&model)
 ---
-issuer: "http://credibil.io"
+issuer: "http://vercre.io"
 offered:
   EmployeeID_JWT:
     format: jwt_vc_json
@@ -20,9 +20,9 @@ offered:
       - name: Employee ID
         locale: en-NZ
         logo:
-          url: "https://credibil.github.io/assets/credibil-logo-reversed.png"
-          alt_text: Credibil Logo
-        description: Credibil employee ID credential
+          url: "https://vercre.github.io/assets/vercre-logo-reversed.png"
+          alt_text: Vercre Logo
+        description: Vercre employee ID credential
         background_color: "#323ed2"
         text_color: "#ffffff"
     credential_definition:
