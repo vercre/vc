@@ -1,0 +1,13 @@
+# extend = "../../Makefile.toml"
+
+[tasks.gen]
+dependencies = ["gen-app", "gen-web"]
+# cargo uniffi-bindgen -l swift -l kotlin -o ./gen ./src/shared.udl
+
+[tasks.gen-app]
+command = "cargo"
+args = ["build", "--manifest-path", "./examples/app/Cargo.toml"]
+
+[tasks.gen-web]
+command = "cargo"
+args = ["build", "--manifest-path", "./examples/web/Cargo.toml"]

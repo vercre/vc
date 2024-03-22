@@ -265,7 +265,7 @@ mod tests {
         let app = AppTester::<App, _>::default();
         let mut model = Model::default();
 
-        let request_uri = "http://credibil.io/request/1234";
+        let request_uri = "http://vercre.io/request/1234";
 
         let mut update = app.update(Event::Requested(request_uri.to_string()), &mut model);
         assert_snapshot!("new-request", app.view(&model));
@@ -471,7 +471,7 @@ mod tests {
             "response_type":"vp_token",
             "response_uri":"http://localhost:8080/direct_post.jwt",
             "response_mode":"direct_post.jwt",
-            "client_id":"http://credibil.io/post",
+            "client_id":"http://vercre.io/post",
             "redirect_uri":"http://localhost:8080/verified",
             "presentation_definition":{
                 "id":"3f79561e-d53f-44fd-bcef-9ac34561491c",
@@ -511,7 +511,7 @@ mod tests {
             "state":"ZkR2VXBeOVpRUDg5TFFXaXc0a2xZMCk2bH5WfjExalk",
             "client_id_scheme":"did",
             "client_metadata":{
-                "client_id":"http://credibil.io",
+                "client_id":"http://vercre.io",
                 "redirect_uris":["http://localhost:3000/callback"],
                 "grant_types":["authorization_code"],
                 "response_types":["vp_token","id_token vp_token"],

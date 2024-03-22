@@ -8,14 +8,14 @@ Overall, the Vercre's release process favours bringing new features to market fr
 
 ## Core tenets
 
-The release process starts as soon as change is identified. That is, the decision to release is not a separate step at the end of development, but rather a natural consequence of bringing a change to market. 
+The release process starts as soon as a change is identified. That is, the decision to release is not a separate step at the end of development, but rather a natural consequence of bringing a change to market.
 
 **TLDR**:
 
 * `main` is the source of truth. 
 * Development is undertaken on `feature` branches and is considered complete when requirements have been met and CI checks pass. 
 * Completed features are merged back into `main`, gated behind a "feature flag".
-* A short-lived `release` branch is created for testing and release preparation with changes merged back into `main`.
+* A short-lived `release` branch is created for testing and release preparation with any changes merged back into `main`.
 * Once ready, a release is tagged, published, and the branch deleted.
 
 ### `main` branch

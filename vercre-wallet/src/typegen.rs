@@ -91,7 +91,7 @@ pub fn generate(lang: Language, gen_dir: &str) {
 
     match lang {
         Language::Java => gen
-            .java("io.credibil.shared_types", format!("{gen_dir}/java"))
+            .java("io.vercre.shared_types", format!("{gen_dir}/java"))
             .expect("should generate types"),
         Language::Swift => {
             gen.swift("SharedTypes", format!("{gen_dir}/swift")).expect("should generate types")

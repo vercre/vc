@@ -24,7 +24,7 @@ use crate::{err, stringify, Result};
 pub struct InvokeRequest {
     #[allow(rustdoc::bare_urls)]
     /// The Verifier ID. It MUST be a valid URI. For example,
-    /// `"https://credibil.io"` or `"did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg"`.
+    /// `"https://vercre.io"` or `"did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg"`.
     #[serde(skip)]
     pub client_id: String,
 

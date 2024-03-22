@@ -96,7 +96,7 @@ pub enum Event {
 #[serde(rename = "IssuanceView")]
 pub struct ViewModel {
     #[allow(rustdoc::bare_urls)]
-    /// The credential issuer's URI (e.g. "`https://credibil.io`").
+    /// The credential issuer's URI (e.g. "`https://vercre.io`").
     pub issuer: String,
 
     /// A list of credentials being offered by the issuer.
@@ -334,34 +334,22 @@ impl crux_core::App for App {
             // ----------------------------------------------------------------
             Event::Metadata(Err(e)) => {
                 #[cfg(feature = "wasm")]
-                web_sys::console::error_2(
-                    &"Event::Metadata Err".into(),
-                    &format!("{e:?}").into(),
-                );
+                web_sys::console::error_2(&"Event::Metadata Err".into(), &format!("{e:?}").into());
                 self.update(Event::Fail(format!("Issue fetching metadata: {e:?}")), model, caps);
             }
             Event::Token(Err(e)) => {
                 #[cfg(feature = "wasm")]
-                web_sys::console::error_2(
-                    &"Event::Token Err".into(),
-                    &format!("{e:?}").into(),
-                );
+                web_sys::console::error_2(&"Event::Token Err".into(), &format!("{e:?}").into());
                 self.update(Event::Fail(format!("Issue fetching token: {e:?}")), model, caps);
             }
             Event::Proof(Err(e)) => {
                 #[cfg(feature = "wasm")]
-                web_sys::console::error_2(
-                    &"Event::Proof Err".into(),
-                    &format!("{e:?}").into(),
-                );
+                web_sys::console::error_2(&"Event::Proof Err".into(), &format!("{e:?}").into());
                 self.update(Event::Fail(format!("Issue fetching proof: {e:?}")), model, caps);
             }
             Event::Signed(Err(e)) => {
                 #[cfg(feature = "wasm")]
-                web_sys::console::error_2(
-                    &"Event::Signed Err".into(),
-                    &format!("{e:?}").into(),
-                );
+                web_sys::console::error_2(&"Event::Signed Err".into(), &format!("{e:?}").into());
                 self.update(Event::Fail(format!("Issue signing proof JWT: {e:?}")), model, caps);
             }
             Event::Credential(Err(e)) => {
@@ -384,19 +372,13 @@ impl crux_core::App for App {
                 // Just store the credential without the logo
                 log::error!("Error fetching logo: {e:?}");
                 #[cfg(feature = "wasm")]
-                web_sys::console::error_2(
-                    &"Event::Logo Err".into(),
-                    &format!("{e:?}").into(),
-                );
+                web_sys::console::error_2(&"Event::Logo Err".into(), &format!("{e:?}").into());
                 caps.store.add(credential, Event::CredentialSaved);
             }
             Event::Fail(msg) => {
                 log::error!("{}", msg);
                 #[cfg(feature = "wasm")]
-                web_sys::console::error_2(
-                    &"Event::Fail".into(),
-                    &format!("{msg}").into(),
-                );
+                web_sys::console::error_2(&"Event::Fail".into(), &format!("{msg}").into());
                 model.status = Status::Failed(msg);
                 #[cfg(feature = "wasm")]
                 web_sys::console::debug_2(&"model:".into(), &format!("{model:?}").into());

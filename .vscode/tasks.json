@@ -20,7 +20,7 @@
                 "dev"
             ],
             "options": {
-                "cwd": "${workspaceFolder}/vercre-wallet/examples/desktop"
+                "cwd": "${workspaceFolder}/vercre-wallet/examples/app"
             },
             // without this problemMatcher VSCode `dependsOn` tasks won't work
             "problemMatcher": [
@@ -44,9 +44,13 @@
         {
             "label": "tauri:bundle",
             "type": "shell",
-            "command": "make dev",
+            "command": "cargo",
+            "args": [
+                "make",
+                "dev"
+            ],
             "options": {
-                "cwd": "${workspaceFolder}/vercre-wallet/examples/desktop"
+                "cwd": "${workspaceFolder}/vercre-wallet/examples/app"
             }
         },
         {

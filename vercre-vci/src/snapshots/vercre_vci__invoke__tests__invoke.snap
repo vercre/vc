@@ -4,7 +4,7 @@ assertion_line: 265
 expression: response
 ---
 credential_offer:
-  credential_issuer: "http://credibil.io"
+  credential_issuer: "http://vercre.io"
   credential_configuration_ids:
     - EmployeeID_JWT
   grants:

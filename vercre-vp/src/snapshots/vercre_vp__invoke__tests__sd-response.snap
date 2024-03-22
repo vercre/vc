@@ -5,7 +5,7 @@ expression: response
 ---
 request_object:
   response_type: vp_token
-  client_id: "http://credibil.io/callback"
+  client_id: "http://vercre.io/callback"
   nonce: "[nonce]"
   state: "[state]"
   presentation_definition: "[presentation_definition]"

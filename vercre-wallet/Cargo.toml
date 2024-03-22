@@ -34,7 +34,6 @@ base64ct = { version = "1.6.0", default-features = false, features = ["std"] }
 chrono = { version = "0.4.35", features = ["serde"] }
 crux_core = "0.7.3"
 crux_http = "0.8.0"
-futures = "0.3.30"
 lazy_static = "1.4.0"
 log = "0.4.21"
 olpc-cjson = "0.1.3"

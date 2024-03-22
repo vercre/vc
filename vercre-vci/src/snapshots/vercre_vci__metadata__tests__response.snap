@@ -3,12 +3,12 @@ source: vercre-vci/src/metadata.rs
 assertion_line: 92
 expression: response
 ---
-credential_issuer: "http://credibil.io"
-credential_endpoint: "http://credibil.io/credential"
-batch_credential_endpoint: "http://credibil.io/batch"
-deferred_credential_endpoint: "http://credibil.io/deferred"
+credential_issuer: "http://vercre.io"
+credential_endpoint: "http://vercre.io/credential"
+batch_credential_endpoint: "http://vercre.io/batch"
+deferred_credential_endpoint: "http://vercre.io/deferred"
 display:
-  name: Credibil
+  name: Vercre
   locale: en-NZ
 credential_configurations_supported:
   Developer_JWT:
@@ -29,12 +29,12 @@ credential_configurations_supported:
       - name: Developer
         locale: en-NZ
         logo:
-          uri: "https://credibil.github.io/assets/propellerhead-logo-reversed.png"
+          uri: "https://vercre.github.io/assets/propellerhead-logo-reversed.png"
           alt_text: Propellerhead Logo
         description: Propellerhead certified developer credential
         background_color: "#010100"
         background_image:
-          uri: "https://credibil.github.io/assets/propellerhead-background.png"
+          uri: "https://vercre.github.io/assets/propellerhead-background.png"
           alt_text: Propellerhead Background
         text_color: "#ffffff"
     credential_definition:
@@ -81,13 +81,13 @@ credential_configurations_supported:
       - name: Employee ID
         locale: en-NZ
         logo:
-          uri: "https://credibil.github.io/assets/credibil-logo-reversed.png"
-          alt_text: Credibil Logo
-        description: Credibil employee ID credential
+          uri: "https://vercre.github.io/assets/vercre-logo-reversed.png"
+          alt_text: Vercre Logo
+        description: Vercre employee ID credential
         background_color: "#323ed2"
         background_image:
-          uri: "https://credibil.github.io/assets/credibil-background.png"
-          alt_text: Credibil Background
+          uri: "https://vercre.github.io/assets/vercre-background.png"
+          alt_text: Vercre Background
         text_color: "#ffffff"
     credential_definition:
       "@context":
