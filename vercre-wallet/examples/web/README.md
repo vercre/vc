@@ -56,3 +56,35 @@ echo $RESP | jq '.credential_offer'
 # print user pin
 echo $RESP | jq '.user_code'
 ```
+
+
+## Verifying a Sample Credential
+
+Launch the `vercre-vp/examples/http` server. It runs on port 8080 by default.
+
+```bash
+cd vercre-vp
+cargo run --example http-verifier
+```
+
+Once both the VP server and web app are running, the verification process can be initiated by sending a Presentation Request to the wallet using curl commands to the example VP server.
+
+```bash
+# get presentation request from verification service
+RESP=$(curl --json '{
+        "purpose": "To verify employment",
+        "input_descriptors": [{
+            "id": "employment",
+            "constraints": {
+                "fields": [{
+                    "path":["$.type"],
+                    "filter": {
+                        "type": "string",
+                        "const": "EmployeeIDCredential"
+                    }
+                }]
+            }
+        }],
+        "device_flow": "CrossDevice"
+    }' \
+    http://localhost:8080/invoke)

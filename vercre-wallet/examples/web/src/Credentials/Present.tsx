@@ -58,7 +58,8 @@ const Present = (props: PresentProps) => {
         if (request === '') {
             return;
         }
-        const encoded = encodeURIComponent(request);
+        // Crude interpretation of whether the URL needs encoding.
+        const encoded = request.includes('://') ? encodeURIComponent(request) : request;
         update(new st.EventVariantPresentation(new st.PresentationEventVariantRequested(encoded)));
     };
 
