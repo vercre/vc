@@ -87,7 +87,7 @@ impl Jwk {
             err!(Err::InvalidRequest, "unable to build signature")
         };
 
-        let Ok(_) = verifying_key.verify(msg.as_bytes(), &signature) else {
+        let Ok(()) = verifying_key.verify(msg.as_bytes(), &signature) else {
             err!(Err::InvalidRequest, "unable to verify signature")
         };
 
