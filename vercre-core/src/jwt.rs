@@ -121,32 +121,32 @@ where
         }
 
         let Ok(decoded_header) = Base64UrlUnpadded::decode_vec(parts[0]) else {
-            err!(Err::InvalidRequest, "unable to base64 decode proof JWT header");
+            err!("unable to base64 decode proof JWT header");
         };
         let Ok(header) = serde_json::from_slice(&decoded_header) else {
-            err!(Err::InvalidRequest, "unable to deserialize proof JWT header");
+            err!("unable to deserialize proof JWT header");
         };
         let Ok(decoded_claims) = Base64UrlUnpadded::decode_vec(parts[1]) else {
-            err!(Err::InvalidRequest, "unable to base64 decode proof JWT claims");
+            err!("unable to base64 decode proof JWT claims");
         };
         let Ok(claims) = serde_json::from_slice(&decoded_claims) else {
-            err!(Err::InvalidRequest, "unable to deserialize proof JWT claims");
+            err!("unable to deserialize proof JWT claims");
         };
 
         let jwt = Self { header, claims };
 
         let msg = format!("{}.{}", parts[0], parts[1]);
         let Ok(sig) = Base64UrlUnpadded::decode_vec(parts[2]) else {
-            err!(Err::InvalidRequest, "unable to base64 decode proof signature");
+            err!("unable to base64 decode proof signature");
         };
         let jwk = match proof::Jwk::from_str(&jwt.header.kid) {
             Ok(jwk) => jwk,
             Err(e) => {
-                err!(
-                    Err::InvalidRequest,
+                let hint = format!(
                     "unable to parse proof JWT 'kid' into JWK: {}",
                     e.error_description().unwrap_or_default()
                 );
+                err!("{hint}");
             }
         };
 
