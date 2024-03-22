@@ -142,9 +142,16 @@ where
             };
 
             // TODO: allow passing verifier into this method
-            let Ok(jwt) = Jwt::<ProofClaims>::from_str(proof_jwt) else {
-                let (nonce, expires_in) = self.err_nonce(provider).await?;
-                err!(Err::InvalidProof(nonce, expires_in), "Invalid proof_jwt");
+            let jwt = match Jwt::<ProofClaims>::from_str(proof_jwt) {
+                Ok(jwt) => jwt,
+                Err(e) => {
+                    let (nonce, expires_in) = self.err_nonce(provider).await?;
+                    err!(
+                        Err::InvalidProof(nonce, expires_in),
+                        "{}",
+                        e.error_description().unwrap_or_default()
+                    );
+                }
             };
 
             // algorithm

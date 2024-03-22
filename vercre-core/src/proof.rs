@@ -8,6 +8,7 @@ use base64ct::{Base64UrlUnpadded, Encoding};
 use ecdsa::signature::Verifier;
 use serde::{Deserialize, Serialize};
 
+use crate::error::Err;
 use crate::{err, error, Result};
 
 /// Simplified JSON Web Key (JWK) key structure.
@@ -72,15 +73,23 @@ impl Jwk {
         use ed25519_dalek::{Signature, VerifyingKey};
 
         // build verifying key
-        let x_bytes = Base64UrlUnpadded::decode_vec(&self.x)?;
+        let Ok(x_bytes) = Base64UrlUnpadded::decode_vec(&self.x) else {
+            err!(Err::InvalidRequest, "unable to base64 decode proof JWK 'x'");
+        };
         let Ok(bytes) = &x_bytes.try_into() else {
-            err!("Invalid public key length");
+            err!(Err::InvalidRequest, "invalid public key length");
         };
 
-        let verifying_key = VerifyingKey::from_bytes(bytes)?;
-        let signature = Signature::from_slice(sig_bytes)?;
+        let Ok(verifying_key) = VerifyingKey::from_bytes(bytes) else {
+            err!(Err::InvalidRequest, "unable to build verifying key")
+        };
+        let Ok(signature) = Signature::from_slice(sig_bytes) else {
+            err!(Err::InvalidRequest, "unable to build signature")
+        };
 
-        verifying_key.verify(msg.as_bytes(), &signature)?;
+        let Ok(()) = verifying_key.verify(msg.as_bytes(), &signature) else {
+            err!(Err::InvalidRequest, "unable to verify signature")
+        };
 
         Ok(())
     }
@@ -102,15 +111,20 @@ impl FromStr for Jwk {
 
         let jwk = if kid.starts_with(DID_JWK) {
             let jwk_b64 = kid.trim_start_matches(DID_JWK).trim_end_matches("#0");
-            let jwk_vec = Base64UrlUnpadded::decode_vec(jwk_b64)?;
-            let Ok(jwk_str) = str::from_utf8(&jwk_vec) else {
-                err!("Issue converting JWK bytes to string");
+            let Ok(jwk_vec) = Base64UrlUnpadded::decode_vec(jwk_b64) else {
+                err!(Err::InvalidRequest, "Issue decoding JWK base64");
             };
-            serde_json::from_str(jwk_str)?
+            let Ok(jwk_str) = str::from_utf8(&jwk_vec) else {
+                err!(Err::InvalidRequest, "Issue converting JWK bytes to string");
+            };
+            let Ok(jwk) = serde_json::from_str(jwk_str) else {
+                err!(Err::InvalidRequest, "Issue deserializing JWK string");
+            };
+            jwk
         } else if kid.starts_with(DID_ION) {
             verification_key(kid)?
         } else {
-            err!("Proof JWT 'kid' is invalid");
+            err!(Err::InvalidRequest, "Proof JWT 'kid' is invalid");
         };
 
         Ok(jwk)
