@@ -120,14 +120,35 @@ where
             err!(Err::InvalidRequest, "invalid proof JWT format");
         }
 
-        let jwt = Self {
-            header: serde_json::from_slice(&Base64UrlUnpadded::decode_vec(parts[0])?)?,
-            claims: serde_json::from_slice(&Base64UrlUnpadded::decode_vec(parts[1])?)?,
+        let Ok(decoded_header) = Base64UrlUnpadded::decode_vec(parts[0]) else {
+            err!(Err::InvalidRequest, "unable to base64 decode proof JWT header");
+        };
+        let Ok(header) = serde_json::from_slice(&decoded_header) else {
+            err!(Err::InvalidRequest, "unable to deserialize proof JWT header");
+        };
+        let Ok(decoded_claims) = Base64UrlUnpadded::decode_vec(parts[1]) else {
+            err!(Err::InvalidRequest, "unable to base64 decode proof JWT claims");
+        };
+        let Ok(claims) = serde_json::from_slice(&decoded_claims) else {
+            err!(Err::InvalidRequest, "unable to deserialize proof JWT claims");
         };
 
+        let jwt = Self { header, claims };
+
         let msg = format!("{}.{}", parts[0], parts[1]);
-        let sig = Base64UrlUnpadded::decode_vec(parts[2])?;
-        let jwk = proof::Jwk::from_str(&jwt.header.kid)?;
+        let Ok(sig) = Base64UrlUnpadded::decode_vec(parts[2]) else {
+            err!(Err::InvalidRequest, "unable to base64 decode proof signature");
+        };
+        let jwk = match proof::Jwk::from_str(&jwt.header.kid) {
+            Ok(jwk) => jwk,
+            Err(e) => {
+                err!(
+                    Err::InvalidRequest,
+                    "unable to parse proof JWT 'kid' into JWK: {}",
+                    e.error_description().unwrap_or_default()
+                );
+            }
+        };
 
         jwk.verify(&msg, &sig).map(|()| jwt)
     }
