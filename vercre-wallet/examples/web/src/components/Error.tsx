@@ -5,6 +5,7 @@ import Alert from '@mui/material/Alert';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
 import * as st from 'shared_types/types/shared_types';
 
 import { useShellState } from '../Shell/Context';
@@ -20,6 +21,12 @@ const Error = (props: ErrorProps) => {
     const { update } = useViewState();
     const initialLoad = useRef<boolean>(true);
     const theme = useTheme();
+    const navigate = useNavigate();
+
+    const handleCancel = () => {
+        update(new st.EventVariantCancel());
+        navigate('/');
+    }
 
     useEffect(() => {
         if (!initialLoad.current) {
@@ -29,7 +36,7 @@ const Error = (props: ErrorProps) => {
         setShellState({
             title: props.title,
             action: (
-                <IconButton onClick={() => update(new st.EventVariantCancel())} size="large">
+                <IconButton onClick={handleCancel} size="large">
                     <ArrowBackIosIcon
                         fontSize="large"
                         sx={{ color: theme.palette.primary.contrastText}}
@@ -42,7 +49,7 @@ const Error = (props: ErrorProps) => {
     
     return (
         <Stack spacing={2} sx={{ my: 2 }}>
-            <Alert severity="error">
+            <Alert severity="error" onClose={handleCancel}>
                 {props.message}
             </Alert>
         </Stack>

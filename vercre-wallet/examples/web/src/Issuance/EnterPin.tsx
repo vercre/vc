@@ -5,6 +5,7 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import { useNavigate } from 'react-router-dom';
 import * as st from 'shared_types/types/shared_types';
 
 import { useViewState } from '../ViewState';
@@ -16,6 +17,7 @@ export const EnterPin = () => {
     const [ pin, setPin ] = useState<Array<string>>(new Array(PIN_LENGTH).fill(''));
     const inputRef = useRef<Array<HTMLInputElement>>([]);
     const { update } = useViewState();
+    const navigate = useNavigate();
 
     const handleInputChange = (index: number) => (e: ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value.replace(/\D/g, '');
@@ -38,6 +40,11 @@ export const EnterPin = () => {
     const handleEnter = () => {
         update(new st.EventVariantIssuance(new st.IssuanceEventVariantPin(pin.join(''))));
     };
+
+    const handleCancel = () => {
+        update(new st.EventVariantCancel());
+        navigate('/');
+    }
 
     return (
         <Stack spacing={2} sx={{ pt: 2 }}>
@@ -76,7 +83,7 @@ export const EnterPin = () => {
                 }}
             >
                 <Button
-                    onClick={() => update(new st.EventVariantCancel())}
+                    onClick={handleCancel}
                     variant="outlined"
                 >
                     Cancel

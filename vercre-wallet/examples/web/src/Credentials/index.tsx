@@ -42,6 +42,7 @@ const Credentials = () => {
     // On initial load of this component, get the list of credentials from the store capability by
     // invoking the crux event.
     useEffect(() => {
+        console.log('Credentials initialisation');
         if (!initialLoad.current) {
             return;
         }

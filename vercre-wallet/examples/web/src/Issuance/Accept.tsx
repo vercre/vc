@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import { useNavigate } from 'react-router-dom';
 import * as st from 'shared_types/types/shared_types';
 
 import VcCard, { VcCardProps } from '../Credentials/VcCard';
@@ -9,6 +10,7 @@ import { useViewState } from '../ViewState';
 
 export const Accept = () => {
     const { viewModel, update } = useViewState();
+    const navigate = useNavigate();
 
     const model= viewModel.issuance;
 
@@ -23,6 +25,11 @@ export const Accept = () => {
             name: display?.name,
             onSelect: undefined,
         };
+    };
+
+    const handleCancel = () => {
+        update(new st.EventVariantCancel());
+        navigate('/');
     };
 
     return (
@@ -44,7 +51,7 @@ export const Accept = () => {
                 }}
             >
                 <Button
-                    onClick={() => update(new st.EventVariantCancel())}
+                    onClick={handleCancel}
                     variant="outlined"
                 >
                     Cancel

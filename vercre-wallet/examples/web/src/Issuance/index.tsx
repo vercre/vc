@@ -33,6 +33,8 @@ export const Issuance = () => {
 
     // translate status to mode
     useEffect(() => {
+        console.log('Issuance status:', model.status);
+        
         if (model.status.startsWith('Failed')) {
             setMode('error');
             return;
