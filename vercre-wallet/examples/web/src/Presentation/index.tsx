@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import Box from '@mui/material/Box';
+import { useNavigate } from 'react-router-dom';
 
 import Authorize from './Authorize';
 import Error from '../components/Error';
@@ -13,8 +14,10 @@ export const Presentation = () => {
     const { setShellState } = useShellState();
     const { viewModel } = useViewState();
     const initialLoad = useRef<boolean>(true);
+    const navigate = useNavigate();
 
     const model = viewModel.presentation;
+    const view = viewModel.view;
 
     // set the default shell state
     useEffect(() => {
@@ -32,6 +35,9 @@ export const Presentation = () => {
 
     // translate status to mode
     useEffect(() => {
+        if (view !== 'Presentation') {
+            navigate('/');
+        }
         if (model.status.startsWith('Failed')) {
             setMode('error');
             return;
@@ -45,7 +51,7 @@ export const Presentation = () => {
                 setMode('authorize');
                 break;
         }
-    }, [model]);
+    }, [model.status, view]);
 
     return (
         <Box sx={{ pt: 1, position: 'relative'}}>

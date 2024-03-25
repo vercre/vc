@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import Box from '@mui/material/Box';
 import Slide from '@mui/material/Slide';
+import { useNavigate } from 'react-router-dom';
 
 import Accept from './Accept';
 import EnterPin from './EnterPin';
@@ -15,8 +16,10 @@ export const Issuance = () => {
     const { setShellState } = useShellState();
     const initialLoad = useRef<boolean>(true);
     const { viewModel } = useViewState();
+    const navigate = useNavigate();
 
     const model = viewModel.issuance;
+    const view = viewModel.view;
 
     // set the default shell state
     useEffect(() => {
@@ -33,6 +36,10 @@ export const Issuance = () => {
 
     // translate status to mode
     useEffect(() => {
+        if (view !== 'Issuance') {
+            navigate('/');
+        }
+
         console.log('Issuance status:', model.status);
         
         if (model.status.startsWith('Failed')) {
@@ -52,7 +59,7 @@ export const Issuance = () => {
                 setMode('accept');
                 break;
         }
-    }, [model]);
+    }, [model.status, view]);
 
     return (
         <Box sx={{ pt: 1, position: 'relative'}}>

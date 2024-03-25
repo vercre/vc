@@ -1,5 +1,5 @@
-// A no-render component that processes a credential offer from a deep link of the form
-// https://example.com/credential_offer?credential_offer=<url-encoded-json-string>
+// A no-render component that processes a presentation request from a deep link of the form
+// https://example.com/request_uri?request_uri=<url-encoded-uri>
 
 import { useEffect, useRef } from "react";
 
@@ -12,7 +12,7 @@ import * as st from 'shared_types/types/shared_types';
 import { useShellState } from '../Shell/Context';
 import { useViewState } from "../ViewState";
 
-const Offer = () => {
+const Request = () => {
     const runOnce = useRef<boolean>(false);
     const location = useLocation();
     const navigate = useNavigate();
@@ -20,14 +20,14 @@ const Offer = () => {
     const { setShellState } = useShellState();
     const { viewModel, update } = useViewState();
 
-    // Process the credential offer query string
+    // Process the presentation request query string
     useEffect(() => {
         if (runOnce.current) {
             return;
         }
         runOnce.current = true;
         setShellState({
-            title: 'Add Credential',
+            title: 'Present Credential',
             action: (
                 <IconButton onClick={() => navigate('/credentials')} size="large">
                     <ArrowBackIosIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
@@ -37,23 +37,23 @@ const Offer = () => {
         });
 
         const params = new URLSearchParams(location.search);
-        const offer = params.get('credential_offer');
-        if (offer !== null) {
-            update(new st.EventVariantIssuance(new st.IssuanceEventVariantOffer(offer)));
+        const uri = params.get('request_uri');
+        if (uri !== null) {
+            update(new st.EventVariantPresentation(new st.PresentationEventVariantRequested(uri)));
         } else {
             update(new st.EventVariantCancel());
             navigate('credentials');
         }
     }, [location.search]);
 
-    // Listen for changes to the view model and navigate to the main issuance sub-app.
+    // Listen for changes to the view model and navigate to the main presentation sub-app.
     useEffect(() => {
-        if (viewModel.view === 'Issuance') {
-            navigate('issuance');
+        if (viewModel.view === 'Presentation') {
+            navigate('presentation');
         }
     }, [viewModel.view]);
 
     return (<></>);
 };
 
-export default Offer;
+export default Request;

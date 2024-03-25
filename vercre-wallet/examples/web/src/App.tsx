@@ -6,6 +6,7 @@ import Credentials from './Credentials';
 import Issuance from './Issuance';
 import Offer from './Issuance/Offer';
 import Presentation from './Presentation';
+import Request from './Presentation/Request';
 import Shell from './Shell';
 import { ShellStateProvider } from './Shell/Context';
 import { theme } from './theme';
@@ -31,7 +32,11 @@ const router = createBrowserRouter([
         {
           path: 'credential_offer',
           element: <Offer />,
-        }
+        },
+        {
+          path: 'request_uri',
+          element: <Request />,
+        },
       ]
     },
   ]);
