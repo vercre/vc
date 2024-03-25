@@ -50,13 +50,22 @@ RESP=$(curl --json '{
     }' \
     http://localhost:8080/invoke)
 
-# paste this JSON into the add-credential form in the web app
-echo $RESP | jq '.credential_offer'
+
+
+# This should open the web app in your browser and start the issuance process
+OFFER=$(echo $RESP | jq '.credential_offer' | jq -r @uri)
+open "https://localhost:3000/credential_offer?credential_offer=$OFFER"
 
 # print user pin
 echo $RESP | jq '.user_code'
 ```
 
+You can also use the Add Credential form in the web app to paste the JSON response from the VCI server.
+
+```bash
+# paste this JSON into the add-credential form in the web app
+echo $RESP | jq '.credential_offer'
+```
 
 ## Verifying a Sample Credential
 
@@ -88,3 +97,10 @@ RESP=$(curl --json '{
         "device_flow": "CrossDevice"
     }' \
     http://localhost:8080/invoke)
+
+# This should open the web app in your browser and start the verification process
+REQUEST_URI=$(echo $RESP | jq '.request_uri' | jq -r @uri)
+open "https://localhost:3000/request_uri?request_uri=$REQUEST_URI"
+```
+
+You can also use the Present Credential form in the web app to paste the request URI from the VP server.

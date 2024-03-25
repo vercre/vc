@@ -779,7 +779,7 @@ impl CredentialConfiguration {
                 locale: Some(String::from("en-NZ")),
                 logo: Some(Image {
                     uri: Some(String::from(
-                        "https://vercre.github.io/assets/vercre-logo-reversed.png",
+                        "https://vercre.github.io/assets/employee.png",
                     )),
                     alt_text: Some(String::from("Vercre Logo")),
                 }),
@@ -874,22 +874,22 @@ impl CredentialConfiguration {
             )])),
             display: Some(vec![CredentialDisplay {
                 name: String::from("Developer"),
-                description: Some(String::from("Propellerhead certified developer credential")),
+                description: Some(String::from("Vercre certified developer credential")),
                 locale: Some(String::from("en-NZ")),
                 logo: Some(Image {
                     uri: Some(
-                        "https://vercre.github.io/assets/propellerhead-logo-reversed.png"
+                        "https://vercre.github.io/assets/developer.png"
                             .to_string(),
                     ),
-                    alt_text: Some(String::from("Propellerhead Logo")),
+                    alt_text: Some(String::from("Vercre Logo")),
                 }),
                 text_color: Some(String::from("#ffffff")),
                 background_color: Some(String::from("#010100")),
                 background_image: Some(Image {
                     uri: Some(
-                        "https://vercre.github.io/assets/propellerhead-background.png".to_string(),
+                        "https://vercre.github.io/assets/vercre-background.png".to_string(),
                     ),
-                    alt_text: Some(String::from("Propellerhead Background")),
+                    alt_text: Some(String::from("Vercre Background")),
                 }),
             }]),
             credential_definition: CredentialDefinition {
