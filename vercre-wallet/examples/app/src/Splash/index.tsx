@@ -1,20 +1,21 @@
-import Container from "@mui/material/Container";
-
-import LogoLockup from './LogoLockup';
-import Watermark from './Watermark';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
 
 const Splash = () => {
     return (
         <Container
             maxWidth={false}
             sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 backgroundColor: theme => theme.palette.primary.main,
+                color: theme => theme.palette.primary.contrastText,
                 height: '100vh',
                 overflow: 'hidden',
             }}
         >
-            <LogoLockup />
-            <Watermark />
+            <Typography variant="h1">Vercre Wallet</Typography>
         </Container>
     );
 };
