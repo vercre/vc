@@ -97,3 +97,10 @@ RESP=$(curl --json '{
         "device_flow": "CrossDevice"
     }' \
     http://localhost:8080/invoke)
+
+# This should open the web app in your browser and start the verification process
+REQUEST_URI=$(echo $RESP | jq '.request_uri' | jq -r @uri)
+open "https://localhost:3000/request_uri?request_uri=$REQUEST_URI"
+```
+
+You can also use the Present Credential form in the web app to paste the request URI from the VP server.
