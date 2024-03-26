@@ -25,9 +25,23 @@ data structures are passed both ways between the Rust **Core** and [Swift|Kotlin
 
 ## Getting Started
 
-<!-- TODO: add `examples/tauri` -->
+For an example of the library used as a Tauri application, see the [Vercre App](<https://github.com/vercre/vercre/vercre-wallet/examples/app>).
 
-See the [Vercre Wallet](<https://github.com/vercre/vercre/vercre-wallet/examples/app>).
+For an exmaple of the library published as a WebAssembly package and used as a web application, see the [Vercre Web App](<https://github.com/vercre/vercre/vercre-wallet/examples/web>)
+
+## NPM Packages
+
+The wallet is built as a WebAssembly package and published to NPM. To use it in your typescript project, use your favourite package manager to install it:
+
+```bash
+npm i --save @vercre/vercre-wallet
+```
+
+If using TypeScript you will also need to install some shared types that have been generated from the Rust crux application. These provide classes with serialization and deserialization compatibile with the FFI.
+
+```bash
+npm i --save @vercre/shared-types
+```
 
 ## Development
 
