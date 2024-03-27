@@ -20,7 +20,7 @@ args = ["build", "--target", "web", "--scope", "vercre", "--out-dir", "./pkg"]
 dependencies = ["build-wasm"]
 script = '''
 cd ./pkg
-npm pkg set version="0.1.0-alpha.6"
+npm pkg set version="0.1.0-alpha.7"
 npm publish --access public
 '''
 
@@ -29,7 +29,7 @@ dependencies = ["gen-web"]
 script = '''
 cd ./examples/web/types/gen/typescript/
 npm pkg set name="@vercre/shared_types"
-npm pkg set version="0.1.0-alpha.6"
+npm pkg set version="0.1.0-alpha.7"
 npm publish --access public
 '''
 
