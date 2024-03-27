@@ -32,6 +32,3 @@ npm pkg set name="@vercre/shared_types"
 npm pkg set version="0.1.0-alpha.7"
 npm publish --access public
 '''
-
-[tasks.publish]
-dependencies = ["publish-wasm", "publish-types"]
