@@ -1,5 +1,4 @@
 [build]
-# target = "wasm32-unknown-unknown"
 
 [target.x86_64-apple-darwin]
 # rustc-env = {DYLD_FALLBACK_LIBRARY_PATH = "$(xcode-select --print-path)/usr/lib/:$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/"}
