@@ -24,14 +24,14 @@ const Add = (props: AddProps) => {
     const [error, setError] = useState<string | undefined>(undefined);
     const { setShellState } = useShellState();
     const { update } = useViewState();
-    const initialLoad = useRef<boolean>(true);
+    const runOnce = useRef<boolean>(false);
     const theme = useTheme();
 
     useEffect(() => {
-        if (!initialLoad.current) {
+        if (runOnce.current) {
             return;
         }
-        initialLoad.current = false;
+        runOnce.current = true;
         setShellState({
             title: 'Add Credential',
             action: (

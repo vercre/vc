@@ -11,3 +11,24 @@ args = ["build", "--manifest-path", "./examples/app/Cargo.toml"]
 [tasks.gen-web]
 command = "cargo"
 args = ["build", "--manifest-path", "./examples/web/Cargo.toml"]
+
+[tasks.build-wasm]
+command = "wasm-pack"
+args = ["build", "--target", "web", "--scope", "vercre", "--out-dir", "./pkg"]
+
+[tasks.publish-wasm]
+dependencies = ["build-wasm"]
+script = '''
+cd ./pkg
+npm pkg set version="0.1.0-alpha.9"
+npm publish --access public
+'''
+
+[tasks.publish-types]
+dependencies = ["gen-web"]
+script = '''
+cd ./examples/web/types/gen/typescript/
+npm pkg set name="@vercre/shared_types"
+npm pkg set version="0.1.0-alpha.9"
+npm publish --access public
+'''

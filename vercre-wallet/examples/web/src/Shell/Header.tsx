@@ -13,7 +13,7 @@ const Header = () => {
             elevation={0}
             position="fixed"
             sx = {{
-                backgroundColor: theme => theme.palette.brandRoyal.main,
+                backgroundColor: theme => theme.palette.primary.main,
             }}
         >
             <Toolbar>

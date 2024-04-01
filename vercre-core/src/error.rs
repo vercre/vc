@@ -471,8 +471,9 @@ macro_rules! err {
     // one or more tokens e.g. "error: {e}"
     ($($msg:tt)+) => {{
         use $crate::error::Err;
+        use $crate::error::Ancillary as _;
         use anyhow::anyhow;
-        return Err(Err::ServerError(anyhow!($($msg)+)).into());
+        return Err(Err::ServerError(anyhow!($($msg)+))).hint(format!($($msg)+));
     }};
 }
 

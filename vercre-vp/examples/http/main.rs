@@ -19,6 +19,7 @@ use serde::Serialize;
 use serde_json::json;
 use test_utils::vp_provider::Provider;
 use tokio::net::TcpListener;
+use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
@@ -33,6 +34,8 @@ async fn main() {
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
     let endpoint = Arc::new(Endpoint::new(Provider::new()));
+    // CORS. Just an example for local development. Set this properly in production.
+    let cors = CorsLayer::new().allow_methods(Any).allow_origin(Any).allow_headers(Any);
 
     let router = Router::new()
         .route("/invoke", post(invoke))
@@ -40,6 +43,7 @@ async fn main() {
         .route("/callback", get(response))
         .route("/post", post(response))
         .layer(TraceLayer::new_for_http())
+        .layer(cors)
         .with_state(endpoint);
 
     let listener = TcpListener::bind("0.0.0.0:8080").await.expect("should bind");

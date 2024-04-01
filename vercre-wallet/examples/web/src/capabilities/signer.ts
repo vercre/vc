@@ -6,7 +6,7 @@ import { encode } from 'punycode';
 import * as st from 'shared_types/types/shared_types';
 
 // Should be a key from a secure key store
-const privateKey = new TextEncoder().encode('kKpNNWIPPK8hvgsuz6olBOXQ3xmumLU7');
+const privateKey = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
 
 export const signer = async (request: st.SignerRequest): Promise<st.SignerResponse> => {
     console.log('signer', request);
@@ -20,7 +20,7 @@ export const signer = async (request: st.SignerRequest): Promise<st.SignerRespon
         }
         case st.SignerRequestVariantVerification: {
             const publicKey = await ed.getPublicKeyAsync(privateKey);
-            const encoded = encodeURIComponent(new TextDecoder().decode(publicKey));
+            const encoded = bytesToBase64(publicKey);
 
             const jwkStr = JSON.stringify({
                 kty: 'OKP',
@@ -28,13 +28,19 @@ export const signer = async (request: st.SignerRequest): Promise<st.SignerRespon
                 use: 'enc',
                 x: encoded,
             });
-            const jwkB64 = encodeURIComponent(jwkStr)
+            // const jwkUrl = encodeURIComponent(jwkStr)
+            const jwkB64 = btoa(jwkStr).replace(/=/g, '');
             const kid = `did:jwk:${jwkB64}#0`;
 
-            return new st.SignerResponseVariantVerification('ed25519', kid);
+            return new st.SignerResponseVariantVerification('EdDSA', kid);
         }
         default: {
             return new st.SignerResponseVariantErr('invalid request');
         }
     }
 };
+
+const bytesToBase64 = (bytes: Uint8Array) => {
+    const binString = Array.from(bytes, (byte) => String.fromCodePoint(byte)).join('');
+    return btoa(binString).replace(/=/g, '');
+  };
