@@ -245,7 +245,7 @@ async fn metadata(
 // ----------------------------------------------------------------------------
 
 /// Wrapper for axum::Response
-pub struct AxResult<T>(vercre_core::Result<T>);
+pub struct AxResult<T>(vercre_vci::Result<T>);
 
 impl<T> IntoResponse for AxResult<T>
 where
@@ -260,8 +260,8 @@ where
     }
 }
 
-impl<T> From<vercre_core::Result<T>> for AxResult<T> {
-    fn from(val: vercre_core::Result<T>) -> Self {
+impl<T> From<vercre_vci::Result<T>> for AxResult<T> {
+    fn from(val: vercre_vci::Result<T>) -> Self {
         Self(val)
     }
 }
