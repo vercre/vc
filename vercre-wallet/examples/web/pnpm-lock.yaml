@@ -66,7 +66,7 @@ devDependencies:
     version: 6.21.0(eslint@8.57.0)(typescript@5.3.3)
   '@vitejs/plugin-react':
     specifier: ^4.2.1
-    version: 4.2.1(vite@5.1.5)
+    version: 4.2.1(vite@5.1.7)
   eslint:
     specifier: ^8.56.0
     version: 8.57.0
@@ -95,20 +95,20 @@ devDependencies:
     specifier: ^5.3.3
     version: 5.3.3
   vite:
-    specifier: ^5.0.12
-    version: 5.1.5(@types/node@20.11.24)
+    specifier: ^5.1.7
+    version: 5.1.7(@types/node@20.11.24)
   vite-plugin-csp:
     specifier: ^1.1.2
-    version: 1.1.2(vite@5.1.5)
+    version: 1.1.2(vite@5.1.7)
   vite-plugin-mkcert:
     specifier: ^1.17.3
-    version: 1.17.4(vite@5.1.5)
+    version: 1.17.4(vite@5.1.7)
   vite-plugin-top-level-await:
     specifier: ^1.4.1
-    version: 1.4.1(vite@5.1.5)
+    version: 1.4.1(vite@5.1.7)
   vite-plugin-wasm:
     specifier: ^3.3.0
-    version: 3.3.0(vite@5.1.5)
+    version: 3.3.0(vite@5.1.7)
 
 packages:
 
@@ -1593,7 +1593,7 @@ packages:
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
     dev: true
 
-  /@vitejs/plugin-react@4.2.1(vite@5.1.5):
+  /@vitejs/plugin-react@4.2.1(vite@5.1.7):
     resolution: {integrity: sha512-oojO9IDc4nCUUi8qIR11KoQm0XFFLIwsRBwHRR4d/88IWghn1y6ckz/bJ8GHDCsYEJee8mDzqtJxh15/cisJNQ==}
     engines: {node: ^14.18.0 || >=16.0.0}
     peerDependencies:
@@ -1604,7 +1604,7 @@ packages:
       '@babel/plugin-transform-react-jsx-source': 7.23.3(@babel/core@7.24.0)
       '@types/babel__core': 7.20.5
       react-refresh: 0.14.0
-      vite: 5.1.5(@types/node@20.11.24)
+      vite: 5.1.7(@types/node@20.11.24)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -1784,7 +1784,7 @@ packages:
   /axios@1.6.7(debug@4.3.4):
     resolution: {integrity: sha512-/hDJGff6/c7u0hDkvkGxR/oy6CbCs8ziCsC7SqmhjfozqiJGc8Z11wrv9z9lYfY4K8l+H9TpjcMDX0xOZmx+RA==}
     dependencies:
-      follow-redirects: 1.15.5(debug@4.3.4)
+      follow-redirects: 1.15.6(debug@4.3.4)
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -2619,8 +2619,8 @@ packages:
     resolution: {integrity: sha512-X8cqMLLie7KsNUDSdzeN8FYK9rEt4Dt67OsG/DNGnYTSDBG4uFAJFBnUeiV+zCVAvwFy56IjM9sH51jVaEhNxw==}
     dev: true
 
-  /follow-redirects@1.15.5(debug@4.3.4):
-    resolution: {integrity: sha512-vSFWUON1B+yAw1VN4xMfxgn5fTUiaOzAJCKBwIIgT/+7CuGy9+r+5gITvP62j3RmaD5Ph65UaERdOSRGUzZtgw==}
+  /follow-redirects@1.15.6(debug@4.3.4):
+    resolution: {integrity: sha512-wWN62YITEaOpSK584EZXJafH1AGpO8RVgElfkuXbTOrPX4fIfOyEpW/CsiNd8JdYrAoOvafRTOEnvsO++qCqFA==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -3895,7 +3895,7 @@ packages:
     hasBin: true
     dev: true
 
-  /vite-plugin-csp@1.1.2(vite@5.1.5):
+  /vite-plugin-csp@1.1.2(vite@5.1.7):
     resolution: {integrity: sha512-fX1V/fcWwHvvrwVtnVOxZ1RDQa5JU3Rpb4j1a6oZhp/YK8NnWf9M4dkCBoWH4Vw6iGQ/q68+YTSatdFhQWX3RA==}
     peerDependencies:
       vite: '>=2.6.5'
@@ -3904,10 +3904,10 @@ packages:
       cheerio: 1.0.0-rc.12
       csp-typed-directives: 1.1.10
       css-tree: 2.3.1
-      vite: 5.1.5(@types/node@20.11.24)
+      vite: 5.1.7(@types/node@20.11.24)
     dev: true
 
-  /vite-plugin-mkcert@1.17.4(vite@5.1.5):
+  /vite-plugin-mkcert@1.17.4(vite@5.1.7):
     resolution: {integrity: sha512-P/B/tXhsUdpFO4Go1f2obu8WL3xxA3lbsbz4YzflbWfqWl15uwFiXaiCCBztJu1f4WnilrdXYihGrGT9jU743A==}
     engines: {node: '>=v16.7.0'}
     peerDependencies:
@@ -3917,12 +3917,12 @@ packages:
       axios: 1.6.7(debug@4.3.4)
       debug: 4.3.4
       picocolors: 1.0.0
-      vite: 5.1.5(@types/node@20.11.24)
+      vite: 5.1.7(@types/node@20.11.24)
     transitivePeerDependencies:
       - supports-color
     dev: true
 
-  /vite-plugin-top-level-await@1.4.1(vite@5.1.5):
+  /vite-plugin-top-level-await@1.4.1(vite@5.1.7):
     resolution: {integrity: sha512-hogbZ6yT7+AqBaV6lK9JRNvJDn4/IJvHLu6ET06arNfo0t2IsyCaon7el9Xa8OumH+ESuq//SDf8xscZFE0rWw==}
     peerDependencies:
       vite: '>=2.8'
@@ -3930,22 +3930,22 @@ packages:
       '@rollup/plugin-virtual': 3.0.2
       '@swc/core': 1.4.6
       uuid: 9.0.1
-      vite: 5.1.5(@types/node@20.11.24)
+      vite: 5.1.7(@types/node@20.11.24)
     transitivePeerDependencies:
       - '@swc/helpers'
       - rollup
     dev: true
 
-  /vite-plugin-wasm@3.3.0(vite@5.1.5):
+  /vite-plugin-wasm@3.3.0(vite@5.1.7):
     resolution: {integrity: sha512-tVhz6w+W9MVsOCHzxo6SSMSswCeIw4HTrXEi6qL3IRzATl83jl09JVO1djBqPSwfjgnpVHNLYcaMbaDX5WB/pg==}
     peerDependencies:
       vite: ^2 || ^3 || ^4 || ^5
     dependencies:
-      vite: 5.1.5(@types/node@20.11.24)
+      vite: 5.1.7(@types/node@20.11.24)
     dev: true
 
-  /vite@5.1.5(@types/node@20.11.24):
-    resolution: {integrity: sha512-BdN1xh0Of/oQafhU+FvopafUp6WaYenLU/NFoL5WyJL++GxkNfieKzBhM24H3HVsPQrlAqB7iJYTHabzaRed5Q==}
+  /vite@5.1.7(@types/node@20.11.24):
+    resolution: {integrity: sha512-sgnEEFTZYMui/sTlH1/XEnVNHMujOahPLGMxn1+5sIT45Xjng1Ec1K78jRP15dSmVgg5WBin9yO81j3o9OxofA==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
     peerDependencies:
