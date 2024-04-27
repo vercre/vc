@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 //! # Wallet App
 //!
 //! The Wallet app module is the top level implementation for `crux::App`.
@@ -72,10 +74,19 @@ pub struct Model {
 /// The view model represents the App's 'external' state to the shell.
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct ViewModel {
+    /// The credential sub-app view model.
     pub credential: credential::ViewModel,
+
+    /// The issuance sub-app view model.
     pub issuance: issuance::ViewModel,
+
+    /// The presentation sub-app view model.
     pub presentation: presentation::ViewModel,
+
+    /// App error for consumption by the shell.
     pub error: Option<String>,
+
+    /// The current view of the app.
     pub view: String,
 }
 

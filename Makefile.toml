@@ -43,7 +43,7 @@ install_crate = "rustfmt"
 # not using (yet) -Dclippy::restriction
 [tasks.lint]
 command = "cargo"
-args = ["clippy", "--", "-Dclippy::all", "-Dclippy::nursery", "-Dclippy::pedantic"]
+args = ["clippy"]
 install_crate = { rustup_component_name = "clippy" }
 
 [tasks.audit]

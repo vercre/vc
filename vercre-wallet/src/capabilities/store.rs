@@ -73,7 +73,7 @@ pub enum StoreResponse {
     /// The store operation returned a list of credentials.
     List(Vec<StoreEntry>),
 
-    // The store operation returned with the specified error.
+    /// The store operation returned with the specified error.
     Err(String),
 }
 

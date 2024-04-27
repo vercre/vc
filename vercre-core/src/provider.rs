@@ -13,6 +13,9 @@ use crate::metadata::{
     Server as ServerMetadata,
 };
 
+/// Result is used for all external errors. It is used to constrain public API to
+/// returning `[vercre_core::Error]` types in accordance with the OpenID4VCI and
+/// OpenID4VP specifications.
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// The Client trait is used by implementers to provide Client metadata to the
@@ -130,6 +133,8 @@ impl Algorithm {
 }
 
 mod error {
+    #![allow(missing_docs)]
+
     //! The `Error` type is used to allow `Provider` trait implementers to return errors
     //! that can readily be converted to the `vercre_core::Error` type.
 
@@ -139,6 +144,8 @@ mod error {
 
     use thiserror::Error;
 
+    /// `ProviderError` is used to provide a common error type for common provider
+    /// errors.
     #[allow(clippy::module_name_repetitions)]
     #[derive(Error, Debug)]
     pub enum ProviderError {

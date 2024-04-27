@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 //! # Issuance App
 //!
 //! The Issuance app implements the vercre-wallet's credential issuance flow.
@@ -77,7 +79,7 @@ pub enum Event {
     #[serde(skip)]
     Logo(credential::Credential, crux_http::Result<crux_http::Response<Vec<u8>>>),
 
-    // SaveCredential adds the supplied credential to the model.
+    /// `SaveCredential` adds the supplied credential to the model.
     #[serde(skip)]
     SaveCredential(credential::Credential),
 

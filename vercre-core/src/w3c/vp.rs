@@ -258,11 +258,17 @@ pub struct Filter {
     pub value: FilterValue,
 }
 
+/// `FilterValue` represents the type and value of a `JSONPath` filter.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum FilterValue {
+    /// The value of the filter is a constant.
     Const(String),
+
+    /// The value of the filter is a regular expression.
     Pattern(String),
+
+    /// The value of the filter is a JSON Schema type format. For example, "date-time".
     Format(String),
 }
 

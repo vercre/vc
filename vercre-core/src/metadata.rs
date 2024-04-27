@@ -559,12 +559,21 @@ pub struct Claim {
     pub claim_nested: Option<HashMap<String, Box<Claim>>>,
 }
 
+/// `ValueType` is used to define a claim's value type.
 #[derive(Default, Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum ValueType {
+    /// Value of type String. The default.
     #[default]
     String,
+
+    /// Value of type Number.
     Number,
+
+    /// Image media types such as `image/jpeg`. See [IANA media type registry]
+    /// for a complete list of media types.
+    ///
+    ///[IANA media type registry]: (https://www.iana.org/assignments/media-types/media-types.xhtml#image)
     Image,
 }
 
@@ -778,9 +787,7 @@ impl CredentialConfiguration {
                 description: Some(String::from("Vercre employee ID credential")),
                 locale: Some(String::from("en-NZ")),
                 logo: Some(Image {
-                    uri: Some(String::from(
-                        "https://vercre.github.io/assets/employee.png",
-                    )),
+                    uri: Some(String::from("https://vercre.github.io/assets/employee.png")),
                     alt_text: Some(String::from("Vercre Logo")),
                 }),
                 text_color: Some(String::from("#ffffff")),
@@ -877,18 +884,13 @@ impl CredentialConfiguration {
                 description: Some(String::from("Vercre certified developer credential")),
                 locale: Some(String::from("en-NZ")),
                 logo: Some(Image {
-                    uri: Some(
-                        "https://vercre.github.io/assets/developer.png"
-                            .to_string(),
-                    ),
+                    uri: Some("https://vercre.github.io/assets/developer.png".to_string()),
                     alt_text: Some(String::from("Vercre Logo")),
                 }),
                 text_color: Some(String::from("#ffffff")),
                 background_color: Some(String::from("#010100")),
                 background_image: Some(Image {
-                    uri: Some(
-                        "https://vercre.github.io/assets/vercre-background.png".to_string(),
-                    ),
+                    uri: Some("https://vercre.github.io/assets/vercre-background.png".to_string()),
                     alt_text: Some(String::from("Vercre Background")),
                 }),
             }]),

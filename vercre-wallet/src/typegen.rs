@@ -18,6 +18,7 @@ use vercre_core::vci::Format;
 use crate::credential::Credential;
 use crate::{app, credential, issuance, presentation};
 
+#[allow(missing_docs)]
 pub enum Language {
     Java,
     Swift,

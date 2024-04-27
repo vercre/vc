@@ -19,6 +19,9 @@ version.workspace = true
 bench = false
 crate-type = ["cdylib", "rlib"]
 
+# [lints]
+# workspace = true
+
 [dependencies]
 anyhow.workspace = true
 base64ct.workspace = true

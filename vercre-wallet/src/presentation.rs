@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 //! # Presentation App
 //!
 //! The Presentation app implements the vercre-wallet's credential presentation flow.

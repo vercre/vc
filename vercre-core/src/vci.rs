@@ -636,8 +636,11 @@ pub struct TokenResponse {
     pub scope: Option<String>,
 }
 
+/// Access token type as defined in [RFC6749]. Per the specification, the only
+/// value allowed is "`Bearer`".
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TokenType {
+    /// The only valid value is "`Bearer`".
     #[default]
     Bearer,
 }
@@ -647,6 +650,8 @@ pub enum TokenType {
 /// `credential_identifiers` parameter for use in Credential requests.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct TokenAuthorizationDetail {
+    /// Reuse (and flatten) the existing [`AuthorizationDetail`] object used in
+    /// authorization requests.
     #[serde(flatten)]
     pub authorization_detail: AuthorizationDetail,
 

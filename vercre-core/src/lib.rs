@@ -61,9 +61,14 @@ pub trait Context: Send + Sync + Debug {
 }
 
 // TODO: replace async fn in trait with async trait
+
+/// The Endpoint trait is implemented by issuance and presentation endpoints in order
+/// to provide a common basis for request handling.
 pub trait Endpoint: Debug {
+    /// The provider type to use with the endpoint.
     type Provider: Callback;
 
+    /// Access to the endpoint's provider.
     fn provider(&self) -> &Self::Provider;
 
     /// Wrap the processing of individual requests for shared handling of callbacks,

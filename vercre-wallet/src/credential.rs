@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 //! # Credential App
 //!
 //! The Credential app module implements `crux::App` for credential management.
@@ -89,8 +91,11 @@ pub struct Model {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename = "CredentialView")]
 pub struct ViewModel {
+    /// Serialized list of credentials. Serializing as a String makes it easier to
+    /// serialize to the shell.
     pub credentials: String,
 
+    /// Error message for the shell, if any.
     #[serde(skip)]
     pub error: Option<String>,
 }

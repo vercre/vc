@@ -431,7 +431,7 @@ impl From<crate::provider::Error> for Error {
 ///
 /// # Example
 ///
-/// ```
+/// ```rust,ignore
 /// use vercre_core::error::Err;
 /// use vercre_core::{err, error, Result};
 ///

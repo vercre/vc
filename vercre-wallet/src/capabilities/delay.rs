@@ -1,3 +1,8 @@
+//! Delay Capability
+//!
+//! This capability allows the application to delay the dispatch of an event by a
+//!  specified amount of time.
+
 use crux_core::capability::{CapabilityContext, Operation};
 use crux_core::macros::Capability;
 use serde::{Deserialize, Serialize};
@@ -6,6 +11,7 @@ use serde::{Deserialize, Serialize};
 #[allow(clippy::module_name_repetitions)]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct DelayOperation {
+    /// Delay in milliseconds.
     pub delay_ms: u64,
 }
 
@@ -14,6 +20,7 @@ impl Operation for DelayOperation {
     type Output = ();
 }
 
+/// Delay capability context.
 #[derive(Capability)]
 #[allow(clippy::module_name_repetitions)]
 pub struct Delay<Ev> {

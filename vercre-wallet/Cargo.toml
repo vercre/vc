@@ -28,6 +28,9 @@ path = "uniffi-bindgen.rs"
 typegen = ["crux_core/typegen", "vercre-core/typegen"]
 wasm = ["vercre-core/wasm", "dep:web-sys"]
 
+[lints]
+workspace = true
+
 [dependencies]
 anyhow.workspace = true
 base64ct = { version = "1.6.0", default-features = false, features = ["std"] }

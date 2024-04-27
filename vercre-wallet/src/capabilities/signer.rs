@@ -1,4 +1,17 @@
-//! # Verifiable Presentation Signer
+//! # Signer
+//!
+//! The `Signer` capability is used to sign requests and responses using the wallet's
+//! signing key.
+//!
+//! Signing operations occur during:
+//!
+//! 1. Credential issuance — the wallet signs a Proof (JWT or CWT) as proof of possesion
+//!    of key material. That is, proof that the wallet controls the private key for the
+//!    DID the issued credential will be bound to.
+//!
+//! 2. Credential presentation — the wallet signs a Proof eincluded in the presentation
+//!    response as proof of possession of key material. That is, proof that the wallet
+//!    controls the private key for the DID the presentation response is bound to.
 
 use std::fmt::Display;
 
@@ -57,11 +70,14 @@ pub enum SignerResponse {
 
     /// Signer's verification information.
     Verification {
+        /// The algorithm used for signing.
         alg: String,
+
+        /// The key identifier.
         kid: String,
     },
 
-    // The signing operation returned with the specified error.
+    /// The signing operation returned with the specified error.
     Err(String),
 }
 

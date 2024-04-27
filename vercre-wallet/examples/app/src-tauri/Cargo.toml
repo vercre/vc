@@ -8,6 +8,9 @@ version.workspace = true
 crate-type = ["cdylib", "rlib", "staticlib"]
 name = "tauri_lib"
 
+[lints]
+workspace = true
+
 [dependencies]
 anyhow = "1.0.82"
 argon2 = { version = "2.1.0", package = "rust-argon2" }

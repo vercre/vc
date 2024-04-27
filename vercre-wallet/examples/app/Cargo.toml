@@ -7,6 +7,17 @@ edition = "2021"
 rust-version = "1.72"
 version = "0.1.0"
 
+[workspace.lints.rust]
+unused_extern_crates = "warn"
+trivial_numeric_casts = "warn"
+# unstable_features = "warn"
+unused_import_braces = "warn"
+
+[workspace.lints.clippy]
+all = "warn"
+pedantic = "warn"
+nursery = "warn"
+
 [workspace.dependencies]
 vercre-wallet = { path = "../../../vercre-wallet" }
 
