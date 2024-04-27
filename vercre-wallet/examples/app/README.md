@@ -4,20 +4,26 @@ Tauri + React + Typescript
 
 ## Getting Started
 
-Launch the Tauri app using:
+Install dependencies:
 
 ```bash
 pnpm install
+```
+
+Launch the Tauri app using:
+
+```bash
 pnpm tauri dev
 ```
 
-or use VS Code debugger with the `Tauri Bundle` launch configuration.
+OR use VS Code debugger with the `Tauri Bundle` launch configuration.
 
 ### Issuance
 
 Launch the `vercre-vci/examples/http` server. It runs on port 8080 by default.
 
-Once both the VCI server and Tauri app are running, the issuance process can be initiated by sending a Credential Offer to the wallet.
+Once both the VCI server and Tauri app are running, the issuance process can be 
+initiated by sending a Credential Offer to the wallet.
 
 ```bash
 # get pre-authorized credential offer from issuance service

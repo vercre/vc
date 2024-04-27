@@ -213,6 +213,7 @@ impl crux_core::App for App {
                     web_sys::console::debug_2(&"model:".into(), &format!("{model:?}").into());
                     web_sys::console::debug_2(&"req:".into(), &format!("{req}").into());
                 }
+                log::info!("Token request: {req}");
                 caps.http
                     .post(format!("{}/token", model.offer.credential_issuer))
                     .content_type("application/x-www-form-urlencoded")
