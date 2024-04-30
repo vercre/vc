@@ -119,7 +119,9 @@ where
                 println!("batch state: {:?}", self.state);
 
                 for (k, v) in &self.issuer_meta.credential_configurations_supported {
+                    println!("k: {k:?}, v: {v:?}");
                     if (&v.format == format) && (v.credential_definition.type_ == cred_def.type_) {
+                        println!("matched");
                         authorized = self.state.credential_configuration_ids.contains(k);
                         break;
                     }
