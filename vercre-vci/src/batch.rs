@@ -117,12 +117,6 @@ where
                 let mut authorized = false;
 
                 for (k, v) in &self.issuer_meta.credential_configurations_supported {
-                    println!("format: {:?}, v.format: {:?}", *format, v.format);
-                    println!(
-                        "cred_def.type_: {:?}, v.credential_definition.type_: {:?}",
-                        cred_def.type_, v.credential_definition.type_
-                    );
-
                     if (&v.format == format) && (v.credential_definition.type_ == cred_def.type_) {
                         authorized = self.state.credential_configuration_ids.contains(k);
                         break;
