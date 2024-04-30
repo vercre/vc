@@ -236,9 +236,11 @@ impl Model {
         &mut self, mut response: Response<CredentialResponse>,
     ) -> anyhow::Result<credential::Credential> {
         if !response.status().is_success() {
+            println!("credential_response: {:?}", response.body());
             return Err(anyhow!("Issue requesting credential: {:?}", response.body()));
         }
         let Some(cred_resp) = response.take_body() else {
+            println!("Missing response body");
             return Err(anyhow!("Missing response body"));
         };
 
@@ -250,12 +252,15 @@ impl Model {
         };
 
         let Some(value) = &cred_resp.credential else {
+            println!("Missing VC");
             return Err(anyhow!("Missing VC"));
         };
         let Some(vc_str) = value.as_str() else {
+            println!("VC is not a string");
             return Err(anyhow!("VC is not a string"));
         };
         let Ok(vc) = VerifiableCredential::from_str(vc_str) else {
+            println!("Could not parse VC");
             return Err(anyhow!("Could not parse VC"));
         };
 
@@ -273,6 +278,7 @@ impl Model {
             }
         }
 
+        print!("Could not find metadata for returned VC");
         Err(anyhow!("Could not find metadata for returned VC"))
     }
 }

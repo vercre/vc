@@ -209,13 +209,13 @@ where
             // ------------------------------------------------
             // Authorization Code Grant
             // ------------------------------------------------
-            let iss_state = gen::state_key();
+            let issuer_state = gen::state_key();
 
             auth_grant = Some(AuthorizationCodeGrant {
-                issuer_state: Some(iss_state.clone()),
+                issuer_state: Some(issuer_state.clone()),
                 authorization_server: None,
             });
-            StateManager::put(provider, &iss_state, state.to_vec(), state.expires_at).await?;
+            StateManager::put(provider, &issuer_state, state.to_vec(), state.expires_at).await?;
         }
 
         // return response

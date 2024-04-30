@@ -115,6 +115,9 @@ where
                 // check request has been authorized:
                 //   - match format + type against authorized items in state
                 let mut authorized = false;
+
+                println!("batch state: {:?}", self.state);
+
                 for (k, v) in &self.issuer_meta.credential_configurations_supported {
                     if (&v.format == format) && (v.credential_definition.type_ == cred_def.type_) {
                         authorized = self.state.credential_configuration_ids.contains(k);
