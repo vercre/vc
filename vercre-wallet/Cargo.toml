@@ -56,7 +56,7 @@ web-sys = { version = "0.3.69", features = ["console"], optional = true }
 assert_let_bind = "0.1.1"
 axum = { version = "0.7.5", features = ["macros"] }
 axum-extra = { version = "0.9.3", features = ["typed-header"] }
-axum-test = "14.9.0"
+axum-test = "14.9.1"
 insta = { version = "1.38.0", features = ["redactions", "yaml"] }
 test-utils = { path = "../test-utils" }
 tokio = { version = "1.37.0", default-features = false, features = ["fs", "macros", "rt"] }
