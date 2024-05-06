@@ -13,7 +13,7 @@ use std::str::FromStr;
 
 use anyhow::anyhow;
 use chrono::{TimeDelta, Utc};
-use tracing::{instrument, trace};
+use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::{Ancillary as _, Err};
 use vercre_core::jwt::Jwt;
@@ -40,6 +40,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
+    #[instrument(level = "debug", skip(self))]
     pub async fn batch(&self, request: &BatchCredentialRequest) -> Result<BatchCredentialResponse> {
         let Ok(buf) = StateManager::get(&self.provider, &request.access_token).await else {
             err!(Err::AccessDenied, "invalid access token");
@@ -81,9 +82,8 @@ where
         self.callback_id.clone()
     }
 
-    #[instrument]
     async fn verify(&mut self, provider: &P, request: &Self::Request) -> Result<&Self> {
-        trace!("Context::verify");
+        tracing::debug!("Context::verify");
 
         let Some(token_state) = &self.state.token else {
             err!(Err::AccessDenied, "invalid access token state");
@@ -190,9 +190,8 @@ where
         Ok(self)
     }
 
-    #[instrument]
     async fn process(&self, provider: &P, request: &Self::Request) -> Result<Self::Response> {
-        trace!("Context::process");
+        tracing::debug!("Context::process");
 
         // process credential requests
         let mut responses = Vec::<CredentialResponse>::new();
@@ -234,11 +233,10 @@ where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
 {
     // Processes the Credential Request to generate a Credential Response.
-    #[instrument]
     async fn make_response(
         &self, provider: &P, request: &CredentialRequest,
     ) -> Result<CredentialResponse> {
-        trace!("Context::make_response");
+        tracing::debug!("Context::make_response");
 
         // Try to create a VC. If None, then return a deferred issuance response.
         let Some(mut vc) = self.make_vc(provider, request).await? else {
@@ -279,11 +277,10 @@ where
     // Attempt to generate a Verifiable Credential from information provided in the Credential
     // Request. May return `None` if the credential is not ready to be issued because the request
     // for Holder is pending.
-    #[instrument]
     async fn make_vc(
         &self, provider: &P, request: &CredentialRequest,
     ) -> Result<Option<VerifiableCredential>> {
-        trace!("Context::make_vc");
+        tracing::debug!("Context::make_vc");
 
         let cred_def = self.credential_definition(request)?;
         let Some(holder_id) = &self.state.holder_id else {
@@ -344,9 +341,8 @@ where
     }
 
     // Get the request's credential definition. If it does not exist, create it.
-    #[instrument]
     fn credential_definition(&self, request: &CredentialRequest) -> Result<CredentialDefinition> {
-        trace!("Context::credential_definition");
+        tracing::debug!("Context::credential_definition");
 
         if let Some(mut cred_def) = request.credential_definition.clone() {
             // add credential subject when not present

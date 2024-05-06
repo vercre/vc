@@ -152,7 +152,7 @@ impl ClientStore {
 
     fn get(&self, client_id: &str) -> Result<types::Client> {
         let Some(client) = self.clients.lock().expect("should lock").get(client_id).cloned() else {
-            return Err(anyhow!("client not found for client_id: {client_id}").into());
+            return Err(anyhow!("client not found for client_id: {client_id}"));
         };
         Ok(client)
     }
@@ -223,7 +223,7 @@ impl HolderStore {
 
     fn authorize(&self, holder_id: &str, _credential_configuration_id: &str) -> Result<bool> {
         if self.holders.lock().expect("should lock").get(holder_id).is_none() {
-            return Err(anyhow!("no matching holder_id").into());
+            return Err(anyhow!("no matching holder_id"));
         };
         Ok(true)
     }
@@ -286,7 +286,7 @@ impl StateStore {
 
     fn get(&self, key: &str) -> Result<Vec<u8>> {
         let Some(state) = self.store.lock().expect("should lock").get(key).cloned() else {
-            return Err(anyhow!("state not found for key: {key}").into());
+            return Err(anyhow!("state not found for key: {key}"));
         };
         Ok(state)
     }
@@ -320,7 +320,7 @@ impl IssuerStore {
 
     fn get(&self, issuer_id: &str) -> Result<types::Issuer> {
         let Some(issuer) = self.issuers.get(issuer_id) else {
-            return Err(anyhow!("issuer not found").into());
+            return Err(anyhow!("issuer not found"));
         };
         Ok(issuer.clone())
     }
@@ -344,7 +344,7 @@ impl ServerStore {
 
     fn get(&self, server_id: &str) -> Result<types::Server> {
         let Some(server) = self.servers.get(server_id) else {
-            return Err(anyhow!("issuer not found").into());
+            return Err(anyhow!("issuer not found"));
         };
         Ok(server.clone())
     }

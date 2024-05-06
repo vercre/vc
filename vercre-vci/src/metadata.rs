@@ -23,7 +23,7 @@
 //!     Accept-Language: fr-ch, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5
 //! ```
 
-use tracing::{instrument, trace};
+use tracing::instrument;
 pub use vercre_core::metadata as types;
 use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
@@ -42,6 +42,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
+    #[instrument(level = "debug", skip(self))]
     pub async fn metadata(&self, request: &MetadataRequest) -> Result<MetadataResponse> {
         let ctx = Context {
             _p: std::marker::PhantomData,
@@ -68,11 +69,10 @@ where
         None
     }
 
-    #[instrument]
     async fn process(
         &self, provider: &Self::Provider, request: &Self::Request,
     ) -> Result<Self::Response> {
-        trace!("Context::process");
+        tracing::debug!("Context::process");
 
         // TODO: add languages to request
         let credential_issuer = Issuer::metadata(provider, &request.credential_issuer).await?;

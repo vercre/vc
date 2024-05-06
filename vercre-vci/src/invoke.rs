@@ -68,7 +68,7 @@ use std::fmt::Debug;
 
 use anyhow::anyhow;
 use chrono::Utc;
-use tracing::{instrument, trace};
+use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
@@ -91,6 +91,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
+    #[instrument(level = "debug", skip(self))]
     pub async fn invoke(&self, request: &InvokeRequest) -> Result<InvokeResponse> {
         let ctx = Context {
             callback_id: request.callback_id.clone(),
@@ -119,9 +120,8 @@ where
         self.callback_id.clone()
     }
 
-    #[instrument]
     async fn verify(&mut self, provider: &P, request: &Self::Request) -> Result<&Self> {
-        trace!("Context::verify");
+        tracing::debug!("Context::verify");
 
         let issuer_meta = Issuer::metadata(provider, &request.credential_issuer).await?;
 
@@ -151,11 +151,10 @@ where
     }
 
     // Process the request.
-    #[instrument]
     async fn process(
         &self, provider: &Self::Provider, request: &Self::Request,
     ) -> Result<Self::Response> {
-        trace!("Context::process");
+        tracing::debug!("Context::process");
 
         let mut state = State::builder()
             .credential_issuer(request.credential_issuer.clone())

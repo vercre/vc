@@ -25,7 +25,7 @@ use std::str::FromStr;
 
 use serde_json::Value;
 use serde_json_path::JsonPath;
-use tracing::{instrument, trace};
+use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{Callback, Client, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
@@ -47,6 +47,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
+    #[instrument(level = "debug", skip(self))]
     pub async fn response(&self, request: &ResponseRequest) -> Result<ResponseResponse> {
         // TODO: handle case where Wallet returns error instead of subm
 
@@ -86,11 +87,8 @@ where
     }
 
     // Verfiy the vp_token and presentation subm
-    #[instrument]
-    async fn verify(
-        &mut self, provider: &Self::Provider, request: &Self::Request,
-    ) -> Result<&Self> {
-        trace!("Context::verify");
+    async fn verify(&mut self, _: &Self::Provider, request: &Self::Request) -> Result<&Self> {
+        tracing::debug!("Context::verify");
 
         // TODO:
         // Validate the integrity, authenticity, and holder binding of each Verifiable
@@ -222,11 +220,10 @@ where
     }
 
     // Process the authorization request
-    #[instrument]
     async fn process(
         &self, provider: &Self::Provider, request: &Self::Request,
     ) -> Result<Self::Response> {
-        trace!("Context::process");
+        tracing::debug!("Context::process");
 
         // clear state
         let Some(state_key) = &request.state else {

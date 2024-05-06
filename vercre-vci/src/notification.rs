@@ -21,7 +21,7 @@
 //! Credential Issuer will receive a notification within a certain time period or at
 //! all.
 
-use tracing::{instrument, trace};
+use tracing::instrument;
 use vercre_core::vci::{MetadataRequest, MetadataResponse};
 use vercre_core::{Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager};
 
@@ -38,6 +38,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
+    #[instrument(level = "debug", skip(self))]
     pub async fn notification(
         &self, request: impl Into<MetadataRequest>,
     ) -> Result<MetadataResponse> {
@@ -58,12 +59,11 @@ impl super::Context for Context {
         None
     }
 
-    #[instrument]
     async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
     where
         P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
     {
-        trace!("Context::process");
+        tracing::debug!("Context::process");
 
         // TODO: add languages to request
         let credential_issuer = Issuer::metadata(provider, &request.credential_issuer).await?;

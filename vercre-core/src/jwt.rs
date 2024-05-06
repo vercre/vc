@@ -23,7 +23,6 @@ use std::{fmt, str};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use serde::de::{self, DeserializeOwned, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
-use tracing::{instrument, trace};
 
 use crate::error::{self, Err};
 use crate::provider::Signer;
@@ -63,9 +62,10 @@ where
     T: Serialize + Default + Send + Sync + Debug,
 {
     /// Signs the JWT using the provided Signer
-    #[instrument]
+    ///
+    /// # Errors
     pub async fn sign(&mut self, signer: impl Signer) -> Result<String> {
-        trace!("Jwt::sign");
+        tracing::debug!("Jwt::sign");
 
         // set header fields
         if self.header.typ.is_empty() {
@@ -109,9 +109,8 @@ where
 {
     type Err = error::Error;
 
-    #[instrument]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        trace!("Jwt::from_str");
+        tracing::debug!("Jwt::from_str");
 
         // verify signature
         // TODO: cater for different key types
@@ -139,8 +138,8 @@ where
         let Ok(sig) = Base64UrlUnpadded::decode_vec(parts[2]) else {
             err!("unable to base64 decode proof signature");
         };
-        let jwk = match proof::Jwk::from_str(&jwt.header.kid) {
-            Ok(jwk) => jwk,
+        let proof_jwk = match proof::Jwk::from_str(&jwt.header.kid) {
+            Ok(proof_jwk) => proof_jwk,
             Err(e) => {
                 let hint = format!(
                     "unable to parse proof JWT 'kid' into JWK: {}",
@@ -150,7 +149,7 @@ where
             }
         };
 
-        jwk.verify(&msg, &sig).map(|()| jwt)
+        proof_jwk.verify(&msg, &sig).map(|()| jwt)
     }
 }
 

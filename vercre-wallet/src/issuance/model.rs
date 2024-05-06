@@ -148,7 +148,7 @@ impl Model {
 
     /// Build a token request to retrieve an access token for use in requested
     /// credentials.
-    pub(crate) fn token_request(&mut self) -> anyhow::Result<String> {
+    pub(crate) fn token_request(&self) -> anyhow::Result<String> {
         // pre-authorized flow
         let Some(grants) = &self.offer.grants else {
             return Err(anyhow!("Missing grants"));
@@ -187,7 +187,7 @@ impl Model {
     }
 
     /// Build a credential request to retrieve a credential.
-    pub(crate) fn request_jwt(&mut self, alg: String, kid: String) -> Jwt<ProofClaims> {
+    pub(crate) fn request_jwt(&self, alg: String, kid: String) -> Jwt<ProofClaims> {
         let kid2 = kid.clone();
         let holder_did = kid2.split('#').collect::<Vec<&str>>()[0];
 

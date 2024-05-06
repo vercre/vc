@@ -4,7 +4,7 @@ use std::fmt::Debug;
 
 use anyhow::anyhow;
 use chrono::Utc;
-use tracing::{instrument, trace};
+use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
 pub use vercre_core::vci::{RegistrationRequest, RegistrationResponse};
@@ -23,6 +23,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
+    #[instrument(level = "debug", skip(self))]
     pub async fn register(&self, request: &RegistrationRequest) -> Result<RegistrationResponse> {
         let ctx = Context {
             _p: std::marker::PhantomData,
@@ -49,11 +50,10 @@ where
         None
     }
 
-    #[instrument]
     async fn verify(
         &mut self, provider: &Self::Provider, request: &Self::Request,
     ) -> Result<&Self> {
-        trace!("Context::verify");
+        tracing::debug!("Context::verify");
 
         let buf = match StateManager::get(provider, &request.access_token).await {
             Ok(buf) => buf,
@@ -70,11 +70,10 @@ where
         Ok(self)
     }
 
-    #[instrument]
     async fn process(
         &self, provider: &Self::Provider, request: &Self::Request,
     ) -> Result<Self::Response> {
-        trace!("Context::process");
+        tracing::debug!("Context::process");
 
         let Ok(client_meta) = provider.register(&request.client_metadata).await else {
             err!("Registration failed");

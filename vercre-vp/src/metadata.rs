@@ -7,7 +7,7 @@
 
 use std::fmt::Debug;
 
-use tracing::{instrument, trace};
+use tracing::instrument;
 pub use vercre_core::metadata as types;
 use vercre_core::provider::{Callback, Client, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
@@ -27,6 +27,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
+    #[instrument(level = "debug", skip(self))]
     pub async fn metadata(&self, request: &MetadataRequest) -> Result<MetadataResponse> {
         let ctx = Context {
             _p: std::marker::PhantomData,
@@ -54,9 +55,8 @@ where
         None
     }
 
-    #[instrument]
     async fn process(&self, provider: &P, req: &Self::Request) -> Result<Self::Response> {
-        trace!("Context::process");
+        tracing::debug!("Context::process");
 
         Ok(MetadataResponse {
             client: Client::metadata(provider, &req.client_id).await?,

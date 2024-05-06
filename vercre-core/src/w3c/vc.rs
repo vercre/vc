@@ -16,7 +16,6 @@ use chrono::{DateTime, Utc};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tracing::{debug, instrument, span, trace, Level};
 
 use crate::jwt::{self, Jwt};
 use crate::w3c::serde::{flexobj, flexvec, option_flexvec};
@@ -134,9 +133,10 @@ impl VerifiableCredential {
     }
 
     /// Transforms the `VerifiableCredential` into its JWT equivalent.
-    #[instrument]
+    ///
+    /// # Errors
     pub fn to_jwt(&mut self) -> Result<Jwt<VcClaims>> {
-        trace!("VerifiableCredential::to_jwt");
+        tracing::debug!("VerifiableCredential::to_jwt");
 
         let Some(proofs) = self.proof.clone() else {
             err!("proof is missing");
@@ -219,9 +219,8 @@ impl VerifiableCredential {
 impl FromStr for VerifiableCredential {
     type Err = error::Error;
 
-    #[instrument]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        trace!("VerifiableCredential::from_str");
+        tracing::debug!("VerifiableCredential::from_str");
         let vc_jwt = Jwt::<VcClaims>::from_str(s)?;
         Ok(vc_jwt.claims.vc)
     }
@@ -262,11 +261,9 @@ impl Serialize for Issuer {
     where
         S: Serializer,
     {
-        let _ = span!(Level::TRACE, "Issuer::serialize").entered();
-
         if let Some(extra) = &self.extra {
             // serialize the entire object, flattening any 'extra' fields.
-            debug!("serializing issuer to object: {:?}", &self);
+            tracing::debug!("serializing issuer to object: {:?}", &self);
             let mut map = serializer.serialize_map(None)?;
             map.serialize_entry("id", &self.id)?;
             for (k, v) in extra {
@@ -275,7 +272,7 @@ impl Serialize for Issuer {
             map.end()
         } else {
             // serialize to string when no extra fields are present
-            debug!("serializing issuer to string: {}", &self.id);
+            tracing::debug!("serializing issuer to string: {}", &self.id);
             serializer.serialize_str(&self.id)
         }
     }
@@ -553,9 +550,8 @@ pub struct VcBuilder {
 
 impl VcBuilder {
     /// Returns a new [`VcBuilder`]
-    #[instrument]
     pub fn new() -> Self {
-        trace!("VcBuilder::new");
+        tracing::debug!("VcBuilder::new");
 
         let mut builder: Self = Self::default();
 
@@ -621,9 +617,8 @@ impl VcBuilder {
     /// # Errors
     ///
     /// Fails with `Err::ServerError` if any of the VC's mandatory fields are not set.
-    #[instrument]
     pub fn build(self) -> Result<VerifiableCredential> {
-        trace!("VcBuilder::build");
+        tracing::debug!("VcBuilder::build");
 
         if self.vc.context.len() < 2 {
             err!("no context set");
@@ -648,9 +643,8 @@ impl VcBuilder {
 impl TryFrom<VcBuilder> for VerifiableCredential {
     type Error = error::Error;
 
-    #[instrument]
     fn try_from(builder: VcBuilder) -> Result<Self, Self::Error> {
-        trace!("VerifiableCredential::try_from");
+        tracing::debug!("VerifiableCredential::try_from");
         builder.build()
     }
 }
@@ -723,7 +717,8 @@ mod tests {
     // Initialise tracing for tests.
     fn init_tracer() {
         INIT.call_once(|| {
-            let subscriber = FmtSubscriber::builder().with_max_level(Level::ERROR).finish();
+            let subscriber =
+                FmtSubscriber::builder().with_max_level(tracing::Level::ERROR).finish();
             tracing::subscriber::set_global_default(subscriber).expect("subscriber set");
         });
     }

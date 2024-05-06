@@ -130,7 +130,7 @@ impl ClientStore {
 
     fn get(&self, client_id: &str) -> Result<types::Client> {
         let Some(client) = self.clients.get(client_id) else {
-            return Err(anyhow!("verifier not found").into());
+            return Err(anyhow!("verifier not found"));
         };
         Ok(client.clone())
     }
@@ -160,7 +160,7 @@ impl StateStore {
 
     fn get(&self, key: &str) -> Result<Vec<u8>> {
         let Some(state) = self.store.lock().expect("should lock").get(key).cloned() else {
-            return Err(anyhow!("state not found for key: {key}").into());
+            return Err(anyhow!("state not found for key: {key}"));
         };
         Ok(state)
     }

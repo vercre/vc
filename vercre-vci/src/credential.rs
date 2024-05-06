@@ -45,7 +45,7 @@
 
 use std::fmt::Debug;
 
-use tracing::{instrument, trace};
+use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
@@ -65,6 +65,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
+    #[instrument(level = "debug", skip(self))]
     pub async fn credential(&self, request: &CredentialRequest) -> Result<CredentialResponse> {
         let Ok(buf) = StateManager::get(&self.provider, &request.access_token).await else {
             err!(Err::AccessDenied, "invalid access token");
@@ -101,26 +102,25 @@ where
         self.callback_id.clone()
     }
 
-    #[instrument]
     async fn process(
         &self, provider: &Self::Provider, request: &Self::Request,
     ) -> Result<Self::Response> {
-        trace!("Context::process");
+        tracing::debug!("Context::process");
 
-        let batch_req = BatchCredentialRequest {
+        let request = BatchCredentialRequest {
             credential_issuer: request.credential_issuer.clone(),
             access_token: request.access_token.clone(),
             credential_requests: vec![request.clone()],
         };
-        let batch_res = Endpoint::new(provider.clone()).batch(&batch_req).await?;
+        let batch = Endpoint::new(provider.clone()).batch(&request).await?;
 
         // set c_nonce and c_nonce_expires_at - batch endpoint sets them in the
         // top-level response, not each credential response
-        let mut cred_res = batch_res.credential_responses[0].clone();
-        cred_res.c_nonce = batch_res.c_nonce;
-        cred_res.c_nonce_expires_in = batch_res.c_nonce_expires_in;
+        let mut response = batch.credential_responses[0].clone();
+        response.c_nonce = batch.c_nonce;
+        response.c_nonce_expires_in = batch.c_nonce_expires_in;
 
-        Ok(cred_res)
+        Ok(response)
     }
 }
 

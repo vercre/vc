@@ -4,7 +4,6 @@ use std::fmt::{Debug, Display};
 use std::future::{Future, IntoFuture};
 
 use chrono::{DateTime, Utc};
-pub use error::ProviderError as Error;
 
 use crate::callback;
 use crate::holder::Claims;
@@ -13,10 +12,8 @@ use crate::metadata::{
     Server as ServerMetadata,
 };
 
-/// Result is used for all external errors. It is used to constrain public API to
-/// returning `[vercre_core::Error]` types in accordance with the OpenID4VCI and
-/// OpenID4VP specifications.
-pub type Result<T, E = Error> = std::result::Result<T, E>;
+/// Result is used for all external errors.
+pub type Result<T> = anyhow::Result<T>;
 
 /// The Client trait is used by implementers to provide Client metadata to the
 /// library.
@@ -128,47 +125,6 @@ impl Algorithm {
         match self {
             Self::ES256K => String::from("EcdsaSecp256k1VerificationKey2019"),
             Self::EdDSA => String::from("JsonWebKey2020"),
-        }
-    }
-}
-
-mod error {
-    #![allow(missing_docs)]
-
-    //! The `Error` type is used to allow `Provider` trait implementers to return errors
-    //! that can readily be converted to the `vercre_core::Error` type.
-
-    use std::backtrace::Backtrace;
-    use std::error::Error;
-    use std::fmt;
-
-    use thiserror::Error;
-
-    /// `ProviderError` is used to provide a common error type for common provider
-    /// errors.
-    #[allow(clippy::module_name_repetitions)]
-    #[derive(Error, Debug)]
-    pub enum ProviderError {
-        Anyhow {
-            #[from]
-            source: anyhow::Error,
-            backtrace: Backtrace,
-        },
-        Base64 {
-            #[from]
-            source: base64ct::Error,
-            backtrace: Backtrace,
-        },
-        Ecdsa {
-            #[from]
-            source: ecdsa::Error,
-            backtrace: Backtrace,
-        },
-    }
-
-    impl fmt::Display for ProviderError {
-        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "{}", self.source().unwrap())
         }
     }
 }

@@ -74,7 +74,7 @@ use std::vec;
 
 use anyhow::anyhow;
 use chrono::Utc;
-use tracing::{instrument, trace};
+use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::metadata::Issuer as IssuerMetadata;
 use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
@@ -97,6 +97,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
+    #[instrument(level = "debug", skip(self))]
     pub async fn authorize(&self, request: &AuthorizationRequest) -> Result<AuthorizationResponse> {
         // attempt to get callback_id from state, if pre-auth flow
         let callback_id = if let Some(state_key) = &request.issuer_state {
@@ -142,11 +143,10 @@ where
         self.callback_id.clone()
     }
 
-    #[instrument]
     async fn verify(
         &mut self, provider: &Self::Provider, request: &Self::Request,
     ) -> Result<&Self> {
-        trace!("Context::verify");
+        tracing::debug!("Context::verify");
 
         let Ok(client_meta) = Client::metadata(provider, &request.client_id).await else {
             err!(Err::InvalidClient, "invalid client_id");
@@ -218,11 +218,10 @@ where
     // - check which requested `credential_configuration_id`s the holder is
     //   authorized for
     // - save related auth_dets/scope items in state
-    #[instrument]
     async fn process(
         &self, provider: &Self::Provider, request: &Self::Request,
     ) -> Result<Self::Response> {
-        trace!("Context::process");
+        tracing::debug!("Context::process");
 
         let mut authzd_auth_dets = vec![];
         let mut authzd_cfg_ids = vec![];

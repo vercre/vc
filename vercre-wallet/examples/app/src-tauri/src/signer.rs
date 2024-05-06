@@ -4,6 +4,7 @@ use vercre_wallet::signer::{SignerRequest, SignerResponse};
 
 use crate::error;
 
+#[allow(clippy::unnecessary_wraps)]
 pub fn request<R>(
     op: &SignerRequest, app_handle: &tauri::AppHandle<R>,
 ) -> Result<SignerResponse, error::Error>

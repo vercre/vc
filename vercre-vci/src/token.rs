@@ -16,7 +16,7 @@ use std::fmt::Debug;
 use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use sha2::{Digest, Sha256};
-use tracing::{instrument, trace};
+use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
 use vercre_core::vci::{GrantType, TokenType};
@@ -37,6 +37,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
+    #[instrument(level = "debug", skip(self))]
     pub async fn token(&self, request: &TokenRequest) -> Result<TokenResponse> {
         // restore state
         // RFC 6749 requires a particular error here
@@ -77,11 +78,10 @@ where
     }
 
     // Verify the token request.
-    #[instrument]
     async fn verify(
         &mut self, provider: &Self::Provider, request: &Self::Request,
     ) -> Result<&Self> {
-        trace!("Context::verify");
+        tracing::debug!("Context::verify");
 
         let Ok(server_meta) = Server::metadata(provider, &request.credential_issuer).await else {
             err!(Err::InvalidRequest, "unknown authorization server");
@@ -136,11 +136,10 @@ where
 
     /// Exchange auth code (authorization or pre-authorized) for access token,
     /// updating state along the way.
-    #[instrument]
     async fn process(
         &self, provider: &Self::Provider, request: &Self::Request,
     ) -> Result<Self::Response> {
-        trace!("Context::process");
+        tracing::debug!("Context::process");
 
         // prevent auth code reuse
         StateManager::purge(provider, &auth_state_key(request)?).await?;

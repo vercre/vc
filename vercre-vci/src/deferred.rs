@@ -11,7 +11,7 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
-use tracing::{instrument, trace};
+use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
@@ -31,6 +31,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
+    #[instrument(level = "debug", skip(self))]
     pub async fn deferred(
         &self, request: &DeferredCredentialRequest,
     ) -> Result<DeferredCredentialResponse> {
@@ -69,11 +70,10 @@ where
         self.callback_id.clone()
     }
 
-    #[instrument]
     async fn process(
         &self, provider: &Self::Provider, request: &Self::Request,
     ) -> Result<Self::Response> {
-        trace!("Context::process");
+        tracing::debug!("Context::process");
 
         // retrieve deferred credential request from state
         let Ok(buf) = StateManager::get(provider, &request.transaction_id).await else {

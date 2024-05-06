@@ -30,14 +30,14 @@ importers:
         specifier: 2.0.0-beta.9
         version: 2.0.0-beta.9
       '@tauri-apps/plugin-deep-link':
-        specifier: 2.0.0-beta.2
-        version: 2.0.0-beta.2
+        specifier: 2.0.0-beta.3
+        version: 2.0.0-beta.3
       '@tauri-apps/plugin-shell':
-        specifier: 2.0.0-beta.2
-        version: 2.0.0-beta.2
+        specifier: 2.0.0-beta.3
+        version: 2.0.0-beta.3
       '@tauri-apps/plugin-store':
-        specifier: 2.0.0-beta.2
-        version: 2.0.0-beta.2
+        specifier: 2.0.0-beta.3
+        version: 2.0.0-beta.3
       globals:
         specifier: ^15.1.0
         version: 15.1.0
@@ -438,8 +438,8 @@ packages:
   '@floating-ui/core@1.6.1':
     resolution: {integrity: sha512-42UH54oPZHPdRHdw6BgoBD6cg/eVTmVrFcgeRDM3jbO7uxSoipVcmcIGFcA5jmOHO5apcyvBhkSKES3fQJnu7A==}
 
-  '@floating-ui/dom@1.6.4':
-    resolution: {integrity: sha512-0G8R+zOvQsAG1pg2Q99P21jiqxqGBW1iRe/iXHsBRBxnpXKFI8QwbB4x5KmYLggNO5m34IQgOIu9SCRfR/WWiQ==}
+  '@floating-ui/dom@1.6.5':
+    resolution: {integrity: sha512-Nsdud2X65Dz+1RHjAIP0t8z5e2ff/IRbei6BqFrl1urT8sDVzM1HMQ+R0XcU5ceRfyO3I6ayeqIfh+6Wb8LGTw==}
 
   '@floating-ui/react-dom@2.0.9':
     resolution: {integrity: sha512-q0umO0+LQK4+p6aGyvzASqKbKOJcAHJ7ycE9CuUvfx3s9zTHWmGJTPOIlM/hmSBfUfg/XfY5YhLBLR/LHwShQQ==}
@@ -698,8 +698,8 @@ packages:
     resolution: {integrity: sha512-zxnDjHHKjOsrIzZm6nO5Xapb/BxqUq1tc7cGkFXsFkGTsSWgCPH1D8mm0XS9weJY2OaR73I3k3S+b7eSzJDfqA==}
     engines: {node: '>= 14.6.0', npm: '>= 6.6.0', yarn: '>= 1.19.1'}
 
-  '@tauri-apps/api@2.0.0-beta.4':
-    resolution: {integrity: sha512-Nxtj28NYUo5iwYkpYslxmOPkdI2WkELU2e3UH9nbJm9Ydki2CQwJVGQxx4EANtdZcMNsEsUzRqaDTvEUYH1l6w==}
+  '@tauri-apps/api@2.0.0-beta.11':
+    resolution: {integrity: sha512-wJRY+fBUm3KpqZDHMIz5HRv+1vlnvRJ/dFxiyY3NlINTx2qXqDou5qWYcP1CuZXsd39InWVPV3FAZvno/kGCkA==}
     engines: {node: '>= 18', npm: '>= 6.6.0', yarn: '>= 1.19.1'}
 
   '@tauri-apps/api@2.0.0-beta.9':
@@ -771,14 +771,14 @@ packages:
     engines: {node: '>= 10'}
     hasBin: true
 
-  '@tauri-apps/plugin-deep-link@2.0.0-beta.2':
-    resolution: {integrity: sha512-fwMq9TiWYRam4483oXQinYKXlQDnAi4vP7qD8TyriT0YITcvrSek8kkSPpu1mqdk/wrNd4SRjoYUdWk5AQPmRg==}
+  '@tauri-apps/plugin-deep-link@2.0.0-beta.3':
+    resolution: {integrity: sha512-PCaIyr5vi8VQkw8hWgLe5EH9ZI1w9UI5kyzn7E1grlKbBA9NZwwdtSCqc9I4Ywd9/H8Ek3KQJwnSnsOoAUs5XQ==}
 
-  '@tauri-apps/plugin-shell@2.0.0-beta.2':
-    resolution: {integrity: sha512-9rWsfN7Wt+EuWmpmNnK8bCs+04fzhEYrHtWyLIAYxb9diFdcJrEoctCP9YM2v+Uf8/y8qFC7VCbZ/9VQHANymQ==}
+  '@tauri-apps/plugin-shell@2.0.0-beta.3':
+    resolution: {integrity: sha512-iSFKUJzmdBE194J0q2O3nWgO86tApVsB9kKD4UkB4YNGTIz09hgeXsOIEo3bMfJEmQe54H/zPBzPo9TeuZZFGA==}
 
-  '@tauri-apps/plugin-store@2.0.0-beta.2':
-    resolution: {integrity: sha512-9TdMLLYEPqRSABRX3GtwFNWiulfW+SUHdi+5dVgdk73B8PtGf457gdtwvgrP/O2k9Vt/ET2X6Nurimx1185AzA==}
+  '@tauri-apps/plugin-store@2.0.0-beta.3':
+    resolution: {integrity: sha512-qTvbG2aGTME3TcBBIBizwhN0f3Iqy5tgeaEtj5gWaisAD0PJfrNAAaUnpXvO4O3PUTS8idZt933z1uAiBhY7FA==}
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -1005,8 +1005,8 @@ packages:
     resolution: {integrity: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==}
     engines: {node: '>=6'}
 
-  caniuse-lite@1.0.30001615:
-    resolution: {integrity: sha512-1IpazM5G3r38meiae0bHRnPhz+CBQ3ZLqbQMtrg+AsTPKAXgW38JNsXkyZ+v8waCsDmPq87lmfun5Q2AGysNEQ==}
+  caniuse-lite@1.0.30001616:
+    resolution: {integrity: sha512-RHVYKov7IcdNjVHJFNY/78RdG4oGVjbayxv8u5IO74Wv7Hlq4PnJE6mo/OjFijjVFNy5ijnCt6H3IIo4t+wfEw==}
 
   chalk@2.4.2:
     resolution: {integrity: sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==}
@@ -1371,8 +1371,8 @@ packages:
     resolution: {integrity: sha512-g0QYk1dZBxGwk+Ngc+ltRH2IBp2f7zBkBMBJZCDerh6EhlhSR6+9irMCuT/09zD6qkarHUSn529sK/yL4S27mg==}
     engines: {node: '>= 0.4'}
 
-  get-tsconfig@4.7.3:
-    resolution: {integrity: sha512-ZvkrzoUA0PQZM6fy6+/Hce561s+faD1rsNwhnO5FelNjyy7EMGJ3Rz1AQ8GYDWjhRs/7dBLOEJvhK8MiEJOAFg==}
+  get-tsconfig@4.7.4:
+    resolution: {integrity: sha512-ofbkKj+0pjXjhejr007J/fLf+sW+8H7K5GCm+msC8q3IpvgjobpyPqSRFemNyIMxklC0zeJpi7VDFna19FacvQ==}
 
   glob-parent@5.1.2:
     resolution: {integrity: sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==}
@@ -2498,14 +2498,14 @@ snapshots:
     dependencies:
       '@floating-ui/utils': 0.2.2
 
-  '@floating-ui/dom@1.6.4':
+  '@floating-ui/dom@1.6.5':
     dependencies:
       '@floating-ui/core': 1.6.1
       '@floating-ui/utils': 0.2.2
 
   '@floating-ui/react-dom@2.0.9(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@floating-ui/dom': 1.6.4
+      '@floating-ui/dom': 1.6.5
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
@@ -2718,7 +2718,7 @@ snapshots:
 
   '@tauri-apps/api@1.5.3': {}
 
-  '@tauri-apps/api@2.0.0-beta.4': {}
+  '@tauri-apps/api@2.0.0-beta.11': {}
 
   '@tauri-apps/api@2.0.0-beta.9': {}
 
@@ -2765,17 +2765,17 @@ snapshots:
       '@tauri-apps/cli-win32-ia32-msvc': 2.0.0-beta.13
       '@tauri-apps/cli-win32-x64-msvc': 2.0.0-beta.13
 
-  '@tauri-apps/plugin-deep-link@2.0.0-beta.2':
+  '@tauri-apps/plugin-deep-link@2.0.0-beta.3':
     dependencies:
-      '@tauri-apps/api': 2.0.0-beta.4
+      '@tauri-apps/api': 2.0.0-beta.11
 
-  '@tauri-apps/plugin-shell@2.0.0-beta.2':
+  '@tauri-apps/plugin-shell@2.0.0-beta.3':
     dependencies:
-      '@tauri-apps/api': 2.0.0-beta.4
+      '@tauri-apps/api': 2.0.0-beta.11
 
-  '@tauri-apps/plugin-store@2.0.0-beta.2':
+  '@tauri-apps/plugin-store@2.0.0-beta.3':
     dependencies:
-      '@tauri-apps/api': 2.0.0-beta.4
+      '@tauri-apps/api': 2.0.0-beta.11
 
   '@types/babel__core@7.20.5':
     dependencies:
@@ -3066,7 +3066,7 @@ snapshots:
 
   browserslist@4.23.0:
     dependencies:
-      caniuse-lite: 1.0.30001615
+      caniuse-lite: 1.0.30001616
       electron-to-chromium: 1.4.756
       node-releases: 2.0.14
       update-browserslist-db: 1.0.15(browserslist@4.23.0)
@@ -3081,7 +3081,7 @@ snapshots:
 
   callsites@3.1.0: {}
 
-  caniuse-lite@1.0.30001615: {}
+  caniuse-lite@1.0.30001616: {}
 
   chalk@2.4.2:
     dependencies:
@@ -3365,7 +3365,7 @@ snapshots:
       eslint-module-utils: 2.8.1(@typescript-eslint/parser@7.8.0(eslint@8.57.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@7.8.0(eslint@8.57.0)(typescript@5.4.5))(eslint-plugin-import@2.29.1)(eslint@8.57.0))(eslint@8.57.0)
       eslint-plugin-import: 2.29.1(@typescript-eslint/parser@7.8.0(eslint@8.57.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
       fast-glob: 3.3.2
-      get-tsconfig: 4.7.3
+      get-tsconfig: 4.7.4
       is-core-module: 2.13.1
       is-glob: 4.0.3
     transitivePeerDependencies:
@@ -3619,7 +3619,7 @@ snapshots:
       es-errors: 1.3.0
       get-intrinsic: 1.2.4
 
-  get-tsconfig@4.7.3:
+  get-tsconfig@4.7.4:
     dependencies:
       resolve-pkg-maps: 1.0.0
 

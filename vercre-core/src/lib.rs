@@ -77,7 +77,7 @@ pub trait Endpoint: Debug {
     /// Each endpoint implements a request-specific `Endpoint::call` method which then
     /// calls `Endpoint::handle_request` to handle shared functionality.
     #[allow(async_fn_in_trait)]
-    #[instrument]
+    #[instrument(level = "debug", skip(self))]
     async fn handle_request<R, C, U>(&self, request: &R, mut ctx: C) -> Result<U>
     where
         C: Context<Request = R, Response = U, Provider = Self::Provider>,
@@ -114,14 +114,14 @@ pub trait Endpoint: Debug {
 
     /// Try to send a callback to the client. If the callback fails, log the error.
     #[allow(async_fn_in_trait)]
-    #[instrument]
+    #[instrument(level = "debug", skip(self))]
     async fn try_callback<R, C, U>(&self, ctx: C, e: &Error) -> provider::Result<()>
     where
         C: Context<Request = R, Response = U>,
         R: Default + Clone + Send + Sync + Debug,
     {
         if let Some(callback_id) = ctx.callback_id() {
-            tracing::trace!("Endpoint::try_callback");
+            tracing::debug!("Endpoint::try_callback");
 
             let pl = Payload {
                 id: callback_id.clone(),

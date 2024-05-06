@@ -206,9 +206,7 @@ impl Model {
 
     /// Build a token request to retrieve an access token for use in requested
     /// credentials.
-    pub(crate) fn submission_request(
-        &mut self, signed: String,
-    ) -> anyhow::Result<(String, String)> {
+    pub(crate) fn submission_request(&self, signed: String) -> anyhow::Result<(String, String)> {
         // TODO: cater for unsigned vp_tokens (JSON objects) in resposne
         // TODO: cater more than 1 vp_token in response
         let Ok(vp_token) = serde_json::to_value(signed) else {

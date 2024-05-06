@@ -16,7 +16,7 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
-use tracing::{instrument, trace};
+use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{Callback, Client, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
@@ -38,6 +38,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
+    #[instrument(level = "debug", skip(self))]
     pub async fn request_object(
         &self, request: &RequestObjectRequest,
     ) -> Result<RequestObjectResponse> {
@@ -66,11 +67,10 @@ where
         None
     }
 
-    #[instrument]
     async fn process(
         &self, provider: &Self::Provider, request: &Self::Request,
     ) -> Result<Self::Response> {
-        trace!("Context::process");
+        tracing::debug!("Context::process");
 
         // retrieve request object from state
         let Ok(buf) = StateManager::get(provider, &request.state).await else {

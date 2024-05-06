@@ -44,7 +44,7 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 use anyhow::anyhow;
-use tracing::{instrument, trace};
+use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
 use vercre_core::provider::{Algorithm, Callback, Client, Signer, StateManager};
@@ -89,6 +89,7 @@ where
     ///
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
+    #[instrument(level = "debug", skip(self))]
     pub async fn invoke(&self, request: &InvokeRequest) -> Result<InvokeResponse> {
         let ctx = Context {
             callback_id: request.callback_id.clone(),
@@ -117,11 +118,8 @@ where
         self.callback_id.clone()
     }
 
-    #[instrument]
-    async fn verify(
-        &mut self, provider: &Self::Provider, request: &Self::Request,
-    ) -> Result<&Self> {
-        trace!("Context::verify");
+    async fn verify(&mut self, _: &Self::Provider, request: &Self::Request) -> Result<&Self> {
+        tracing::debug!("Context::verify");
 
         if request.input_descriptors.is_empty() {
             err!(Err::InvalidRequest, "no credentials specified");
@@ -129,11 +127,10 @@ where
         Ok(self)
     }
 
-    #[instrument]
     async fn process(
         &self, provider: &Self::Provider, request: &Self::Request,
     ) -> Result<Self::Response> {
-        trace!("Context::process");
+        tracing::debug!("Context::process");
 
         // TODO: build dynamically...
         let fmt = Format {

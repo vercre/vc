@@ -18,7 +18,6 @@ use chrono::Utc;
 // pub use matcher::VcMatcher;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tracing::{instrument, trace};
 
 use crate::jwt::{self, Jwt}; //::JwsBuilder;
 use crate::w3c::serde::option_flexvec;
@@ -361,10 +360,11 @@ impl VerifiablePresentation {
         VpBuilder::new()
     }
 
-    /// Transforms the VerifiableCredential into a signed, base64 encoded JWT.
-    #[instrument]
-    pub fn to_jwt(&mut self) -> Result<Jwt<Claims>> {
-        trace!("VerifiablePresentation::to_jwt");
+    /// Transforms the `VerifiableCredential` into a signed, base64 encoded JWT.
+    ///
+    /// # Errors
+    pub fn to_jwt(&self) -> Result<Jwt<Claims>> {
+        tracing::debug!("VerifiablePresentation::to_jwt");
 
         let Some(proofs) = self.proof.clone() else {
             err!("proof is missing");
