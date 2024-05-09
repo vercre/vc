@@ -18,6 +18,13 @@ skip_rust_env_info = true
 [tasks.clean]
 command = "cargo"
 args = ["clean"]
+dependencies = ["clean-tauri"]
+
+[tasks.clean-tauri]
+script = '''
+  cd vercre-wallet/examples/app
+  cargo clean
+'''
 
 [tasks.build]
 command = "cargo"
