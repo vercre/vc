@@ -27,14 +27,14 @@ pedantic = "warn"
 nursery = "warn"
 
 [workspace.dependencies]
-anyhow = "1.0.82"
+anyhow = "1.0.83"
 base64ct = { version = "1.6.0", features = ["std"] }
 chrono = { version = "0.4.38", features = ["serde"] }
 derive_builder = "0.20.0"
 ecdsa = "0.16.9"
 k256 = "0.13.3"
-serde = { version = "1.0.200", features = ["derive"] }
-serde_json = "1.0.116"
+serde = { version = "1.0.201", features = ["derive"] }
+serde_json = "1.0.117"
 tracing = "0.1.40"
 uuid = { version = "1.8.0", features = ["fast-rng", "v4"] }
 vercre-core = { path = "vercre-core", version = "0.1.0-alpha.4" }

@@ -42,7 +42,7 @@ serde_json.workspace = true
 serde_json_path = "0.6.7"
 serde_qs = "0.13.0"
 signature = "2.2.0"
-thiserror = "1.0.59"
+thiserror = "1.0.60"
 tracing.workspace = true
 
 [dev-dependencies]
