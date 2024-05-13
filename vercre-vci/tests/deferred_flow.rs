@@ -10,7 +10,7 @@ use test_utils::vci_provider::{Provider, ISSUER, PENDING_USER};
 use test_utils::wallet;
 use vercre_vci::credential::{CredentialRequest, CredentialResponse};
 use vercre_vci::deferred::{DeferredCredentialRequest, DeferredCredentialResponse};
-use vercre_vci::invoke::{InvokeRequest, InvokeResponse};
+use vercre_vci::create_offer::{CreateOfferRequest, CreateOfferResponse};
 use vercre_vci::jwt::{self, Jwt};
 use vercre_vci::token::{TokenRequest, TokenResponse};
 use vercre_vci::{Endpoint, ProofClaims};
@@ -43,9 +43,9 @@ async fn deferred_flow() {
     });
 }
 
-// Simulate Issuer request to '/invoke' endpoint to get credential offer to use to
+// Simulate Issuer request to '/create_offer' endpoint to get credential offer to use to
 // make credential offer to Wallet.
-async fn get_offer() -> Result<InvokeResponse> {
+async fn get_offer() -> Result<CreateOfferResponse> {
     // offer request
     let body = json!({
         "credential_configuration_ids": ["EmployeeID_JWT"],
@@ -55,17 +55,17 @@ async fn get_offer() -> Result<InvokeResponse> {
         "callback_id": "1234"
     });
 
-    let mut request = serde_json::from_value::<InvokeRequest>(body)?;
+    let mut request = serde_json::from_value::<CreateOfferRequest>(body)?;
     request.credential_issuer = ISSUER.to_string();
 
     let endpoint = Endpoint::new(PROVIDER.to_owned());
-    let response = endpoint.invoke(&request).await?;
+    let response = endpoint.create_offer(&request).await?;
     Ok(response)
 }
 
 // Simulate Wallet request to '/token' endpoint with pre-authorized code to get
 // access token
-async fn get_token(input: InvokeResponse) -> Result<TokenResponse> {
+async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
     assert_let!(Some(offer), &input.credential_offer);
     assert_let!(Some(grants), &offer.grants);
     assert_let!(Some(pre_authorized_code), &grants.pre_authorized_code);

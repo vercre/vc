@@ -11,7 +11,7 @@ use insta::assert_yaml_snapshot as assert_snapshot;
 use lazy_static::lazy_static;
 use serde_json::{json, Value};
 use test_utils::wallet;
-use vercre_core::vp::{InvokeResponse, RequestObjectResponse, ResponseRequest};
+use vercre_core::vp::{CreateRequestResponse, RequestObjectResponse, ResponseRequest};
 use vercre_wallet::capabilities::signer::{SignerRequest, SignerResponse};
 use vercre_wallet::capabilities::store::{StoreEntry, StoreRequest, StoreResponse};
 use vercre_wallet::credential::Credential;
@@ -45,7 +45,7 @@ async fn cross_device_flow() {
         "device_flow": "CrossDevice"
     });
 
-    let resp = verifier.post("/invoke").json(&body).expect_success().await.json::<InvokeResponse>();
+    let resp = verifier.post("/create_request").json(&body).expect_success().await.json::<CreateRequestResponse>();
     let request_uri = resp.request_uri.expect("request uri");
 
     // ------------------------------------------------

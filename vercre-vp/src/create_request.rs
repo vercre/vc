@@ -49,7 +49,7 @@ use uuid::Uuid;
 use vercre_core::error::Err;
 use vercre_core::provider::{Algorithm, Callback, Client, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
-pub use vercre_core::vp::{DeviceFlow, InvokeRequest, InvokeResponse, RequestObject};
+pub use vercre_core::vp::{DeviceFlow, CreateRequestRequest, CreateRequestResponse, RequestObject};
 use vercre_core::w3c::vp::{Format, PresentationDefinition};
 use vercre_core::{err, gen, Result};
 
@@ -78,7 +78,7 @@ use crate::state::State;
 //   ]
 // }
 
-/// Invoke Request handler.
+/// `CreateRequest` Request handler.
 impl<P> Endpoint<P>
 where
     P: Client + StateManager + Signer + Callback + Clone + Debug,
@@ -90,7 +90,7 @@ where
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
     #[instrument(level = "debug", skip(self))]
-    pub async fn invoke(&self, request: &InvokeRequest) -> Result<InvokeResponse> {
+    pub async fn create_request(&self, request: &CreateRequestRequest) -> Result<CreateRequestResponse> {
         let ctx = Context {
             callback_id: request.callback_id.clone(),
             _p: std::marker::PhantomData,
@@ -111,8 +111,8 @@ where
     P: Client + StateManager + Signer + Callback + Clone + Debug,
 {
     type Provider = P;
-    type Request = InvokeRequest;
-    type Response = InvokeResponse;
+    type Request = CreateRequestRequest;
+    type Response = CreateRequestResponse;
 
     fn callback_id(&self) -> Option<String> {
         self.callback_id.clone()
@@ -162,7 +162,7 @@ where
             ..Default::default()
         };
 
-        let mut response = InvokeResponse::default();
+        let mut response = CreateRequestResponse::default();
 
         // Response Mode "direct_post" is RECOMMENDED for cross-device flows.
         // TODO: replace hard-coded endpoints with Provider-set values
@@ -220,11 +220,11 @@ mod tests {
         });
 
         let mut request =
-            serde_json::from_value::<InvokeRequest>(body).expect("should deserialize");
+            serde_json::from_value::<CreateRequestRequest>(body).expect("should deserialize");
         request.client_id = String::from("http://vercre.io");
 
         let response =
-            Endpoint::new(provider.clone()).invoke(&request).await.expect("response is ok");
+            Endpoint::new(provider.clone()).create_request(&request).await.expect("response is ok");
 
         assert_eq!(response.request_uri, None);
         assert_let!(Some(req_obj), &response.request_object);
@@ -271,11 +271,11 @@ mod tests {
         });
 
         let mut request =
-            serde_json::from_value::<InvokeRequest>(body).expect("should deserialize");
+            serde_json::from_value::<CreateRequestRequest>(body).expect("should deserialize");
         request.client_id = String::from("http://vercre.io");
 
         let response =
-            Endpoint::new(provider.clone()).invoke(&request).await.expect("response is ok");
+            Endpoint::new(provider.clone()).create_request(&request).await.expect("response is ok");
 
         assert!(response.request_object.is_none());
         assert_let!(Some(req_uri), response.request_uri);

@@ -16,7 +16,7 @@ use test_utils::vp_provider::Provider;
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
-use vercre_vp::invoke::{InvokeRequest, InvokeResponse};
+use vercre_vp::create_request::{CreateRequestRequest, CreateRequestResponse};
 use vercre_vp::request::{RequestObjectRequest, RequestObjectResponse};
 use vercre_vp::response::ResponseRequest;
 use vercre_vp::Endpoint;
@@ -36,7 +36,7 @@ pub fn app() -> Router {
     let endpoint = Arc::new(Endpoint::new(Provider::new()));
 
     Router::new()
-        .route("/invoke", post(invoke))
+        .route("/create_request", post(create_request))
         .route("/request/:client_state", get(request_object))
         .route("/callback", get(response))
         .route("/post", post(response))
@@ -46,12 +46,12 @@ pub fn app() -> Router {
 
 // Generate Authorization Request endpoint
 #[axum::debug_handler]
-async fn invoke(
+async fn create_request(
     State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
-    Json(mut req): Json<InvokeRequest>,
-) -> AxResult<InvokeResponse> {
+    Json(mut req): Json<CreateRequestRequest>,
+) -> AxResult<CreateRequestResponse> {
     req.client_id = format!("http://{}", host);
-    endpoint.invoke(&req).await.into()
+    endpoint.create_request(&req).await.into()
 }
 
 // Retrieve Authorization Request Object endpoint

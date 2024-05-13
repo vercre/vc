@@ -73,7 +73,7 @@ use vercre_core::error::Err;
 use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vci::{
-    AuthorizationCodeGrant, CredentialOffer, Grants, InvokeRequest, InvokeResponse,
+    AuthorizationCodeGrant, CredentialOffer, Grants, CreateOfferRequest, CreateOfferResponse,
     PreAuthorizedCodeGrant, TxCode,
 };
 use vercre_core::{err, gen, Result};
@@ -92,7 +92,7 @@ where
     /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
     /// not available.
     #[instrument(level = "debug", skip(self))]
-    pub async fn invoke(&self, request: &InvokeRequest) -> Result<InvokeResponse> {
+    pub async fn create_offer(&self, request: &CreateOfferRequest) -> Result<CreateOfferResponse> {
         let ctx = Context {
             callback_id: request.callback_id.clone(),
             _p: std::marker::PhantomData,
@@ -113,8 +113,8 @@ where
     P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
 {
     type Provider = P;
-    type Request = InvokeRequest;
-    type Response = InvokeResponse;
+    type Request = CreateOfferRequest;
+    type Response = CreateOfferResponse;
 
     fn callback_id(&self) -> Option<String> {
         self.callback_id.clone()
@@ -218,7 +218,7 @@ where
         }
 
         // return response
-        Ok(InvokeResponse {
+        Ok(CreateOfferResponse {
             credential_offer: Some(CredentialOffer {
                 credential_issuer: request.credential_issuer.clone(),
                 credential_configuration_ids: request.credential_configuration_ids.clone(),
@@ -260,11 +260,11 @@ mod tests {
         });
 
         let mut request =
-            serde_json::from_value::<InvokeRequest>(body).expect("request should deserialize");
+            serde_json::from_value::<CreateOfferRequest>(body).expect("request should deserialize");
         request.credential_issuer = ISSUER.to_string();
         let response =
-            Endpoint::new(provider.clone()).invoke(&request).await.expect("response is ok");
-        assert_snapshot!("invoke", &response, {
+            Endpoint::new(provider.clone()).create_offer(&request).await.expect("response is ok");
+        assert_snapshot!("create_offer", &response, {
             ".credential_offer.grants.authorization_code.issuer_state" => "[state]",
             ".credential_offer.grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
             ".user_code" => "[user_code]"

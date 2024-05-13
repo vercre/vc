@@ -34,7 +34,7 @@ RESP=$(curl --json '{
         "tx_code_required": true,
         "callback_id": "1234"
     }' \
-    http://localhost:8080/invoke)
+    http://localhost:8080/create_offer)
 
 # send credential offer to wallet (Tauri app)
 OFFER=$(echo $RESP | jq '.credential_offer' | jq -r @uri)
@@ -61,7 +61,7 @@ RESP=$(curl --json '{
         "tx_code_required": true,
         "callback_id": "1234"
     }' \
-    http://localhost:8080/invoke)
+    http://localhost:8080/create_offer)
 
 # paste this JSON into the add-credential form in the Tauri app
 echo $RESP | jq '.credential_offer'
@@ -94,7 +94,7 @@ RESP=$(curl --json '{
         }],
         "device_flow": "CrossDevice"
     }' \
-    http://localhost:8080/invoke)
+    http://localhost:8080/create_request)
 
 # send presentation request to wallet (Tauri app)
 REQUEST_URI=$(echo $RESP | jq '.request_uri' | jq -r @uri)

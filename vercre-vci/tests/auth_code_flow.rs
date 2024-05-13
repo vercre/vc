@@ -42,7 +42,7 @@ async fn auth_code_flow() {
     });
 }
 
-// Simulate Issuer request to '/invoke' endpoint to get credential offer to use to
+// Simulate Issuer request to '/create_offer' endpoint to get credential offer to use to
 // make credential offer to Wallet.
 async fn authorize() -> Result<AuthorizationResponse> {
     // authorize request

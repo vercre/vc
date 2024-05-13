@@ -6,7 +6,7 @@ use futures::executor::block_on;
 use serde_json::json;
 use test::Bencher;
 use test_utils::vp_provider::Provider;
-use vercre_core::vp::InvokeRequest;
+use vercre_core::vp::CreateRequestRequest;
 use vercre_vp::Endpoint;
 
 #[bench]
@@ -22,9 +22,9 @@ fn request(b: &mut Bencher) {
         ],
     });
 
-    let mut request = serde_json::from_value::<InvokeRequest>(body).expect("should deserialize");
+    let mut request = serde_json::from_value::<CreateRequestRequest>(body).expect("should deserialize");
     request.client_id = String::from("http://vercre.io");
 
     // run benchmark test
-    b.iter(|| block_on(endpoint.invoke(&request)));
+    b.iter(|| block_on(endpoint.create_request(&request)));
 }

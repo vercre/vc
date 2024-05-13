@@ -27,7 +27,7 @@ use vercre_vci::authorize::AuthorizationRequest;
 use vercre_vci::batch::{BatchCredentialRequest, BatchCredentialResponse};
 use vercre_vci::credential::{CredentialRequest, CredentialResponse};
 use vercre_vci::deferred::{DeferredCredentialRequest, DeferredCredentialResponse};
-use vercre_vci::invoke::{InvokeRequest, InvokeResponse};
+use vercre_vci::create_offer::{CreateOfferRequest, CreateOfferResponse};
 use vercre_vci::metadata::{MetadataRequest, MetadataResponse};
 use vercre_vci::token::{TokenRequest, TokenResponse};
 use vercre_vci::Endpoint;
@@ -46,7 +46,7 @@ async fn main() {
     let cors = CorsLayer::new().allow_methods(Any).allow_origin(Any).allow_headers(Any);
 
     let router = Router::new()
-        .route("/invoke", post(invoke))
+        .route("/create_offer", post(create_offer))
         .route("/auth", get(authorize))
         .route("/login", post(login))
         .route("/token", post(token))
@@ -65,12 +65,12 @@ async fn main() {
 
 // Credential Offer endpoint
 #[axum::debug_handler]
-async fn invoke(
+async fn create_offer(
     State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
-    Json(mut req): Json<InvokeRequest>,
-) -> AxResult<InvokeResponse> {
+    Json(mut req): Json<CreateOfferRequest>,
+) -> AxResult<CreateOfferResponse> {
     req.credential_issuer = format!("http://{}", host);
-    endpoint.invoke(&req).await.into()
+    endpoint.create_offer(&req).await.into()
 }
 
 /// Authorize endpoint

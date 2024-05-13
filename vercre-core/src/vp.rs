@@ -21,7 +21,7 @@ use crate::{err, stringify, Result};
 /// Authorization Request Object.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(default)]
-pub struct InvokeRequest {
+pub struct CreateRequestRequest {
     #[allow(rustdoc::bare_urls)]
     /// The Verifier ID. It MUST be a valid URI. For example,
     /// `"https://vercre.io"` or `"did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg"`.
@@ -79,7 +79,7 @@ pub enum DeviceFlow {
 
 /// The response to the originator of the Request Object Request.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct InvokeResponse {
+pub struct CreateRequestResponse {
     /// The generated Authorization Request Object, ready to send to the Wallet.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub request_object: Option<RequestObject>,

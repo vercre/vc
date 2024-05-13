@@ -1,5 +1,5 @@
 ---
-source: vercre-vci/src/invoke.rs
+source: vercre-vci/src/create_offer.rs
 assertion_line: 286
 expression: state
 ---

@@ -10,7 +10,7 @@ use serde_json::{json, Value};
 use test_utils::vci_provider::NORMAL_USER;
 use test_utils::wallet;
 use vercre_core::vci::{
-    CredentialResponse, InvokeResponse, MetadataResponse, TokenRequest, TokenResponse,
+    CredentialResponse, CreateOfferResponse, MetadataResponse, TokenRequest, TokenResponse,
 };
 use vercre_wallet::capabilities::signer::{SignerRequest, SignerResponse};
 use vercre_wallet::capabilities::store::StoreResponse;
@@ -27,7 +27,7 @@ async fn receive_offer() {
     let app = AppTester::<App, _>::default();
     let mut model = Model::default();
 
-    // create InvokeRequest
+    // create CreateOfferRequest
     let body = json!({
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "holder_id": NORMAL_USER,
@@ -36,10 +36,10 @@ async fn receive_offer() {
         "callback_id": "1234"
     });
 
-    let resp = issuer.post("/invoke").expect_success().json(&body).await;
+    let resp = issuer.post("/create_offer").expect_success().json(&body).await;
 
     // generate issuer offer to 'send' to the app
-    let offer_resp = resp.json::<InvokeResponse>();
+    let offer_resp = resp.json::<CreateOfferResponse>();
     let offer = offer_resp.credential_offer.expect("should have offer");
 
     // ------------------------------------------------

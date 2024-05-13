@@ -102,7 +102,7 @@ pub enum Format {
 
 /// Request a Credential Offer for a Credential Issuer.
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
-pub struct InvokeRequest {
+pub struct CreateOfferRequest {
     /// The URL of the Credential Issuer the Wallet can use obtain offered
     /// Credentials.
     #[serde(skip)]
@@ -141,7 +141,7 @@ pub struct InvokeRequest {
 
 /// The response to a Credential Offer request.
 #[derive(Debug, Deserialize, Serialize)]
-pub struct InvokeResponse {
+pub struct CreateOfferResponse {
     /// A Credential Offer object that can be sent to a Wallet as an HTTP GET
     /// request.
     #[serde(skip_serializing_if = "Option::is_none")]

@@ -48,7 +48,7 @@ RESP=$(curl --json '{
         "tx_code_required": true,
         "callback_id": "1234"
     }' \
-    http://localhost:8080/invoke)
+    http://localhost:8080/create_offer)
 
 
 
@@ -96,7 +96,7 @@ RESP=$(curl --json '{
         }],
         "device_flow": "CrossDevice"
     }' \
-    http://localhost:8080/invoke)
+    http://localhost:8080/create_request)
 
 # This should open the web app in your browser and start the verification process
 REQUEST_URI=$(echo $RESP | jq '.request_uri' | jq -r @uri)
