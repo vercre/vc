@@ -53,6 +53,28 @@ command = "cargo"
 args = ["clippy"]
 install_crate = { rustup_component_name = "clippy" }
 
+[tasks.update]
+command = "cargo"
+args = ["update"]
+dependencies = ["update-tauri"]
+
+[tasks.update-tauri]
+script = '''
+  cd vercre-wallet/examples/app
+  cargo update
+'''
+
+[tasks.upgrade]
+command = "cargo"
+args = ["update"]
+dependencies = ["upgrade-tauri"]
+
+[tasks.upgrade-tauri]
+script = '''
+  cd vercre-wallet/examples/app
+  cargo upgrade
+'''
+
 [tasks.audit]
 command = "cargo"
 args = ["audit"]
