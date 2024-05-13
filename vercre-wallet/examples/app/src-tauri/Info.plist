@@ -14,7 +14,8 @@
 				<string>io.vercre.wallet</string>
 				<key>CFBundleURLSchemes</key>
 				<array>
-					<!-- register the openid-vc:// scheme -->
+					<!-- register schemes -->
+					<string>openid-credential-offer</string>
 					<string>openid-vc</string>
 				</array>
 			</dict>

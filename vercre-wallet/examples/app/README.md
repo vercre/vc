@@ -38,7 +38,7 @@ RESP=$(curl --json '{
 
 # send credential offer to wallet (Tauri app)
 OFFER=$(echo $RESP | jq '.credential_offer' | jq -r @uri)
-open "openid-vc://credential_offer?credential_offer=$OFFER"
+open "openid-credential-offer://?credential_offer=$OFFER"
 
 # print user pin
 echo $RESP | jq '.user_code'
@@ -47,7 +47,7 @@ echo $RESP | jq '.user_code'
 The resultant link should look like:
 
 ```bash
-openid-vc://credential_offer?credential_offer=%7B%22credential_issuer%22%3A%22http%3A%2F%2Flocalhost%3A8080%22%2C%22credentials%22%3A%5B%22EmployeeID_JWT%22%5D%2C%22grants%22%3A%7B%22authorization_code%22%3Anull%2C%22urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Apre-authorized_code%22%3A%7B%22authorization_server%22%3Anull%2C%22interval%22%3Anull%2C%22pre-authorized_code%22%3A%22QCZ1WTMmYjNDUjJSQHNTMmRAR3RaU1ZPSkAlaW1TQVo%22%2C%22user_pin_required%22%3Atrue%7D%7D%7D
+openid-credential-offer://?credential_offer=%7B%22credential_issuer%22%3A%22http%3A%2F%2Flocalhost%3A8080%22%2C%22credentials%22%3A%5B%22EmployeeID_JWT%22%5D%2C%22grants%22%3A%7B%22authorization_code%22%3Anull%2C%22urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Apre-authorized_code%22%3A%7B%22authorization_server%22%3Anull%2C%22interval%22%3Anull%2C%22pre-authorized_code%22%3A%22QCZ1WTMmYjNDUjJSQHNTMmRAR3RaU1ZPSkAlaW1TQVo%22%2C%22user_pin_required%22%3Atrue%7D%7D%7D
 ```
 
 A convenient way to process a credential offer that bypasses the deep link is to use the add-credential form and paste the offer into the input field. This is not the intended end user experience but allows faster shell development and testing.

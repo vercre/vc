@@ -23,11 +23,11 @@ reqwest = { version = "0.12.4", features = ["json"] }
 serde = "1.0.201"
 serde_json = "1.0.117"
 tauri = { version = "2.0.0-beta.19", features = ["test"] }
-tauri-plugin-deep-link = "2.0.0-beta.0"
-tauri-plugin-http = "2.0.0-beta.0"
-tauri-plugin-log = "2.0.0-beta.0"
-tauri-plugin-shell = "2.0.0-beta.0"
-tauri-plugin-store = "2.0.0-beta.0"
+tauri-plugin-deep-link = "2.0.0-beta.4"
+tauri-plugin-http = "2.0.0-beta.4"
+tauri-plugin-log = "2.0.0-beta.4"
+tauri-plugin-shell = "2.0.0-beta.4"
+tauri-plugin-store = "2.0.0-beta.4"
 thiserror = "1.0.60"
 vercre-wallet.workspace = true
 

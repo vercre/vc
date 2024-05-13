@@ -60,7 +60,7 @@ pub fn run() {
 // Handle deep links
 fn deep_link(event: &tauri::Event, handle: &AppHandle) {
     // credential offer
-    const OFFER_PREFIX: &str = "openid-vc://credential_offer?credential_offer=";
+    const OFFER_PREFIX: &str = "openid-credential-offer://?credential_offer=";
     const REQUEST_PREFIX: &str = "openid-vc://request_uri=";
 
     // trim '[]' wrapping payload
