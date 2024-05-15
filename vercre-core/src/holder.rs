@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// The user information returned by the Holder trait.
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Claims {
     /// The credential subject populated for the user.
     pub claims: HashMap<String, Value>,
