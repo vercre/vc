@@ -22,6 +22,7 @@
 //!     Host: server.example.com
 //!     Accept-Language: fr-ch, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5
 //! ```
+use std::fmt::Debug;
 
 use tracing::instrument;
 pub use vercre_core::metadata as types;
@@ -34,7 +35,7 @@ use super::Endpoint;
 
 impl<P> Endpoint<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Metadata request handler.
     ///
@@ -58,7 +59,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer,
+    P: Issuer + Debug,
 {
     type Provider = P;
     type Request = MetadataRequest;

@@ -23,7 +23,7 @@ use crate::state::State;
 
 impl<P> Endpoint<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Deferred credential request handler.
     ///
@@ -59,7 +59,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
 {
     type Provider = P;
     type Request = DeferredCredentialRequest;

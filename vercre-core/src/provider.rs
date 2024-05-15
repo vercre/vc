@@ -1,6 +1,6 @@
 //! # `OpenID` Core
 
-use std::fmt::{Debug, Display};
+use std::fmt::Display;
 use std::future::{Future, IntoFuture};
 
 use chrono::{DateTime, Utc};
@@ -82,7 +82,7 @@ pub trait Holder: Send + Sync {
 
 /// Signer is used by implementers to provide signing functionality for
 /// Verifiable Credential issuance and Verifiable Presentation submissions.
-pub trait Signer: Send + Sync + Debug {
+pub trait Signer: Send + Sync {
     /// Algorithm returns the algorithm used by the signer.
     fn algorithm(&self) -> Algorithm;
 

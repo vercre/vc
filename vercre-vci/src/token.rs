@@ -29,7 +29,7 @@ use crate::state::{Expire, State, Token};
 
 impl<P> Endpoint<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Token request handler.
     ///

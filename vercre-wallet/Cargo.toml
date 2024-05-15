@@ -35,7 +35,7 @@ workspace = true
 anyhow.workspace = true
 base64ct = { version = "1.6.0", default-features = false, features = ["std"] }
 chrono = { version = "0.4.38", features = ["serde"] }
-crux_core = "0.7.5"
+crux_core = "0.7.6"
 crux_http = "0.9.1"
 lazy_static = "1.4.0"
 log = "0.4.21"
@@ -45,7 +45,7 @@ serde_json.workspace = true
 serde_qs = "0.13.0"
 serde_urlencoded = "0.7.1"
 thiserror = "1.0.60"
-uniffi = { version = "0.27.1", features = ["cli"] }
+uniffi = { version = "0.27.2", features = ["cli"] }
 urlencoding = "2.1.3"
 uuid.workspace = true
 vercre-core.workspace = true
@@ -57,7 +57,7 @@ assert_let_bind = "0.1.1"
 axum = { version = "0.7.5", features = ["macros"] }
 axum-extra = { version = "0.9.3", features = ["typed-header"] }
 axum-test = "14.9.1"
-insta = { version = "1.38.0", features = ["redactions", "yaml"] }
+insta = { version = "1.39.0", features = ["redactions", "yaml"] }
 test-utils = { path = "../test-utils" }
 tokio = { version = "1.37.0", default-features = false, features = ["fs", "macros", "rt"] }
 tower-http = { version = "0.5.2", features = ["trace"] }
@@ -67,7 +67,7 @@ vercre-vci = { path = "../vercre-vci" }
 vercre-vp = { path = "../vercre-vp" }
 
 [build-dependencies]
-uniffi = { version = "0.27.1", features = ["build"] }
+uniffi = { version = "0.27.2", features = ["build"] }
 
 [target.uniffi-bindgen.dependencies]
-uniffi = { version = "0.27.1", features = ["cli"] }
+uniffi = { version = "0.27.2", features = ["cli"] }

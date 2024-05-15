@@ -15,7 +15,7 @@ use crate::state::State;
 
 impl<P> Endpoint<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Registration request handler.
     ///
@@ -39,7 +39,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer,
+    P: Client + StateManager + Debug,
 {
     type Provider = P;
     type Request = RegistrationRequest;

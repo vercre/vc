@@ -88,9 +88,9 @@
 
 pub mod authorize;
 pub mod batch;
+pub mod create_offer;
 pub mod credential;
 pub mod deferred;
-pub mod create_offer;
 pub mod metadata;
 pub mod register;
 mod state;

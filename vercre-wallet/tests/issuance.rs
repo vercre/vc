@@ -10,7 +10,7 @@ use serde_json::{json, Value};
 use test_utils::vci_provider::NORMAL_USER;
 use test_utils::wallet;
 use vercre_core::vci::{
-    CredentialResponse, CreateOfferResponse, MetadataResponse, TokenRequest, TokenResponse,
+    CreateOfferResponse, CredentialResponse, MetadataResponse, TokenRequest, TokenResponse,
 };
 use vercre_wallet::capabilities::signer::{SignerRequest, SignerResponse};
 use vercre_wallet::capabilities::store::StoreResponse;

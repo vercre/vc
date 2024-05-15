@@ -133,7 +133,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Debug,
+    P: Client + Server + Holder + StateManager + Debug,
 {
     type Provider = P;
     type Request = AuthorizationRequest;
@@ -307,7 +307,7 @@ where
 
 impl<P> Context<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Debug,
+    P: Client + Server + Holder + StateManager + Debug,
 {
     // Verify Credentials requested in `authorization_details` are supported.
     //

@@ -32,7 +32,7 @@ use crate::state::{Deferred, Expire, State};
 
 impl<P> Endpoint<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Batch credential request handler.
     ///
@@ -72,7 +72,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    P: Issuer + Holder + StateManager + Signer + Clone + Debug,
 {
     type Provider = P;
     type Request = BatchCredentialRequest;
@@ -230,7 +230,7 @@ where
 
 impl<P> Context<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    P: Holder + StateManager + Signer + Clone,
 {
     // Processes the Credential Request to generate a Credential Response.
     async fn make_response(

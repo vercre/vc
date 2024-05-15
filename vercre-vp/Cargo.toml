@@ -46,7 +46,7 @@ assert_let_bind = "0.1.1"
 axum = { version = "0.7.5", features = ["macros"] }
 axum-extra = { version = "0.9.3", features = ["typed-header"] }
 futures = "0.3.30"
-insta = { version = "1.38.0", features = ["redactions", "yaml"] }
+insta = { version = "1.39.0", features = ["redactions", "yaml"] }
 lazy_static = "1.4.0"
 test-utils = { path = "../test-utils" }
 tokio = { version = "1.37.0", features = ["rt-multi-thread"] }

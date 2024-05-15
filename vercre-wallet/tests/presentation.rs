@@ -45,7 +45,12 @@ async fn cross_device_flow() {
         "device_flow": "CrossDevice"
     });
 
-    let resp = verifier.post("/create_request").json(&body).expect_success().await.json::<CreateRequestResponse>();
+    let resp = verifier
+        .post("/create_request")
+        .json(&body)
+        .expect_success()
+        .await
+        .json::<CreateRequestResponse>();
     let request_uri = resp.request_uri.expect("request uri");
 
     // ------------------------------------------------
