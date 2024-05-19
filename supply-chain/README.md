@@ -12,3 +12,5 @@ For more information about Vercre's usage of `cargo vet` see our
 [documentation](https://vercre.io/contributing-coding-guidelines.html#dependencies-of-vercre).
 
 [`cargo vet`]: https://mozilla.github.io/cargo-vet/
+
+TODO: Investigate audit by the [Open Source Technology Improvement Fund](https://ostif.org).
