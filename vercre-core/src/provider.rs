@@ -100,6 +100,25 @@ pub trait Signer: Send + Sync {
     fn try_sign(&self, msg: &[u8]) -> impl Future<Output = Result<Vec<u8>>> + Send;
 }
 
+/// Storer is used by wallet implementations to provide persistent storage of Verifiable
+/// Credentials in serialized form.
+pub trait Storer: Send + Sync {
+    /// Save data to the store. Overwrite any existing data with the same key. Create a new object
+    /// with the key if it does not exist.
+    fn save(&self, key: &str, data: Vec<u8>) -> impl Future<Output = Result<()>> + Send;
+
+    /// Retrieve a serialized object from the store with the given key. Return None if no object
+    /// with the key exists.
+    fn load(&self, key: &str) -> impl Future<Output = Result<Option<Vec<u8>>>> + Send;
+
+    /// List all keys in the store.
+    fn list(&self) -> impl Future<Output = Result<Vec<String>>> + Send;
+
+    /// Remove the object with the given key from the store. Return an error if the object does not
+    /// exist.
+    fn remove(&self, key: &str) -> impl Future<Output = Result<()>> + Send;
+}
+
 /// Algorithm is used to specify the signing algorithm used by the signer.
 pub enum Algorithm {
     /// Algorithm for the secp256k1 curve
