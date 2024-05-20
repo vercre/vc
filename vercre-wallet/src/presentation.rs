@@ -251,7 +251,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use lazy_static::lazy_static;
     use serde_json::{json, Value};
-    use test_utils::wallet;
+    use test_utils::wallet_provider::wallet;
     use vercre_core::jwt::{self, Jwt};
     use vercre_core::vp::RequestObject;
     use vercre_core::w3c::vp::PresentationSubmission;

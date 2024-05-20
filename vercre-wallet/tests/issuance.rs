@@ -8,7 +8,7 @@
 // use insta::assert_yaml_snapshot as assert_snapshot;
 // use serde_json::{json, Value};
 // use test_utils::vci_provider::NORMAL_USER;
-// use test_utils::wallet;
+// use test_utils::wallet_provider::wallet;
 // use vercre_core::vci::{
 //     CreateOfferResponse, CredentialResponse, MetadataResponse, TokenRequest, TokenResponse,
 // };

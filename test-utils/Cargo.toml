@@ -36,3 +36,4 @@ uuid.workspace = true
 # vercre-core.workspace = true
 vercre-vci = { path = "../vercre-vci" }
 vercre-vp = { path = "../vercre-vp" }
+vercre-wallet = { path = "../vercre-wallet" }

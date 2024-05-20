@@ -64,7 +64,9 @@ pub mod offer;
 
 pub use std::fmt::Debug;
 
-pub use vercre_core::provider::{Callback, Signer, StateManager, Storer};
+use vercre_core::provider::{Callback, Signer, StateManager, Storer};
+// re-exports
+pub use vercre_core::{callback, provider};
 
 /// Endpoint is used to surface the public wallet endpoints to clients.
 #[derive(Debug)]
@@ -100,4 +102,9 @@ where
     fn provider(&self) -> &P {
         &self.provider
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use test_utils::wallet_provider::Provider;
 }

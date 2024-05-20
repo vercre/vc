@@ -113,7 +113,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use test_utils::vci_provider::{Provider, ISSUER, NORMAL_USER};
-    use test_utils::wallet;
+    use test_utils::wallet_provider::wallet;
     use vercre_core::jwt::{self, Jwt};
     use vercre_core::vci::{CredentialRequest, ProofClaims};
     use vercre_core::w3c::vc::VcClaims;

@@ -16,7 +16,7 @@ use vercre_vci::provider::{
 };
 use vercre_vci::{holder, GrantType};
 
-use crate::wallet;
+use crate::wallet_provider::wallet;
 
 pub const NORMAL_USER: &str = "normal_user";
 pub const PENDING_USER: &str = "pending_user";

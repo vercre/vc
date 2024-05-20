@@ -10,7 +10,7 @@
 // // use insta::internals::Redaction;
 // use lazy_static::lazy_static;
 // use serde_json::{json, Value};
-// use test_utils::wallet;
+// use test_utils::wallet_provider::wallet;
 // use vercre_core::vp::{CreateRequestResponse, RequestObjectResponse, ResponseRequest};
 // use vercre_wallet::capabilities::signer::{SignerRequest, SignerResponse};
 // use vercre_wallet::capabilities::store::{StoreEntry, StoreRequest, StoreResponse};
