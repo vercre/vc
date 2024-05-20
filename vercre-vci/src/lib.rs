@@ -168,6 +168,7 @@ mod tests {
         assert!(response.is_err());
     }
 
+    struct TestResponse {}
     // ------------------------------------------------------------------------
     // Mock Endpoint
     // ------------------------------------------------------------------------
@@ -176,7 +177,6 @@ mod tests {
         return_ok: bool,
     }
 
-    struct TestResponse {}
 
     impl<P> Endpoint<P>
     where
