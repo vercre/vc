@@ -12,6 +12,7 @@ pub mod metadata;
 pub mod offer;
 pub mod pin;
 pub mod reset;
+pub mod state;
 pub mod token_request;
 
 /// `Issuance` maintains app state across the steps of the issuance flow.
