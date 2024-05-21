@@ -31,25 +31,25 @@ use vercre_core::vci::{
 // TODO: investigate use of Builder-like pattern to build `Model` model over
 // course of events TODO: support authorization flow
 
-/// `Model` maintains app state across the steps of the issuance flow. Model data
-/// is surfaced to the shell indirectly via the `ViewModel`.
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct Issuance {
-    /// The current status of the issuance flow.
-    pub status: Status,
+// /// `Model` maintains app state across the steps of the issuance flow. Model data
+// /// is surfaced to the shell indirectly via the `ViewModel`.
+// #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+// pub struct Issuance {
+//     /// The current status of the issuance flow.
+//     pub status: Status,
 
-    // The `CredentialOffer` received from the issuer.
-    pub offer: CredentialOffer,
+//     // The `CredentialOffer` received from the issuer.
+//     pub offer: CredentialOffer,
 
-    /// A list of `CredentialConfiguration`s, one for each credential offered.
-    pub offered: HashMap<String, CredentialConfiguration>,
+//     /// A list of `CredentialConfiguration`s, one for each credential offered.
+//     pub offered: HashMap<String, CredentialConfiguration>,
 
-    /// The user's pin, as set from the shell.
-    pub pin: Option<String>,
+//     /// The user's pin, as set from the shell.
+//     pub pin: Option<String>,
 
-    /// The `TokenResponse` received from the issuer.
-    pub token: TokenResponse,
-}
+//     /// The `TokenResponse` received from the issuer.
+//     pub token: TokenResponse,
+// }
 
 
 
@@ -310,32 +310,32 @@ pub struct Issuance {
 //     None
 // }
 
-/// Issuance Status values.
-#[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename = "IssuanceStatus")]
-pub enum Status {
-    /// No credential offer is being processed.
-    #[default]
-    Inactive,
+// /// Issuance Status values.
+// #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
+// #[serde(rename = "IssuanceStatus")]
+// pub enum Status {
+//     /// No credential offer is being processed.
+//     #[default]
+//     Inactive,
 
-    /// A new credential offer has been received.
-    Offered,
+//     /// A new credential offer has been received.
+//     Offered,
 
-    /// Metadata has been retrieved and the offer is ready to be viewed.
-    Ready,
+//     /// Metadata has been retrieved and the offer is ready to be viewed.
+//     Ready,
 
-    /// The offer requires a user pin to progress.
-    PendingPin,
+//     /// The offer requires a user pin to progress.
+//     PendingPin,
 
-    /// The offer has been accepted and the credential is being issued.
-    Accepted,
+//     /// The offer has been accepted and the credential is being issued.
+//     Accepted,
 
-    /// A credential has been requested.
-    Requested,
+//     /// A credential has been requested.
+//     Requested,
 
-    /// The credential offer has failed, with an error message.
-    Failed(String),
-}
+//     /// The credential offer has failed, with an error message.
+//     Failed(String),
+// }
 
 // /// Get a string representation of the `Status`.
 // impl std::fmt::Display for Status {

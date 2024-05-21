@@ -1,0 +1,120 @@
+//! # Endpoint to accept an offer
+//! 
+//! Used to update the issuance status to `Accepted` when the Holder has accepted an offer, or to
+//! `PendingPin` when a user has accepted an offer and a PIN is required. To reject an offer and
+//! clear the issuance state, use the reset endpoint.
+
+use std::fmt::Debug;
+
+use tracing::instrument;
+use vercre_core::error::Err;
+use vercre_core::provider::{Callback, Client, Signer, StateManager, Storer};
+use vercre_core::{err, Result};
+
+use crate::issuance::{Issuance, Status};
+use crate::Endpoint;
+
+impl<P> Endpoint<P>
+where
+    P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
+{
+    /// Accept endpoint updates the issuance status to `Accepted` when the Holder has accepted an
+    /// offer, or to `PendingPin` when a user has accepted an offer and a PIN is required.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the request is invalid or the provider is unavailable.
+    #[instrument(level = "debug", skip(self))]
+    pub async fn accept(&self) -> Result<()> {
+        let ctx = Context {
+            _p: std::marker::PhantomData,
+        };
+
+        vercre_core::Endpoint::handle_request(self, &(), ctx).await
+    }
+}
+
+#[derive(Debug, Default)]
+struct Context<P> {
+    _p: std::marker::PhantomData<P>,
+}
+
+impl<P> vercre_core::Context for Context<P>
+where
+    P: StateManager + Debug,
+{
+    type Provider = P;
+    type Request = ();
+    type Response = ();
+
+    fn callback_id(&self) -> Option<String> {
+        None
+    }
+
+    async fn verify(&mut self, provider: &P, _req: &Self::Request) -> Result<&Self> {
+        tracing::debug!("Context::verify");
+
+        // Check we are processing an offer and we are at the expected point in the flow.
+        let Some(stashed) = provider.get_opt("issuance").await? else {
+            err!(Err::InvalidRequest, "no issuance in progress");
+        };
+        let issuance: Issuance = serde_json::from_slice(&stashed)?;
+        if issuance.status != Status::Ready {
+            err!(Err::InvalidRequest, "invalid issuance status");
+        }
+        let Some(grants) = &issuance.offer.grants else {
+            err!(Err::InvalidRequest, "no grants");
+        };
+        if grants.pre_authorized_code.is_none() {
+            err!(Err::InvalidRequest, "no pre-authorized code");
+        };
+
+        Ok(self)
+    }
+
+    async fn process(&self, provider: &P, _req: &Self::Request) -> Result<Self::Response> {
+        tracing::debug!("Context::process");
+
+        // Update the issuance status
+        let Some(stashed) = provider.get_opt("issuance").await? else {
+            err!(Err::InvalidRequest, "no issuance in progress");
+        };
+        let mut issuance: Issuance = serde_json::from_slice(&stashed)?;
+        let Some(grants) = &issuance.offer.grants else {
+            err!(Err::InvalidRequest, "no grants");
+        };
+        let Some(pre_auth_code) = &grants.pre_authorized_code else {
+            err!(Err::InvalidRequest, "no pre-authorized code");
+        };
+        if pre_auth_code.tx_code.is_some() {
+            issuance.status = Status::PendingPin;
+        } else {
+            issuance.status = Status::Accepted;
+        }
+        provider.put_opt("issuance", serde_json::to_vec(&issuance)?, None).await?;
+
+        Ok(())
+    }
+}
+
+//     /// When the Holder has accepted an offer, determine whether a user pin is
+//     /// required or not.
+//     pub(crate) fn accept(&mut self) -> anyhow::Result<()> {
+//         // determine whether a user pin is required or not
+//         let Some(grants) = &self.offer.grants else {
+//             return Err(anyhow!("Missing grants"));
+//         };
+//         let Some(pre_auth_code) = &grants.pre_authorized_code else {
+//             return Err(anyhow!("Missing pre-authorized code"));
+//         };
+
+//         // TODO: switch to using `tx_code` object to drive shell UI
+//         // set status based on whether user pin is required
+//         if pre_auth_code.tx_code.is_some() {
+//             self.status = Status::PendingPin;
+//         } else {
+//             self.status = Status::Accepted;
+//         }
+
+//         Ok(())
+//     }

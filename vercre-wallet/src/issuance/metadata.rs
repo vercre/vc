@@ -11,7 +11,7 @@ use vercre_core::vci::MetadataResponse;
 use vercre_core::{err, Result};
 
 use crate::Endpoint;
-use crate::issuance::model::{Issuance, Status};
+use crate::issuance::{Issuance, Status};
 
 impl<P> Endpoint<P>
 where

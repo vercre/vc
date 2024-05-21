@@ -1,5 +1,5 @@
 //! # PIN endpoint.
-//! 
+//!
 //! Used to set a Personal Identification Number (PIN) for a token request.
 
 use std::fmt::Debug;
@@ -9,12 +9,12 @@ use vercre_core::error::Err;
 use vercre_core::provider::{Callback, Client, Signer, StateManager, Storer};
 use vercre_core::{err, Result};
 
+use crate::issuance::{Issuance, Status};
 use crate::Endpoint;
-use crate::issuance::model::{Issuance, Status};
 
 impl<P> Endpoint<P>
-    where
-        P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
+where
+    P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
 {
     /// PIN endpoint receives a PIN from the wallet client, stashes it in state for use later in
     /// the flow, and updates the issuance status.
@@ -34,8 +34,8 @@ struct Context<P> {
 }
 
 impl<P> vercre_core::Context for Context<P>
-    where
-        P: StateManager + Debug,
+where
+    P: StateManager + Debug,
 {
     type Provider = P;
     type Request = String;
@@ -53,7 +53,7 @@ impl<P> vercre_core::Context for Context<P>
             err!(Err::InvalidRequest, "no issuance in progress");
         };
         let issuance: Issuance = serde_json::from_slice(&stashed)?;
-        if issuance.status != Status::Ready {
+        if issuance.status != Status::PendingPin {
             err!(Err::InvalidRequest, "invalid issuance status");
         }
 
