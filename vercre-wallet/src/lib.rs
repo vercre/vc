@@ -60,6 +60,7 @@
 //        - add Registration endpoint
 
 mod issuance;
+pub mod metadata;
 pub mod offer;
 
 pub use std::fmt::Debug;
