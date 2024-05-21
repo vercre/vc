@@ -61,12 +61,16 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
+use uuid::Uuid;
 use vercre_wallet::callback::Payload;
-use vercre_wallet::provider::{Algorithm, Callback, Result, Signer, StateManager, Storer};
+use vercre_wallet::provider::{Algorithm, Callback, Client, Result, Signer, StateManager, Storer};
+use vercre_wallet::GrantType;
+use vercre_wallet::types;
 
 #[derive(Default, Clone, Debug)]
 pub struct Provider {
     callback: CallbackHook,
+    client: ClientStore,
     state_store: StateStore,
     store: Store,
 }
@@ -76,9 +80,20 @@ impl Provider {
     pub fn new() -> Self {
         Self {
             callback: CallbackHook::new(),
+            client: ClientStore::new(),
             state_store: StateStore::new(),
             store: Store::new(),
         }
+    }
+}
+
+impl Client for Provider {
+    async fn metadata(&self, client_id: &str) -> Result<types::Client> {
+        self.client.get(client_id)
+    }
+
+    async fn register(&self, client_meta: &types::Client) -> Result<types::Client> {
+        self.client.add(client_meta)
     }
 }
 
@@ -114,6 +129,10 @@ impl StateManager for Provider {
     async fn purge(&self, key: &str) -> Result<()> {
         self.state_store.purge(key)
     }
+
+    async fn get_opt(&self, key: &str) -> Result<Option<Vec<u8>>> {
+        self.state_store.get_opt(key)
+    }
 }
 
 impl Storer for Provider {
@@ -131,6 +150,58 @@ impl Storer for Provider {
 
     async fn remove(&self, key: &str) -> Result<()> {
         self.store.remove(key)
+    }
+}
+
+//-----------------------------------------------------------------------------
+// ClientStore
+//-----------------------------------------------------------------------------
+
+#[derive(Default, Clone, Debug)]
+struct ClientStore {
+    clients: Arc<Mutex<HashMap<String, types::Client>>>,
+}
+
+impl ClientStore {
+    fn new() -> Self {
+        let client_id = wallet::did();
+
+        let client = types::Client {
+            client_id: client_id.clone(),
+            redirect_uris: Some(vec![String::from("http://localhost:3000/callback")]),
+            grant_types: Some(vec![GrantType::AuthorizationCode, GrantType::PreAuthorizedCode]),
+            response_types: Some(vec![String::from("code")]),
+            scope: Some(String::from("openid credential")),
+            credential_offer_endpoint: Some(String::from("openid-credential-offer://")),
+
+            ..Default::default()
+        };
+
+        Self {
+            clients: Arc::new(Mutex::new(HashMap::from([(client_id, client)]))),
+        }
+    }
+
+    fn get(&self, client_id: &str) -> Result<types::Client> {
+        let Some(client) = self.clients.lock().expect("should lock").get(client_id).cloned() else {
+            return Err(anyhow!("client not found for client_id: {client_id}"));
+        };
+        Ok(client)
+    }
+
+    #[allow(clippy::unnecessary_wraps)]
+    fn add(&self, client_meta: &types::Client) -> Result<types::Client> {
+        let client_meta = types::Client {
+            client_id: Uuid::new_v4().to_string(),
+            ..client_meta.to_owned()
+        };
+
+        self.clients
+            .lock()
+            .expect("should lock")
+            .insert(client_meta.client_id.to_string(), client_meta.clone());
+
+        Ok(client_meta)
     }
 }
 
@@ -156,11 +227,20 @@ impl StateStore {
         Ok(())
     }
 
+    // fn put_opt(&self, key: &str, state: Vec<u8>, _: Option<DateTime<Utc>>) -> Result<()> {
+    //     self.store.lock().expect("should lock").insert(key.to_string(), state);
+    //     Ok(())
+    // }
+
     fn get(&self, key: &str) -> Result<Vec<u8>> {
         let Some(state) = self.store.lock().expect("should lock").get(key).cloned() else {
             return Err(anyhow!("state not found for key: {key}"));
         };
         Ok(state)
+    }
+
+    fn get_opt(&self, key: &str) -> Result<Option<Vec<u8>>> {
+        Ok(self.store.lock().expect("should lock").get(key).cloned())
     }
 
     #[allow(clippy::unnecessary_wraps)]

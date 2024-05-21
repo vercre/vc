@@ -45,6 +45,8 @@ serde_json.workspace = true
 serde_qs = "0.13.0"
 serde_urlencoded = "0.7.1"
 thiserror = "1.0.60"
+tracing.workspace = true
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 uniffi = { version = "0.27.2", features = ["cli"] }
 urlencoding = "2.1.3"
 uuid.workspace = true
@@ -61,8 +63,6 @@ insta = { version = "1.39.0", features = ["redactions", "yaml"] }
 test-utils = { path = "../test-utils" }
 tokio = { version = "1.37.0", default-features = false, features = ["fs", "macros", "rt"] }
 tower-http = { version = "0.5.2", features = ["trace"] }
-tracing.workspace = true
-tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 vercre-vci = { path = "../vercre-vci" }
 vercre-vp = { path = "../vercre-vp" }
 
