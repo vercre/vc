@@ -68,6 +68,7 @@ where
         };
         let mut issuance: Issuance = serde_json::from_slice(&stashed)?;
         issuance.pin = Some(req.clone());
+        issuance.status = Status::Accepted;
         provider.put_opt("issuance", serde_json::to_vec(&issuance)?, None).await?;
 
         Ok(())

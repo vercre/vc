@@ -1,14 +1,14 @@
-//! # Endpoint to accept an offer
+//! # Token Request endpoint.
 //! 
-//! Used to update the issuance status to `Accepted` when the Holder has accepted an offer, or to
-//! `PendingPin` when a user has accepted an offer and a PIN is required. To reject an offer and
-//! clear the issuance state, use the reset endpoint.
+//! Used to build a token request that can be sent to the issuer to retrieve an access token that
+//! can be used to exchange for credentials. The token request is serialized ready to be sent.
 
 use std::fmt::Debug;
 
 use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{Callback, Client, Signer, StateManager, Storer};
+use vercre_core::vci::{GrantType, TokenRequest};
 use vercre_core::{err, Result};
 
 use crate::issuance::{Issuance, Status};
@@ -18,19 +18,15 @@ impl<P> Endpoint<P>
 where
     P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
 {
-    /// Accept endpoint updates the issuance status to `Accepted` when the Holder has accepted an
-    /// offer, or to `PendingPin` when a user has accepted an offer and a PIN is required.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the request is invalid or the provider is unavailable.
+    /// Token request endpoint uses the issuance state to construct a token request that the wallet
+    /// client can send to the issuance service.
     #[instrument(level = "debug", skip(self))]
-    pub async fn accept(&self) -> Result<()> {
+    pub async fn token_request(&self, request: &String) -> Result<String> {
         let ctx = Context {
             _p: std::marker::PhantomData,
         };
 
-        vercre_core::Endpoint::handle_request(self, &(), ctx).await
+        vercre_core::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -44,8 +40,8 @@ where
     P: StateManager + Debug,
 {
     type Provider = P;
-    type Request = ();
-    type Response = ();
+    type Request = String;
+    type Response = String;
 
     fn callback_id(&self) -> Option<String> {
         None
@@ -59,7 +55,7 @@ where
             err!(Err::InvalidRequest, "no issuance in progress");
         };
         let issuance: Issuance = serde_json::from_slice(&stashed)?;
-        if issuance.status != Status::Ready {
+        if issuance.status != Status::Accepted {
             err!(Err::InvalidRequest, "invalid issuance status");
         }
         let Some(grants) = &issuance.offer.grants else {
@@ -72,27 +68,32 @@ where
         Ok(self)
     }
 
-    async fn process(&self, provider: &P, _req: &Self::Request) -> Result<Self::Response> {
+    async fn process(&self, provider: &P, req: &Self::Request) -> Result<Self::Response> {
         tracing::debug!("Context::process");
 
-        // Update the issuance status
         let Some(stashed) = provider.get_opt("issuance").await? else {
             err!(Err::InvalidRequest, "no issuance in progress");
         };
-        let mut issuance: Issuance = serde_json::from_slice(&stashed)?;
+        let issuance: Issuance = serde_json::from_slice(&stashed)?;
+
+        // pre-authorized flow
         let Some(grants) = &issuance.offer.grants else {
-            err!(Err::InvalidRequest, "no grants");
+            err!(Err::InvalidRequest, "Missing grants");
         };
         let Some(pre_auth_code) = &grants.pre_authorized_code else {
-            err!(Err::InvalidRequest, "no pre-authorized code");
+            err!(Err::InvalidRequest, "No pre-authorized code");
         };
-        if pre_auth_code.tx_code.is_some() {
-            issuance.status = Status::PendingPin;
-        } else {
-            issuance.status = Status::Accepted;
-        }
-        provider.put_opt("issuance", serde_json::to_vec(&issuance)?, None).await?;
 
-        Ok(())
+        let req = TokenRequest {
+            credential_issuer: issuance.offer.credential_issuer.clone(),
+            client_id: req.clone(),
+            grant_type: GrantType::PreAuthorizedCode,
+            pre_authorized_code: Some(pre_auth_code.pre_authorized_code.clone()),
+            user_code: issuance.pin.clone(),
+
+            ..Default::default()
+        };
+
+        Ok(serde_urlencoded::to_string(req).map_err(|e| Err::ServerError(e.into()))?)
     }
 }
