@@ -10,7 +10,7 @@ use vercre_core::provider::{Callback, Client, Signer, StateManager, Storer};
 use vercre_core::vci::MetadataResponse;
 use vercre_core::{err, Result};
 
-use super::Endpoint;
+use crate::Endpoint;
 use crate::issuance::model::{Issuance, Status};
 
 impl<P> Endpoint<P>

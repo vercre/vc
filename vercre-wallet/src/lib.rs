@@ -59,9 +59,7 @@
 //        - add Metadata endpoint
 //        - add Registration endpoint
 
-mod issuance;
-pub mod metadata;
-pub mod offer;
+pub mod issuance;
 
 pub use std::fmt::Debug;
 

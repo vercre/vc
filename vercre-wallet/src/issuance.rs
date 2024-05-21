@@ -5,6 +5,9 @@
 //! The Issuance app implements the vercre-wallet's credential issuance flow.
 
 pub(crate) mod model;
+pub mod metadata;
+pub mod offer;
+pub mod pin;
 
 // use crux_core::macros::Effect;
 // #[cfg(feature = "typegen")]
