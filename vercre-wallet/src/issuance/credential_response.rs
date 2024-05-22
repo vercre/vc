@@ -93,6 +93,9 @@ where
                 credential.metadata = cfg.clone();
                 credential.vc = self.vc.clone();
                 credential.issued = self.vc_str.clone();
+
+                provider.save(key, serde_json::to_vec(&credential)?).await?;
+
                 cred_key = Some(key.clone());
             }
         }
