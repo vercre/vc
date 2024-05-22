@@ -14,6 +14,7 @@ pub mod pin;
 pub mod reset;
 pub mod state;
 pub mod token_request;
+pub mod token_response;
 
 /// `Issuance` maintains app state across the steps of the issuance flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
