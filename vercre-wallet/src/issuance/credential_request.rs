@@ -9,7 +9,7 @@ use std::fmt::Debug;
 
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, Client, Signer, StateManager, Storer};
+use vercre_core::provider::{Callback, Signer, StateManager, Storer};
 use vercre_core::vci::{CredentialRequest, Proof, ProofClaims, TokenResponse};
 use vercre_core::{err, Result};
 use vercre_core::jwt::{Header, Jwt};
@@ -19,15 +19,16 @@ use crate::Endpoint;
 
 impl<P> Endpoint<P>
 where
-    P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
+    P: Callback + Signer + StateManager + Storer + Clone + Debug,
 {
     /// Token response endpoint receives a token response from the issuance service and stashes the
     /// token in state. It then constructs a set of serialized credential requests to send to the
     /// issuance service.
     #[instrument(level = "debug", skip(self))]
-    pub async fn token_response(&self, request: &TokenResponse) -> Result<String> {
+    pub async fn credential_request(&self, request: &TokenResponse) -> Result<String> {
         let ctx = Context {
             _p: std::marker::PhantomData,
+            issuance: Issuance::default(),
         };
 
         vercre_core::Endpoint::handle_request(self, request, ctx).await
@@ -37,6 +38,7 @@ where
 #[derive(Debug, Default)]
 struct Context<P> {
     _p: std::marker::PhantomData<P>,
+    issuance: Issuance,
 }
 
 impl<P> vercre_core::Context for Context<P>
@@ -46,10 +48,6 @@ where
     type Provider = P;
     type Request = TokenResponse;
     type Response = String;
-
-    fn callback_id(&self) -> Option<String> {
-        None
-    }
 
     async fn verify(&mut self, provider: &P, _req: &Self::Request) -> Result<&Self> {
         tracing::debug!("Context::verify");
@@ -62,6 +60,7 @@ where
         if issuance.status != Status::Accepted {
             err!(Err::InvalidRequest, "invalid issuance status");
         }
+        self.issuance = issuance;
 
         Ok(self)
     }
@@ -69,8 +68,9 @@ where
     async fn process(&self, provider: &P, req: &Self::Request) -> Result<Self::Response> {
         tracing::debug!("Context::process");
 
-        // Stash the token in state.
-        let mut issuance: Issuance = serde_json::from_slice(&provider.get("issuance").await?)?;
+        // Stash the token in state and update status (assuming client will actually make the
+        // request).
+        let mut issuance = self.issuance.clone();
         issuance.token = req.clone();
         issuance.status = Status::Requested;
         provider.put_opt("issuance", serde_json::to_vec(&issuance)?, None).await?;
@@ -122,46 +122,3 @@ where
         Ok(requests_str)
     }
 }
-
-
-//     pub(super) fn credential_request(
-//         &mut self, cfg_id: &str, signed_jwt: &str,
-//     ) -> anyhow::Result<Value> {
-//         self.status = Status::Requested;
-
-//         let Some(cred_cfg) = self.offered.get(cfg_id) else {
-//             return Err(anyhow!("Credential configuration not found"));
-//         };
-
-//         // TODO: build credential subject from metadata
-//         // "credentialSubject": &metadata.credential_definition.credential_subject,
-
-//         Ok(json!({
-//             "format": cred_cfg.format.clone(),
-//             "credential_definition": {
-//                 "type": cred_cfg.credential_definition.type_.clone(),
-//             },
-//             "proof":{
-//                 "proof_type": "jwt",
-//                 "jwt": signed_jwt
-//             }
-//         }))
-//     }
-
-
-//for cfg_id in model.offered.clone().keys() {
-    //                     let Ok(request) = model.credential_request(cfg_id, &signed_jwt) else {
-    //                         let msg = String::from("Issue building credential request");
-    //                         self.update(Event::Fail(msg), model, caps);
-    //                         return;
-    //                     };
-    //                     #[cfg(feature = "wasm")]
-    //                     web_sys::console::debug_2(&"model:".into(), &format!("{model:?}").into());
-    
-    //                     caps.http
-    //                         .post(format!("{}/credential", model.offer.credential_issuer))
-    //                         .header("authorization", format!("Bearer {}", model.token.access_token))
-    //                         .body(request)
-    //                         .expect_json()
-    //                         .send(Event::Credential);
-    //                 }

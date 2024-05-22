@@ -59,11 +59,12 @@
 //        - add Metadata endpoint
 //        - add Registration endpoint
 
+pub mod credential;
 pub mod issuance;
 
 pub use std::fmt::Debug;
 
-use vercre_core::provider::{Callback, Client, Signer, StateManager, Storer};
+use vercre_core::provider::{Callback, Signer, StateManager, Storer};
 // re-exports
 pub use vercre_core::{callback, provider, Result};
 pub use vercre_core::metadata as types;
@@ -73,7 +74,7 @@ pub use vercre_core::vci::GrantType;
 #[derive(Debug)]
 pub struct Endpoint<P>
 where
-    P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
+    P: Signer + StateManager + Storer + Clone + Debug,
 {
     provider: P,
 }
@@ -86,7 +87,7 @@ where
 /// endpoint implementation of `Endpoint::call` specific to the request.
 impl<P> Endpoint<P>
 where
-P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
+P: Signer + StateManager + Storer + Clone + Debug,
 {
     /// Create a new `Endpoint` with the provided `Provider`.
     pub fn new(provider: P) -> Self {
@@ -96,7 +97,7 @@ P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
 
 impl<P> vercre_core::Endpoint for Endpoint<P>
 where
-P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
+P: Callback + Signer + StateManager + Storer + Clone + Debug,
 {
     type Provider = P;
 
@@ -141,7 +142,7 @@ mod tests {
 
     impl<P> Endpoint<P>
     where
-        P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
+        P: Callback + Signer + StateManager + Storer + Clone + Debug,
     {
         async fn test(&mut self, request: &TestRequest) -> Result<TestResponse> {
             let ctx = Context {
@@ -158,7 +159,7 @@ mod tests {
 
     impl<P> vercre_core::Context for Context<P>
     where
-        P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
+        P: Signer + StateManager + Storer + Clone + Debug,
     {
         type Provider = P;
         type Request = TestRequest;

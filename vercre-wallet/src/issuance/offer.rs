@@ -7,7 +7,7 @@ use std::fmt::Debug;
 use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::metadata::CredentialConfiguration;
-use vercre_core::provider::{Callback, Client, Signer, StateManager, Storer};
+use vercre_core::provider::{Callback, Signer, StateManager, Storer};
 use vercre_core::vci::CredentialOffer;
 use vercre_core::{err, Result};
 
@@ -16,7 +16,7 @@ use crate::issuance::{Issuance, Status};
 
 impl<P> Endpoint<P>
 where
-    P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
+    P: Callback + Signer + StateManager + Storer + Clone + Debug,
 {
     /// Receive offer endpoint receives a a credential offer request from an issuer. Returns the
     /// credential issuer URL which can be used to retrieve metadata. It is the responsibility of
@@ -38,6 +38,7 @@ where
 #[derive(Debug, Default)]
 struct Context<P> {
     _p: std::marker::PhantomData<P>,
+    
 }
 
 impl<P> vercre_core::Context for Context<P>
@@ -47,10 +48,6 @@ where
     type Provider = P;
     type Request = CredentialOffer;
     type Response = String;
-
-    fn callback_id(&self) -> Option<String> {
-        None
-    }
 
     async fn verify(&mut self, provider: &P, req: &Self::Request) -> Result<&Self> {
         tracing::debug!("Context::verify");

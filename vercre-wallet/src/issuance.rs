@@ -8,13 +8,14 @@ use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::vci::{CredentialOffer, TokenResponse};
 
 pub mod accept;
+pub mod credential_response;
 pub mod metadata;
 pub mod offer;
 pub mod pin;
 pub mod reset;
 pub mod state;
 pub mod token_request;
-pub mod token_response;
+pub mod credential_request;
 
 /// `Issuance` maintains app state across the steps of the issuance flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]

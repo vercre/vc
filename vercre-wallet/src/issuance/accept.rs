@@ -8,7 +8,7 @@ use std::fmt::Debug;
 
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, Client, Signer, StateManager, Storer};
+use vercre_core::provider::{Callback, Signer, StateManager, Storer};
 use vercre_core::{err, Result};
 
 use crate::issuance::{Issuance, Status};
@@ -16,7 +16,7 @@ use crate::Endpoint;
 
 impl<P> Endpoint<P>
 where
-    P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
+    P: Callback + Signer + StateManager + Storer + Clone + Debug,
 {
     /// Accept endpoint updates the issuance status to `Accepted` when the Holder has accepted an
     /// offer, or to `PendingPin` when a user has accepted an offer and a PIN is required.
@@ -28,6 +28,7 @@ where
     pub async fn accept(&self) -> Result<()> {
         let ctx = Context {
             _p: std::marker::PhantomData,
+            issuance: Issuance::default(),
         };
 
         vercre_core::Endpoint::handle_request(self, &(), ctx).await
@@ -37,6 +38,7 @@ where
 #[derive(Debug, Default)]
 struct Context<P> {
     _p: std::marker::PhantomData<P>,
+    issuance: Issuance,
 }
 
 impl<P> vercre_core::Context for Context<P>
@@ -46,10 +48,6 @@ where
     type Provider = P;
     type Request = ();
     type Response = ();
-
-    fn callback_id(&self) -> Option<String> {
-        None
-    }
 
     async fn verify(&mut self, provider: &P, _req: &Self::Request) -> Result<&Self> {
         tracing::debug!("Context::verify");
@@ -68,6 +66,7 @@ where
         if grants.pre_authorized_code.is_none() {
             err!(Err::InvalidRequest, "no pre-authorized code");
         };
+        self.issuance = issuance;
 
         Ok(self)
     }
@@ -76,10 +75,7 @@ where
         tracing::debug!("Context::process");
 
         // Update the issuance status
-        let Some(stashed) = provider.get_opt("issuance").await? else {
-            err!(Err::InvalidRequest, "no issuance in progress");
-        };
-        let mut issuance: Issuance = serde_json::from_slice(&stashed)?;
+        let mut issuance = self.issuance.clone();
         let Some(grants) = &issuance.offer.grants else {
             err!(Err::InvalidRequest, "no grants");
         };

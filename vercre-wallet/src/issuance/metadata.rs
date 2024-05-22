@@ -6,7 +6,7 @@ use std::fmt::Debug;
 
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, Client, Signer, StateManager, Storer};
+use vercre_core::provider::{Callback, Signer, StateManager, Storer};
 use vercre_core::vci::MetadataResponse;
 use vercre_core::{err, Result};
 
@@ -15,7 +15,7 @@ use crate::issuance::{Issuance, Status};
 
 impl<P> Endpoint<P>
 where
-    P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
+    P: Callback + Signer + StateManager + Storer + Clone + Debug,
 {
     /// Metadata endpoint receives issuer metadata from wallet client. It is the responsibility of
     /// the client to retrieve the metadata and pass it to this endpoint.
@@ -27,6 +27,7 @@ where
     pub async fn metadata(&self, request: &MetadataResponse) -> Result<()> {
         let ctx = Context {
             _p: std::marker::PhantomData,
+            issuance: Issuance::default(),
         };
 
         vercre_core::Endpoint::handle_request(self, request, ctx).await
@@ -36,6 +37,7 @@ where
 #[derive(Debug, Default)]
 struct Context<P> {
     _p: std::marker::PhantomData<P>,
+    issuance: Issuance,
 }
 
 impl<P> vercre_core::Context for Context<P>
@@ -45,10 +47,6 @@ where
     type Provider = P;
     type Request = MetadataResponse;
     type Response = ();
-
-    fn callback_id(&self) -> Option<String> {
-        None
-    }
 
     async fn verify(&mut self, provider: &P, req: &Self::Request) -> Result<&Self> {
         tracing::debug!("Context::verify");
@@ -69,6 +67,7 @@ where
         if issuance.status != Status::Offered {
             err!(Err::InvalidRequest, "invalid issuance status");
         }
+        self.issuance = issuance;
 
         Ok(self)
     }
@@ -79,10 +78,7 @@ where
         tracing::debug!("Context::process");
 
         // Get the offer from state and populate with credential configurations.
-        let Some(stashed) = provider.get_opt("issuance").await? else {
-            err!(Err::InvalidRequest, "no issuance in progress");
-        };
-        let mut issuance: Issuance = serde_json::from_slice(&stashed)?;
+        let mut issuance = self.issuance.clone();
 
         let creds_supported = &req.credential_issuer.credential_configurations_supported;
 
