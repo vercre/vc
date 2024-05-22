@@ -12,10 +12,11 @@ cd types
 cargo build
 ```
 
-Install the TypeScript dependencies:
+Install dependencies:
 
 ```bash
 pnpm install
+cargo install wasm-pack
 ```
 
 Run the app:
@@ -24,7 +25,7 @@ Run the app:
 pnpm dev
 ```
 
-Navigate to [https://localhost:3000](https://localhost:3000) in your browser.
+Navigate to <https://localhost:3000/> in your browser.
 
 ## Issuing a Sample Credential
 
@@ -49,7 +50,6 @@ RESP=$(curl --json '{
         "callback_id": "1234"
     }' \
     http://localhost:8080/create_offer)
-
 
 
 # This should open the web app in your browser and start the issuance process
