@@ -12,7 +12,9 @@ pub mod credential_response;
 pub mod metadata;
 pub mod offer;
 pub mod pin;
+#[allow(clippy::module_name_repetitions)]
 pub mod reset_issuance;
+#[allow(clippy::module_name_repetitions)]
 pub mod get_issuance;
 pub mod token_request;
 pub mod credential_request;

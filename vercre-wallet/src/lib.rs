@@ -57,8 +57,8 @@ pub enum Flow {
 impl Display for Flow {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Flow::Issuance => write!(f, "issuance"),
-            Flow::Presentation => write!(f, "presentation"),
+            Self::Issuance => write!(f, "issuance"),
+            Self::Presentation => write!(f, "presentation"),
         }
     }
 }

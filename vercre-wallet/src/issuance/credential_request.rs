@@ -104,7 +104,7 @@ where
 
         // Construct an array of credential requests - one for each credential in the offer.
         let mut requests = Vec::new();
-        for (id, cfg) in issuance.offered.into_iter() {
+        for (id, cfg) in issuance.offered {
             let request = CredentialRequest {
                 credential_issuer: issuance.offer.credential_issuer.clone(),
                 access_token: req.access_token.clone(),

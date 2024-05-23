@@ -85,14 +85,14 @@ where
         let mut credential = Credential::default();
         let mut issuance = self.issuance.clone();
         let mut cred_key: Option<String> = None;
-        for (key, cfg) in issuance.offered.iter() {
+        for (key, cfg) in &issuance.offered {
             if cfg.credential_definition.type_.as_ref() == Some(&self.vc.type_) {
                 // Store the credential in the wallet's persistent storage.
-                credential.id = self.vc.id.clone();
-                credential.issuer = issuance.offer.credential_issuer.clone();
+                credential.id.clone_from(&self.vc.id);
+                credential.issuer.clone_from(&issuance.offer.credential_issuer);
                 credential.metadata = cfg.clone();
                 credential.vc = self.vc.clone();
-                credential.issued = self.vc_str.clone();
+                credential.issued.clone_from(&self.vc_str);
 
                 provider.save(key, serde_json::to_vec(&credential)?).await?;
 
@@ -113,10 +113,10 @@ where
             provider.purge(&Flow::Issuance.to_string()).await?;
         } else {
             if req.c_nonce.is_some() {
-                issuance.token.c_nonce = req.c_nonce.clone();
+                issuance.token.c_nonce.clone_from(&req.c_nonce);
             }
             if req.c_nonce_expires_in.is_some() {
-                issuance.token.c_nonce_expires_in = req.c_nonce_expires_in.clone();
+                issuance.token.c_nonce_expires_in = req.c_nonce_expires_in;
             }
             provider
                 .put_opt(&Flow::Issuance.to_string(), serde_json::to_vec(&issuance)?, None)

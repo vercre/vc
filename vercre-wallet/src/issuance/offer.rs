@@ -79,7 +79,7 @@ where
             status: Status::Offered,
             ..Default::default()
         };
-        for id in req.credential_configuration_ids.iter() {
+        for id in &req.credential_configuration_ids {
             issuance.offered.insert(id.to_owned(), CredentialConfiguration::default());
         }
         provider.put_opt(&Flow::Issuance.to_string(), serde_json::to_vec(&issuance)?, None).await?;
