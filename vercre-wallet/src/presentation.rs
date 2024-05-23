@@ -11,6 +11,7 @@ use crate::credential::Credential;
 
 #[allow(clippy::module_name_repetitions)]
 pub mod get_presentation;
+pub mod request;
 
 /// `Presentation` maintains app state across steps of the presentation flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]

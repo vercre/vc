@@ -61,7 +61,7 @@ where
         // Do not progress if an issuance is already being processed for this offer.
         let stashed_issuance = provider.get_opt(&Flow::Issuance.to_string()).await?;
         if stashed_issuance.is_some() {
-            err!(Err::InvalidRequest, "credential already being processed");
+            err!(Err::InvalidRequest, "issuance already being processed");
         }
 
         Ok(self)
