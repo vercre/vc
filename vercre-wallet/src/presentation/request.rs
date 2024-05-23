@@ -17,7 +17,12 @@ use crate::presentation::{Presentation, Status};
 use crate::{Endpoint, Flow};
 
 /// Helper function to parse a presentation request object from a URL parameter. The parameter needs
-/// to contain "&presentation_definition=" and it is assumed to be URL-encoded.
+/// to contain "&`presentation_definition`=" and it is assumed to be URL-encoded.
+/// 
+/// # Errors
+/// 
+/// Returns an error if parsing fails.
+#[allow(clippy::module_name_repetitions)]
 pub fn request_from_url_param(url_param: &str) -> anyhow::Result<RequestObject> {
     let request_str = urlencoding::decode(url_param)?;
 
