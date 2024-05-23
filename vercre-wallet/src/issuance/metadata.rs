@@ -10,8 +10,8 @@ use vercre_core::provider::{Callback, Signer, StateManager, Storer};
 use vercre_core::vci::MetadataResponse;
 use vercre_core::{err, Result};
 
-use crate::Endpoint;
 use crate::issuance::{Issuance, Status};
+use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>
 where
@@ -57,7 +57,7 @@ where
 
         // Check we are processing an offer from this issuer and we are at the expected point in
         // the flow.
-        let Some(stashed) = provider.get_opt("issuance").await? else {
+        let Some(stashed) = provider.get_opt(&Flow::Issuance.to_string()).await? else {
             err!(Err::InvalidRequest, "no issuance in progress");
         };
         let issuance: Issuance = serde_json::from_slice(&stashed)?;
@@ -85,13 +85,14 @@ where
         for (cfg_id, cred_cfg) in &mut issuance.offered {
             // find supported credential in metadata and copy to state object.
             let Some(found) = creds_supported.get(cfg_id) else {
-                issuance.status = Status::Failed(String::from("Unsupported credential type in offer"));
+                issuance.status =
+                    Status::Failed(String::from("Unsupported credential type in offer"));
                 err!(Err::InvalidRequest, "unsupported credential type in offer");
             };
             *cred_cfg = found.clone();
         }
         issuance.status = Status::Ready;
-        provider.put_opt("issuance", serde_json::to_vec(&issuance)?, None).await?;
+        provider.put_opt(&Flow::Issuance.to_string(), serde_json::to_vec(&issuance)?, None).await?;
 
         Ok(())
     }

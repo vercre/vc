@@ -13,7 +13,7 @@ use vercre_core::provider::{Callback, Client, Signer, StateManager, Storer};
 use vercre_core::Result;
 
 use crate::issuance::Issuance;
-use crate::Endpoint;
+use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>
 where
@@ -26,7 +26,7 @@ where
     ///
     /// Returns an error if the request is invalid or the provider is unavailable.
     #[instrument(level = "debug", skip(self))]
-    pub async fn state(&self) -> Result<Option<Issuance>> {
+    pub async fn get_issuance(&self) -> Result<Option<Issuance>> {
         let ctx = Context {
             _p: std::marker::PhantomData,
         };
@@ -62,7 +62,7 @@ where
         tracing::debug!("Context::process");
 
         // Check we are processing an offer and we are at the expected point in the flow.
-        match provider.get_opt("issuance").await? {
+        match provider.get_opt(&Flow::Issuance.to_string()).await? {
             Some(stashed) => {
                 let issuance: Issuance = serde_json::from_slice(&stashed)?;
                 Ok(Some(issuance))

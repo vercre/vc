@@ -12,8 +12,8 @@ pub mod credential_response;
 pub mod metadata;
 pub mod offer;
 pub mod pin;
-pub mod reset;
-pub mod state;
+pub mod reset_issuance;
+pub mod get_issuance;
 pub mod token_request;
 pub mod credential_request;
 

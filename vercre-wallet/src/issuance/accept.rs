@@ -12,7 +12,7 @@ use vercre_core::provider::{Callback, Signer, StateManager, Storer};
 use vercre_core::{err, Result};
 
 use crate::issuance::{Issuance, Status};
-use crate::Endpoint;
+use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>
 where
@@ -53,7 +53,7 @@ where
         tracing::debug!("Context::verify");
 
         // Check we are processing an offer and we are at the expected point in the flow.
-        let Some(stashed) = provider.get_opt("issuance").await? else {
+        let Some(stashed) = provider.get_opt(&Flow::Issuance.to_string()).await? else {
             err!(Err::InvalidRequest, "no issuance in progress");
         };
         let issuance: Issuance = serde_json::from_slice(&stashed)?;
@@ -87,7 +87,7 @@ where
         } else {
             issuance.status = Status::Accepted;
         }
-        provider.put_opt("issuance", serde_json::to_vec(&issuance)?, None).await?;
+        provider.put_opt(&Flow::Issuance.to_string(), serde_json::to_vec(&issuance)?, None).await?;
 
         Ok(())
     }

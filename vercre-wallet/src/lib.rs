@@ -26,32 +26,7 @@
 //!
 //! # Example
 //!
-//! The following example demonstrates how a single endpoint might be surfaced. See the `examples`
-//! directory for more complete examples.
-//!
-//! ```rust,ignore
-//! #[tokio::main]
-//! async fn main() {
-//!    // `Provider` implements the `Provider` traits
-//!   let endpoint = Arc::new(Endpoint::new(Provider::new()));
-//!
-//!   let router = Router::new()
-//!     // --- other routes ---
-//!     .route("/offer", post(credential))
-//!     // --- other routes ---
-//!    .with_state(endpoint);
-//!
-//!   let listener = TcpListener::bind("0.0.0.0:8080").await.expect("should bind");
-//!   axum::serve(listener, router).await.expect("server should run");
-//! }
-//!
-//! // Offer endpoint
-//! async fn offer(
-//!     State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
-//!     Json(mut req): Json<OfferRequest>,
-//! ) -> AxResult<OfferResponse> {
-//!    TODO: this
-//! }
+//! See the `examples` directory for more complete examples.
 // TODO: implement client registration/ client metadata endpoints
 
 // TODO: support [SIOPv2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html)(https://openid.net/specs/openid-connect-self-issued-v2-1_0.html)
@@ -62,13 +37,31 @@
 pub mod credential;
 pub mod issuance;
 
-pub use std::fmt::Debug;
+pub use std::fmt::{Debug, Display};
 
 use vercre_core::provider::{Callback, Signer, StateManager, Storer};
 // re-exports
 pub use vercre_core::{callback, provider, Result};
 pub use vercre_core::metadata as types;
 pub use vercre_core::vci::GrantType;
+
+/// Types of flows supported by the wallet.
+#[derive(Debug)]
+pub enum Flow {
+    /// Credential issuance flow.
+    Issuance,
+    /// Credential presentation flow.
+    Presentation,
+}
+
+impl Display for Flow {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Flow::Issuance => write!(f, "issuance"),
+            Flow::Presentation => write!(f, "presentation"),
+        }
+    }
+}
 
 /// Endpoint is used to surface the public wallet endpoints to clients.
 #[derive(Debug)]

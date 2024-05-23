@@ -15,7 +15,7 @@ use vercre_core::{err, Result};
 
 use crate::credential::Credential;
 use crate::issuance::{Issuance, Status};
-use crate::Endpoint;
+use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>
 where
@@ -56,7 +56,7 @@ where
         tracing::debug!("Context::verify");
 
         // Check we are processing an offer and we are at the expected point in the flow.
-        let Some(stashed) = provider.get_opt("issuance").await? else {
+        let Some(stashed) = provider.get_opt(&Flow::Issuance.to_string()).await? else {
             err!(Err::InvalidRequest, "no issuance in progress");
         };
         let issuance: Issuance = serde_json::from_slice(&stashed)?;
@@ -110,7 +110,7 @@ where
         // If there are no offers left, remove the entire state, otherwise update the nonce if
         // necessary.
         if issuance.offered.is_empty() {
-            provider.purge("issuance").await?;
+            provider.purge(&Flow::Issuance.to_string()).await?;
         } else {
             if req.c_nonce.is_some() {
                 issuance.token.c_nonce = req.c_nonce.clone();
@@ -118,7 +118,9 @@ where
             if req.c_nonce_expires_in.is_some() {
                 issuance.token.c_nonce_expires_in = req.c_nonce_expires_in.clone();
             }
-            provider.put_opt("issuance", serde_json::to_vec(&issuance)?, None).await?;
+            provider
+                .put_opt(&Flow::Issuance.to_string(), serde_json::to_vec(&issuance)?, None)
+                .await?;
         }
 
         Ok(credential)

@@ -1,4 +1,4 @@
-//! # Reset Issuance Flow endpoint
+//! # Reset Issuance Flow Endpoint
 //! 
 //! Used to clear the issuance state in case of error handling or when the Holder rejects or cancels
 //! an issuance offer.
@@ -9,7 +9,7 @@ use tracing::instrument;
 use vercre_core::provider::{Callback, Client, Signer, StateManager, Storer};
 use vercre_core::Result;
 
-use crate::Endpoint;
+use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>
     where
@@ -21,7 +21,7 @@ impl<P> Endpoint<P>
     /// 
     /// Returns an error if the provider is unavailable or fails.
     #[instrument(level = "debug", skip(self))]
-    pub async fn reset(&self) -> Result<()> {
+    pub async fn reset_issuance(&self) -> Result<()> {
         let ctx = Context {
             _p: std::marker::PhantomData,
         };
@@ -55,7 +55,7 @@ where
         tracing::debug!("Context::process");
 
         // Clear the issuance state
-        provider.purge("issuance").await?;
+        provider.purge(&Flow::Issuance.to_string()).await?;
 
         Ok(())
     }

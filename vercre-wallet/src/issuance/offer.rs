@@ -11,8 +11,8 @@ use vercre_core::provider::{Callback, Signer, StateManager, Storer};
 use vercre_core::vci::CredentialOffer;
 use vercre_core::{err, Result};
 
-use crate::Endpoint;
 use crate::issuance::{Issuance, Status};
+use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>
 where
@@ -38,7 +38,6 @@ where
 #[derive(Debug, Default)]
 struct Context<P> {
     _p: std::marker::PhantomData<P>,
-    
 }
 
 impl<P> vercre_core::Context for Context<P>
@@ -60,7 +59,7 @@ where
         }
 
         // Do not progress if an issuance is already being processed for this offer.
-        let stashed_issuance = provider.get_opt("issuance").await?;
+        let stashed_issuance = provider.get_opt(&Flow::Issuance.to_string()).await?;
         if stashed_issuance.is_some() {
             err!(Err::InvalidRequest, "credential already being processed");
         }
@@ -83,7 +82,7 @@ where
         for id in req.credential_configuration_ids.iter() {
             issuance.offered.insert(id.to_owned(), CredentialConfiguration::default());
         }
-        provider.put_opt("issuance", serde_json::to_vec(&issuance)?, None).await?;
+        provider.put_opt(&Flow::Issuance.to_string(), serde_json::to_vec(&issuance)?, None).await?;
 
         Ok(req.credential_issuer.clone())
     }
