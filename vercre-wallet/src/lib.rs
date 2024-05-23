@@ -36,6 +36,8 @@
 
 pub mod credential;
 pub mod issuance;
+pub mod presentation;
+pub mod reset;
 
 pub use std::fmt::{Debug, Display};
 
@@ -46,12 +48,18 @@ pub use vercre_core::metadata as types;
 pub use vercre_core::vci::GrantType;
 
 /// Types of flows supported by the wallet.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Flow {
     /// Credential issuance flow.
     Issuance,
     /// Credential presentation flow.
     Presentation,
+}
+
+impl Default for Flow {
+    fn default() -> Self {
+        Self::Issuance
+    }
 }
 
 impl Display for Flow {

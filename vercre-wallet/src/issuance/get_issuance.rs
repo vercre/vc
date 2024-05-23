@@ -1,7 +1,7 @@
-//! # State endpoint
+//! # Get Issuance State Endpoint
 //! 
 //! Use this endpoint to get the state of the issuance process at any point. The state object is
-//! initiated with defaults and the parts are populated with real data as the issuance flow
+//! initialized with defaults and the parts are populated with real data as the issuance flow
 //! progresses, so careful consideration of the progress of the flow is required before using parts
 //! of the state object. This endpoint simply returns whatever is stored in the state store at the
 //! time of the request.
@@ -19,8 +19,8 @@ impl<P> Endpoint<P>
 where
     P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
 {
-    /// State endpoint returns the current state of the issuance process. Can return None if no
-    /// issuance is in progress.
+    /// Get issuance endpoint returns the current state of the issuance process. Can return None if
+    /// no issuance is in progress.
     ///
     /// # Errors
     ///

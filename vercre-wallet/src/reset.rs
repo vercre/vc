@@ -1,7 +1,7 @@
-//! # Reset Issuance Flow Endpoint
+//! # Reset Issuance or Presentation Flow Endpoint
 //! 
-//! Used to clear the issuance state in case of error handling or when the Holder rejects or cancels
-//! an issuance offer.
+//! Used to clear the flow state in case of error handling or when the Holder rejects or cancels
+//! an issuance offer or presentation request.
 
 use std::fmt::Debug;
 
@@ -21,12 +21,12 @@ impl<P> Endpoint<P>
     /// 
     /// Returns an error if the provider is unavailable or fails.
     #[instrument(level = "debug", skip(self))]
-    pub async fn reset_issuance(&self) -> Result<()> {
+    pub async fn reset(&self, request: &Flow) -> Result<()> {
         let ctx = Context {
             _p: std::marker::PhantomData,
         };
 
-        vercre_core::Endpoint::handle_request(self, &(), ctx).await
+        vercre_core::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -40,7 +40,7 @@ where
     P: StateManager + Debug,
 {
     type Provider = P;
-    type Request = ();
+    type Request = Flow;
     type Response = ();
 
     fn callback_id(&self) -> Option<String> {
@@ -51,11 +51,11 @@ where
         Ok(self)
     }
 
-    async fn process(&self, provider: &P, _req: &Self::Request) -> Result<Self::Response> {
+    async fn process(&self, provider: &P, req: &Self::Request) -> Result<Self::Response> {
         tracing::debug!("Context::process");
 
         // Clear the issuance state
-        provider.purge(&Flow::Issuance.to_string()).await?;
+        provider.purge(&req.to_string()).await?;
 
         Ok(())
     }
