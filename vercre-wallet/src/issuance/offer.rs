@@ -7,16 +7,17 @@ use std::fmt::Debug;
 use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::metadata::CredentialConfiguration;
-use vercre_core::provider::{Callback, Signer, StateManager, Storer};
+use vercre_core::provider::{Callback, Signer, StateManager};
 use vercre_core::vci::CredentialOffer;
 use vercre_core::{err, Result};
 
 use crate::issuance::{Issuance, Status};
+use crate::store::CredentialStorer;
 use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>
 where
-    P: Callback + Signer + StateManager + Storer + Clone + Debug,
+    P: Callback + Signer + StateManager + Clone + Debug + CredentialStorer,
 {
     /// Receive offer endpoint receives a a credential offer request from an issuer. Returns the
     /// credential issuer URL which can be used to retrieve metadata. It is the responsibility of

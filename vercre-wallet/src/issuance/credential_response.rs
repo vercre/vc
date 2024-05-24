@@ -8,23 +8,26 @@ use std::str::FromStr;
 
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, Signer, StateManager, Storer};
+use vercre_core::provider::{Callback, Signer, StateManager};
 use vercre_core::vci::CredentialResponse;
 use vercre_core::w3c::VerifiableCredential;
 use vercre_core::{err, Result};
 
 use crate::credential::Credential;
 use crate::issuance::{Issuance, Status};
+use crate::store::CredentialStorer;
 use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>
 where
-    P: Callback + Signer + StateManager + Storer + Clone + Debug,
+    P: Callback + Signer + StateManager + Clone + Debug + CredentialStorer,
 {
     /// Credential response endpoint receives a credential response and stores the credential in
     /// the wallet client's persistent storage.
     #[instrument(level = "debug", skip(self))]
-    pub async fn credential_response(&self, request: &CredentialResponse) -> Result<Credential> {
+    pub async fn credential_response(
+        &self, request: &CredentialResponse,
+    ) -> Result<Credential> {
         let ctx = Context {
             _p: std::marker::PhantomData,
             vc: VerifiableCredential::default(),
@@ -46,7 +49,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: StateManager + Storer + Debug,
+    P: StateManager + Debug + CredentialStorer,
 {
     type Provider = P;
     type Request = CredentialResponse;
@@ -94,7 +97,7 @@ where
                 credential.vc = self.vc.clone();
                 credential.issued.clone_from(&self.vc_str);
 
-                provider.save(key, serde_json::to_vec(&credential)?).await?;
+                provider.save(&credential).await?;
 
                 cred_key = Some(key.clone());
             }

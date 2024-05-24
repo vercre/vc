@@ -9,8 +9,9 @@ use vercre_core::w3c::vp::{Constraints, PresentationSubmission};
 
 use crate::credential::Credential;
 
+pub mod authorize;
 #[allow(clippy::module_name_repetitions)]
-pub mod get_presentation;
+pub mod presentation_state;
 pub mod request;
 
 /// `Presentation` maintains app state across steps of the presentation flow.

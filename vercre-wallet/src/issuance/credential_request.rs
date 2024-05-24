@@ -1,5 +1,5 @@
 //! # Token Response endpoint.
-//! 
+//!
 //! Call this endpoint on receipt of a token response from the issuance service to stash the token
 //! in issuance state and get a set of credential requests to send to the issuance service - one for
 //! each credential in the offer. Uses the signer provider to construct the proof needed in the
@@ -9,23 +9,26 @@ use std::fmt::Debug;
 
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, Signer, StateManager, Storer};
+use vercre_core::jwt::{Header, Jwt};
+use vercre_core::provider::{Callback, Signer, StateManager};
 use vercre_core::vci::{CredentialRequest, Proof, ProofClaims, TokenResponse};
 use vercre_core::{err, Result};
-use vercre_core::jwt::{Header, Jwt};
 
 use crate::issuance::{Issuance, Status};
+use crate::store::CredentialStorer;
 use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>
 where
-    P: Callback + Signer + StateManager + Storer + Clone + Debug,
+    P: Callback + Signer + StateManager + Clone + Debug + CredentialStorer,
 {
     /// Token response endpoint receives a token response from the issuance service and stashes the
-    /// token in state. It then constructs a set of serialized credential requests to send to the
+    /// token in state. It then constructs a set of credential requests to send to the
     /// issuance service.
     #[instrument(level = "debug", skip(self))]
-    pub async fn credential_request(&self, request: &TokenResponse) -> Result<String> {
+    pub async fn credential_request(
+        &self, request: &TokenResponse,
+    ) -> Result<Vec<CredentialRequest>> {
         let ctx = Context {
             _p: std::marker::PhantomData,
             issuance: Issuance::default(),
@@ -47,7 +50,7 @@ where
 {
     type Provider = P;
     type Request = TokenResponse;
-    type Response = String;
+    type Response = Vec<CredentialRequest>;
 
     async fn verify(&mut self, provider: &P, _req: &Self::Request) -> Result<&Self> {
         tracing::debug!("Context::verify");
@@ -68,12 +71,8 @@ where
     async fn process(&self, provider: &P, req: &Self::Request) -> Result<Self::Response> {
         tracing::debug!("Context::process");
 
-        // Stash the token in state and update status (assuming client will actually make the
-        // request).
-        let mut issuance = self.issuance.clone();
+         let mut issuance = self.issuance.clone();
         issuance.token = req.clone();
-        issuance.status = Status::Requested;
-        provider.put_opt(&Flow::Issuance.to_string(), serde_json::to_vec(&issuance)?, None).await?;
 
         // Construct a proof.
         let kid = provider.verification_method().clone();
@@ -95,12 +94,17 @@ where
         // Sign the proof.
         let jwt_bytes = serde_json::to_vec(&jwt).map_err(|e| Err::ServerError(e.into()))?;
         let signed_jwt = provider.sign(&jwt_bytes).await;
-        let signed_jwt_str = String::from_utf8(signed_jwt).map_err(|e| Err::ServerError(e.into()))?;
+        let signed_jwt_str =
+            String::from_utf8(signed_jwt).map_err(|e| Err::ServerError(e.into()))?;
         let proof = Proof {
             proof_type: jwt.to_string(),
             jwt: Some(signed_jwt_str),
             cwt: None,
         };
+
+        // Update status (assuming client will actually make the request).
+        issuance.status = Status::Requested;
+        provider.put_opt(&Flow::Issuance.to_string(), serde_json::to_vec(&issuance)?, None).await?;
 
         // Construct an array of credential requests - one for each credential in the offer.
         let mut requests = Vec::new();
@@ -117,8 +121,6 @@ where
             requests.push(request);
         }
 
-        // Serialize
-        let requests_str = serde_json::to_string(&requests).map_err(|e| Err::ServerError(e.into()))?;
-        Ok(requests_str)
+        Ok(requests)
     }
 }

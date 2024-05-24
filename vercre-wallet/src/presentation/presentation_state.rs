@@ -1,7 +1,7 @@
-//! # Get Issuance State Endpoint
+//! # Get Presentation State Endpoint
 //! 
-//! Use this endpoint to get the state of the issuance process at any point. The state object is
-//! initialized with defaults and the parts are populated with real data as the issuance flow
+//! This endpoint returns the current state of the presentation process. The state objet is
+//! initialized with defaults and the parts are populated with real data as the presentation flow
 //! progresses, so careful consideration of the progress of the flow is required before using parts
 //! of the state object. This endpoint simply returns whatever is stored in the state store at the
 //! time of the request.
@@ -9,24 +9,25 @@
 use std::fmt::Debug;
 
 use tracing::instrument;
-use vercre_core::provider::{Callback, Client, Signer, StateManager, Storer};
+use vercre_core::provider::{Callback, Client, Signer, StateManager};
 use vercre_core::Result;
 
-use crate::issuance::Issuance;
+use crate::presentation::Presentation;
+use crate::store::CredentialStorer;
 use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>
 where
-    P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
+    P: Callback + Client + Signer + StateManager + Clone + Debug + CredentialStorer,
 {
-    /// Get issuance endpoint returns the current state of the issuance process. Can return None if
-    /// no issuance is in progress.
+    /// Gets the current state of the presentation process. Can return None if no presentation is in
+    /// progress.
     ///
     /// # Errors
     ///
     /// Returns an error if the request is invalid or the provider is unavailable.
     #[instrument(level = "debug", skip(self))]
-    pub async fn get_issuance(&self) -> Result<Option<Issuance>> {
+    pub async fn get_presentation(&self) -> Result<Option<Presentation>> {
         let ctx = Context {
             _p: std::marker::PhantomData,
         };
@@ -46,7 +47,7 @@ where
 {
     type Provider = P;
     type Request = ();
-    type Response = Option<Issuance>;
+    type Response = Option<Presentation>;
 
     fn callback_id(&self) -> Option<String> {
         None
@@ -62,10 +63,10 @@ where
         tracing::debug!("Context::process");
 
         // Check we are processing an offer and we are at the expected point in the flow.
-        match provider.get_opt(&Flow::Issuance.to_string()).await? {
+        match provider.get_opt(&Flow::Presentation.to_string()).await? {
             Some(stashed) => {
-                let issuance: Issuance = serde_json::from_slice(&stashed)?;
-                Ok(Some(issuance))
+                let presentation: Presentation = serde_json::from_slice(&stashed)?;
+                Ok(Some(presentation))
             }
             None => Ok(None),
         }

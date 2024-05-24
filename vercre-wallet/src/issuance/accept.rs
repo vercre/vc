@@ -8,15 +8,16 @@ use std::fmt::Debug;
 
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, Signer, StateManager, Storer};
+use vercre_core::provider::{Callback, Signer, StateManager};
 use vercre_core::{err, Result};
 
 use crate::issuance::{Issuance, Status};
+use crate::store::CredentialStorer;
 use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>
 where
-    P: Callback + Signer + StateManager + Storer + Clone + Debug,
+    P: Callback + Signer + StateManager + Clone + Debug + CredentialStorer,
 {
     /// Accept endpoint updates the issuance status to `Accepted` when the Holder has accepted an
     /// offer, or to `PendingPin` when a user has accepted an offer and a PIN is required.

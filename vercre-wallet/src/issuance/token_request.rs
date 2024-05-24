@@ -1,27 +1,28 @@
 //! # Token Request endpoint.
 //! 
 //! Used to build a token request that can be sent to the issuer to retrieve an access token that
-//! can be used to exchange for credentials. The token request is serialized ready to be sent.
+//! can be used to exchange for credentials.
 
 use std::fmt::Debug;
 
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, Signer, StateManager, Storer};
+use vercre_core::provider::{Callback, Signer, StateManager};
 use vercre_core::vci::{GrantType, TokenRequest};
 use vercre_core::{err, Result};
 
 use crate::issuance::{Issuance, Status};
+use crate::store::CredentialStorer;
 use crate::Endpoint;
 
 impl<P> Endpoint<P>
 where
-    P: Callback + Signer + StateManager + Storer + Clone + Debug,
+    P: Callback + Signer + StateManager + Clone + Debug + CredentialStorer,
 {
     /// Token request endpoint uses the issuance state to construct a token request that the wallet
     /// client can send to the issuance service.
     #[instrument(level = "debug", skip(self))]
-    pub async fn token_request(&self, request: &String) -> Result<String> {
+    pub async fn token_request(&self, request: &String) -> Result<TokenRequest> {
         let ctx = Context {
             _p: std::marker::PhantomData,
             issuance: Issuance::default(),
@@ -43,7 +44,7 @@ where
 {
     type Provider = P;
     type Request = String;
-    type Response = String;
+    type Response = TokenRequest;
 
     async fn verify(&mut self, provider: &P, _req: &Self::Request) -> Result<&Self> {
         tracing::debug!("Context::verify");
@@ -88,6 +89,6 @@ where
             ..Default::default()
         };
 
-        Ok(serde_urlencoded::to_string(req).map_err(|e| Err::ServerError(e.into()))?)
+        Ok(req)
     }
 }

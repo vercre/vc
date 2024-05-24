@@ -1,19 +1,25 @@
-//!# Presentation Request Endpoint.
+//! # Presentation Request Endpoint.
 //!
 //! The presentation request endpoint is responsible for handling incoming requests for a credential
-//! presentation.
+//! presentation. Use this endpoint to initiate a presentation flow.
+//! 
+//! The request can be encountered in two ways: the whole request object serialised into a URL
+//! parameter, or just a URI to go fetch the request object. Helper methods are provided to parse
+//! the request object from a URL parameter or the response from fetching.
 
 use std::fmt::Debug;
 
 use anyhow::anyhow;
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, Signer, StateManager, Storer};
-use vercre_core::vp::RequestObject;
+use vercre_core::jwt::Jwt;
+use vercre_core::provider::{Callback, Signer, StateManager};
+use vercre_core::vp::{RequestObject, RequestObjectResponse};
 use vercre_core::w3c::PresentationDefinition;
 use vercre_core::{err, Result};
 
 use crate::presentation::{Presentation, Status};
+use crate::store::CredentialStorer;
 use crate::{Endpoint, Flow};
 
 /// Helper function to parse a presentation request object from a URL parameter. The parameter needs
@@ -36,12 +42,32 @@ pub fn request_from_url_param(url_param: &str) -> anyhow::Result<RequestObject> 
     Ok(req_obj)
 }
 
+/// Helper function to parse a presentation request object from the response of fetching from 
+/// previously provided URI in the form of a `RequestObjectResponse`.
+/// 
+/// # Errors
+/// 
+/// Returns an error if parsing fails.
+#[allow(clippy::module_name_repetitions)]
+pub fn request_from_response(res: &RequestObjectResponse) -> anyhow::Result<RequestObject> {
+
+    let Some(jwt_enc) = res.jwt.clone() else {
+        return Err(anyhow!("no encoded JWT found in response"));
+    };
+    let Ok(jwt) = jwt_enc.parse::<Jwt<RequestObject>>() else {
+        return Err(anyhow!("failed to parse JWT"));
+    };
+
+    Ok(jwt.claims)
+}
+
 impl<P> Endpoint<P>
 where
-    P: Callback + Signer + StateManager + Storer + Clone + Debug,
+    P: Callback + Signer + StateManager + Clone + Debug + CredentialStorer,
 {
-    /// Request endpoint receives a a presentation request from a verifier. Initializes a
-    /// presentation flow state object and stashes that in the state storage provider.
+    /// Request endpoint receives a a presentation request from a verifier in the form of a URL
+    /// parameter. Initializes a presentation flow state object and stashes that in the state
+    /// storage provider.
     ///
     /// # Errors
     ///

@@ -63,8 +63,10 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 use vercre_wallet::callback::Payload;
-use vercre_wallet::provider::{Algorithm, Callback, Client, Result, Signer, StateManager, Storer};
-use vercre_wallet::GrantType;
+use vercre_wallet::credential::Credential;
+use vercre_wallet::store::CredentialStorer;
+use vercre_wallet::provider::{Algorithm, Callback, Client, Result, Signer, StateManager};
+use vercre_wallet::{Constraints, GrantType};
 use vercre_wallet::types;
 
 #[derive(Default, Clone, Debug)]
@@ -135,21 +137,21 @@ impl StateManager for Provider {
     }
 }
 
-impl Storer for Provider {
-    async fn save(&self, key: &str, data: Vec<u8>) -> Result<()> {
-        self.store.save(key, data)
+impl CredentialStorer for Provider {
+    async fn save(&self, credential: &Credential) -> Result<()> {
+        self.store.save(credential)
     }
 
-    async fn load(&self, key: &str) -> Result<Option<Vec<u8>>> {
-        self.store.load(key)
+    async fn load(&self, id: &str) -> Result<Option<Credential>> {
+        self.store.load(id)
     }
 
-    async fn list(&self) -> Result<Vec<String>> {
-        self.store.list()
+    async fn find(&self, filter: Option<Constraints>) -> Result<Vec<Credential>> {
+        self.store.find(filter)
     }
 
-    async fn remove(&self, key: &str) -> Result<()> {
-        self.store.remove(key)
+    async fn remove(&self, id: &str) -> Result<()> {
+        self.store.remove(id)
     }
 }
 
@@ -256,7 +258,7 @@ impl StateStore {
 
 #[derive(Default, Clone, Debug)]
 struct Store {
-    store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
+    store: Arc<Mutex<HashMap<String, Credential>>>,
 }
 
 impl Store {
@@ -266,17 +268,19 @@ impl Store {
         }
     }
 
-    fn save(&self, key: &str, data: Vec<u8>) -> Result<()> {
+    fn save(&self, credential: &Credential) -> Result<()> {
+        let data = credential.clone();
+        let key = credential.id.clone();
         self.store.lock().expect("should lock").insert(key.to_string(), data);
         Ok(())
     }
 
-    fn load(&self, key: &str) -> Result<Option<Vec<u8>>> {
-        Ok(self.store.lock().expect("should lock").get(key).cloned())
+    fn load(&self, id: &str) -> Result<Option<Credential>> {
+        Ok(self.store.lock().expect("should lock").get(id).cloned())
     }
 
-    fn list(&self) -> Result<Vec<String>> {
-        Ok(self.store.lock().expect("should lock").keys().cloned().collect())
+    fn find(&self, _filter: Option<Constraints>) -> Result<Vec<Credential>> {
+        Ok(self.store.lock().expect("should lock").values().cloned().collect())
     }
 
     fn remove(&self, key: &str) -> Result<()> {

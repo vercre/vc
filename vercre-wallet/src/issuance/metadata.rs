@@ -6,16 +6,17 @@ use std::fmt::Debug;
 
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, Signer, StateManager, Storer};
+use vercre_core::provider::{Callback, Signer, StateManager};
 use vercre_core::vci::MetadataResponse;
 use vercre_core::{err, Result};
 
 use crate::issuance::{Issuance, Status};
+use crate::store::CredentialStorer;
 use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>
 where
-    P: Callback + Signer + StateManager + Storer + Clone + Debug,
+    P: Callback + Signer + StateManager + Clone + Debug + CredentialStorer,
 {
     /// Metadata endpoint receives issuer metadata from wallet client. It is the responsibility of
     /// the client to retrieve the metadata and pass it to this endpoint.

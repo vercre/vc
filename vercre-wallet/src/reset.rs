@@ -6,14 +6,15 @@
 use std::fmt::Debug;
 
 use tracing::instrument;
-use vercre_core::provider::{Callback, Client, Signer, StateManager, Storer};
+use vercre_core::provider::{Callback, Client, Signer, StateManager};
 use vercre_core::Result;
 
+use crate::store::CredentialStorer;
 use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>
     where
-        P: Callback + Client + Signer + StateManager + Storer + Clone + Debug,
+        P: Callback + Client + Signer + StateManager + Clone + Debug + CredentialStorer,
 {
     /// Reset endpoint clears issuance state.
     /// 
