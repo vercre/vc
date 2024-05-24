@@ -64,7 +64,7 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 use vercre_wallet::callback::Payload;
 use vercre_wallet::credential::Credential;
-use vercre_wallet::store::CredentialStorer;
+use vercre_wallet::storer::CredentialStorer;
 use vercre_wallet::provider::{Algorithm, Callback, Client, Result, Signer, StateManager};
 use vercre_wallet::{Constraints, GrantType};
 use vercre_wallet::types;
@@ -253,7 +253,7 @@ impl StateStore {
 }
 
 //-----------------------------------------------------------------------------
-// Storer
+// CredentialStorer
 //-----------------------------------------------------------------------------
 
 #[derive(Default, Clone, Debug)]

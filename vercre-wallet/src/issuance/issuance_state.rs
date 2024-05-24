@@ -13,7 +13,7 @@ use vercre_core::provider::{Callback, Client, Signer, StateManager};
 use vercre_core::Result;
 
 use crate::issuance::Issuance;
-use crate::store::CredentialStorer;
+use crate::storer::CredentialStorer;
 use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>

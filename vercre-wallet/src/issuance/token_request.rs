@@ -12,7 +12,7 @@ use vercre_core::vci::{GrantType, TokenRequest};
 use vercre_core::{err, Result};
 
 use crate::issuance::{Issuance, Status};
-use crate::store::CredentialStorer;
+use crate::storer::CredentialStorer;
 use crate::Endpoint;
 
 impl<P> Endpoint<P>

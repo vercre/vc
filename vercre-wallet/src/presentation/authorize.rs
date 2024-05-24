@@ -13,7 +13,7 @@ use vercre_core::w3c::PresentationSubmission;
 use vercre_core::{err, Result};
 
 use crate::presentation::{Presentation, Status};
-use crate::store::CredentialStorer;
+use crate::storer::CredentialStorer;
 use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>

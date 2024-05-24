@@ -19,7 +19,7 @@ use vercre_core::w3c::PresentationDefinition;
 use vercre_core::{err, Result};
 
 use crate::presentation::{Presentation, Status};
-use crate::store::CredentialStorer;
+use crate::storer::CredentialStorer;
 use crate::{Endpoint, Flow};
 
 /// Helper function to parse a presentation request object from a URL parameter. The parameter needs

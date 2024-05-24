@@ -1,4 +1,4 @@
-//! # Credential Storage
+//! # Credential Storer
 //! 
 //! Trait for the management of credential storage by the wallet client. Used by the wallet
 //! endpoints.
@@ -9,8 +9,9 @@ use vercre_core::w3c::vp::Constraints;
 
 use crate::credential::Credential;
 
-/// CredentialStorer is used by wallet implementations to provide persistent storage of Verifiable
+/// `CredentialStorer` is used by wallet implementations to provide persistent storage of Verifiable
 /// Credentials.
+#[allow(clippy::module_name_repetitions)]
 pub trait CredentialStorer: Send + Sync {
     /// Save a `Credential` to the store. Overwrite any existing credential with the same ID. Create
     /// a new credential if one with the same ID does not exist.

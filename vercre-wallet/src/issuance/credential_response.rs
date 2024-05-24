@@ -15,7 +15,7 @@ use vercre_core::{err, Result};
 
 use crate::credential::Credential;
 use crate::issuance::{Issuance, Status};
-use crate::store::CredentialStorer;
+use crate::storer::CredentialStorer;
 use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>

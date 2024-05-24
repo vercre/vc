@@ -38,10 +38,11 @@ pub mod credential;
 pub mod issuance;
 pub mod presentation;
 pub mod reset;
-pub mod store;
+pub mod storer;
 
 pub use std::fmt::{Debug, Display};
 
+use storer::CredentialStorer;
 use vercre_core::provider::{Callback, Signer, StateManager};
 // re-exports
 pub use vercre_core::{callback, provider, Result};
@@ -49,7 +50,6 @@ pub use vercre_core::metadata as types;
 pub use vercre_core::vci::GrantType;
 pub use vercre_core::w3c::vp::Constraints;
 
-use store::CredentialStorer;
 
 /// Types of flows supported by the wallet.
 #[derive(Clone, Debug)]
@@ -79,7 +79,7 @@ impl Display for Flow {
 #[derive(Debug)]
 pub struct Endpoint<P>
 where
-    P: Signer + StateManager + Clone + Debug + CredentialStorer,
+    P: Signer + StateManager + CredentialStorer + Clone + Debug,
 {
     provider: P,
 }
@@ -92,7 +92,7 @@ where
 /// endpoint implementation of `Endpoint::call` specific to the request.
 impl<P> Endpoint<P>
 where
-P: Signer + StateManager + Clone + Debug + CredentialStorer,
+    P: Signer + StateManager + CredentialStorer + Clone + Debug,
 {
     /// Create a new `Endpoint` with the provided `Provider`.
     pub fn new(provider: P) -> Self {
@@ -102,7 +102,7 @@ P: Signer + StateManager + Clone + Debug + CredentialStorer,
 
 impl<P> vercre_core::Endpoint for Endpoint<P>
 where
-P: Callback + Signer + StateManager + Clone + Debug + CredentialStorer,
+    P: Callback + Signer + StateManager + CredentialStorer + Clone + Debug,
 {
     type Provider = P;
 
@@ -121,6 +121,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_ok() {
+        let provider = Provider::new();
         let request = TestRequest { return_ok: true };
         let response = Endpoint::new(Provider::new()).test(&request).await;
 
@@ -147,7 +148,7 @@ mod tests {
 
     impl<P> Endpoint<P>
     where
-        P: Callback + Signer + StateManager + Clone + Debug + CredentialStorer,
+        P: Callback + Signer + StateManager + CredentialStorer + Clone + Debug,
     {
         async fn test(&mut self, request: &TestRequest) -> Result<TestResponse> {
             let ctx = Context {
@@ -164,7 +165,7 @@ mod tests {
 
     impl<P> vercre_core::Context for Context<P>
     where
-        P: Signer + StateManager + Clone + Debug,
+        P: Signer + StateManager + CredentialStorer + Clone + Debug,
     {
         type Provider = P;
         type Request = TestRequest;
