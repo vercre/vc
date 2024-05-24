@@ -63,10 +63,8 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 use vercre_wallet::callback::Payload;
-use vercre_wallet::credential::Credential;
-use vercre_wallet::storer::CredentialStorer;
 use vercre_wallet::provider::{Algorithm, Callback, Client, Result, Signer, StateManager};
-use vercre_wallet::{Constraints, GrantType};
+use vercre_wallet::GrantType;
 use vercre_wallet::types;
 
 #[derive(Default, Clone, Debug)]
@@ -74,7 +72,6 @@ pub struct Provider {
     callback: CallbackHook,
     client: ClientStore,
     state_store: StateStore,
-    store: Store,
 }
 
 impl Provider {
@@ -84,7 +81,6 @@ impl Provider {
             callback: CallbackHook::new(),
             client: ClientStore::new(),
             state_store: StateStore::new(),
-            store: Store::new(),
         }
     }
 }
@@ -134,24 +130,6 @@ impl StateManager for Provider {
 
     async fn get_opt(&self, key: &str) -> Result<Option<Vec<u8>>> {
         self.state_store.get_opt(key)
-    }
-}
-
-impl CredentialStorer for Provider {
-    async fn save(&self, credential: &Credential) -> Result<()> {
-        self.store.save(credential)
-    }
-
-    async fn load(&self, id: &str) -> Result<Option<Credential>> {
-        self.store.load(id)
-    }
-
-    async fn find(&self, filter: Option<Constraints>) -> Result<Vec<Credential>> {
-        self.store.find(filter)
-    }
-
-    async fn remove(&self, id: &str) -> Result<()> {
-        self.store.remove(id)
     }
 }
 
@@ -247,43 +225,6 @@ impl StateStore {
 
     #[allow(clippy::unnecessary_wraps)]
     fn purge(&self, key: &str) -> Result<()> {
-        self.store.lock().expect("should lock").remove(key);
-        Ok(())
-    }
-}
-
-//-----------------------------------------------------------------------------
-// CredentialStorer
-//-----------------------------------------------------------------------------
-
-#[derive(Default, Clone, Debug)]
-struct Store {
-    store: Arc<Mutex<HashMap<String, Credential>>>,
-}
-
-impl Store {
-    fn new() -> Self {
-        Self {
-            store: Arc::new(Mutex::new(HashMap::new())),
-        }
-    }
-
-    fn save(&self, credential: &Credential) -> Result<()> {
-        let data = credential.clone();
-        let key = credential.id.clone();
-        self.store.lock().expect("should lock").insert(key.to_string(), data);
-        Ok(())
-    }
-
-    fn load(&self, id: &str) -> Result<Option<Credential>> {
-        Ok(self.store.lock().expect("should lock").get(id).cloned())
-    }
-
-    fn find(&self, _filter: Option<Constraints>) -> Result<Vec<Credential>> {
-        Ok(self.store.lock().expect("should lock").values().cloned().collect())
-    }
-
-    fn remove(&self, key: &str) -> Result<()> {
         self.store.lock().expect("should lock").remove(key);
         Ok(())
     }
