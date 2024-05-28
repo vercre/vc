@@ -69,7 +69,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use test_utils::vp_provider::Provider;
 
-    // use test_utils::wallet::CLIENT_ID;
+    // use test_utils::wallet_provider::wallet::CLIENT_ID;
     use super::*;
 
     #[tokio::test]

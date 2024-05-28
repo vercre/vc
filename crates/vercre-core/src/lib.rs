@@ -45,8 +45,10 @@ pub trait Context: Send + Sync + Debug {
     type Response;
 
     /// Callback ID is used to identify the initial request when sending status
-    /// updates to the client.
-    fn callback_id(&self) -> Option<String>;
+    /// updates to the client. Defaults to no callback.
+    fn callback_id(&self) -> Option<String> {
+        None
+    }
 
     /// Verify the request.
     #[allow(clippy::unused_async)]

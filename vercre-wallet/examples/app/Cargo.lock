@@ -6103,6 +6103,8 @@ dependencies = [
  "serde_qs 0.13.0",
  "serde_urlencoded",
  "thiserror",
+ "tracing",
+ "tracing-subscriber",
  "uniffi",
  "urlencoding",
  "uuid",

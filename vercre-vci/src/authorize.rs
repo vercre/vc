@@ -403,7 +403,7 @@ mod tests {
     use serde_json::json;
     use sha2::{Digest, Sha256};
     use test_utils::vci_provider::{Provider, ISSUER, NORMAL_USER};
-    use test_utils::wallet;
+    use test_utils::wallet_provider::wallet;
 
     use super::*;
 

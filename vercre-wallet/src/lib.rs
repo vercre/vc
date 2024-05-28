@@ -3,17 +3,30 @@
 
 //! # `OpenID` Wallet
 //!
-//! A vercre-wallet app that support `OpenID` for Verifiable Credential Issuance and
-//! Presentation.
+//! A vercre-wallet that supports `OpenID` for Verifiable Credential Issuance and Presentation.
 //!
-//! The app is based on Red Badger's experimental [CRUX](https://redbadger.github.io/crux/overview.html)
-//! framework, for cross-platform applications.
+//! The crate does not provide a user or service interface - that is the job of a wallet
+//! implementation. See examples for simple (not full-featured) implementations.
 //!
-//! The application is split into two parts; the core business logic (this
-//! library) built in Rust, and a platform-specific shell (Swift, Kotlin,
-//! TypeScript) to manage user interactions.
-
-// TODO: implement server metatdata endpoint
+//! # Design
+//!
+//! ** Endpoints **
+//!
+//! Similar to the `vercre-vci` and `vercre-vp` crates, the library is architected around the
+//! [OpenID4VCI] endpoints, each with its own `XxxRequest` and `XxxResponse` types. The types
+//! serialize to and from JSON, in accordance with the specification.
+//!
+//! The endpoints are designed to be used with Rust-based HTTP servers but are not specifically tied
+//! to any particular protocol.
+//!
+//! ** Provider **
+//!
+//! Implementors need to implement 'Provider' traits that are responsible for handling storage and
+//! signing. See [`vercre-core`](https://docs.rs/vercre-core/latest/vercre_core/).
+//!
+//! # Example
+//!
+//! See the `examples` directory for more complete examples.
 // TODO: implement client registration/ client metadata endpoints
 
 // TODO: support [SIOPv2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html)(https://openid.net/specs/openid-connect-self-issued-v2-1_0.html)
@@ -21,49 +34,152 @@
 //        - add Metadata endpoint
 //        - add Registration endpoint
 
-pub mod app;
-pub mod capabilities;
 pub mod credential;
 pub mod issuance;
 pub mod presentation;
-#[cfg(feature = "typegen")]
-pub mod typegen;
+pub mod reset;
+pub mod storer;
 
-pub use app::{App, Capabilities, Effect, Event};
-pub use capabilities::{signer, store};
-pub use crux_core::bridge::{Bridge, Request};
-pub use crux_core::Core;
-pub use crux_http as http;
-use lazy_static::lazy_static;
-use wasm_bindgen::prelude::wasm_bindgen;
+use std::fmt::{Debug, Display};
 
-uniffi::include_scaffolding!("shared");
+use vercre_core::provider::{Callback, Signer, StateManager};
+// re-exports
+pub use vercre_core::{callback, provider, Result};
+pub use vercre_core::metadata as types;
+pub use vercre_core::vci::GrantType;
+pub use vercre_core::w3c::vp::Constraints;
 
-lazy_static! {
-    static ref CORE: Bridge<Effect, App> = Bridge::new(Core::new::<Capabilities>());
+
+/// Types of flows supported by the wallet.
+#[derive(Clone, Debug)]
+pub enum Flow {
+    /// Credential issuance flow.
+    Issuance,
+    /// Credential presentation flow.
+    Presentation,
 }
 
-/// FFI interface to receive an event from the shell.
-#[wasm_bindgen]
-#[must_use]
-pub fn process_event(data: &[u8]) -> Vec<u8> {
-    CORE.process_event(data)
+impl Default for Flow {
+    fn default() -> Self {
+        Self::Issuance
+    }
 }
 
-/// FFI interface to receive a response to a capability request from the shell.
+impl Display for Flow {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Issuance => write!(f, "issuance"),
+            Self::Presentation => write!(f, "presentation"),
+        }
+    }
+}
+
+/// Endpoint is used to surface the public wallet endpoints to clients.
+#[derive(Debug)]
+pub struct Endpoint<P>
+where
+    P: Signer + StateManager + Clone + Debug,
+{
+    provider: P,
+}
+
+/// Endpoint is used to provide a thread-safe way of handling requests. Each request passes through
+/// a number of steps which require state to be maintained between steps.
 ///
-/// The `output` is serialized capability output. It will be deserialized by the
-/// core. The `uuid` MUST match the `uuid` of the effect that triggered it, else
-/// the core will panic.
-#[wasm_bindgen]
-#[must_use]
-pub fn handle_response(uuid: &[u8], data: &[u8]) -> Vec<u8> {
-    CORE.handle_response(uuid, data)
+/// The Endpoint also provides common top-level tracing, error-handling and client callback
+/// functionality for all endpoints. The act of setting a request causes the Endpoint to select the
+/// endpoint implementation of `Endpoint::call` specific to the request.
+impl<P> Endpoint<P>
+where
+    P: Signer + StateManager + Clone + Debug,
+{
+    /// Create a new `Endpoint` with the provided `Provider`.
+    pub fn new(provider: P) -> Self {
+        Self { provider }
+    }
 }
 
-/// FFI interface to get the current state of the app's view model (serialized).
-#[wasm_bindgen]
-#[must_use]
-pub fn view() -> Vec<u8> {
-    CORE.view()
+impl<P> vercre_core::Endpoint for Endpoint<P>
+where
+    P: Callback + Signer + StateManager + Clone + Debug,
+{
+    type Provider = P;
+
+    fn provider(&self) -> &P {
+        &self.provider
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use test_utils::wallet_provider::Provider;
+    use vercre_core::err;
+    use vercre_core::error::Err;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn test_ok() {
+        let request = TestRequest { return_ok: true };
+        let response = Endpoint::new(Provider::new()).test(&request).await;
+
+        assert!(response.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_err() {
+        let request = TestRequest { return_ok: false };
+        let response = Endpoint::new(Provider::new()).test(&request).await;
+
+        assert!(response.is_err());
+    }
+
+    struct TestResponse {}
+
+    // ------------------------------------------------------------------------
+    // Mock Endpoint
+    // ------------------------------------------------------------------------
+    #[derive(Clone, Debug, Default)]
+    struct TestRequest {
+        return_ok: bool,
+    }
+
+    impl<P> Endpoint<P>
+    where
+        P: Callback + Signer + StateManager + Clone + Debug,
+    {
+        async fn test(&mut self, request: &TestRequest) -> Result<TestResponse> {
+            let ctx = Context {
+                _p: std::marker::PhantomData,
+            };
+            vercre_core::Endpoint::handle_request(self, request, ctx).await
+        }
+    }
+
+    #[derive(Debug)]
+    struct Context<P> {
+        _p: std::marker::PhantomData<P>,
+    }
+
+    impl<P> vercre_core::Context for Context<P>
+    where
+        P: Signer + StateManager + Clone + Debug,
+    {
+        type Provider = P;
+        type Request = TestRequest;
+        type Response = TestResponse;
+
+        fn callback_id(&self) -> Option<String> {
+            Some(String::from("callback_id"))
+        }
+
+        async fn process(
+            &self, _provider: &Self::Provider, request: &Self::Request,
+        ) -> Result<Self::Response> {
+            match request.return_ok {
+                true => Ok(TestResponse {}),
+                false => err!(Err::InvalidRequest, "invalid request"),
+            }
+        }
+    }
 }
