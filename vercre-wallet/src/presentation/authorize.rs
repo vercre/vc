@@ -12,7 +12,6 @@ use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
 use vercre_core::jwt::Jwt;
-use vercre_core::provider::{Callback, Signer, StateManager};
 use vercre_core::vp::ResponseRequest;
 use vercre_core::w3c::{
     Claims, DescriptorMap, PathNested, PresentationSubmission, Proof, VerifiablePresentation,
@@ -21,7 +20,7 @@ use vercre_core::{err, Result};
 
 use crate::credential::Credential;
 use crate::presentation::{Presentation, Status};
-use crate::storer::CredentialStorer;
+use crate::provider::{Callback, CredentialStorer, Signer, StateManager};
 use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>

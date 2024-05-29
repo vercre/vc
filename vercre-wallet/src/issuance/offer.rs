@@ -7,12 +7,11 @@ use std::fmt::Debug;
 use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::metadata::CredentialConfiguration;
-use vercre_core::provider::{Callback, Signer, StateManager};
 use vercre_core::vci::CredentialOffer;
 use vercre_core::{err, Result};
 
 use crate::issuance::{Issuance, Status};
-use crate::storer::CredentialStorer;
+use crate::provider::{Callback, CredentialStorer, Signer, StateManager};
 use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>

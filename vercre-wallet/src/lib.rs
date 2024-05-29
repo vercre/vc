@@ -38,17 +38,18 @@ pub mod credential;
 pub mod issuance;
 pub mod presentation;
 pub mod reset;
-pub mod storer;
+pub mod provider;
+#[cfg(test)]
+mod test_common;
 
 use std::fmt::{Debug, Display};
 
 use vercre_core::provider::{Callback, Signer, StateManager};
 // re-exports
-pub use vercre_core::{callback, provider, Result};
+pub use vercre_core::{callback, Result};
 pub use vercre_core::metadata as types;
 pub use vercre_core::vci::GrantType;
 pub use vercre_core::w3c::vp::Constraints;
-
 
 /// Types of flows supported by the wallet.
 #[derive(Clone, Debug)]
@@ -112,7 +113,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use test_utils::wallet_provider::Provider;
+    use test_common::wallet_provider::Provider;
     use vercre_core::err;
     use vercre_core::error::Err;
 

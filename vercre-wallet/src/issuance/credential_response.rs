@@ -8,14 +8,13 @@ use std::str::FromStr;
 
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, Signer, StateManager};
 use vercre_core::vci::CredentialResponse;
 use vercre_core::w3c::VerifiableCredential;
 use vercre_core::{err, Result};
 
 use crate::credential::Credential;
 use crate::issuance::{Issuance, Status};
-use crate::storer::CredentialStorer;
+use crate::provider::{Callback, CredentialStorer, Signer, StateManager};
 use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>

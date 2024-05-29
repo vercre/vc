@@ -6095,6 +6095,7 @@ dependencies = [
  "chrono",
  "crux_core",
  "crux_http",
+ "ed25519-dalek",
  "lazy_static",
  "log",
  "olpc-cjson",

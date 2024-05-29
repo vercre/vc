@@ -2,18 +2,20 @@
 //!
 //! The Issuance app implements the vercre-wallet's credential issuance flow.
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize};
 use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::vci::{CredentialOffer, TokenResponse};
+use vercre_core::{err, Result};
+use crate::provider::{Callback, CredentialStorer, Signer, StateManager};
+use crate::{Endpoint, Flow};
 
 pub mod accept;
 pub mod credential_response;
 pub mod metadata;
 pub mod offer;
 pub mod pin;
-#[allow(clippy::module_name_repetitions)]
-pub mod issuance_state;
 pub mod token_request;
 pub mod credential_request;
 
@@ -61,6 +63,17 @@ pub enum Status {
 
     /// The credential offer has failed, with an error message.
     Failed(String),
+}
+
+impl<P> Endpoint<P>
+where
+    P: Callback + CredentialStorer + Signer + StateManager + Clone + Debug,
+{
+    /// Orchestrates the issuance flow triggered by a new credential offer.
+    #[tracing::instrument(level = "debug", skip(self))]
+    pub async fn init_issuance(&self, request: &CredentialOffer) -> Result<String> {
+        todo!();
+    }
 }
 
 // use crux_core::macros::Effect;

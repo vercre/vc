@@ -1,20 +1,19 @@
 //! # Reset Issuance or Presentation Flow Endpoint
 //! 
-//! Used to clear the flow state in case of error handling or when the Holder rejects or cancels
+//! Used to clear the flow state in case of error handling. Used internally when a holder cancels
 //! an issuance offer or presentation request.
 
 use std::fmt::Debug;
 
 use tracing::instrument;
-use vercre_core::provider::{Callback, Client, Signer, StateManager};
 use vercre_core::Result;
 
-use crate::storer::CredentialStorer;
+use crate::provider::{Callback, CredentialStorer, Signer, StateManager};
 use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>
     where
-        P: Callback + Client + Signer + StateManager + Clone + Debug + CredentialStorer,
+        P: Callback + Signer + StateManager + Clone + Debug + CredentialStorer,
 {
     /// Reset endpoint clears issuance state.
     /// 

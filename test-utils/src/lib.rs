@@ -2,8 +2,7 @@
 pub mod vci_provider;
 #[path = "./vp-provider.rs"]
 pub mod vp_provider;
-#[path = "./wallet-provider.rs"]
-pub mod wallet_provider;
+pub mod wallet;
 
 use std::sync::Once;
 

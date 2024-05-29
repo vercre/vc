@@ -13,13 +13,12 @@ use anyhow::anyhow;
 use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::jwt::Jwt;
-use vercre_core::provider::{Callback, Signer, StateManager};
 use vercre_core::vp::{RequestObject, RequestObjectResponse};
 use vercre_core::w3c::PresentationDefinition;
 use vercre_core::{err, Result};
 
 use crate::presentation::{Presentation, Status};
-use crate::storer::CredentialStorer;
+use crate::provider::{Callback, CredentialStorer, Signer, StateManager};
 use crate::{Endpoint, Flow};
 
 /// Helper function to parse a presentation request object from a URL parameter. The parameter needs
