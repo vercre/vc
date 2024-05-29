@@ -8,6 +8,7 @@ use std::future::Future;
 use vercre_core::w3c::vp::Constraints;
 
 use crate::credential::Credential;
+use crate::Result;
 
 /// `CredentialStorer` is used by wallet implementations to provide persistent storage of Verifiable
 /// Credentials.
@@ -15,21 +16,21 @@ use crate::credential::Credential;
 pub trait CredentialStorer: Send + Sync {
     /// Save a `Credential` to the store. Overwrite any existing credential with the same ID. Create
     /// a new credential if one with the same ID does not exist.
-    fn save(&self, credential: &Credential) -> impl Future<Output = anyhow::Result<()>> + Send;
+    fn save(&self, credential: &Credential) -> impl Future<Output = Result<()>> + Send;
 
     /// Retrieve a `Credential` from the store with the given ID. Return None if no credential with
     /// the ID exists.
-    fn load(&self, id: &str) -> impl Future<Output = anyhow::Result<Option<Credential>>> + Send;
+    fn load(&self, id: &str) -> impl Future<Output = Result<Option<Credential>>> + Send;
 
     /// Find the credentials that match the the provided filter. If `filter` is None, return all
     /// credentials in the store.
     fn find(
         &self, filter: Option<Constraints>,
-    ) -> impl Future<Output = anyhow::Result<Vec<Credential>>> + Send;
+    ) -> impl Future<Output = Result<Vec<Credential>>> + Send;
 
     /// Remove the credential with the given ID from the store. Return an error if the credential
     /// does not exist.
-    fn remove(&self, id: &str) -> impl Future<Output = anyhow::Result<()>> + Send;
+    fn remove(&self, id: &str) -> impl Future<Output = Result<()>> + Send;
 }
 
 #[cfg(test)]
@@ -52,20 +53,24 @@ mod tests {
     }
 
     impl CredentialStorer for TestCredentialStore {
-        async fn save(&self, credential: &Credential) -> anyhow::Result<()> {
-            self.store.save(credential)
+        async fn save(&self, credential: &Credential) -> Result<()> {
+            self.store.save(credential)?;
+            Ok(())
         }
 
-        async fn load(&self, id: &str) -> anyhow::Result<Option<Credential>> {
-            self.store.load(id)
+        async fn load(&self, id: &str) -> Result<Option<Credential>> {
+            let cred = self.store.load(id)?;
+            Ok(cred)
         }
 
-        async fn find(&self, filter: Option<Constraints>) -> anyhow::Result<Vec<Credential>> {
-            self.store.find(filter)
+        async fn find(&self, filter: Option<Constraints>) -> Result<Vec<Credential>> {
+            let creds = self.store.find(filter)?;
+            Ok(creds)
         }
 
-        async fn remove(&self, id: &str) -> anyhow::Result<()> {
-            self.store.remove(id)
+        async fn remove(&self, id: &str) -> Result<()> {
+            self.store.remove(id)?;
+            Ok(())
         }
     }
 

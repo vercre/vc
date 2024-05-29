@@ -48,7 +48,7 @@ where
     type Request = CredentialOffer;
     type Response = String;
 
-    async fn verify(&mut self, provider: &P, req: &Self::Request) -> Result<&Self> {
+    async fn verify(&mut self, provider: &Self::Provider, req: &Self::Request) -> Result<&Self> {
         tracing::debug!("Context::verify");
 
         if req.credential_configuration_ids.is_empty() {

@@ -5,19 +5,22 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize};
+use tracing::instrument;
+use vercre_core::error::Err;
 use vercre_core::metadata::CredentialConfiguration;
-use vercre_core::vci::{CredentialOffer, TokenResponse};
+use vercre_core::vci::{CredentialOffer, MetadataRequest, MetadataResponse, TokenResponse};
 use vercre_core::{err, Result};
-use crate::provider::{Callback, CredentialStorer, Signer, StateManager};
-use crate::{Endpoint, Flow};
+
+use crate::provider::{Callback, CredentialStorer, IssuerClient, Signer};
+use crate::Endpoint;
 
 pub mod accept;
+pub mod credential_request;
 pub mod credential_response;
 pub mod metadata;
 pub mod offer;
 pub mod pin;
 pub mod token_request;
-pub mod credential_request;
 
 /// `Issuance` maintains app state across the steps of the issuance flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -67,13 +70,96 @@ pub enum Status {
 
 impl<P> Endpoint<P>
 where
-    P: Callback + CredentialStorer + Signer + StateManager + Clone + Debug,
+    P: Callback + CredentialStorer + IssuerClient + Signer + Clone + Debug,
 {
     /// Orchestrates the issuance flow triggered by a new credential offer.
-    #[tracing::instrument(level = "debug", skip(self))]
-    pub async fn init_issuance(&self, request: &CredentialOffer) -> Result<String> {
-        todo!();
+    #[instrument(level = "debug", skip(self))]
+    pub async fn receive_offer(&self, request: &CredentialOffer) -> Result<()> {
+        let ctx = Context {
+            _p: std::marker::PhantomData,
+        };
+
+        vercre_core::Endpoint::handle_request(self, request, ctx).await
     }
+}
+
+#[derive(Debug, Default)]
+struct Context<P> {
+    _p: std::marker::PhantomData<P>,
+}
+
+impl<P> vercre_core::Context for Context<P>
+where
+    P: CredentialStorer + IssuerClient + Signer + Debug,
+{
+    type Provider = P;
+    type Request = CredentialOffer;
+    type Response = ();
+
+    async fn verify(&mut self, _provider: &P, req: &Self::Request) -> Result<&Self> {
+        tracing::debug!("Context::verify");
+
+        if req.credential_configuration_ids.is_empty() {
+            err!(Err::InvalidRequest, "no credential IDs");
+        }
+        if req.grants.is_none() {
+            err!(Err::InvalidRequest, "no grants");
+        }
+
+        Ok(self)
+    }
+
+    async fn process(
+        &self, provider: &Self::Provider, req: &Self::Request,
+    ) -> Result<Self::Response> {
+        tracing::debug!("Context::process");
+
+        // Establish a new issuance flow state
+        let mut issuance = Issuance::default();
+
+        // Process the offer and establish a metadata request, passing that to the provider to
+        // use.
+        let metadata_request = offer(&mut issuance, req)?;
+        let metadata_response = provider.get_metadata(&metadata_request).await?;
+
+        // Update the flow state with issuer's metadata.
+        metadata(&mut issuance, &metadata_response)?;
+
+        Ok(())
+    }
+}
+
+/// Convert a `CredentialOffer` into a `MetadataRequest` and update flow state.
+fn offer(issuance: &mut Issuance, req: &CredentialOffer) -> Result<MetadataRequest> {
+    issuance.offer = req.clone();
+    issuance.status = Status::Offered;
+
+    // Set up a credential configuration for each credential offered
+    for id in &req.credential_configuration_ids {
+        issuance.offered.insert(id.into(), CredentialConfiguration::default());
+    }
+
+    Ok(MetadataRequest {
+        credential_issuer: req.credential_issuer.clone(),
+        languages: None, // The wallet client should provide any specific languages required.
+    })
+}
+
+/// Update the flow state with the issuer's metadata.
+fn metadata(issuance: &mut Issuance, md: &MetadataResponse) -> Result<()> {
+    let creds_supported = &md.credential_issuer.credential_configurations_supported;
+
+    for (cfg_id, cred_cfg) in &mut issuance.offered {
+        // find supported credential in metadata and copy to state object.
+        let Some(found) = creds_supported.get(cfg_id) else {
+            issuance.status =
+                Status::Failed(String::from("Unsupported credential type in offer"));
+            err!(Err::InvalidRequest, "unsupported credential type in offer");
+        };
+        *cred_cfg = found.clone();
+    }
+    issuance.status = Status::Ready;
+    Ok(())
 }
 
 // use crux_core::macros::Effect;

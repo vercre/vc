@@ -44,7 +44,7 @@ mod test_common;
 
 use std::fmt::{Debug, Display};
 
-use vercre_core::provider::{Callback, Signer, StateManager};
+use vercre_core::provider::{Callback, Signer};
 // re-exports
 pub use vercre_core::{callback, Result};
 pub use vercre_core::metadata as types;
@@ -79,7 +79,7 @@ impl Display for Flow {
 #[derive(Debug)]
 pub struct Endpoint<P>
 where
-    P: Signer + StateManager + Clone + Debug,
+    P: Signer + Clone + Debug,
 {
     provider: P,
 }
@@ -92,7 +92,7 @@ where
 /// endpoint implementation of `Endpoint::call` specific to the request.
 impl<P> Endpoint<P>
 where
-    P: Signer + StateManager + Clone + Debug,
+    P: Signer + Clone + Debug,
 {
     /// Create a new `Endpoint` with the provided `Provider`.
     pub fn new(provider: P) -> Self {
@@ -102,7 +102,7 @@ where
 
 impl<P> vercre_core::Endpoint for Endpoint<P>
 where
-    P: Callback + Signer + StateManager + Clone + Debug,
+    P:  Callback + Signer + Clone + Debug,
 {
     type Provider = P;
 
@@ -147,7 +147,7 @@ mod tests {
 
     impl<P> Endpoint<P>
     where
-        P: Callback + Signer + StateManager + Clone + Debug,
+        P: Callback + Signer + Clone + Debug,
     {
         async fn test(&mut self, request: &TestRequest) -> Result<TestResponse> {
             let ctx = Context {
@@ -164,7 +164,7 @@ mod tests {
 
     impl<P> vercre_core::Context for Context<P>
     where
-        P: Signer + StateManager + Clone + Debug,
+        P: Signer + Clone + Debug,
     {
         type Provider = P;
         type Request = TestRequest;
