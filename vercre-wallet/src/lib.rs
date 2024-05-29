@@ -44,11 +44,10 @@ mod test_common;
 
 use std::fmt::{Debug, Display};
 
-pub use vercre_core::metadata as types;
+pub use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::provider::{Callback, Signer};
-pub use vercre_core::vci::GrantType;
+pub use vercre_core::vci::{GrantType, TxCode};
 pub use vercre_core::w3c::vp::Constraints;
-// re-exports
 pub use vercre_core::{callback, Result};
 
 /// Types of flows supported by the wallet.

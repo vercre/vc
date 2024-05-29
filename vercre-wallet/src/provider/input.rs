@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use std::future::Future;
 
 use vercre_core::metadata::CredentialConfiguration;
+use vercre_core::vci::TxCode;
 
 /// `IssuanceInput` is a provider that allows the wallet client to provide input to the issuance or
 /// presentation flow.
@@ -16,6 +17,9 @@ pub trait IssuanceInput {
     /// Accept (true) or reject (false) an issuance offer.
     // TODO: All credentials offered accepted/rejected, or can we accept some and reject others?
     fn accept(
-        &self, config: &HashMap<String, CredentialConfiguration>,
+        &self, flow_id: &str, config: &HashMap<String, CredentialConfiguration>,
     ) -> impl Future<Output = bool> + Send;
+
+    /// Provide a PIN.
+    fn pin(&self, flow_id: &str, tx_code: &TxCode) -> impl Future<Output = String> + Send;
 }

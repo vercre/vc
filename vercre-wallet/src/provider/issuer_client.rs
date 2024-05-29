@@ -14,6 +14,6 @@ use crate::Result;
 pub trait IssuerClient {
     /// Get issuer metadata. If an error is returned, the wallet will cancel the issuance flow.
     fn get_metadata(
-        &self, req: &MetadataRequest,
+        &self, flow_id: &str, req: &MetadataRequest,
     ) -> impl Future<Output = Result<MetadataResponse>> + Send;
 }

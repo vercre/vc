@@ -6,6 +6,7 @@ use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
+use uuid::Uuid;
 use vercre_core::error::Err;
 use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::vci::{CredentialOffer, MetadataRequest, MetadataResponse, TokenResponse};
@@ -27,6 +28,10 @@ pub mod token_request;
 /// `Issuance` maintains app state across the steps of the issuance flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Issuance {
+    /// The unique identifier for the issuance flow. Not used internally but passed to providers
+    /// so that wallet clients can use to track interactions with specific flows.
+    pub id: String,
+
     /// The current status of the issuance flow.
     pub status: Status,
 
@@ -127,30 +132,41 @@ where
         tracing::debug!("Context::process");
 
         // Establish a new issuance flow state
-        let mut issuance = Issuance::default();
+        let mut issuance = Issuance {
+            id: Uuid::new_v4().to_string(),
+            status: Status::Offered,
+            ..Default::default()
+        };
+        provider.notify(&issuance.id, Status::Offered);
 
         // Process the offer and establish a metadata request, passing that to the provider to
         // use.
         let metadata_request = offer(&mut issuance, req);
-        let metadata_response = provider.get_metadata(&metadata_request).await?;
+        let metadata_response = provider.get_metadata(&issuance.id, &metadata_request).await?;
 
         // Update the flow state with issuer's metadata.
         metadata(&mut issuance, &metadata_response)?;
+        issuance.status = Status::Ready;
+        provider.notify(&issuance.id, Status::Ready);
 
         // Ask the holder's agent to confirm acceptance of the offer.
         // TODO: Should this be wholesale rejection of the offer or credential-by-credential?
-        if !provider.accept(&issuance.offered).await {
+        if !provider.accept(&issuance.id, &issuance.offered).await {
             return Ok(());
         }
-        // Unwrap to find PIN requirements, since verify was called to check existence.
-        let grants = &req.grants.as_ref().unwrap();
-        let pre_auth_code = &grants.pre_authorized_code.as_ref().unwrap();
-        if pre_auth_code.tx_code.is_some() {
+
+        // Get PIN if asked for. Unwraps are OK since verify was called to check existence.
+        let grants = &req.grants.as_ref().expect("grants exist on offer");
+        let pre_auth_code =
+            &grants.pre_authorized_code.as_ref().expect("pre-authorization code exists on offer");
+        if let Some(tx_code) = &pre_auth_code.tx_code {
             issuance.status = Status::PendingPin;
-        } else {
-            issuance.status = Status::Accepted;
-        }
-        provider.notify(issuance.status);
+            provider.notify(&issuance.id, Status::PendingPin);
+            let pin = provider.pin(&issuance.id, tx_code).await;
+            issuance.pin = Some(pin);
+        };
+        issuance.status = Status::Accepted;
+        provider.notify(&issuance.id, Status::Accepted);
 
         Ok(())
     }

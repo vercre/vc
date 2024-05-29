@@ -12,11 +12,11 @@ use crate::presentation::Status as PresentationStatus;
 /// Callback provider for issuance status updates to the wallet client.
 pub trait IssuanceListener {
     /// Notify the listener of a status change during the issuance process.
-    fn notify(&self, status: IssuanceStatus);
+    fn notify(&self, flow_id: &str, status: IssuanceStatus);
 }
 
 /// Callback provider for presentation status updates to the wallet client.
 pub trait PresentationListener {
     /// Notify the listener of a status change during the presentation process.
-    fn notify(&self, status: PresentationStatus);
+    fn notify(&self, flow_id: &str, status: PresentationStatus);
 }
