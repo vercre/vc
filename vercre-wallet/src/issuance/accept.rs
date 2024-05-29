@@ -1,5 +1,5 @@
 //! # Endpoint to accept an offer
-//! 
+//!
 //! Used to update the issuance status to `Accepted` when the Holder has accepted an offer, or to
 //! `PendingPin` when a user has accepted an offer and a PIN is required. To reject an offer and
 //! clear the issuance state, use the reset endpoint.

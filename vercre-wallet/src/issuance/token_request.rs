@@ -1,5 +1,5 @@
 //! # Token Request endpoint.
-//! 
+//!
 //! Used to build a token request that can be sent to the issuer to retrieve an access token that
 //! can be used to exchange for credentials.
 

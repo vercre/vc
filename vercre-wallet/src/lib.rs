@@ -37,19 +37,19 @@
 pub mod credential;
 pub mod issuance;
 pub mod presentation;
-pub mod reset;
 pub mod provider;
+pub mod reset;
 #[cfg(test)]
 mod test_common;
 
 use std::fmt::{Debug, Display};
 
-use vercre_core::provider::{Callback, Signer};
-// re-exports
-pub use vercre_core::{callback, Result};
 pub use vercre_core::metadata as types;
+use vercre_core::provider::{Callback, Signer};
 pub use vercre_core::vci::GrantType;
 pub use vercre_core::w3c::vp::Constraints;
+// re-exports
+pub use vercre_core::{callback, Result};
 
 /// Types of flows supported by the wallet.
 #[derive(Clone, Debug)]
@@ -102,7 +102,7 @@ where
 
 impl<P> vercre_core::Endpoint for Endpoint<P>
 where
-    P:  Callback + Signer + Clone + Debug,
+    P: Callback + Signer + Clone + Debug,
 {
     type Provider = P;
 

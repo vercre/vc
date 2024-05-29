@@ -46,7 +46,7 @@ pub enum Status {
     /// The authorization request has been authorized.
     Authorized,
 
-     /// The authorization request has failed, with an error message.
+    /// The authorization request has failed, with an error message.
     Failed(String),
 }
 

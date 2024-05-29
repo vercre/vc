@@ -177,7 +177,6 @@ mod tests {
         return_ok: bool,
     }
 
-
     impl<P> Endpoint<P>
     where
         P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,

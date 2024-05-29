@@ -1,5 +1,5 @@
 //! # Reset Issuance or Presentation Flow Endpoint
-//! 
+//!
 //! Used to clear the flow state in case of error handling. Used internally when a holder cancels
 //! an issuance offer or presentation request.
 
@@ -12,13 +12,13 @@ use crate::provider::{Callback, CredentialStorer, Signer, StateManager};
 use crate::{Endpoint, Flow};
 
 impl<P> Endpoint<P>
-    where
-        P: Callback + Signer + StateManager + Clone + Debug + CredentialStorer,
+where
+    P: Callback + Signer + StateManager + Clone + Debug + CredentialStorer,
 {
     /// Reset endpoint clears issuance state.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// Returns an error if the provider is unavailable or fails.
     #[instrument(level = "debug", skip(self))]
     pub async fn reset(&self, request: &Flow) -> Result<()> {

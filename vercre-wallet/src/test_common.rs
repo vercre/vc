@@ -1,5 +1,5 @@
 //! # Test Common module
-//! 
+//!
 //! Useful functions for use in wallet tests.
 
 pub(crate) mod wallet;

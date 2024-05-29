@@ -1,5 +1,5 @@
 //! # Credential Storer
-//! 
+//!
 //! Trait for the management of credential storage by the wallet client. Used by the wallet
 //! endpoints.
 
@@ -46,9 +46,7 @@ mod tests {
 
     impl TestCredentialStore {
         fn new() -> Self {
-            Self {
-                store: Store::new(),
-            }
+            Self { store: Store::new() }
         }
     }
 

@@ -24,9 +24,7 @@ where
     /// Credential response endpoint receives a credential response and stores the credential in
     /// the wallet client's persistent storage.
     #[instrument(level = "debug", skip(self))]
-    pub async fn credential_response(
-        &self, request: &CredentialResponse,
-    ) -> Result<Credential> {
+    pub async fn credential_response(&self, request: &CredentialResponse) -> Result<Credential> {
         let ctx = Context {
             _p: std::marker::PhantomData,
             vc: VerifiableCredential::default(),

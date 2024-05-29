@@ -1,5 +1,5 @@
 //! # Wallet Credential Data Model
-//! 
+//!
 //! This module provides a data model suitable for storing a credential in a wallet so that it can
 //! be displayed offline and used in presentation with minimal rebuilding.
 

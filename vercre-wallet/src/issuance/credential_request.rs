@@ -70,7 +70,7 @@ where
     async fn process(&self, provider: &P, req: &Self::Request) -> Result<Self::Response> {
         tracing::debug!("Context::process");
 
-         let mut issuance = self.issuance.clone();
+        let mut issuance = self.issuance.clone();
         issuance.token = req.clone();
 
         // Construct a proof.

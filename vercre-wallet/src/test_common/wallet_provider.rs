@@ -1,9 +1,9 @@
-
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
+
 use crate::callback::Payload;
 use crate::provider::{Algorithm, Callback, Result, Signer, StateManager};
 use crate::test_common::wallet;

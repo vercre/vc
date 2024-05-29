@@ -2,7 +2,7 @@
 //!
 //! The presentation request endpoint is responsible for handling incoming requests for a credential
 //! presentation. Use this endpoint to initiate a presentation flow.
-//! 
+//!
 //! The request can be encountered in two ways: the whole request object serialised into a URL
 //! parameter, or just a URI to go fetch the request object. Helper methods are provided to parse
 //! the request object from a URL parameter or the response from fetching.
@@ -23,9 +23,9 @@ use crate::{Endpoint, Flow};
 
 /// Helper function to parse a presentation request object from a URL parameter. The parameter needs
 /// to contain "&`presentation_definition`=" and it is assumed to be URL-encoded.
-/// 
+///
 /// # Errors
-/// 
+///
 /// Returns an error if parsing fails.
 #[allow(clippy::module_name_repetitions)]
 pub fn request_from_url_param(url_param: &str) -> anyhow::Result<RequestObject> {
@@ -41,15 +41,14 @@ pub fn request_from_url_param(url_param: &str) -> anyhow::Result<RequestObject> 
     Ok(req_obj)
 }
 
-/// Helper function to parse a presentation request object from the response of fetching from 
+/// Helper function to parse a presentation request object from the response of fetching from
 /// previously provided URI in the form of a `RequestObjectResponse`.
-/// 
+///
 /// # Errors
-/// 
+///
 /// Returns an error if parsing fails.
 #[allow(clippy::module_name_repetitions)]
 pub fn request_from_response(res: &RequestObjectResponse) -> anyhow::Result<RequestObject> {
-
     let Some(jwt_enc) = res.jwt.clone() else {
         return Err(anyhow!("no encoded JWT found in response"));
     };

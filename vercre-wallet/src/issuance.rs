@@ -11,7 +11,9 @@ use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::vci::{CredentialOffer, MetadataRequest, MetadataResponse, TokenResponse};
 use vercre_core::{err, Result};
 
-use crate::provider::{Callback, CredentialStorer, IssuerClient, Signer};
+use crate::provider::{
+    Callback, CredentialStorer, IssuanceInput, IssuanceListener, IssuerClient, Signer,
+};
 use crate::Endpoint;
 
 pub mod accept;
@@ -70,7 +72,14 @@ pub enum Status {
 
 impl<P> Endpoint<P>
 where
-    P: Callback + CredentialStorer + IssuerClient + Signer + Clone + Debug,
+    P: Callback
+        + CredentialStorer
+        + IssuanceInput
+        + IssuanceListener
+        + IssuerClient
+        + Signer
+        + Clone
+        + Debug,
 {
     /// Orchestrates the issuance flow triggered by a new credential offer.
     #[instrument(level = "debug", skip(self))]
@@ -90,7 +99,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: CredentialStorer + IssuerClient + Signer + Debug,
+    P: CredentialStorer + IssuanceInput + IssuanceListener + IssuerClient + Signer + Debug,
 {
     type Provider = P;
     type Request = CredentialOffer;
@@ -102,8 +111,11 @@ where
         if req.credential_configuration_ids.is_empty() {
             err!(Err::InvalidRequest, "no credential IDs");
         }
-        if req.grants.is_none() {
+        let Some(grants) = &req.grants else {
             err!(Err::InvalidRequest, "no grants");
+        };
+        if grants.pre_authorized_code.is_none() {
+            err!(Err::InvalidRequest, "no pre-authorized code");
         }
 
         Ok(self)
@@ -119,18 +131,33 @@ where
 
         // Process the offer and establish a metadata request, passing that to the provider to
         // use.
-        let metadata_request = offer(&mut issuance, req)?;
+        let metadata_request = offer(&mut issuance, req);
         let metadata_response = provider.get_metadata(&metadata_request).await?;
 
         // Update the flow state with issuer's metadata.
         metadata(&mut issuance, &metadata_response)?;
+
+        // Ask the holder's agent to confirm acceptance of the offer.
+        // TODO: Should this be wholesale rejection of the offer or credential-by-credential?
+        if !provider.accept(&issuance.offered).await {
+            return Ok(());
+        }
+        // Unwrap to find PIN requirements, since verify was called to check existence.
+        let grants = &req.grants.as_ref().unwrap();
+        let pre_auth_code = &grants.pre_authorized_code.as_ref().unwrap();
+        if pre_auth_code.tx_code.is_some() {
+            issuance.status = Status::PendingPin;
+        } else {
+            issuance.status = Status::Accepted;
+        }
+        provider.notify(issuance.status);
 
         Ok(())
     }
 }
 
 /// Convert a `CredentialOffer` into a `MetadataRequest` and update flow state.
-fn offer(issuance: &mut Issuance, req: &CredentialOffer) -> Result<MetadataRequest> {
+fn offer(issuance: &mut Issuance, req: &CredentialOffer) -> MetadataRequest {
     issuance.offer = req.clone();
     issuance.status = Status::Offered;
 
@@ -139,10 +166,10 @@ fn offer(issuance: &mut Issuance, req: &CredentialOffer) -> Result<MetadataReque
         issuance.offered.insert(id.into(), CredentialConfiguration::default());
     }
 
-    Ok(MetadataRequest {
+    MetadataRequest {
         credential_issuer: req.credential_issuer.clone(),
         languages: None, // The wallet client should provide any specific languages required.
-    })
+    }
 }
 
 /// Update the flow state with the issuer's metadata.
@@ -152,8 +179,7 @@ fn metadata(issuance: &mut Issuance, md: &MetadataResponse) -> Result<()> {
     for (cfg_id, cred_cfg) in &mut issuance.offered {
         // find supported credential in metadata and copy to state object.
         let Some(found) = creds_supported.get(cfg_id) else {
-            issuance.status =
-                Status::Failed(String::from("Unsupported credential type in offer"));
+            issuance.status = Status::Failed(String::from("Unsupported credential type in offer"));
             err!(Err::InvalidRequest, "unsupported credential type in offer");
         };
         *cred_cfg = found.clone();

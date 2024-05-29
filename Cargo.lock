@@ -2672,7 +2672,6 @@ dependencies = [
  "uuid",
  "vercre-vci",
  "vercre-vp",
- "vercre-wallet",
 ]
 
 [[package]]
