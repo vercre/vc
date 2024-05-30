@@ -1,12 +1,10 @@
 [workspace]
-members = ["crates/*", "vercre-vci", "vercre-vp", "vercre-wallet"]
+members = ["crates/*", "examples/*", "vercre-vci", "vercre-vp", "vercre-wallet"]
 resolver = "2"
 
 [workspace.package]
 authors = ["Vercre"]
 categories = ["decentralized identity", "openid for verifiable data", "privacy", "security", "verifiable credentials"]
-
-# documentation = <use docs.rs>
 edition = "2021"
 exclude = [".*", "/docs", "snapshots/"]
 homepage = "https://vercre.io"
@@ -48,6 +46,8 @@ tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 uuid = { version = "1.8.0", features = ["fast-rng", "v4"] }
 vercre-core = { path = "crates/vercre-core", version = "0.1.0-alpha.4" }
+vercre-vci = { path = "vercre-vci", version = "0.1.0-alpha.4" }
+vercre-vp = { path = "vercre-vp", version = "0.1.0-alpha.4" }
 
 [workspace.metadata.bin]
 cargo-xcode = { version = "=1.7.0" }

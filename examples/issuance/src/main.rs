@@ -69,7 +69,7 @@ async fn create_offer(
     State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     Json(mut req): Json<CreateOfferRequest>,
 ) -> AxResult<CreateOfferResponse> {
-    req.credential_issuer = format!("http://{}", host);
+    req.credential_issuer = format!("http://{host}");
     endpoint.create_offer(&req).await.into()
 }
 
@@ -79,7 +79,6 @@ async fn create_offer(
 /// The authorization server issues an authorization code and delivers it to the
 /// client by adding the response parameters to the query component of the redirection
 /// URI using the "application/x-www-form-urlencoded" format.
-
 #[axum::debug_handler]
 async fn authorize(
     State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
@@ -185,7 +184,7 @@ async fn token(
     State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     Form(mut req): Form<TokenRequest>,
 ) -> AxResult<TokenResponse> {
-    req.credential_issuer = format!("http://{}", host);
+    req.credential_issuer = format!("http://{host}");
     endpoint.token(&req).await.into()
 }
 
@@ -195,7 +194,7 @@ async fn credential(
     State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>, Json(mut req): Json<CredentialRequest>,
 ) -> AxResult<CredentialResponse> {
-    req.credential_issuer = format!("http://{}", host);
+    req.credential_issuer = format!("http://{host}");
     req.access_token = auth.token().to_string();
     endpoint.credential(&req).await.into()
 }
@@ -207,7 +206,7 @@ async fn deferred_credential(
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(mut req): Json<DeferredCredentialRequest>,
 ) -> AxResult<DeferredCredentialResponse> {
-    req.credential_issuer = format!("http://{}", host);
+    req.credential_issuer = format!("http://{host}");
     req.access_token = auth.0.token().to_string();
     endpoint.deferred(&req).await.into()
 }
@@ -219,7 +218,7 @@ async fn batch_credential(
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(mut req): Json<BatchCredentialRequest>,
 ) -> AxResult<BatchCredentialResponse> {
-    req.credential_issuer = format!("http://{}", host);
+    req.credential_issuer = format!("http://{host}");
     req.access_token = auth.0.token().to_string();
     endpoint.batch(&req).await.into()
 }
@@ -231,11 +230,11 @@ async fn metadata(
     TypedHeader(host): TypedHeader<Host>,
 ) -> AxResult<MetadataResponse> {
     let req = MetadataRequest {
-        credential_issuer: format!("http://{}", host),
+        credential_issuer: format!("http://{host}"),
         languages: headers
             .get("accept-language")
             .and_then(|v| v.to_str().ok())
-            .map(|v| v.to_string()),
+            .map(ToString::to_string),
     };
     endpoint.metadata(&req).await.into()
 }
@@ -244,7 +243,7 @@ async fn metadata(
 // Axum Response
 // ----------------------------------------------------------------------------
 
-/// Wrapper for axum::Response
+/// Wrapper for `axum::Response`
 pub struct AxResult<T>(vercre_vci::Result<T>);
 
 impl<T> IntoResponse for AxResult<T>

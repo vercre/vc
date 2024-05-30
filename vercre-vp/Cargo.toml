@@ -16,11 +16,7 @@ version.workspace = true
 
 [lib]
 bench = false
-crate-type = ["cdylib", "rlib"]
-
-[[example]]
-name = "http-verifier"
-path = "examples/http/main.rs"
+# crate-type = ["cdylib", "rlib"]
 
 [[bench]]
 bench = true
@@ -43,12 +39,8 @@ vercre-core.workspace = true
 
 [dev-dependencies]
 assert_let_bind.workspace = true
-axum-extra.workspace = true
-axum.workspace = true
 futures.workspace = true
 insta.workspace = true
 lazy_static.workspace = true
 test-utils.workspace = true
 tokio.workspace = true
-tower-http.workspace = true
-tracing-subscriber.workspace = true

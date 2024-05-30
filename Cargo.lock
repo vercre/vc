@@ -1529,6 +1529,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8478577c03552c21db0e2724ffb8986a5ce7af88107e6be5d2ee6e158c12800"
 
 [[package]]
+name = "issuance"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "axum-extra",
+ "lazy_static",
+ "oauth2",
+ "serde",
+ "serde_json",
+ "serde_qs 0.13.0",
+ "test-utils",
+ "tokio",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "vercre-vci",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1927,6 +1946,22 @@ name = "ppv-lite86"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
+
+[[package]]
+name = "presentation"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "axum-extra",
+ "serde",
+ "serde_json",
+ "test-utils",
+ "tokio",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "vercre-vp",
+]
 
 [[package]]
 name = "pretty_assertions"
@@ -3222,24 +3257,18 @@ version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
  "assert_let_bind",
- "axum",
- "axum-extra",
  "base64ct",
  "chrono",
  "derive_builder",
  "futures",
  "insta",
  "lazy_static",
- "oauth2",
  "serde",
  "serde_json",
- "serde_qs 0.13.0",
  "sha2",
  "test-utils",
  "tokio",
- "tower-http",
  "tracing",
- "tracing-subscriber",
  "uuid",
  "vercre-core",
 ]
@@ -3250,8 +3279,6 @@ version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
  "assert_let_bind",
- "axum",
- "axum-extra",
  "chrono",
  "derive_builder",
  "futures",
@@ -3262,9 +3289,7 @@ dependencies = [
  "serde_json_path",
  "test-utils",
  "tokio",
- "tower-http",
  "tracing",
- "tracing-subscriber",
  "uuid",
  "vercre-core",
 ]

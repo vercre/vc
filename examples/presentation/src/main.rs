@@ -55,10 +55,10 @@ async fn main() {
 #[axum::debug_handler]
 async fn create_request(
     State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
-    Json(mut req): Json<CreateRequestRequest>,
+    Json(mut request): Json<CreateRequestRequest>,
 ) -> AxResult<CreateRequestResponse> {
-    req.client_id = format!("http://{}", host);
-    endpoint.create_request(&req).await.into()
+    request.client_id = format!("http://{host}");
+    endpoint.create_request(&request).await.into()
 }
 
 // Retrieve Authorization Request Object endpoint
@@ -67,20 +67,20 @@ async fn request_object(
     State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     Path(client_state): Path<String>,
 ) -> AxResult<RequestObjectResponse> {
-    let req = RequestObjectRequest {
-        client_id: format!("http://{}", host),
+    let request = RequestObjectRequest {
+        client_id: format!("http://{host}"),
         state: client_state,
     };
-    endpoint.request_object(&req).await.into()
+    endpoint.request_object(&request).await.into()
 }
 
 // Wallet Authorization response endpoint
 #[axum::debug_handler]
 async fn response(
-    State(endpoint): State<Arc<Endpoint<Provider>>>, Form(req): Form<ResponseRequest>,
+    State(endpoint): State<Arc<Endpoint<Provider>>>, Form(request): Form<ResponseRequest>,
 ) -> impl IntoResponse {
-    let res = endpoint.response(&req).await;
-    AxResult(res)
+    let response = endpoint.response(&request).await;
+    AxResult(response)
 }
 
 // ----------------------------------------------------------------------------
@@ -88,7 +88,7 @@ async fn response(
 // ----------------------------------------------------------------------------
 
 /// Axum response wrapper
-pub struct AxResult<T>(vercre_core::Result<T>);
+pub struct AxResult<T>(vercre_vp::Result<T>);
 
 impl<T> IntoResponse for AxResult<T>
 where
@@ -103,8 +103,8 @@ where
     }
 }
 
-impl<T> From<vercre_core::Result<T>> for AxResult<T> {
-    fn from(val: vercre_core::Result<T>) -> Self {
+impl<T> From<vercre_vp::Result<T>> for AxResult<T> {
+    fn from(val: vercre_vp::Result<T>) -> Self {
         Self(val)
     }
 }
