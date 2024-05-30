@@ -3,6 +3,7 @@
 //! The Issuance app implements the vercre-wallet's credential issuance flow.
 use std::collections::HashMap;
 use std::fmt::Debug;
+use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
@@ -11,11 +12,13 @@ use vercre_core::error::Err;
 use vercre_core::jwt::{Header, Jwt};
 use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::vci::{
-    CredentialOffer, CredentialRequest, GrantType, MetadataRequest, MetadataResponse, Proof,
-    ProofClaims, TokenRequest, TokenResponse,
+    CredentialOffer, CredentialRequest, CredentialResponse, GrantType, MetadataRequest,
+    MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
+use vercre_core::w3c::VerifiableCredential;
 use vercre_core::{err, Result};
 
+use crate::credential::Credential;
 use crate::provider::{
     Callback, CredentialStorer, IssuanceInput, IssuanceListener, IssuerClient, Signer,
 };
@@ -230,7 +233,7 @@ where
             issuance.status = Status::Requested;
             provider.notify(&issuance.id, Status::Requested);
             let cred_res = match provider.get_credential(&issuance.id, &request).await {
-                Ok(response) => response,
+                Ok(r) => r,
                 Err(e) => {
                     provider.notify(&issuance.id, Status::Failed(e.to_string()));
                     return Ok(());
@@ -243,7 +246,21 @@ where
                 issuance.token.c_nonce_expires_in.clone_from(&cred_res.c_nonce_expires_in);
             }
 
-            //
+            // Store the credential in the wallet's persistent storage.
+            let credential = match credential(&issuance, cfg, &cred_res) {
+                Ok(c) => c,
+                Err(e) => {
+                    provider.notify(&issuance.id, Status::Failed(e.to_string()));
+                    return Ok(());
+                }
+            };
+            match provider.save(&credential).await {
+                Ok(()) => (),
+                Err(e) => {
+                    provider.notify(&issuance.id, Status::Failed(e.to_string()));
+                    return Ok(());
+                }
+            };
         }
         provider.notify(&issuance.id, Status::Inactive);
 
@@ -337,6 +354,30 @@ fn credential_request(
         credential_definition: Some(cfg.credential_definition.clone()),
         credential_response_encryption: None,
     }
+}
+
+/// Construct a credential from a credential response.
+fn credential(
+    issuance: &Issuance, credential_configuration: &CredentialConfiguration,
+    res: &CredentialResponse,
+) -> Result<Credential> {
+    let Some(value) = res.credential.as_ref() else {
+        err!(Err::InvalidRequest, "no credential in response");
+    };
+    let Some(vc_str) = value.as_str() else {
+        err!(Err::InvalidRequest, "credential is not a string");
+    };
+    let Ok(vc) = VerifiableCredential::from_str(vc_str) else {
+        err!(Err::InvalidRequest, "could not parse credential");
+    };
+    Ok(Credential {
+        id: vc.id.clone(),
+        issuer: issuance.offer.credential_issuer.clone(),
+        metadata: credential_configuration.clone(),
+        vc,
+        issued: vc_str.into(),
+        ..Default::default()
+    })
 }
 
 // use crux_core::macros::Effect;
