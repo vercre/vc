@@ -10,11 +10,12 @@ use k256::Secp256k1;
 use serde_json::Value;
 use uuid::Uuid;
 use vercre_core::callback::Payload;
+use vercre_core::holder;
 use vercre_core::metadata::{self, CredentialDefinition};
 use vercre_core::provider::{
     Algorithm, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager,
 };
-use vercre_core::{holder, vci::GrantType};
+use vercre_core::vci::GrantType;
 
 use crate::wallet;
 
