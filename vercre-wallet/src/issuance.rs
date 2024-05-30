@@ -8,8 +8,12 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
+use vercre_core::jwt::{Header, Jwt};
 use vercre_core::metadata::CredentialConfiguration;
-use vercre_core::vci::{CredentialOffer, MetadataRequest, MetadataResponse, TokenResponse};
+use vercre_core::vci::{
+    CredentialOffer, CredentialRequest, GrantType, MetadataRequest, MetadataResponse, Proof,
+    ProofClaims, TokenRequest, TokenResponse,
+};
 use vercre_core::{err, Result};
 
 use crate::provider::{
@@ -75,6 +79,17 @@ pub enum Status {
     Failed(String),
 }
 
+/// The `ReceiveOfferRequest` is the input to the `receive_offer` endpoint.
+#[derive(Clone, Debug, Default)]
+pub struct ReceiveOfferRequest {
+    /// Wallet client identifier. This is used by the issuance service to issue an access token so
+    /// should be unique to the holder's agent. Care should be taken to ensure this is not shared
+    /// across holders in the case of headless, multi-tenant agents.
+    pub client_id: String,
+    /// The credential offer from the issuer.
+    pub offer: CredentialOffer,
+}
+
 impl<P> Endpoint<P>
 where
     P: Callback
@@ -88,7 +103,7 @@ where
 {
     /// Orchestrates the issuance flow triggered by a new credential offer.
     #[instrument(level = "debug", skip(self))]
-    pub async fn receive_offer(&self, request: &CredentialOffer) -> Result<()> {
+    pub async fn receive_offer(&self, request: &ReceiveOfferRequest) -> Result<()> {
         let ctx = Context {
             _p: std::marker::PhantomData,
         };
@@ -107,16 +122,16 @@ where
     P: CredentialStorer + IssuanceInput + IssuanceListener + IssuerClient + Signer + Debug,
 {
     type Provider = P;
-    type Request = CredentialOffer;
+    type Request = ReceiveOfferRequest;
     type Response = ();
 
     async fn verify(&mut self, _provider: &P, req: &Self::Request) -> Result<&Self> {
         tracing::debug!("Context::verify");
 
-        if req.credential_configuration_ids.is_empty() {
+        if req.offer.credential_configuration_ids.is_empty() {
             err!(Err::InvalidRequest, "no credential IDs");
         }
-        let Some(grants) = &req.grants else {
+        let Some(grants) = &req.offer.grants else {
             err!(Err::InvalidRequest, "no grants");
         };
         if grants.pre_authorized_code.is_none() {
@@ -141,11 +156,20 @@ where
 
         // Process the offer and establish a metadata request, passing that to the provider to
         // use.
-        let metadata_request = offer(&mut issuance, req);
-        let metadata_response = provider.get_metadata(&issuance.id, &metadata_request).await?;
+        let metadata_request = offer(&mut issuance, &req.offer);
+        let metadata_response = match provider.get_metadata(&issuance.id, &metadata_request).await {
+            Ok(resp) => resp,
+            Err(e) => {
+                provider.notify(&issuance.id, Status::Failed(e.to_string()));
+                return Ok(());
+            }
+        };
 
         // Update the flow state with issuer's metadata.
-        metadata(&mut issuance, &metadata_response)?;
+        if let Err(e) = metadata(&mut issuance, &metadata_response) {
+            provider.notify(&issuance.id, Status::Failed(e.to_string()));
+            return Ok(());
+        };
         issuance.status = Status::Ready;
         provider.notify(&issuance.id, Status::Ready);
 
@@ -155,10 +179,10 @@ where
             return Ok(());
         }
 
-        // Get PIN if asked for. Unwraps are OK since verify was called to check existence.
-        let grants = &req.grants.as_ref().expect("grants exist on offer");
+        // Get PIN if required. Unwraps are OK since verify was called to check existence.
+        let grants = req.offer.grants.as_ref().expect("grants exist on offer");
         let pre_auth_code =
-            &grants.pre_authorized_code.as_ref().expect("pre-authorization code exists on offer");
+            grants.pre_authorized_code.as_ref().expect("pre-authorization code exists on offer");
         if let Some(tx_code) = &pre_auth_code.tx_code {
             issuance.status = Status::PendingPin;
             provider.notify(&issuance.id, Status::PendingPin);
@@ -167,6 +191,61 @@ where
         };
         issuance.status = Status::Accepted;
         provider.notify(&issuance.id, Status::Accepted);
+
+        // Request an access token from the issuer.
+        let token_request =
+            token_request(&req.client_id, &issuance, &pre_auth_code.pre_authorized_code);
+        let token_response = match provider.get_token(&issuance.id, &token_request).await {
+            Ok(resp) => resp,
+            Err(e) => {
+                provider.notify(&issuance.id, Status::Failed(e.to_string()));
+                return Ok(());
+            }
+        };
+        issuance.token = token_response;
+
+        // Request each credential offered.
+        // TODO: concurrent requests. Possible if wallet is WASM?
+        let kid = provider.verification_method();
+        let alg = provider.algorithm().to_string();
+        for (id, cfg) in &issuance.offered {
+            // Construct a proof to be used in credential requests.
+            let jwt = proof_jwt(&issuance, &kid, &alg);
+            let jwt_bytes = match serde_json::to_vec(&jwt) {
+                Ok(bytes) => bytes,
+                Err(e) => {
+                    provider.notify(&issuance.id, Status::Failed(e.to_string()));
+                    return Ok(());
+                }
+            };
+            let signed_jwt = provider.sign(&jwt_bytes).await;
+            let proof = match proof(&jwt, &signed_jwt) {
+                Ok(p) => p,
+                Err(e) => {
+                    provider.notify(&issuance.id, Status::Failed(e.to_string()));
+                    return Ok(());
+                }
+            };
+            let request = credential_request(&issuance, id, cfg, &proof);
+            issuance.status = Status::Requested;
+            provider.notify(&issuance.id, Status::Requested);
+            let cred_res = match provider.get_credential(&issuance.id, &request).await {
+                Ok(response) => response,
+                Err(e) => {
+                    provider.notify(&issuance.id, Status::Failed(e.to_string()));
+                    return Ok(());
+                }
+            };
+            if cred_res.c_nonce.is_some() {
+                issuance.token.c_nonce.clone_from(&cred_res.c_nonce);
+            }
+            if cred_res.c_nonce_expires_in.is_some() {
+                issuance.token.c_nonce_expires_in.clone_from(&cred_res.c_nonce_expires_in);
+            }
+
+            //
+        }
+        provider.notify(&issuance.id, Status::Inactive);
 
         Ok(())
     }
@@ -202,6 +281,62 @@ fn metadata(issuance: &mut Issuance, md: &MetadataResponse) -> Result<()> {
     }
     issuance.status = Status::Ready;
     Ok(())
+}
+
+/// Construct a token request.
+fn token_request(client_id: &str, issuance: &Issuance, pre_authorized_code: &str) -> TokenRequest {
+    TokenRequest {
+        credential_issuer: issuance.offer.credential_issuer.clone(),
+        client_id: client_id.into(),
+        grant_type: GrantType::PreAuthorizedCode,
+        pre_authorized_code: Some(pre_authorized_code.to_string()),
+        user_code: issuance.pin.clone(),
+        ..Default::default()
+    }
+}
+
+/// Construct an unsigned, serialized jwt to include in a proof.
+fn proof_jwt(issuance: &Issuance, kid: &str, alg: &str) -> Jwt<ProofClaims> {
+    let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
+    Jwt {
+        header: Header {
+            typ: String::from("vercre-vci-proof+jwt"),
+            alg: alg.into(),
+            kid: kid.into(),
+        },
+        claims: ProofClaims {
+            iss: holder_did.to_string(),
+            aud: issuance.offer.credential_issuer.clone(),
+            iat: chrono::Utc::now().timestamp(),
+            nonce: issuance.token.c_nonce.clone().unwrap_or_default(),
+        },
+    }
+}
+
+/// Construct a proof using a jwt and it's signed serialized form.
+fn proof(jwt: &Jwt<ProofClaims>, signed_jwt: &[u8]) -> Result<Proof> {
+    let signed_jwt_str =
+        String::from_utf8(signed_jwt.to_vec()).map_err(|e| Err::ServerError(e.into()))?;
+    Ok(Proof {
+        proof_type: jwt.to_string(),
+        jwt: Some(signed_jwt_str),
+        cwt: None,
+    })
+}
+
+/// Construct a credential request from an offered credential configuration.
+fn credential_request(
+    issuance: &Issuance, id: &str, cfg: &CredentialConfiguration, proof: &Proof,
+) -> CredentialRequest {
+    CredentialRequest {
+        credential_issuer: issuance.offer.credential_issuer.clone(),
+        access_token: issuance.token.access_token.clone(),
+        format: Some(cfg.format.clone()),
+        proof: Some(proof.clone()),
+        credential_identifier: Some(id.into()),
+        credential_definition: Some(cfg.credential_definition.clone()),
+        credential_response_encryption: None,
+    }
 }
 
 // use crux_core::macros::Effect;

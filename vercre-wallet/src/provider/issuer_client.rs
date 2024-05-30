@@ -5,7 +5,10 @@
 //! trait allows the wallet (and issuance services) to be transport layer agnostic.
 use std::future::Future;
 
-use vercre_core::vci::{MetadataRequest, MetadataResponse};
+use vercre_core::vci::{
+    CredentialRequest, CredentialResponse, MetadataRequest, MetadataResponse, TokenRequest,
+    TokenResponse,
+};
 
 use crate::Result;
 
@@ -16,4 +19,14 @@ pub trait IssuerClient {
     fn get_metadata(
         &self, flow_id: &str, req: &MetadataRequest,
     ) -> impl Future<Output = Result<MetadataResponse>> + Send;
+
+    /// Get an access token. If an error is returned, the wallet will cancel the issuance flow.
+    fn get_token(
+        &self, flow_id: &str, req: &TokenRequest,
+    ) -> impl Future<Output = Result<TokenResponse>> + Send;
+
+    /// Get a credential. If an error is returned, the wallet will cancel the issuance flow.
+    fn get_credential(
+        &self, flow_id: &str, req: &CredentialRequest,
+    ) -> impl Future<Output = Result<CredentialResponse>> + Send;
 }
