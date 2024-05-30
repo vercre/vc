@@ -2705,8 +2705,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
- "vercre-vci",
- "vercre-vp",
+ "vercre-core",
 ]
 
 [[package]]

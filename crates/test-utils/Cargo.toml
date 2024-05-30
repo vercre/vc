@@ -33,5 +33,4 @@ serde_json.workspace = true
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 tracing.workspace = true
 uuid.workspace = true
-vercre-vci = { path = "../../vercre-vci" }
-vercre-vp = { path = "../../vercre-vp" }
+vercre-core.workspace = true

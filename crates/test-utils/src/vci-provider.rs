@@ -9,12 +9,12 @@ use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
 use serde_json::Value;
 use uuid::Uuid;
-use vercre_vci::callback::Payload;
-use vercre_vci::metadata::types::{self, CredentialDefinition};
-use vercre_vci::provider::{
+use vercre_core::callback::Payload;
+use vercre_core::metadata::{self, CredentialDefinition};
+use vercre_core::provider::{
     Algorithm, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager,
 };
-use vercre_vci::{holder, GrantType};
+use vercre_core::{holder, vci::GrantType};
 
 use crate::wallet;
 
@@ -51,23 +51,23 @@ impl Provider {
 }
 
 impl Client for Provider {
-    async fn metadata(&self, client_id: &str) -> Result<types::Client> {
+    async fn metadata(&self, client_id: &str) -> Result<metadata::Client> {
         self.client.get(client_id)
     }
 
-    async fn register(&self, client_meta: &types::Client) -> Result<types::Client> {
+    async fn register(&self, client_meta: &metadata::Client) -> Result<metadata::Client> {
         self.client.add(client_meta)
     }
 }
 
 impl Issuer for Provider {
-    async fn metadata(&self, issuer_id: &str) -> Result<types::Issuer> {
+    async fn metadata(&self, issuer_id: &str) -> Result<metadata::Issuer> {
         self.issuer.get(issuer_id)
     }
 }
 
 impl Server for Provider {
-    async fn metadata(&self, server_id: &str) -> Result<types::Server> {
+    async fn metadata(&self, server_id: &str) -> Result<metadata::Server> {
         self.server.get(server_id)
     }
 }
@@ -127,14 +127,14 @@ impl Callback for Provider {
 //-----------------------------------------------------------------------------
 #[derive(Default, Clone, Debug)]
 struct ClientStore {
-    clients: Arc<Mutex<HashMap<String, types::Client>>>,
+    clients: Arc<Mutex<HashMap<String, metadata::Client>>>,
 }
 
 impl ClientStore {
     fn new() -> Self {
         let client_id = wallet::did();
 
-        let client = types::Client {
+        let client = metadata::Client {
             client_id: client_id.clone(),
             redirect_uris: Some(vec!["http://localhost:3000/callback".into()]),
             grant_types: Some(vec![GrantType::AuthorizationCode, GrantType::PreAuthorizedCode]),
@@ -150,7 +150,7 @@ impl ClientStore {
         }
     }
 
-    fn get(&self, client_id: &str) -> Result<types::Client> {
+    fn get(&self, client_id: &str) -> Result<metadata::Client> {
         let Some(client) = self.clients.lock().expect("should lock").get(client_id).cloned() else {
             return Err(anyhow!("client not found for client_id: {client_id}"));
         };
@@ -158,8 +158,8 @@ impl ClientStore {
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn add(&self, client_meta: &types::Client) -> Result<types::Client> {
-        let client_meta = types::Client {
+    fn add(&self, client_meta: &metadata::Client) -> Result<metadata::Client> {
+        let client_meta = metadata::Client {
             client_id: Uuid::new_v4().to_string(),
             ..client_meta.to_owned()
         };
@@ -303,12 +303,12 @@ impl StateStore {
 //-----------------------------------------------------------------------------
 #[derive(Default, Clone, Debug)]
 struct IssuerStore {
-    issuers: HashMap<String, types::Issuer>,
+    issuers: HashMap<String, metadata::Issuer>,
 }
 
 impl IssuerStore {
     fn new() -> Self {
-        let issuer = types::Issuer::sample();
+        let issuer = metadata::Issuer::sample();
 
         Self {
             issuers: HashMap::from([
@@ -318,7 +318,7 @@ impl IssuerStore {
         }
     }
 
-    fn get(&self, issuer_id: &str) -> Result<types::Issuer> {
+    fn get(&self, issuer_id: &str) -> Result<metadata::Issuer> {
         let Some(issuer) = self.issuers.get(issuer_id) else {
             return Err(anyhow!("issuer not found"));
         };
@@ -328,12 +328,12 @@ impl IssuerStore {
 
 #[derive(Default, Clone, Debug)]
 struct ServerStore {
-    servers: HashMap<String, types::Server>,
+    servers: HashMap<String, metadata::Server>,
 }
 
 impl ServerStore {
     fn new() -> Self {
-        let server = types::Server::sample();
+        let server = metadata::Server::sample();
         Self {
             servers: HashMap::from([
                 ("http://localhost:8080".into(), server.clone()),
@@ -342,7 +342,7 @@ impl ServerStore {
         }
     }
 
-    fn get(&self, server_id: &str) -> Result<types::Server> {
+    fn get(&self, server_id: &str) -> Result<metadata::Server> {
         let Some(server) = self.servers.get(server_id) else {
             return Err(anyhow!("issuer not found"));
         };

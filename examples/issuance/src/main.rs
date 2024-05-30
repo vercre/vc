@@ -96,8 +96,7 @@ async fn authorize(
         let csrf = CsrfToken::new_random();
         let token = csrf.secret();
 
-        let mut authorized = AUTHORIZED.write().await;
-        authorized.insert(token.clone(), req);
+        AUTHORIZED.write().await.insert(token.clone(), req);
 
         // prompt user to login
         let login_form = format!(
@@ -114,7 +113,7 @@ async fn authorize(
     }
 
     // process request
-    req.credential_issuer = format!("http://{}", host);
+    req.credential_issuer = format!("http://{host}");
 
     let Some(redirect_uri) = req.redirect_uri.clone() else {
         return (StatusCode::UNAUTHORIZED, Json(json!({"error": "no redirect_uri"})))
