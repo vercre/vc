@@ -5,7 +5,7 @@
 //! allows the wallet (and verifier's services) to be transport layer agnostic.
 use std::future::Future;
 
-use vercre_core::vp::RequestObjectResponse;
+use vercre_core::vp::{RequestObjectResponse, ResponseRequest};
 
 use crate::Result;
 
@@ -16,4 +16,9 @@ pub trait VerifierClient {
     fn get_request_object(
         &self, flow_id: &str, req: &str,
     ) -> impl Future<Output = Result<RequestObjectResponse>> + Send;
+
+    /// Send the presentation to the verifier.
+    fn present(
+        &self, flow_id: &str, uri: &str, presentation: &ResponseRequest,
+    ) -> impl Future<Output = Result<()>> + Send;
 }
