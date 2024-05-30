@@ -4,13 +4,17 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
+use chrono::{TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
 use vercre_core::jwt::Jwt;
-use vercre_core::vp::{RequestObject, RequestObjectResponse};
-use vercre_core::w3c::vp::{Constraints, PresentationSubmission};
+use vercre_core::vp::{RequestObject, RequestObjectResponse, ResponseRequest};
+use vercre_core::w3c::vp::{
+    Claims, Constraints, DescriptorMap, PathNested, PresentationSubmission, Proof,
+    VerifiablePresentation,
+};
 use vercre_core::{err, Result};
 
 use crate::credential::Credential;
@@ -20,7 +24,6 @@ use crate::provider::{
 use crate::Endpoint;
 
 pub mod authorize;
-pub mod request;
 
 /// `Presentation` maintains app state across steps of the presentation flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -43,7 +46,7 @@ pub struct Presentation {
     pub filter: Constraints,
 
     /// The presentation submission token.
-    pub submission: Option<PresentationSubmission>,
+    pub submission: PresentationSubmission,
 }
 
 /// Presentation Status values.
@@ -203,11 +206,48 @@ where
         };
         presentation.credentials = credentials.clone();
 
-        // Request authorization to proceed with the presentation from the wallet client.
+        // Request authorization from the wallet client to proceed with the presentation.
         if !provider.authorize(&presentation.id, credentials).await {
             return Ok(());
         }
         provider.notify(&presentation.id, Status::Authorized);
+
+        // Construct a presentation submission.
+        let submission = match create_submission(&presentation) {
+            Ok(submission) => submission,
+            Err(e) => {
+                provider.notify(&presentation.id, Status::Failed(e.to_string()));
+                return Ok(());
+            }
+        };
+        presentation.submission = submission.clone();
+
+        // Construct a token
+        let token = match vp_token(
+            &presentation,
+            &provider.algorithm().to_string(),
+            &provider.verification_method(),
+        ) {
+            Ok(token) => token,
+            Err(e) => {
+                provider.notify(&presentation.id, Status::Failed(e.to_string()));
+                return Ok(());
+            }
+        };
+        let vp_token = match serde_json::to_value(token) {
+            Ok(v) => v,
+            Err(e) => {
+                provider.notify(&presentation.id, Status::Failed(e.to_string()));
+                return Ok(());
+            }
+        };
+
+        // Assemble the presentation response to the verifier and ask the wallet client to send it.
+        let req = ResponseRequest {
+            vp_token: Some(vec![vp_token]),
+            presentation_submission: Some(submission),
+            state: presentation.request.state.clone(),
+        };
 
         todo!();
     }
@@ -247,6 +287,75 @@ fn build_filter(request: &RequestObject) -> Result<Constraints> {
     let constraints = pd.input_descriptors[0].constraints.clone();
 
     Ok(constraints)
+}
+
+/// Create a presentation submission from the presentation request and matched credentials.
+fn create_submission(presentation: &Presentation) -> anyhow::Result<PresentationSubmission> {
+    let request = presentation.request.clone();
+    let Some(pd) = &request.presentation_definition else {
+        return Err(anyhow!("No presentation definition on request in context"));
+    };
+    let mut desc_map: Vec<DescriptorMap> = vec![];
+    for n in 0..pd.input_descriptors.len() {
+        let in_desc = &pd.input_descriptors[n];
+        let dm = DescriptorMap {
+            id: in_desc.id.clone(),
+            path: "$".to_string(),
+            path_nested: PathNested {
+                format: "jwt_vc_json".to_string(),
+                // URGENT: index matched VCs not input descriptors!!
+                path: "$.verifiableCredential[0]".to_string(),
+            },
+            format: "jwt_vc_json".to_string(),
+        };
+        desc_map.push(dm);
+    }
+    let submission = PresentationSubmission {
+        id: Uuid::new_v4().to_string(),
+        definition_id: pd.id.clone(),
+        descriptor_map: desc_map,
+    };
+    Ok(submission)
+}
+
+/// Construct a verifiable presentation proof.
+fn vp_token(presentation: &Presentation, alg: &str, kid: &str) -> anyhow::Result<Jwt<Claims>> {
+    let request = presentation.request.clone();
+    let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
+
+    // presentation with 2 VCs: one as JSON, one as base64url encoded JWT
+    let mut builder = VerifiablePresentation::builder()
+        .add_context(String::from("https://www.w3.org/2018/credentials/examples/v1"))
+        .add_type(String::from("EmployeeIDPresentation"))
+        .holder(holder_did.to_string());
+
+    for c in &presentation.credentials {
+        let val = serde_json::to_value(&c.issued)?;
+        builder = builder.add_credential(val);
+    }
+
+    let mut vp = builder.build()?;
+
+    let proof_type = match alg {
+        "EdDSA" => "JsonWebKey2020",
+        _ => "EcdsaSecp256k1VerificationKey2019",
+    };
+
+    vp.proof = Some(vec![Proof {
+        id: Some(format!("urn:uuid:{}", Uuid::new_v4())),
+        type_: proof_type.to_string(),
+        verification_method: kid.to_string(),
+        created: Some(Utc::now()),
+        expires: Utc::now().checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
+        domain: Some(vec![request.client_id.clone()]),
+        challenge: Some(request.nonce.clone()),
+        ..Default::default()
+    }]);
+
+    // transform VP into signed JWT
+    // TODO: support other req.credential.formats
+
+    Ok(vp.to_jwt()?)
 }
 
 // pub(crate) mod model;
