@@ -162,19 +162,19 @@ mod tests {
     #[test]
     fn test_flex() {
         let test_data = TestData {
-            string: String::from("string"),
+            string: "string".into(),
             object: vec![Nested {
-                n: String::from("object"),
+                n: "object".into(),
             }],
             object_array: vec![
                 Nested {
-                    n: String::from("object1"),
+                    n: "object1".into(),
                 },
                 Nested {
-                    n: String::from("object2"),
+                    n: "object2".into(),
                 },
             ],
-            array: vec![String::from("item1"), String::from("item2")],
+            array: vec!["item1".into(), "item2".into()],
             none: Default::default(),
         };
 

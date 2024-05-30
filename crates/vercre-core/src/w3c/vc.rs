@@ -155,7 +155,7 @@ impl VerifiableCredential {
         Ok(jwt::Jwt {
             // TODO: build Header in signing module
             header: jwt::Header {
-                typ: String::from("JWT"),
+                typ: "JWT".into(),
                 alg: alg.to_string(),
                 kid: proof.verification_method.clone(),
             },
@@ -170,28 +170,25 @@ impl VerifiableCredential {
 
         Self {
             context: vec![
-                String::from("https://www.w3.org/2018/credentials/v1"),
-                String::from("https://www.w3.org/2018/credentials/examples/v1"),
+                "https://www.w3.org/2018/credentials/v1".into(),
+                "https://www.w3.org/2018/credentials/examples/v1".into(),
             ],
-            type_: vec![String::from("VerifiableCredential"), String::from("EmployeeIDCredential")],
+            type_: vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()],
             issuer: Issuer {
-                id: String::from("https://example.com/issuers/14"),
+                id: "https://example.com/issuers/14".into(),
                 extra: None,
             },
-            id: String::from("https://example.com/credentials/3732"),
+            id: "https://example.com/credentials/3732".into(),
             issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
             credential_subject: vec![CredentialSubject {
-                id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".to_string()),
-                claims: HashMap::from([(
-                    String::from("employeeId"),
-                    serde_json::json!("1234567890"),
-                )]),
+                id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
+                claims: HashMap::from([("employeeId".into(), serde_json::json!("1234567890"))]),
             }],
             proof: Some(vec![Proof {
-                type_: String::from("Ed25519Signature2020"),
-                cryptosuite: Some("EcdsaSecp256k1VerificationKey2019".to_string()),
-                proof_purpose: String::from("assertionMethod"),
-                verification_method: String::from("did:example:ebfeb1f712ebc6f1c276e12ec21"),
+                type_: "Ed25519Signature2020".into(),
+                cryptosuite: Some("EcdsaSecp256k1VerificationKey2019".into()),
+                proof_purpose: "assertionMethod".into(),
+                verification_method: "did:example:ebfeb1f712ebc6f1c276e12ec21".into(),
                 ..Default::default()
             }]),
 
@@ -556,8 +553,8 @@ impl VcBuilder {
         let mut builder: Self = Self::default();
 
         // set some sensibile defaults
-        builder.vc.context.push(String::from("https://www.w3.org/2018/credentials/v1"));
-        builder.vc.type_.push(String::from("VerifiableCredential"));
+        builder.vc.context.push("https://www.w3.org/2018/credentials/v1".into());
+        builder.vc.type_.push("VerifiableCredential".into());
         builder.vc.issuance_date = chrono::Utc::now(); //.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
 
         builder
@@ -824,10 +821,8 @@ mod tests {
         let vc_de: VerifiableCredential =
             serde_json::from_value(vc_json).expect("should deserialize");
         assert_eq!(vc_de.issuer, vc.issuer);
-        vc.issuer.extra = Some(HashMap::from([(
-            String::from("name"),
-            Value::String(String::from("Example University")),
-        )]));
+        vc.issuer.extra =
+            Some(HashMap::from([("name".into(), Value::String("Example University".into()))]));
 
         // serialize
         let vc_json = serde_json::to_value(&vc).expect("should serialize to json");

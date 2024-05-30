@@ -94,23 +94,23 @@ struct ClientStore {
 impl ClientStore {
     fn new() -> Self {
         let client_meta = types::Client {
-            client_id: String::from("http://vercre.io"),
-            redirect_uris: Some(vec![String::from("http://localhost:3000/callback")]),
+            client_id: "http://vercre.io".into(),
+            redirect_uris: Some(vec!["http://localhost:3000/callback".into()]),
             grant_types: Some(vec![GrantType::AuthorizationCode]),
-            response_types: Some(vec![String::from("vp_token"), String::from("id_token vp_token")]),
+            response_types: Some(vec!["vp_token".into(), "id_token vp_token".into()]),
             vp_formats: Some(HashMap::from([
                 (
                     Format::JwtVcJson,
                     VpFormat {
-                        alg: Some(vec![String::from("ES256K")]),
-                        proof_type: Some(vec![String::from("JsonWebSignature2020")]),
+                        alg: Some(vec!["ES256K".into()]),
+                        proof_type: Some(vec!["JsonWebSignature2020".into()]),
                     },
                 ),
                 (
                     Format::JwtVcJson,
                     VpFormat {
-                        alg: Some(vec![String::from("ES256K")]),
-                        proof_type: Some(vec![String::from("JsonWebSignature2020")]),
+                        alg: Some(vec!["ES256K".into()]),
+                        proof_type: Some(vec!["JsonWebSignature2020".into()]),
                     },
                 ),
             ])),
@@ -118,7 +118,7 @@ impl ClientStore {
         };
 
         let mut local_client = client_meta.clone();
-        local_client.client_id = String::from("http://localhost:8080");
+        local_client.client_id = "http://localhost:8080".into();
 
         let clients = HashMap::from([
             (client_meta.client_id.clone(), client_meta),

@@ -24,7 +24,7 @@ fn request(b: &mut Bencher) {
 
     let mut request =
         serde_json::from_value::<CreateRequestRequest>(body).expect("should deserialize");
-    request.client_id = String::from("http://vercre.io");
+    request.client_id = "http://vercre.io".into();
 
     // run benchmark test
     b.iter(|| block_on(endpoint.create_request(&request)));

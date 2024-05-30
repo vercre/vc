@@ -69,7 +69,7 @@ where
 
         // set header fields
         if self.header.typ.is_empty() {
-            self.header.typ = String::from("JWT");
+            self.header.typ = "JWT".into();
         }
         if self.header.kid.is_empty() {
             self.header.kid = signer.verification_method();

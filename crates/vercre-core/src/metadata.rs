@@ -764,83 +764,69 @@ impl CredentialConfiguration {
     pub fn sample() -> Self {
         Self {
             format: Format::JwtVcJson,
-            scope: Some(String::from("EmployeeIDCredential")),
-            cryptographic_binding_methods_supported: Some(vec![
-                String::from("did:jwk"),
-                String::from("did:ion"),
-            ]),
-            credential_signing_alg_values_supported: Some(vec![
-                String::from("ES256K"),
-                String::from("EdDSA"),
-            ]),
+            scope: Some("EmployeeIDCredential".into()),
+            cryptographic_binding_methods_supported: Some(vec!["did:jwk".into(), "did:ion".into()]),
+            credential_signing_alg_values_supported: Some(vec!["ES256K".into(), "EdDSA".into()]),
             proof_types_supported: Some(HashMap::from([(
-                String::from("jwt"),
+                "jwt".into(),
                 ProofTypesSupported {
-                    proof_signing_alg_values_supported: vec![
-                        String::from("ES256K"),
-                        String::from("EdDSA"),
-                    ],
+                    proof_signing_alg_values_supported: vec!["ES256K".into(), "EdDSA".into()],
                 },
             )])),
             display: Some(vec![CredentialDisplay {
-                name: String::from("Employee ID"),
-                description: Some(String::from("Vercre employee ID credential")),
-                locale: Some(String::from("en-NZ")),
+                name: "Employee ID".into(),
+                description: Some("Vercre employee ID credential".into()),
+                locale: Some("en-NZ".into()),
                 logo: Some(Image {
-                    uri: Some(String::from("https://vercre.github.io/assets/employee.png")),
-                    alt_text: Some(String::from("Vercre Logo")),
+                    uri: Some("https://vercre.github.io/assets/employee.png".into()),
+                    alt_text: Some("Vercre Logo".into()),
                 }),
-                text_color: Some(String::from("#ffffff")),
-                background_color: Some(String::from("#323ed2")),
+                text_color: Some("#ffffff".into()),
+                background_color: Some("#323ed2".into()),
                 background_image: Some(Image {
-                    uri: Some(String::from(
-                        "https://vercre.github.io/assets/vercre-background.png",
-                    )),
-                    alt_text: Some(String::from("Vercre Background")),
+                    uri: Some("https://vercre.github.io/assets/vercre-background.png".into()),
+                    alt_text: Some("Vercre Background".into()),
                 }),
             }]),
             credential_definition: CredentialDefinition {
                 context: Some(vec![
-                    String::from("https://www.w3.org/2018/credentials/v1"),
-                    String::from("https://www.w3.org/2018/credentials/examples/v1"),
+                    "https://www.w3.org/2018/credentials/v1".into(),
+                    "https://www.w3.org/2018/credentials/examples/v1".into(),
                 ]),
-                type_: Some(vec![
-                    String::from("VerifiableCredential"),
-                    String::from("EmployeeIDCredential"),
-                ]),
+                type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
                 credential_subject: Some(HashMap::from([
                     (
-                        String::from("email"),
+                        "email".into(),
                         Claim {
                             mandatory: Some(true),
                             value_type: Some(ValueType::String),
                             display: Some(vec![Display {
-                                name: String::from("Email"),
-                                locale: Some(String::from("en-NZ")),
+                                name: "Email".into(),
+                                locale: Some("en-NZ".into()),
                             }]),
                             claim_nested: None,
                         },
                     ),
                     (
-                        String::from("familyName"),
+                        "familyName".into(),
                         Claim {
                             mandatory: Some(true),
                             value_type: Some(ValueType::String),
                             display: Some(vec![Display {
-                                name: String::from("Family name"),
-                                locale: Some(String::from("en-NZ")),
+                                name: "Family name".into(),
+                                locale: Some("en-NZ".into()),
                             }]),
                             claim_nested: None,
                         },
                     ),
                     (
-                        String::from("givenName"),
+                        "givenName".into(),
                         Claim {
                             mandatory: Some(true),
                             value_type: Some(ValueType::String),
                             display: Some(vec![Display {
-                                name: String::from("Given name"),
-                                locale: Some(String::from("en-NZ")),
+                                name: "Given name".into(),
+                                locale: Some("en-NZ".into()),
                             }]),
                             claim_nested: None,
                         },
@@ -861,81 +847,69 @@ impl CredentialConfiguration {
     pub fn sample2() -> Self {
         Self {
             format: Format::JwtVcJson,
-            scope: Some(String::from("DeveloperCredential")),
-            cryptographic_binding_methods_supported: Some(vec![
-                String::from("did:jwk"),
-                String::from("did:ion"),
-            ]),
-            credential_signing_alg_values_supported: Some(vec![
-                String::from("ES256K"),
-                String::from("EdDSA"),
-            ]),
+            scope: Some("DeveloperCredential".into()),
+            cryptographic_binding_methods_supported: Some(vec!["did:jwk".into(), "did:ion".into()]),
+            credential_signing_alg_values_supported: Some(vec!["ES256K".into(), "EdDSA".into()]),
             proof_types_supported: Some(HashMap::from([(
-                String::from("jwt"),
+                "jwt".into(),
                 ProofTypesSupported {
-                    proof_signing_alg_values_supported: vec![
-                        String::from("ES256K"),
-                        String::from("EdDSA"),
-                    ],
+                    proof_signing_alg_values_supported: vec!["ES256K".into(), "EdDSA".into()],
                 },
             )])),
             display: Some(vec![CredentialDisplay {
-                name: String::from("Developer"),
-                description: Some(String::from("Vercre certified developer credential")),
-                locale: Some(String::from("en-NZ")),
+                name: "Developer".into(),
+                description: Some("Vercre certified developer credential".into()),
+                locale: Some("en-NZ".into()),
                 logo: Some(Image {
-                    uri: Some("https://vercre.github.io/assets/developer.png".to_string()),
-                    alt_text: Some(String::from("Vercre Logo")),
+                    uri: Some("https://vercre.github.io/assets/developer.png".into()),
+                    alt_text: Some("Vercre Logo".into()),
                 }),
-                text_color: Some(String::from("#ffffff")),
-                background_color: Some(String::from("#010100")),
+                text_color: Some("#ffffff".into()),
+                background_color: Some("#010100".into()),
                 background_image: Some(Image {
-                    uri: Some("https://vercre.github.io/assets/vercre-background.png".to_string()),
-                    alt_text: Some(String::from("Vercre Background")),
+                    uri: Some("https://vercre.github.io/assets/vercre-background.png".into()),
+                    alt_text: Some("Vercre Background".into()),
                 }),
             }]),
             credential_definition: CredentialDefinition {
                 context: Some(vec![
-                    String::from("https://www.w3.org/2018/credentials/v1"),
-                    String::from("https://www.w3.org/2018/credentials/examples/v1"),
+                    "https://www.w3.org/2018/credentials/v1".into(),
+                    "https://www.w3.org/2018/credentials/examples/v1".into(),
                 ]),
-                type_: Some(vec![
-                    String::from("VerifiableCredential"),
-                    String::from("DeveloperCredential"),
-                ]),
+                type_: Some(vec!["VerifiableCredential".into(), "DeveloperCredential".into()]),
                 credential_subject: Some(HashMap::from([
                     (
-                        String::from("proficiency"),
+                        "proficiency".into(),
                         Claim {
                             mandatory: Some(true),
                             value_type: Some(ValueType::Number),
                             display: Some(vec![Display {
-                                name: String::from("Proficiency"),
-                                locale: Some(String::from("en-NZ")),
+                                name: "Proficiency".into(),
+                                locale: Some("en-NZ".into()),
                             }]),
                             claim_nested: None,
                         },
                     ),
                     (
-                        String::from("familyName"),
+                        "familyName".into(),
                         Claim {
                             mandatory: Some(true),
                             value_type: Some(ValueType::String),
                             display: Some(vec![Display {
-                                name: String::from("Family name"),
-                                locale: Some(String::from("en-NZ")),
+                                name: "Family name".into(),
+                                locale: Some("en-NZ".into()),
                             }]),
                             claim_nested: None,
                         },
                     ),
                     (
-                        String::from("givenName"),
+                        "givenName".into(),
                         Claim {
                             mandatory: Some(true),
                             value_type: Some(ValueType::String),
                             display: Some(vec![Display {
-                                name: String::from("Given name"),
-                                locale: Some(String::from("en-NZ")),
+                                name: "Given name".into(),
+                                locale: Some("en-NZ".into()),
                             }]),
                             claim_nested: None,
                         },
@@ -952,17 +926,17 @@ impl Server {
     #[must_use]
     pub fn sample() -> Self {
         Self {
-            issuer: String::from("http://vercre.io"),
-            authorization_endpoint: String::from("/auth"),
-            token_endpoint: String::from("/token"),
-            scopes_supported: Some(vec![String::from("openid")]),
-            response_types_supported: vec![String::from("code")],
-            response_modes_supported: Some(vec![String::from("query")]),
+            issuer: "http://vercre.io".into(),
+            authorization_endpoint: "/auth".into(),
+            token_endpoint: "/token".into(),
+            scopes_supported: Some(vec!["openid".into()]),
+            response_types_supported: vec!["code".into()],
+            response_modes_supported: Some(vec!["query".into()]),
             grant_types_supported: Some(vec![
                 GrantType::AuthorizationCode,
                 GrantType::PreAuthorizedCode,
             ]),
-            code_challenge_methods_supported: Some(vec![String::from("S256")]),
+            code_challenge_methods_supported: Some(vec!["S256".into()]),
             pre_authorized_grant_anonymous_access_supported: true,
             presentation_definition_uri_supported: false,
             jwks_uri: None,
@@ -983,15 +957,15 @@ impl Server {
             vp_formats_supported: None,
             // vp_formats_supported: Some(HashMap::from([
             //     (
-            //         String::from("jwt_vc_json"),
+            //         "jwt_vc_json".into(),
             //         SupportedVpFormat {
-            //             alg_values_supported: Some(vec![String::from("ES256K"), String::from("EdDSA")]),
+            //             alg_values_supported: Some(vec!["ES256K".into(), "EdDSA".into()]),
             //         },
             //     ),
             //     (
-            //         String::from("jwt_vp_json"),
+            //         "jwt_vp_json".into(),
             //         SupportedVpFormat {
-            //             alg_values_supported: Some(vec![String::from("ES256K"), String::from("EdDSA")]),
+            //             alg_values_supported: Some(vec!["ES256K"into(), "EdDSA".into()]),
             //         },
             //     ),
             // ])),

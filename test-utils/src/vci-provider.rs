@@ -136,11 +136,11 @@ impl ClientStore {
 
         let client = types::Client {
             client_id: client_id.clone(),
-            redirect_uris: Some(vec![String::from("http://localhost:3000/callback")]),
+            redirect_uris: Some(vec!["http://localhost:3000/callback".into()]),
             grant_types: Some(vec![GrantType::AuthorizationCode, GrantType::PreAuthorizedCode]),
-            response_types: Some(vec![String::from("code")]),
-            scope: Some(String::from("openid credential")),
-            credential_offer_endpoint: Some(String::from("openid-credential-offer://")),
+            response_types: Some(vec!["code".into()]),
+            scope: Some("openid credential".into()),
+            credential_offer_endpoint: Some("openid-credential-offer://".into()),
 
             ..Default::default()
         };
@@ -312,7 +312,7 @@ impl IssuerStore {
 
         Self {
             issuers: HashMap::from([
-                (String::from("http://localhost:8080"), issuer.clone()),
+                ("http://localhost:8080".into(), issuer.clone()),
                 (issuer.credential_issuer.clone(), issuer),
             ]),
         }
@@ -336,7 +336,7 @@ impl ServerStore {
         let server = types::Server::sample();
         Self {
             servers: HashMap::from([
-                (String::from("http://localhost:8080"), server.clone()),
+                ("http://localhost:8080".into(), server.clone()),
                 (server.issuer.clone(), server),
             ]),
         }

@@ -177,11 +177,11 @@ where
 
             let tx_code = if request.tx_code_required {
                 Some(TxCode {
-                    input_mode: Some(String::from("numeric")),
+                    input_mode: Some("numeric".into()),
                     length: Some(6),
-                    description: Some(String::from(
-                        "Please provide the one-time code that was sent via e-mail",
-                    )),
+                    description: Some(
+                        "Please provide the one-time code that was sent via e-mail".into(),
+                    ),
                 })
             } else {
                 None

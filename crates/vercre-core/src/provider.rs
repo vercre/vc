@@ -144,8 +144,8 @@ impl Algorithm {
     #[must_use]
     pub fn proof_type(&self) -> String {
         match self {
-            Self::ES256K => String::from("EcdsaSecp256k1VerificationKey2019"),
-            Self::EdDSA => String::from("JsonWebKey2020"),
+            Self::ES256K => "EcdsaSecp256k1VerificationKey2019".into(),
+            Self::EdDSA => "JsonWebKey2020".into(),
         }
     }
 }

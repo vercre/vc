@@ -528,9 +528,9 @@ mod test {
     // in the external response.
     #[test]
     fn proof_err() {
-        let err: Error = Err::InvalidProof(String::from("c_nonce"), 10).into();
+        let err: Error = Err::InvalidProof("c_nonce".into(), 10).into();
 
-        assert_eq!(err.c_nonce(), Some((String::from("c_nonce"), 10)));
+        assert_eq!(err.c_nonce(), Some(("c_nonce".into(), 10)));
         assert_eq!(
             err.to_json(),
             json!({
@@ -561,7 +561,7 @@ mod test {
     fn test_from_err() {
         let error = from_err().expect_err("expected error");
 
-        assert_eq!(error.to_string(), String::from("server_error"));
+        assert_eq!(&error.to_string(), "server_error");
 
         // check backtrace, if it is enabled
         if env::var("RUST_BACKTRACE").is_ok_and(|s| s == "1") {

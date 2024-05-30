@@ -144,7 +144,7 @@ where
             id: Uuid::new_v4().to_string(),
             purpose: Some(request.purpose.clone()),
             input_descriptors: request.input_descriptors.clone(),
-            format: Some(HashMap::from([(String::from("jwt_vc"), fmt)])),
+            format: Some(HashMap::from([("jwt_vc".into(), fmt)])),
             name: None,
         };
         let state_key = gen::state_key();
@@ -155,12 +155,12 @@ where
         };
 
         let mut req_obj = RequestObject {
-            response_type: String::from("vp_token"),
+            response_type: "vp_token".into(),
             state: Some(state_key.clone()),
             nonce: gen::nonce(),
             presentation_definition: Some(pres_def),
             client_metadata: Some(client_meta),
-            client_id_scheme: Some(String::from("redirect_uri")),
+            client_id_scheme: Some("redirect_uri".into()),
             ..Default::default()
         };
 
@@ -169,7 +169,7 @@ where
         // Response Mode "direct_post" is RECOMMENDED for cross-device flows.
         // TODO: replace hard-coded endpoints with Provider-set values
         if request.device_flow == DeviceFlow::CrossDevice {
-            req_obj.response_mode = Some(String::from("direct_post"));
+            req_obj.response_mode = Some("direct_post".into());
             req_obj.client_id = format!("{}/post", request.client_id);
             req_obj.response_uri = Some(format!("{}/post", request.client_id));
             response.request_uri = Some(format!("{}/request/{state_key}", request.client_id));
@@ -223,7 +223,7 @@ mod tests {
 
         let mut request =
             serde_json::from_value::<CreateRequestRequest>(body).expect("should deserialize");
-        request.client_id = String::from("http://vercre.io");
+        request.client_id = "http://vercre.io".into();
 
         let response =
             Endpoint::new(provider.clone()).create_request(&request).await.expect("response is ok");
@@ -274,7 +274,7 @@ mod tests {
 
         let mut request =
             serde_json::from_value::<CreateRequestRequest>(body).expect("should deserialize");
-        request.client_id = String::from("http://vercre.io");
+        request.client_id = "http://vercre.io".into();
 
         let response =
             Endpoint::new(provider.clone()).create_request(&request).await.expect("response is ok");

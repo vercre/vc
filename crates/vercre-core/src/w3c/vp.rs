@@ -379,7 +379,7 @@ impl VerifiablePresentation {
         let jwt = jwt::Jwt {
             // TODO: build Header in signing module
             header: jwt::Header {
-                typ: String::from("openid-vci-proof+jwt"),
+                typ: "openid-vci-proof+jwt".into(),
                 alg: alg.to_string(),
                 kid: proof.verification_method.clone(),
             },
@@ -412,8 +412,8 @@ impl VpBuilder {
         let mut builder: Self = Self::default();
 
         // sensibile defaults
-        builder.vp.context.push(String::from("https://www.w3.org/2018/credentials/v1"));
-        builder.vp.type_.push(String::from("VerifiablePresentation"));
+        builder.vp.context.push("https://www.w3.org/2018/credentials/v1".into());
+        builder.vp.type_.push("VerifiablePresentation".into());
         builder
     }
 
@@ -610,20 +610,20 @@ mod tests {
 
     fn base_vp() -> Result<VerifiablePresentation> {
         let mut subj = CredentialSubject::default();
-        subj.id = Some(String::from("did:example:ebfeb1f712ebc6f1c276e12ec21"));
-        subj.claims.insert(String::from("employeeID"), json!("1234567890"));
+        subj.id = Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into());
+        subj.claims.insert("employeeID".into(), json!("1234567890"));
 
         let vc = VerifiableCredential::builder()
-            .add_context(String::from("https://www.w3.org/2018/credentials/examples/v1"))
-            .id(String::from("https://example.com/credentials/3732"))
-            .add_type(String::from("EmployeeIDCredential"))
-            .issuer(String::from("https://example.com/issuers/14"))
+            .add_context("https://www.w3.org/2018/credentials/examples/v1".into())
+            .id("https://example.com/credentials/3732".into())
+            .add_type("EmployeeIDCredential".into())
+            .issuer("https://example.com/issuers/14".into())
             .add_subject(subj)
             .build()?;
 
         VerifiablePresentation::builder()
-            .add_context(String::from("https://www.w3.org/2018/credentials/examples/v1"))
-            .add_type(String::from("EmployeeIDCredential"))
+            .add_context("https://www.w3.org/2018/credentials/examples/v1".into())
+            .add_type("EmployeeIDCredential".into())
             .add_credential(serde_json::to_value(vc)?)
             .build()
     }

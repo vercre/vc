@@ -78,7 +78,7 @@ mod tests {
         let provider = Provider::new();
 
         let request = MetadataRequest {
-            client_id: String::from("http://vercre.io"),
+            client_id: "http://vercre.io".into(),
         };
         let response = Endpoint::new(provider).metadata(&request).await.expect("response is ok");
         assert_snapshot!("response", response, {
