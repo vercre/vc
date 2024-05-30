@@ -246,14 +246,25 @@ where
                 issuance.token.c_nonce_expires_in.clone_from(&cred_res.c_nonce_expires_in);
             }
 
-            // Store the credential in the wallet's persistent storage.
-            let credential = match credential(&issuance, cfg, &cred_res) {
+            // Create a credential in a useful wallet format.
+            let mut credential = match credential(&issuance, cfg, &cred_res) {
                 Ok(c) => c,
                 Err(e) => {
                     provider.notify(&issuance.id, Status::Failed(e.to_string()));
                     return Ok(());
                 }
             };
+            // Base64-encoded logo if possible.
+            if let Some(display) = &cfg.display {
+                // TODO: Locale?
+                if let Some(logo_info) = &display[0].logo {
+                    if let Some(uri) = &logo_info.uri {
+                        if let Ok(logo) = provider.get_logo(&issuance.id, &uri).await {
+                            credential.logo = Some(logo);
+                        }
+                    }
+                }
+            }
             match provider.save(&credential).await {
                 Ok(()) => (),
                 Err(e) => {

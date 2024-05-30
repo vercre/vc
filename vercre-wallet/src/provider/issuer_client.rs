@@ -10,6 +10,7 @@ use vercre_core::vci::{
     TokenResponse,
 };
 
+use crate::credential::Logo;
 use crate::Result;
 
 /// `IssuerClient` is a provider that implements the wallet side of the OpenID for VC Issuance
@@ -29,4 +30,8 @@ pub trait IssuerClient {
     fn get_credential(
         &self, flow_id: &str, req: &CredentialRequest,
     ) -> impl Future<Output = Result<CredentialResponse>> + Send;
+
+    /// Get a base64 encoded form of the credential logo. If an error is returned the wallet
+    /// library will ignore.
+    fn get_logo(&self, flow_id: &str, logo_url: &str) -> impl Future<Output = Result<Logo>> + Send;
 }
