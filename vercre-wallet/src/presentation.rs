@@ -1,13 +1,21 @@
-//! # Presentation App
+//! # Presentation
 //!
-//! The Presentation app implements the vercre-wallet's credential presentation flow.
+//! The Presentation endpoint implements the vercre-wallet's credential presentation flow.
+use std::fmt::Debug;
 
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
+use tracing::instrument;
 use vercre_core::vp::RequestObject;
 use vercre_core::w3c::vp::{Constraints, PresentationSubmission};
+use vercre_core::Result;
 
 use crate::credential::Credential;
+use crate::provider::{
+    Callback, CredentialStorer, PresentationInput, PresentationListener, Signer,
+    VerifierClient,
+};
+use crate::Endpoint;
 
 pub mod authorize;
 pub mod request;
@@ -77,6 +85,65 @@ impl std::str::FromStr for Status {
             "Authorized" => Ok(Self::Authorized),
             _ => Err(anyhow!("Invalid status: {s}")),
         }
+    }
+}
+
+/// The `ReceivePresentationRequest` is the input to the `receive_request` endpoint. It can be
+/// a URI to fetch the request object or the request object itself as a query parameter.
+pub type ReceivePresentationRequest = String;
+
+impl<P> Endpoint<P>
+where
+    P: Callback
+        + CredentialStorer
+        + PresentationInput
+        + PresentationListener
+        + VerifierClient
+        + Signer
+        + Clone
+        + Debug,
+{
+    /// Orchestrates the presentation flow triggered by a presentation request from a verifier.
+    #[instrument(level = "debug", skip(self))]
+    pub async fn receive_request(&self, request: &ReceivePresentationRequest) -> Result<()> {
+        let ctx = Context {
+            _p: std::marker::PhantomData,
+        };
+
+        vercre_core::Endpoint::handle_request(self, request, ctx).await
+    }
+}
+
+#[derive(Debug, Default)]
+struct Context<P> {
+    _p: std::marker::PhantomData<P>,
+}
+
+impl<P> vercre_core::Context for Context<P>
+where
+    P: Callback
+        + CredentialStorer
+        + PresentationInput
+        + PresentationListener
+        + VerifierClient
+        + Signer
+        + Clone
+        + Debug,
+{
+    type Provider = P;
+    type Request = ReceivePresentationRequest;
+    type Response = ();
+
+    async fn verify(&mut self, _provider: &P, _req: &Self::Request) -> Result<&Self> {
+        tracing::debug!("Context::verify");
+        todo!();
+    }
+
+    async fn process(
+        &self, provider: &Self::Provider, req: &Self::Request,
+    ) -> Result<Self::Response> {
+        tracing::debug!("Context::process");
+        todo!();
     }
 }
 

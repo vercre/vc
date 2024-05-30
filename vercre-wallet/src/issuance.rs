@@ -1,6 +1,6 @@
-//! # Issuance App
+//! # Issuance
 //!
-//! The Issuance app implements the vercre-wallet's credential issuance flow.
+//! The Issuance endpoint implements the vercre-wallet's credential issuance flow.
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::str::FromStr;
@@ -23,14 +23,6 @@ use crate::provider::{
     Callback, CredentialStorer, IssuanceInput, IssuanceListener, IssuerClient, Signer,
 };
 use crate::Endpoint;
-
-pub mod accept;
-pub mod credential_request;
-pub mod credential_response;
-pub mod metadata;
-pub mod offer;
-pub mod pin;
-pub mod token_request;
 
 /// `Issuance` maintains app state across the steps of the issuance flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]

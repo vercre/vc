@@ -19,7 +19,7 @@ use vercre_core::{err, Result};
 
 use crate::presentation::{Presentation, Status};
 use crate::provider::{Callback, CredentialStorer, Signer, StateManager};
-use crate::{Endpoint, Flow};
+use crate::Endpoint;
 
 /// Helper function to parse a presentation request object from a URL parameter. The parameter needs
 /// to contain "&`presentation_definition`=" and it is assumed to be URL-encoded.
@@ -100,7 +100,7 @@ where
         tracing::debug!("Context::verify");
 
         // Do not progress if a presentation is already being processed.
-        let stashed_presentation = provider.get_opt(&Flow::Presentation.to_string()).await?;
+        let stashed_presentation = provider.get_opt("presentation").await?;
         if stashed_presentation.is_some() {
             err!(Err::InvalidRequest, "presentation already being processed");
         }
@@ -135,7 +135,7 @@ where
 
         // Stash the presentation object
         provider
-            .put_opt(&Flow::Presentation.to_string(), serde_json::to_vec(&presentation)?, None)
+            .put_opt("presentation", serde_json::to_vec(&presentation)?, None)
             .await?;
 
         Ok(())

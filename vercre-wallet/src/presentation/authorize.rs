@@ -21,7 +21,7 @@ use vercre_core::{err, Result};
 use crate::credential::Credential;
 use crate::presentation::{Presentation, Status};
 use crate::provider::{Callback, CredentialStorer, Signer, StateManager};
-use crate::{Endpoint, Flow};
+use crate::Endpoint;
 
 impl<P> Endpoint<P>
 where
@@ -63,7 +63,7 @@ where
         tracing::debug!("Context::verify");
 
         // Check we are processing a presentation and we are at the expected point in the flow.
-        let Some(stashed) = provider.get_opt(&Flow::Presentation.to_string()).await? else {
+        let Some(stashed) = provider.get_opt("presentation").await? else {
             err!(Err::InvalidRequest, "no presentation in progress");
         };
         let presentation: Presentation = serde_json::from_slice(&stashed)?;
@@ -119,7 +119,7 @@ where
         // the request.
         presentation.status = Status::Authorized;
         provider
-            .put_opt(&Flow::Presentation.to_string(), serde_json::to_vec(&presentation)?, None)
+            .put_opt("presentation", serde_json::to_vec(&presentation)?, None)
             .await?;
 
         Ok((res_uri, req))

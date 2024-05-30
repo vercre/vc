@@ -38,41 +38,16 @@ pub mod credential;
 pub mod issuance;
 pub mod presentation;
 pub mod provider;
-pub mod reset;
 #[cfg(test)]
 mod test_common;
 
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 
 pub use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::provider::{Callback, Signer};
 pub use vercre_core::vci::{GrantType, TxCode};
 pub use vercre_core::w3c::vp::Constraints;
 pub use vercre_core::{callback, Result};
-
-/// Types of flows supported by the wallet.
-#[derive(Clone, Debug)]
-pub enum Flow {
-    /// Credential issuance flow.
-    Issuance,
-    /// Credential presentation flow.
-    Presentation,
-}
-
-impl Default for Flow {
-    fn default() -> Self {
-        Self::Issuance
-    }
-}
-
-impl Display for Flow {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Issuance => write!(f, "issuance"),
-            Self::Presentation => write!(f, "presentation"),
-        }
-    }
-}
 
 /// Endpoint is used to surface the public wallet endpoints to clients.
 #[derive(Debug)]

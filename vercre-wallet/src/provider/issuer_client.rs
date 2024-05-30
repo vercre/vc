@@ -1,8 +1,8 @@
 //! # Issuer Client provider
 //!
-//! This provider is used to allows the wallet to interact with an issuer's services that are
-//! compliant with OpenID for VC Issuance. While the specification is oriented towards HTTP, the
-//! trait allows the wallet (and issuance services) to be transport layer agnostic.
+//! This provider allows the wallet to interact with an issuer's services that are compliant with
+//! OpenID for VC Issuance. While the specification is oriented towards HTTP, the trait allows the
+//! wallet (and issuance services) to be transport layer agnostic.
 use std::future::Future;
 
 use vercre_core::vci::{
