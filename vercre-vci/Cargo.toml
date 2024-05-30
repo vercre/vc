@@ -1,15 +1,14 @@
 [package]
-description = "OpenID for Verifiable Credential Issuance"
-license = "MIT OR Apache-2.0"
 name = "vercre-vci"
+description = "OpenID for Verifiable Credential Issuance"
 readme = "README.md"
-
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
 exclude.workspace = true
 homepage.workspace = true
 keywords.workspace = true
+license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 version.workspace = true
