@@ -6,14 +6,16 @@ use std::fmt::Debug;
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use vercre_core::vp::RequestObject;
+use uuid::Uuid;
+use vercre_core::error::Err;
+use vercre_core::jwt::Jwt;
+use vercre_core::vp::{RequestObject, RequestObjectResponse};
 use vercre_core::w3c::vp::{Constraints, PresentationSubmission};
-use vercre_core::Result;
+use vercre_core::{err, Result};
 
 use crate::credential::Credential;
 use crate::provider::{
-    Callback, CredentialStorer, PresentationInput, PresentationListener, Signer,
-    VerifierClient,
+    Callback, CredentialStorer, PresentationInput, PresentationListener, Signer, VerifierClient,
 };
 use crate::Endpoint;
 
@@ -23,11 +25,15 @@ pub mod request;
 /// `Presentation` maintains app state across steps of the presentation flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Presentation {
+    /// The unique identifier for the presentation flow. Not used internally but passed to providers
+    /// so that wallet clients can track interactions with specific flows.
+    pub id: String,
+
     /// The current status of the presentation flow.
     pub status: Status,
 
     /// The request object received from the verifier.
-    pub request: Option<RequestObject>,
+    pub request: RequestObject,
 
     /// The list of credentials matching the verifier's request (Presentation
     /// Definition).
@@ -134,17 +140,73 @@ where
     type Request = ReceivePresentationRequest;
     type Response = ();
 
-    async fn verify(&mut self, _provider: &P, _req: &Self::Request) -> Result<&Self> {
-        tracing::debug!("Context::verify");
-        todo!();
-    }
-
     async fn process(
         &self, provider: &Self::Provider, req: &Self::Request,
     ) -> Result<Self::Response> {
         tracing::debug!("Context::process");
+
+        // Parse the request and either go fetch the request object or use one embedded in a
+        // query parameter.
+        let Ok(request) = urlencoding::decode(req) else {
+            err!(Err::InvalidRequest, "unable to decode request url string");
+        };
+        let mut presentation = Presentation {
+            id: Uuid::new_v4().to_string(),
+            status: Status::Requested,
+            ..Default::default()
+        };
+
+        let request_object = if request.contains("&presentation_definition=") {
+            match parse_presentation_definition(&request) {
+                Ok(req_obj) => req_obj,
+                Err(e) => {
+                    provider.notify(&presentation.id, Status::Failed(e.to_string()));
+                    return Ok(());
+                }
+            }
+        } else {
+            match provider.get_request_object(&presentation.id, &request).await {
+                Ok(req_obj_res) => {
+                    let req_obj = match parse_request_object_response(&req_obj_res) {
+                        Ok(req_obj) => req_obj,
+                        Err(e) => {
+                            provider.notify(&presentation.id, Status::Failed(e.to_string()));
+                            return Ok(());
+                        }
+                    };
+                    req_obj
+                }
+                Err(e) => {
+                    provider.notify(&presentation.id, Status::Failed(e.to_string()));
+                    return Ok(());
+                }
+            }
+        };
+        presentation.request = request_object;
+
         todo!();
     }
+}
+
+/// Extract a presentation request from a query string parameter.
+fn parse_presentation_definition(request: &str) -> Result<RequestObject> {
+    let req_obj = serde_qs::from_str::<RequestObject>(request)?;
+    Ok(req_obj)
+}
+
+/// Extract a presentation `RequestObject` from a `RequestObjectResponse`.
+fn parse_request_object_response(res: &RequestObjectResponse) -> Result<RequestObject> {
+    if res.request_object.is_some() {
+        return Ok(res.request_object.clone().unwrap());
+    }
+    let Some(jwt_enc) = res.jwt.clone() else {
+        err!(Err::InvalidRequest, "no encoded JWT found in response");
+    };
+    let Ok(jwt) = jwt_enc.parse::<Jwt<RequestObject>>() else {
+        err!(Err::InvalidRequest, "failed to parse JWT");
+    };
+
+    Ok(jwt.claims)
 }
 
 // pub(crate) mod model;
