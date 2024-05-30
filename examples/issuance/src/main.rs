@@ -153,8 +153,7 @@ async fn login(
     }
 
     // update 'authorized' HashMap with subject as key
-    let authorized = AUTHORIZED.read().await;
-    let Some(auth_req) = authorized.get(&req.csrf_token) else {
+    let Some(auth_req) = AUTHORIZED.write().await.remove(&req.csrf_token) else {
         return (StatusCode::UNAUTHORIZED, Json(json!({"error": "invalid csrf_token"})))
             .into_response();
     };
