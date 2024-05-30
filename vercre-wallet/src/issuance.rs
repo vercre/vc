@@ -28,7 +28,7 @@ use crate::Endpoint;
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Issuance {
     /// The unique identifier for the issuance flow. Not used internally but passed to providers
-    /// so that wallet clients can use to track interactions with specific flows.
+    /// so that wallet clients can track interactions with specific flows.
     pub id: String,
 
     /// The current status of the issuance flow.
