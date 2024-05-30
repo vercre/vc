@@ -180,7 +180,7 @@ where
                     input_mode: Some("numeric".into()),
                     length: Some(6),
                     description: Some(
-                        "Please provide the one-time code that was sent via e-mail".into(),
+                        "Please provide the one-time code received".into(),
                     ),
                 })
             } else {
