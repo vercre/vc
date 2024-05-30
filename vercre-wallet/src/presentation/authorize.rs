@@ -81,7 +81,7 @@ where
         let request = presentation.request.clone();
 
         // Get credentials from the wallet's storage that match the constraints in the request.
-        let credentials = provider.find(presentation.filter.clone()).await?;
+        let credentials = provider.find(Some(presentation.filter.clone())).await?;
 
         // Construct a token
         let token = vp_token(

@@ -40,7 +40,7 @@ pub struct Presentation {
     pub credentials: Vec<Credential>,
 
     /// The `JSONPath` query used to match credentials to the verifier's request.
-    pub filter: Option<Constraints>,
+    pub filter: Constraints,
 
     /// The presentation submission token.
     pub submission: Option<PresentationSubmission>,
@@ -155,6 +155,7 @@ where
             status: Status::Requested,
             ..Default::default()
         };
+        provider.notify(&presentation.id, Status::Requested);
 
         let request_object = if request.contains("&presentation_definition=") {
             match parse_presentation_definition(&request) {
@@ -184,6 +185,30 @@ where
         };
         presentation.request = request_object;
 
+        // Get the credentials from wallet storage that match the verifier's request.
+        let filter = match build_filter(&presentation.request) {
+            Ok(filter) => filter,
+            Err(e) => {
+                provider.notify(&presentation.id, Status::Failed(e.to_string()));
+                return Ok(());
+            }
+        };
+        presentation.filter = filter.clone();
+        let credentials = match provider.find(Some(filter)).await {
+            Ok(creds) => creds,
+            Err(e) => {
+                provider.notify(&presentation.id, Status::Failed(e.to_string()));
+                return Ok(());
+            }
+        };
+        presentation.credentials = credentials.clone();
+
+        // Request authorization to proceed with the presentation from the wallet client.
+        if !provider.authorize(&presentation.id, credentials).await {
+            return Ok(());
+        }
+        provider.notify(&presentation.id, Status::Authorized);
+
         todo!();
     }
 }
@@ -207,6 +232,21 @@ fn parse_request_object_response(res: &RequestObjectResponse) -> Result<RequestO
     };
 
     Ok(jwt.claims)
+}
+
+/// Construct a credential filter (JSONPath) from the presentation definition contained in the
+/// presentation request.
+// TODO: How to handle multiple input descriptors?
+fn build_filter(request: &RequestObject) -> Result<Constraints> {
+    let Some(pd) = &request.presentation_definition else {
+        err!(Err::InvalidRequest, "no presentation definition found");
+    };
+    if pd.input_descriptors.is_empty() {
+        err!(Err::InvalidRequest, "no input descriptors found");
+    }
+    let constraints = pd.input_descriptors[0].constraints.clone();
+
+    Ok(constraints)
 }
 
 // pub(crate) mod model;
