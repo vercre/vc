@@ -10,6 +10,8 @@ use std::future::Future;
 use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::vci::TxCode;
 
+use crate::credential::Credential;
+
 /// `IssuanceInput` is a provider that allows the wallet client to provide input to the issuance
 /// flow.
 #[allow(clippy::module_name_repetitions)]
@@ -29,5 +31,7 @@ pub trait IssuanceInput {
 #[allow(clippy::module_name_repetitions)]
 pub trait PresentationInput {
     /// Authorize (true) or reject (false) a presentation request.
-    fn authorize(&self, flow_id: &str) -> impl Future<Output = bool> + Send;
+    fn authorize(
+        &self, flow_id: &str, credentials: Vec<Credential>,
+    ) -> impl Future<Output = bool> + Send;
 }
