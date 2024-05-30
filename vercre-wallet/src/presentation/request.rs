@@ -134,9 +134,7 @@ where
         };
 
         // Stash the presentation object
-        provider
-            .put_opt("presentation", serde_json::to_vec(&presentation)?, None)
-            .await?;
+        provider.put_opt("presentation", serde_json::to_vec(&presentation)?, None).await?;
 
         Ok(())
     }

@@ -42,13 +42,13 @@ uuid.workspace = true
 vercre-core.workspace = true
 
 [dev-dependencies]
-assert_let_bind = "0.1.1"
-axum = { version = "0.7.5", features = ["macros"] }
-axum-extra = { version = "0.9.3", features = ["typed-header"] }
-futures = "0.3.30"
-insta = { version = "1.39.0", features = ["redactions", "yaml"] }
-lazy_static = "1.4.0"
-test-utils = { path = "../test-utils" }
-tokio = { version = "1.37.0", features = ["rt-multi-thread"] }
-tower-http = { version = "0.5.2", features = ["cors", "trace"] }
-tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
+assert_let_bind.workspace = true
+axum-extra.workspace = true
+axum.workspace = true
+futures.workspace = true
+insta.workspace = true
+lazy_static.workspace = true
+test-utils.workspace = true
+tokio.workspace = true
+tower-http.workspace = true
+tracing-subscriber.workspace = true

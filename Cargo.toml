@@ -1,5 +1,5 @@
 [workspace]
-members = ["test-utils", "crates/vercre-core", "vercre-vci", "vercre-vp", "vercre-wallet"]
+members = ["crates/*", "vercre-vci", "vercre-vp", "vercre-wallet"]
 resolver = "2"
 
 [workspace.package]
@@ -28,14 +28,24 @@ nursery = "warn"
 
 [workspace.dependencies]
 anyhow = "1.0.83"
+assert_let_bind = "0.1.1"
+axum = { version = "0.7.5", features = ["macros"] }
+axum-extra = { version = "0.9.3", features = ["typed-header"] }
 base64ct = { version = "1.6.0", features = ["std"] }
 chrono = { version = "0.4.38", features = ["serde"] }
 derive_builder = "0.20.0"
 ecdsa = "0.16.9"
+futures = "0.3.30"
+insta = { version = "1.39.0", features = ["redactions", "yaml"] }
 k256 = "0.13.3"
+lazy_static = "1.4.0"
 serde = { version = "1.0.202", features = ["derive"] }
 serde_json = "1.0.117"
+test-utils = { path = "crates/test-utils" }
+tokio = { version = "1.37.0", features = ["rt-multi-thread"] }
+tower-http = { version = "0.5.2", features = ["cors", "trace"] }
 tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 uuid = { version = "1.8.0", features = ["fast-rng", "v4"] }
 vercre-core = { path = "crates/vercre-core", version = "0.1.0-alpha.4" }
 

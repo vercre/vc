@@ -113,9 +113,7 @@ where
         // Update the presentation status to `Authorized`, assuming the client will actually make
         // the request.
         presentation.status = Status::Authorized;
-        provider
-            .put_opt("presentation", serde_json::to_vec(&presentation)?, None)
-            .await?;
+        provider.put_opt("presentation", serde_json::to_vec(&presentation)?, None).await?;
 
         Ok((res_uri, req))
     }
