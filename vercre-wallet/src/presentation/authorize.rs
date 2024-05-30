@@ -78,12 +78,7 @@ where
         tracing::debug!("Context::process");
 
         let mut presentation = self.presentation.clone();
-        let Some(request) = &presentation.request else {
-            err!(
-                Err::ServerError(anyhow!("no request stored in context presentaion")),
-                "no request stored in context presentation"
-            );
-        };
+        let request = presentation.request.clone();
 
         // Get credentials from the wallet's storage that match the constraints in the request.
         let credentials = provider.find(presentation.filter.clone()).await?;
@@ -129,9 +124,7 @@ where
 fn vp_token(
     presentation: &Presentation, credentials: &[Credential], alg: &str, kid: &str,
 ) -> anyhow::Result<Jwt<Claims>> {
-    let Some(request) = &presentation.request else {
-        return Err(anyhow!("No request stored in context presentation"));
-    };
+    let request = presentation.request.clone();
     let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
 
     // presentation with 2 VCs: one as JSON, one as base64url encoded JWT
@@ -170,9 +163,7 @@ fn vp_token(
 }
 
 fn create_submission(presentation: &Presentation) -> anyhow::Result<PresentationSubmission> {
-    let Some(request) = &presentation.request else {
-        return Err(anyhow!("No request stored in context presentation"));
-    };
+    let request = presentation.request.clone();
     let Some(pd) = &request.presentation_definition else {
         return Err(anyhow!("No presentation definition on request in context"));
     };

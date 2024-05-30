@@ -128,7 +128,7 @@ where
         // TODO: build credential query from presentation definition
         let presentation = Presentation {
             filter: Some(self.presentation_definition.input_descriptors[0].constraints.clone()),
-            request: Some(req.clone()),
+            request: req.clone(),
             status: Status::Requested,
             ..Default::default()
         };
