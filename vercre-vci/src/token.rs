@@ -19,9 +19,9 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
-use vercre_core::vci::{GrantType, TokenType};
 #[allow(clippy::module_name_repetitions)]
-pub use vercre_core::vci::{TokenRequest, TokenResponse};
+pub use vercre_core::vci::{AuthorizationDetailType, TokenRequest, TokenResponse};
+use vercre_core::vci::{GrantType, TokenType};
 use vercre_core::{err, gen, Result};
 
 use super::Endpoint;
@@ -291,7 +291,7 @@ mod tests {
             code_challenge_method: Some("S256".into()),
             authorization_details: Some(vec![TokenAuthorizationDetail {
                 authorization_detail: AuthorizationDetail {
-                    type_: "openid_credential".into(),
+                    type_: AuthorizationDetailType::OpenIdCredential,
                     format: Some(Format::JwtVcJson),
                     credential_definition: Some(CredentialDefinition {
                         type_: Some(vec![

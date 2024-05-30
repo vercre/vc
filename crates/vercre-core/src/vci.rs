@@ -456,13 +456,22 @@ pub struct AuthorizationRequest {
     pub issuer_state: Option<String>,
 }
 
+/// Authorization details type.
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub enum AuthorizationDetailType {
+    /// OpenID Credential authorization detail type.
+    #[default]
+    #[serde(rename = "openid_credential")]
+    OpenIdCredential,
+}
+
 /// Authorization Details is used to convey the details about the Credentials
 /// the Wallet wants to obtain.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AuthorizationDetail {
     /// Type determines the authorization details type. MUST be "`openid_credential`".
     #[serde(rename = "type")]
-    pub type_: String,
+    pub type_: AuthorizationDetailType,
 
     /// Specifies the unique identifier of the Credential being described in the
     /// `credential_configurations_supported` map in the Credential Issuer Metadata.
@@ -976,7 +985,7 @@ mod tests {
             code_challenge: "1234".into(),
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
-                type_: "openid_credential".into(),
+                type_: AuthorizationDetailType::OpenIdCredential,
                 format: Some(Format::JwtVcJson),
                 credential_definition: Some(CredentialDefinition {
                     context: Some(vec![

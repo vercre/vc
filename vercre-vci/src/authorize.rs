@@ -80,7 +80,8 @@ use vercre_core::metadata::Issuer as IssuerMetadata;
 use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
 use vercre_core::vci::GrantType;
 pub use vercre_core::vci::{
-    AuthorizationDetail, AuthorizationRequest, AuthorizationResponse, TokenAuthorizationDetail,
+    AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
+    TokenAuthorizationDetail,
 };
 use vercre_core::{err, gen, Result};
 
@@ -230,7 +231,7 @@ where
         for (cfg_id, auth_det) in &self.auth_dets {
             let auth = Holder::authorize(provider, &request.holder_id, cfg_id)
                 .await
-                .map_err(|e| Err::ServerError(anyhow!("issue checking authorization: {e}")))?;
+                .map_err(|e| Err::ServerError(anyhow!("issue authorizing holder: {e}")))?;
             if auth {
                 let tkn_auth_det = TokenAuthorizationDetail {
                     authorization_detail: auth_det.clone(),
@@ -252,7 +253,7 @@ where
         for (cfg_id, item) in &self.scope_items {
             let auth = Holder::authorize(provider, &request.holder_id, cfg_id)
                 .await
-                .map_err(|e| Err::ServerError(anyhow!("issue checking authorization: {e}")))?;
+                .map_err(|e| Err::ServerError(anyhow!("issue authorizing holder: {e}")))?;
             if auth {
                 authzd_scope_items.push(item.clone());
                 authzd_cfg_ids.push(cfg_id.clone());
@@ -266,7 +267,7 @@ where
 
         // error if holder is not authorized for any requested credentials
         if auth_dets.is_none() && scope.is_none() {
-            err!(Err::AccessDenied, "holder is not authorized for any requested credentials");
+            err!(Err::AccessDenied, "holder is not authorized for requested credentials");
         }
 
         // save authorization state
@@ -276,7 +277,7 @@ where
             client_id: Some(request.client_id.clone()),
             credential_configuration_ids: authzd_cfg_ids,
             holder_id: Some(request.holder_id.clone()),
-            ..Default::default()
+            ..State::default()
         };
 
         let auth_state = Auth {
@@ -285,7 +286,7 @@ where
             code_challenge_method: Some(request.code_challenge_method.clone()),
             authorization_details: auth_dets,
             scope,
-            ..Default::default()
+            ..Auth::default()
         };
         state.auth = Some(auth_state);
 
@@ -318,7 +319,7 @@ where
     ) -> Result<()> {
         'verify_details: for auth_det in authorization_details {
             // we only support "`openid_credential`" authorization detail requests
-            if auth_det.type_ != "openid_credential" {
+            if auth_det.type_ != AuthorizationDetailType::OpenIdCredential {
                 err!(Err::InvalidRequest, "invalid authorization_details type");
             }
 
