@@ -198,7 +198,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use providers::issuance::{Provider, ISSUER, NORMAL_USER};
-    use test_utils::wallet;
+    use providers::wallet;
     use vercre_core::metadata::CredentialDefinition;
     use vercre_core::vci::{AuthorizationDetail, Format, TokenAuthorizationDetail};
 

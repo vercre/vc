@@ -404,7 +404,7 @@ mod tests {
     use providers::issuance::{Provider, ISSUER, NORMAL_USER};
     use serde_json::json;
     use sha2::{Digest, Sha256};
-    use test_utils::wallet;
+    use providers::wallet;
 
     use super::*;
 

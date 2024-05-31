@@ -9,7 +9,7 @@ use lazy_static::lazy_static;
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use providers::issuance::{Provider, ISSUER, NORMAL_USER};
-use test_utils::wallet;
+use providers::wallet;
 use vercre_vci::authorize::{AuthorizationRequest, AuthorizationResponse};
 use vercre_vci::credential::{CredentialRequest, CredentialResponse};
 use vercre_vci::jwt::{self, Jwt};
