@@ -84,20 +84,20 @@ Each provider implements its corresponding trait, as defined in [`vercre-vci`].
 
 Providers are:
 
-- Client — provides Client metadata, typically from a persistent data store or 
+- `Client` — provides Client metadata, typically from a persistent data store or 
   external API.
 
-- Issuer — provides Credential Issuer metadata, as above.
+- `Issuer` — provides Credential Issuer metadata, as above.
 
-- Server — provides Authorization Server metadata, as above.
+- `Server` — provides Authorization Server metadata, as above.
 
-- Callback — used to notify a wallet or other client of issuance status.
+- `Callback` — used to notify a wallet or other client of issuance status.
 
-- Holder — provides holder (or user) user information used during credential issuance.
+- `Holder` — provides holder (or user) user information used during credential issuance.
 
-- StateManager — used to temporarily store and manage server state.
+- `StateManager` — used to temporarily store and manage server state.
 
-- Signer — provide signing functionality, typically implemented using a secure
+- `Signer` — provide signing functionality, typically implemented using a secure
   enclave or HSM.
 
 The `Client` provider trait is shown below as an example. For a more complete example, see 
