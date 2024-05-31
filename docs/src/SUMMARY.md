@@ -1,18 +1,16 @@
-# Summary
 
-[Overview](./overview.md)
+- [Introduction](./introduction/index.md)
+    - [Motivation](./introduction/motivation.md)
 
-[Motivation](./motivation.md)
+- [Using the Vercre API](./api/index.md)
+    - [Issuance](./api/vci/index.md)
+    - [Presentation](./api/vp/index.md)
+    - [Wallet](./api/wallet/index.md) 
 
-[Getting Started](./getting_started/index.md)
+- [Contributing](./contributing/index.md)
+    - [Release Process](./contributing/release.md)
+    - [Code of Conduct](./contributing/coc.md)
 
-# Development Guide
-
-- [Release Process](./release.md)
-
-- [Issuance](./issuance/index.md)
-
-- [Presentation](./presentation/index.md)
 
 # Internals
 

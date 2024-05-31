@@ -2,8 +2,18 @@ name: ci
 
 on:
   push:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
   pull_request:
-  workflow_dispatch:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+  # workflow_dispatch:
   # schedule: [cron: "40 1 * * *"]
 
 permissions:

@@ -1,13 +1,19 @@
-# Documentation Guide
+# Documentation
 
 This is built with [mdBook](https://github.com/rust-lang/mdBook). If you want to
-change the docs, follow the
-[installation](https://rust-lang.github.io/mdBook/guide/installation.html) and
-[getting started guide](https://rust-lang.github.io/mdBook/guide/creating.html).
+change the docs, follow the [installation](https://rust-lang.github.io/mdBook/guide/installation.html) 
+and [getting started guide](https://rust-lang.github.io/mdBook/guide/creating.html).
+
+TLDR:to view this book locally, run:
+
+```sh
+cd docs
+mdbook serve --open
+```
 
 ## mdbook plugins
 
-To get the full styling, you need to install the following plugins:
+To get the full styling, install the following plugins:
 
 ```sh
 cargo install mdbook-admonish

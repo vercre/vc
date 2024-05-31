@@ -2,8 +2,12 @@ name: pages
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'docs/**'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - 'docs/**'
 
 env:
   CARGO_INCREMENTAL: 0

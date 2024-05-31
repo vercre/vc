@@ -4,7 +4,7 @@
 
 Overall, the Vercre's release process favours bringing new features to market frequently, while minimizing the risk of releasing a broken version. It draws heavily on the Rust release process, which is well-documented and understood.
 
-![Release Process](images/release.png)
+![Release Process](../images/release.png)
 
 ## Core tenets
 
