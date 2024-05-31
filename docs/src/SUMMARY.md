@@ -6,6 +6,9 @@
 
 - [Using the Vercre API](./api/index.md)
     - [Issuance](./api/vci/index.md)
+        - [Endpoints](./api/vci/endpoints.md)
+        - [Providers](./api/vci/provders.md)
+
     - [Presentation](./api/vp/index.md)
     - [Wallet](./api/wallet/index.md) 
 
