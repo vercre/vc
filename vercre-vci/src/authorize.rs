@@ -401,9 +401,9 @@ where
 mod tests {
     use base64ct::{Base64UrlUnpadded, Encoding};
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use providers::issuance::{Provider, ISSUER, NORMAL_USER};
     use serde_json::json;
     use sha2::{Digest, Sha256};
-    use test_utils::vci_provider::{Provider, ISSUER, NORMAL_USER};
     use test_utils::wallet;
 
     use super::*;

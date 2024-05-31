@@ -1,3 +1,9 @@
+#![allow(missing_docs)]
+
+pub mod issuance;
+pub mod presentation;
+pub mod wallet;
+
 use std::sync::Once;
 
 use tracing::Level;

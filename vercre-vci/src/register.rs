@@ -88,8 +88,8 @@ where
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use providers::issuance::{Provider, ISSUER};
     use serde_json::json;
-    use test_utils::vci_provider::{Provider, ISSUER};
     use test_utils::wallet;
 
     use super::*;

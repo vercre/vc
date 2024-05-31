@@ -13,7 +13,7 @@ use axum_test::http::HeaderValue;
 use axum_test::TestServer;
 use serde::Serialize;
 use serde_json::json;
-use test_utils::vci_provider::Provider;
+use providers::issuance::Provider;
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;

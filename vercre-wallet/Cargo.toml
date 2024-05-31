@@ -61,6 +61,7 @@ axum = { version = "0.7.5", features = ["macros"] }
 axum-extra = { version = "0.9.3", features = ["typed-header"] }
 axum-test = "14.9.1"
 insta = { version = "1.39.0", features = ["redactions", "yaml"] }
+providers.workspace = true
 test-utils.workspace = true
 tokio = { version = "1.37.0", default-features = false, features = ["fs", "macros", "rt"] }
 tower-http = { version = "0.5.2", features = ["trace"] }

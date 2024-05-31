@@ -412,7 +412,7 @@ mod tests {
     use base64ct::{Base64UrlUnpadded, Encoding};
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
-    use test_utils::vci_provider::{Provider, ISSUER, NORMAL_USER};
+    use providers::issuance::{Provider, ISSUER, NORMAL_USER};
     use test_utils::wallet;
     use vercre_core::jwt;
     use vercre_core::w3c::vc::VcClaims;

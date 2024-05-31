@@ -246,7 +246,7 @@ where
 mod tests {
     use lazy_static::lazy_static;
     use serde_json::json;
-    use test_utils::vp_provider::Provider;
+    use providers::presentation::Provider;
     use vercre_core::vp::RequestObject;
     use vercre_core::w3c::vp::PresentationDefinition;
 

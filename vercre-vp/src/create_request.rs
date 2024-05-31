@@ -194,7 +194,7 @@ mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
-    use test_utils::vp_provider::Provider;
+    use providers::presentation::Provider;
 
     use super::*;
 

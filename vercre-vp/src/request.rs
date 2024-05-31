@@ -98,7 +98,7 @@ where
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use test_utils::vp_provider::{Provider, VERIFIER};
+    use providers::presentation::{Provider, VERIFIER};
     use vercre_core::jwt::Jwt;
     use vercre_core::vp::RequestObject;
 

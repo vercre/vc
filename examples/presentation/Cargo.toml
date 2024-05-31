@@ -9,6 +9,7 @@ workspace = true
 [dependencies]
 axum-extra.workspace = true
 axum.workspace = true
+providers.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 test-utils.workspace = true

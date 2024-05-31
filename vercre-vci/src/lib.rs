@@ -146,7 +146,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use test_utils::vci_provider::Provider;
+    use providers::issuance::Provider;
     use vercre_core::err;
     use vercre_core::error::Err;
 

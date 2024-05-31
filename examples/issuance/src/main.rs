@@ -16,7 +16,7 @@ use axum_extra::TypedHeader;
 use oauth2::CsrfToken;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use test_utils::vci_provider::Provider;
+use providers::issuance::Provider;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};

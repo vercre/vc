@@ -42,5 +42,6 @@ assert_let_bind.workspace = true
 futures.workspace = true
 insta.workspace = true
 lazy_static.workspace = true
+providers.workspace = true
 test-utils.workspace = true
 tokio.workspace = true

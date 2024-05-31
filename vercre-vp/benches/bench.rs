@@ -3,9 +3,9 @@
 extern crate test;
 
 use futures::executor::block_on;
+use providers::presentation::Provider;
 use serde_json::json;
 use test::Bencher;
-use test_utils::vp_provider::Provider;
 use vercre_core::vp::CreateRequestRequest;
 use vercre_vp::Endpoint;
 

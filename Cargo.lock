@@ -1554,10 +1554,10 @@ dependencies = [
  "axum-extra",
  "lazy_static",
  "oauth2",
+ "providers",
  "serde",
  "serde_json",
  "serde_qs 0.13.0",
- "test-utils",
  "tokio",
  "tower-http",
  "tracing",
@@ -1971,6 +1971,7 @@ version = "0.0.0"
 dependencies = [
  "axum",
  "axum-extra",
+ "providers",
  "serde",
  "serde_json",
  "test-utils",
@@ -2028,6 +2029,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec96c6a92621310b51366f1e28d05ef11489516e93be030060e5fc12024a49d6"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "providers"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "ecdsa",
+ "ed25519-dalek",
+ "k256",
+ "serde_json",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "vercre-core",
 ]
 
 [[package]]
@@ -3280,6 +3298,7 @@ dependencies = [
  "futures",
  "insta",
  "lazy_static",
+ "providers",
  "serde",
  "serde_json",
  "sha2",
@@ -3301,6 +3320,7 @@ dependencies = [
  "futures",
  "insta",
  "lazy_static",
+ "providers",
  "serde",
  "serde_json",
  "serde_json_path",
@@ -3329,6 +3349,7 @@ dependencies = [
  "lazy_static",
  "log",
  "olpc-cjson",
+ "providers",
  "serde",
  "serde_json",
  "serde_qs 0.13.0",
