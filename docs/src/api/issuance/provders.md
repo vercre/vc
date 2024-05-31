@@ -24,9 +24,11 @@ Providers are:
 - `Signer` — provide signing functionality, typically implemented using a secure
   enclave or HSM.
 
-The `Client` provider trait is shown below as an example. For a more complete example, see 
-Vercre's [example providers](https://github.com/vercre/vercre/blob/main/crates/test-utils/src/vci-provider.rs)
-used in examples and tests.
+## Provider Traits
+
+Providers are defined by traits that must be implemented by the library user.
+
+By way of example, the `Client` provider trait is outlined below. 
 
 ```rust,ignore
 /// The Client trait is used by implementers to provide Client metadata to the
@@ -42,3 +44,7 @@ pub trait Client: Send + Sync {
     ) -> impl Future<Output = Result<ClientMetadata>> + Send;
 }
 ```
+
+For a more complete example of providers, see Vercre's 
+[example providers](https://github.com/vercre/vercre/blob/main/examples/providers/src/issuance.rs)
+used in examples and tests.

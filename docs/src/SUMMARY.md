@@ -5,11 +5,11 @@
 # User Guide
 
 - [Using the Vercre API](./api/index.md)
-    - [Issuance](./api/vci/index.md)
-        - [Endpoints](./api/vci/endpoints.md)
-        - [Providers](./api/vci/provders.md)
+    - [Issuance](./api/issuance/index.md)
+        - [Endpoints](./api/issuance/endpoints.md)
+        - [Providers](./api/issuance/provders.md)
 
-    - [Presentation](./api/vp/index.md)
+    - [Presentation](./api/presentation/index.md)
     - [Wallet](./api/wallet/index.md) 
 
 # Contributer Guide

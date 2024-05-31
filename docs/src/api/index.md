@@ -10,11 +10,11 @@
 The Vercre API comprises three top-level libraries that form the backbone of OpenID 
 for Verifiable Credentials.
 
-- [Issuance](./vci/index.md) — based on the [OpenID for Verifiable Credential Issuance]
+- [Issuance](./issuance/index.md) — based on the [OpenID for Verifiable Credential Issuance]
   specification, the [vercre-vci] library provides an API for issuing Verifiable 
   Credentials.
 
-- [Presentation](./vp/index.md) — based on the [OpenID for VerifiablePresentations]
+- [Presentation](./presentation/index.md) — based on the [OpenID for VerifiablePresentations]
   specification, the [vercre-vp] library provides an API for  requesting and presenting 
   Verifiable Credentials.
 
