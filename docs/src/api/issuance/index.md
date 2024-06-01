@@ -38,8 +38,9 @@ used to request Credential issuance at the Credential Endpoint.
 Before initiating issuance, the Issuer prepares by authenticating and authorizing the 
 End-User.
 
-<div style="text-align:center;">
-  <img src="../../images/pre-auth-flow.png" width="60%" alt="The Rust logo">
-</div>
+<figure style="text-align:center;padding-top:1.5rem;">
+  <img src="../../images/pre-auth-flow.png" width="75%" alt="Pre-Authorized Flow">
+    <figcaption>Pre-Authorized Flow</figcaption>
+</figure>
 
 [OpenID for Verifiable Credential Issuance]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
