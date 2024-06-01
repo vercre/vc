@@ -562,30 +562,30 @@ impl VcBuilder {
 
     /// Sets the `@context` property
     #[must_use]
-    pub fn add_context(mut self, context: String) -> Self {
-        self.vc.context.push(context);
+    pub fn add_context(mut self, context: impl Into<String>) -> Self {
+        self.vc.context.push(context.into());
         self
     }
 
     /// Sets the `id` property
     #[must_use]
-    pub fn id(mut self, id: String) -> Self {
-        self.vc.id = id;
+    pub fn id(mut self, id: impl Into<String>) -> Self {
+        self.vc.id = id.into();
         self
     }
 
     /// Sets the `type_` property
     #[must_use]
-    pub fn add_type(mut self, type_: String) -> Self {
-        self.vc.type_.push(type_);
+    pub fn add_type(mut self, type_: impl Into<String>) -> Self {
+        self.vc.type_.push(type_.into());
         self
     }
 
     /// Sets the `issuer` property
     #[must_use]
-    pub fn issuer(mut self, issuer: String) -> Self {
+    pub fn issuer(mut self, issuer: impl Into<String>) -> Self {
         self.vc.issuer = Issuer {
-            id: issuer,
+            id: issuer.into(),
             extra: None,
         };
         self

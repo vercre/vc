@@ -419,15 +419,15 @@ impl VpBuilder {
 
     /// Sets the `@context` property
     #[must_use]
-    pub fn add_context(mut self, context: String) -> Self {
-        self.vp.context.push(context);
+    pub fn add_context(mut self, context: impl Into<String>) -> Self {
+        self.vp.context.push(context.into());
         self
     }
 
     /// Adds a type to the `type` property
     #[must_use]
-    pub fn add_type(mut self, type_: String) -> Self {
-        self.vp.type_.push(type_);
+    pub fn add_type(mut self, type_: impl Into<String>) -> Self {
+        self.vp.type_.push(type_.into());
         self
     }
 
@@ -444,8 +444,8 @@ impl VpBuilder {
 
     /// Sets the `type_` property
     #[must_use]
-    pub fn holder(mut self, holder: String) -> Self {
-        self.vp.holder = Some(holder);
+    pub fn holder(mut self, holder: impl Into<String>) -> Self {
+        self.vp.holder = Some(holder.into());
         self
     }
 
@@ -614,16 +614,16 @@ mod tests {
         subj.claims.insert("employeeID".into(), json!("1234567890"));
 
         let vc = VerifiableCredential::builder()
-            .add_context("https://www.w3.org/2018/credentials/examples/v1".into())
-            .id("https://example.com/credentials/3732".into())
-            .add_type("EmployeeIDCredential".into())
-            .issuer("https://example.com/issuers/14".into())
+            .add_context("https://www.w3.org/2018/credentials/examples/v1")
+            .id("https://example.com/credentials/3732")
+            .add_type("EmployeeIDCredential")
+            .issuer("https://example.com/issuers/14")
             .add_subject(subj)
             .build()?;
 
         VerifiablePresentation::builder()
-            .add_context("https://www.w3.org/2018/credentials/examples/v1".into())
-            .add_type("EmployeeIDCredential".into())
+            .add_context("https://www.w3.org/2018/credentials/examples/v1")
+            .add_type("EmployeeIDCredential")
             .add_credential(serde_json::to_value(vc)?)
             .build()
     }

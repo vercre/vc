@@ -6,44 +6,55 @@ Providers allow the library request implementation-specific data, and functional
 Each provider implements its corresponding trait, as defined in 
 [`vercre-vci`](https://github.com/vercre/vercre/tree/main/vercre-vci).
 
-Providers are:
+Each provider is defined by a trait that must be implemented by the library user.
 
-- `Client` — provides Client metadata, typically from a persistent data store or 
-  external API.
+### Client
 
-- `Issuer` — provides Credential Issuer metadata, as above.
-
-- `Server` — provides Authorization Server metadata, as above.
-
-- `Callback` — used to notify a wallet or other client of issuance status.
-
-- `Holder` — provides holder (or user) user information used during credential issuance.
-
-- `StateManager` — used to temporarily store and manage server state.
-
-- `Signer` — provide signing functionality, typically implemented using a secure
-  enclave or HSM.
-
-## Provider Traits
-
-Providers are defined by traits that must be implemented by the library user.
-
-By way of example, the `Client` provider trait is outlined below. 
+The `Client` provider is responsible for managing the OAuth 2.0 Client — or Wallet —
+metadata on behalf of the library. The provider retrieves Client metadata as well as
+dynamic Client (Wallet) registration.
 
 ```rust,ignore
-/// The Client trait is used by implementers to provide Client metadata to the
-/// library.
 pub trait Client: Send + Sync {
-    /// Returns client metadata for the specified client.
     fn metadata(&self, client_id: &str) -> impl Future<Output = Result<ClientMetadata>> + Send;
 
-    /// Used by OAuth 2.0 clients to dynamically register with the authorization
-    /// server.
     fn register(
         &self, client_meta: &ClientMetadata,
     ) -> impl Future<Output = Result<ClientMetadata>> + Send;
 }
 ```
+
+### Issuer
+
+Provides Credential Issuer metadata, as above.
+
+```rust,ignore
+pub trait Issuer: Send + Sync {
+    fn metadata(&self, issuer_id: &str) -> impl Future<Output = Result<IssuerMetadata>> + Send;
+}
+```
+
+### Server
+
+Provides Authorization Server metadata, as above.
+
+### Callback
+
+Used to notify a wallet or other client of issuance status.
+
+### Holder
+
+Provides holder (or user) user information used during credential issuance.
+
+### StateManager
+
+Used to temporarily store and manage server state.
+
+### Signer
+
+Provide signing functionality, typically implemented using a secure enclave or HSM.
+
+
 
 For a more complete example of providers, see Vercre's 
 [example providers](https://github.com/vercre/vercre/blob/main/examples/providers/src/issuance.rs)
