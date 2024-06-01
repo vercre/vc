@@ -1,5 +1,28 @@
 # Endpoints
 
+The API is comprised of the following endpoints:
+
+- `Create Offer` — for Issuer-initiated Credential issuance (Pre-Authorized Code flow).
+
+- `Authorization` — for Wallet authorization and Wallet-initiated Credential issuance
+  (Authorization Code flow).
+
+- `Token` — for the Wallet to exchange an authorization code for an access token 
+  during both pre-authorized code and authorization code flows.
+
+- `Credential` — for Credential issuance.
+
+- `Batch Credential` — for issuance of multiple Credentials in a single batch.
+
+- `Deferred Credential` — for deferred issuance of Credentials.
+
+- `Metadata` — publishes metadata about the Issuer and the Credentials they can issue.
+
+- `Notification` — for the Issuer to receive Wallet notifications about the status of 
+  issued Credentials.
+
+## Web Server
+
 The following is a minimal example web server using the issuance API. The example below
 uses [axum](https://docs.rs/axum/latest/axum/), but any Rust web server should suffice.
 
@@ -26,6 +49,8 @@ async fn main() {
 }
 ```
 
+## Create Offer Endpoint
+
 By way of example, the `create_offer` handler is shown below. Here, the heavy lifting of
 converting the HTTP request body to the `CreateOfferRequest` object is handled by `axum`.
 
@@ -38,9 +63,9 @@ request.
 async fn create_offer(
     State(endpoint): State<Arc<Endpoint<Provider>>>, 
     TypedHeader(host): TypedHeader<Host>,
-    Json(mut req): Json<CreateOfferRequest>,
+    Json(mut req): Json<CreateOfferRequest>,          // <- convert request body
 ) -> AxResult<CreateOfferResponse> {
-    req.credential_issuer = format!("http://{host}");
-    endpoint.create_offer(&req).await.into()
+    req.credential_issuer = format!("http://{host}"); // <- set credential issuer
+    endpoint.create_offer(&req).await.into()          // <- forward to library
 }
 ```
