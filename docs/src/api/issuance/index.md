@@ -28,19 +28,41 @@ The API is comprised of the following endpoints:
 - `Notification` — for the Issuer to receive Wallet notifications about the status of 
   issued Credentials.
 
-## Pre-Authorized Flow
+## Pre-Authorized Code Flow
 
 The Pre-Authorized Code flow is initiated by the Issuer, who creates a Credential Offer
-that includes a Pre-Authorized Code and sends to the Wallet. The Wallet exchanges the 
-Pre-Authorized Code for an Access Token at the Token Endpoint. The Access Token is then
-used to request Credential issuance at the Credential Endpoint.
+that includes a Pre-Authorized Code. The Offer is "sent" to the Wallet, either directly 
+or by the End-User scanning a QR code or similar.
 
-Before initiating issuance, the Issuer prepares by authenticating and authorizing the 
+Currently, we consider this the most common way of initiating Credential issuance and, 
+as a consequence, have invested more in its implementation and ergonimics.
+
+In this flow, the Wallet exchanges the Pre-Authorized Code for an Access Token at the 
+Token Endpoint. The Access Token is then used to request Credential issuance at the 
+Credential Endpoint.
+
+Prior to initiating this flow, the Issuer prepares by authenticating and authorizing the
 End-User.
 
 <figure style="text-align:center;padding-top:1.5rem;">
   <img src="../../images/pre-auth-flow.png" width="75%" alt="Pre-Authorized Flow">
-    <figcaption>Pre-Authorized Flow</figcaption>
+    <figcaption>Pre-Authorized Code Flow</figcaption>
+</figure>
+
+## Authorization Code Flow
+
+The Authorization Code flow can be initiated initiated by either the Issuer making a 
+Credential Offer (without a Pre-Authized Code) or the End-User requesting a Credential.
+In either case, the End-User is unauthorized and must authenticate and authorize before
+the Credential can issued.
+
+In this case, the Wallet must call the Authorization Endpoint to authorize the End-User.
+Following authorization, the Wallet exchanges the Authorization Code for an Access Token
+and the flow continues from Token Endpoint to Credential Endpoint as above.
+
+<figure style="text-align:center;padding-top:1.5rem;">
+  <img src="../../images/auth-flow.png" width="75%" alt="Pre-Authorized Flow">
+    <figcaption>Authorization Code Flow</figcaption>
 </figure>
 
 [OpenID for Verifiable Credential Issuance]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
