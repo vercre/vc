@@ -8,7 +8,9 @@ The specification defines an API for Credential issuance provided by a Credentia
 
 The API is comprised of the a set of endpoints, called in sequence to issue a Credential.
 The sequence is determined both by the flow used to initiate the issuance process as well
-as such things as whether the issuer defers Credential issuance. 
+as such things as whether the issuer defers Credential issuance.
+
+The two primary sequences (or flows) are described below.
 
 ## Pre-Authorized Code Flow
 
@@ -27,7 +29,7 @@ Prior to initiating this flow, the Issuer prepares by authenticating and authori
 End-User.
 
 <figure style="text-align:center;padding-top:1.5rem;">
-  <img src="../../images/pre-auth-flow.png" width="75%" alt="Pre-Authorized Flow">
+  <img src="../../images/pre-auth-flow.png" width="80%" alt="Pre-Authorized Flow">
     <figcaption>Pre-Authorized Code Flow</figcaption>
 </figure>
 
@@ -43,8 +45,17 @@ Following authorization, the Wallet exchanges the Authorization Code for an Acce
 and the flow continues from Token Endpoint to Credential Endpoint as above.
 
 <figure style="text-align:center;padding-top:1.5rem;">
-  <img src="../../images/auth-flow.png" width="75%" alt="Pre-Authorized Flow">
+  <img src="../../images/auth-flow.png" alt="Pre-Authorized Flow">
     <figcaption>Authorization Code Flow</figcaption>
 </figure>
 
 [OpenID for Verifiable Credential Issuance]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html
+
+## Implementing the API
+
+In the next sections, we will cover implementing the API, in particualar [endpoints](./endpoints.md) 
+and [providers](./provders.md).
+
+### Working example 
+If you want to skip ahead, this [API example](https://github.com/vercre/vercre/tree/main/examples/issuance)
+provides a naive but complete implementation of the issuance API.

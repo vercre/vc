@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use axum::extract::State;
-use axum::http::{HeaderMap, StatusCode};
+use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum::{Form, Json, Router};
@@ -14,12 +14,13 @@ use axum_extra::headers::authorization::Bearer;
 use axum_extra::headers::{Authorization, Host};
 use axum_extra::TypedHeader;
 use oauth2::CsrfToken;
+use providers::issuance::Provider;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use providers::issuance::Provider;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
@@ -47,15 +48,19 @@ async fn main() {
 
     let router = Router::new()
         .route("/create_offer", post(create_offer))
+        .route("/.well-known/openid-credential-issuer", get(metadata))
         .route("/auth", get(authorize))
         .route("/login", post(login))
         .route("/token", post(token))
         .route("/credential", post(credential))
         .route("/batch_credential", post(batch_credential))
         .route("/deferred_credential", post(deferred_credential))
-        .route("/.well-known/openid-credential-issuer", get(metadata))
         .layer(TraceLayer::new_for_http())
         .layer(cors)
+        .layer(SetResponseHeaderLayer::if_not_present(
+            header::CACHE_CONTROL,
+            HeaderValue::from_static("no-cache, no-store"),
+        ))
         .with_state(endpoint);
 
     let listener = TcpListener::bind("0.0.0.0:8080").await.expect("should bind");
@@ -71,6 +76,23 @@ async fn create_offer(
 ) -> AxResult<CreateOfferResponse> {
     req.credential_issuer = format!("http://{host}");
     endpoint.create_offer(&req).await.into()
+}
+
+// Metadata endpoint
+// TODO: override default  Cache-Control header to allow caching
+#[axum::debug_handler]
+async fn metadata(
+    headers: HeaderMap, State(endpoint): State<Arc<Endpoint<Provider>>>,
+    TypedHeader(host): TypedHeader<Host>,
+) -> AxResult<MetadataResponse> {
+    let req = MetadataRequest {
+        credential_issuer: format!("http://{host}"),
+        languages: headers
+            .get("accept-language")
+            .and_then(|v| v.to_str().ok())
+            .map(ToString::to_string),
+    };
+    endpoint.metadata(&req).await.into()
 }
 
 /// Authorize endpoint
@@ -219,22 +241,6 @@ async fn batch_credential(
     req.credential_issuer = format!("http://{host}");
     req.access_token = auth.0.token().to_string();
     endpoint.batch(&req).await.into()
-}
-
-// Metadata endpoint
-#[axum::debug_handler]
-async fn metadata(
-    headers: HeaderMap, State(endpoint): State<Arc<Endpoint<Provider>>>,
-    TypedHeader(host): TypedHeader<Host>,
-) -> AxResult<MetadataResponse> {
-    let req = MetadataRequest {
-        credential_issuer: format!("http://{host}"),
-        languages: headers
-            .get("accept-language")
-            .and_then(|v| v.to_str().ok())
-            .map(ToString::to_string),
-    };
-    endpoint.metadata(&req).await.into()
 }
 
 // ----------------------------------------------------------------------------

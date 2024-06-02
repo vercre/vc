@@ -1,17 +1,17 @@
 # Providers
 
-So far, so straightforward. The real work for API users is in implementing providers.
+While exposing and implementing endpoints may be relatively straightforward, the real
+work is in implementing providers.
 
-Providers allow the library request implementation-specific data, and functionality.
-Each provider implements its corresponding trait, as defined in 
-[`vercre-vci`](https://github.com/vercre/vercre/tree/main/vercre-vci).
+Providers are a set of Rust traits that allow the library to outsource 
+data persistence, secure signing, and callback functionality. Each provider requires the
+library user to implement a corresponding trait, as defined below.
 
-Each provider is defined by a trait that must be implemented by the library user, as 
-outlined below.
+_See Vercre's example
+[issuance providers](https://github.com/vercre/vercre/blob/main/examples/providers/src/issuance.rs)
+for more detail._
 
-## Issuance Providers
-
-### Client
+## Client
 
 The `Client` provider is responsible for managing the OAuth 2.0 Client — or Wallet —
 metadata on behalf of the library. The provider retrieves Client metadata as well as
@@ -27,7 +27,7 @@ pub trait Client: Send + Sync {
 }
 ```
 
-### Issuer
+## Issuer
 
 The `Issuer` provider is responsible for making Credential Issuer metadata available to 
 the issuance library. The library uses this metadata to determine the Issuer's 
@@ -39,7 +39,7 @@ pub trait Issuer: Send + Sync {
 }
 ```
 
-### Server
+## Server
 
 The `Server` provider is responsible for making OAuth 2.0 Authorization Server metadata
 available to the issuance library. As with Issuer metadata, the library uses this to 
@@ -51,7 +51,7 @@ pub trait Server: Send + Sync {
 }
 ```
 
-### Holder
+## Holder
 
 The `Holder` provider is responsible for providing the issuance library with information
 about the Holder, or end-user the Credential is to be issued to. This information is used
@@ -73,7 +73,7 @@ pub trait Holder: Send + Sync {
 }
 ```
 
-### StateManager
+## StateManager
 
 As its name implies, `StateManager` is responsible for temporarily storing and 
 managing state on behalf of the library.
@@ -89,7 +89,7 @@ pub trait StateManager: Send + Sync {
 }
 ```
 
-### Signer
+## Signer
 
 The `Signer` provides the library with secure signing functionality by implementing
 one of the supported signing and verification algorithms. Typically, implementers
@@ -112,7 +112,7 @@ pub trait Signer: Send + Sync {
 }
 ```
 
-### Callback
+## Callback
 
 The library uses callbacks to notify the Wallet or other interested parties of issuance
 status during the issuance process.
@@ -122,8 +122,3 @@ pub trait Callback: Send + Sync {
     fn callback(&self, pl: &callback::Payload) -> impl Future<Output = Result<()>> + Send;
 }
 ```
-## Examples
-
-For a more complete example of providers, see Vercre's 
-[example providers](https://github.com/vercre/vercre/blob/main/examples/providers/src/issuance.rs)
-used in examples and tests.
