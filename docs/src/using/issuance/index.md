@@ -53,7 +53,7 @@ and the flow continues from Token Endpoint to Credential Endpoint as above.
 
 ## Implementing the API
 
-In the next sections, we will cover implementing the API, in particualar [endpoints](./endpoints.md) 
+In the next sections, we will cover implementing the API, in particular [endpoints](./endpoints.md) 
 and [providers](./provders.md).
 
 ### Working example 
