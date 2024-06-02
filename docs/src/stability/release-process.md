@@ -1,6 +1,6 @@
 # Release Process
 
-Vercre's release process is described in more  [detail here](../contributing/release-process.md)
+Vercre's release process is described in more  [detail here](../contributing/maintainer-guidelines/release-process.md)
 with this page serving as a high-level summary of the process.
 
 * A new major version of Vercre will be made available once a month.

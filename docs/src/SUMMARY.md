@@ -34,9 +34,9 @@
     - [Testing](./contributing/testing.md)
     - [Coding Guidelines](./contributing/coding-guidelines.md)
     - [Development Process](./contributing/development-process.md)
-    - [Maintainer Guidelines](./contributing/maintainer-guidelines.md)
-        - [Code Review](./contributing/code-review.md)
-        - [Release Process](./contributing/release-process.md)
+    - [Maintainer Guidelines](./contributing/maintainer-guidelines/index.md)
+        - [Code Review](./contributing/maintainer-guidelines/code-review.md)
+        - [Release Process](./contributing/maintainer-guidelines/release-process.md)
     - [Governance](./contributing/governance.md)
     - [Code of Conduct](./contributing/coc.md)
 
