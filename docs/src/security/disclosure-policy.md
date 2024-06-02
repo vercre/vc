@@ -35,6 +35,5 @@ in the future.
 
 Security notifications will be distributed via the following methods.
 
-TODO: Add mailing list information...
-
-https://vercre.zulipchat.com/#narrow/stream/nnn-sec-announce
+- Zulip: <https://vercre.zulipchat.com/#channels/440231/security-updates/>
+- Email: TODO: add mailing list information...

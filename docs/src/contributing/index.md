@@ -8,12 +8,10 @@ Vercre is ambitious, with much work to be done to achieve full compliance with t
 OpenID specifications. And while we're confident we can achieve our goals, we see many 
 opportunities for others to get involved and help get there more quickly.
 
-<div class="hidden">
-TODO: establish Vercre Zulip presence
 
 ## Join Our Chat
 
-We chat about Vercre development on Zulip — join us!. You can also join specific streams:
+We chat about Vercre development on [Zulip](https://vercre.zulipchat.com/) — join us!.
 
 If you're having trouble building Vercre, aren't sure why a test is failing, or have any
 other questions, feel free to ask on Zulip. Not everything we hope to do with these projects 
@@ -26,7 +24,6 @@ As always, you're more than welcome to open an issue too!
 Finally, we have bi-weekly project meetings, hosted on Zoom, for Vercre. For more
 information, see our meetings agendas/minutes repository. Please feel free to contact us
 via Zulip if you're interested in joining!
-</div>
 
 ## Finding Something to Hack On
 
