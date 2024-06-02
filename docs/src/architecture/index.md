@@ -1,8 +1,9 @@
 # Architecture
 
-At its most simple, Vercre is a set of three top-level libraries  that allow developers
-to build applications that can issue, present, and verify credentials. All underpinned
-by OpenID for Verifiable Credential specifications.
+At its most simple, Vercre is a set of three top-level libraries that support 
+developers in building Verifiable Credential-based applications. That is, applications
+that can issue, present, and verify credentials — all underpinned by OpenID for 
+Verifiable Credential specifications.
 
 Implementers choose their own HTTP server(s) and implement the provider traits for
 each library used.
