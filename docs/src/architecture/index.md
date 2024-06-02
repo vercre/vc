@@ -5,11 +5,9 @@ to build applications that can issue, present, and verify credentials. All under
 by OpenID for Verifiable Credential specifications.
 
 Implementers choose their own HTTP server(s) and implement the provider traits for
-each library.
+each library used.
 
-<div style="text-align:center;">
-    <img src="../images/architecture.png" width="65%" alt="overview" />
-</div>
+![overview](../images/architecture.png)
 
 Top-level libraries:
 
