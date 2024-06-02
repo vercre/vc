@@ -4,7 +4,9 @@
 
 # User Guide
 
-- [Using the Vercre API](./using/index.md)
+- [Architecture](./architecture/index.md)
+
+- [Using the API](./using/index.md)
     - [Issuance](./using/issuance/index.md)
         - [Endpoints](./using/issuance/endpoints.md)
         - [Providers](./using/issuance/provders.md)
@@ -29,7 +31,6 @@
 # Contributer Guide
 
 - [Contributing](./contributing/index.md)
-    - [Architecture](./contributing/architecture.md)
     - [Building](./contributing/building.md)
     - [Testing](./contributing/testing.md)
     - [Coding Guidelines](./contributing/coding-guidelines.md)
