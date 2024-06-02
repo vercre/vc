@@ -53,8 +53,8 @@ and the flow continues from Token Endpoint to Credential Endpoint as above.
 
 ## Implementing the API
 
-In the next sections, we will cover implementing the API, in particular [endpoints](./endpoints.md) 
-and [providers](./provders.md).
+In the following sections, we will cover implementing the API, in particular 
+[endpoints](./endpoints.md) and [providers](./provders.md).
 
 ### Working example 
 If you want to skip ahead, this [API example](https://github.com/vercre/vercre/tree/main/examples/issuance)

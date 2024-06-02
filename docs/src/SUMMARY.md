@@ -40,7 +40,6 @@
     - [Governance](./contributing/governance.md)
     - [Code of Conduct](./contributing/coc.md)
 
-
-# Internals
+# Roadmap
 
 - [Draft chapter]()
