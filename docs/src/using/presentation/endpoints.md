@@ -1,29 +1,31 @@
 # Endpoints
 
-As mentioned previously, the issuance API is comprised of the a set of endpoints,
+As mentioned previously, the presentation API is comprised of the a set of endpoints,
 called in sequence to issue a Credential. The primary endpoints are:
 
-- `Create Offer` — creates Credential Offer used by Issuer to initiate issuance
-- `Authorization` — OAuth 2.0 Authorization endpoint
-- `Token` — OAuth 2.0 Token endpoint
-- `Credential` — issues requested Credential
-- `Batch Credential` — issuances multiple Credentials in a single batch
-- `Deferred Credential` — issues Credential when issuance has been 'deferred'
-- `Metadata` — Issuer and Credential metadata
-- `Notification` — used by the Wallet to notify of events about issued Credentials
+- `Create Request` — prepares an Authorization Request for the Verifier to send to the 
+  Wallet to request authorization (in the form of Verifiable Presentations).
+
+- `Authorization Request` — used by the Wallet in cross-device flows to retrieve a 
+  previously created Authorization Request Object.
+
+- `Authorization Response` — the endpoint the Wallet sends the Authorization Response
+  (containing Verifiable Presentations) back to the Verifier.
+
+- `Verifier Metadata` — endpoint to surface Verifier metadata to the Wallet.
 
 Each endpoint is described in more detail further down.
 
 ## Exposing Endpoints
 
-In order for Wallets to interact with issuance API, endpoints must be exposed over HTTP.
+In order for Wallets to interact with presentation API, endpoints must be exposed over HTTP.
 
 The following is a minimal example web server exposing endpoints required to support a 
 minimal Pre-Authorized flow example. The example uses [axum](https://docs.rs/axum/latest/axum/), 
 but any Rust web server should suffice.
 
 For the sake of brevity, imports, tracing, etc. are omitted. A more complete example can
-be found in the [examples directory](https://github.com/vercre/vercre/tree/main/examples/issuance).
+be found in the [examples directory](https://github.com/vercre/vercre/tree/main/examples/presentation).
 
 ```rust,ignore
 #[tokio::main]
@@ -33,10 +35,10 @@ async fn main() {
 
     // http endpoints
     let router = Router::new()
-        .route("/create_offer", post(create_offer))
-        .route("/.well-known/openid-credential-issuer", get(metadata))
-        .route("/token", post(token))
-        .route("/credential", post(credential))
+        .route("/create_request", post(create_request))
+        .route("/request/:client_state", get(request_object))
+        .route("/callback", get(response))
+        .route("/post", post(response))
         .with_state(endpoint);
 
     // run the server
@@ -51,22 +53,22 @@ In our example above, we have defined handlers for each `axum` route. Each handl
 is responsible for converting the HTTP request to a request object that can be passed
 to the associated endpoint.
 
-The following example shows how the `create_offer` handler uses `axum` to wrap the
-heavy lifting of converting the HTTP request body to a `CreateOfferRequest` object
+The following example shows how the `create_request` handler uses `axum` to wrap the
+heavy lifting of converting the HTTP request body to a `CreateRequestRequest` object
 ready to forward to the endpoint.
 
 Other than forwarding the request to the library, the handler is responsible for setting
-the `credential_issuer` attribute on the request object. This value should come from one
+the `verifier` attribute on the request object. This value should come from one
 of `host`, `:authority`, or `Forwarded` (if behind a proxy) headers of the HTTP request.
 
 ```rust,ignore
-async fn create_offer(
+async fn create_request(
     State(endpoint): State<Arc<Endpoint<Provider>>>,  // <- get providers from state
     TypedHeader(host): TypedHeader<Host>,
-    Json(mut req): Json<CreateOfferRequest>,          // <- convert request body
+    Json(mut req): Json<CreateRequestRequest>,        // <- convert request body
 ) -> AxResult<CreateOfferResponse> {
-    req.credential_issuer = format!("http://{host}"); // <- set credential issuer
-    endpoint.create_offer(&req).await.into()          // <- forward to library
+    request.client_id = format!("http://{host}");     // <- set verifier
+    endpoint.create_request(&request).await.into()    // <- forward to library
 }
 ```
 
@@ -77,100 +79,47 @@ implementer responsibilities and expected behavior.
 
 **Cache-Control** 
 
-The issuance HTTP API MUST include the HTTP `Cache-Control` response header
+The presentation HTTP API MUST include the HTTP `Cache-Control` response header
 (per [RFC2616](https://www.rfc-editor.org/rfc/rfc2616)) with values of `"no-store"`
 and `"no-cache"` in any responses containing sensitive information. That is, from all
 endpoints except the Metadata endpoint.
 
-### Create Offer
+### Create Rquest
 
-The `Create Offer` endpoint is used by the Issuer to create a Credential Offer. The Offer
-is used to initiate the issuance process with the Wallet by sending it directly to the
-Wallet or by the Wallet scanning a QR code.
+The `Create Request` endpoint is used by the Verifier to create an Authorization Request. 
+The Request is used to initiate the presentation process with the Wallet by sending it 
+directly to the Wallet as a Request Object or by the Wallet scanning a QR code to get a 
+URL pointing to the location of the Request Object.
 
-Below is an example of a JSON-based Credential Offer for a Pre-Authorized Code Flow.
-The JSON is serialized from the `CreateOfferResponse` struct returned by the endpoint.
+### Authorization Request
 
-```json
-{
-    "credential_issuer": "https://credential-issuer.example.com",
-    "credential_configuration_ids": [
-        "UniversityDegree_LDP_VC"
-    ],
-    "grants": {
-        "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
-            "pre-authorized_code": "adhjhdjajkdkhjhdj",
-            "tx_code": {
-                "input_mode":"numeric",
-                "length":6,
-                "description":"Please provide the one-time code that was sent via e-mail"
-            }
-       }
-    }
-}
-```
+The `Authorization Request` endpoint is used by the Wallet to retrieve a previously
+created Authorization Request Object.
+
+The Request Object is created by the Verifier when calling the `Create Request` endpoint to
+create an Authorization Request. Instead of sending the Request Object to the Wallet,
+the Verifier sends an Authorization Request containing a `request_uri` which can be
+used to retrieve the saved Request Object.
+
+### Response
+
+The `Response` endpoint is where the Wallet sends its response, in the form of an 
+[RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html) Authorization Response to the
+Verifier's Authorization Request.
+
+If the Authorization Request's Response Type value is "`vp_token`", the VP Token
+is returned in the Authorization Response. When the Response Type value is
+"`vp_token id_token`" and the scope parameter contains "openid", the VP Token is
+returned in the Authorization Response alongside a Self-Issued ID Token as defined
+in [SIOPv2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html).
+
+If the Response Type value is "code" (Authorization Code Grant Type), the VP
+Token is provided in the Token Response.
 
 ### Metadata
 
-The `Metadata` endpoint is used by the Wallet to determine the capabilities of the
-Issuer and the Credential. The metadata contains information on the Credential Issuer's
-technical capabilities, supported Credentials, and (internationalized) display 
-information.
+The `Metadata` endpoint is used to make Verifier metadata available to the Wallet.
 
-The metadata MUST be published as a JSON document available at the path formed by 
-concatenating the Credential Issuer Identifier (HTTP `host`) with the path
-`/.well-known/openid-credential-issuer`.
+As the Verifier is a client to the Wallet's Authorization Server, this endpoint
+returns Client metadata as defined in [RFC7591](https://www.rfc-editor.org/rfc/rfc7591).
 
-For example,
-
-```http
-GET /.well-known/openid-credential-issuer HTTP/1.1
-    Host: credential-issuer.example.com
-    Accept-Language: fr-ch, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5
-```
-
-### Authorization
-
-The `Authorization` endpoint is used by the Wallet to authorize the End-User for
-access to the Credential endpoint. That is, to request issuance of a Credential. 
-
-The endpoint is used in the same manner as defined in [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html).
-
-**N.B.** It is the implementers responsibility to authenticate the End-User and ensure their
-eligibility to receive the requested Credential.
-
-
-### Token
-
-The `Token` endpoint is used by the Wallet to exchange a Pre-Authorized Code or an 
-Authorization Code for an Access Token. The Access Token can subsequently be used to
-request a Credential at the Credential Endpoint.
-
-The endpoint is used in the same manner as defined in [RFC6749](https://tools.ietf.org/html/rfc6749#section-5.1).
-
-### Credential
-
-The `Credential` endpoint is used by the Wallet to request Credential issuance. 
-
-The Wallet sends the Access Token obtained at the Token Endpoint to this endpoint. The
-Wallet MAY use the same Access Token to send multiple Credential Requests to request
-issuance of multiple Credentials of different types bound to the same proof, or multiple
-Credentials of the same type bound to different proofs.
-
-### Batch Credential
-
-The `Batch Credential` endpoint is used by the Wallet to request issuance of multiple Credentials
-in a single batch. Other than batched Credential requests and responses, this endpoint is the same
-as the Credential endpoint.
-
-### Deferred Credential
-
-The `Deferred Credential` endpoint is used by the Wallet to request issuance of a 
-Credential where issuance was previously deferred (typically to allow for out-of-band
-request processing).
-
-### Notification
-
-The `Notification` endpoint is used by the Wallet to notify the Issuer of events about 
-issued Credentials. The Issuer uses this endpoint to receive notifications about the 
-status of issued Credentials.

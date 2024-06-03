@@ -3,10 +3,10 @@
 //! This endpoint is used by the Wallet to retrieve a previously created Authorization
 //! Request Object.
 //!
-//! The Request Object is created by the Verifier when calling the `Initiate` endpoint to
-//! create an Authorization Request. Instead of sending the Request Object to the Wallet,
-//! the Verifier sends an Authorization Request containing a `request_uri` which can be
-//! used to retrieve the saved Request Object.
+//! The Request Object is created by the Verifier when calling the `Create Request` 
+//! endpoint to create an Authorization Request. Instead of sending the Request 
+//! Object to the Wallet, the Verifier sends an Authorization Request containing a 
+//! `request_uri` which can be used to retrieve the saved Request Object.
 //!
 //! Per the [JWT VC Presentation Profile], the Request Object MUST be returned as an
 //! encoded JWT.

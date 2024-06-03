@@ -1,7 +1,7 @@
-//! # Initiate Endpoint
+//! # Create Request Endpoint
 //!
-//! This endpoint is used to **prepare** an [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html) Authorization Request to use
-//! to request Verifiable Presentations from an End-User's Wallet.
+//! This endpoint is used to prepare an [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html) 
+//! Authorization Request to use to request Verifiable Presentations from an End-User's Wallet.
 //!
 //! While based on the [OpenID4VP](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
 //! specification, the endpoint only implements a subset of the specification

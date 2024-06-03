@@ -1,4 +1,4 @@
-//! # Response Redirect Endpoint
+//! # Response Endpoint
 //!
 //! This endpoint is where the Wallet **redirects** to when returning an [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html).
 //! Authorization Response when both Wallet and Verifier interact on the same device.
