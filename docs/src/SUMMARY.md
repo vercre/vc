@@ -23,6 +23,9 @@
     - [Release Process](./stability/release-process.md)
     - [Support Tiers](./stability/support-tiers.md)
     - [Platform Support](./stability/platform-support.md)
+    - [RFC Process](./stability/rfc-process/index.md)
+        - [Template: Draft](./stability/rfc-process/template-draft.md)
+        - [Template: Full](./stability/rfc-process/template-full.md)
 
 - [Security](./security/index.md)
     - [Disclosure Policy](./security/disclosure-policy.md)

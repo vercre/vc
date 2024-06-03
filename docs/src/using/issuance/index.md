@@ -4,8 +4,6 @@ Based on the [OpenID for Verifiable Credential Issuance](https://openid.net/spec
 specification, the [vercre-vci](https://github.com/vercre/vercre/tree/main/vercre-vci) 
 library provides an API for issuing Verifiable Credentials.
 
-The specification defines an API for Credential issuance provided by a Credential Issuer. 
-
 The API is comprised of the a set of endpoints, called in sequence to issue a Credential.
 The sequence is determined both by the flow used to initiate the issuance process as well
 as such things as whether the issuer defers Credential issuance.
@@ -29,7 +27,7 @@ Prior to initiating this flow, the Issuer prepares by authenticating and authori
 End-User.
 
 <figure style="text-align:center;padding-top:1.5rem;">
-  <img src="../../images/pre-auth-flow.png" width="80%" alt="Pre-Authorized Flow">
+  <img src="../../images/issue-pre-auth.png" width="80%" alt="Pre-Authorized Flow">
     <figcaption>Pre-Authorized Code Flow</figcaption>
 </figure>
 
@@ -45,7 +43,7 @@ Following authorization, the Wallet exchanges the Authorization Code for an Acce
 and the flow continues from Token Endpoint to Credential Endpoint as above.
 
 <figure style="text-align:center;padding-top:1.5rem;">
-  <img src="../../images/auth-flow.png" alt="Pre-Authorized Flow">
+  <img src="../../images/issue-auth.png" alt="Pre-Authorized Flow">
     <figcaption>Authorization Code Flow</figcaption>
 </figure>
 

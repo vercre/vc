@@ -60,3 +60,4 @@ Note, though, that bugs and security issues in these projects do not at this
 time warrant patch releases for Vercre.
 </div>
 
+[RFC process]: https://github.com/vercre/rfcs
