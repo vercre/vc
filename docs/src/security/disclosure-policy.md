@@ -1,6 +1,6 @@
 # Disclosure Policy
 
-Here is the security disclosure policy for Vercre projects.
+This section addresses the security disclosure policy for Vercre projects.
 
 The security report is received and is assigned a primary handler. This person will 
 coordinate the fix and release process. The problem is confirmed and a list of all 
@@ -8,11 +8,11 @@ affected versions is determined. Code is audited to find any potential similar p
 Fixes are prepared for all releases which are still under maintenance. These fixes are
 not committed to the public repository but rather held locally pending the announcement.
 
-A suggested embargo date for this vulnerability is chosen and a CVE (Common 
-Vulnerabilities and Exposures (CVE®)) is requested for the vulnerability.
+A suggested embargo date for this vulnerability is chosen and a [CVE](https://www.cve.org/) 
+(Common Vulnerabilities and Exposures) is requested for the vulnerability.
 
-A prenotification may be published on the security announcements mailing list, providing
-information about affected projects, severity, and the embargo date.
+A pre-notification may be published on the security announcements mailing list, 
+providing information about affected projects, severity, and the embargo date.
 
 On the embargo date, the Vercre security mailing list is sent a copy of the
 announcement. The changes are pushed to the public repository and new builds are
@@ -31,7 +31,7 @@ Project maintainers are encouraged to write a post-mortem for the Vercre blog, d
 the vulnerability and steps being taken to identify and prevent similar vulnerabilities
 in the future.
 
-## Receiving Security Updates
+## Publishing Security Updates
 
 Security notifications will be distributed via the following methods.
 
