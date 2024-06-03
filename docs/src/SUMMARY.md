@@ -20,8 +20,8 @@
         - [Providers](./using/wallet/provders.md)
 
 - [Stability](./stability/index.md)
-    - [Support Tiers](./stability/support-tiers.md)
     - [Platform Support](./stability/platform-support.md)
+    - [Support Tiers](./stability/support-tiers.md)
     - [RFC Process](./stability/rfc-process.md)
     - [Release Process](./stability/release-process.md)
 

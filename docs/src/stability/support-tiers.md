@@ -1,17 +1,17 @@
-# Tiers of Support in Vercre
+# Support Tiers
 
-Vercre recognises three distinct tiers for platform and feature support. Each tier
-outlines the level of support that Vercre will provide for a given platform or feature.
+Vercre recognises three distinct tiers of platform and feature support. Each tier
+identifies the level of support that should be provided for a given platform or feature.
 
-The description of these tiers are inspired by the [Rust compiler's support tiers for
+The description of these tiers are inspired by the Rust compiler's [support tiers for
 targets](https://doc.rust-lang.org/rustc/target-tier-policy.html) with some additional
-tailoring.
+customization for feature support.
 
-This document provides a framework from which to evaluate the inclusion of new 
-features and support for existing features.
+This section provides a framework for the evaluation of new features as well as support 
+requires for existing features.
 
-Keep in mind this is only a guide and should not be used to "lawyer" a change 
-into Vercre on a technical detail.
+_Keep in mind, this is merely a guide and should not be used to "lawyer" a change into 
+Vercre on some technical detail._
 
 ## Supported Platforms and Features
 
