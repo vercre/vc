@@ -4,10 +4,10 @@ Vercre's release process is described in more  [detail here](../contributing/mai
 with this page serving as a high-level summary of the process.
 
 * A new major version of Vercre will be made available once a month.
-* Security bugs and correctness fixes will be backported to the latest two
-  releases of Vercre and issued as patch releases.
+* Security bugs and correctness fixes will be backported to the latest two releases 
+  of Vercre and issued as patch releases.
 
-Once a month Vercre will issue a new major version. This will be issued with a
+Once a month Vercre will issue a new version. This will be issued with a
 semver-major version update, such as 4.0.0 to 5.0.0. The precise schedule of
 Vercre's release is currently an automated PR is sent to bump the version on
 the 5th of every month and a release is made when the PR is merged. The PR
