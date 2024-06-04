@@ -445,7 +445,7 @@ mod tests {
     fn construct_token_request() {
         let mut issuance = Issuance {
             id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
-            status: Status::Offered,
+            status: Status::Accepted,
             offered: HashMap::from([("EmployeeID_JWT".into(), CredentialConfiguration::default())]),
             pin: Some("1234".into()),
             ..Default::default()
@@ -460,5 +460,24 @@ mod tests {
             "cVJ9o7fKUOxLbyQAEbHx3TPkTbvjTHHH",
         );
         assert_snapshot!("token_request", &token_req);
+    }
+
+    #[test]
+    fn construct_proof_jwt() {
+        let mut issuance = Issuance {
+            id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
+            status: Status::Accepted,
+            offered: HashMap::from([("EmployeeID_JWT".into(), CredentialConfiguration::default())]),
+            pin: Some("1234".into()),
+            ..Default::default()
+        };
+        let meta_res = MetadataResponse {
+            credential_issuer: vercre_core::metadata::Issuer::sample(),
+        };
+        metadata(&mut issuance, &meta_res).expect("metadata should update flow");
+        let kid = "did:jwk:eyJrdHkiOiJFQyIsImNydiI6InNlY3AyNTZrMSIsIngiOiJKSnpQaTRxeTJydktTVk85RjItMDVWV2VYMm9oc3dYN1NUbzg3TUdxcVB3IiwieSI6IkMxUnRGbnFXOWxOTEI1ejcycG9uMTIzZHh2MWtEcVUzUWw1QjhzMFdjXzQifQ#0";
+        let alg = "EdDSA";
+        let jwt = proof_jwt(&issuance, &kid, &alg);
+        assert_snapshot!("proof_jwt", &jwt, { ".claims.iat" => "[timestamp]" });
     }
 }
