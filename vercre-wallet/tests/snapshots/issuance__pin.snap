@@ -1,8 +1,0 @@
----
-source: vercre-wallet/tests/issuance.rs
-assertion_line: 102
-expression: app.view(&model)
----
-issuer: "http://vercre.io"
-offered: "{\"EmployeeID_JWT\":{\"credential_definition\":{\"@context\":[\"https://www.w3.org/2018/credentials/v1\",\"https://www.w3.org/2018/credentials/examples/v1\"],\"credentialSubject\":{\"email\":{\"display\":[{\"locale\":\"en-NZ\",\"name\":\"Email\"}],\"mandatory\":true,\"value_type\":\"string\"},\"familyName\":{\"display\":[{\"locale\":\"en-NZ\",\"name\":\"Family name\"}],\"mandatory\":true,\"value_type\":\"string\"},\"givenName\":{\"display\":[{\"locale\":\"en-NZ\",\"name\":\"Given name\"}],\"mandatory\":true,\"value_type\":\"string\"}},\"type\":[\"VerifiableCredential\",\"EmployeeIDCredential\"]},\"credential_signing_alg_values_supported\":[\"ES256K\",\"EdDSA\"],\"cryptographic_binding_methods_supported\":[\"did:jwk\",\"did:ion\"],\"display\":[{\"background_color\":\"#323ed2\",\"background_image\":{\"alt_text\":\"Vercre Background\",\"uri\":\"https://vercre.github.io/assets/vercre-background.png\"},\"description\":\"Vercre employee ID credential\",\"locale\":\"en-NZ\",\"logo\":{\"alt_text\":\"Vercre Logo\",\"uri\":\"https://vercre.github.io/assets/employee.png\"},\"name\":\"Employee ID\",\"text_color\":\"#ffffff\"}],\"format\":\"jwt_vc_json\",\"proof_types_supported\":{\"jwt\":{\"proof_signing_alg_values_supported\":[\"ES256K\",\"EdDSA\"]}},\"scope\":\"EmployeeIDCredential\"}}"
-status: Accepted

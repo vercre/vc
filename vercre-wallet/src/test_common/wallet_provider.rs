@@ -2,16 +2,27 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
-use chrono::{DateTime, Utc};
+use vercre_core::vci::{
+    CredentialRequest, CredentialResponse, MetadataRequest, MetadataResponse, TokenRequest,
+    TokenResponse,
+};
+use vercre_core::vp::{RequestObjectRequest, RequestObjectResponse, ResponseRequest};
 
 use crate::callback::Payload;
-use crate::provider::{Algorithm, Callback, Result, Signer, StateManager};
+use crate::credential::{Credential, Logo};
+use crate::issuance;
+use crate::presentation;
+use crate::provider::{
+    Algorithm, Callback, Constraints, CredentialConfiguration, CredentialStorer, IssuanceInput,
+    IssuanceListener, IssuerClient, PresentationInput, PresentationListener, Result, Signer,
+    TxCode, VerifierClient,
+};
 use crate::test_common::wallet;
 
 #[derive(Default, Clone, Debug)]
 pub struct Provider {
     callback: CallbackHook,
-    state_store: StateStore,
+    credential_store: CredentialStore,
 }
 
 impl Provider {
@@ -19,7 +30,7 @@ impl Provider {
     pub fn new() -> Self {
         Self {
             callback: CallbackHook::new(),
-            state_store: StateStore::new(),
+            credential_store: CredentialStore::new(),
         }
     }
 }
@@ -27,6 +38,97 @@ impl Provider {
 impl Callback for Provider {
     async fn callback(&self, pl: &Payload) -> Result<()> {
         self.callback.callback(pl)
+    }
+}
+
+impl CredentialStorer for Provider {
+    async fn save(&self, credential: &Credential) -> Result<()> {
+        self.credential_store.save(credential)
+    }
+
+    async fn load(&self, id: &str) -> Result<Option<Credential>> {
+        self.credential_store.load(id)
+    }
+
+    async fn find(&self, _filter: Option<Constraints>) -> Result<Vec<Credential>> {
+        self.credential_store.get_all()
+    }
+
+    async fn remove(&self, id: &str) -> Result<()> {
+        self.credential_store.remove(id)
+    }
+}
+
+// TODO: provide a mechanism for returning a rejection to test that path through the flow
+impl IssuanceInput for Provider {
+    async fn accept(
+        &self, _flow_id: &str, _config: &HashMap<String, CredentialConfiguration>,
+    ) -> bool {
+        true
+    }
+
+    async fn pin(&self, _flow_id: &str, tx_code: &TxCode) -> String {
+        if let Some(len) = tx_code.length {
+            let mut code = String::new();
+            for i in 0..len {
+                code.push_str(&i.to_string());
+            }
+            code
+        } else {
+            "1234".to_string()
+        }
+    }
+}
+
+impl IssuanceListener for Provider {
+    fn notify(&self, flow_id: &str, status: issuance::Status) {
+        println!("{}: {:?}", flow_id, status);
+    }
+}
+
+/// Here we use the example VCI provider and invoke the endpoint API directly, but in a real
+/// implementation this would be an HTTP request (or other transport) to the issuance service.
+impl IssuerClient for Provider {
+    async fn get_metadata(
+        &self, _flow_id: &str, req: &MetadataRequest,
+    ) -> Result<MetadataResponse> {
+        use providers::issuance::Provider as IssuanceProvider;
+        let provider = IssuanceProvider::new();
+        let response = vercre_vci::Endpoint::new(provider).metadata(req).await?;
+        Ok(response)
+    }
+
+    async fn get_token(&self, _flow_id: &str, req: &TokenRequest) -> Result<TokenResponse> {
+        use providers::issuance::Provider as IssuanceProvider;
+        let provider = IssuanceProvider::new();
+        let response = vercre_vci::Endpoint::new(provider).token(req).await?;
+        Ok(response)
+    }
+
+    async fn get_credential(
+        &self, _flow_id: &str, req: &CredentialRequest,
+    ) -> Result<CredentialResponse> {
+        use providers::issuance::Provider as IssuanceProvider;
+        let provider = IssuanceProvider::new();
+        let response = vercre_vci::Endpoint::new(provider).credential(req).await?;
+        Ok(response)
+    }
+
+    async fn get_logo(&self, _flow_id: &str, _logo_url: &str) -> Result<Logo> {
+        Ok(Logo::sample())
+    }
+}
+
+// TODO: provide a mechanism for returning a rejection to test that path through the flow
+impl PresentationInput for Provider {
+    async fn authorize(&self, _flow_id: &str, _credentials: Vec<Credential>) -> bool {
+        true
+    }
+}
+
+impl PresentationListener for Provider {
+    fn notify(&self, flow_id: &str, status: presentation::Status) {
+        println!("{}: {:?}", flow_id, status);
     }
 }
 
@@ -39,70 +141,77 @@ impl Signer for Provider {
         wallet::kid()
     }
 
-    async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
+    async fn try_sign(&self, msg: &[u8]) -> anyhow::Result<Vec<u8>> {
         Ok(wallet::sign(msg))
     }
 }
 
-impl StateManager for Provider {
-    async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
-        self.state_store.put(key, state, dt)
+/// Here we use the example VP provider and invoke the endpoint API directly, but in a real
+/// implementation this would be an HTTP request (or other transport) to the presentation service.
+impl VerifierClient for Provider {
+    async fn get_request_object(
+        &self, _flow_id: &str, req: &str,
+    ) -> Result<RequestObjectResponse> {
+        use providers::presentation::Provider as PresentationProvider;
+        let provider = PresentationProvider::new();
+
+        // Here we unpack the URI into a request object but a typical implementation would just
+        // make a request directly to the URI.
+        // The URI is of the form client_id/request/state_key
+        let parts: Vec<&str> = req.split('/').collect();
+        let state = parts[parts.len() - 1].to_string();
+        let request = RequestObjectRequest {
+            client_id: wallet::CLIENT_ID.to_string(),
+            state,
+        };
+
+        let response = vercre_vp::Endpoint::new(provider).request_object(&request).await?;
+        Ok(response)
     }
 
-    async fn get(&self, key: &str) -> Result<Vec<u8>> {
-        self.state_store.get(key)
-    }
-
-    async fn purge(&self, key: &str) -> Result<()> {
-        self.state_store.purge(key)
-    }
-
-    async fn get_opt(&self, key: &str) -> Result<Option<Vec<u8>>> {
-        self.state_store.get_opt(key)
+    async fn present(
+        &self, _flow_id: &str, _uri: &str, presentation: &ResponseRequest,
+    ) -> Result<()> {
+        use providers::presentation::Provider as PresentationProvider;
+        let provider = PresentationProvider::new();
+        vercre_vp::Endpoint::new(provider).response(presentation).await?;
+        Ok(())
     }
 }
 
 //-----------------------------------------------------------------------------
-// StateStore
+// CredentialStore
 //-----------------------------------------------------------------------------
 
 #[derive(Default, Clone, Debug)]
-struct StateStore {
-    store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
+struct CredentialStore {
+    store: Arc<Mutex<HashMap<String, Credential>>>,
 }
 
-impl StateStore {
+impl CredentialStore {
     fn new() -> Self {
         Self {
             store: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
-    #[allow(clippy::unnecessary_wraps)]
-    fn put(&self, key: &str, state: Vec<u8>, _: DateTime<Utc>) -> Result<()> {
-        self.store.lock().expect("should lock").insert(key.to_string(), state);
+    fn save(&self, credential: &Credential) -> anyhow::Result<()> {
+        let key = credential.id.clone();
+        self.store.lock().expect("should lock").insert(key.to_string(), credential.clone());
         Ok(())
     }
 
-    // fn put_opt(&self, key: &str, state: Vec<u8>, _: Option<DateTime<Utc>>) -> Result<()> {
-    //     self.store.lock().expect("should lock").insert(key.to_string(), state);
-    //     Ok(())
-    // }
-
-    fn get(&self, key: &str) -> Result<Vec<u8>> {
-        let Some(state) = self.store.lock().expect("should lock").get(key).cloned() else {
-            return Err(anyhow!("state not found for key: {key}"));
-        };
-        Ok(state)
+    fn load(&self, id: &str) -> anyhow::Result<Option<Credential>> {
+        Ok(self.store.lock().expect("should lock").get(id).cloned())
     }
 
-    fn get_opt(&self, key: &str) -> Result<Option<Vec<u8>>> {
-        Ok(self.store.lock().expect("should lock").get(key).cloned())
+    fn get_all(&self) -> anyhow::Result<Vec<Credential>> {
+        let store = self.store.lock().expect("should lock");
+        Ok(store.values().cloned().collect())
     }
 
-    #[allow(clippy::unnecessary_wraps)]
-    fn purge(&self, key: &str) -> Result<()> {
-        self.store.lock().expect("should lock").remove(key);
+    fn remove(&self, id: &str) -> anyhow::Result<()> {
+        self.store.lock().expect("should lock").remove(id).ok_or_else(|| anyhow!("not found"))?;
         Ok(())
     }
 }

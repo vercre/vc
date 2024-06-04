@@ -8,7 +8,7 @@ use std::future::Future;
 use vercre_core::w3c::vp::Constraints;
 
 use crate::credential::Credential;
-use crate::Result;
+use crate::provider::Result;
 
 /// `CredentialStorer` is used by wallet implementations to provide persistent storage of Verifiable
 /// Credentials.
