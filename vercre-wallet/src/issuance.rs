@@ -275,7 +275,6 @@ where
 /// Convert a `CredentialOffer` into a `MetadataRequest` and update flow state.
 fn offer(issuance: &mut Issuance, req: &CredentialOffer) -> MetadataRequest {
     issuance.offer = req.clone();
-    issuance.status = Status::Offered;
 
     // Set up a credential configuration for each credential offered
     for id in &req.credential_configuration_ids {
@@ -382,4 +381,63 @@ fn credential(
         issued: vc_str.into(),
         ..Default::default()
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use insta::assert_yaml_snapshot as assert_snapshot;
+    use vercre_core::vci::{Grants, PreAuthorizedCodeGrant, TxCode};
+
+    use super::*;
+
+    fn sample_offer() -> CredentialOffer {
+        CredentialOffer {
+            credential_issuer: "http://vercre.io".into(),
+            credential_configuration_ids: vec!["EmployeeID_JWT".into()],
+            grants: Some(Grants {
+                authorization_code: None,
+                pre_authorized_code: Some(PreAuthorizedCodeGrant {
+                    pre_authorized_code: "cVJ9o7fKUOxLbyQAEbHx3TPkTbvjTHHH".into(),
+                    tx_code: Some(TxCode {
+                        input_mode: Some("numeric".into()),
+                        length: Some(4),
+                        description: None,
+                    }),
+                    ..Default::default()
+                }),
+            }),
+        }
+    }
+
+    #[test]
+    fn metadata_request_from_offer() {
+        let mut issuance = Issuance {
+            id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
+            status: Status::Offered,
+            ..Default::default()
+        };
+        let received_offer = sample_offer();
+        let mdr = offer(&mut issuance, &received_offer);
+        assert_eq!(mdr.credential_issuer, "http://vercre.io");
+        assert!(issuance.offered.contains_key("EmployeeID_JWT"));
+    }
+
+    #[test]
+    fn flow_updated_with_metadata() {
+        let mut issuance = Issuance {
+            id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
+            status: Status::Offered,
+            offered: HashMap::from([("EmployeeID_JWT".into(), CredentialConfiguration::default())]),
+            ..Default::default()
+        };
+        let meta_res = MetadataResponse {
+            credential_issuer: vercre_core::metadata::Issuer::sample(),
+        };
+        metadata(&mut issuance, &meta_res).expect("metadata should update flow");
+        assert_snapshot!(
+            "issuance",
+            &issuance,
+            { ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction() }
+        );
+    }
 }

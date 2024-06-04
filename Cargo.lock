@@ -3337,6 +3337,7 @@ version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
  "assert_let_bind",
+ "async-trait",
  "axum",
  "axum-extra",
  "axum-test",

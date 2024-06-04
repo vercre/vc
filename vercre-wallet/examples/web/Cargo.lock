@@ -2208,6 +2208,7 @@ name = "vercre-wallet"
 version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
+ "async-trait",
  "base64ct",
  "chrono",
  "crux_core",
