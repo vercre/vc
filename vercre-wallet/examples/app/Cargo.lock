@@ -1391,6 +1391,7 @@ checksum = "4a3daa8e81a3963a60642bcc1f90a670680bd4a77535faa384e9d1c79d620871"
 dependencies = [
  "curve25519-dalek 4.1.2",
  "ed25519",
+ "rand_core 0.6.4",
  "serde",
  "sha2 0.10.8",
  "subtle",
@@ -3727,6 +3728,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b33eb56c327dec362a9e55b3ad14f9d2f0904fb5a5b03b513ab5465399e9f43"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "providers"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "ecdsa",
+ "ed25519-dalek",
+ "k256",
+ "serde_json",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "vercre-core",
 ]
 
 [[package]]
@@ -6087,6 +6105,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "vercre-vci"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "derive_builder",
+ "serde",
+ "serde_json",
+ "sha2 0.10.8",
+ "tracing",
+ "uuid",
+ "vercre-core",
+]
+
+[[package]]
+name = "vercre-vp"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "derive_builder",
+ "serde",
+ "serde_json",
+ "serde_json_path",
+ "tracing",
+ "uuid",
+ "vercre-core",
+]
+
+[[package]]
 name = "vercre-wallet"
 version = "0.1.0-alpha.4"
 dependencies = [
@@ -6100,6 +6149,7 @@ dependencies = [
  "lazy_static",
  "log",
  "olpc-cjson",
+ "providers",
  "serde",
  "serde_json",
  "serde_qs 0.13.0",
@@ -6111,6 +6161,8 @@ dependencies = [
  "urlencoding",
  "uuid",
  "vercre-core",
+ "vercre-vci",
+ "vercre-vp",
  "wasm-bindgen",
 ]
 

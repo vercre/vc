@@ -6,12 +6,10 @@
 //! See individual trait documentation for specific details.
 
 mod client;
+pub mod example;
 mod input;
 mod status_listener;
 mod storer;
-
-#[cfg(test)]
-pub(crate) mod example;
 
 pub use client::{IssuerClient, VerifierClient};
 pub use input::{IssuanceInput, PresentationInput};

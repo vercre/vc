@@ -1,10 +1,8 @@
-mod provider;
-
 use assert_let_bind::assert_let;
 use insta::assert_yaml_snapshot as assert_snapshot;
-use provider::Provider;
 use providers::issuance::{Provider as IssuanceProvider, ISSUER, NORMAL_USER};
 use vercre_core::vci::CreateOfferRequest;
+use vercre_wallet::provider::example::Provider;
 
 // This tests the entire issuance flow end-to-end. See the issuance module for stepwise tests.
 #[tokio::test]

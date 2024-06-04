@@ -1,3 +1,10 @@
+//! # Example Provider
+//! 
+//! The `vercre-wallet::Endpoint` requires a provider that implments a number of traits to provide
+//! capabilities and callbacks for the wallet's issuance and presentation flows. This module has a
+//! sample provider that is useful for self-contained testing (no external services are required),
+//! and as an example of how to implement the required traits.
+
 mod wallet {
     use std::str;
 
@@ -76,6 +83,8 @@ use crate::provider::{
     TxCode, VerifierClient,
 };
 
+/// Sample provider. Used internally for testing and as an example of how to implement the super
+/// trait needed for the wallet endpoints.
 #[derive(Default, Clone, Debug)]
 pub struct Provider {
     callback: CallbackHook,
@@ -83,6 +92,7 @@ pub struct Provider {
 }
 
 impl Provider {
+    /// Constructor
     #[must_use]
     pub fn new() -> Self {
         Self {
