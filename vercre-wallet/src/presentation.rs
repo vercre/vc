@@ -141,6 +141,7 @@ where
     type Request = ReceivePresentationRequest;
     type Response = ();
 
+    #[allow(clippy::too_many_lines)]
     async fn process(
         &self, provider: &Self::Provider, req: &Self::Request,
     ) -> Result<Self::Response> {
@@ -169,14 +170,13 @@ where
         } else {
             match provider.get_request_object(&presentation.id, &request).await {
                 Ok(req_obj_res) => {
-                    let req_obj = match parse_request_object_response(&req_obj_res) {
+                    match parse_request_object_response(&req_obj_res) {
                         Ok(req_obj) => req_obj,
                         Err(e) => {
                             provider.notify(&presentation.id, Status::Failed(e.to_string()));
                             return Ok(());
                         }
-                    };
-                    req_obj
+                    }
                 }
                 Err(e) => {
                     provider.notify(&presentation.id, Status::Failed(e.to_string()));
@@ -202,7 +202,7 @@ where
                 return Ok(());
             }
         };
-        presentation.credentials = credentials.clone();
+        presentation.credentials.clone_from(&credentials);
 
         // Request authorization from the wallet client to proceed with the presentation.
         if !provider.authorize(&presentation.id, credentials).await {
@@ -283,7 +283,7 @@ fn parse_request_object_response(res: &RequestObjectResponse) -> Result<RequestO
     Ok(jwt.claims)
 }
 
-/// Construct a credential filter (JSONPath) from the presentation definition contained in the
+/// Construct a credential filter (`JSONPath`) from the presentation definition contained in the
 /// presentation request.
 // TODO: How to handle multiple input descriptors?
 fn build_filter(request: &RequestObject) -> Result<Constraints> {
@@ -357,7 +357,7 @@ fn vp_token(presentation: &Presentation, alg: &str, kid: &str) -> anyhow::Result
         created: Some(Utc::now()),
         expires: Utc::now().checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
         domain: Some(vec![request.client_id.clone()]),
-        challenge: Some(request.nonce.clone()),
+        challenge: Some(request.nonce),
         ..Default::default()
     }]);
 

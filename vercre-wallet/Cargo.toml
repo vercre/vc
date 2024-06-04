@@ -18,12 +18,6 @@ version.workspace = true
 bench = false
 crate-type = ["cdylib", "lib", "staticlib"]
 
-[[bin]]
-# Workaround until Cargo supports artifact dependencies (https://github.com/rust-lang/cargo/issues/9096)
-# https://mozilla.github.io/uniffi-rs/tutorial/foreign_language_bindings.html#creating-the-bindgen-binary
-name = "uniffi-bindgen"
-path = "uniffi-bindgen.rs"
-
 [features]
 typegen = ["crux_core/typegen", "vercre-core/typegen"]
 wasm = ["vercre-core/wasm", "dep:web-sys"]

@@ -42,19 +42,3 @@ If using TypeScript you will also need to install some shared types that have be
 ```bash
 npm i --save @vercre/shared-types
 ```
-
-## Development
-
-### Generating FFI Bindings
-
-[Mozilla UniFFI](https://mozilla.github.io/uniffi-rs) generates foreign-language bindings
-for Rust libraries. It fits in the practice of consolidating business logic in a single
-Rust library while targeting multiple platforms, making it simpler to develop and maintain
-a cross-platform codebase.
-
-```bash
-cd vercre-wallet
-cargo build
-cargo uniffi-bindgen --out-dir ./gen ./src/shared.udl --language kotlin --language swift
-# cargo run --bin uniffi-bindgen generate --out-dir ./gen ./src/shared.udl --language kotlin --language swift
-```

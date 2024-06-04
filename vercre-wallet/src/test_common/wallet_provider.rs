@@ -148,6 +148,7 @@ impl Signer for Provider {
 
 /// Here we use the example VP provider and invoke the endpoint API directly, but in a real
 /// implementation this would be an HTTP request (or other transport) to the presentation service.
+#[allow(clippy::module_name_repetitions)]
 impl VerifierClient for Provider {
     async fn get_request_object(
         &self, _flow_id: &str, req: &str,

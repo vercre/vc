@@ -136,6 +136,7 @@ where
         Ok(self)
     }
 
+    #[allow(clippy::too_many_lines)]
     async fn process(
         &self, provider: &Self::Provider, req: &Self::Request,
     ) -> Result<Self::Response> {
@@ -251,7 +252,7 @@ where
                 // TODO: Locale?
                 if let Some(logo_info) = &display[0].logo {
                     if let Some(uri) = &logo_info.uri {
-                        if let Ok(logo) = provider.get_logo(&issuance.id, &uri).await {
+                        if let Ok(logo) = provider.get_logo(&issuance.id, uri).await {
                             credential.logo = Some(logo);
                         }
                     }
