@@ -440,4 +440,25 @@ mod tests {
             { ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction() }
         );
     }
+
+    #[test]
+    fn construct_token_request() {
+        let mut issuance = Issuance {
+            id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
+            status: Status::Offered,
+            offered: HashMap::from([("EmployeeID_JWT".into(), CredentialConfiguration::default())]),
+            pin: Some("1234".into()),
+            ..Default::default()
+        };
+        let meta_res = MetadataResponse {
+            credential_issuer: vercre_core::metadata::Issuer::sample(),
+        };
+        metadata(&mut issuance, &meta_res).expect("metadata should update flow");
+        let token_req = token_request(
+            "96bfb9cb-0513-7d64-5532-bed74c48f9ab",
+            &issuance,
+            "cVJ9o7fKUOxLbyQAEbHx3TPkTbvjTHHH",
+        );
+        assert_snapshot!("token_request", &token_req);
+    }
 }
