@@ -110,15 +110,16 @@ impl Callback for Provider {
 
 impl CredentialStorer for Provider {
     async fn save(&self, credential: &Credential) -> Result<()> {
-        self.credential_store.save(credential)
+        self.credential_store.save(credential);
+        Ok(())
     }
 
     async fn load(&self, id: &str) -> Result<Option<Credential>> {
-        self.credential_store.load(id)
+        Ok(self.credential_store.load(id))
     }
 
     async fn find(&self, _filter: Option<Constraints>) -> Result<Vec<Credential>> {
-        self.credential_store.get_all()
+        Ok(self.credential_store.get_all())
     }
 
     async fn remove(&self, id: &str) -> Result<()> {
@@ -135,21 +136,23 @@ impl IssuanceInput for Provider {
     }
 
     async fn pin(&self, _flow_id: &str, tx_code: &TxCode) -> String {
-        if let Some(len) = tx_code.length {
-            let mut code = String::new();
-            for i in 0..len {
-                code.push_str(&i.to_string());
-            }
-            code
-        } else {
-            "1234".to_string()
-        }
+        let len = Some(tx_code.length);
+        len.map_or_else(
+            || "1234".into(),
+            |n| {
+                let mut code = String::new();
+                for i in 0..n.unwrap() {
+                    code.push_str(&i.to_string());
+                }
+                code
+            },
+        )
     }
 }
 
 impl IssuanceListener for Provider {
     fn notify(&self, flow_id: &str, status: issuance::Status) {
-        println!("{}: {:?}", flow_id, status);
+        println!("{flow_id}: {status:?}");
     }
 }
 
@@ -195,7 +198,7 @@ impl PresentationInput for Provider {
 
 impl PresentationListener for Provider {
     fn notify(&self, flow_id: &str, status: presentation::Status) {
-        println!("{}: {:?}", flow_id, status);
+        println!("{flow_id}: {status:?}");
     }
 }
 
@@ -263,19 +266,18 @@ impl CredentialStore {
         }
     }
 
-    fn save(&self, credential: &Credential) -> anyhow::Result<()> {
+    fn save(&self, credential: &Credential) {
         let key = credential.id.clone();
-        self.store.lock().expect("should lock").insert(key.to_string(), credential.clone());
-        Ok(())
+        self.store.lock().expect("should lock").insert(key, credential.clone());
     }
 
-    fn load(&self, id: &str) -> anyhow::Result<Option<Credential>> {
-        Ok(self.store.lock().expect("should lock").get(id).cloned())
+    fn load(&self, id: &str) -> Option<Credential> {
+        self.store.lock().expect("should lock").get(id).cloned()
     }
 
-    fn get_all(&self) -> anyhow::Result<Vec<Credential>> {
+    fn get_all(&self) -> Vec<Credential> {
         let store = self.store.lock().expect("should lock");
-        Ok(store.values().cloned().collect())
+        store.values().cloned().collect()
     }
 
     fn remove(&self, id: &str) -> anyhow::Result<()> {
