@@ -1,7 +1,7 @@
 ---
 source: vercre-vci/src/create_offer.rs
-assertion_line: 265
-expression: response
+assertion_line: 267
+expression: "&response"
 ---
 credential_offer:
   credential_issuer: "http://vercre.io"
@@ -13,5 +13,5 @@ credential_offer:
       tx_code:
         input_mode: numeric
         length: 6
-        description: Please provide the one-time code that was sent via e-mail
+        description: Please provide the one-time code received
 user_code: "[user_code]"

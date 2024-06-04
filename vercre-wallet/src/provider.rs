@@ -10,6 +10,9 @@ mod input;
 mod status_listener;
 mod storer;
 
+#[cfg(test)]
+pub(crate) mod example;
+
 pub use client::{IssuerClient, VerifierClient};
 pub use input::{IssuanceInput, PresentationInput};
 pub use status_listener::{IssuanceListener, PresentationListener};

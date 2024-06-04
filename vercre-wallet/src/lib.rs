@@ -38,8 +38,6 @@ pub mod credential;
 pub mod issuance;
 pub mod presentation;
 pub mod provider;
-#[cfg(test)]
-mod test_common;
 
 use std::fmt::Debug;
 
@@ -87,7 +85,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use test_common::wallet_provider::Provider;
+    use provider::example::Provider;
     use vercre_core::err;
     use vercre_core::error::Err;
 
