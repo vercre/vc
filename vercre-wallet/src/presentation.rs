@@ -277,6 +277,9 @@ fn parse_request_object_response(res: &RequestObjectResponse) -> Result<RequestO
     let Ok(jwt) = serde_json::from_str::<Jwt<RequestObject>>(&jwt_enc) else {
         err!(Err::InvalidRequest, "failed to parse JWT");
     };
+    // Note: commented code below represents case where JWT is encoded and signed.
+    // TODO: Check that above simple deserialization is spec compliant (see associated test for
+    // simple serialization). If so, remove this comment and code.
     // let Ok(jwt) = jwt_enc.parse::<Jwt<RequestObject>>() else {
     //     err!(Err::InvalidRequest, "failed to parse JWT");
     // };
@@ -372,9 +375,10 @@ fn vp_token(presentation: &Presentation, alg: &str, kid: &str) -> anyhow::Result
 mod tests {
     use std::collections::HashMap;
 
-    // use insta::assert_yaml_snapshot as assert_snapshot;
+    use insta::assert_yaml_snapshot as assert_snapshot;
+    use vercre_core::metadata::CredentialConfiguration;
     use vercre_core::w3c::{
-        Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition,
+        Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition, VerifiableCredential
     };
     use vercre_vp::provider::Algorithm;
 
@@ -403,7 +407,7 @@ mod tests {
                     id: "EmployeeID_JWT".into(),
                     constraints: Constraints {
                         fields: Some(vec![Field {
-                            path: vec!["$.type".into()],
+                            path: vec!["$.type_".into()],
                             filter: Some(Filter {
                                 type_: "string".into(),
                                 value: FilterValue::Const("EmployeeIDCredential".into()),
@@ -424,6 +428,21 @@ mod tests {
             scope: None,
             presentation_definition_uri: None,
             client_metadata_uri: None,
+        }
+    }
+
+    fn sample_credential() -> Credential {
+        let mut vc = VerifiableCredential::sample();
+        let vc_jwt = vc.to_jwt().expect("should serialize to jwt");
+        let vc_str = serde_json::to_string(&vc_jwt).expect("should serialize to string");
+        let config = CredentialConfiguration::sample();
+        Credential {
+            issuer: "https://vercre.io".into(),
+            id: vc.id.clone(),
+            metadata: config,
+            vc: vc.clone(),
+            issued: vc_str,
+            logo: None,
         }
     }
 
@@ -454,5 +473,31 @@ mod tests {
         };
         let decoded = parse_request_object_response(&req_obj_res).expect("should parse with jwt");
         assert_eq!(obj, decoded);
+    }
+
+    #[test]
+    fn build_filter_test() {
+        let req_obj = sample_request();
+        let filter = build_filter(&req_obj).expect("should build filter");
+        assert_eq!(
+            filter,
+            req_obj.presentation_definition.unwrap().input_descriptors[0].constraints
+        );
+    }
+
+    #[test]
+    fn create_submission_test() {
+        let req_obj = sample_request();
+        let creds = vec![sample_credential()];
+        let presentation = Presentation {
+            id: "1234".into(),
+            status: Status::Requested,
+            request: sample_request(),
+            credentials: creds,
+            filter: build_filter(&req_obj).expect("should build filter"),
+            submission: PresentationSubmission::default(),
+        };
+        let submission = create_submission(&presentation).expect("should create submission");
+        assert_snapshot!("create_submission", &submission, {".id" => "[id]"});
     }
 }
