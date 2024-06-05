@@ -175,7 +175,7 @@ mod tests {
         // create CredentialRequest to 'send' to the app
         let jwt_enc = Jwt {
             header: jwt::Header {
-                typ: "vercre-vci-proof+jwt".into(),
+                typ: "openid4vci-proof+jwt".into(),
                 alg: wallet::alg(),
                 kid: wallet::kid(),
             },

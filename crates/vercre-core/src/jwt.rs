@@ -50,7 +50,7 @@ pub struct Header {
     /// inside a JWKS.
     pub kid: String,
 
-    /// Wallet proof: "vercre-vci-proof+jwt"
+    /// Wallet proof: "openid4vci-proof+jwt"
     /// Credential: "jwt"
     /// Request Object: "oauth-authz-req+jwt"
     /// Presentation: ???

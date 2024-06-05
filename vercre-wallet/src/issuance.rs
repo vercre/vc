@@ -315,7 +315,7 @@ fn proof_jwt(issuance: &Issuance, kid: &str, alg: &str) -> Jwt<ProofClaims> {
     let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
     Jwt {
         header: Header {
-            typ: String::from("vercre-vci-proof+jwt"),
+            typ: String::from("openid4vci-proof+jwt"),
             alg: alg.into(),
             kid: kid.into(),
         },
@@ -488,7 +488,7 @@ mod tests {
         let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
         let jwt = Jwt {
             header: Header {
-                typ: String::from("vercre-vci-proof+jwt"),
+                typ: String::from("openid4vci-proof+jwt"),
                 alg,
                 kid: kid.clone(),
             },
@@ -526,7 +526,7 @@ mod tests {
         let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
         let jwt = Jwt {
             header: Header {
-                typ: String::from("vercre-vci-proof+jwt"),
+                typ: String::from("openid4vci-proof+jwt"),
                 alg,
                 kid: kid.clone(),
             },

@@ -161,11 +161,11 @@ where
                 err!(Err::InvalidProof(nonce, expires_in), "Proof JWT 'alg' is not recognised");
             }
             // proof type
-            if jwt.header.typ != "vercre-vci-proof+jwt" {
+            if jwt.header.typ != "openid4vci-proof+jwt" {
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(
                     Err::InvalidProof(nonce, expires_in),
-                    "Proof JWT 'typ' is not 'vercre-vci-proof+jwt'"
+                    "Proof JWT 'typ' is not 'openid4vci-proof+jwt'"
                 );
             }
             // previously issued c_nonce
@@ -411,9 +411,9 @@ mod tests {
     use assert_let_bind::assert_let;
     use base64ct::{Base64UrlUnpadded, Encoding};
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use serde_json::json;
     use providers::issuance::{Provider, ISSUER, NORMAL_USER};
     use providers::wallet;
+    use serde_json::json;
     use vercre_core::jwt;
     use vercre_core::w3c::vc::VcClaims;
 
@@ -453,7 +453,7 @@ mod tests {
         // create BatchCredentialRequest to 'send' to the app
         let jwt_enc = Jwt {
             header: jwt::Header {
-                typ: "vercre-vci-proof+jwt".into(),
+                typ: "openid4vci-proof+jwt".into(),
                 alg: wallet::alg(),
                 kid: wallet::kid(),
             },
@@ -555,7 +555,7 @@ mod tests {
     //     // create BatchCredentialRequest to 'send' to the app
     //     let jwt_enc = Jwt {
     //         header: jwt::Header {
-    //             typ: "vercre-vci-proof+jwt".into(),
+    //             typ: "openid4vci-proof+jwt".into(),
     //             alg: wallet::alg(),
     //             kid: wallet::kid(),
     //         },

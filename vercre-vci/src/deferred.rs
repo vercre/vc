@@ -111,9 +111,9 @@ mod tests {
     use base64ct::{Base64UrlUnpadded, Encoding};
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use serde_json::json;
     use providers::issuance::{Provider, ISSUER, NORMAL_USER};
     use providers::wallet;
+    use serde_json::json;
     use vercre_core::jwt::{self, Jwt};
     use vercre_core::vci::{CredentialRequest, ProofClaims};
     use vercre_core::w3c::vc::VcClaims;
@@ -134,7 +134,7 @@ mod tests {
         // create CredentialRequest to 'send' to the app
         let jwt_enc = Jwt {
             header: jwt::Header {
-                typ: "vercre-vci-proof+jwt".into(),
+                typ: "openid4vci-proof+jwt".into(),
                 alg: wallet::alg(),
                 kid: wallet::kid(),
             },
