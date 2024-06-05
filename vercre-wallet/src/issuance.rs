@@ -382,9 +382,9 @@ fn credential(
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use vercre_core::vci::{Grants, PreAuthorizedCodeGrant, TxCode};
-    use crate::provider::example::wallet;
 
     use super::*;
+    use crate::provider::example::wallet;
 
     fn sample_offer() -> CredentialOffer {
         CredentialOffer {
@@ -503,5 +503,48 @@ mod tests {
         let signed_jwt = wallet::sign(&jwt_bytes);
         let p = proof(&jwt, &signed_jwt);
         assert_snapshot!("proof", &p);
+    }
+
+    #[test]
+    fn construct_credential_request() {
+        let mut issuance = Issuance {
+            id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
+            status: Status::Accepted,
+            offer: sample_offer(),
+            offered: HashMap::from([("EmployeeID_JWT".into(), CredentialConfiguration::default())]),
+            pin: Some("1234".into()),
+            ..Default::default()
+        };
+        let meta_res = MetadataResponse {
+            credential_issuer: vercre_core::metadata::Issuer::sample(),
+        };
+        metadata(&mut issuance, &meta_res).expect("metadata should update flow");
+        let id = issuance.offered.keys().next().expect("should have an offered configuration key");
+        let cfg = issuance.offered.get(id).expect("should have an offered configuration");
+        let kid = wallet::kid();
+        let alg = wallet::alg();
+        let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
+        let jwt = Jwt {
+            header: Header {
+                typ: String::from("vercre-vci-proof+jwt"),
+                alg,
+                kid: kid.clone(),
+            },
+            claims: ProofClaims {
+                iss: holder_did.into(),
+                aud: "http://vercre.io".into(),
+                iat: 1717546167,
+                nonce: "".into(),
+            },
+        };
+        let jwt_bytes = serde_json::to_vec(&jwt).expect("should serialize");
+        let signed_jwt = wallet::sign(&jwt_bytes);
+        let p = proof(&jwt, &signed_jwt);
+        let request = credential_request(&issuance, id, cfg, &p);
+        assert_snapshot!(
+            "credential_request",
+            &request,
+            { ".credential_definition.credentialSubject" => insta::sorted_redaction() }
+        );
     }
 }
