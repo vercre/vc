@@ -169,15 +169,13 @@ where
             }
         } else {
             match provider.get_request_object(&presentation.id, &request).await {
-                Ok(req_obj_res) => {
-                    match parse_request_object_response(&req_obj_res) {
-                        Ok(req_obj) => req_obj,
-                        Err(e) => {
-                            provider.notify(&presentation.id, Status::Failed(e.to_string()));
-                            return Ok(());
-                        }
+                Ok(req_obj_res) => match parse_request_object_response(&req_obj_res) {
+                    Ok(req_obj) => req_obj,
+                    Err(e) => {
+                        provider.notify(&presentation.id, Status::Failed(e.to_string()));
+                        return Ok(());
                     }
-                }
+                },
                 Err(e) => {
                     provider.notify(&presentation.id, Status::Failed(e.to_string()));
                     return Ok(());
@@ -365,4 +363,92 @@ fn vp_token(presentation: &Presentation, alg: &str, kid: &str) -> anyhow::Result
     // TODO: support other req.credential.formats
 
     Ok(vp.to_jwt()?)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    // use insta::assert_yaml_snapshot as assert_snapshot;
+    use vercre_core::w3c::{Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition};
+    use vercre_vci::jwt::Header;
+    use vercre_vp::provider::Algorithm;
+
+    use super::*;
+
+    fn sample_request() -> RequestObject {
+        let state_key = "ABCDEF123456";
+        let nonce = "1234567890";
+        let fmt = Format {
+            alg: Some(vec![Algorithm::EdDSA.to_string()]),
+            proof_type: None,
+        };
+        RequestObject {
+            response_type: "vp_token".into(),
+            client_id: "https://vercre.io/post".into(),
+            state: Some(state_key.into()),
+            nonce: nonce.into(),
+            response_mode: Some("direct_post".into()),
+            response_uri: Some("https://vercre.io/post".into()),
+            presentation_definition: Some(PresentationDefinition {
+                id: "cd4cf88c-adc9-48b9-91cf-12d8643bff73".into(),
+                purpose: Some("To verify employment status".into()),
+                format: Some(HashMap::from([("jwt_vc".into(), fmt)])),
+                name: None,
+                input_descriptors: vec![InputDescriptor {
+                    id: "EmployeeID_JWT".into(),
+                    constraints: Constraints {
+                        fields: Some(vec![Field {
+                            path: vec!["$.type".into()],
+                            filter: Some(Filter {
+                                type_: "string".into(),
+                                value: FilterValue::Const("EmployeeIDCredential".into()),
+                            }),
+                            ..Default::default()
+                        }]),
+                        limit_disclosure: None,
+                    },
+                    name: None,
+                    purpose: None,
+                    format: None,
+                }],
+            }),
+            client_id_scheme: Some("redirect_uri".into()),
+            client_metadata: None, // Some(self.client_meta.clone()),
+
+            redirect_uri: None,
+            scope: None,
+            presentation_definition_uri: None,
+            client_metadata_uri: None,
+        }
+    }
+
+    // TODO: Is this test actually doing anything other than testing serde_qs? Consider removing.
+    #[test]
+    fn parse_presentation_definition_test() {
+        let req_obj = sample_request();
+        let req_str = serde_qs::to_string(&req_obj).expect("request object should serialize");
+        let decoded = parse_presentation_definition(&req_str).expect("should parse");
+        assert_eq!(req_obj, decoded);
+    }
+
+    #[test]
+    fn parse_request_object_response_test() {
+        let obj = sample_request();
+        let jwt = Jwt::<RequestObject> {
+            header: Header {
+                typ: "JWT".into(),
+                alg: "ES256K".into(),
+                kid: "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJwdWJsaWNLZXlNb2RlbDFJZCIsInB1YmxpY0tleUp3ayI6eyJjcnYiOiJzZWNwMjU2azEiLCJrdHkiOiJFQyIsIngiOiJ0WFNLQl9ydWJYUzdzQ2pYcXVwVkpFelRjVzNNc2ptRXZxMVlwWG45NlpnIiwieSI6ImRPaWNYcWJqRnhvR0otSzAtR0oxa0hZSnFpY19EX09NdVV3a1E3T2w2bmsifSwicHVycG9zZXMiOlsiYXV0aGVudGljYXRpb24iLCJrZXlBZ3JlZW1lbnQiXSwidHlwZSI6IkVjZHNhU2VjcDI1NmsxVmVyaWZpY2F0aW9uS2V5MjAxOSJ9XSwic2VydmljZXMiOlt7ImlkIjoic2VydmljZTFJZCIsInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly93d3cuc2VydmljZTEuY29tIiwidHlwZSI6InNlcnZpY2UxVHlwZSJ9XX19XSwidXBkYXRlQ29tbWl0bWVudCI6IkVpREtJa3dxTzY5SVBHM3BPbEhrZGI4Nm5ZdDBhTnhTSFp1MnItYmhFem5qZEEifSwic3VmZml4RGF0YSI6eyJkZWx0YUhhc2giOiJFaUNmRFdSbllsY0Q5RUdBM2RfNVoxQUh1LWlZcU1iSjluZmlxZHo1UzhWRGJnIiwicmVjb3ZlcnlDb21taXRtZW50IjoiRWlCZk9aZE10VTZPQnc4UGs4NzlRdFotMkotOUZiYmpTWnlvYUFfYnFENHpoQSJ9fQ#publicKeyModel1Id".into(),
+                ..Default::default()
+            },
+            claims: obj.clone(),
+        };
+        let req_obj_res = RequestObjectResponse {
+            request_object: Some(obj.clone()),
+            jwt: Some(jwt.to_string()),
+        };
+        let decoded = parse_request_object_response(&req_obj_res).expect("should parse");
+        assert_eq!(obj, decoded);
+    }
 }

@@ -406,7 +406,7 @@ mod tests {
     }
 
     #[test]
-    fn metadata_request_from_offer() {
+    fn offer_test() {
         let mut issuance = Issuance {
             id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
             status: Status::Offered,
@@ -419,7 +419,7 @@ mod tests {
     }
 
     #[test]
-    fn flow_updated_with_metadata() {
+    fn metadata_test() {
         let mut issuance = Issuance {
             id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
             status: Status::Offered,
@@ -439,7 +439,7 @@ mod tests {
     }
 
     #[test]
-    fn construct_token_request() {
+    fn token_request_test() {
         let mut issuance = Issuance {
             id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
             status: Status::Accepted,
@@ -461,7 +461,7 @@ mod tests {
     }
 
     #[test]
-    fn construct_proof_jwt() {
+    fn proof_jwt_test() {
         let mut issuance = Issuance {
             id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
             status: Status::Accepted,
@@ -482,7 +482,7 @@ mod tests {
     }
 
     #[test]
-    fn construct_proof() {
+    fn proof_test() {
         let kid = wallet::kid();
         let alg = wallet::alg();
         let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
@@ -506,7 +506,7 @@ mod tests {
     }
 
     #[test]
-    fn construct_credential_request() {
+    fn credential_request_test() {
         let mut issuance = Issuance {
             id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
             status: Status::Accepted,
@@ -547,4 +547,9 @@ mod tests {
             { ".credential_definition.credentialSubject" => insta::sorted_redaction() }
         );
     }
+
+    // TODO: Test conversion of credential response to wallet-friendly credential. It is not
+    // easy to do this without a real response from the issuance endpoint, which would mean
+    // executing the entire flow. This is covered in end-to-end tests already. May need to
+    // use a temporary output in that test flow to construct this test set-up.
 }
