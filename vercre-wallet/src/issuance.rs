@@ -216,13 +216,7 @@ where
                 }
             };
             let signed_jwt = provider.sign(&jwt_bytes).await;
-            let proof = match proof(&jwt, &signed_jwt) {
-                Ok(p) => p,
-                Err(e) => {
-                    provider.notify(&issuance.id, Status::Failed(e.to_string()));
-                    return Ok(());
-                }
-            };
+            let proof = proof(&jwt, &signed_jwt);
             let request = credential_request(&issuance, id, cfg, &proof);
             issuance.status = Status::Requested;
             provider.notify(&issuance.id, Status::Requested);
@@ -335,14 +329,14 @@ fn proof_jwt(issuance: &Issuance, kid: &str, alg: &str) -> Jwt<ProofClaims> {
 }
 
 /// Construct a proof using a jwt and it's signed serialized form.
-fn proof(jwt: &Jwt<ProofClaims>, signed_jwt: &[u8]) -> Result<Proof> {
-    let sig_enc = Base64UrlUnpadded::encode_string(&signed_jwt);
-    let signed_jwt_str = format!("{}.{}", jwt.to_string(), sig_enc);
-    Ok(Proof {
+fn proof(jwt: &Jwt<ProofClaims>, signed_jwt: &[u8]) -> Proof {
+    let sig_enc = Base64UrlUnpadded::encode_string(signed_jwt);
+    let signed_jwt_str = format!("{jwt}.{sig_enc}");
+    Proof {
         proof_type: jwt.to_string(),
         jwt: Some(signed_jwt_str),
         cwt: None,
-    })
+    }
 }
 
 /// Construct a credential request from an offered credential configuration.
@@ -507,7 +501,7 @@ mod tests {
         };
         let jwt_bytes = serde_json::to_vec(&jwt).expect("should serialize");
         let signed_jwt = wallet::sign(&jwt_bytes);
-        let p = proof(&jwt, &signed_jwt).expect("should create proof");
+        let p = proof(&jwt, &signed_jwt);
         assert_snapshot!("proof", &p);
     }
 }
