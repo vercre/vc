@@ -1,0 +1,64 @@
+{
+  "productName": "wallet",
+  "version": "0.1.0",
+  "identifier": "io.vercre.wallet",
+  "app": {
+    "macOSPrivateApi": false,
+    "security": {
+      "csp": {
+        "default-src": "'self' customprotocol: asset:",
+        "connect-src": "ipc: http://ipc.localhost",
+        "font-src": [
+          "https://fonts.gstatic.com"
+        ],
+        "img-src": "'self' asset: http://asset.localhost blob: data:",
+        "style-src": "'unsafe-inline' 'self' https://fonts.googleapis.com"
+      }
+    },
+    "windows": [
+      {
+        "title": "Vercre Wallet",
+        "width": 800,
+        "height": 600,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "withGlobalTauri": true
+  },
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build"
+  },
+  "bundle": {
+    "active": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "iOS": {
+      "developmentTeam": "Vercre"
+    },
+    "macOS": {
+      "minimumSystemVersion": "10.13"
+    },
+    "targets": "all"
+  },
+  "plugins": {
+    "deep-link": {
+      "mobile": [],
+      "desktop": {
+        "schemes": [
+          "openid-credential-offer",
+          "openid-vc"
+        ]
+      }
+    }
+  },
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json"
+}

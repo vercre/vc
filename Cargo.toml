@@ -1,5 +1,14 @@
 [workspace]
-members = ["crates/*", "examples/*", "vercre-vci", "vercre-vp", "vercre-wallet"]
+members = [
+    "crates/*",
+    "examples/issuance",
+    "examples/presentation",
+    "examples/providers",
+    "examples/wallet/src-tauri",
+    "vercre-vci",
+    "vercre-vp",
+    "vercre-wallet"
+]
 resolver = "2"
 
 [workspace.package]
