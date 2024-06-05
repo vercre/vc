@@ -1,24 +1,36 @@
 //! # Example Provider
-//! 
+//!
 //! The `vercre-wallet::Endpoint` requires a provider that implments a number of traits to provide
 //! capabilities and callbacks for the wallet's issuance and presentation flows. This module has a
 //! sample provider that is useful for self-contained testing (no external services are required),
 //! and as an example of how to implement the required traits.
 
-mod wallet {
+/// Mock wallet useful for testing without needing a full provider.
+pub mod wallet {
     use std::str;
 
     use base64ct::{Base64UrlUnpadded, Encoding};
     use ed25519_dalek::{Signature, Signer, SigningKey};
-    pub const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
-    
-    //const ALG: &str = "EdDSA";
+
+    const ALG: &str = "EdDSA";
+    const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
     const JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
     const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
-    
-    // pub const HOLDER_DID: &str ="did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJwdWJsaWNLZXlNb2RlbDFJZCIsInB1YmxpY0tleUp3ayI6eyJjcnYiOiJzZWNwMjU2azEiLCJrdHkiOiJFQyIsIngiOiJ0WFNLQl9ydWJYUzdzQ2pYcXVwVkpFelRjVzNNc2ptRXZxMVlwWG45NlpnIiwieSI6ImRPaWNYcWJqRnhvR0otSzAtR0oxa0hZSnFpY19EX09NdVV3a1E3T2w2bmsifSwicHVycG9zZXMiOlsiYXV0aGVudGljYXRpb24iLCJrZXlBZ3JlZW1lbnQiXSwidHlwZSI6IkVjZHNhU2VjcDI1NmsxVmVyaWZpY2F0aW9uS2V5MjAxOSJ9XSwic2VydmljZXMiOlt7ImlkIjoic2VydmljZTFJZCIsInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly93d3cuc2VydmljZTEuY29tIiwidHlwZSI6InNlcnZpY2UxVHlwZSJ9XX19XSwidXBkYXRlQ29tbWl0bWVudCI6IkVpREtJa3dxTzY5SVBHM3BPbEhrZGI4Nm5ZdDBhTnhTSFp1MnItYmhFem5qZEEifSwic3VmZml4RGF0YSI6eyJkZWx0YUhhc2giOiJFaUNmRFdSbllsY0Q5RUdBM2RfNVoxQUh1LWlZcU1iSjluZmlxZHo1UzhWRGJnIiwicmVjb3ZlcnlDb21taXRtZW50IjoiRWlCZk9aZE10VTZPQnc4UGs4NzlRdFotMkotOUZiYmpTWnlvYUFfYnFENHpoQSJ9fQ";
-    // pub const VERIFY_KEY_ID: &str = "publicKeyModel1Id";
-    
+
+    /// Get the algorithm used for signing.
+    #[must_use]
+    pub fn alg() -> String {
+        ALG.to_string()
+    }
+    /// A wallet has a unique client ID. See the
+    /// [OpenID for Verifiable Credential Issuance](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
+    /// specification for more details on client registration.
+    #[must_use]
+    pub fn client_id() -> String {
+        CLIENT_ID.to_string()
+    }
+
+    /// Generate a distributed identifier (DID) for the wallet to use for signing.
     #[must_use]
     pub fn did() -> String {
         let jwk = serde_json::json!({
@@ -29,31 +41,21 @@ mod wallet {
         });
         let jwk_str = jwk.to_string();
         let jwk_b64 = Base64UrlUnpadded::encode_string(jwk_str.as_bytes());
-    
+
         format!("did:jwk:{jwk_b64}")
     }
-    
+
+    /// Generate a key identifier for the wallet.
     #[must_use]
     pub fn kid() -> String {
         format!("{}#0", did())
     }
-    
-    // #[must_use]
-    // pub fn alg() -> String {
-    //     ALG.to_string()
-    // }
-    
+
     /// Sign the provided message.
     ///
     /// # Panics
     #[must_use]
     pub fn sign(msg: &[u8]) -> Vec<u8> {
-        // let mut csprng = OsRng;
-        // let signing_key: Ed25519SigningKey = Ed25519SigningKey::generate(&mut csprng);
-        // signing_key.to_bytes().to_vec();
-        // println!("d: {}", Base64UrlUnpadded::encode_string(&signing_key.to_bytes()));
-        // println!("x: {}", Base64UrlUnpadded::encode_string(&signing_key.verifying_key().to_bytes()));
-    
         let decoded = Base64UrlUnpadded::decode_vec(JWK_D).expect("should decode");
         let bytes: [u8; 32] = decoded.as_slice().try_into().expect("should convert ");
         let signing_key = SigningKey::from_bytes(&bytes);
@@ -75,13 +77,12 @@ use vercre_core::vp::{RequestObjectRequest, RequestObjectResponse, ResponseReque
 
 use crate::callback::Payload;
 use crate::credential::{Credential, Logo};
-use crate::issuance;
-use crate::presentation;
 use crate::provider::{
     Algorithm, Callback, Constraints, CredentialConfiguration, CredentialStorer, IssuanceInput,
     IssuanceListener, IssuerClient, PresentationInput, PresentationListener, Result, Signer,
     TxCode, VerifierClient,
 };
+use crate::{issuance, presentation};
 
 /// Sample provider. Used internally for testing and as an example of how to implement the super
 /// trait needed for the wallet endpoints.
@@ -220,9 +221,7 @@ impl Signer for Provider {
 /// implementation this would be an HTTP request (or other transport) to the presentation service.
 #[allow(clippy::module_name_repetitions)]
 impl VerifierClient for Provider {
-    async fn get_request_object(
-        &self, _flow_id: &str, req: &str,
-    ) -> Result<RequestObjectResponse> {
+    async fn get_request_object(&self, _flow_id: &str, req: &str) -> Result<RequestObjectResponse> {
         use providers::presentation::Provider as PresentationProvider;
         let provider = PresentationProvider::new();
 
@@ -232,7 +231,7 @@ impl VerifierClient for Provider {
         let parts: Vec<&str> = req.split('/').collect();
         let state = parts[parts.len() - 1].to_string();
         let request = RequestObjectRequest {
-            client_id: wallet::CLIENT_ID.to_string(),
+            client_id: wallet::client_id(),
             state,
         };
 

@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::str::FromStr;
 
+use base64ct::{Base64UrlUnpadded, Encoding};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
@@ -335,8 +336,8 @@ fn proof_jwt(issuance: &Issuance, kid: &str, alg: &str) -> Jwt<ProofClaims> {
 
 /// Construct a proof using a jwt and it's signed serialized form.
 fn proof(jwt: &Jwt<ProofClaims>, signed_jwt: &[u8]) -> Result<Proof> {
-    let signed_jwt_str =
-        String::from_utf8(signed_jwt.to_vec()).map_err(|e| Err::ServerError(e.into()))?;
+    let sig_enc = Base64UrlUnpadded::encode_string(&signed_jwt);
+    let signed_jwt_str = format!("{}.{}", jwt.to_string(), sig_enc);
     Ok(Proof {
         proof_type: jwt.to_string(),
         jwt: Some(signed_jwt_str),
@@ -387,6 +388,7 @@ fn credential(
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use vercre_core::vci::{Grants, PreAuthorizedCodeGrant, TxCode};
+    use crate::provider::example::wallet;
 
     use super::*;
 
@@ -427,6 +429,7 @@ mod tests {
         let mut issuance = Issuance {
             id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
             status: Status::Offered,
+            offer: sample_offer(),
             offered: HashMap::from([("EmployeeID_JWT".into(), CredentialConfiguration::default())]),
             ..Default::default()
         };
@@ -446,6 +449,7 @@ mod tests {
         let mut issuance = Issuance {
             id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
             status: Status::Accepted,
+            offer: sample_offer(),
             offered: HashMap::from([("EmployeeID_JWT".into(), CredentialConfiguration::default())]),
             pin: Some("1234".into()),
             ..Default::default()
@@ -467,6 +471,7 @@ mod tests {
         let mut issuance = Issuance {
             id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
             status: Status::Accepted,
+            offer: sample_offer(),
             offered: HashMap::from([("EmployeeID_JWT".into(), CredentialConfiguration::default())]),
             pin: Some("1234".into()),
             ..Default::default()
@@ -475,9 +480,34 @@ mod tests {
             credential_issuer: vercre_core::metadata::Issuer::sample(),
         };
         metadata(&mut issuance, &meta_res).expect("metadata should update flow");
-        let kid = "did:jwk:eyJrdHkiOiJFQyIsImNydiI6InNlY3AyNTZrMSIsIngiOiJKSnpQaTRxeTJydktTVk85RjItMDVWV2VYMm9oc3dYN1NUbzg3TUdxcVB3IiwieSI6IkMxUnRGbnFXOWxOTEI1ejcycG9uMTIzZHh2MWtEcVUzUWw1QjhzMFdjXzQifQ#0";
-        let alg = "EdDSA";
+        let kid = wallet::kid();
+        let alg = wallet::alg();
         let jwt = proof_jwt(&issuance, &kid, &alg);
+        assert_eq!(jwt.claims.aud, "http://vercre.io");
         assert_snapshot!("proof_jwt", &jwt, { ".claims.iat" => "[timestamp]" });
+    }
+
+    #[test]
+    fn construct_proof() {
+        let kid = wallet::kid();
+        let alg = wallet::alg();
+        let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
+        let jwt = Jwt {
+            header: Header {
+                typ: String::from("vercre-vci-proof+jwt"),
+                alg,
+                kid: kid.clone(),
+            },
+            claims: ProofClaims {
+                iss: holder_did.into(),
+                aud: "http://vercre.io".into(),
+                iat: 1717546167,
+                nonce: "".into(),
+            },
+        };
+        let jwt_bytes = serde_json::to_vec(&jwt).expect("should serialize");
+        let signed_jwt = wallet::sign(&jwt_bytes);
+        let p = proof(&jwt, &signed_jwt).expect("should create proof");
+        assert_snapshot!("proof", &p);
     }
 }
