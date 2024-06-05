@@ -377,12 +377,14 @@ mod tests {
 
     use insta::assert_yaml_snapshot as assert_snapshot;
     use vercre_core::metadata::CredentialConfiguration;
+    use vercre_core::provider::Algorithm;
     use vercre_core::w3c::{
-        Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition, VerifiableCredential
+        Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition,
+        VerifiableCredential,
     };
-    use vercre_vp::provider::Algorithm;
 
     use super::*;
+    use crate::provider::example::wallet;
 
     fn sample_request() -> RequestObject {
         let state_key = "ABCDEF123456";
@@ -499,5 +501,27 @@ mod tests {
         };
         let submission = create_submission(&presentation).expect("should create submission");
         assert_snapshot!("create_submission", &submission, {".id" => "[id]"});
+    }
+
+    #[test]
+    fn vp_token_test() {
+        let req_obj = sample_request();
+        let creds = vec![sample_credential()];
+        let mut presentation = Presentation {
+            id: "1234".into(),
+            status: Status::Requested,
+            request: sample_request(),
+            credentials: creds,
+            filter: build_filter(&req_obj).expect("should build filter"),
+            submission: PresentationSubmission::default(),
+        };
+        presentation.submission =
+            create_submission(&presentation).expect("should create submission");
+        let token =
+            vp_token(&presentation, &wallet::alg(), &wallet::kid()).expect("should create token");
+        assert_snapshot!(
+            "vp_token",
+            &token,
+            { ".claims.jti" => "[jti]", ".claims.exp" => "[exp]", ".claims.iat" => "[iat]" });
     }
 }
