@@ -20,7 +20,7 @@
                 "dev"
             ],
             "options": {
-                "cwd": "${workspaceFolder}/vercre-wallet/examples/app"
+                "cwd": "${workspaceFolder}/examples/wallet"
             },
             // without this problemMatcher VSCode `dependsOn` tasks won't work
             "problemMatcher": [
@@ -50,7 +50,7 @@
                 "dev"
             ],
             "options": {
-                "cwd": "${workspaceFolder}/vercre-wallet/examples/app"
+                "cwd": "${workspaceFolder}/examples/wallet"
             }
         },
         {

@@ -45,11 +45,11 @@
             "name": "Tauri",
             "type": "lldb",
             "request": "launch",
-            "cwd": "${workspaceRoot}/vercre-wallet/examples/app",
+            "cwd": "${workspaceRoot}/examples/wallet",
             "cargo": {
                 "args": [
                     "build",
-                    "--manifest-path=${workspaceRoot}/vercre-wallet/examples/app/src-tauri/Cargo.toml",
+                    "--manifest-path=${workspaceRoot}/examples/wallet/src-tauri/Cargo.toml",
                     "--no-default-features"
                 ]
             },
@@ -61,8 +61,8 @@
             "name": "Tauri deep link",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceRoot}/vercre-wallet/examples/app/target/debug/bundle/macos/Wallet.app",
-            "cwd": "${workspaceRoot}/vercre-wallet/examples/app",
+            "program": "${workspaceRoot}/examples/wallet/target/debug/bundle/macos/Wallet.app",
+            "cwd": "${workspaceRoot}/examples/wallet",
             "preLaunchTask": "tauri:prelaunch",
             "postDebugTask": "tauri:kill",
         }

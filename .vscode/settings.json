@@ -1,8 +1,6 @@
 {
     "rust-analyzer.linkedProjects": [
         "Cargo.toml",
-        "vercre-wallet/examples/app/Cargo.toml",
-        "vercre-wallet/examples/web/Cargo.toml",
     ],
     "rust-analyzer.cargo.features": [
         //  "typegen",
@@ -14,7 +12,7 @@
     },
     "eslint.workingDirectories": [
         {
-            "pattern": "vercre-wallet/examples/*/"
+            "pattern": "examples/wallet/"
         }
     ],
 }
