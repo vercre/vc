@@ -1,23 +1,52 @@
 [package]
-name = "app"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
-repository = ""
-edition = "2021"
-rust-version = "1.70"
+name = "example-wallet"
+description = "Example wallet client for Vercre Wallet crate"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+exclude.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
 
 [lib]
-name = "app_lib"
+name = "example_wallet"
 crate-type = ["staticlib", "cdylib", "rlib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow.workspace = true
+argon2 = { version = "2.1.0", package = "rust-argon2" }
+base64ct.workspace = true
+http = "1.1.0"
+iota_stronghold = { git = "https://github.com/vercre/stronghold.rs", package = "iota_stronghold" }
+lazy_static = "1.4.0"
+log = "0.4.21"
+reqwest = { version = "0.12.4", features = ["json"] }
+serde = { version = "1.0.202", features = ["derive"] }
+serde_json = "1.0.117"
+tauri = { version = "2.0.0-beta.22", features = [] }
+tauri-plugin-deep-link = "2.0.0-beta.7"
+tauri-plugin-http = "2.0.0-beta.5"
+tauri-plugin-log = "2.0.0-beta.6"
+tauri-plugin-shell = "2.0.0-beta.6"
+tauri-plugin-store = "2.0.0-beta.5"
+vercre-wallet = { path = "../../../vercre-wallet" }
 
 [build-dependencies]
 tauri-build = { version = "2.0.0-beta.17", features = [] }
 
-[dependencies]
-serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "2.0.0-beta.22", features = [] }
+[features]
+# by default Tauri runs in production mode
+# when `tauri dev` runs it is executed with `cargo run --no-default-features` if `devPath` is an URL
+default = ["custom-protocol"]
+# this feature is used for production builds or when `devPath` points to the filesystem
+# DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]

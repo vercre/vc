@@ -18,7 +18,7 @@ const Splash = () => {
                 started: true,
                 subApp: 'credential',
             });
-        }, 3000);
+        }, 2500);
     }, [view, setView]);
 
     return (
