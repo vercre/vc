@@ -1,6 +1,6 @@
 ---
-source: vercre-vci/src/metadata.rs
-assertion_line: 101
+source: vercre-issuer/src/metadata.rs
+assertion_line: 112
 expression: response
 ---
 credential_issuer: "http://vercre.io"

@@ -102,15 +102,15 @@ args = ["semver-checks"]
 install_crate = "cargo-semver-checks"
 
 [tasks.pre-pub]
-run_task = { name = ["pre-pub-core", "pre-pub-vci", "pre-pub-vp", "pre-pub-holder"], parallel = true }
+run_task = { name = ["pre-pub-core", "pre-pub-issuer", "pre-pub-vp", "pre-pub-holder"], parallel = true }
 
 [tasks.pre-pub-core]
 command = "cargo"
 args = ["publish", "--allow-dirty", "--dry-run", "--package", "vercre-core"]
 
-[tasks.pre-pub-vci]
+[tasks.pre-pub-issuer]
 command = "cargo"
-args = ["publish", "--allow-dirty", "--dry-run", "--package", "vercre-vci"]
+args = ["publish", "--allow-dirty", "--dry-run", "--package", "vercre-issuer"]
 
 [tasks.pre-pub-vp]
 command = "cargo"

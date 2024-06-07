@@ -47,7 +47,7 @@ uniffi = { version = "0.27.2", features = ["cli"] }
 urlencoding = "2.1.3"
 uuid.workspace = true
 vercre-core.workspace = true
-vercre-vci = { path = "../vercre-vci" }
+vercre-issuer.workspace = true
 vercre-vp = { path = "../vercre-vp" }
 wasm-bindgen = "0.2.92"
 web-sys = { version = "0.3.69", features = ["console"], optional = true }

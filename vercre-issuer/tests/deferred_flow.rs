@@ -8,12 +8,12 @@ use lazy_static::lazy_static;
 use providers::issuance::{Provider, ISSUER, PENDING_USER};
 use providers::wallet;
 use serde_json::json;
-use vercre_vci::create_offer::{CreateOfferRequest, CreateOfferResponse};
-use vercre_vci::credential::{CredentialRequest, CredentialResponse};
-use vercre_vci::deferred::{DeferredCredentialRequest, DeferredCredentialResponse};
-use vercre_vci::jwt::{self, Jwt};
-use vercre_vci::token::{TokenRequest, TokenResponse};
-use vercre_vci::{Endpoint, ProofClaims};
+use vercre_issuer::create_offer::{CreateOfferRequest, CreateOfferResponse};
+use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
+use vercre_issuer::deferred::{DeferredCredentialRequest, DeferredCredentialResponse};
+use vercre_issuer::jwt::{self, Jwt};
+use vercre_issuer::token::{TokenRequest, TokenResponse};
+use vercre_issuer::{Endpoint, ProofClaims};
 
 lazy_static! {
     static ref PROVIDER: Provider = Provider::new();

@@ -1,5 +1,5 @@
 [package]
-name = "vercre-vci"
+name = "vercre-issuer"
 description = "OpenID for Verifiable Credential Issuance"
 readme = "README.md"
 authors.workspace = true

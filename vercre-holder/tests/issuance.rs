@@ -21,7 +21,7 @@ async fn issuance_steps() {
     };
 
     let issuance_provider = IssuanceProvider::new();
-    let create_offer_response = vercre_vci::Endpoint::new(issuance_provider)
+    let create_offer_response = vercre_issuer::Endpoint::new(issuance_provider)
         .create_offer(&create_offer_request)
         .await
         .expect("issuance endpoint should create offer");

@@ -1,6 +1,6 @@
 ---
-source: vercre-vci/src/authorize.rs
-assertion_line: 470
+source: vercre-issuer/src/authorize.rs
+assertion_line: 474
 expression: state
 ---
 expires_at: "[expires_at]"
@@ -13,4 +13,10 @@ auth:
   redirect_uri: "http://localhost:3000/callback"
   code_challenge: "[code_challenge]"
   code_challenge_method: S256
-  scope: EmployeeIDCredential
+  authorization_details:
+    - type: openid_credential
+      format: jwt_vc_json
+      credential_definition:
+        type:
+          - VerifiableCredential
+          - EmployeeIDCredential

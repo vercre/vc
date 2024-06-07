@@ -1,6 +1,6 @@
 ---
-source: vercre-vci/src/deferred.rs
-assertion_line: 224
+source: vercre-issuer/src/deferred.rs
+assertion_line: 252
 expression: state
 ---
 expires_at: "[expires_at]"

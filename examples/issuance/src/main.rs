@@ -24,14 +24,14 @@ use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
-use vercre_vci::authorize::AuthorizationRequest;
-use vercre_vci::batch::{BatchCredentialRequest, BatchCredentialResponse};
-use vercre_vci::create_offer::{CreateOfferRequest, CreateOfferResponse};
-use vercre_vci::credential::{CredentialRequest, CredentialResponse};
-use vercre_vci::deferred::{DeferredCredentialRequest, DeferredCredentialResponse};
-use vercre_vci::metadata::{MetadataRequest, MetadataResponse};
-use vercre_vci::token::{TokenRequest, TokenResponse};
-use vercre_vci::Endpoint;
+use vercre_issuer::authorize::AuthorizationRequest;
+use vercre_issuer::batch::{BatchCredentialRequest, BatchCredentialResponse};
+use vercre_issuer::create_offer::{CreateOfferRequest, CreateOfferResponse};
+use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
+use vercre_issuer::deferred::{DeferredCredentialRequest, DeferredCredentialResponse};
+use vercre_issuer::metadata::{MetadataRequest, MetadataResponse};
+use vercre_issuer::token::{TokenRequest, TokenResponse};
+use vercre_issuer::Endpoint;
 
 lazy_static::lazy_static! {
     static ref AUTHORIZED: RwLock<HashMap<String, AuthorizationRequest>> = RwLock::new(HashMap::new());
@@ -248,7 +248,7 @@ async fn batch_credential(
 // ----------------------------------------------------------------------------
 
 /// Wrapper for `axum::Response`
-pub struct AxResult<T>(vercre_vci::Result<T>);
+pub struct AxResult<T>(vercre_issuer::Result<T>);
 
 impl<T> IntoResponse for AxResult<T>
 where
@@ -263,8 +263,8 @@ where
     }
 }
 
-impl<T> From<vercre_vci::Result<T>> for AxResult<T> {
-    fn from(val: vercre_vci::Result<T>) -> Self {
+impl<T> From<vercre_issuer::Result<T>> for AxResult<T> {
+    fn from(val: vercre_issuer::Result<T>) -> Self {
         Self(val)
     }
 }

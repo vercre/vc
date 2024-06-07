@@ -1,7 +1,7 @@
 ---
-source: vercre-vci/src/deferred.rs
-assertion_line: 199
-expression: response
+source: vercre-issuer/src/deferred.rs
+assertion_line: 229
+expression: "&response"
 ---
 credential: "[credential]"
 c_nonce: "[c_nonce]"

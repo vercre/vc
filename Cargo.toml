@@ -5,9 +5,9 @@ members = [
     "examples/presentation",
     "examples/providers",
     "examples/wallet/src-tauri",
-    "vercre-vci",
+    "vercre-holder",
+    "vercre-issuer",
     "vercre-vp",
-    "vercre-holder"
 ]
 resolver = "2"
 
@@ -56,7 +56,7 @@ tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 uuid = { version = "1.8.0", features = ["fast-rng", "v4"] }
 vercre-core = { path = "crates/vercre-core", version = "0.1.0-alpha.4" }
-vercre-vci = { path = "vercre-vci", version = "0.1.0-alpha.4" }
+vercre-issuer = { path = "vercre-issuer", version = "0.1.0-alpha.4" }
 vercre-vp = { path = "vercre-vp", version = "0.1.0-alpha.4" }
 
 [workspace.metadata.bin]

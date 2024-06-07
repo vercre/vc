@@ -1,6 +1,6 @@
 ---
-source: vercre-vci/src/create_offer.rs
-assertion_line: 267
+source: vercre-issuer/src/create_offer.rs
+assertion_line: 275
 expression: "&response"
 ---
 credential_offer:

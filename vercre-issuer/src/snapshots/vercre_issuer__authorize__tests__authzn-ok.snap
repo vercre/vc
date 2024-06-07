@@ -1,7 +1,7 @@
 ---
-source: vercre-vci/src/authorize.rs
-assertion_line: 420
-expression: response
+source: vercre-issuer/src/authorize.rs
+assertion_line: 467
+expression: "&response"
 ---
 code: "[code]"
 state: "1234"

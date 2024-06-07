@@ -165,14 +165,14 @@ impl IssuerClient for Provider {
     ) -> Result<MetadataResponse> {
         use providers::issuance::Provider as IssuanceProvider;
         let provider = IssuanceProvider::new();
-        let response = vercre_vci::Endpoint::new(provider).metadata(req).await?;
+        let response = vercre_issuer::Endpoint::new(provider).metadata(req).await?;
         Ok(response)
     }
 
     async fn get_token(&self, _flow_id: &str, req: &TokenRequest) -> Result<TokenResponse> {
         use providers::issuance::Provider as IssuanceProvider;
         let provider = IssuanceProvider::new();
-        let response = vercre_vci::Endpoint::new(provider).token(req).await?;
+        let response = vercre_issuer::Endpoint::new(provider).token(req).await?;
         Ok(response)
     }
 
@@ -181,7 +181,7 @@ impl IssuerClient for Provider {
     ) -> Result<CredentialResponse> {
         use providers::issuance::Provider as IssuanceProvider;
         let provider = IssuanceProvider::new();
-        let response = vercre_vci::Endpoint::new(provider).credential(req).await?;
+        let response = vercre_issuer::Endpoint::new(provider).credential(req).await?;
         Ok(response)
     }
 

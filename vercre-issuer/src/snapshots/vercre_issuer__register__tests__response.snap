@@ -1,6 +1,6 @@
 ---
-source: vercre-vci/src/register.rs
-assertion_line: 140
+source: vercre-issuer/src/register.rs
+assertion_line: 154
 expression: response
 ---
 client_id: "[client_id]"

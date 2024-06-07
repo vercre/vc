@@ -1,7 +1,7 @@
 ---
-source: vercre-vci/src/batch.rs
-assertion_line: 594
-expression: response
+source: vercre-issuer/src/batch.rs
+assertion_line: 507
+expression: "&response"
 ---
 credential_responses:
   - "[credential]"

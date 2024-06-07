@@ -1,9 +1,0 @@
----
-source: vercre-vci/src/batch.rs
-assertion_line: 492
-expression: response
----
-credential_responses:
-  - "[credential]"
-c_nonce: "[c_nonce]"
-c_nonce_expires_in: "[c_nonce_expires_in]"

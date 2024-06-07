@@ -1,7 +1,7 @@
 ---
-source: vercre-vci/src/create_offer.rs
-assertion_line: 286
-expression: state
+source: vercre-issuer/src/create_offer.rs
+assertion_line: 292
+expression: "&state"
 ---
 expires_at: "[expires_at]"
 credential_issuer: "http://vercre.io"

@@ -1,6 +1,6 @@
 ---
-source: vercre-vci/src/batch.rs
-assertion_line: 620
+source: vercre-issuer/src/batch.rs
+assertion_line: 530
 expression: state
 ---
 expires_at: "[expires_at]"
