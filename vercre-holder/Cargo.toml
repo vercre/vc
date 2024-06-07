@@ -52,6 +52,7 @@ vercre-verifier.workspace = true
 wasm-bindgen = "0.2.92"
 web-sys = { version = "0.3.69", features = ["console"], optional = true }
 async-trait = "0.1.80"
+vercre-vc.workspace = true
 
 [dev-dependencies]
 assert_let_bind = "0.1.1"

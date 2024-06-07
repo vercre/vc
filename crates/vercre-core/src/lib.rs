@@ -15,7 +15,6 @@ pub mod stringify;
 pub mod subject;
 pub mod vci;
 pub mod vp;
-pub mod w3c;
 
 use std::fmt::Debug;
 

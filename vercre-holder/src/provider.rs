@@ -18,4 +18,4 @@ pub use storer::CredentialStorer;
 pub use vercre_core::metadata::CredentialConfiguration;
 pub use vercre_core::provider::{Algorithm, Callback, Result, Signer, StateManager};
 pub use vercre_core::vci::TxCode;
-pub use vercre_core::w3c::vp::Constraints;
+pub use vercre_vc::model::vp::Constraints;

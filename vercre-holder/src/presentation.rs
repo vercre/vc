@@ -9,13 +9,12 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
-use vercre_core::jwt::Jwt;
 use vercre_core::vp::{RequestObject, RequestObjectResponse, ResponseRequest};
-use vercre_core::w3c::vp::{
-    Claims, Constraints, DescriptorMap, PathNested, PresentationSubmission, Proof,
-    VerifiablePresentation,
-};
 use vercre_core::{err, Result};
+use vercre_vc::model::vp::{
+    Constraints, DescriptorMap, PathNested, PresentationSubmission, Proof, VerifiablePresentation,
+};
+use vercre_vc::proof::jwt::{Jwt, VpClaims};
 
 use crate::credential::Credential;
 use crate::provider::{
@@ -332,7 +331,7 @@ fn create_submission(presentation: &Presentation) -> anyhow::Result<Presentation
 }
 
 /// Construct a verifiable presentation proof.
-fn vp_token(presentation: &Presentation, alg: &str, kid: &str) -> anyhow::Result<Jwt<Claims>> {
+fn vp_token(presentation: &Presentation, alg: &str, kid: &str) -> anyhow::Result<Jwt<VpClaims>> {
     let request = presentation.request.clone();
     let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
 
@@ -368,7 +367,7 @@ fn vp_token(presentation: &Presentation, alg: &str, kid: &str) -> anyhow::Result
     // transform VP into signed JWT
     // TODO: support other req.credential.formats
 
-    Ok(vp.to_jwt()?)
+    vp.to_jwt()
 }
 
 #[cfg(test)]
@@ -378,7 +377,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use vercre_core::metadata::CredentialConfiguration;
     use vercre_core::provider::Algorithm;
-    use vercre_core::w3c::{
+    use vercre_vc::model::{
         Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition,
         VerifiableCredential,
     };

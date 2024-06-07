@@ -1,14 +1,46 @@
 //! Proof
 
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 use std::str::{self, FromStr};
 
 use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ecdsa::signature::Verifier;
 use serde::{Deserialize, Serialize};
+use vercre_vc::proof::jwt::Jwt;
 
+use crate::provider::Signer;
 use crate::{err, error, Result};
+
+/// Signs the JWT using the provided Signer
+///
+/// # Errors
+pub async fn sign<T>(mut jwt: Jwt<T>, signer: impl Signer) -> anyhow::Result<String>
+where
+    T: Serialize + Default + Send + Sync + Debug,
+{
+    tracing::debug!("Jwt::sign");
+
+    // set header fields
+    if jwt.header.typ.is_empty() {
+        jwt.header.typ = "JWT".into();
+    }
+    if jwt.header.kid.is_empty() {
+        jwt.header.kid = signer.verification_method();
+    }
+    if jwt.header.alg.is_empty() {
+        jwt.header.alg = signer.algorithm().to_string();
+    }
+
+    // serialize
+    let msg = jwt.to_string();
+
+    // sign
+    let sig = signer.try_sign(msg.as_bytes()).await?;
+    let sig_enc = Base64UrlUnpadded::encode_string(&sig);
+
+    Ok(format!("{msg}.{sig_enc}"))
+}
 
 /// Simplified JSON Web Key (JWK) key structure.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]

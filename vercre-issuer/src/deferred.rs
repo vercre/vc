@@ -134,7 +134,7 @@ mod tests {
     use serde_json::json;
     use vercre_core::jwt::{self, Jwt};
     use vercre_core::vci::{CredentialRequest, ProofClaims};
-    use vercre_core::w3c::vc::VcClaims;
+    use vercre_vc::proof::jwt::VcClaims;
 
     use super::*;
     use crate::state::{Deferred, Expire, Token};

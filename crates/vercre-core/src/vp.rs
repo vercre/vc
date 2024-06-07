@@ -10,11 +10,11 @@ use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use vercre_vc::model::vp::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 
 use crate::error::Err;
 use crate::jwt::{self, Jwt};
 use crate::metadata::Client as ClientMetadata;
-use crate::w3c::vp::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 use crate::{err, stringify, Result};
 
 /// The Request Object Request is created by the Verifier to generate an

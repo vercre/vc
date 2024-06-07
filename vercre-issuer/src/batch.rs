@@ -26,8 +26,8 @@ use vercre_core::vci::ProofClaims;
 pub use vercre_core::vci::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialRequest, CredentialResponse,
 };
-use vercre_core::w3c::{self, CredentialSubject, VerifiableCredential};
-use vercre_core::{err, gen, Result};
+use vercre_core::{err, gen, proof, Result};
+use vercre_vc::model::{CredentialSubject, Proof, VerifiableCredential};
 
 use super::Endpoint;
 use crate::state::{Deferred, Expire, State};
@@ -277,7 +277,7 @@ where
         // transform to JWT
         let mut vc_jwt = vc.to_jwt()?;
         vc_jwt.claims.sub.clone_from(&self.holder_did);
-        let signed = vc_jwt.sign(provider.clone()).await?;
+        let signed = proof::sign(vc_jwt, provider.clone()).await?;
 
         Ok(CredentialResponse {
             credential: Some(serde_json::to_value(signed)?),
@@ -316,7 +316,7 @@ where
 
         // create proof
         // TODO: add all fields required by JWT
-        let proof = w3c::vc::Proof {
+        let proof = Proof {
             id: Some(format!("urn:uuid:{}", Uuid::new_v4())),
             type_: Signer::algorithm(provider).proof_type(),
             verification_method: Signer::verification_method(provider),
@@ -426,7 +426,7 @@ mod tests {
     use providers::wallet;
     use serde_json::json;
     use vercre_core::jwt;
-    use vercre_core::w3c::vc::VcClaims;
+    use vercre_vc::proof::jwt::VcClaims;
 
     use super::*;
     use crate::state::Token;

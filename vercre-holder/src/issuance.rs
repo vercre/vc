@@ -16,8 +16,8 @@ use vercre_core::vci::{
     CredentialOffer, CredentialRequest, CredentialResponse, GrantType, MetadataRequest,
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
-use vercre_core::w3c::VerifiableCredential;
 use vercre_core::{err, Result};
+use vercre_vc::model::vc::VerifiableCredential;
 
 use crate::credential::Credential;
 use crate::provider::{
