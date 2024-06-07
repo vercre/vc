@@ -50,8 +50,8 @@ use vercre_core::error::Err;
 use vercre_core::provider::{Algorithm, Callback, ClientMetadata, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{CreateRequestRequest, CreateRequestResponse, DeviceFlow, RequestObject};
-use vercre_vc::model::vp::{Format, PresentationDefinition};
 use vercre_core::{err, gen, Result};
+use vercre_vc::model::vp::{Format, PresentationDefinition};
 
 use super::Endpoint;
 use crate::state::State;

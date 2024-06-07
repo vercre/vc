@@ -104,8 +104,8 @@ use vercre_core::provider::{
 };
 // TODO: move Claims into jwt module
 pub use vercre_core::vci::{GrantType, ProofClaims};
-pub use vercre_core::{callback, jwt, provider, subject, Result};
-pub use vercre_vc::proof::jwt::VcClaims;
+pub use vercre_core::{callback, provider, subject, Result};
+pub use vercre_vc::proof::jwt::{self, Jwt, VcClaims};
 
 /// Endpoint is used to surface the public Verifiable Presentation endpoints to
 /// clients.

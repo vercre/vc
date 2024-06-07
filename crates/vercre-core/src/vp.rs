@@ -11,9 +11,9 @@ use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use vercre_vc::model::vp::{InputDescriptor, PresentationDefinition, PresentationSubmission};
+use vercre_vc::proof::jwt::{self, Jwt};
 
 use crate::error::Err;
-use crate::jwt::{self, Jwt};
 use crate::metadata::Client as ClientMetadata;
 use crate::{err, stringify, Result};
 

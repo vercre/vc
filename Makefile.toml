@@ -18,13 +18,6 @@ skip_rust_env_info = true
 [tasks.clean]
 command = "cargo"
 args = ["clean"]
-dependencies = ["clean-tauri"]
-
-[tasks.clean-tauri]
-script = '''
-  cd examples/wallet/src-tauri
-  cargo clean
-'''
 
 [tasks.build]
 command = "cargo"
@@ -56,24 +49,10 @@ install_crate = { rustup_component_name = "clippy" }
 [tasks.update]
 command = "cargo"
 args = ["update"]
-dependencies = ["update-tauri"]
-
-[tasks.update-tauri]
-script = '''
-  cd examples/wallet/src-tauri
-  cargo update
-'''
 
 [tasks.upgrade]
 command = "cargo"
 args = ["update"]
-dependencies = ["upgrade-tauri"]
-
-[tasks.upgrade-tauri]
-script = '''
-  cd examples/wallet/src-tauri
-  cargo upgrade
-'''
 
 [tasks.audit]
 command = "cargo"

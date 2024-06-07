@@ -132,9 +132,8 @@ mod tests {
     use providers::issuance::{Provider, ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
-    use vercre_core::jwt::{self, Jwt};
     use vercre_core::vci::{CredentialRequest, ProofClaims};
-    use vercre_vc::proof::jwt::VcClaims;
+    use vercre_vc::proof::jwt::{self, Jwt, VcClaims};
 
     use super::*;
     use crate::state::{Deferred, Expire, Token};

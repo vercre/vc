@@ -16,7 +16,6 @@ use chrono::{TimeDelta, Utc};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::{Ancillary as _, Err};
-use vercre_core::jwt::Jwt;
 use vercre_core::metadata::{CredentialDefinition, Issuer};
 use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
@@ -26,8 +25,9 @@ use vercre_core::vci::ProofClaims;
 pub use vercre_core::vci::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialRequest, CredentialResponse,
 };
-use vercre_core::{err, gen, proof, Result};
+use vercre_core::{err, gen, Result};
 use vercre_vc::model::{CredentialSubject, Proof, VerifiableCredential};
+use vercre_vc::proof::jwt::Jwt;
 
 use super::Endpoint;
 use crate::state::{Deferred, Expire, State};
@@ -158,11 +158,7 @@ where
                 Ok(jwt) => jwt,
                 Err(e) => {
                     let (nonce, expires_in) = self.err_nonce(provider).await?;
-                    err!(
-                        Err::InvalidProof(nonce, expires_in),
-                        "{}",
-                        e.error_description().unwrap_or_default()
-                    );
+                    err!(Err::InvalidProof(nonce, expires_in), "{}", e.to_string());
                 }
             };
 
@@ -277,7 +273,7 @@ where
         // transform to JWT
         let mut vc_jwt = vc.to_jwt()?;
         vc_jwt.claims.sub.clone_from(&self.holder_did);
-        let signed = proof::sign(vc_jwt, provider.clone()).await?;
+        let signed = vc_jwt.sign(provider.clone()).await?;
 
         Ok(CredentialResponse {
             credential: Some(serde_json::to_value(signed)?),
@@ -425,8 +421,7 @@ mod tests {
     use providers::issuance::{Provider, ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
-    use vercre_core::jwt;
-    use vercre_vc::proof::jwt::VcClaims;
+    use vercre_vc::proof::jwt::{self, VcClaims};
 
     use super::*;
     use crate::state::Token;

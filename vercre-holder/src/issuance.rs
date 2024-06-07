@@ -10,7 +10,6 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
-use vercre_core::jwt::{Header, Jwt};
 use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::vci::{
     CredentialOffer, CredentialRequest, CredentialResponse, GrantType, MetadataRequest,
@@ -18,6 +17,7 @@ use vercre_core::vci::{
 };
 use vercre_core::{err, Result};
 use vercre_vc::model::vc::VerifiableCredential;
+use vercre_vc::proof::jwt::{Header, Jwt};
 
 use crate::credential::Credential;
 use crate::provider::{

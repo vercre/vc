@@ -30,9 +30,9 @@ use vercre_core::error::Err;
 use vercre_core::provider::{Callback, ClientMetadata, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{ResponseRequest, ResponseResponse};
-use vercre_core::{err, jwt, Result};
+use vercre_core::{err, Result};
 use vercre_vc::model::vc::VerifiableCredential;
-use vercre_vc::proof::jwt::VpClaims;
+use vercre_vc::proof::jwt::{self, VpClaims};
 
 use super::Endpoint;
 use crate::state::State;
