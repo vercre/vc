@@ -1,6 +1,6 @@
 ---
-source: vercre-vp/src/create_request.rs
-assertion_line: 237
+source: vercre-verifier/src/create_request.rs
+assertion_line: 244
 expression: response
 ---
 request_object:

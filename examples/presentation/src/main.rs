@@ -23,10 +23,10 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
-use vercre_vp::create_request::{CreateRequestRequest, CreateRequestResponse};
-use vercre_vp::request::{RequestObjectRequest, RequestObjectResponse};
-use vercre_vp::response::ResponseRequest;
-use vercre_vp::Endpoint;
+use vercre_verifier::create_request::{CreateRequestRequest, CreateRequestResponse};
+use vercre_verifier::request::{RequestObjectRequest, RequestObjectResponse};
+use vercre_verifier::response::ResponseRequest;
+use vercre_verifier::Endpoint;
 
 #[tokio::main]
 async fn main() {
@@ -88,7 +88,7 @@ async fn response(
 // ----------------------------------------------------------------------------
 
 /// Axum response wrapper
-pub struct AxResult<T>(vercre_vp::Result<T>);
+pub struct AxResult<T>(vercre_verifier::Result<T>);
 
 impl<T> IntoResponse for AxResult<T>
 where
@@ -103,8 +103,8 @@ where
     }
 }
 
-impl<T> From<vercre_vp::Result<T>> for AxResult<T> {
-    fn from(val: vercre_vp::Result<T>) -> Self {
+impl<T> From<vercre_verifier::Result<T>> for AxResult<T> {
+    fn from(val: vercre_verifier::Result<T>) -> Self {
         Self(val)
     }
 }

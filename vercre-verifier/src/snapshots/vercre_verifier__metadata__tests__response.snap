@@ -1,5 +1,5 @@
 ---
-source: vercre-vp/src/metadata.rs
+source: vercre-verifier/src/metadata.rs
 assertion_line: 84
 expression: response
 ---

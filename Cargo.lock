@@ -4177,7 +4177,7 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
- "vercre-vp",
+ "vercre-verifier",
 ]
 
 [[package]]
@@ -6862,7 +6862,7 @@ dependencies = [
  "uuid",
  "vercre-core",
  "vercre-issuer",
- "vercre-vp",
+ "vercre-verifier",
  "wasm-bindgen",
  "web-sys",
 ]
@@ -6891,7 +6891,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "vercre-vp"
+name = "vercre-verifier"
 version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",

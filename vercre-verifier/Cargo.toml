@@ -1,5 +1,5 @@
 [package]
-name = "vercre-vp"
+name = "vercre-verifier"
 description = "OpenID for Verifiable Presentations"
 readme = "README.md"
 authors.workspace = true

@@ -235,7 +235,7 @@ impl VerifierClient for Provider {
             state,
         };
 
-        let response = vercre_vp::Endpoint::new(provider).request_object(&request).await?;
+        let response = vercre_verifier::Endpoint::new(provider).request_object(&request).await?;
         Ok(response)
     }
 
@@ -244,7 +244,7 @@ impl VerifierClient for Provider {
     ) -> Result<()> {
         use providers::presentation::Provider as PresentationProvider;
         let provider = PresentationProvider::new();
-        vercre_vp::Endpoint::new(provider).response(presentation).await?;
+        vercre_verifier::Endpoint::new(provider).response(presentation).await?;
         Ok(())
     }
 }
