@@ -19,7 +19,7 @@
                 }
             },
             "args": [],
-            "cwd": "${workspaceRoot}/vercre-vci",
+            "cwd": "${workspaceRoot}/vercre-issuer",
             // "envFile": "${workspaceRoot}/.env"
         },
         {
@@ -37,7 +37,7 @@
                 }
             },
             "args": [],
-            "cwd": "${workspaceRoot}/vercre-vp",
+            "cwd": "${workspaceRoot}/vercre-verifier",
             // "envFile": "${workspaceRoot}/.env"
         },
         {

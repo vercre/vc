@@ -10,11 +10,11 @@ An API for the issuance of Verifiable Credentials based on the [OpenID for Verif
 
 ## Getting Started
 
-An example impementation of a Verifiable Credential Issuance service can be found at: [Credential Issuance API](./vercre-vci/examples/http).
+An example impementation of a Verifiable Credential Issuance service can be found at: [Credential Issuance API](./examples/issuance).
 
-[Learn how to use `vercre-vci` in your project](https://vercre.io/issuance).
+[Learn how to use `vercre-issuer` in your project](https://vercre.io/issuance).
 
-[Read the API documentation](https://docs.rs/vercre-vci).
+[Read the API documentation](https://docs.rs/vercre-issuer).
 
 ## Additional
 

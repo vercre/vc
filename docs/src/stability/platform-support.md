@@ -24,7 +24,7 @@ TODO: complete this section
 
 ## Support for `#![no_std]`
 
-The `vercre-vci` crate supports being build on no\_std platforms in Rust, but
+The `vercre-issuer` crate supports being build on no\_std platforms in Rust, but
 only for a subset of its compile-time Cargo features. Currently supported features 
 are:
 

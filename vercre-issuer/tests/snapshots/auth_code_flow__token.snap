@@ -1,7 +1,7 @@
 ---
-source: vercre-vci/tests/auth_code_flow.rs
-assertion_line: 109
-expression: response
+source: vercre-issuer/tests/auth_code_flow.rs
+assertion_line: 107
+expression: "&response"
 ---
 access_token: "[access_token]"
 token_type: Bearer
@@ -15,4 +15,3 @@ authorization_details:
       type:
         - VerifiableCredential
         - EmployeeIDCredential
-

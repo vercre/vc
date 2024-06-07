@@ -12,7 +12,7 @@
 //!
 //! ** Endpoints **
 //!
-//! Similar to the `vercre-vci` and `vercre-vp` crates, the library is architected around the
+//! Similar to the `vercre-issuer` and `vercre-verifier` crates, the library is architected around the
 //! [OpenID4VCI] endpoints, each with its own `XxxRequest` and `XxxResponse` types. The types
 //! serialize to and from JSON, in accordance with the specification.
 //!

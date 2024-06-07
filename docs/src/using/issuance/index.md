@@ -1,7 +1,7 @@
 # Issuance
 
 Based on the [OpenID for Verifiable Credential Issuance](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
-specification, the [vercre-vci](https://github.com/vercre/vercre/tree/main/vercre-vci) 
+specification, the [vercre-issuer](https://github.com/vercre/vercre/tree/main/vercre-issuer) 
 library provides an API for issuing Verifiable Credentials.
 
 The API is comprised of the a set of endpoints, called in sequence to issue a Credential.

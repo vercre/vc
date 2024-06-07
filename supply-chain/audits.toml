@@ -1,7 +1,7 @@
 
 # cargo-vet audits file
 
-[[wildcard-audits.vercre-vci]]
+[[wildcard-audits.vercre-issuer]]
 who = "Andrew Weston <andrewweston@propellerhead.co.nz>"
 criteria = "safe-to-deploy"
 user-id = 1 # wasmtime-publish

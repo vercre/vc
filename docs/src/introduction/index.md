@@ -9,13 +9,13 @@ implementers to use only the modules needed.
 The three top-level Vercre libraries can be used independently or work together for an
 end-to-end Verifiable Data solution:
 
-- [`vercre-wallet`] — greatly simplifies building cross-platform wallets.
-- [`vercre-vci`] — for building credential issuance APIs.
-- [`vercre-vp`] — for building verifiable presentation APIs.
+- [`vercre-holder`] — greatly simplifies building cross-platform wallets.
+- [`vercre-issuer`] — for building credential issuance APIs.
+- [`vercre-verifier`] — for building verifiable presentation APIs.
 
-[`vercre-wallet`]: https://github.com/vercre/vercre/tree/main/vercre-wallet
-[`vercre-vci`]: https://github.com/vercre/vercre/tree/main/vercre-vci
-[`vercre-vp`]: https://github.com/vercre/vercre/tree/main/vercre-vp
+[`vercre-holder`]: https://github.com/vercre/vercre/tree/main/vercre-holder
+[`vercre-issuer`]: https://github.com/vercre/vercre/tree/main/vercre-issuer
+[`vercre-verifier`]: https://github.com/vercre/vercre/tree/main/vercre-verifier
 
 ## Shell
 
@@ -23,11 +23,11 @@ Each library requires a 'shell' to wrap and expose functionality. The shell is
 responsible for handling the application's specific requirements, such as user 
 interface, storage, and network communication.
 
-In the case of the server-side libraries (`vercre-vci` and `vercre-vp`), the shell is
-typically an HTTP server. While in the case of the client-side library 
-(`vercre-wallet`), the shell is typically a mobile or web application.
+In the case of the server-side libraries (`vercre-issuer` and `vercre-verifier`), the shell is
+typically an HTTP server. While in the case of the holder's agent library 
+(`vercre-holder`), the shell is typically a mobile or web application.
 
-Example 'shell' implementations can be found in each libraries `examples` directory.
+Example 'shell' implementations can be found in the `examples` directory.
 
 ## Implementation
 

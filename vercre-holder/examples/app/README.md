@@ -1,4 +1,6 @@
-# Wallet App
+# Wallet App - Deprecated
+
+TODO: Parts of this content need to be moved to a new README in the /examples/wallet directory and this example deleted.
 
 Tauri + React + Typescript
 
@@ -20,7 +22,7 @@ OR use VS Code debugger with the `Tauri Bundle` launch configuration.
 
 ### Issuance
 
-Launch the `vercre-vci/examples/http` server. It runs on port 8080 by default.
+Launch the `vercre-issuer/examples/http` server. It runs on port 8080 by default.
 
 Once both the VCI server and Tauri app are running, the issuance process can be 
 initiated by sending a Credential Offer to the wallet.

@@ -10,9 +10,9 @@ Shared types and logic for higher order `vercre-xxx` crates.
 
 This crate is primarily of interest to developers using any of the following crates to deliver **OpenID for Verifiable Credentials** solutions:
 
-- [`vercre-wallet`](../vercre-wallet/) — a library that greatly simplifies building cross-platform wallets.
-- [`vercre-vci`](../vercre-vci/) — a library for building credential issuance APIs.
-- [`vercre-vp`](../vercre-vp/) — a library for building verifiable presentation APIs.
+- [`vercre-holder`](../../vercre-holder/) — a library that greatly simplifies building cross-platform wallets.
+- [`vercre-issuer`](../../vercre-issuer/) — a library for building credential issuance APIs.
+- [`vercre-verifier`](../../vercre-verifier/) — a library for building verifiable presentation APIs.
 
 ## Additional
 
