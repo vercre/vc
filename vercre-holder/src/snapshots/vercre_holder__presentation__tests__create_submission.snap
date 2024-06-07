@@ -1,6 +1,6 @@
 ---
-source: vercre-wallet/src/presentation.rs
-assertion_line: 501
+source: vercre-holder/src/presentation.rs
+assertion_line: 503
 expression: "&submission"
 ---
 id: "[id]"

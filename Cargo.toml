@@ -7,7 +7,7 @@ members = [
     "examples/wallet/src-tauri",
     "vercre-vci",
     "vercre-vp",
-    "vercre-wallet"
+    "vercre-holder"
 ]
 resolver = "2"
 

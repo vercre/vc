@@ -1,6 +1,6 @@
 pub use stronghold::Stronghold;
 use tauri::Manager;
-use vercre_wallet::signer::{SignerRequest, SignerResponse};
+use vercre_holder::signer::{SignerRequest, SignerResponse};
 
 use crate::error;
 

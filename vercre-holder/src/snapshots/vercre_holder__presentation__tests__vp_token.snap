@@ -1,5 +1,5 @@
 ---
-source: vercre-wallet/src/presentation.rs
+source: vercre-holder/src/presentation.rs
 assertion_line: 522
 expression: "&token"
 ---

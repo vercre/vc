@@ -38,7 +38,7 @@ tauri-plugin-http = "2.0.0-beta.5"
 tauri-plugin-log = "2.0.0-beta.6"
 tauri-plugin-shell = "2.0.0-beta.6"
 tauri-plugin-store = "2.0.0-beta.5"
-vercre-wallet = { path = "../../../vercre-wallet" }
+vercre-holder = { path = "../../../vercre-holder" }
 
 [build-dependencies]
 tauri-build = { version = "2.0.0-beta.17", features = [] }

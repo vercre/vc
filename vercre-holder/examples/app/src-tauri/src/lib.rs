@@ -9,9 +9,9 @@
 // use lazy_static::lazy_static;
 // use tauri::{AppHandle, Manager};
 // use tauri_plugin_log::{Target, TargetKind};
-// use vercre_wallet::signer::SignerResponse;
-// use vercre_wallet::store::StoreResponse;
-// use vercre_wallet::{credential, issuance, presentation, App, Capabilities, Core, Effect, Event};
+// use vercre_holder::signer::SignerResponse;
+// use vercre_holder::store::StoreResponse;
+// use vercre_holder::{credential, issuance, presentation, App, Capabilities, Core, Effect, Event};
 
 // lazy_static! {
 //     static ref CORE: Arc<Core<Effect, App>> = Arc::new(Core::new::<Capabilities>());

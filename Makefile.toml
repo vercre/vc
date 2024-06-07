@@ -22,7 +22,7 @@ dependencies = ["clean-tauri"]
 
 [tasks.clean-tauri]
 script = '''
-  cd vercre-wallet/examples/app
+  cd examples/wallet/src-tauri
   cargo clean
 '''
 
@@ -60,7 +60,7 @@ dependencies = ["update-tauri"]
 
 [tasks.update-tauri]
 script = '''
-  cd vercre-wallet/examples/app
+  cd examples/wallet/src-tauri
   cargo update
 '''
 
@@ -71,7 +71,7 @@ dependencies = ["upgrade-tauri"]
 
 [tasks.upgrade-tauri]
 script = '''
-  cd vercre-wallet/examples/app
+  cd examples/wallet/src-tauri
   cargo upgrade
 '''
 
@@ -102,7 +102,7 @@ args = ["semver-checks"]
 install_crate = "cargo-semver-checks"
 
 [tasks.pre-pub]
-run_task = { name = ["pre-pub-core", "pre-pub-vci", "pre-pub-vp", "pre-pub-wallet"], parallel = true }
+run_task = { name = ["pre-pub-core", "pre-pub-vci", "pre-pub-vp", "pre-pub-holder"], parallel = true }
 
 [tasks.pre-pub-core]
 command = "cargo"
@@ -116,9 +116,9 @@ args = ["publish", "--allow-dirty", "--dry-run", "--package", "vercre-vci"]
 command = "cargo"
 args = ["publish", "--allow-dirty", "--dry-run", "--package", "vercre-vp"]
 
-[tasks.pre-pub-wallet]
+[tasks.pre-pub-holder]
 command = "cargo"
-args = ["publish", "--allow-dirty", "--dry-run", "--package", "vercre-wallet"]
+args = ["publish", "--allow-dirty", "--dry-run", "--package", "vercre-holder"]
 
 # args = release level: one of `release`, `major`, `minor`, `patch`, `alpha`, `beta`, `rc`
 [tasks.release]

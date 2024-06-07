@@ -1,4 +1,4 @@
-// use vercre_wallet::http::protocol::{HttpRequest, HttpResponse, HttpResult};
+// use vercre_holder::http::protocol::{HttpRequest, HttpResponse, HttpResult};
 
 // use crate::error;
 

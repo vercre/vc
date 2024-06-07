@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use tauri::Manager;
 use tauri_plugin_store::{with_store, StoreCollection};
-use vercre_wallet::store::{StoreEntry, StoreRequest, StoreResponse};
+use vercre_holder::store::{StoreEntry, StoreRequest, StoreResponse};
 
 use crate::error;
 

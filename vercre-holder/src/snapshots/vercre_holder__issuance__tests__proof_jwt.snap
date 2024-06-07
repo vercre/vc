@@ -1,6 +1,6 @@
 ---
-source: vercre-wallet/src/issuance.rs
-assertion_line: 486
+source: vercre-holder/src/issuance.rs
+assertion_line: 481
 expression: "&jwt"
 ---
 header:

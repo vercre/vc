@@ -1,7 +1,7 @@
 [package]
-description = "OpenID compliant Verifiable Credential wallet"
+description = "OpenID compliant Verifiable Credential holder API"
 license = "MIT OR Apache-2.0"
-name = "vercre-wallet"
+name = "vercre-holder"
 readme = "README.md"
 
 authors.workspace = true

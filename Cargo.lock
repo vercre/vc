@@ -1753,7 +1753,7 @@ dependencies = [
  "tauri-plugin-log",
  "tauri-plugin-shell",
  "tauri-plugin-store",
- "vercre-wallet",
+ "vercre-holder",
 ]
 
 [[package]]
@@ -6828,6 +6828,46 @@ dependencies = [
 ]
 
 [[package]]
+name = "vercre-holder"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "assert_let_bind",
+ "async-trait",
+ "axum",
+ "axum-extra",
+ "axum-test",
+ "base64ct",
+ "chrono",
+ "crux_core 0.7.6",
+ "crux_http",
+ "ed25519-dalek",
+ "insta",
+ "lazy_static",
+ "log",
+ "olpc-cjson",
+ "providers",
+ "serde",
+ "serde_json",
+ "serde_qs 0.13.0",
+ "serde_urlencoded",
+ "test-utils",
+ "thiserror",
+ "tokio",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "uniffi",
+ "urlencoding",
+ "uuid",
+ "vercre-core",
+ "vercre-vci",
+ "vercre-vp",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "vercre-vci"
 version = "0.1.0-alpha.4"
 dependencies = [
@@ -6870,46 +6910,6 @@ dependencies = [
  "tracing",
  "uuid",
  "vercre-core",
-]
-
-[[package]]
-name = "vercre-wallet"
-version = "0.1.0-alpha.4"
-dependencies = [
- "anyhow",
- "assert_let_bind",
- "async-trait",
- "axum",
- "axum-extra",
- "axum-test",
- "base64ct",
- "chrono",
- "crux_core 0.7.6",
- "crux_http",
- "ed25519-dalek",
- "insta",
- "lazy_static",
- "log",
- "olpc-cjson",
- "providers",
- "serde",
- "serde_json",
- "serde_qs 0.13.0",
- "serde_urlencoded",
- "test-utils",
- "thiserror",
- "tokio",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "uniffi",
- "urlencoding",
- "uuid",
- "vercre-core",
- "vercre-vci",
- "vercre-vp",
- "wasm-bindgen",
- "web-sys",
 ]
 
 [[package]]

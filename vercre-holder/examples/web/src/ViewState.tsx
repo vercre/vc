@@ -10,7 +10,7 @@ import {
 
 import * as bin from 'shared_types/bincode/mod';
 import * as st from 'shared_types/types/shared_types';
-import init_core, { handle_response, process_event, view } from 'vercre-wallet/vercre_wallet';
+import init_core, { handle_response, process_event, view } from 'vercre-wallet/vercre_holder';
 
 import { request as http } from './capabilities/http';
 import { signer } from './capabilities/signer';

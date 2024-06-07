@@ -12,10 +12,10 @@
 // use serde_json::{json, Value};
 // use test_utils::wallet_provider::wallet;
 // use vercre_core::vp::{CreateRequestResponse, RequestObjectResponse, ResponseRequest};
-// use vercre_wallet::capabilities::signer::{SignerRequest, SignerResponse};
-// use vercre_wallet::capabilities::store::{StoreEntry, StoreRequest, StoreResponse};
-// use vercre_wallet::credential::Credential;
-// use vercre_wallet::presentation::*;
+// use vercre_holder::capabilities::signer::{SignerRequest, SignerResponse};
+// use vercre_holder::capabilities::store::{StoreEntry, StoreRequest, StoreResponse};
+// use vercre_holder::credential::Credential;
+// use vercre_holder::presentation::*;
 
 // // Test that a 'cross-device' authorization (presentation) request event results in
 // // the requested VC's being presented.

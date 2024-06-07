@@ -1,6 +1,6 @@
 ---
-source: vercre-wallet/src/issuance.rs
-assertion_line: 462
+source: vercre-holder/src/issuance.rs
+assertion_line: 460
 expression: "&token_req"
 ---
 client_id: 96bfb9cb-0513-7d64-5532-bed74c48f9ab

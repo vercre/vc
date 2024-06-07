@@ -10,7 +10,7 @@ use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, State};
 use tauri_plugin_log::{Target, TargetKind};
-use vercre_wallet::issuance::Status;
+use vercre_holder::issuance::Status;
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 struct Model {
