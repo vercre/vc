@@ -1,6 +1,6 @@
 //! # Create Request Endpoint
 //!
-//! This endpoint is used to prepare an [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html) 
+//! This endpoint is used to prepare an [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html)
 //! Authorization Request to use to request Verifiable Presentations from an End-User's Wallet.
 //!
 //! While based on the [OpenID4VP](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
@@ -47,7 +47,7 @@ use anyhow::anyhow;
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
-use vercre_core::provider::{Algorithm, Callback, Client, Signer, StateManager};
+use vercre_core::provider::{Algorithm, Callback, ClientMetadata, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{CreateRequestRequest, CreateRequestResponse, DeviceFlow, RequestObject};
 use vercre_core::w3c::vp::{Format, PresentationDefinition};
@@ -81,7 +81,7 @@ use crate::state::State;
 /// `CreateRequest` Request handler.
 impl<P> Endpoint<P>
 where
-    P: Client + StateManager + Signer + Callback + Clone + Debug,
+    P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Initiate an Authorization Request flow.
     ///
@@ -110,7 +110,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Client + StateManager + Clone + Debug,
+    P: ClientMetadata + StateManager + Clone + Debug,
 {
     type Provider = P;
     type Request = CreateRequestRequest;
@@ -150,7 +150,7 @@ where
         let state_key = gen::state_key();
 
         // get client metadata
-        let Ok(client_meta) = Client::metadata(provider, &request.client_id).await else {
+        let Ok(client_meta) = ClientMetadata::metadata(provider, &request.client_id).await else {
             err!(Err::InvalidRequest, "invalid client_id");
         };
 
@@ -193,8 +193,8 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use serde_json::json;
     use providers::presentation::Provider;
+    use serde_json::json;
 
     use super::*;
 

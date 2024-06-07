@@ -70,7 +70,9 @@ use anyhow::anyhow;
 use chrono::Utc;
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, Client, Subject, Issuer, Server, Signer, StateManager};
+use vercre_core::provider::{
+    Callback, ClientMetadata, Issuer, Server, Signer, StateManager, Subject,
+};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vci::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer, Grants,
@@ -83,7 +85,15 @@ use crate::state::{Auth, Expire, State};
 
 impl<P> Endpoint<P>
 where
-    P: Client + Issuer + Server + Subject + StateManager + Signer + Callback + Clone + Debug,
+    P: ClientMetadata
+        + Issuer
+        + Server
+        + Subject
+        + StateManager
+        + Signer
+        + Callback
+        + Clone
+        + Debug,
 {
     /// Invoke request handler generates and returns a Credential Offer.
     ///
@@ -179,9 +189,7 @@ where
                 Some(TxCode {
                     input_mode: Some("numeric".into()),
                     length: Some(6),
-                    description: Some(
-                        "Please provide the one-time code received".into(),
-                    ),
+                    description: Some("Please provide the one-time code received".into()),
                 })
             } else {
                 None
@@ -239,8 +247,8 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use serde_json::json;
     use providers::issuance::{Provider, ISSUER, NORMAL_USER};
+    use serde_json::json;
 
     use super::*;
 

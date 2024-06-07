@@ -9,7 +9,7 @@ use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
 use vercre_core::callback::Payload;
 use vercre_core::metadata::{self, VpFormat};
-use vercre_core::provider::{Algorithm, Callback, Client, Result, Signer, StateManager};
+use vercre_core::provider::{Algorithm, Callback, ClientMetadata, Result, Signer, StateManager};
 use vercre_core::vci::{Format, GrantType};
 
 pub const VERIFIER: &str = "http://vercre.io";
@@ -35,7 +35,7 @@ impl Provider {
     }
 }
 
-impl Client for Provider {
+impl ClientMetadata for Provider {
     async fn metadata(&self, client_id: &str) -> Result<metadata::Client> {
         self.client.get(client_id)
     }

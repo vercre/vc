@@ -18,7 +18,9 @@ use base64ct::{Base64UrlUnpadded, Encoding};
 use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, Client, Subject, Issuer, Server, Signer, StateManager};
+use vercre_core::provider::{
+    Callback, ClientMetadata, Issuer, Server, Signer, StateManager, Subject,
+};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vci::{AuthorizationDetailType, TokenRequest, TokenResponse};
 use vercre_core::vci::{GrantType, TokenType};
@@ -29,7 +31,15 @@ use crate::state::{Expire, State, Token};
 
 impl<P> Endpoint<P>
 where
-    P: Client + Issuer + Server + Subject + StateManager + Signer + Callback + Clone + Debug,
+    P: ClientMetadata
+        + Issuer
+        + Server
+        + Subject
+        + StateManager
+        + Signer
+        + Callback
+        + Clone
+        + Debug,
 {
     /// Token request handler.
     ///
@@ -67,7 +77,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Client + Issuer + Server + Subject + StateManager + Signer + Debug,
+    P: ClientMetadata + Issuer + Server + Subject + StateManager + Signer + Debug,
 {
     type Provider = P;
     type Request = TokenRequest;
@@ -196,9 +206,9 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use serde_json::json;
     use providers::issuance::{Provider, ISSUER, NORMAL_USER};
     use providers::wallet;
+    use serde_json::json;
     use vercre_core::metadata::CredentialDefinition;
     use vercre_core::vci::{AuthorizationDetail, Format, TokenAuthorizationDetail};
 

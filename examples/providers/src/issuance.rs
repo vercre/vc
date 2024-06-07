@@ -10,11 +10,11 @@ use k256::Secp256k1;
 use serde_json::Value;
 use uuid::Uuid;
 use vercre_core::callback::Payload;
-use vercre_core::subject;
 use vercre_core::metadata::{self, CredentialDefinition};
 use vercre_core::provider::{
-    Algorithm, Callback, Client, Subject, Issuer, Result, Server, Signer, StateManager,
+    Algorithm, Callback, ClientMetadata, Issuer, Result, Server, Signer, StateManager, Subject,
 };
+use vercre_core::subject;
 use vercre_core::vci::GrantType;
 
 use crate::wallet;
@@ -52,7 +52,7 @@ impl Provider {
     }
 }
 
-impl Client for Provider {
+impl ClientMetadata for Provider {
     async fn metadata(&self, client_id: &str) -> Result<metadata::Client> {
         self.client.get(client_id)
     }
@@ -76,7 +76,9 @@ impl Server for Provider {
 
 impl Subject for Provider {
     /// Authorize issuance of the specified credential for the holder.
-    async fn authorize(&self, holder_subject: &str, credential_configuration_id: &str) -> Result<bool> {
+    async fn authorize(
+        &self, holder_subject: &str, credential_configuration_id: &str,
+    ) -> Result<bool> {
         self.subject.authorize(holder_subject, credential_configuration_id)
     }
 
@@ -233,10 +235,13 @@ impl SubjectStore {
         Ok(true)
     }
 
-    fn get_claims(&self, holder_subject: &str, credential: &CredentialDefinition) -> subject::Claims {
+    fn get_claims(
+        &self, holder_subject: &str, credential: &CredentialDefinition,
+    ) -> subject::Claims {
         // get holder subject while allowing mutex to go out of scope and release
         // lock so we can take another lock for insert further down
-        let subject = self.subjects.lock().expect("should lock").get(holder_subject).unwrap().clone();
+        let subject =
+            self.subjects.lock().expect("should lock").get(holder_subject).unwrap().clone();
 
         // populate requested claims for subject
         let mut claims = HashMap::new();

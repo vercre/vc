@@ -166,7 +166,7 @@ mod state;
 use std::fmt::Debug;
 
 pub use vercre_core::error::Error;
-use vercre_core::provider::{Callback, Client, Signer, StateManager};
+use vercre_core::provider::{Callback, ClientMetadata, Signer, StateManager};
 pub use vercre_core::vci::{Format, GrantType};
 pub use vercre_core::{callback, provider, Result};
 
@@ -193,7 +193,7 @@ where
 /// to the request.
 impl<P> Endpoint<P>
 where
-    P: Client + StateManager + Signer + Callback + Clone + Debug,
+    P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Create a new endpoint instance.
     pub const fn new(provider: P) -> Self {
@@ -203,7 +203,7 @@ where
 
 impl<P> vercre_core::Endpoint for Endpoint<P>
 where
-    P: Client + StateManager + Signer + Callback + Clone + Debug,
+    P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
 {
     type Provider = P;
 
@@ -248,7 +248,7 @@ mod tests {
 
     impl<P> Endpoint<P>
     where
-        P: Client + StateManager + Signer + Callback + Clone + Debug,
+        P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
     {
         async fn test(&mut self, request: &TestRequest) -> Result<TestResponse> {
             let ctx = Context {
@@ -265,7 +265,7 @@ mod tests {
 
     impl<P> vercre_core::Context for Context<P>
     where
-        P: Client + StateManager + Signer + Callback + Clone + Debug,
+        P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
     {
         type Provider = P;
         type Request = TestRequest;

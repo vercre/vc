@@ -9,7 +9,7 @@ use std::fmt::Debug;
 
 use tracing::instrument;
 pub use vercre_core::metadata as types;
-use vercre_core::provider::{Callback, Client, Signer, StateManager};
+use vercre_core::provider::{Callback, ClientMetadata, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{MetadataRequest, MetadataResponse};
 use vercre_core::Result;
@@ -19,7 +19,7 @@ use super::Endpoint;
 /// Metadata request handler.
 impl<P> Endpoint<P>
 where
-    P: Client + StateManager + Signer + Callback + Clone + Debug,
+    P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Endpoint for Wallets to request Verifier (Client) metadata.
     ///
@@ -44,7 +44,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Client + StateManager + Signer + Callback + Clone + Debug,
+    P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
 {
     type Provider = P;
     type Request = MetadataRequest;
@@ -59,7 +59,7 @@ where
         tracing::debug!("Context::process");
 
         Ok(MetadataResponse {
-            client: Client::metadata(provider, &req.client_id).await?,
+            client: ClientMetadata::metadata(provider, &req.client_id).await?,
         })
     }
 }

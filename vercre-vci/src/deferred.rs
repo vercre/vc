@@ -13,7 +13,9 @@ use std::fmt::Debug;
 use anyhow::anyhow;
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, Client, Subject, Issuer, Server, Signer, StateManager};
+use vercre_core::provider::{
+    Callback, ClientMetadata, Issuer, Server, Signer, StateManager, Subject,
+};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vci::{DeferredCredentialRequest, DeferredCredentialResponse};
 use vercre_core::{err, Result};
@@ -23,7 +25,15 @@ use crate::state::State;
 
 impl<P> Endpoint<P>
 where
-    P: Client + Issuer + Server + Subject + StateManager + Signer + Callback + Clone + Debug,
+    P: ClientMetadata
+        + Issuer
+        + Server
+        + Subject
+        + StateManager
+        + Signer
+        + Callback
+        + Clone
+        + Debug,
 {
     /// Deferred credential request handler.
     ///
@@ -59,7 +69,15 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Client + Issuer + Server + Subject + StateManager + Signer + Callback + Clone + Debug,
+    P: ClientMetadata
+        + Issuer
+        + Server
+        + Subject
+        + StateManager
+        + Signer
+        + Callback
+        + Clone
+        + Debug,
 {
     type Provider = P;
     type Request = DeferredCredentialRequest;

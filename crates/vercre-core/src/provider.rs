@@ -6,26 +6,23 @@ use std::future::{Future, IntoFuture};
 use chrono::{DateTime, Utc};
 
 use crate::callback;
-use crate::subject::Claims;
 use crate::metadata::{
-    Client as ClientMetadata, CredentialDefinition, Issuer as IssuerMetadata,
-    Server as ServerMetadata,
+    Client, CredentialDefinition, Issuer as IssuerMetadata, Server as ServerMetadata,
 };
+use crate::subject::Claims;
 
 /// Result is used for all external errors.
 pub type Result<T> = anyhow::Result<T>;
 
-/// The Client trait is used by implementers to provide Client metadata to the
+/// The `ClientMetadata` trait is used by implementers to provide `Client` metadata to the
 /// library.
-pub trait Client: Send + Sync {
+pub trait ClientMetadata: Send + Sync {
     /// Returns client metadata for the specified client.
-    fn metadata(&self, client_id: &str) -> impl Future<Output = Result<ClientMetadata>> + Send;
+    fn metadata(&self, client_id: &str) -> impl Future<Output = Result<Client>> + Send;
 
     /// Used by OAuth 2.0 clients to dynamically register with the authorization
     /// server.
-    fn register(
-        &self, client_meta: &ClientMetadata,
-    ) -> impl Future<Output = Result<ClientMetadata>> + Send;
+    fn register(&self, client_meta: &Client) -> impl Future<Output = Result<Client>> + Send;
 }
 
 /// The Issuer trait is used by implementers to provide Credential Issuer

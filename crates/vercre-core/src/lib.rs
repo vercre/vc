@@ -7,12 +7,12 @@
 pub mod callback;
 pub mod error;
 pub mod gen;
-pub mod subject;
 pub mod jwt;
 pub mod metadata;
 pub mod proof;
 pub mod provider;
 pub mod stringify;
+pub mod subject;
 pub mod vci;
 pub mod vp;
 pub mod w3c;

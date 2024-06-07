@@ -60,7 +60,7 @@ pub mod wallet {
         let bytes: [u8; 32] = decoded.as_slice().try_into().expect("should convert ");
         let signing_key = SigningKey::from_bytes(&bytes);
         let sig: Signature = signing_key.sign(msg);
-    
+
         sig.to_vec()
     }
 }

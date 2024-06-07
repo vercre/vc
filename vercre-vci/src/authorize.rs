@@ -77,7 +77,9 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::metadata::Issuer as IssuerMetadata;
-use vercre_core::provider::{Callback, Client, Subject, Issuer, Server, Signer, StateManager};
+use vercre_core::provider::{
+    Callback, ClientMetadata, Issuer, Server, Signer, StateManager, Subject,
+};
 use vercre_core::vci::GrantType;
 pub use vercre_core::vci::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
@@ -90,7 +92,15 @@ use crate::state::{Auth, Expire, State};
 
 impl<P> Endpoint<P>
 where
-    P: Client + Issuer + Server + Subject + StateManager + Signer + Callback + Clone + Debug,
+    P: ClientMetadata
+        + Issuer
+        + Server
+        + Subject
+        + StateManager
+        + Signer
+        + Callback
+        + Clone
+        + Debug,
 {
     /// Authorization request handler.
     ///
@@ -134,7 +144,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Client + Server + Subject + StateManager + Debug,
+    P: ClientMetadata + Server + Subject + StateManager + Debug,
 {
     type Provider = P;
     type Request = AuthorizationRequest;
@@ -149,7 +159,7 @@ where
     ) -> Result<&Self> {
         tracing::debug!("Context::verify");
 
-        let Ok(client_meta) = Client::metadata(provider, &request.client_id).await else {
+        let Ok(client_meta) = ClientMetadata::metadata(provider, &request.client_id).await else {
             err!(Err::InvalidClient, "invalid client_id");
         };
         let server_meta = Server::metadata(provider, &request.credential_issuer).await?;
@@ -308,7 +318,7 @@ where
 
 impl<P> Context<P>
 where
-    P: Client + Server + Subject + StateManager + Debug,
+    P: ClientMetadata + Server + Subject + StateManager + Debug,
 {
     // Verify Credentials requested in `authorization_details` are supported.
     //
@@ -402,9 +412,9 @@ mod tests {
     use base64ct::{Base64UrlUnpadded, Encoding};
     use insta::assert_yaml_snapshot as assert_snapshot;
     use providers::issuance::{Provider, ISSUER, NORMAL_USER};
+    use providers::wallet;
     use serde_json::json;
     use sha2::{Digest, Sha256};
-    use providers::wallet;
 
     use super::*;
 

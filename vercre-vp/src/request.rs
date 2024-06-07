@@ -3,9 +3,9 @@
 //! This endpoint is used by the Wallet to retrieve a previously created Authorization
 //! Request Object.
 //!
-//! The Request Object is created by the Verifier when calling the `Create Request` 
-//! endpoint to create an Authorization Request. Instead of sending the Request 
-//! Object to the Wallet, the Verifier sends an Authorization Request containing a 
+//! The Request Object is created by the Verifier when calling the `Create Request`
+//! endpoint to create an Authorization Request. Instead of sending the Request
+//! Object to the Wallet, the Verifier sends an Authorization Request containing a
 //! `request_uri` which can be used to retrieve the saved Request Object.
 //!
 //! Per the [JWT VC Presentation Profile], the Request Object MUST be returned as an
@@ -18,7 +18,7 @@ use std::fmt::Debug;
 use anyhow::anyhow;
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, Client, Signer, StateManager};
+use vercre_core::provider::{Callback, ClientMetadata, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{RequestObjectRequest, RequestObjectResponse};
 use vercre_core::{err, Result};
@@ -29,7 +29,7 @@ use crate::state::State;
 /// Request Object request handler.
 impl<P> Endpoint<P>
 where
-    P: Client + StateManager + Signer + Callback + Clone + Debug,
+    P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Endpoint for the Wallet to request the Verifier's Request Object when engaged
     /// in a cross-device flow.
@@ -56,7 +56,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Client + StateManager + Signer + Callback + Clone + Debug,
+    P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
 {
     type Provider = P;
     type Request = RequestObjectRequest;

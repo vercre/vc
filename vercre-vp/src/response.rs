@@ -27,7 +27,7 @@ use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, Client, Signer, StateManager};
+use vercre_core::provider::{Callback, ClientMetadata, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{ResponseRequest, ResponseResponse};
 use vercre_core::w3c::{Claims as VpClaims, VerifiableCredential};
@@ -39,7 +39,7 @@ use crate::state::State;
 /// Authorization Response request handler.
 impl<P> Endpoint<P>
 where
-    P: Client + StateManager + Signer + Callback + Clone + Debug,
+    P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Endpoint for the Wallet to respond Verifier's Authorization Request.
     ///
@@ -76,7 +76,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Client + StateManager + Signer + Callback + Clone + Debug,
+    P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
 {
     type Provider = P;
     type Request = ResponseRequest;
@@ -245,8 +245,8 @@ where
 #[cfg(test)]
 mod tests {
     use lazy_static::lazy_static;
-    use serde_json::json;
     use providers::presentation::Provider;
+    use serde_json::json;
     use vercre_core::vp::RequestObject;
     use vercre_core::w3c::vp::PresentationDefinition;
 
