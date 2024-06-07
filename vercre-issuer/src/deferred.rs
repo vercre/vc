@@ -133,7 +133,7 @@ mod tests {
     use providers::wallet;
     use serde_json::json;
     use vercre_core::vci::{CredentialRequest, ProofClaims};
-    use vercre_vc::proof::jwt::{self, Jwt, VcClaims};
+    use vercre_vc::proof::jose::{self, Jwt, VcClaims};
 
     use super::*;
     use crate::state::{Deferred, Expire, Token};
@@ -150,7 +150,7 @@ mod tests {
 
         // create CredentialRequest to 'send' to the app
         let jwt_enc = Jwt {
-            header: jwt::Header {
+            header: jose::Header {
                 typ: "openid4vci-proof+jwt".into(),
                 alg: wallet::alg(),
                 kid: wallet::kid(),

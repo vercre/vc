@@ -390,12 +390,11 @@ dependencies = [
 
 [[package]]
 name = "axum-test"
-version = "14.10.0"
+version = "15.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "167294800740b4b6bc7bfbccbf3a1d50a6c6e097342580ec4c11d1672e456292"
+checksum = "b6eaf3651cc3b15185c6033db9cc40676b02ffaa69278679c5f018de2bcae598"
 dependencies = [
  "anyhow",
- "async-trait",
  "auto-future",
  "axum",
  "bytes",
@@ -757,9 +756,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.0.98"
+version = "1.0.99"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41c270e7540d725e65ac7f1b212ac8ce349719624d7bcff99f8e2e488e8cf03f"
+checksum = "96c51067fd44124faa7f870b4b1c969379ad32b2ba805aa959430ceaa384f695"
 
 [[package]]
 name = "cesu8"
@@ -1126,26 +1125,6 @@ checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
 
 [[package]]
 name = "crux_core"
-version = "0.7.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f157ec86b27a717edd3e740dd6bb298f5bcd7f27720c1bf671e9700b5d6072a5"
-dependencies = [
- "anyhow",
- "bincode",
- "crossbeam-channel",
- "crux_macros",
- "erased-serde",
- "futures",
- "serde",
- "serde-generate",
- "serde-reflection",
- "serde_json",
- "thiserror",
- "uuid",
-]
-
-[[package]]
-name = "crux_core"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2cbc7f23786d97287a7f9221a7f255639e7eaae4a109394e0a00e71a41c544ce"
@@ -1157,6 +1136,8 @@ dependencies = [
  "erased-serde",
  "futures",
  "serde",
+ "serde-generate",
+ "serde-reflection",
  "serde_json",
  "slab",
  "thiserror",
@@ -1170,7 +1151,7 @@ checksum = "cc0253f5bbbb7ebc428c4ce4c9c65f45dd84b26bb386bf04afd492cac98588cc"
 dependencies = [
  "anyhow",
  "async-trait",
- "crux_core 0.8.0",
+ "crux_core",
  "derive_builder",
  "futures-util",
  "http-types-red-badger-temporary-fork",
@@ -1561,9 +1542,9 @@ checksum = "dcbb2bf8e87535c23f7a8a321e364ce21462d0ff10cb6407820e8e96dfff6653"
 
 [[package]]
 name = "dtoa-short"
-version = "0.3.4"
+version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dbaceec3c6e4211c79e7b1800fb9680527106beb2f9c51904a3210c03a448c74"
+checksum = "cd1511a7b6a56299bd043a9c167a6d2bfb37bf84a6dfceaba651168adfb43c87"
 dependencies = [
  "dtoa",
 ]
@@ -6770,8 +6751,6 @@ checksum = "a183cf7feeba97b4dd1c0d46788634f6221d87fa961b305bed08c851829efcc0"
 dependencies = [
  "getrandom 0.2.15",
  "rand 0.8.5",
- "serde",
- "wasm-bindgen",
 ]
 
 [[package]]
@@ -6831,7 +6810,7 @@ dependencies = [
  "axum-test",
  "base64ct",
  "chrono",
- "crux_core 0.7.6",
+ "crux_core",
  "crux_http",
  "ed25519-dalek",
  "insta",
@@ -6887,7 +6866,7 @@ dependencies = [
 [[package]]
 name = "vercre-vc"
 version = "0.1.0"
-source = "git+https://github.com/vercre/vercre-vc#340af1e909cd5240dcba57cafcc591b4c2d402c4"
+source = "git+https://github.com/vercre/vercre-vc#e0416c3b64d4d508c88a2041c705cb2ea0b9afe4"
 dependencies = [
  "anyhow",
  "base64ct",
@@ -7319,9 +7298,9 @@ dependencies = [
 
 [[package]]
 name = "windows-registry"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f721bc2e55efb506a1a395a545cb76c2481fb023d33b51f0050e7888716281cf"
+checksum = "acc134c90a0318d873ec962b13149e9c862ff0d2669082a709a4810167a3c6ee"
 dependencies = [
  "windows-result",
  "windows-targets 0.52.5",
@@ -7329,9 +7308,9 @@ dependencies = [
 
 [[package]]
 name = "windows-result"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "749f0da9cc72d82e600d8d2e44cadd0b9eedb9038f71a1c58556ac1c5791813b"
+checksum = "5e383302e8ec8515204254685643de10811af0ed97ea37210dc26fb0032647f8"
 dependencies = [
  "windows-targets 0.52.5",
 ]

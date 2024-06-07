@@ -15,7 +15,6 @@ version.workspace = true
 
 [lib]
 bench = false
-# crate-type = ["cdylib", "rlib"]
 
 [[bench]]
 bench = true

@@ -17,7 +17,7 @@ use vercre_core::vci::{
 };
 use vercre_core::{err, Result};
 use vercre_vc::model::vc::VerifiableCredential;
-use vercre_vc::proof::jwt::{Header, Jwt};
+use vercre_vc::proof::jose::{Header, Jwt};
 
 use crate::credential::Credential;
 use crate::provider::{

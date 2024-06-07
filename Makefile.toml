@@ -27,7 +27,7 @@ dependencies = ["clean"]
 [tasks.test]
 command = "cargo"
 args = ["nextest", "run"]
-dependencies = ["clean"]
+# dependencies = ["clean"]
 env = { RUSTFLAGS = "-Dwarnings" }
 
 # -----------------------------------------------------------------------------
@@ -39,8 +39,6 @@ command = "cargo"
 args = ["fmt", "--all"]
 install_crate = "rustfmt"
 
-# clippy::all = correctness, suspicious, style, complexity, perf
-# not using (yet) -Dclippy::restriction
 [tasks.lint]
 command = "cargo"
 args = ["clippy"]

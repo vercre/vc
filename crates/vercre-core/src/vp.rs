@@ -11,7 +11,7 @@ use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use vercre_vc::model::vp::{InputDescriptor, PresentationDefinition, PresentationSubmission};
-use vercre_vc::proof::jwt::{self, Jwt};
+use vercre_vc::proof::jose::{self, Jwt};
 
 use crate::error::Err;
 use crate::metadata::Client as ClientMetadata;
@@ -334,8 +334,8 @@ impl RequestObject {
     ///
     /// Returns an `Err::ServerError` error if the Request Object cannot be serialized.
     pub fn to_jwt(&self) -> Result<Jwt<Self>> {
-        Ok(jwt::Jwt {
-            header: jwt::Header::default(),
+        Ok(Jwt {
+            header: jose::Header::default(),
             claims: self.clone(),
         })
     }

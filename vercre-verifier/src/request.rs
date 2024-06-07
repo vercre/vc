@@ -100,7 +100,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use providers::presentation::{Provider, VERIFIER};
     use vercre_core::vp::RequestObject;
-    use vercre_vc::proof::jwt::Jwt;
+    use vercre_vc::proof::jose::Jwt;
 
     use super::*;
 

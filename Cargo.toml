@@ -29,6 +29,8 @@ missing_docs = "warn"
 unused_extern_crates = "warn"
 
 [workspace.lints.clippy]
+# clippy::all = correctness, suspicious, style, complexity, perf
+# not using (yet) -Dclippy::restriction
 all = "warn"
 pedantic = "warn"
 nursery = "warn"

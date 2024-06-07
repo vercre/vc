@@ -14,7 +14,7 @@ use vercre_core::{err, Result};
 use vercre_vc::model::vp::{
     Constraints, DescriptorMap, PathNested, PresentationSubmission, Proof, VerifiablePresentation,
 };
-use vercre_vc::proof::jwt::{Jwt, VpClaims};
+use vercre_vc::proof::jose::{Jwt, VpClaims};
 
 use crate::credential::Credential;
 use crate::provider::{

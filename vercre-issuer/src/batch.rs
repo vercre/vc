@@ -27,7 +27,7 @@ pub use vercre_core::vci::{
 };
 use vercre_core::{err, gen, Result};
 use vercre_vc::model::{CredentialSubject, Proof, VerifiableCredential};
-use vercre_vc::proof::jwt::Jwt;
+use vercre_vc::proof::jose::Jwt;
 
 use super::Endpoint;
 use crate::state::{Deferred, Expire, State};
@@ -421,7 +421,7 @@ mod tests {
     use providers::issuance::{Provider, ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
-    use vercre_vc::proof::jwt::{self, VcClaims};
+    use vercre_vc::proof::jose::{self, VcClaims};
 
     use super::*;
     use crate::state::Token;
@@ -458,7 +458,7 @@ mod tests {
 
         // create BatchCredentialRequest to 'send' to the app
         let jwt_enc = Jwt {
-            header: jwt::Header {
+            header: jose::Header {
                 typ: "openid4vci-proof+jwt".into(),
                 alg: wallet::alg(),
                 kid: wallet::kid(),

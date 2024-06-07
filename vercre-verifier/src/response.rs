@@ -32,7 +32,7 @@ use vercre_core::provider::{Callback, ClientMetadata, Signer, StateManager};
 pub use vercre_core::vp::{ResponseRequest, ResponseResponse};
 use vercre_core::{err, Result};
 use vercre_vc::model::vc::VerifiableCredential;
-use vercre_vc::proof::jwt::{self, VpClaims};
+use vercre_vc::proof::jose::{self, VpClaims};
 
 use super::Endpoint;
 use crate::state::State;
@@ -121,7 +121,7 @@ where
                     vp_val
                 }
                 Value::String(string) => {
-                    let Ok(jwt) = jwt::Jwt::<VpClaims>::from_str(&string) else {
+                    let Ok(jwt) = jose::Jwt::<VpClaims>::from_str(&string) else {
                         err!(Err::InvalidRequest, "invalid vp_token format");
                     };
                     if jwt.claims.nonce != saved_req.nonce {
