@@ -48,7 +48,7 @@ use std::fmt::Debug;
 use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, Server, Signer, StateManager, Subject,
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
 };
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vci::{BatchCredentialRequest, CredentialRequest, CredentialResponse};
@@ -61,7 +61,7 @@ impl<P> Endpoint<P>
 where
     P: ClientMetadata
         + IssuerMetadata
-        + Server
+        + ServerMetadata
         + Subject
         + StateManager
         + Signer
@@ -103,7 +103,7 @@ impl<P> vercre_core::Context for Context<P>
 where
     P: ClientMetadata
         + IssuerMetadata
-        + Server
+        + ServerMetadata
         + Subject
         + StateManager
         + Signer

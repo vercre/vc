@@ -12,8 +12,8 @@ use uuid::Uuid;
 use vercre_core::callback::Payload;
 use vercre_core::metadata::{self, CredentialDefinition};
 use vercre_core::provider::{
-    Algorithm, Callback, ClientMetadata, IssuerMetadata, Result, Server, Signer, StateManager,
-    Subject,
+    Algorithm, Callback, ClientMetadata, IssuerMetadata, Result, ServerMetadata, Signer,
+    StateManager, Subject,
 };
 use vercre_core::subject;
 use vercre_core::vci::GrantType;
@@ -69,7 +69,7 @@ impl IssuerMetadata for Provider {
     }
 }
 
-impl Server for Provider {
+impl ServerMetadata for Provider {
     async fn metadata(&self, server_id: &str) -> Result<metadata::Server> {
         self.server.get(server_id)
     }

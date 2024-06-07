@@ -6,9 +6,7 @@ use std::future::{Future, IntoFuture};
 use chrono::{DateTime, Utc};
 
 use crate::callback;
-use crate::metadata::{
-    Client, CredentialDefinition, Issuer, Server as ServerMetadata,
-};
+use crate::metadata::{Client, CredentialDefinition, Issuer, Server};
 use crate::subject::Claims;
 
 /// Result is used for all external errors.
@@ -25,18 +23,16 @@ pub trait ClientMetadata: Send + Sync {
     fn register(&self, client_meta: &Client) -> impl Future<Output = Result<Client>> + Send;
 }
 
-/// The `IssuerMetadata` trait is used by implementers to provide Credential Issuer
-/// metadata.
+/// The `IssuerMetadata` trait is used by implementers to provide Credential Issuer metadata.
 pub trait IssuerMetadata: Send + Sync {
     /// Returns the Credential Issuer's metadata.
     fn metadata(&self, issuer_id: &str) -> impl Future<Output = Result<Issuer>> + Send;
 }
 
-/// The Issuer trait is used by implementers to provide Authorization Server
-/// metadata.
-pub trait Server: Send + Sync {
+/// The `ServerMetadata` trait is used by implementers to provide Authorization Server metadata.
+pub trait ServerMetadata: Send + Sync {
     /// Returns the Authorization Server's metadata.
-    fn metadata(&self, server_id: &str) -> impl Future<Output = Result<ServerMetadata>> + Send;
+    fn metadata(&self, server_id: &str) -> impl Future<Output = Result<Server>> + Send;
 }
 
 /// `StateManager` is used to store and manage server state.

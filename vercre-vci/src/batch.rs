@@ -19,7 +19,7 @@ use vercre_core::error::{Ancillary as _, Err};
 use vercre_core::jwt::Jwt;
 use vercre_core::metadata::{CredentialDefinition, Issuer};
 use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, Server, Signer, StateManager, Subject,
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
 };
 use vercre_core::vci::ProofClaims;
 #[allow(clippy::module_name_repetitions)]
@@ -36,7 +36,7 @@ impl<P> Endpoint<P>
 where
     P: ClientMetadata
         + IssuerMetadata
-        + Server
+        + ServerMetadata
         + Subject
         + StateManager
         + Signer

@@ -78,7 +78,7 @@ use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::metadata::Issuer;
 use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, Server, Signer, StateManager, Subject,
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
 };
 use vercre_core::vci::GrantType;
 pub use vercre_core::vci::{
@@ -94,7 +94,7 @@ impl<P> Endpoint<P>
 where
     P: ClientMetadata
         + IssuerMetadata
-        + Server
+        + ServerMetadata
         + Subject
         + StateManager
         + Signer
@@ -145,7 +145,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: ClientMetadata + Server + Subject + StateManager + Debug,
+    P: ClientMetadata + ServerMetadata + Subject + StateManager + Debug,
 {
     type Provider = P;
     type Request = AuthorizationRequest;
@@ -163,7 +163,7 @@ where
         let Ok(client_meta) = ClientMetadata::metadata(provider, &request.client_id).await else {
             err!(Err::InvalidClient, "invalid client_id");
         };
-        let server_meta = Server::metadata(provider, &request.credential_issuer).await?;
+        let server_meta = ServerMetadata::metadata(provider, &request.credential_issuer).await?;
 
         // 'authorization_code' grant_type allowed (client and server)?
         let client_grant_types = client_meta.grant_types.unwrap_or_default();
@@ -319,7 +319,7 @@ where
 
 impl<P> Context<P>
 where
-    P: ClientMetadata + Server + Subject + StateManager + Debug,
+    P: ClientMetadata + ServerMetadata + Subject + StateManager + Debug,
 {
     // Verify Credentials requested in `authorization_details` are supported.
     //
