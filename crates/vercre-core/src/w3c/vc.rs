@@ -95,7 +95,7 @@ pub struct VerifiableCredential {
     pub credential_schema: Option<Vec<CredentialSchema>>,
 
     /// `RefreshService` can be used to provide a link to the issuer's refresh
-    /// service so Holder's can refresh (manually or automatically) an
+    /// service so Holders can refresh (manually or automatically) an
     /// expired credential.
     #[serde(rename = "refreshService")]
     #[serde(skip_serializing_if = "Option::is_none")]

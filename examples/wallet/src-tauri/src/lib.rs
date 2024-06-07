@@ -20,6 +20,10 @@ struct Model {
 struct StateModel(Mutex<Model>);
 
 /// Tauri entry point
+/// 
+/// # Panics
+/// 
+/// Will panic if the Tauri application builder fails to run.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -63,11 +67,13 @@ pub fn run() {
 }
 
 #[tauri::command]
+#[allow(clippy::used_underscore_binding)]
 async fn update_status(
     status: Status, state: State<'_, StateModel>, app: AppHandle,
 ) -> Result<(), error::AppError> {
     let mut model = state.0.lock().unwrap();
-    (*model).status = status;
-    app.emit("status_updated", model.clone()).map_err(|e| error::AppError::from(e))?;
+    model.status = status;
+    app.emit("status_updated", model.clone()).map_err(error::AppError::from)?;
+    drop(model);
     Ok(())
 }

@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-/// The user information returned by the Holder trait.
+/// The user information returned by the Subject trait.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Claims {
     /// The credential subject populated for the user.

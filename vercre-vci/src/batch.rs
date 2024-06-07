@@ -18,7 +18,7 @@ use uuid::Uuid;
 use vercre_core::error::{Ancillary as _, Err};
 use vercre_core::jwt::Jwt;
 use vercre_core::metadata::{CredentialDefinition, Issuer as IssuerMetadata};
-use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
+use vercre_core::provider::{Callback, Client, Subject, Issuer, Server, Signer, StateManager};
 use vercre_core::vci::ProofClaims;
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vci::{
@@ -32,7 +32,7 @@ use crate::state::{Deferred, Expire, State};
 
 impl<P> Endpoint<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
+    P: Client + Issuer + Server + Subject + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Batch credential request handler.
     ///
@@ -72,7 +72,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Issuer + Holder + StateManager + Signer + Clone + Debug,
+    P: Issuer + Subject + StateManager + Signer + Clone + Debug,
 {
     type Provider = P;
     type Request = BatchCredentialRequest;
@@ -230,7 +230,7 @@ where
 
 impl<P> Context<P>
 where
-    P: Holder + StateManager + Signer + Clone,
+    P: Subject + StateManager + Signer + Clone,
 {
     // Processes the Credential Request to generate a Credential Response.
     async fn make_response(
@@ -276,7 +276,7 @@ where
 
     // Attempt to generate a Verifiable Credential from information provided in the Credential
     // Request. May return `None` if the credential is not ready to be issued because the request
-    // for Holder is pending.
+    // for Subject is pending.
     async fn make_vc(
         &self, provider: &P, request: &CredentialRequest,
     ) -> Result<Option<VerifiableCredential>> {
@@ -288,7 +288,7 @@ where
         };
 
         // claim values
-        let holder_claims = Holder::claims(provider, holder_id, &cred_def).await?;
+        let holder_claims = Subject::claims(provider, holder_id, &cred_def).await?;
         if holder_claims.pending {
             return Ok(None);
         }

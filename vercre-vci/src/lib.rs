@@ -99,18 +99,18 @@ pub mod token;
 use std::fmt::Debug;
 
 pub use vercre_core::error::Error;
-use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
+use vercre_core::provider::{Callback, Client, Subject, Issuer, Server, Signer, StateManager};
 // TODO: move Claims into jwt module
 pub use vercre_core::vci::{GrantType, ProofClaims};
 pub use vercre_core::w3c::vc::VcClaims;
-pub use vercre_core::{callback, holder, jwt, provider, Result};
+pub use vercre_core::{callback, subject, jwt, provider, Result};
 
 /// Endpoint is used to surface the public Verifiable Presentation endpoints to
 /// clients.
 #[derive(Debug)]
 pub struct Endpoint<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
+    P: Client + Issuer + Server + Subject + StateManager + Signer + Callback + Clone + Debug,
 {
     provider: P,
 }
@@ -125,7 +125,7 @@ where
 /// to the request.
 impl<P> Endpoint<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
+    P: Client + Issuer + Server + Subject + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Create a new endpoint instance.
     pub const fn new(provider: P) -> Self {
@@ -135,7 +135,7 @@ where
 
 impl<P> vercre_core::Endpoint for Endpoint<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
+    P: Client + Issuer + Server + Subject + StateManager + Signer + Callback + Clone + Debug,
 {
     type Provider = P;
 
@@ -179,7 +179,7 @@ mod tests {
 
     impl<P> Endpoint<P>
     where
-        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
+        P: Client + Issuer + Server + Subject + StateManager + Signer + Callback + Clone + Debug,
     {
         async fn test(&mut self, request: &TestRequest) -> Result<TestResponse> {
             let ctx = Context {
@@ -196,7 +196,7 @@ mod tests {
 
     impl<P> vercre_core::Context for Context<P>
     where
-        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
+        P: Client + Issuer + Server + Subject + StateManager + Signer + Callback + Clone + Debug,
     {
         type Provider = P;
         type Request = TestRequest;

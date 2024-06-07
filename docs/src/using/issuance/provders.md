@@ -51,9 +51,9 @@ pub trait Server: Send + Sync {
 }
 ```
 
-## Holder
+## Subject
 
-The `Holder` provider is responsible for providing the issuance library with information
+The `Subject` provider is responsible for providing the issuer library with information
 about the Holder, or end-user the Credential is to be issued to. This information is used
 to:
 
@@ -62,13 +62,13 @@ to:
    claims).
 
 ```rust,ignore
-pub trait Holder: Send + Sync {
+pub trait Subject: Send + Sync {
     fn authorize(
-        &self, holder_id: &str, credential_configuration_id: &str,
+        &self, holder_subject: &str, credential_configuration_id: &str,
     ) -> impl Future<Output = Result<bool>> + Send;
 
     fn claims(
-        &self, holder_id: &str, credential: &CredentialDefinition,
+        &self, holder_subject: &str, credential: &CredentialDefinition,
     ) -> impl Future<Output = Result<Claims>> + Send;
 }
 ```

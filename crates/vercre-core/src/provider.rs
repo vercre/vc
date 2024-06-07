@@ -6,7 +6,7 @@ use std::future::{Future, IntoFuture};
 use chrono::{DateTime, Utc};
 
 use crate::callback;
-use crate::holder::Claims;
+use crate::subject::Claims;
 use crate::metadata::{
     Client as ClientMetadata, CredentialDefinition, Issuer as IssuerMetadata,
     Server as ServerMetadata,
@@ -85,19 +85,19 @@ pub trait Callback: Send + Sync {
     fn callback(&self, pl: &callback::Payload) -> impl Future<Output = Result<()>> + Send;
 }
 
-/// The Holder trait specifies how the library expects user information to be
+/// The Subject trait specifies how the library expects user information to be
 /// provided by implementers.
-pub trait Holder: Send + Sync {
+pub trait Subject: Send + Sync {
     /// Authorize issuance of the credential specified by `credential_configuration_id`.
-    /// Returns `true` if the holder is authorized.
+    /// Returns `true` if the subject (holder) is authorized.
     fn authorize(
-        &self, holder_id: &str, credential_configuration_id: &str,
+        &self, holder_subject: &str, credential_configuration_id: &str,
     ) -> impl Future<Output = Result<bool>> + Send;
 
-    /// Returns a populated `Claims` object for the given holder and credential
+    /// Returns a populated `Claims` object for the given subject (holder) and credential
     /// definition.
     fn claims(
-        &self, holder_id: &str, credential: &CredentialDefinition,
+        &self, holder_subject: &str, credential: &CredentialDefinition,
     ) -> impl Future<Output = Result<Claims>> + Send;
 }
 

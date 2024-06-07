@@ -70,7 +70,7 @@ use anyhow::anyhow;
 use chrono::Utc;
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
+use vercre_core::provider::{Callback, Client, Subject, Issuer, Server, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vci::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer, Grants,
@@ -83,7 +83,7 @@ use crate::state::{Auth, Expire, State};
 
 impl<P> Endpoint<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
+    P: Client + Issuer + Server + Subject + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Invoke request handler generates and returns a Credential Offer.
     ///

@@ -18,8 +18,8 @@ version.workspace = true
 name = "example_wallet"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
-[lints]
-workspace = true
+# [lints]
+# workspace = true
 
 [dependencies]
 anyhow.workspace = true

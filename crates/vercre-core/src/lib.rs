@@ -7,7 +7,7 @@
 pub mod callback;
 pub mod error;
 pub mod gen;
-pub mod holder;
+pub mod subject;
 pub mod jwt;
 pub mod metadata;
 pub mod proof;

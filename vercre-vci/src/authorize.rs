@@ -77,7 +77,7 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::metadata::Issuer as IssuerMetadata;
-use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
+use vercre_core::provider::{Callback, Client, Subject, Issuer, Server, Signer, StateManager};
 use vercre_core::vci::GrantType;
 pub use vercre_core::vci::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
@@ -90,7 +90,7 @@ use crate::state::{Auth, Expire, State};
 
 impl<P> Endpoint<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
+    P: Client + Issuer + Server + Subject + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Authorization request handler.
     ///
@@ -134,7 +134,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Client + Server + Holder + StateManager + Debug,
+    P: Client + Server + Subject + StateManager + Debug,
 {
     type Provider = P;
     type Request = AuthorizationRequest;
@@ -229,7 +229,7 @@ where
 
         // check which requested `authorization_detail` entries the holder is authorized for
         for (cfg_id, auth_det) in &self.auth_dets {
-            let auth = Holder::authorize(provider, &request.holder_id, cfg_id)
+            let auth = Subject::authorize(provider, &request.holder_id, cfg_id)
                 .await
                 .map_err(|e| Err::ServerError(anyhow!("issue authorizing holder: {e}")))?;
             if auth {
@@ -251,7 +251,7 @@ where
 
         // check which requested `scope` items the holder is authorized for
         for (cfg_id, item) in &self.scope_items {
-            let auth = Holder::authorize(provider, &request.holder_id, cfg_id)
+            let auth = Subject::authorize(provider, &request.holder_id, cfg_id)
                 .await
                 .map_err(|e| Err::ServerError(anyhow!("issue authorizing holder: {e}")))?;
             if auth {
@@ -308,7 +308,7 @@ where
 
 impl<P> Context<P>
 where
-    P: Client + Server + Holder + StateManager + Debug,
+    P: Client + Server + Subject + StateManager + Debug,
 {
     // Verify Credentials requested in `authorization_details` are supported.
     //

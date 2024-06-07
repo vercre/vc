@@ -23,14 +23,14 @@
 
 use tracing::instrument;
 use vercre_core::vci::{MetadataRequest, MetadataResponse};
-use vercre_core::{Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager};
+use vercre_core::{Callback, Client, Subject, Issuer, Result, Server, Signer, StateManager};
 
 use super::Endpoint;
 
 /// Metadata request handler.
 impl<P> Endpoint<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+    P: Client + Issuer + Server + Subject + StateManager + Signer + Callback + Clone,
 {
     /// Request Issuer metadata.
     ///
@@ -61,7 +61,7 @@ impl super::Context for Context {
 
     async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
     where
-        P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone,
+        P: Client + Issuer + Server + Subject + StateManager + Signer + Callback + Clone,
     {
         tracing::debug!("Context::process");
 

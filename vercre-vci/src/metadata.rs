@@ -26,7 +26,7 @@ use std::fmt::Debug;
 
 use tracing::instrument;
 pub use vercre_core::metadata as types;
-use vercre_core::provider::{Callback, Client, Holder, Issuer, Server, Signer, StateManager};
+use vercre_core::provider::{Callback, Client, Subject, Issuer, Server, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vci::{MetadataRequest, MetadataResponse};
 use vercre_core::Result;
@@ -35,7 +35,7 @@ use super::Endpoint;
 
 impl<P> Endpoint<P>
 where
-    P: Client + Issuer + Server + Holder + StateManager + Signer + Callback + Clone + Debug,
+    P: Client + Issuer + Server + Subject + StateManager + Signer + Callback + Clone + Debug,
 {
     /// Metadata request handler.
     ///

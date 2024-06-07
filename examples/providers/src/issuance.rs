@@ -10,10 +10,10 @@ use k256::Secp256k1;
 use serde_json::Value;
 use uuid::Uuid;
 use vercre_core::callback::Payload;
-use vercre_core::holder;
+use vercre_core::subject;
 use vercre_core::metadata::{self, CredentialDefinition};
 use vercre_core::provider::{
-    Algorithm, Callback, Client, Holder, Issuer, Result, Server, Signer, StateManager,
+    Algorithm, Callback, Client, Subject, Issuer, Result, Server, Signer, StateManager,
 };
 use vercre_core::vci::GrantType;
 
@@ -33,7 +33,7 @@ pub struct Provider {
     client: ClientStore,
     issuer: IssuerStore,
     server: ServerStore,
-    holder: HolderStore,
+    subject: SubjectStore,
     state_store: StateStore,
     callback: CallbackHook,
 }
@@ -45,7 +45,7 @@ impl Provider {
             client: ClientStore::new(),
             issuer: IssuerStore::new(),
             server: ServerStore::new(),
-            holder: HolderStore::new(),
+            subject: SubjectStore::new(),
             state_store: StateStore::new(),
             callback: CallbackHook::new(),
         }
@@ -74,16 +74,16 @@ impl Server for Provider {
     }
 }
 
-impl Holder for Provider {
+impl Subject for Provider {
     /// Authorize issuance of the specified credential for the holder.
-    async fn authorize(&self, holder_id: &str, credential_configuration_id: &str) -> Result<bool> {
-        self.holder.authorize(holder_id, credential_configuration_id)
+    async fn authorize(&self, holder_subject: &str, credential_configuration_id: &str) -> Result<bool> {
+        self.subject.authorize(holder_subject, credential_configuration_id)
     }
 
     async fn claims(
-        &self, holder_id: &str, credential: &CredentialDefinition,
-    ) -> Result<holder::Claims> {
-        Ok(self.holder.get_claims(holder_id, credential))
+        &self, holder_subject: &str, credential: &CredentialDefinition,
+    ) -> Result<subject::Claims> {
+        Ok(self.subject.get_claims(holder_subject, credential))
     }
 }
 
@@ -179,7 +179,7 @@ impl ClientStore {
 }
 
 //-----------------------------------------------------------------------------
-// Holder
+// Subject
 //-----------------------------------------------------------------------------
 #[derive(Default, Clone, Debug)]
 struct Person {
@@ -191,14 +191,14 @@ struct Person {
 }
 
 #[derive(Default, Clone, Debug)]
-struct HolderStore {
-    holders: Arc<Mutex<HashMap<String, Person>>>,
+struct SubjectStore {
+    subjects: Arc<Mutex<HashMap<String, Person>>>,
 }
 
-impl HolderStore {
+impl SubjectStore {
     fn new() -> Self {
         // issuer
-        let holders = HashMap::from([
+        let subjects = HashMap::from([
             (
                 NORMAL_USER.to_string(),
                 Person {
@@ -222,32 +222,32 @@ impl HolderStore {
         ]);
 
         Self {
-            holders: Arc::new(Mutex::new(holders)),
+            subjects: Arc::new(Mutex::new(subjects)),
         }
     }
 
-    fn authorize(&self, holder_id: &str, _credential_configuration_id: &str) -> Result<bool> {
-        if self.holders.lock().expect("should lock").get(holder_id).is_none() {
-            return Err(anyhow!("no matching holder_id"));
+    fn authorize(&self, holder_subject: &str, _credential_configuration_id: &str) -> Result<bool> {
+        if self.subjects.lock().expect("should lock").get(holder_subject).is_none() {
+            return Err(anyhow!("no matching holder_subject"));
         };
         Ok(true)
     }
 
-    fn get_claims(&self, holder_id: &str, credential: &CredentialDefinition) -> holder::Claims {
-        // get holder while allowing mutex to go out of scope and release
+    fn get_claims(&self, holder_subject: &str, credential: &CredentialDefinition) -> subject::Claims {
+        // get holder subject while allowing mutex to go out of scope and release
         // lock so we can take another lock for insert further down
-        let holder = self.holders.lock().expect("should lock").get(holder_id).unwrap().clone();
+        let subject = self.subjects.lock().expect("should lock").get(holder_subject).unwrap().clone();
 
-        // populate requested claims for holder
+        // populate requested claims for subject
         let mut claims = HashMap::new();
 
         if let Some(subj) = &credential.credential_subject {
             for k in subj.keys() {
                 let v = match k.as_str() {
-                    "givenName" => holder.given_name,
-                    "familyName" => holder.family_name,
-                    "email" => holder.email,
-                    "proficiency" => holder.proficiency,
+                    "givenName" => subject.given_name,
+                    "familyName" => subject.family_name,
+                    "email" => subject.email,
+                    "proficiency" => subject.proficiency,
                     _ => continue,
                 };
 
@@ -255,14 +255,14 @@ impl HolderStore {
             }
         };
 
-        // update holder's pending state to make Deferred Issuance work
-        let mut updated = holder.clone();
+        // update subject's pending state to make Deferred Issuance work
+        let mut updated = subject.clone();
         updated.pending = false;
-        self.holders.lock().expect("should lock").insert(holder_id.to_string(), updated);
+        self.subjects.lock().expect("should lock").insert(holder_subject.to_string(), updated);
 
-        holder::Claims {
+        subject::Claims {
             claims,
-            pending: holder.pending,
+            pending: subject.pending,
         }
     }
 }

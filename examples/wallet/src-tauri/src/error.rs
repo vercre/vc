@@ -10,6 +10,7 @@ use serde::Serialize;
 // TODO: improve error handling
 
 #[derive(Debug, Serialize)]
+#[allow(clippy::module_name_repetitions)]
 pub struct AppError {
     message: String,
 }
