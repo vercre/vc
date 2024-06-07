@@ -27,7 +27,7 @@ use std::fmt::Debug;
 use tracing::instrument;
 pub use vercre_core::metadata as types;
 use vercre_core::provider::{
-    Callback, ClientMetadata, Issuer, Server, Signer, StateManager, Subject,
+    Callback, ClientMetadata, IssuerMetadata, Server, Signer, StateManager, Subject,
 };
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vci::{MetadataRequest, MetadataResponse};
@@ -38,7 +38,7 @@ use super::Endpoint;
 impl<P> Endpoint<P>
 where
     P: ClientMetadata
-        + Issuer
+        + IssuerMetadata
         + Server
         + Subject
         + StateManager
@@ -69,7 +69,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Issuer + Debug,
+    P: IssuerMetadata + Debug,
 {
     type Provider = P;
     type Request = MetadataRequest;
@@ -86,7 +86,7 @@ where
         tracing::debug!("Context::process");
 
         // TODO: add languages to request
-        let credential_issuer = Issuer::metadata(provider, &request.credential_issuer).await?;
+        let credential_issuer = IssuerMetadata::metadata(provider, &request.credential_issuer).await?;
         Ok(MetadataResponse { credential_issuer })
     }
 }

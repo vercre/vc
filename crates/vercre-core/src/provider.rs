@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 
 use crate::callback;
 use crate::metadata::{
-    Client, CredentialDefinition, Issuer as IssuerMetadata, Server as ServerMetadata,
+    Client, CredentialDefinition, Issuer, Server as ServerMetadata,
 };
 use crate::subject::Claims;
 
@@ -25,11 +25,11 @@ pub trait ClientMetadata: Send + Sync {
     fn register(&self, client_meta: &Client) -> impl Future<Output = Result<Client>> + Send;
 }
 
-/// The Issuer trait is used by implementers to provide Credential Issuer
+/// The `IssuerMetadata` trait is used by implementers to provide Credential Issuer
 /// metadata.
-pub trait Issuer: Send + Sync {
+pub trait IssuerMetadata: Send + Sync {
     /// Returns the Credential Issuer's metadata.
-    fn metadata(&self, issuer_id: &str) -> impl Future<Output = Result<IssuerMetadata>> + Send;
+    fn metadata(&self, issuer_id: &str) -> impl Future<Output = Result<Issuer>> + Send;
 }
 
 /// The Issuer trait is used by implementers to provide Authorization Server

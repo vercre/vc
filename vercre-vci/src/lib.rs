@@ -100,7 +100,7 @@ use std::fmt::Debug;
 
 pub use vercre_core::error::Error;
 use vercre_core::provider::{
-    Callback, ClientMetadata, Issuer, Server, Signer, StateManager, Subject,
+    Callback, ClientMetadata, IssuerMetadata, Server, Signer, StateManager, Subject,
 };
 // TODO: move Claims into jwt module
 pub use vercre_core::vci::{GrantType, ProofClaims};
@@ -113,7 +113,7 @@ pub use vercre_core::{callback, jwt, provider, subject, Result};
 pub struct Endpoint<P>
 where
     P: ClientMetadata
-        + Issuer
+        + IssuerMetadata
         + Server
         + Subject
         + StateManager
@@ -136,7 +136,7 @@ where
 impl<P> Endpoint<P>
 where
     P: ClientMetadata
-        + Issuer
+        + IssuerMetadata
         + Server
         + Subject
         + StateManager
@@ -154,7 +154,7 @@ where
 impl<P> vercre_core::Endpoint for Endpoint<P>
 where
     P: ClientMetadata
-        + Issuer
+        + IssuerMetadata
         + Server
         + Subject
         + StateManager
@@ -206,7 +206,7 @@ mod tests {
     impl<P> Endpoint<P>
     where
         P: ClientMetadata
-            + Issuer
+            + IssuerMetadata
             + Server
             + Subject
             + StateManager
@@ -231,7 +231,7 @@ mod tests {
     impl<P> vercre_core::Context for Context<P>
     where
         P: ClientMetadata
-            + Issuer
+            + IssuerMetadata
             + Server
             + Subject
             + StateManager

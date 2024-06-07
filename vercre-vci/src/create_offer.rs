@@ -71,7 +71,7 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{
-    Callback, ClientMetadata, Issuer, Server, Signer, StateManager, Subject,
+    Callback, ClientMetadata, IssuerMetadata, Server, Signer, StateManager, Subject,
 };
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vci::{
@@ -86,7 +86,7 @@ use crate::state::{Auth, Expire, State};
 impl<P> Endpoint<P>
 where
     P: ClientMetadata
-        + Issuer
+        + IssuerMetadata
         + Server
         + Subject
         + StateManager
@@ -120,7 +120,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Issuer + StateManager + Debug,
+    P: IssuerMetadata + StateManager + Debug,
 {
     type Provider = P;
     type Request = CreateOfferRequest;
@@ -133,7 +133,7 @@ where
     async fn verify(&mut self, provider: &P, request: &Self::Request) -> Result<&Self> {
         tracing::debug!("Context::verify");
 
-        let issuer_meta = Issuer::metadata(provider, &request.credential_issuer).await?;
+        let issuer_meta = IssuerMetadata::metadata(provider, &request.credential_issuer).await?;
 
         // credential_issuer required
         if request.credential_issuer.is_empty() {

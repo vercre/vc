@@ -76,9 +76,9 @@ use anyhow::anyhow;
 use chrono::Utc;
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::metadata::Issuer as IssuerMetadata;
+use vercre_core::metadata::Issuer;
 use vercre_core::provider::{
-    Callback, ClientMetadata, Issuer, Server, Signer, StateManager, Subject,
+    Callback, ClientMetadata, IssuerMetadata, Server, Signer, StateManager, Subject,
 };
 use vercre_core::vci::GrantType;
 pub use vercre_core::vci::{
@@ -93,7 +93,7 @@ use crate::state::{Auth, Expire, State};
 impl<P> Endpoint<P>
 where
     P: ClientMetadata
-        + Issuer
+        + IssuerMetadata
         + Server
         + Subject
         + StateManager
@@ -119,7 +119,8 @@ where
             None
         };
 
-        let issuer_meta = Issuer::metadata(&self.provider, &request.credential_issuer).await?;
+        let issuer_meta =
+            IssuerMetadata::metadata(&self.provider, &request.credential_issuer).await?;
 
         let ctx = Context {
             callback_id,
@@ -136,7 +137,7 @@ where
 #[derive(Debug)]
 struct Context<P> {
     callback_id: Option<String>,
-    issuer_meta: IssuerMetadata,
+    issuer_meta: Issuer,
     auth_dets: HashMap<String, AuthorizationDetail>,
     scope_items: HashMap<String, String>,
     _p: std::marker::PhantomData<P>,

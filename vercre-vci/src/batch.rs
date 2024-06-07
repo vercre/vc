@@ -17,9 +17,9 @@ use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::{Ancillary as _, Err};
 use vercre_core::jwt::Jwt;
-use vercre_core::metadata::{CredentialDefinition, Issuer as IssuerMetadata};
+use vercre_core::metadata::{CredentialDefinition, Issuer};
 use vercre_core::provider::{
-    Callback, ClientMetadata, Issuer, Server, Signer, StateManager, Subject,
+    Callback, ClientMetadata, IssuerMetadata, Server, Signer, StateManager, Subject,
 };
 use vercre_core::vci::ProofClaims;
 #[allow(clippy::module_name_repetitions)]
@@ -35,7 +35,7 @@ use crate::state::{Deferred, Expire, State};
 impl<P> Endpoint<P>
 where
     P: ClientMetadata
-        + Issuer
+        + IssuerMetadata
         + Server
         + Subject
         + StateManager
@@ -62,7 +62,8 @@ where
         let ctx = Context {
             callback_id: state.callback_id.clone(),
             state,
-            issuer_meta: Issuer::metadata(&self.provider, &request.credential_issuer).await?,
+            issuer_meta: IssuerMetadata::metadata(&self.provider, &request.credential_issuer)
+                .await?,
             holder_did: String::new(),
             _p: std::marker::PhantomData,
         };
@@ -74,7 +75,7 @@ where
 #[derive(Debug)]
 struct Context<P> {
     callback_id: Option<String>,
-    issuer_meta: IssuerMetadata,
+    issuer_meta: Issuer,
     state: State,
     holder_did: String,
     _p: std::marker::PhantomData<P>,
@@ -82,7 +83,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: Issuer + Subject + StateManager + Signer + Clone + Debug,
+    P: IssuerMetadata + Subject + StateManager + Signer + Clone + Debug,
 {
     type Provider = P;
     type Request = BatchCredentialRequest;

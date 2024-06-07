@@ -7,7 +7,7 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{
-    Callback, ClientMetadata, Issuer, Server, Signer, StateManager, Subject,
+    Callback, ClientMetadata, IssuerMetadata, Server, Signer, StateManager, Subject,
 };
 pub use vercre_core::vci::{RegistrationRequest, RegistrationResponse};
 use vercre_core::{err, Result};
@@ -18,7 +18,7 @@ use crate::state::State;
 impl<P> Endpoint<P>
 where
     P: ClientMetadata
-        + Issuer
+        + IssuerMetadata
         + Server
         + Subject
         + StateManager
