@@ -458,7 +458,7 @@ mod tests {
 
         // create BatchCredentialRequest to 'send' to the app
         let jwt_enc = Jwt {
-            header: jose::JwtHeader {
+            header: jose::Header {
                 typ: "openid4vci-proof+jwt".into(),
                 alg: wallet::alg(),
                 kid: wallet::kid(),

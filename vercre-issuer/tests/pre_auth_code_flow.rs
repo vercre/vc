@@ -87,7 +87,7 @@ async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
 async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     // create CredentialRequest to 'send' to the app
     let jwt_enc = Jwt {
-        header: jose::JwtHeader {
+        header: jose::Header {
             typ: "openid4vci-proof+jwt".into(),
             alg: wallet::alg(),
             kid: wallet::kid(),
