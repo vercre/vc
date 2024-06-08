@@ -22,6 +22,7 @@ use vercre_core::provider::{Callback, ClientMetadata, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{RequestObjectRequest, RequestObjectResponse};
 use vercre_core::{err, Result};
+use vercre_vc::proof::jose;
 
 use super::Endpoint;
 use crate::state::State;
@@ -86,11 +87,12 @@ where
             err!(Err::InvalidRequest, "client ID mismatch");
         }
 
-        let jwt = req_obj.to_jwt()?.sign(provider.clone()).await?;
+        let jwt = req_obj.to_jwt()?;
+        let signed = jose::encode(jwt.header, &jwt.claims, provider.clone()).await?;
 
         Ok(RequestObjectResponse {
             request_object: None,
-            jwt: Some(jwt),
+            jwt: Some(signed),
         })
     }
 }

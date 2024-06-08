@@ -27,7 +27,7 @@ pub use vercre_core::vci::{
 };
 use vercre_core::{err, gen, Result};
 use vercre_vc::model::{CredentialSubject, Proof, VerifiableCredential};
-use vercre_vc::proof::jose::Jwt;
+use vercre_vc::proof::jose::{self, Jwt};
 
 use super::Endpoint;
 use crate::state::{Deferred, Expire, State};
@@ -203,7 +203,7 @@ where
         // process credential requests
         let mut responses = Vec::<CredentialResponse>::new();
         for c_req in request.credential_requests.clone() {
-            responses.push(self.make_response(provider, &c_req).await?);
+            responses.push(self.create_response(provider, &c_req).await?);
         }
 
         // generate nonce and update state
@@ -240,13 +240,13 @@ where
     P: Subject + StateManager + Signer + Clone,
 {
     // Processes the Credential Request to generate a Credential Response.
-    async fn make_response(
+    async fn create_response(
         &self, provider: &P, request: &CredentialRequest,
     ) -> Result<CredentialResponse> {
-        tracing::debug!("Context::make_response");
+        tracing::debug!("Context::create_response");
 
         // Try to create a VC. If None, then return a deferred issuance response.
-        let Some(mut vc) = self.make_vc(provider, request).await? else {
+        let Some(mut vc) = self.create_vc(provider, request).await? else {
             //--------------------------------------------------
             // Defer credential issuance
             //--------------------------------------------------
@@ -271,9 +271,9 @@ where
         };
 
         // transform to JWT
-        let mut vc_jwt = vc.to_jwt()?;
-        vc_jwt.claims.sub.clone_from(&self.holder_did);
-        let signed = vc_jwt.sign(provider.clone()).await?;
+        let mut jwt = vc.to_jwt()?;
+        jwt.claims.sub.clone_from(&self.holder_did);
+        let signed = jose::encode(jwt.header, &jwt.claims, provider.clone()).await?;
 
         Ok(CredentialResponse {
             credential: Some(serde_json::to_value(signed)?),
@@ -284,10 +284,10 @@ where
     // Attempt to generate a Verifiable Credential from information provided in the Credential
     // Request. May return `None` if the credential is not ready to be issued because the request
     // for Subject is pending.
-    async fn make_vc(
+    async fn create_vc(
         &self, provider: &P, request: &CredentialRequest,
     ) -> Result<Option<VerifiableCredential>> {
-        tracing::debug!("Context::make_vc");
+        tracing::debug!("Context::create_vc");
 
         let cred_def = self.credential_definition(request)?;
         let Some(holder_id) = &self.state.holder_id else {
