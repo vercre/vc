@@ -335,7 +335,7 @@ impl RequestObject {
     /// Returns an `Err::ServerError` error if the Request Object cannot be serialized.
     pub fn to_jwt(&self) -> Result<Jwt<Self>> {
         Ok(Jwt {
-            header: jose::Header::default(),
+            header: jose::JwtHeader::default(),
             claims: self.clone(),
         })
     }

@@ -17,7 +17,7 @@ use vercre_core::vci::{
 };
 use vercre_core::{err, Result};
 use vercre_vc::model::vc::VerifiableCredential;
-use vercre_vc::proof::jose::{Header, Jwt};
+use vercre_vc::proof::jose::{Jwt, JwtHeader};
 
 use crate::credential::Credential;
 use crate::provider::{
@@ -314,7 +314,7 @@ fn token_request(client_id: &str, issuance: &Issuance, pre_authorized_code: &str
 fn proof_jwt(issuance: &Issuance, kid: &str, alg: &str) -> Jwt<ProofClaims> {
     let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
     Jwt {
-        header: Header {
+        header: JwtHeader {
             typ: String::from("openid4vci-proof+jwt"),
             alg: alg.into(),
             kid: kid.into(),
@@ -487,7 +487,7 @@ mod tests {
         let alg = wallet::alg();
         let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
         let jwt = Jwt {
-            header: Header {
+            header: JwtHeader {
                 typ: String::from("openid4vci-proof+jwt"),
                 alg,
                 kid: kid.clone(),
@@ -525,7 +525,7 @@ mod tests {
         let alg = wallet::alg();
         let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
         let jwt = Jwt {
-            header: Header {
+            header: JwtHeader {
                 typ: String::from("openid4vci-proof+jwt"),
                 alg,
                 kid: kid.clone(),
