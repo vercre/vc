@@ -65,7 +65,7 @@
 // TODO: add support for "ldp_vc" format
 // TODO: add support for "jwt_vc_json-ld" format
 // TODO: add support for "vc+sd-jwt" format
-// TODO: add support for "mso_mdoc" format
+// LATER: add support for "mso_mdoc" format
 // TODO: implement `Interval` and `SlowDown` checks/errors
 
 use std::collections::HashMap;
