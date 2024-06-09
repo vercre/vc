@@ -215,6 +215,8 @@ where
                     return Ok(());
                 }
             };
+
+            // TODO: move signing to vercre-vc crate
             let signed_jwt = provider.sign(&jwt_bytes).await;
             let proof = proof(&jwt, &signed_jwt);
             let request = credential_request(&issuance, id, cfg, &proof);

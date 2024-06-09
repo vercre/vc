@@ -87,8 +87,8 @@ where
             err!(Err::InvalidRequest, "client ID mismatch");
         }
 
-        let jwt = req_obj.to_jwt()?;
-        let signed = jose::encode(jwt.header, &jwt.claims, provider.clone()).await?;
+        let claims = req_obj.to_claims()?;
+        let signed = jose::encode(jose::JwtType::RequestObject, &claims, provider.clone()).await?;
 
         Ok(RequestObjectResponse {
             request_object: None,
