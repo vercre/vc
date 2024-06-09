@@ -9,6 +9,7 @@ members = [
     "vercre-issuer",
     "vercre-verifier",
 ]
+exclude = ["vercre-holder/examples/*"]
 resolver = "2"
 
 [workspace.package]
