@@ -63,7 +63,7 @@
 //! [RFC9396]: (https://www.rfc-editor.org/rfc/rfc9396)
 
 // TODO: add support for "ldp_vc" format
-// LATER: add support for "jwt_vc_json-ld" format
+// TODO: add support for "jwt_vc_json-ld" format
 // LATER: add support for "vc+sd-jwt" format
 // LATER: add support for "mso_mdoc" format
 // LATER: implement `Interval` and `SlowDown` checks/errors
