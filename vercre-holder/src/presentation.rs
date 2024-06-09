@@ -381,6 +381,7 @@ mod tests {
         Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition,
         VerifiableCredential,
     };
+    use vercre_vc::proof::jose;
 
     use super::*;
     use crate::provider::example::wallet;
@@ -433,9 +434,21 @@ mod tests {
     }
 
     fn sample_credential() -> Credential {
-        let mut vc = VerifiableCredential::sample();
-        let vc_jwt = vc.to_jwt().expect("should serialize to jwt");
-        let vc_str = serde_json::to_string(&vc_jwt).expect("should serialize to string");
+        let vc = VerifiableCredential::sample();
+
+        let proofs = vc.proof.clone().unwrap_or_default();
+        let proof = &proofs[0];
+
+        let jwt = Jwt {
+            header: jose::Header {
+                alg: "ES256K".into(),
+                kid: proof.verification_method.clone(),
+                ..Default::default()
+            },
+            claims: vc.to_claims().expect("should get claims"),
+        };
+        let vc_str = serde_json::to_string(&jwt).expect("should serialize to string");
+
         let config = CredentialConfiguration::sample();
         Credential {
             issuer: "https://vercre.io".into(),
@@ -466,8 +479,14 @@ mod tests {
         let decoded =
             parse_request_object_response(&req_obj_res).expect("should parse with object");
         assert_eq!(obj, decoded);
-        let jwt = obj.to_jwt().expect("should serialize to jwt");
+
+        let claims = obj.to_claims().expect("should get claims");
+        let jwt = Jwt {
+            header: jose::Header::default(),
+            claims,
+        };
         let jwt_str = serde_json::to_string(&jwt).expect("should serialize jwt");
+
         let req_obj_res = RequestObjectResponse {
             request_object: None,
             jwt: Some(jwt_str),

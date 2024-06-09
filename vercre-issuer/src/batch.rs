@@ -246,7 +246,7 @@ where
         tracing::debug!("Context::create_response");
 
         // Try to create a VC. If None, then return a deferred issuance response.
-        let Some(mut vc) = self.create_vc(provider, request).await? else {
+        let Some(vc) = self.create_vc(provider, request).await? else {
             //--------------------------------------------------
             // Defer credential issuance
             //--------------------------------------------------
@@ -271,9 +271,9 @@ where
         };
 
         // transform to JWT
-        let mut jwt = vc.to_jwt()?;
-        jwt.claims.sub.clone_from(&self.holder_did);
-        let signed = jose::encode(jwt.header, &jwt.claims, provider.clone()).await?;
+        let mut claims = vc.to_claims()?;
+        claims.sub.clone_from(&self.holder_did);
+        let signed = jose::encode(jose::JwtType::Credential, &claims, provider.clone()).await?;
 
         Ok(CredentialResponse {
             credential: Some(serde_json::to_value(signed)?),
