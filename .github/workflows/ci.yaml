@@ -28,8 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - name: Install GDK-3.0
-        run: sudo apt-get install libgtk-3-dev
+      - name: Install WebKitGTK deps
+        run: sudo apt-get install libgtk-3-dev libsoup-3.0-dev
 
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@nightly
@@ -52,8 +52,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - name: Install GDK-3.0
-        run: sudo apt-get install libgtk-3-dev
+      - name: Install WebKitGTK deps
+        run: sudo apt-get install libgtk-3-dev libsoup-3.0-dev
 
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@nightly
@@ -123,8 +123,8 @@ jobs:
     if: github.event_name != 'pull_request'
     timeout-minutes: 45
     steps:
-      - name: Install GDK-3.0
-        run: sudo apt-get install libgtk-3-dev
+      - name: Install WebKitGTK deps
+        run: sudo apt-get install libgtk-3-dev libsoup-3.0-dev
 
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@clippy
@@ -151,9 +151,9 @@ jobs:
     if: github.event_name != 'pull_request'
     timeout-minutes: 45
     steps:
-      - name: Install GDK-3.0
-        run: sudo apt-get install libgtk-3-dev
-        
+      - name: Install WebKitGTK deps
+        run: sudo apt-get install libgtk-3-dev libsoup-3.0-dev
+
       - uses: actions/checkout@v4
       - uses: dtolnay/install@cargo-outdated
       - run: cargo outdated --workspace --exit-code 1
