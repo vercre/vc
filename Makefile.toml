@@ -50,7 +50,8 @@ args = ["update"]
 
 [tasks.upgrade]
 command = "cargo"
-args = ["update"]
+args = ["upgrade"]
+install_crate = "cargo-edit"
 
 [tasks.audit]
 command = "cargo"
