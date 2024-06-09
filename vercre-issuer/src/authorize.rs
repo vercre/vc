@@ -62,11 +62,11 @@
 //! [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
 //! [RFC9396]: (https://www.rfc-editor.org/rfc/rfc9396)
 
-// LATER: add support for "ldp_vc" format
-// LATER: add support for "jwt_vc_json-ld" format
-// LATER: add support for "vc+sd-jwt" format
-// LATER: add support for "mso_mdoc" format
-// LATER: implement `Interval` and `SlowDown` checks/errors
+// TODO: add support for "ldp_vc" format
+// TODO: add support for "jwt_vc_json-ld" format
+// TODO: add support for "vc+sd-jwt" format
+// TODO: add support for "mso_mdoc" format
+// TODO: implement `Interval` and `SlowDown` checks/errors
 
 use std::collections::HashMap;
 use std::fmt::Debug;
