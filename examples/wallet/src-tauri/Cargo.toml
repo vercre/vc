@@ -18,8 +18,8 @@ version.workspace = true
 name = "example_wallet"
 # crate-type = ["cdylib", "rlib"]
 
-# [lints]
-# workspace = true
+[lints]
+workspace = true
 
 [dependencies]
 argon2 = { version = "2.1.0", package = "rust-argon2" }

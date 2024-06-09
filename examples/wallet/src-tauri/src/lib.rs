@@ -2,6 +2,8 @@
 //!
 //! This module is the entry point for the Tauri application.
 
+#![allow(clippy::used_underscore_binding)]
+
 mod error;
 mod signer;
 
@@ -67,7 +69,6 @@ pub fn run() {
 }
 
 #[tauri::command]
-#[allow(clippy::used_underscore_binding)]
 async fn update_status(
     status: Status, state: State<'_, StateModel>, app: AppHandle,
 ) -> Result<(), error::AppError> {
