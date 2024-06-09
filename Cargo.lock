@@ -3432,6 +3432,7 @@ dependencies = [
  "tracing-subscriber",
  "uuid",
  "vercre-core",
+ "vercre-vc",
 ]
 
 [[package]]

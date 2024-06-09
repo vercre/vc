@@ -376,12 +376,11 @@ mod tests {
 
     use insta::assert_yaml_snapshot as assert_snapshot;
     use vercre_core::metadata::CredentialConfiguration;
-    use vercre_core::provider::Algorithm;
     use vercre_vc::model::{
         Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition,
         VerifiableCredential,
     };
-    use vercre_vc::proof::jose;
+    use vercre_vc::proof::{jose, Algorithm};
 
     use super::*;
     use crate::provider::example::wallet;

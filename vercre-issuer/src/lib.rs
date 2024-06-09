@@ -100,12 +100,13 @@ use std::fmt::Debug;
 
 pub use vercre_core::error::Error;
 use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
 // TODO: move Claims into jwt module
 pub use vercre_core::vci::{GrantType, ProofClaims};
 pub use vercre_core::{callback, provider, subject, Result};
 pub use vercre_vc::proof::jose::{self, Jwt, VcClaims};
+use vercre_vc::proof::Signer;
 
 /// Endpoint is used to surface the public Verifiable Presentation endpoints to
 /// clients.

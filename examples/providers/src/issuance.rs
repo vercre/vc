@@ -12,11 +12,11 @@ use uuid::Uuid;
 use vercre_core::callback::Payload;
 use vercre_core::metadata::{self, CredentialDefinition};
 use vercre_core::provider::{
-    Algorithm, Callback, ClientMetadata, IssuerMetadata, Result, ServerMetadata, Signer,
-    StateManager, Subject,
+    Callback, ClientMetadata, IssuerMetadata, Result, ServerMetadata, StateManager, Subject,
 };
 use vercre_core::subject;
 use vercre_core::vci::GrantType;
+use vercre_vc::proof::{Algorithm, Signer};
 
 use crate::wallet;
 

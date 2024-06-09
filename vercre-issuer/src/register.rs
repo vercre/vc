@@ -7,10 +7,11 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
 pub use vercre_core::vci::{RegistrationRequest, RegistrationResponse};
 use vercre_core::{err, Result};
+use vercre_vc::proof::Signer;
 
 use super::Endpoint;
 use crate::state::State;

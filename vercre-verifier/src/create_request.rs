@@ -47,11 +47,12 @@ use anyhow::anyhow;
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
-use vercre_core::provider::{Algorithm, Callback, ClientMetadata, Signer, StateManager};
+use vercre_core::provider::{Callback, ClientMetadata, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{CreateRequestRequest, CreateRequestResponse, DeviceFlow, RequestObject};
 use vercre_core::{err, gen, Result};
 use vercre_vc::model::vp::{Format, PresentationDefinition};
+use vercre_vc::proof::{Algorithm, Signer};
 
 use super::Endpoint;
 use crate::state::State;

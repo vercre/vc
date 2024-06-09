@@ -78,7 +78,7 @@ use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::metadata::Issuer;
 use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
 use vercre_core::vci::GrantType;
 pub use vercre_core::vci::{
@@ -86,6 +86,7 @@ pub use vercre_core::vci::{
     TokenAuthorizationDetail,
 };
 use vercre_core::{err, gen, Result};
+use vercre_vc::proof::Signer;
 
 use super::Endpoint;
 use crate::state::{Auth, Expire, State};

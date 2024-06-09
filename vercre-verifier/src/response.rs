@@ -27,12 +27,13 @@ use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, ClientMetadata, Signer, StateManager};
+use vercre_core::provider::{Callback, ClientMetadata, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{ResponseRequest, ResponseResponse};
 use vercre_core::{err, Result};
 use vercre_vc::model::vc::VerifiableCredential;
 use vercre_vc::proof::jose::{self, VpClaims};
+use vercre_vc::proof::Signer;
 
 use super::Endpoint;
 use crate::state::State;

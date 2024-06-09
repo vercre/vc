@@ -42,10 +42,11 @@ pub mod provider;
 use std::fmt::Debug;
 
 pub use vercre_core::metadata::CredentialConfiguration;
-use vercre_core::provider::{Callback, Signer};
+use vercre_core::provider::Callback;
 pub use vercre_core::vci::{GrantType, TxCode};
 pub use vercre_core::{callback, Result};
 pub use vercre_vc::model::vp::Constraints;
+use vercre_vc::proof::Signer;
 
 /// Endpoint is used to surface the public wallet endpoints to clients.
 #[derive(Debug)]

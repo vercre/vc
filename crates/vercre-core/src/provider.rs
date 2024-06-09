@@ -3,7 +3,6 @@
 use std::future::{Future, IntoFuture};
 
 use chrono::{DateTime, Utc};
-pub use vercre_vc::proof::{Algorithm, Signer};
 
 use crate::callback;
 use crate::metadata::{Client, CredentialDefinition, Issuer, Server};
