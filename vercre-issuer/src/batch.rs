@@ -273,7 +273,7 @@ where
         // transform to JWT
         let mut claims = vc.to_claims()?;
         claims.sub.clone_from(&self.holder_did);
-        let signed = jose::encode(jose::JwtType::Credential, &claims, provider.clone()).await?;
+        let signed = jose::encode(&jose::Claims::Credential(claims), provider.clone()).await?;
 
         Ok(CredentialResponse {
             credential: Some(serde_json::to_value(signed)?),

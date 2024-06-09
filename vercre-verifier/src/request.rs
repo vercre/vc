@@ -88,7 +88,7 @@ where
         }
 
         let claims = req_obj.to_claims()?;
-        let signed = jose::encode(jose::JwtType::RequestObject, &claims, provider.clone()).await?;
+        let signed = jose::encode(&jose::Claims::RequestObject(claims), provider.clone()).await?;
 
         Ok(RequestObjectResponse {
             request_object: None,
