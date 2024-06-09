@@ -66,7 +66,7 @@
 // LATER: add support for "jwt_vc_json-ld" format
 // LATER: add support for "vc+sd-jwt" format
 // LATER: add support for "mso_mdoc" format
-// TODO: implement `Interval` and `SlowDown` checks/errors
+// LATER: implement `Interval` and `SlowDown` checks/errors
 
 use std::collections::HashMap;
 use std::fmt::Debug;
