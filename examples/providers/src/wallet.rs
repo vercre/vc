@@ -2,9 +2,8 @@ use std::str;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ed25519_dalek::{Signature, Signer, SigningKey};
-// pub const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
+use vercre_vc::proof::jose;
 
-const ALG: &str = "EdDSA";
 const JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
 
@@ -28,8 +27,8 @@ pub fn kid() -> String {
 }
 
 #[must_use]
-pub fn alg() -> String {
-    ALG.to_string()
+pub fn alg() -> jose::Algorithm {
+    jose::Algorithm::EdDSA
 }
 
 /// Sign the provided message.

@@ -14,7 +14,7 @@ use vercre_core::{err, Result};
 use vercre_vc::model::vp::{
     Constraints, DescriptorMap, PathNested, PresentationSubmission, Proof, VerifiablePresentation,
 };
-use vercre_vc::proof::jose::{Jwt, VpClaims};
+use vercre_vc::proof::jose::{self, Jwt, VpClaims};
 
 use crate::credential::Credential;
 use crate::provider::{
@@ -218,17 +218,14 @@ where
         presentation.submission = submission.clone();
 
         // Construct a token
-        let token = match vp_token(
-            &presentation,
-            &provider.algorithm().to_string(),
-            &provider.verification_method(),
-        ) {
-            Ok(token) => token,
-            Err(e) => {
-                provider.notify(&presentation.id, Status::Failed(e.to_string()));
-                return Ok(());
-            }
-        };
+        let token =
+            match vp_token(&presentation, provider.algorithm(), &provider.verification_method()) {
+                Ok(token) => token,
+                Err(e) => {
+                    provider.notify(&presentation.id, Status::Failed(e.to_string()));
+                    return Ok(());
+                }
+            };
         let vp_token = match serde_json::to_value(token) {
             Ok(v) => v,
             Err(e) => {
@@ -331,7 +328,9 @@ fn create_submission(presentation: &Presentation) -> anyhow::Result<Presentation
 }
 
 /// Construct a verifiable presentation proof.
-fn vp_token(presentation: &Presentation, alg: &str, kid: &str) -> anyhow::Result<Jwt<VpClaims>> {
+fn vp_token(
+    presentation: &Presentation, alg: jose::Algorithm, kid: &str,
+) -> anyhow::Result<Jwt<VpClaims>> {
     let request = presentation.request.clone();
     let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
 
@@ -349,7 +348,7 @@ fn vp_token(presentation: &Presentation, alg: &str, kid: &str) -> anyhow::Result
     let mut vp = builder.build()?;
 
     let proof_type = match alg {
-        "EdDSA" => "JsonWebKey2020",
+        jose::Algorithm::EdDSA => "JsonWebKey2020",
         _ => "EcdsaSecp256k1VerificationKey2019",
     };
 
@@ -440,9 +439,9 @@ mod tests {
 
         let jwt = Jwt {
             header: jose::Header {
-                alg: "ES256K".into(),
-                kid: proof.verification_method.clone(),
-                ..Default::default()
+                alg: jose::Algorithm::ES256K,
+                kid: Some(proof.verification_method.clone()),
+                ..jose::Header::default()
             },
             claims: vc.to_claims().expect("should get claims"),
         };
@@ -535,7 +534,7 @@ mod tests {
         presentation.submission =
             create_submission(&presentation).expect("should create submission");
         let token =
-            vp_token(&presentation, &wallet::alg(), &wallet::kid()).expect("should create token");
+            vp_token(&presentation, wallet::alg(), &wallet::kid()).expect("should create token");
         assert_snapshot!(
             "vp_token",
             &token,

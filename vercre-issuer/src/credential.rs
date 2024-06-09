@@ -193,9 +193,10 @@ mod tests {
         // create CredentialRequest to 'send' to the app
         let jwt_enc = Jwt {
             header: jose::Header {
-                typ: "openid4vci-proof+jwt".into(),
+                typ: jose::Typ::WalletProof,
                 alg: wallet::alg(),
-                kid: wallet::kid(),
+                kid: Some(wallet::kid()),
+                ..jose::Header::default()
             },
             claims: ProofClaims {
                 iss: wallet::did(),

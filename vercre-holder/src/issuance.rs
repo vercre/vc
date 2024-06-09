@@ -17,7 +17,7 @@ use vercre_core::vci::{
 };
 use vercre_core::{err, Result};
 use vercre_vc::model::vc::VerifiableCredential;
-use vercre_vc::proof::jose::{Header, Jwt};
+use vercre_vc::proof::jose::{self, Header, Jwt};
 
 use crate::credential::Credential;
 use crate::provider::{
@@ -204,10 +204,11 @@ where
         // Request each credential offered.
         // TODO: concurrent requests. Possible if wallet is WASM?
         let kid = provider.verification_method();
-        let alg = provider.algorithm().to_string();
+        let alg = provider.algorithm();
+
         for (id, cfg) in &issuance.offered {
             // Construct a proof to be used in credential requests.
-            let jwt = proof_jwt(&issuance, &kid, &alg);
+            let jwt = proof_jwt(&issuance, &kid, alg.clone());
             let jwt_bytes = match serde_json::to_vec(&jwt) {
                 Ok(bytes) => bytes,
                 Err(e) => {
@@ -313,13 +314,14 @@ fn token_request(client_id: &str, issuance: &Issuance, pre_authorized_code: &str
 }
 
 /// Construct an unsigned, serialized jwt to include in a proof.
-fn proof_jwt(issuance: &Issuance, kid: &str, alg: &str) -> Jwt<ProofClaims> {
+fn proof_jwt(issuance: &Issuance, kid: &str, alg: jose::Algorithm) -> Jwt<ProofClaims> {
     let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
     Jwt {
         header: Header {
-            typ: String::from("openid4vci-proof+jwt"),
-            alg: alg.into(),
-            kid: kid.into(),
+            typ: jose::Typ::WalletProof,
+            alg,
+            kid: Some(kid.into()),
+            ..Header::default()
         },
         claims: ProofClaims {
             iss: holder_did.to_string(),
@@ -478,7 +480,8 @@ mod tests {
         metadata(&mut issuance, &meta_res).expect("metadata should update flow");
         let kid = wallet::kid();
         let alg = wallet::alg();
-        let jwt = proof_jwt(&issuance, &kid, &alg);
+
+        let jwt = proof_jwt(&issuance, &kid, alg);
         assert_eq!(jwt.claims.aud, "http://vercre.io");
         assert_snapshot!("proof_jwt", &jwt, { ".claims.iat" => "[timestamp]" });
     }
@@ -490,9 +493,10 @@ mod tests {
         let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
         let jwt = Jwt {
             header: Header {
-                typ: String::from("openid4vci-proof+jwt"),
+                typ: jose::Typ::WalletProof,
                 alg,
-                kid: kid.clone(),
+                kid: Some(kid.clone()),
+                ..Header::default()
             },
             claims: ProofClaims {
                 iss: holder_did.into(),
@@ -528,9 +532,10 @@ mod tests {
         let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
         let jwt = Jwt {
             header: Header {
-                typ: String::from("openid4vci-proof+jwt"),
+                typ: jose::Typ::WalletProof,
                 alg,
-                kid: kid.clone(),
+                kid: Some(kid.clone()),
+                ..Header::default()
             },
             claims: ProofClaims {
                 iss: holder_did.into(),

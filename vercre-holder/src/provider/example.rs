@@ -11,16 +11,16 @@ pub mod wallet {
 
     use base64ct::{Base64UrlUnpadded, Encoding};
     use ed25519_dalek::{Signature, Signer, SigningKey};
+    use vercre_vc::proof::jose;
 
-    const ALG: &str = "EdDSA";
     const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
     const JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
     const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
 
     /// Get the algorithm used for signing.
     #[must_use]
-    pub fn alg() -> String {
-        ALG.to_string()
+    pub fn alg() -> jose::Algorithm {
+        jose::Algorithm::EdDSA
     }
     /// A wallet has a unique client ID. See the
     /// [OpenID for Verifiable Credential Issuance](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)

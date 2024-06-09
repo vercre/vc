@@ -9,7 +9,6 @@
 //! multiple formats, different types and one format, or both.
 
 use std::fmt::Debug;
-use std::str::FromStr;
 
 use anyhow::anyhow;
 use chrono::{TimeDelta, Utc};
@@ -155,40 +154,37 @@ where
             };
 
             // TODO: allow passing verifier into this method
-            let jwt = match Jwt::<ProofClaims>::from_str(proof_jwt) {
+            let jwt: Jwt<ProofClaims> = match jose::decode(proof_jwt) {
                 Ok(jwt) => jwt,
                 Err(e) => {
                     let (nonce, expires_in) = self.err_nonce(provider).await?;
                     err!(Err::InvalidProof(nonce, expires_in), "{}", e.to_string());
                 }
             };
-
-            // algorithm
-            if !(jwt.header.alg == "ES256K" || jwt.header.alg == "EdDSA") {
-                let (nonce, expires_in) = self.err_nonce(provider).await?;
-                err!(Err::InvalidProof(nonce, expires_in), "Proof JWT 'alg' is not recognised");
-            }
             // proof type
-            if jwt.header.typ != "openid4vci-proof+jwt" {
+            if jwt.header.typ != jose::Typ::WalletProof {
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(
                     Err::InvalidProof(nonce, expires_in),
-                    "Proof JWT 'typ' is not 'openid4vci-proof+jwt'"
+                    "Proof JWT 'typ' is not {}",
+                    jose::Typ::WalletProof
                 );
             }
+
             // previously issued c_nonce
             if jwt.claims.nonce != token_state.c_nonce {
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(Err::InvalidProof(nonce, expires_in), "Proof JWT nonce claim is invalid");
             }
+
+            // TODO: use `decode` method in vercre-vc
             // Key ID
-            if jwt.header.kid.is_empty() {
+            let Some(kid) = jwt.header.kid else {
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(Err::InvalidProof(nonce, expires_in), "Proof JWT 'kid' is missing");
             };
-
             // HACK: save extracted DID for later use when issuing credential
-            let Some(did) = jwt.header.kid.split('#').next() else {
+            let Some(did) = kid.split('#').next() else {
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(Err::InvalidProof(nonce, expires_in), "Proof JWT DID is invalid");
             };
@@ -274,7 +270,7 @@ where
         // transform to JWT
         let mut claims = vc.to_claims()?;
         claims.sub.clone_from(&self.holder_did);
-        let signed = jose::encode(&jose::Claims::Credential(claims), provider.clone()).await?;
+        let signed = jose::encode(jose::Typ::Credential, &claims, provider.clone()).await?;
 
         Ok(CredentialResponse {
             credential: Some(serde_json::to_value(signed)?),
@@ -460,9 +456,10 @@ mod tests {
         // create BatchCredentialRequest to 'send' to the app
         let jwt_enc = Jwt {
             header: jose::Header {
-                typ: "openid4vci-proof+jwt".into(),
                 alg: wallet::alg(),
-                kid: wallet::kid(),
+                typ: jose::Typ::WalletProof,
+                kid: Some(wallet::kid()),
+                ..jose::Header::default()
             },
             claims: ProofClaims {
                 iss: wallet::did(),
@@ -512,7 +509,7 @@ mod tests {
 
         let vc_val = credential.expect("VC is present");
         let vc_b64 = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
-        let vc_jwt = Jwt::<VcClaims>::from_str(&vc_b64).expect("VC as JWT");
+        let vc_jwt : Jwt::<VcClaims>=jose::decode(&vc_b64).expect("VC as JWT");
         assert_snapshot!("ad-vc_jwt", vc_jwt, {
             ".claims.iat" => "[iat]",
             ".claims.nbf" => "[nbf]",
@@ -562,7 +559,7 @@ mod tests {
     //     // create BatchCredentialRequest to 'send' to the app
     //     let jwt_enc = Jwt {
     //         header: jwt::Header {
-    //             typ: "openid4vci-proof+jwt".into(),
+    //             typ: jose::Typ::WalletProof,
     //             alg: wallet::alg(),
     //             kid: wallet::kid(),
     //         },

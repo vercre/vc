@@ -1,12 +1,12 @@
 ---
 source: vercre-holder/src/issuance.rs
-assertion_line: 483
+assertion_line: 486
 expression: "&jwt"
 ---
 header:
   alg: EdDSA
+  typ: openidvci-proof+jwt
   kid: "did:jwk:eyJjcnYiOiJYMjU1MTkiLCJrdHkiOiJPS1AiLCJ1c2UiOiJlbmMiLCJ4IjoiM0xnOXl2aUFtVERDdVZPeUxYSTNscTlTMnBIbTczeXIzd3dBa2p3Q0FodyJ9#0"
-  typ: openid4vci-proof+jwt
 claims:
   iss: "did:jwk:eyJjcnYiOiJYMjU1MTkiLCJrdHkiOiJPS1AiLCJ1c2UiOiJlbmMiLCJ4IjoiM0xnOXl2aUFtVERDdVZPeUxYSTNscTlTMnBIbTczeXIzd3dBa2p3Q0FodyJ9"
   aud: "http://vercre.io"
