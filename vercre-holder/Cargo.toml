@@ -3,7 +3,6 @@ name = "vercre-holder"
 description = "OpenID compliant Verifiable Credential holder API"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
