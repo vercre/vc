@@ -30,8 +30,9 @@ use vercre_core::error::Err;
 use vercre_core::provider::{Callback, ClientMetadata, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{ResponseRequest, ResponseResponse};
-use vercre_core::w3c::{Claims as VpClaims, VerifiableCredential};
-use vercre_core::{err, jwt, Result};
+use vercre_core::{err, Result};
+use vercre_vc::model::vc::VerifiableCredential;
+use vercre_vc::proof::jose::{self, VpClaims};
 
 use super::Endpoint;
 use crate::state::State;
@@ -120,7 +121,7 @@ where
                     vp_val
                 }
                 Value::String(string) => {
-                    let Ok(jwt) = jwt::Jwt::<VpClaims>::from_str(&string) else {
+                    let Ok(jwt) = jose::Jwt::<VpClaims>::from_str(&string) else {
                         err!(Err::InvalidRequest, "invalid vp_token format");
                     };
                     if jwt.claims.nonce != saved_req.nonce {
@@ -248,7 +249,7 @@ mod tests {
     use providers::presentation::Provider;
     use serde_json::json;
     use vercre_core::vp::RequestObject;
-    use vercre_core::w3c::vp::PresentationDefinition;
+    use vercre_vc::model::vp::PresentationDefinition;
 
     use super::*;
 

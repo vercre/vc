@@ -9,12 +9,12 @@ use base64ct::{Base64, Encoding};
 use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use vercre_vc::proof::jose::Jwk;
 
 use crate::error::{self, Err};
 use crate::metadata::{
     Claim, Client as ClientMetadata, CredentialDefinition, Issuer as IssuerMetadata,
 };
-use crate::proof::Jwk;
 use crate::{err, stringify, Result};
 
 // ----------------------------------------------------------------------------

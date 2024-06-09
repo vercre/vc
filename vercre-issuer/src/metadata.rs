@@ -86,7 +86,8 @@ where
         tracing::debug!("Context::process");
 
         // TODO: add languages to request
-        let credential_issuer = IssuerMetadata::metadata(provider, &request.credential_issuer).await?;
+        let credential_issuer =
+            IssuerMetadata::metadata(provider, &request.credential_issuer).await?;
         Ok(MetadataResponse { credential_issuer })
     }
 }

@@ -10,14 +10,14 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
-use vercre_core::jwt::{Header, Jwt};
 use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::vci::{
     CredentialOffer, CredentialRequest, CredentialResponse, GrantType, MetadataRequest,
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
-use vercre_core::w3c::VerifiableCredential;
 use vercre_core::{err, Result};
+use vercre_vc::model::vc::VerifiableCredential;
+use vercre_vc::proof::jose::{Header, Jwt};
 
 use crate::credential::Credential;
 use crate::provider::{
@@ -215,6 +215,8 @@ where
                     return Ok(());
                 }
             };
+
+            // TODO: move signing to vercre-vc crate
             let signed_jwt = provider.sign(&jwt_bytes).await;
             let proof = proof(&jwt, &signed_jwt);
             let request = credential_request(&issuance, id, cfg, &proof);

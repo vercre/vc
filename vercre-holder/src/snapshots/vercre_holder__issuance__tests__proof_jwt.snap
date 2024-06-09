@@ -1,6 +1,6 @@
 ---
 source: vercre-holder/src/issuance.rs
-assertion_line: 481
+assertion_line: 483
 expression: "&jwt"
 ---
 header:

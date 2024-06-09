@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/batch.rs
-assertion_line: 520
+assertion_line: 515
 expression: vc_jwt
 ---
 header:

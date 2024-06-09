@@ -30,6 +30,8 @@ missing_docs = "warn"
 unused_extern_crates = "warn"
 
 [workspace.lints.clippy]
+# clippy::all = correctness, suspicious, style, complexity, perf
+# not using (yet) -Dclippy::restriction
 all = "warn"
 pedantic = "warn"
 nursery = "warn"
@@ -56,9 +58,11 @@ tower-http = { version = "0.5.2", features = ["cors", "set-header", "trace"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 uuid = { version = "1.8.0", features = ["fast-rng", "v4"] }
-vercre-core = { path = "crates/vercre-core", version = "0.1.0-alpha.4" }
-vercre-issuer = { path = "vercre-issuer", version = "0.1.0-alpha.4" }
-vercre-verifier = { path = "vercre-verifier", version = "0.1.0-alpha.4" }
+vercre-core = { path = "crates/vercre-core" }
+vercre-issuer = { path = "vercre-issuer" }
+vercre-vc = { git = "https://github.com/vercre/vercre-vc" }
+# vercre-vc = { path = "../vercre-vc" }
+vercre-verifier = { path = "vercre-verifier" }
 
 [workspace.metadata.bin]
 cargo-xcode = { version = "=1.7.0" }

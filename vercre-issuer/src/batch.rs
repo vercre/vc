@@ -16,7 +16,6 @@ use chrono::{TimeDelta, Utc};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::{Ancillary as _, Err};
-use vercre_core::jwt::Jwt;
 use vercre_core::metadata::{CredentialDefinition, Issuer};
 use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
@@ -26,8 +25,9 @@ use vercre_core::vci::ProofClaims;
 pub use vercre_core::vci::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialRequest, CredentialResponse,
 };
-use vercre_core::w3c::{self, CredentialSubject, VerifiableCredential};
 use vercre_core::{err, gen, Result};
+use vercre_vc::model::{CredentialSubject, Proof, VerifiableCredential};
+use vercre_vc::proof::jose::{self, Jwt};
 
 use super::Endpoint;
 use crate::state::{Deferred, Expire, State};
@@ -158,11 +158,7 @@ where
                 Ok(jwt) => jwt,
                 Err(e) => {
                     let (nonce, expires_in) = self.err_nonce(provider).await?;
-                    err!(
-                        Err::InvalidProof(nonce, expires_in),
-                        "{}",
-                        e.error_description().unwrap_or_default()
-                    );
+                    err!(Err::InvalidProof(nonce, expires_in), "{}", e.to_string());
                 }
             };
 
@@ -207,7 +203,7 @@ where
         // process credential requests
         let mut responses = Vec::<CredentialResponse>::new();
         for c_req in request.credential_requests.clone() {
-            responses.push(self.make_response(provider, &c_req).await?);
+            responses.push(self.create_response(provider, &c_req).await?);
         }
 
         // generate nonce and update state
@@ -244,13 +240,13 @@ where
     P: Subject + StateManager + Signer + Clone,
 {
     // Processes the Credential Request to generate a Credential Response.
-    async fn make_response(
+    async fn create_response(
         &self, provider: &P, request: &CredentialRequest,
     ) -> Result<CredentialResponse> {
-        tracing::debug!("Context::make_response");
+        tracing::debug!("Context::create_response");
 
         // Try to create a VC. If None, then return a deferred issuance response.
-        let Some(mut vc) = self.make_vc(provider, request).await? else {
+        let Some(vc) = self.create_vc(provider, request).await? else {
             //--------------------------------------------------
             // Defer credential issuance
             //--------------------------------------------------
@@ -275,9 +271,9 @@ where
         };
 
         // transform to JWT
-        let mut vc_jwt = vc.to_jwt()?;
-        vc_jwt.claims.sub.clone_from(&self.holder_did);
-        let signed = vc_jwt.sign(provider.clone()).await?;
+        let mut claims = vc.to_claims()?;
+        claims.sub.clone_from(&self.holder_did);
+        let signed = jose::encode(&jose::Claims::Credential(claims), provider.clone()).await?;
 
         Ok(CredentialResponse {
             credential: Some(serde_json::to_value(signed)?),
@@ -288,10 +284,10 @@ where
     // Attempt to generate a Verifiable Credential from information provided in the Credential
     // Request. May return `None` if the credential is not ready to be issued because the request
     // for Subject is pending.
-    async fn make_vc(
+    async fn create_vc(
         &self, provider: &P, request: &CredentialRequest,
     ) -> Result<Option<VerifiableCredential>> {
-        tracing::debug!("Context::make_vc");
+        tracing::debug!("Context::create_vc");
 
         let cred_def = self.credential_definition(request)?;
         let Some(holder_id) = &self.state.holder_id else {
@@ -316,7 +312,7 @@ where
 
         // create proof
         // TODO: add all fields required by JWT
-        let proof = w3c::vc::Proof {
+        let proof = Proof {
             id: Some(format!("urn:uuid:{}", Uuid::new_v4())),
             type_: Signer::algorithm(provider).proof_type(),
             verification_method: Signer::verification_method(provider),
@@ -425,8 +421,7 @@ mod tests {
     use providers::issuance::{Provider, ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
-    use vercre_core::jwt;
-    use vercre_core::w3c::vc::VcClaims;
+    use vercre_vc::proof::jose::{self, VcClaims};
 
     use super::*;
     use crate::state::Token;
@@ -463,7 +458,7 @@ mod tests {
 
         // create BatchCredentialRequest to 'send' to the app
         let jwt_enc = Jwt {
-            header: jwt::Header {
+            header: jose::Header {
                 typ: "openid4vci-proof+jwt".into(),
                 alg: wallet::alg(),
                 kid: wallet::kid(),

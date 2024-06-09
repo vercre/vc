@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/deferred.rs
-assertion_line: 242
+assertion_line: 241
 expression: vc_jwt
 ---
 header:

@@ -12,7 +12,7 @@ use serde_json::json;
 use sha2::{Digest, Sha256};
 use vercre_issuer::authorize::{AuthorizationRequest, AuthorizationResponse};
 use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
-use vercre_issuer::jwt::{self, Jwt};
+use vercre_issuer::jose::{self, Jwt};
 use vercre_issuer::token::{TokenRequest, TokenResponse};
 use vercre_issuer::{Endpoint, ProofClaims, VcClaims};
 
@@ -116,7 +116,7 @@ async fn get_token(input: AuthorizationResponse) -> Result<TokenResponse> {
 async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     // create CredentialRequest to 'send' to the app
     let jwt_enc = Jwt {
-        header: jwt::Header {
+        header: jose::Header {
             typ: "openid4vci-proof+jwt".into(),
             alg: wallet::alg(),
             kid: wallet::kid(),

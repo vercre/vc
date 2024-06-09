@@ -1,9 +1,9 @@
 //! # `OpenID` Core
 
-use std::fmt::Display;
 use std::future::{Future, IntoFuture};
 
 use chrono::{DateTime, Utc};
+pub use vercre_vc::proof::{Algorithm, Signer};
 
 use crate::callback;
 use crate::metadata::{Client, CredentialDefinition, Issuer, Server};
@@ -92,53 +92,4 @@ pub trait Subject: Send + Sync {
     fn claims(
         &self, holder_subject: &str, credential: &CredentialDefinition,
     ) -> impl Future<Output = Result<Claims>> + Send;
-}
-
-/// Signer is used by implementers to provide signing functionality for
-/// Verifiable Credential issuance and Verifiable Presentation submissions.
-pub trait Signer: Send + Sync {
-    /// Algorithm returns the algorithm used by the signer.
-    fn algorithm(&self) -> Algorithm;
-
-    /// The verification method the verifier should use to verify the signer's
-    /// signature. This is typically a DID URL + # + verification key ID.
-    fn verification_method(&self) -> String;
-
-    /// Sign is a convenience method for infallible Signer implementations.
-    fn sign(&self, msg: &[u8]) -> impl Future<Output = Vec<u8>> + Send {
-        let v = async { self.try_sign(msg).await.expect("should sign") };
-        v.into_future()
-    }
-
-    /// `TrySign` is the fallible version of Sign.
-    fn try_sign(&self, msg: &[u8]) -> impl Future<Output = Result<Vec<u8>>> + Send;
-}
-
-/// Algorithm is used to specify the signing algorithm used by the signer.
-pub enum Algorithm {
-    /// Algorithm for the secp256k1 curve
-    ES256K,
-
-    /// Algorithm for the Ed25519 curve
-    EdDSA,
-}
-
-impl Display for Algorithm {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::ES256K => write!(f, "ES256K"),
-            Self::EdDSA => write!(f, "EdDSA"),
-        }
-    }
-}
-
-impl Algorithm {
-    /// Returns the key type as a string.
-    #[must_use]
-    pub fn proof_type(&self) -> String {
-        match self {
-            Self::ES256K => "EcdsaSecp256k1VerificationKey2019".into(),
-            Self::EdDSA => "JsonWebKey2020".into(),
-        }
-    }
 }

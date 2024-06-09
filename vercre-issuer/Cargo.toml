@@ -36,6 +36,7 @@ sha2 = "0.10.8"
 tracing.workspace = true
 uuid.workspace = true
 vercre-core.workspace = true
+vercre-vc.workspace = true
 
 [dev-dependencies]
 assert_let_bind.workspace = true

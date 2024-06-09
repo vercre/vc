@@ -22,6 +22,7 @@ use vercre_core::provider::{Callback, ClientMetadata, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{RequestObjectRequest, RequestObjectResponse};
 use vercre_core::{err, Result};
+use vercre_vc::proof::jose;
 
 use super::Endpoint;
 use crate::state::State;
@@ -86,11 +87,12 @@ where
             err!(Err::InvalidRequest, "client ID mismatch");
         }
 
-        let jwt = req_obj.to_jwt()?.sign(provider.clone()).await?;
+        let claims = req_obj.to_claims()?;
+        let signed = jose::encode(&jose::Claims::RequestObject(claims), provider.clone()).await?;
 
         Ok(RequestObjectResponse {
             request_object: None,
-            jwt: Some(jwt),
+            jwt: Some(signed),
         })
     }
 }
@@ -99,8 +101,8 @@ where
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use providers::presentation::{Provider, VERIFIER};
-    use vercre_core::jwt::Jwt;
     use vercre_core::vp::RequestObject;
+    use vercre_vc::proof::jose::Jwt;
 
     use super::*;
 
