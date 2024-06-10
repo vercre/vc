@@ -4,7 +4,6 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-use providers::wallet;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
@@ -113,7 +112,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: CredentialStorer + IssuanceInput + IssuanceListener + IssuerClient + Signer + Debug,
+    P: CredentialStorer + IssuanceInput + IssuanceListener + IssuerClient + Signer + Clone + Debug,
 {
     type Provider = P;
     type Request = ReceiveOfferRequest;
@@ -210,7 +209,7 @@ where
                 iat: chrono::Utc::now().timestamp(),
                 nonce: issuance.token.c_nonce.clone().unwrap_or_default(),
             };
-            let Ok(jwt) = jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider).await
+            let Ok(jwt) = jose::encode(jose::Typ::WalletProof, &claims, provider.clone()).await
             else {
                 provider.notify(&issuance.id, Status::Failed("could not encode proof".into()));
                 return Ok(());
@@ -488,7 +487,7 @@ mod tests {
         metadata(&mut issuance, &meta_res).expect("metadata should update flow");
         let id = issuance.offered.keys().next().expect("should have an offered configuration key");
         let cfg = issuance.offered.get(id).expect("should have an offered configuration");
-        
+
         let claims = ProofClaims {
             iss: wallet::did(),
             aud: "http://vercre.io".into(),

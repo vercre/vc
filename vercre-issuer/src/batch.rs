@@ -263,7 +263,7 @@ where
             // only need to return transaction_id
             return Ok(CredentialResponse {
                 transaction_id: Some(txn_id),
-                ..Default::default()
+                ..CredentialResponse::default()
             });
         };
 
