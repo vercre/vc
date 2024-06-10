@@ -5,7 +5,7 @@
 #![allow(clippy::used_underscore_binding)]
 
 mod error;
-mod signer;
+mod model;
 
 use std::sync::Mutex;
 
