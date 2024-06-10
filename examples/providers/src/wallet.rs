@@ -27,7 +27,7 @@ pub fn kid() -> String {
 }
 
 #[must_use]
-pub fn alg() -> jose::Algorithm {
+pub const fn alg() -> jose::Algorithm {
     jose::Algorithm::EdDSA
 }
 

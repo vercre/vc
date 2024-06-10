@@ -4,7 +4,6 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
-use chrono::{TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
@@ -14,7 +13,7 @@ use vercre_core::{err, Result};
 use vercre_vc::model::vp::{
     Constraints, DescriptorMap, PathNested, PresentationSubmission, Proof, VerifiablePresentation,
 };
-use vercre_vc::proof::jose::{self, Jwt, VpClaims};
+use vercre_vc::proof::jose::{Jwt, VpClaims};
 
 use crate::credential::Credential;
 use crate::provider::{
@@ -218,14 +217,13 @@ where
         presentation.submission = submission.clone();
 
         // Construct a token
-        let token =
-            match vp_token(&presentation, provider.algorithm(), &provider.verification_method()) {
-                Ok(token) => token,
-                Err(e) => {
-                    provider.notify(&presentation.id, Status::Failed(e.to_string()));
-                    return Ok(());
-                }
-            };
+        let token = match vp_token(&presentation, &provider.verification_method()) {
+            Ok(token) => token,
+            Err(e) => {
+                provider.notify(&presentation.id, Status::Failed(e.to_string()));
+                return Ok(());
+            }
+        };
         let vp_token = match serde_json::to_value(token) {
             Ok(v) => v,
             Err(e) => {
@@ -328,9 +326,7 @@ fn create_submission(presentation: &Presentation) -> anyhow::Result<Presentation
 }
 
 /// Construct a verifiable presentation proof.
-fn vp_token(
-    presentation: &Presentation, alg: jose::Algorithm, kid: &str,
-) -> anyhow::Result<Jwt<VpClaims>> {
+fn vp_token(presentation: &Presentation, kid: &str) -> anyhow::Result<Jwt<VpClaims>> {
     let request = presentation.request.clone();
     let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
 
@@ -347,20 +343,16 @@ fn vp_token(
 
     let mut vp = builder.build()?;
 
-    let proof_type = match alg {
-        jose::Algorithm::EdDSA => "JsonWebKey2020",
-        _ => "EcdsaSecp256k1VerificationKey2019",
-    };
-
     vp.proof = Some(vec![Proof {
-        id: Some(format!("urn:uuid:{}", Uuid::new_v4())),
-        type_: proof_type.to_string(),
-        verification_method: kid.to_string(),
-        created: Some(Utc::now()),
-        expires: Utc::now().checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
+        // id: vp.id.clone(),
+        // type_: proof_type.to_string(),
+        // verification_method: kid.to_string(),
+        // created: Some(Utc::now()),
+        // expires: Utc::now().checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
         domain: Some(vec![request.client_id.clone()]),
         challenge: Some(request.nonce),
-        ..Default::default()
+
+        ..Proof::default()
     }]);
 
     // transform VP into signed JWT
@@ -533,11 +525,16 @@ mod tests {
         };
         presentation.submission =
             create_submission(&presentation).expect("should create submission");
-        let token =
-            vp_token(&presentation, wallet::alg(), &wallet::kid()).expect("should create token");
+        let token = vp_token(&presentation, &wallet::kid()).expect("should create token");
         assert_snapshot!(
-            "vp_token",
-            &token,
-            { ".claims.jti" => "[jti]", ".claims.exp" => "[exp]", ".claims.iat" => "[iat]" });
+        "vp_token",
+        &token,
+        { ".claims.jti" => "[jti]",
+        ".claims.nbf" => "[nbf]",
+        ".claims.iat" => "[iat]" ,
+        ".claims.exp" => "[exp]",
+        ".claims.vp.id" => "[vp.id]"
+
+        });
     }
 }
