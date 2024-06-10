@@ -4,8 +4,8 @@
 //! application state is translated into a view model for the shell to render.
 
 use vercre_holder::credential::Credential;
-use vercre_holder::issuance;
-use vercre_holder::presentation;
+use vercre_holder::issuance::Issuance;
+use vercre_holder::presentation::Presentation;
 
 use crate::model;
 
@@ -18,9 +18,11 @@ pub struct AppState {
     /// Credentials stored in the wallet
     pub credential: CredentialState,
     /// State of issuance flow (if active)
-    pub issuance: IssuanceState,
+    pub issuance: Issuance,
     /// State of presentation flow (if active)
-    pub presentation: PresentationState,
+    pub presentation: Presentation,
+    /// Error information
+    pub error: Option<String>,
 }
 
 /// Credential sub-app state
@@ -30,22 +32,4 @@ pub struct CredentialState {
     pub credentials: Vec<Credential>,
     /// Current credential being viewed
     pub current: Option<Credential>,
-}
-
-/// Issuance sub-app state
-#[derive(Debug, Default)]
-pub struct IssuanceState {
-    /// Flow status
-    pub status: issuance::Status,
-    /// Flow state
-    pub state: issuance::Issuance,
-}
-
-/// Presentation sub-app state
-#[derive(Debug, Default)]
-pub struct PresentationState {
-    /// Flow status
-    pub status: presentation::Status,
-    /// Flow state
-    pub state: presentation::Presentation,
 }

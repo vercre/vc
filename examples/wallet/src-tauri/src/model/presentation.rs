@@ -4,9 +4,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use vercre_holder::presentation::Status;
+use vercre_holder::presentation::{Presentation, Status};
 
-use crate::app::PresentationState;
 use crate::model::credential::CredentialDisplay;
 
 /// Status of the presentation flow
@@ -52,10 +51,10 @@ pub struct PresentationView {
 }
 
 /// Convert underlying presentation flow state to view model
-impl From<PresentationState> for PresentationView {
-    fn from(state: PresentationState) -> Self {
+impl From<Presentation> for PresentationView {
+    fn from(state: Presentation) -> Self {
         let mut creds = HashMap::new();
-        for cred in &state.state.credentials {
+        for cred in &state.credentials {
             creds.insert(cred.id.clone(), cred.into());
         }
         Self {

@@ -4,9 +4,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use vercre_holder::issuance::Status;
+use vercre_holder::issuance::{Issuance, Status};
 
-use crate::app::IssuanceState;
 use crate::model::credential::CredentialDisplay;
 
 /// Status of the issuance flow
@@ -66,18 +65,18 @@ pub struct IssuanceView {
 }
 
 /// Convert the underlying issuance flow state to a view model of the same
-impl From<IssuanceState> for IssuanceView {
-    fn from(state: IssuanceState) -> Self {
+impl From<Issuance> for IssuanceView {
+    fn from(state: Issuance) -> Self {
         let mut creds: HashMap<String, CredentialDisplay> = HashMap::new();
-        for (id, offered) in &state.state.offered {
+        for (id, offered) in &state.offered {
             let mut cred: CredentialDisplay = offered.into();
-            cred.issuer = Some(state.state.offer.credential_issuer.clone());
+            cred.issuer = Some(state.offer.credential_issuer.clone());
             creds.insert(id.clone(), cred);
         }
         Self {
             status: state.status.into(),
             credentials: creds,
-            pin: state.state.pin,
+            pin: state.pin,
         }
     }
 }
