@@ -470,10 +470,9 @@ mod tests {
             parse_request_object_response(&req_obj_res).expect("should parse with object");
         assert_eq!(obj, decoded);
 
-        let claims = obj.to_claims().expect("should get claims");
         let jwt = Jwt {
             header: jose::Header::default(),
-            claims,
+            claims: obj.clone(),
         };
         let jwt_str = serde_json::to_string(&jwt).expect("should serialize jwt");
 
