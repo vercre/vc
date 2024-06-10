@@ -326,15 +326,6 @@ impl RequestObject {
     pub fn to_querystring(&self) -> Result<String> {
         Ok(serde_qs::to_string(&self)?)
     }
-
-    /// Generate a JWT for the Request Object.
-    ///
-    /// # Errors
-    ///
-    /// Returns an `Err::ServerError` error if the Request Object cannot be serialized.
-    pub fn to_claims(&self) -> Result<Self> {
-        Ok(self.clone())
-    }
 }
 
 /// The Request Object Request is used (indirectly) by the Wallet to retrieve a previously

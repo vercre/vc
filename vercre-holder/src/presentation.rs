@@ -383,7 +383,7 @@ mod tests {
             alg: Some(vec![Algorithm::EdDSA.to_string()]),
             proof_type: None,
         };
-        
+
         RequestObject {
             response_type: "vp_token".into(),
             client_id: "https://vercre.io/post".into(),
