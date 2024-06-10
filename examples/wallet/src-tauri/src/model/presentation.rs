@@ -6,11 +6,13 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 use vercre_holder::presentation::Status;
 
+use crate::app::PresentationState;
 use crate::model::credential::CredentialDisplay;
 
 /// Status of the presentation flow
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[typeshare]
+#[allow(clippy::module_name_repetitions)]
 pub enum PresentationStatus {
     /// No authorization request is being processed.
     #[default]
@@ -33,7 +35,7 @@ impl From<Status> for PresentationStatus {
             Status::Inactive => Self::Inactive,
             Status::Requested => Self::Requested,
             Status::Authorized => Self::Authorized,
-            _ => Self::Failed,
+            Status::Failed(_) => Self::Failed,
         }
     }
 }
@@ -41,9 +43,24 @@ impl From<Status> for PresentationStatus {
 /// Presentation flow viewable state
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[typeshare]
+#[allow(clippy::module_name_repetitions)]
 pub struct PresentationView {
     /// Presentation request status
     pub status: PresentationStatus,
     /// Credentials to present
     pub credentials: HashMap<String, CredentialDisplay>,
+}
+
+/// Convert underlying presentation flow state to view model
+impl From<PresentationState> for PresentationView {
+    fn from(state: PresentationState) -> Self {
+        let mut creds = HashMap::new();
+        for cred in &state.state.credentials {
+            creds.insert(cred.id.clone(), cred.into());
+        }
+        Self {
+            status: state.status.into(),
+            credentials: creds,
+        }
+    }
 }

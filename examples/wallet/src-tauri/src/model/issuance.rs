@@ -6,11 +6,13 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 use vercre_holder::issuance::Status;
 
+use crate::app::IssuanceState;
 use crate::model::credential::CredentialDisplay;
 
 /// Status of the issuance flow
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[typeshare]
+#[allow(clippy::module_name_repetitions)]
 pub enum IssuanceStatus {
     /// No credential offer is being processed.
     #[default]
@@ -45,7 +47,7 @@ impl From<Status> for IssuanceStatus {
             Status::PendingPin => Self::PendingPin,
             Status::Accepted => Self::Accepted,
             Status::Requested => Self::Requested,
-            _ => Self::Failed,
+            Status::Failed(_) => Self::Failed,
         }
     }
 }
@@ -53,13 +55,31 @@ impl From<Status> for IssuanceStatus {
 /// Issuance flow viewable state
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[typeshare]
+#[allow(clippy::module_name_repetitions)]
 pub struct IssuanceView {
     /// Credential offer status
     pub status: IssuanceStatus,
     /// Credentials on offer
-    pub credential: HashMap<String, CredentialDisplay>,
+    pub credentials: HashMap<String, CredentialDisplay>,
     /// PIN
     pub pin: Option<String>,
+}
+
+/// Convert the underlying issuance flow state to a view model of the same
+impl From<IssuanceState> for IssuanceView {
+    fn from(state: IssuanceState) -> Self {
+        let mut creds: HashMap<String, CredentialDisplay> = HashMap::new();
+        for (id, offered) in &state.state.offered {
+            let mut cred: CredentialDisplay = offered.into();
+            cred.issuer = Some(state.state.offer.credential_issuer.clone());
+            creds.insert(id.clone(), cred);
+        }
+        Self {
+            status: state.status.into(),
+            credentials: creds,
+            pin: state.state.pin,
+        }
+    }
 }
 
 /// Types of PIN characters

@@ -11,20 +11,30 @@ use crate::model;
 
 /// Application state
 #[derive(Debug, Default)]
-pub(crate) struct AppState {
+#[allow(clippy::module_name_repetitions)]
+pub struct AppState {
     /// The sub-app currently active
     pub sub_app: model::SubApp,
     /// Credentials stored in the wallet
-    pub credentials: Vec<Credential>,
+    pub credential: CredentialState,
     /// State of issuance flow (if active)
     pub issuance: IssuanceState,
     /// State of presentation flow (if active)
     pub presentation: PresentationState,
 }
 
+/// Credential sub-app state
+#[derive(Debug, Default)]
+pub struct CredentialState {
+    /// List of credentials
+    pub credentials: Vec<Credential>,
+    /// Current credential being viewed
+    pub current: Option<Credential>,
+}
+
 /// Issuance sub-app state
 #[derive(Debug, Default)]
-pub(crate) struct IssuanceState {
+pub struct IssuanceState {
     /// Flow status
     pub status: issuance::Status,
     /// Flow state
@@ -33,7 +43,7 @@ pub(crate) struct IssuanceState {
 
 /// Presentation sub-app state
 #[derive(Debug, Default)]
-pub(crate) struct PresentationState {
+pub struct PresentationState {
     /// Flow status
     pub status: presentation::Status,
     /// Flow state
