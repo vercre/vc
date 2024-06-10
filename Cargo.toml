@@ -60,8 +60,8 @@ tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 uuid = { version = "1.8.0", features = ["fast-rng", "v4"] }
 vercre-core = { path = "crates/vercre-core" }
 vercre-issuer = { path = "vercre-issuer" }
-# vercre-vc = { git = "https://github.com/vercre/vercre-vc" }
-vercre-vc = { path = "../vercre-vc" }
+vercre-vc = { git = "https://github.com/vercre/vercre-vc" }
+# vercre-vc = { path = "../vercre-vc" }
 vercre-verifier = { path = "vercre-verifier" }
 
 [workspace.metadata.bin]
