@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
 /// View model for the credential sub-app
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 pub struct CredentialView {
     /// List of credentials
@@ -16,7 +16,7 @@ pub struct CredentialView {
 }
 
 /// Summary view for a verifiable credential
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 pub struct CredentialDisplay {
     /// CSS color to use for the background of a credential display
@@ -26,7 +26,7 @@ pub struct CredentialDisplay {
     /// Label to display on the credential to indicate the issuer
     pub issuer: Option<String>,
     /// Logo to display on the credential
-    pub logo: Option<String>,
+    pub logo: Option<Logo>,
     /// URL of the original source of the logo
     pub logo_url: Option<String>,
     /// Name of the credential
@@ -34,7 +34,7 @@ pub struct CredentialDisplay {
 }
 
 /// Logo to display on the credential
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 pub struct Logo {
     /// Base64 encoded image
@@ -44,7 +44,7 @@ pub struct Logo {
 }
 
 /// Detail view for a verifiable credential
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 pub struct CredentialDetail {
     /// Display

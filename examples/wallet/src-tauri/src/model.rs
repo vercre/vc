@@ -5,21 +5,23 @@ mod presentation;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 pub enum SubApp {
+    #[default]
+    Splash,
     Credential,
     Issuance,
     Presentation,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 pub struct ViewModel {
-    sub_app: SubApp,
-    credential: Option<credential::CredentialView>,
-    issuance: Option<issuance::IssuanceView>,
-    presentation: Option<presentation::PresentationView>,
+    pub sub_app: SubApp,
+    pub credential: Option<credential::CredentialView>,
+    pub issuance: Option<issuance::IssuanceView>,
+    pub presentation: Option<presentation::PresentationView>,
     /// Error message, if any
     pub error: Option<String>,
 }

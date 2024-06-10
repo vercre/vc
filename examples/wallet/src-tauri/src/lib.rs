@@ -4,22 +4,18 @@
 
 #![allow(clippy::used_underscore_binding)]
 
+mod app;
 mod error;
 mod model;
 
 use std::sync::Mutex;
 
-use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, State};
 use tauri_plugin_log::{Target, TargetKind};
-use vercre_holder::issuance::Status;
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
-struct Model {
-    status: Status,
-}
+use app::AppState;
 
-struct StateModel(Mutex<Model>);
+struct StateModel(Mutex<AppState>);
 
 /// Tauri entry point
 ///
@@ -57,24 +53,21 @@ pub fn run() {
 
             Ok(())
         })
-        .manage(StateModel(Mutex::new(Model {
-            status: Status::default(),
-        })))
+        .manage(StateModel(Mutex::new(AppState::default())))
         .invoke_handler(tauri::generate_handler![
-            update_status,
             // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
-#[tauri::command]
-async fn update_status(
-    status: Status, state: State<'_, StateModel>, app: AppHandle,
-) -> Result<(), error::AppError> {
-    let mut model = state.0.lock().unwrap();
-    model.status = status;
-    app.emit("status_updated", model.clone()).map_err(error::AppError::from)?;
-    drop(model);
-    Ok(())
-}
+// #[tauri::command]
+// async fn update_status(
+//     status: Status, state: State<'_, StateModel>, app: AppHandle,
+// ) -> Result<(), error::AppError> {
+//     let mut model = state.0.lock().unwrap();
+//     model.status = status;
+//     app.emit("status_updated", model.clone()).map_err(error::AppError::from)?;
+//     drop(model);
+//     Ok(())
+// }

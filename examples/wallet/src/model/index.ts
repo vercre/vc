@@ -1,8 +1,11 @@
 import { atom } from "recoil";
 
+import { ViewModel } from "../types/generated";
+
 export type AppState = {
     started: boolean,
     subApp: "credential" | "issuance" | "presentation" | "splash",
+    viewModel?: ViewModel;
 };
 
 const appState = atom<AppState>({
@@ -10,6 +13,7 @@ const appState = atom<AppState>({
     default: {
         started: false,
         subApp: "splash",
+        viewModel: undefined,
     },
 });
 
