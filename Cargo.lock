@@ -5583,7 +5583,7 @@ dependencies = [
 [[package]]
 name = "vercre-vc"
 version = "0.1.0"
-source = "git+https://github.com/vercre/vercre-vc#ce6e1a8705de8e36b79a0c3bcfd0c9f8d4d9bb6b"
+source = "git+https://github.com/vercre/vercre-vc#6a94bd94542cdcfd3d421adbfd66e3cc93483e6e"
 dependencies = [
  "anyhow",
  "base64ct",

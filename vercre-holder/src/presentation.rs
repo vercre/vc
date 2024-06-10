@@ -10,6 +10,7 @@ use uuid::Uuid;
 use vercre_core::error::Err;
 use vercre_core::vp::{RequestObject, RequestObjectResponse, ResponseRequest};
 use vercre_core::{err, Result};
+use vercre_issuer::jose;
 use vercre_vc::model::vp::{
     Constraints, DescriptorMap, PathNested, PresentationSubmission, Proof, VerifiablePresentation,
 };
@@ -216,15 +217,22 @@ where
         };
         presentation.submission = submission.clone();
 
-        // Construct a token
-        let token = match vp_token(&presentation, &provider.verification_method()) {
+        // create vp
+        let kid = &provider.verification_method();
+        let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
+
+        let vp = match create_vp(&presentation, holder_did) {
             Ok(token) => token,
             Err(e) => {
                 provider.notify(&presentation.id, Status::Failed(e.to_string()));
                 return Ok(());
             }
         };
-        let vp_token = match serde_json::to_value(token) {
+
+        let claims = VpClaims::try_from(vp)?;
+        let jwt = jose::encode(jose::Typ::Presentation, &claims, provider.clone()).await?;
+
+        let vp_token = match serde_json::to_value(&jwt) {
             Ok(v) => v,
             Err(e) => {
                 provider.notify(&presentation.id, Status::Failed(e.to_string()));
@@ -325,16 +333,17 @@ fn create_submission(presentation: &Presentation) -> anyhow::Result<Presentation
     Ok(submission)
 }
 
-/// Construct a verifiable presentation proof.
-fn vp_token(presentation: &Presentation, kid: &str) -> anyhow::Result<Jwt<VpClaims>> {
+/// Construct a Verifiable Presentation.
+fn create_vp(
+    presentation: &Presentation, holder_did: impl Into<String>,
+) -> anyhow::Result<VerifiablePresentation> {
     let request = presentation.request.clone();
-    let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
 
     // presentation with 2 VCs: one as JSON, one as base64url encoded JWT
     let mut builder = VerifiablePresentation::builder()
         .add_context(String::from("https://www.w3.org/2018/credentials/examples/v1"))
         .add_type(String::from("EmployeeIDPresentation"))
-        .holder(holder_did.to_string());
+        .holder(holder_did);
 
     for c in &presentation.credentials {
         let val = serde_json::to_value(&c.issued)?;
@@ -344,21 +353,12 @@ fn vp_token(presentation: &Presentation, kid: &str) -> anyhow::Result<Jwt<VpClai
     let mut vp = builder.build()?;
 
     vp.proof = Some(vec![Proof {
-        // id: vp.id.clone(),
-        // type_: proof_type.to_string(),
-        // verification_method: kid.to_string(),
-        // created: Some(Utc::now()),
-        // expires: Utc::now().checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
         domain: Some(vec![request.client_id.clone()]),
         challenge: Some(request.nonce),
-
         ..Proof::default()
     }]);
 
-    // transform VP into signed JWT
-    // TODO: support other req.credential.formats
-
-    vp.to_jwt()
+    Ok(vp)
 }
 
 #[cfg(test)]
@@ -383,6 +383,7 @@ mod tests {
             alg: Some(vec![Algorithm::EdDSA.to_string()]),
             proof_type: None,
         };
+        
         RequestObject {
             response_type: "vp_token".into(),
             client_id: "https://vercre.io/post".into(),
@@ -415,7 +416,6 @@ mod tests {
             }),
             client_id_scheme: Some("redirect_uri".into()),
             client_metadata: None, // Some(self.client_meta.clone()),
-
             redirect_uri: None,
             scope: None,
             presentation_definition_uri: None,
@@ -525,16 +525,18 @@ mod tests {
         };
         presentation.submission =
             create_submission(&presentation).expect("should create submission");
-        let token = vp_token(&presentation, &wallet::kid()).expect("should create token");
-        assert_snapshot!(
-        "vp_token",
-        &token,
-        { ".claims.jti" => "[jti]",
-        ".claims.nbf" => "[nbf]",
-        ".claims.iat" => "[iat]" ,
-        ".claims.exp" => "[exp]",
-        ".claims.vp.id" => "[vp.id]"
 
+        let kid = wallet::kid();
+        let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
+        let vp = create_vp(&presentation, holder_did).expect("should create vp");
+
+        let claims = VpClaims::try_from(vp).expect("should get claims");
+
+        assert_snapshot!("vp_claims", &claims, {".jti" => "[jti]",
+            ".nbf" => "[nbf]",
+            ".iat" => "[iat]" ,
+            ".exp" => "[exp]",
+            ".vp.id" => "[vp.id]"
         });
     }
 }
