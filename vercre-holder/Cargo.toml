@@ -21,9 +21,7 @@ workspace = true
 
 [dependencies]
 anyhow.workspace = true
-base64ct = { version = "1.6.0", default-features = false, features = ["std"] }
 chrono = { version = "0.4.38", features = ["serde"] }
-ed25519-dalek = "2.1.1"
 providers.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -34,7 +32,6 @@ uuid.workspace = true
 vercre-core.workspace = true
 vercre-issuer.workspace = true
 vercre-vc.workspace = true
-vercre-verifier.workspace = true
 
 [dev-dependencies]
 assert_let_bind = "0.1.1"
@@ -45,3 +42,4 @@ insta = { version = "1.39.0", features = ["redactions", "yaml"] }
 test-utils.workspace = true
 tokio = { version = "1.38.0", default-features = false, features = ["fs", "macros", "rt"] }
 tower-http = { version = "0.5.2", features = ["trace"] }
+providers={path="../examples/providers"}

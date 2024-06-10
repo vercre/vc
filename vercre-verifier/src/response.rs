@@ -21,7 +21,6 @@
 //! Token is provided in the Token Response.
 
 use std::fmt::Debug;
-use std::str::FromStr;
 
 use serde_json::Value;
 use serde_json_path::JsonPath;
@@ -31,8 +30,7 @@ use vercre_core::provider::{Callback, ClientMetadata, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{ResponseRequest, ResponseResponse};
 use vercre_core::{err, Result};
-use vercre_vc::model::vc::VerifiableCredential;
-use vercre_vc::proof::jose::{self, VpClaims};
+use vercre_vc::proof::jose::{self, VcClaims, VpClaims};
 use vercre_vc::proof::Signer;
 
 use super::Endpoint;
@@ -122,7 +120,7 @@ where
                     vp_val
                 }
                 Value::String(string) => {
-                    let Ok(jwt) = jose::Jwt::<VpClaims>::from_str(&string) else {
+                    let Ok(jwt) = jose::decode::<VpClaims>(&string) else {
                         err!(Err::InvalidRequest, "invalid vp_token format");
                     };
                     if jwt.claims.nonce != saved_req.nonce {
@@ -192,7 +190,12 @@ where
 
             // convert Value (req_obj or base64url string) to VerifiableCredential
             let vc = match vc_node {
-                Value::String(s) => VerifiableCredential::from_str(s)?,
+                Value::String(s) => {
+                    let Ok(jwt) = jose::decode::<VcClaims>(s) else {
+                        err!(Err::InvalidRequest, "invalid VC format: {}", s);
+                    };
+                    jwt.claims.vc
+                }
                 Value::Object(_) => serde_json::from_value(vc_node.clone())?,
                 _ => err!(Err::InvalidRequest, "unexpected VC format: {}", vc_node),
             };

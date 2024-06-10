@@ -6,7 +6,6 @@
 //! See individual trait documentation for specific details.
 
 mod client;
-pub mod example;
 mod input;
 mod status_listener;
 mod storer;

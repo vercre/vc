@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use anyhow::Result;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
@@ -30,7 +28,7 @@ async fn auth_code_flow() {
 
     let vc_val = resp.credential.expect("VC is present");
     let vc_b64 = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
-    let vc_jwt = Jwt::<VcClaims>::from_str(&vc_b64).expect("VC as JWT");
+    let vc_jwt: Jwt<VcClaims> = jose::decode(&vc_b64).expect("should encode");
 
     // check credential response JWT
 
@@ -115,24 +113,14 @@ async fn get_token(input: AuthorizationResponse) -> Result<TokenResponse> {
 // Simulate Wallet request to '/credential' endpoint with access token to get credential.
 async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     // create CredentialRequest to 'send' to the app
-    let jwt_enc = Jwt {
-        header: jose::Header {
-            typ: jose::Typ::WalletProof,
-            alg: wallet::alg(),
-            kid: Some(wallet::kid()),
-            ..jose::Header::default()
-        },
-        claims: ProofClaims {
-            iss: wallet::did(),
-            aud: ISSUER.to_string(),
-            iat: Utc::now().timestamp(),
-            nonce: input.c_nonce.unwrap_or_default(),
-        },
-    }
-    .to_string();
-    let sig = wallet::sign(jwt_enc.as_bytes());
-    let sig_enc = Base64UrlUnpadded::encode_string(&sig);
-    let signed_jwt = format!("{jwt_enc}.{sig_enc}");
+    let claims = ProofClaims {
+        iss: wallet::did(),
+        aud: ISSUER.to_string(),
+        iat: Utc::now().timestamp(),
+        nonce: input.c_nonce.expect("nonce should be set"),
+    };
+    let jwt =
+        jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider).await.expect("should encode");
 
     // HACK: get credential identifier
     let Some(auth_dets) = input.authorization_details else {
@@ -150,7 +138,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
         "credential_definition": auth_det.credential_definition,
         "proof":{
             "proof_type": "jwt",
-            "jwt": signed_jwt
+            "jwt": jwt
         }
     });
 

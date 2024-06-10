@@ -5558,9 +5558,7 @@ dependencies = [
  "axum",
  "axum-extra",
  "axum-test",
- "base64ct",
  "chrono",
- "ed25519-dalek",
  "insta",
  "providers",
  "serde",
@@ -5575,7 +5573,6 @@ dependencies = [
  "vercre-core",
  "vercre-issuer",
  "vercre-vc",
- "vercre-verifier",
 ]
 
 [[package]]
@@ -5605,7 +5602,6 @@ dependencies = [
 [[package]]
 name = "vercre-vc"
 version = "0.1.0"
-source = "git+https://github.com/vercre/vercre-vc#6a94bd94542cdcfd3d421adbfd66e3cc93483e6e"
 dependencies = [
  "anyhow",
  "base64ct",

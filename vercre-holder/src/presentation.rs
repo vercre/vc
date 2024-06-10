@@ -14,7 +14,7 @@ use vercre_issuer::jose;
 use vercre_vc::model::vp::{
     Constraints, DescriptorMap, PathNested, PresentationSubmission, Proof, VerifiablePresentation,
 };
-use vercre_vc::proof::jose::{Jwt, VpClaims};
+use vercre_vc::proof::jose::VpClaims;
 
 use crate::credential::Credential;
 use crate::provider::{
@@ -229,8 +229,36 @@ where
             }
         };
 
-        let claims = VpClaims::try_from(vp)?;
-        let jwt = jose::encode(jose::Typ::Presentation, &claims, provider.clone()).await?;
+        // set JWT claims that cannot be derived from VP
+        #[derive(Clone)]
+        struct VpEncoder {
+            request: RequestObject,
+            vp: VerifiablePresentation,
+        }
+        impl jose::Encoder for VpEncoder {
+            type Claims = VpClaims;
+
+            fn typ(&self) -> jose::Typ {
+                jose::Typ::Presentation
+            }
+
+            fn claims(&self) -> Self::Claims {
+                let mut claims = VpClaims::from(self.vp.clone());
+                claims.aud.clone_from(&self.request.client_id);
+                claims.nonce.clone_from(&self.request.nonce);
+                claims
+            }
+        }
+        let encoder = VpEncoder {
+            request: presentation.request.clone(),
+            vp: vp.clone(),
+        };
+        let jwt = jose::encode2(encoder, provider.clone()).await?;
+
+        // let mut claims = VpClaims::from(vp);
+        // claims.aud.clone_from(&request.client_id);
+        // claims.nonce.clone_from(&request.nonce);
+        // let jwt = jose::encode(jose::Typ::Presentation, &claims, provider.clone()).await?;
 
         let vp_token = match serde_json::to_value(&jwt) {
             Ok(v) => v,
@@ -273,12 +301,15 @@ fn parse_request_object_response(res: &RequestObjectResponse) -> Result<RequestO
     if res.request_object.is_some() {
         return Ok(res.request_object.clone().unwrap());
     }
-    let Some(jwt_enc) = res.jwt.clone() else {
+
+    let Some(token) = &res.jwt else {
         err!(Err::InvalidRequest, "no serialized JWT found in response");
     };
-    let Ok(jwt) = serde_json::from_str::<Jwt<RequestObject>>(&jwt_enc) else {
-        err!(Err::InvalidRequest, "failed to parse JWT");
+    let jwt = match jose::decode(token) {
+        Ok(jwt) => jwt,
+        Err(e) => err!(Err::InvalidRequest, "failed to parse JWT: {e}"),
     };
+
     // Note: commented code below represents case where JWT is encoded and signed.
     // TODO: Check that above simple deserialization is spec compliant (see associated test for
     // simple serialization). If so, remove this comment and code.
@@ -366,6 +397,7 @@ mod tests {
     use std::collections::HashMap;
 
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use providers::wallet;
     use vercre_core::metadata::CredentialConfiguration;
     use vercre_vc::model::{
         Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition,
@@ -374,7 +406,6 @@ mod tests {
     use vercre_vc::proof::{jose, Algorithm};
 
     use super::*;
-    use crate::provider::example::wallet;
 
     fn sample_request() -> RequestObject {
         let state_key = "ABCDEF123456";
@@ -429,7 +460,7 @@ mod tests {
         let proofs = vc.proof.clone().unwrap_or_default();
         let proof = &proofs[0];
 
-        let jwt = Jwt {
+        let jwt = jose::Jwt {
             header: jose::Header {
                 alg: jose::Algorithm::ES256K,
                 kid: Some(proof.verification_method.clone()),
@@ -459,8 +490,8 @@ mod tests {
         assert_eq!(req_obj, decoded);
     }
 
-    #[test]
-    fn parse_request_object_response_test() {
+    #[tokio::test]
+    async fn parse_request_object_response_test() {
         let obj = sample_request();
         let req_obj_res = RequestObjectResponse {
             request_object: Some(obj.clone()),
@@ -470,16 +501,15 @@ mod tests {
             parse_request_object_response(&req_obj_res).expect("should parse with object");
         assert_eq!(obj, decoded);
 
-        let jwt = Jwt {
-            header: jose::Header::default(),
-            claims: obj.clone(),
-        };
-        let jwt_str = serde_json::to_string(&jwt).expect("should serialize jwt");
+        let token = jose::encode(jose::Typ::Authorization, &obj.clone(), wallet::Provider)
+            .await
+            .expect("should encode");
 
         let req_obj_res = RequestObjectResponse {
             request_object: None,
-            jwt: Some(jwt_str),
+            jwt: Some(token),
         };
+
         let decoded = parse_request_object_response(&req_obj_res).expect("should parse with jwt");
         assert_eq!(obj, decoded);
     }
@@ -525,11 +555,10 @@ mod tests {
         presentation.submission =
             create_submission(&presentation).expect("should create submission");
 
-        let kid = wallet::kid();
-        let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
-        let vp = create_vp(&presentation, holder_did).expect("should create vp");
-
-        let claims = VpClaims::try_from(vp).expect("should get claims");
+        let vp = create_vp(&presentation, wallet::did()).expect("should create vp");
+        let mut claims = VpClaims::from(vp);
+        claims.aud.clone_from(&req_obj.client_id);
+        claims.nonce.clone_from(&req_obj.nonce);
 
         assert_snapshot!("vp_claims", &claims, {".jti" => "[jti]",
             ".nbf" => "[nbf]",

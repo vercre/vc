@@ -2,10 +2,12 @@ use std::str;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ed25519_dalek::{Signature, Signer, SigningKey};
-use vercre_vc::proof::jose;
+use vercre_vc::proof::{self, jose};
 
 const JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
+
+pub struct Provider;
 
 #[must_use]
 pub fn did() -> String {
@@ -21,31 +23,20 @@ pub fn did() -> String {
     format!("did:jwk:{jwk_b64}")
 }
 
-#[must_use]
-pub fn kid() -> String {
-    format!("{}#0", did())
-}
+impl proof::Signer for Provider {
+    fn algorithm(&self) -> jose::Algorithm {
+        jose::Algorithm::EdDSA
+    }
 
-#[must_use]
-pub const fn alg() -> jose::Algorithm {
-    jose::Algorithm::EdDSA
-}
+    fn verification_method(&self) -> String {
+        format!("{}#0", did())
+    }
 
-/// Sign the provided message.
-///
-/// # Panics
-#[must_use]
-pub fn sign(msg: &[u8]) -> Vec<u8> {
-    // let mut csprng = OsRng;
-    // let signing_key: Ed25519SigningKey = Ed25519SigningKey::generate(&mut csprng);
-    // signing_key.to_bytes().to_vec();
-    // println!("d: {}", Base64UrlUnpadded::encode_string(&signing_key.to_bytes()));
-    // println!("x: {}", Base64UrlUnpadded::encode_string(&signing_key.verifying_key().to_bytes()));
-
-    let decoded = Base64UrlUnpadded::decode_vec(JWK_D).expect("should decode");
-    let bytes: [u8; 32] = decoded.as_slice().try_into().expect("should convert ");
-    let signing_key = SigningKey::from_bytes(&bytes);
-    let sig: Signature = signing_key.sign(msg);
-
-    sig.to_vec()
+    async fn try_sign(&self, msg: &[u8]) -> anyhow::Result<Vec<u8>> {
+        let decoded = Base64UrlUnpadded::decode_vec(JWK_D)?;
+        let bytes: [u8; 32] = decoded.as_slice().try_into().expect("should convert ");
+        let signing_key = SigningKey::from_bytes(&bytes);
+        let sig: Signature = signing_key.sign(msg);
+        Ok(sig.to_vec())
+    }
 }

@@ -413,7 +413,6 @@ where
 #[cfg(test)]
 mod tests {
     use assert_let_bind::assert_let;
-    use base64ct::{Base64UrlUnpadded, Encoding};
     use insta::assert_yaml_snapshot as assert_snapshot;
     use providers::issuance::{Provider, ISSUER, NORMAL_USER};
     use providers::wallet;
@@ -453,25 +452,15 @@ mod tests {
             .await
             .expect("state exists");
 
-        // create BatchCredentialRequest to 'send' to the app
-        let jwt_enc = Jwt {
-            header: jose::Header {
-                alg: wallet::alg(),
-                typ: jose::Typ::WalletProof,
-                kid: Some(wallet::kid()),
-                ..jose::Header::default()
-            },
-            claims: ProofClaims {
-                iss: wallet::did(),
-                aud: ISSUER.to_string(),
-                iat: Utc::now().timestamp(),
-                nonce: c_nonce.to_string(),
-            },
-        }
-        .to_string();
-        let sig = wallet::sign(jwt_enc.as_bytes());
-        let sig_enc = Base64UrlUnpadded::encode_string(&sig);
-        let signed_jwt = format!("{jwt_enc}.{sig_enc}");
+        let claims = ProofClaims {
+            iss: wallet::did(),
+            aud: ISSUER.to_string(),
+            iat: Utc::now().timestamp(),
+            nonce: c_nonce.to_string(),
+        };
+        let jwt = jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider)
+            .await
+            .expect("should encode");
 
         let body = json!({
             "credential_requests":[{
@@ -485,7 +474,7 @@ mod tests {
                 },
                 "proof":{
                     "proof_type": "jwt",
-                    "jwt": signed_jwt
+                    "jwt": jwt
                 }
             }]
         });
@@ -509,7 +498,7 @@ mod tests {
 
         let vc_val = credential.expect("VC is present");
         let vc_b64 = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
-        let vc_jwt : Jwt::<VcClaims>=jose::decode(&vc_b64).expect("VC as JWT");
+        let vc_jwt: Jwt<VcClaims> = jose::decode(&vc_b64).expect("should encode");
         assert_snapshot!("ad-vc_jwt", vc_jwt, {
             ".claims.iat" => "[iat]",
             ".claims.nbf" => "[nbf]",
@@ -557,23 +546,14 @@ mod tests {
     //         .expect("state exists");
 
     //     // create BatchCredentialRequest to 'send' to the app
-    //     let jwt_enc = Jwt {
-    //         header: jwt::Header {
-    //             typ: jose::Typ::WalletProof,
-    //             alg: wallet::alg(),
-    //             kid: wallet::kid(),
-    //         },
-    //         claims: ProofClaims {
-    //             iss: wallet::did(),
-    //             aud: ISSUER.to_string(),
-    //             iat: Utc::now().timestamp(),
-    //             nonce: c_nonce.to_string(),
-    //         },
-    //     }
-    //     .to_string();
-    //     let sig = wallet::sign(jwt_enc.as_bytes());
-    //     let sig_enc = Base64UrlUnpadded::encode_string(&sig);
-    //     let signed_jwt = format!("{jwt_enc}.{sig_enc}");
+
+    //     let claims = ProofClaims {
+    //         iss: wallet::did(),
+    //         aud: ISSUER.to_string(),
+    //         iat: Utc::now().timestamp(),
+    //         nonce: c_nonce.to_string(),
+    //     };
+    //     let jwt = jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider)
 
     //     let body = json!({
     //         "credential_requests":[{
@@ -604,7 +584,7 @@ mod tests {
 
     //     let vc_val = credential.expect("VC is present");
     //     let vc_b64 = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
-    //     let vc_jwt = Jwt::<VcClaims>::from_str(&vc_b64).expect("VC as JWT");
+    //     let vc_jwt = Jwt::<VcClaims>::from_str(&vc_b64).expect("should encode");
     //     assert_snapshot!("ci-vc_jwt", vc_jwt, {
     //         ".claims.iat" => "[iat]",
     //         ".claims.nbf" => "[nbf]",

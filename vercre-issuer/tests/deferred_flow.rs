@@ -1,6 +1,5 @@
 use anyhow::Result;
 use assert_let_bind::assert_let;
-use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
@@ -11,9 +10,8 @@ use serde_json::json;
 use vercre_issuer::create_offer::{CreateOfferRequest, CreateOfferResponse};
 use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
 use vercre_issuer::deferred::{DeferredCredentialRequest, DeferredCredentialResponse};
-use vercre_issuer::jose::{self, Jwt};
 use vercre_issuer::token::{TokenRequest, TokenResponse};
-use vercre_issuer::{Endpoint, ProofClaims};
+use vercre_issuer::{jose, Endpoint, ProofClaims};
 
 lazy_static! {
     static ref PROVIDER: Provider = Provider::new();
@@ -89,24 +87,16 @@ async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
 // Simulate Wallet request to '/credential' endpoint with access token to get credential.
 async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     // create CredentialRequest to 'send' to the app
-    let jwt_enc = Jwt {
-        header: jose::Header {
-            typ: jose::Typ::WalletProof,
-            alg: wallet::alg(),
-            kid: Some(wallet::kid()),
-            ..jose::Header::default()
-        },
-        claims: ProofClaims {
-            iss: wallet::did(),
-            aud: ISSUER.to_string(),
-            iat: Utc::now().timestamp(),
-            nonce: input.c_nonce.unwrap_or_default(),
-        },
-    }
-    .to_string();
-    let sig = wallet::sign(jwt_enc.as_bytes());
-    let sig_enc = Base64UrlUnpadded::encode_string(&sig);
-    let signed_jwt = format!("{jwt_enc}.{sig_enc}");
+    let claims = ProofClaims {
+        iss: wallet::did(),
+        aud: ISSUER.to_string(),
+        iat: Utc::now().timestamp(),
+        nonce: input.c_nonce.expect("nonce should be set"),
+    };
+    let jwt = jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider)
+        .await
+        .expect("should encode");
+
     let body = json!({
         "format": "jwt_vc_json",
         "credential_definition": {
@@ -117,7 +107,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
         },
         "proof":{
             "proof_type": "jwt",
-            "jwt": signed_jwt
+            "jwt": jwt
         }
     });
 

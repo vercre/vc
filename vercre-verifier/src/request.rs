@@ -87,7 +87,7 @@ where
             err!(Err::InvalidRequest, "client ID mismatch");
         }
 
-        let jwt = jose::encode(jose::Typ::RequestObject, &req_obj, provider.clone()).await?;
+        let jwt = jose::encode(jose::Typ::Authorization, &req_obj, provider.clone()).await?;
 
         Ok(RequestObjectResponse {
             request_object: None,
@@ -146,7 +146,7 @@ mod tests {
             .expect("response is valid");
 
         let jwt_enc = response.jwt.expect("jwt exists");
-        let jwt = jwt_enc.parse::<Jwt<RequestObject>>().expect("jwt is valid");
+        let jwt: Jwt<RequestObject> = jose::decode(&jwt_enc).expect("jwt is valid");
 
         assert_snapshot!("response", jwt);
 

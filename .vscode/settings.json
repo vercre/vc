@@ -6,7 +6,7 @@
         //  "typegen",
     ],
     // See https://github.com/vadimcn/codelldb/blob/v1.10.0/MANUAL.md
-    "lldb.launch.envFile": "${workspaceFolder}/.env",
+    // "lldb.launch.envFile": "${workspaceFolder}/.env",
     "lldb.launch.env": {
         "INSTA_WORKSPACE_ROOT": "${workspaceFolder}",
     },

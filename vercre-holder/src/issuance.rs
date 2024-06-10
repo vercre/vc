@@ -3,9 +3,8 @@
 //! The Issuance endpoint implements the vercre-wallet's credential issuance flow.
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::str::FromStr;
 
-use base64ct::{Base64UrlUnpadded, Encoding};
+use providers::wallet;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
@@ -16,8 +15,7 @@ use vercre_core::vci::{
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
 use vercre_core::{err, Result};
-use vercre_vc::model::vc::VerifiableCredential;
-use vercre_vc::proof::jose::{self, Header, Jwt};
+use vercre_vc::proof::jose;
 
 use crate::credential::Credential;
 use crate::provider::{
@@ -203,23 +201,27 @@ where
 
         // Request each credential offered.
         // TODO: concurrent requests. Possible if wallet is WASM?
-        let kid = provider.verification_method();
-        let alg = provider.algorithm();
 
         for (id, cfg) in &issuance.offered {
             // Construct a proof to be used in credential requests.
-            let jwt = proof_jwt(&issuance, &kid, alg.clone());
-            let jwt_bytes = match serde_json::to_vec(&jwt) {
-                Ok(bytes) => bytes,
-                Err(e) => {
-                    provider.notify(&issuance.id, Status::Failed(e.to_string()));
-                    return Ok(());
-                }
+            let claims = ProofClaims {
+                iss: provider.verification_method(),
+                aud: issuance.offer.credential_issuer.clone(),
+                iat: chrono::Utc::now().timestamp(),
+                nonce: issuance.token.c_nonce.clone().unwrap_or_default(),
+            };
+            let Ok(jwt) = jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider).await
+            else {
+                provider.notify(&issuance.id, Status::Failed("could not encode proof".into()));
+                return Ok(());
             };
 
-            // TODO: move signing to vercre-vc crate
-            let signed_jwt = provider.sign(&jwt_bytes).await;
-            let proof = proof(&jwt, &signed_jwt);
+            let proof = Proof {
+                proof_type: "jwt".into(),
+                jwt: Some(jwt),
+                cwt: None,
+            };
+
             let request = credential_request(&issuance, id, cfg, &proof);
             issuance.status = Status::Requested;
             provider.notify(&issuance.id, Status::Requested);
@@ -313,36 +315,6 @@ fn token_request(client_id: &str, issuance: &Issuance, pre_authorized_code: &str
     }
 }
 
-/// Construct an unsigned, serialized jwt to include in a proof.
-fn proof_jwt(issuance: &Issuance, kid: &str, alg: jose::Algorithm) -> Jwt<ProofClaims> {
-    let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
-    Jwt {
-        header: Header {
-            typ: jose::Typ::WalletProof,
-            alg,
-            kid: Some(kid.into()),
-            ..Header::default()
-        },
-        claims: ProofClaims {
-            iss: holder_did.to_string(),
-            aud: issuance.offer.credential_issuer.clone(),
-            iat: chrono::Utc::now().timestamp(),
-            nonce: issuance.token.c_nonce.clone().unwrap_or_default(),
-        },
-    }
-}
-
-/// Construct a proof using a jwt and it's signed serialized form.
-fn proof(jwt: &Jwt<ProofClaims>, signed_jwt: &[u8]) -> Proof {
-    let sig_enc = Base64UrlUnpadded::encode_string(signed_jwt);
-    let signed_jwt_str = format!("{jwt}.{sig_enc}");
-    Proof {
-        proof_type: jwt.to_string(),
-        jwt: Some(signed_jwt_str),
-        cwt: None,
-    }
-}
-
 /// Construct a credential request from an offered credential configuration.
 fn credential_request(
     issuance: &Issuance, id: &str, cfg: &CredentialConfiguration, proof: &Proof,
@@ -366,29 +338,31 @@ fn credential(
     let Some(value) = res.credential.as_ref() else {
         err!(Err::InvalidRequest, "no credential in response");
     };
-    let Some(vc_str) = value.as_str() else {
+    let Some(token) = value.as_str() else {
         err!(Err::InvalidRequest, "credential is not a string");
     };
-    let Ok(vc) = VerifiableCredential::from_str(vc_str) else {
+    let Ok(jwt) = jose::decode::<jose::VcClaims>(token) else {
         err!(Err::InvalidRequest, "could not parse credential");
     };
+
     Ok(Credential {
-        id: vc.id.clone(),
+        id: jwt.claims.vc.id.clone(),
         issuer: issuance.offer.credential_issuer.clone(),
         metadata: credential_configuration.clone(),
-        vc,
-        issued: vc_str.into(),
-        ..Default::default()
+        vc: jwt.claims.vc,
+        issued: token.into(),
+
+        ..Credential::default()
     })
 }
 
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use providers::wallet;
     use vercre_core::vci::{Grants, PreAuthorizedCodeGrant, TxCode};
 
     use super::*;
-    use crate::provider::example::wallet;
 
     fn sample_offer() -> CredentialOffer {
         CredentialOffer {
@@ -464,55 +438,42 @@ mod tests {
         assert_snapshot!("token_request", &token_req);
     }
 
-    #[test]
-    fn proof_jwt_test() {
+    #[tokio::test]
+    async fn proof_test() {
         let mut issuance = Issuance {
             id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
             status: Status::Accepted,
             offer: sample_offer(),
             offered: HashMap::from([("EmployeeID_JWT".into(), CredentialConfiguration::default())]),
             pin: Some("1234".into()),
-            ..Default::default()
+
+            ..Issuance::default()
         };
+
         let meta_res = MetadataResponse {
             credential_issuer: vercre_core::metadata::Issuer::sample(),
         };
         metadata(&mut issuance, &meta_res).expect("metadata should update flow");
-        let kid = wallet::kid();
-        let alg = wallet::alg();
 
-        let jwt = proof_jwt(&issuance, &kid, alg);
+        let claims = ProofClaims {
+            iss: wallet::did(),
+            aud: issuance.offer.credential_issuer.clone(),
+            iat: chrono::Utc::now().timestamp(),
+            nonce: issuance.token.c_nonce.clone().unwrap_or_default(),
+        };
+
+        let token = jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider)
+            .await
+            .expect("should encode");
+
+        let jwt: jose::Jwt<ProofClaims> = jose::decode(&token).expect("should decode");
+
         assert_eq!(jwt.claims.aud, "http://vercre.io");
         assert_snapshot!("proof_jwt", &jwt, { ".claims.iat" => "[timestamp]" });
     }
 
-    #[test]
-    fn proof_test() {
-        let kid = wallet::kid();
-        let alg = wallet::alg();
-        let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
-        let jwt = Jwt {
-            header: Header {
-                typ: jose::Typ::WalletProof,
-                alg,
-                kid: Some(kid.clone()),
-                ..Header::default()
-            },
-            claims: ProofClaims {
-                iss: holder_did.into(),
-                aud: "http://vercre.io".into(),
-                iat: 1717546167,
-                nonce: "".into(),
-            },
-        };
-        let jwt_bytes = serde_json::to_vec(&jwt).expect("should serialize");
-        let signed_jwt = wallet::sign(&jwt_bytes);
-        let p = proof(&jwt, &signed_jwt);
-        assert_snapshot!("proof", &p);
-    }
-
-    #[test]
-    fn credential_request_test() {
+    #[tokio::test]
+    async fn credential_request_test() {
         let mut issuance = Issuance {
             id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
             status: Status::Accepted,
@@ -527,27 +488,24 @@ mod tests {
         metadata(&mut issuance, &meta_res).expect("metadata should update flow");
         let id = issuance.offered.keys().next().expect("should have an offered configuration key");
         let cfg = issuance.offered.get(id).expect("should have an offered configuration");
-        let kid = wallet::kid();
-        let alg = wallet::alg();
-        let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
-        let jwt = Jwt {
-            header: Header {
-                typ: jose::Typ::WalletProof,
-                alg,
-                kid: Some(kid.clone()),
-                ..Header::default()
-            },
-            claims: ProofClaims {
-                iss: holder_did.into(),
-                aud: "http://vercre.io".into(),
-                iat: 1717546167,
-                nonce: "".into(),
-            },
+        
+        let claims = ProofClaims {
+            iss: wallet::did(),
+            aud: "http://vercre.io".into(),
+            iat: 1717546167,
+            nonce: "".into(),
         };
-        let jwt_bytes = serde_json::to_vec(&jwt).expect("should serialize");
-        let signed_jwt = wallet::sign(&jwt_bytes);
-        let p = proof(&jwt, &signed_jwt);
-        let request = credential_request(&issuance, id, cfg, &p);
+
+        let token = jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider)
+            .await
+            .expect("should encode");
+        let proof = Proof {
+            proof_type: "jwt".into(),
+            jwt: Some(token),
+            cwt: None,
+        };
+
+        let request = credential_request(&issuance, id, cfg, &proof);
         assert_snapshot!(
             "credential_request",
             &request,

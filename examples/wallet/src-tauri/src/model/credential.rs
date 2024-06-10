@@ -26,7 +26,7 @@ pub struct CredentialView {
 pub struct CredentialDisplay {
     /// CSS color to use for the background of a credential display
     pub background_color: Option<String>,
-    /// CSS color to use for the text of a credential display 
+    /// CSS color to use for the text of a credential display
     pub color: Option<String>,
     /// Label to display on the credential to indicate the issuer
     pub issuer: Option<String>,
