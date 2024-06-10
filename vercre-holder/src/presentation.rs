@@ -229,36 +229,10 @@ where
             }
         };
 
-        // set JWT claims that cannot be derived from VP
-        #[derive(Clone)]
-        struct VpEncoder {
-            request: RequestObject,
-            vp: VerifiablePresentation,
-        }
-        impl jose::Encoder for VpEncoder {
-            type Claims = VpClaims;
-
-            fn typ(&self) -> jose::Typ {
-                jose::Typ::Presentation
-            }
-
-            fn claims(&self) -> Self::Claims {
-                let mut claims = VpClaims::from(self.vp.clone());
-                claims.aud.clone_from(&self.request.client_id);
-                claims.nonce.clone_from(&self.request.nonce);
-                claims
-            }
-        }
-        let encoder = VpEncoder {
-            request: presentation.request.clone(),
-            vp: vp.clone(),
-        };
-        let jwt = jose::encode2(encoder, provider.clone()).await?;
-
-        // let mut claims = VpClaims::from(vp);
-        // claims.aud.clone_from(&request.client_id);
-        // claims.nonce.clone_from(&request.nonce);
-        // let jwt = jose::encode(jose::Typ::Presentation, &claims, provider.clone()).await?;
+        let mut claims = VpClaims::from(vp);
+        claims.aud.clone_from(&presentation.request.client_id);
+        claims.nonce.clone_from(&presentation.request.nonce);
+        let jwt = jose::encode(jose::Typ::Presentation, &claims, provider.clone()).await?;
 
         let vp_token = match serde_json::to_value(&jwt) {
             Ok(v) => v,
