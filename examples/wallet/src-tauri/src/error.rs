@@ -33,6 +33,14 @@ impl From<tauri::Error> for AppError {
     }
 }
 
+impl From<anyhow::Error> for AppError {
+    fn from(err: anyhow::Error) -> Self {
+        Self {
+            message: err.to_string(),
+        }
+    }
+}
+
 impl Display for AppError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(f, "{}", self.message)

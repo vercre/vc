@@ -5842,6 +5842,8 @@ dependencies = [
 name = "wallet"
 version = "0.1.0-alpha.4"
 dependencies = [
+ "anyhow",
+ "futures",
  "http 1.1.0",
  "log",
  "reqwest 0.12.4",

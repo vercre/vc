@@ -7,13 +7,14 @@
 mod app;
 mod error;
 mod model;
+mod store;
 
-use std::sync::Mutex;
-
+use futures::lock::Mutex;
 use tauri::{AppHandle, Manager, State};
 use tauri_plugin_log::{Target, TargetKind};
 
 use app::AppState;
+use store::Store;
 
 struct StateModel(Mutex<AppState>);
 
@@ -55,19 +56,18 @@ pub fn run() {
         })
         .manage(StateModel(Mutex::new(AppState::default())))
         .invoke_handler(tauri::generate_handler![
+            start, // let Tauri know the app is ready so it can initialise state.
             // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
-// #[tauri::command]
-// async fn update_status(
-//     status: Status, state: State<'_, StateModel>, app: AppHandle,
-// ) -> Result<(), error::AppError> {
-//     let mut model = state.0.lock().unwrap();
-//     model.status = status;
-//     app.emit("status_updated", model.clone()).map_err(error::AppError::from)?;
-//     drop(model);
-//     Ok(())
-// }
+#[tauri::command]
+async fn start(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
+    let mut model = state.0.lock().await;
+    let store = Store::new(app.clone());
+    model.reset(store).await;
+    app.emit("state_updated", model.clone()).map_err(error::AppError::from)?;
+    Ok(())
+}
