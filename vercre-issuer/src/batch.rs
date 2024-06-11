@@ -26,10 +26,26 @@ pub use vercre_core::vci::{
 use vercre_core::{err, gen, Result};
 use vercre_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_vc::proof::jose::{self, Jwt};
-use vercre_vc::proof::Signer;
+use vercre_vc::proof::{self, integrity, Signer};
 
 use super::Endpoint;
 use crate::state::{Deferred, Expire, State};
+
+struct VcProof {
+    claims: jose::VcClaims,
+}
+
+impl proof::ProofData for VcProof {
+    type Claims = jose::VcClaims;
+
+    fn as_claims(&self) -> Self::Claims {
+        self.claims.clone()
+    }
+
+    fn as_proof(&self) -> integrity::Proof {
+        unimplemented!()
+    }
+}
 
 impl<P> Endpoint<P>
 where
@@ -269,31 +285,14 @@ where
         };
 
         // ********************************************************************
+        // Test Proof Provider
         // ********************************************************************
-        struct Proof {
-            vc_claims: jose::VcClaims,
-        }
-
-        impl vercre_vc::proof::ProofProvider for Proof {
-            type Claims = jose::VcClaims;
-
-            fn as_data_integrity(&self) -> vercre_vc::proof::integrity::Proof {
-                unimplemented!()
-            }
-
-            fn as_claims(&self) -> Self::Claims {
-                self.vc_claims.clone()
-            }
-        }
-
-        let mut proof = Proof {
-            vc_claims: vc.to_claims()?,
+        let mut proof = VcProof {
+            claims: vc.to_claims()?,
         };
-        proof.vc_claims.sub.clone_from(&self.holder_did);
+        proof.claims.sub.clone_from(&self.holder_did);
 
-        let jwt = vercre_vc::proof::create_proof(proof, provider.clone()).await?;
-
-        // ********************************************************************
+        let jwt = proof::create_proof(proof, provider.clone()).await?;
         // ********************************************************************
 
         // transform to JWT

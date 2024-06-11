@@ -5756,8 +5756,7 @@ dependencies = [
 
 [[package]]
 name = "vercre-vc"
-version = "0.1.0"
-source = "git+https://github.com/vercre/vercre-vc#e19c4455d7b0d4315a428fbefe96c4ce2b20f157"
+version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
  "base64ct",
@@ -5770,6 +5769,7 @@ dependencies = [
  "serde_json",
  "serde_json_path",
  "tracing",
+ "tracing-subscriber",
  "uuid",
 ]
 
