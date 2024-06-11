@@ -5845,6 +5845,7 @@ dependencies = [
  "anyhow",
  "futures",
  "http 1.1.0",
+ "lazy_static",
  "log",
  "reqwest 0.12.4",
  "rust-argon2",
@@ -5856,6 +5857,7 @@ dependencies = [
  "tauri-plugin-log",
  "tauri-plugin-shell",
  "tauri-plugin-store",
+ "tokio",
  "typeshare",
  "vercre-holder",
 ]
