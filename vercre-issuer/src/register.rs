@@ -99,7 +99,7 @@ where
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::issuance::{Provider, ISSUER};
+    use providers::issuance::{Provider, CREDENTIAL_ISSUER};
     use providers::wallet;
     use serde_json::json;
 
@@ -116,7 +116,7 @@ mod tests {
         // set up state
         let mut state = State::builder()
             .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credential_issuer(ISSUER.to_string())
+            .credential_issuer(CREDENTIAL_ISSUER.to_string())
             .build()
             .expect("should build state");
 
@@ -148,7 +148,7 @@ mod tests {
 
         let mut request = serde_json::from_value::<RegistrationRequest>(body)
             .expect("request should deserialize");
-        request.credential_issuer = ISSUER.to_string();
+        request.credential_issuer = CREDENTIAL_ISSUER.to_string();
         request.access_token = access_token.to_string();
 
         let response = Endpoint::new(provider).register(&request).await.expect("response is ok");

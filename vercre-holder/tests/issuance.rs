@@ -1,6 +1,6 @@
 use assert_let_bind::assert_let;
 use insta::assert_yaml_snapshot as assert_snapshot;
-use providers::issuance::{Provider as IssuanceProvider, Provider, ISSUER, NORMAL_USER};
+use providers::issuance::{Provider as IssuanceProvider, Provider, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_core::vci::CreateOfferRequest;
 
 // This tests the entire issuance flow end-to-end. See the issuance module for stepwise tests.
@@ -11,7 +11,7 @@ async fn issuance_steps() {
     // Use the issuance endpoint to construct an issuance offer that we can present to the
     // wallet.
     let create_offer_request = CreateOfferRequest {
-        credential_issuer: ISSUER.into(),
+        credential_issuer: CREDENTIAL_ISSUER.into(),
         credential_configuration_ids: vec!["EmployeeID_JWT".into()],
         holder_id: Some(NORMAL_USER.into()),
         pre_authorize: true,

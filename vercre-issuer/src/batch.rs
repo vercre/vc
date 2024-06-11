@@ -11,9 +11,8 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
-use chrono::{TimeDelta, Utc};
+use chrono::Utc;
 use tracing::instrument;
-use uuid::Uuid;
 use vercre_core::error::{Ancillary as _, Err};
 use vercre_core::metadata::{CredentialDefinition, Issuer};
 use vercre_core::provider::{
@@ -25,7 +24,7 @@ pub use vercre_core::vci::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialRequest, CredentialResponse,
 };
 use vercre_core::{err, gen, Result};
-use vercre_vc::model::{CredentialSubject, Proof, VerifiableCredential};
+use vercre_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_vc::proof::jose::{self, Jwt};
 use vercre_vc::proof::Signer;
 
@@ -269,10 +268,38 @@ where
             });
         };
 
+        // ********************************************************************
+        // ********************************************************************
+        struct Proof {
+            vc_claims: jose::VcClaims,
+        }
+
+        impl vercre_vc::proof::ProofProvider for Proof {
+            type Claims = jose::VcClaims;
+
+            fn as_data_integrity(&self) -> vercre_vc::proof::integrity::Proof {
+                unimplemented!()
+            }
+
+            fn as_claims(&self) -> Self::Claims {
+                self.vc_claims.clone()
+            }
+        }
+
+        let mut proof = Proof {
+            vc_claims: vc.to_claims()?,
+        };
+        proof.vc_claims.sub.clone_from(&self.holder_did);
+
+        let jwt = vercre_vc::proof::create_proof(proof, provider.clone()).await?;
+
+        // ********************************************************************
+        // ********************************************************************
+
         // transform to JWT
-        let mut claims = vc.to_claims()?;
-        claims.sub.clone_from(&self.holder_did);
-        let jwt = jose::encode(jose::Typ::Credential, &claims, provider.clone()).await?;
+        // let mut claims = vc.to_claims()?;
+        // claims.sub.clone_from(&self.holder_did);
+        // let jwt = jose::encode(jose::Typ::Credential, &claims, provider.clone()).await?;
 
         Ok(CredentialResponse {
             credential: Some(serde_json::to_value(jwt)?),
@@ -313,15 +340,14 @@ where
 
         // create proof
         // TODO: add all fields required by JWT
-        let proof = Proof {
-            id: Some(format!("urn:uuid:{}", Uuid::new_v4())),
-            type_: Signer::algorithm(provider).proof_type(),
-            verification_method: Signer::verification_method(provider),
-            created: Some(Utc::now()),
-            expires: Utc::now().checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
-
-            ..Proof::default()
-        };
+        // let proof = Proof {
+        //     id: Some(format!("urn:uuid:{}", Uuid::new_v4())),
+        //     type_: Signer::algorithm(provider).proof_type(),
+        //     verification_method: Signer::verification_method(provider),
+        //     created: Some(Utc::now()),
+        //     expires: Utc::now().checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
+        //     ..Proof::default()
+        // };
 
         let credential_issuer = &self.issuer_meta.credential_issuer;
 
@@ -342,7 +368,7 @@ where
                 id: Some(self.holder_did.clone()),
                 claims: holder_claims.claims,
             })
-            .add_proof(proof)
+            // .add_proof(proof)
             .build()?;
 
         Ok(Some(vc))
@@ -418,7 +444,7 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::issuance::{Provider, ISSUER, NORMAL_USER};
+    use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
     use vercre_vc::proof::jose::{self, VcClaims};
@@ -437,7 +463,7 @@ mod tests {
 
         // set up state
         let mut state = State::builder()
-            .credential_issuer(ISSUER.into())
+            .credential_issuer(CREDENTIAL_ISSUER.into())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
             .holder_id(Some(NORMAL_USER.into()))
@@ -458,7 +484,7 @@ mod tests {
 
         let claims = ProofClaims {
             iss: Some(wallet::CLIENT_ID.into()),
-            aud: ISSUER.into(),
+            aud: CREDENTIAL_ISSUER.into(),
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
@@ -485,7 +511,7 @@ mod tests {
 
         let mut request = serde_json::from_value::<BatchCredentialRequest>(body)
             .expect("request should deserialize");
-        request.credential_issuer = ISSUER.into();
+        request.credential_issuer = CREDENTIAL_ISSUER.into();
         request.access_token = access_token.into();
 
         let response =
@@ -531,7 +557,7 @@ mod tests {
 
     //     // set up state
     //     let mut state = State::builder()
-    //         .credential_issuer(ISSUER.into())
+    //         .credential_issuer(CREDENTIAL_ISSUER.into())
     //         .expires_at(Utc::now() + Expire::AuthCode.duration())
     //         .holder_id(Some(NORMAL_USER.into()))
     //         .build()
@@ -553,7 +579,7 @@ mod tests {
 
     //     let claims = ProofClaims {
     //         iss: wallet::CLIENT_ID,
-    //         aud: ISSUER.into(),
+    //         aud: CREDENTIAL_ISSUER.into(),
     //         iat: Utc::now().timestamp(),
     //         nonce: c_nonce.into(),
     //     };
@@ -571,7 +597,7 @@ mod tests {
 
     //     let mut request = serde_json::from_value::<BatchCredentialRequest>(body)
     //         .expect("request should deserialize");
-    //     request.credential_issuer = ISSUER.into();
+    //     request.credential_issuer = CREDENTIAL_ISSUER.into();
     //     request.access_token = access_token.into();
 
     //     let response =

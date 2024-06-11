@@ -23,7 +23,7 @@
 
 use tracing::instrument;
 use vercre_core::vci::{MetadataRequest, MetadataResponse};
-use vercre_core::{Callback, Client, Subject, Issuer, Result, Server, Signer, StateManager};
+use vercre_core::{Callback, Client, Issuer, Result, Server, Signer, StateManager, Subject};
 
 use super::Endpoint;
 
@@ -74,7 +74,7 @@ impl super::Context for Context {
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::issuance::{Provider, ISSUER};
+    use providers::issuance::{Provider, CREDENTIAL_ISSUER};
 
     use super::*;
 
@@ -85,7 +85,7 @@ mod tests {
         let provider = Provider::new();
 
         let request = MetadataRequest {
-            credential_issuer: ISSUER.to_string(),
+            credential_issuer: CREDENTIAL_ISSUER.to_string(),
             languages: None,
         };
         let response = Endpoint::new(provider).metadata(request).await.expect("response is ok");

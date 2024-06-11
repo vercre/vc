@@ -208,7 +208,7 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::issuance::{Provider, ISSUER, NORMAL_USER};
+    use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
     use vercre_core::metadata::CredentialDefinition;
@@ -227,7 +227,7 @@ mod tests {
         let credentials = vec!["EmployeeID_JWT".into()];
 
         let mut state = State::builder()
-            .credential_issuer(ISSUER.to_string())
+            .credential_issuer(CREDENTIAL_ISSUER.to_string())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
             .holder_id(Some(NORMAL_USER.to_string()))
@@ -255,7 +255,7 @@ mod tests {
 
         let mut request =
             serde_json::from_value::<TokenRequest>(body).expect("request should deserialize");
-        request.credential_issuer = ISSUER.to_string();
+        request.credential_issuer = CREDENTIAL_ISSUER.to_string();
         let response =
             Endpoint::new(provider.clone()).token(&request).await.expect("response is valid");
         assert_snapshot!("simpl-token", &response, {
@@ -285,7 +285,7 @@ mod tests {
         let credentials = vec!["EmployeeID_JWT".into()];
 
         let mut state = State::builder()
-            .credential_issuer(ISSUER.to_string())
+            .credential_issuer(CREDENTIAL_ISSUER.to_string())
             .client_id(wallet::CLIENT_ID)
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
@@ -335,7 +335,7 @@ mod tests {
 
         let mut request =
             serde_json::from_value::<TokenRequest>(body).expect("request should deserialize");
-        request.credential_issuer = ISSUER.to_string();
+        request.credential_issuer = CREDENTIAL_ISSUER.to_string();
         let response =
             Endpoint::new(provider.clone()).token(&request).await.expect("response is valid");
         assert_snapshot!("authzn-token", &response, {

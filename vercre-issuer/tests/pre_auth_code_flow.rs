@@ -4,7 +4,7 @@ use chrono::Utc;
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use lazy_static::lazy_static;
-use providers::issuance::{Provider, ISSUER, NORMAL_USER};
+use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
 use providers::wallet;
 use serde_json::json;
 use vercre_issuer::create_offer::{CreateOfferRequest, CreateOfferResponse};
@@ -50,7 +50,7 @@ async fn get_offer() -> Result<CreateOfferResponse> {
     });
 
     let mut request = serde_json::from_value::<CreateOfferRequest>(body)?;
-    request.credential_issuer = ISSUER.into();
+    request.credential_issuer = CREDENTIAL_ISSUER.into();
 
     let endpoint = Endpoint::new(PROVIDER.to_owned());
     let response = endpoint.create_offer(&request).await?;
@@ -73,7 +73,7 @@ async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
     });
 
     let mut request = serde_json::from_value::<TokenRequest>(body)?;
-    request.credential_issuer = ISSUER.into();
+    request.credential_issuer = CREDENTIAL_ISSUER.into();
 
     let endpoint = Endpoint::new(PROVIDER.to_owned());
     let response = endpoint.token(&request).await?;
@@ -84,7 +84,7 @@ async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
 async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     let claims = ProofClaims {
         iss: Some(wallet::CLIENT_ID.into()),
-        aud: ISSUER.into(),
+        aud: CREDENTIAL_ISSUER.into(),
         iat: Utc::now().timestamp(),
         nonce: input.c_nonce,
     };
@@ -107,7 +107,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     });
 
     let mut request = serde_json::from_value::<CredentialRequest>(body)?;
-    request.credential_issuer = ISSUER.into();
+    request.credential_issuer = CREDENTIAL_ISSUER.into();
     request.access_token = input.access_token;
 
     let endpoint = Endpoint::new(PROVIDER.to_owned());

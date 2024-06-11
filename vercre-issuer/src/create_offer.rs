@@ -248,7 +248,7 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::issuance::{Provider, ISSUER, NORMAL_USER};
+    use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use serde_json::json;
 
     use super::*;
@@ -270,7 +270,7 @@ mod tests {
 
         let mut request =
             serde_json::from_value::<CreateOfferRequest>(body).expect("request should deserialize");
-        request.credential_issuer = ISSUER.to_string();
+        request.credential_issuer = CREDENTIAL_ISSUER.to_string();
         let response =
             Endpoint::new(provider.clone()).create_offer(&request).await.expect("response is ok");
         assert_snapshot!("create_offer", &response, {

@@ -127,7 +127,7 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::issuance::{Provider, ISSUER, NORMAL_USER};
+    use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
     use vercre_core::vci::{CredentialRequest, ProofClaims};
@@ -149,7 +149,7 @@ mod tests {
         // create CredentialRequest to 'send' to the app
         let claims = ProofClaims {
             iss: Some(wallet::CLIENT_ID.into()),
-            aud: ISSUER.into(),
+            aud: CREDENTIAL_ISSUER.into(),
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.clone()),
         };
@@ -173,12 +173,12 @@ mod tests {
 
         let mut cred_req =
             serde_json::from_value::<CredentialRequest>(body).expect("request should deserialize");
-        cred_req.credential_issuer = ISSUER.into();
+        cred_req.credential_issuer = CREDENTIAL_ISSUER.into();
         cred_req.access_token = access_token.into();
 
         // set up state
         let mut state = State::builder()
-            .credential_issuer(ISSUER.into())
+            .credential_issuer(CREDENTIAL_ISSUER.into())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
             .holder_id(Some(NORMAL_USER.into()))
@@ -208,7 +208,7 @@ mod tests {
             .expect("state exists");
 
         let request = DeferredCredentialRequest {
-            credential_issuer: ISSUER.into(),
+            credential_issuer: CREDENTIAL_ISSUER.into(),
             access_token: access_token.into(),
             transaction_id: transaction_id.into(),
         };

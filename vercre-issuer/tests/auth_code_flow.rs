@@ -4,7 +4,7 @@ use chrono::Utc;
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use lazy_static::lazy_static;
-use providers::issuance::{Provider, ISSUER, NORMAL_USER};
+use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
 use providers::wallet;
 use serde_json::json;
 use sha2::{Digest, Sha256};
@@ -73,11 +73,11 @@ async fn authorize() -> Result<AuthorizationResponse> {
         "code_challenge_method": "S256",
         "authorization_details": auth_dets,
         "holder_id": NORMAL_USER,
-        "wallet_issuer": ISSUER,
+        "wallet_issuer": CREDENTIAL_ISSUER,
         "callback_id": "1234"
     });
     let mut request = serde_json::from_value::<AuthorizationRequest>(body)?;
-    request.credential_issuer = ISSUER.to_string();
+    request.credential_issuer = CREDENTIAL_ISSUER.to_string();
 
     let endpoint = Endpoint::new(PROVIDER.to_owned());
     let response = endpoint.authorize(&request).await?;
@@ -97,7 +97,7 @@ async fn get_token(input: AuthorizationResponse) -> Result<TokenResponse> {
     });
 
     let mut request = serde_json::from_value::<TokenRequest>(body)?;
-    request.credential_issuer = ISSUER.to_string();
+    request.credential_issuer = CREDENTIAL_ISSUER.to_string();
 
     let endpoint = Endpoint::new(PROVIDER.to_owned());
     let response = endpoint.token(&request).await?;
@@ -115,7 +115,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     // create CredentialRequest to 'send' to the app
     let claims = ProofClaims {
         iss: Some(wallet::CLIENT_ID.into()),
-        aud: ISSUER.to_string(),
+        aud: CREDENTIAL_ISSUER.to_string(),
         iat: Utc::now().timestamp(),
         nonce: input.c_nonce,
     };
@@ -144,7 +144,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     });
 
     let mut request = serde_json::from_value::<CredentialRequest>(body)?;
-    request.credential_issuer = ISSUER.to_string();
+    request.credential_issuer = CREDENTIAL_ISSUER.to_string();
     request.access_token = input.access_token;
 
     let endpoint = Endpoint::new(PROVIDER.to_owned());

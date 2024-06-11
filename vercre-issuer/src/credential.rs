@@ -148,7 +148,7 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::issuance::{Provider, ISSUER, NORMAL_USER};
+    use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
     use vercre_core::vci::ProofClaims;
@@ -168,7 +168,7 @@ mod tests {
 
         // set up state
         let mut state = State::builder()
-            .credential_issuer(ISSUER.into())
+            .credential_issuer(CREDENTIAL_ISSUER.into())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
             .holder_id(Some(NORMAL_USER.into()))
@@ -190,7 +190,7 @@ mod tests {
         // create CredentialRequest to 'send' to the app
         let claims = ProofClaims {
             iss: Some(wallet::CLIENT_ID.into()),
-            aud: ISSUER.into(),
+            aud: CREDENTIAL_ISSUER.into(),
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
@@ -214,7 +214,7 @@ mod tests {
 
         let mut request =
             serde_json::from_value::<CredentialRequest>(body).expect("request should deserialize");
-        request.credential_issuer = ISSUER.into();
+        request.credential_issuer = CREDENTIAL_ISSUER.into();
         request.access_token = access_token.into();
 
         let response =

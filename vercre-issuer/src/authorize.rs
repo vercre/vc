@@ -413,7 +413,7 @@ where
 mod tests {
     use base64ct::{Base64UrlUnpadded, Encoding};
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::issuance::{Provider, ISSUER, NORMAL_USER};
+    use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
     use sha2::{Digest, Sha256};
@@ -455,12 +455,12 @@ mod tests {
             "code_challenge_method": "S256",
             "authorization_details": auth_dets,
             "holder_id": NORMAL_USER,
-            "wallet_issuer": ISSUER,
+            "wallet_issuer": CREDENTIAL_ISSUER,
             "callback_id": "1234"
         });
         let mut request =
             serde_json::from_value::<AuthorizationRequest>(body).expect("should deserialize");
-        request.credential_issuer = ISSUER.to_string();
+        request.credential_issuer = CREDENTIAL_ISSUER.to_string();
 
         let response =
             Endpoint::new(provider.clone()).authorize(&request).await.expect("response is ok");
@@ -496,12 +496,12 @@ mod tests {
             "code_challenge_method": "S256",
             "scope": "EmployeeIDCredential",
             "holder_id": NORMAL_USER,
-            "wallet_issuer": ISSUER,
+            "wallet_issuer": CREDENTIAL_ISSUER,
             "callback_id": "1234"
         });
         let mut request =
             serde_json::from_value::<AuthorizationRequest>(body).expect("should deserialize");
-        request.credential_issuer = ISSUER.to_string();
+        request.credential_issuer = CREDENTIAL_ISSUER.to_string();
 
         let response =
             Endpoint::new(provider.clone()).authorize(&request).await.expect("response is ok");
