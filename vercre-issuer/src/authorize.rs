@@ -448,7 +448,7 @@ mod tests {
         // create request
         let body = json!({
             "response_type": "code",
-            "client_id": wallet::did(),
+            "client_id": wallet::CLIENT_ID,
             "redirect_uri": "http://localhost:3000/callback",
             "state": "1234",
             "code_challenge": Base64UrlUnpadded::encode_string(&verifier_hash),
@@ -489,7 +489,7 @@ mod tests {
         // create request
         let body = json!({
             "response_type": "code",
-            "client_id": wallet::did(),
+            "client_id": wallet::CLIENT_ID,
             "redirect_uri": "http://localhost:3000/callback",
             "state": "1234",
             "code_challenge": Base64UrlUnpadded::encode_string(&verifier_hash),

@@ -66,7 +66,7 @@ async fn authorize() -> Result<AuthorizationResponse> {
     // create request
     let body = json!({
         "response_type": "code",
-        "client_id": wallet::did(),
+        "client_id": wallet::CLIENT_ID,
         "redirect_uri": "http://localhost:3000/callback",
         "state": "1234",
         "code_challenge": Base64UrlUnpadded::encode_string(&verifier_hash),
@@ -89,7 +89,7 @@ async fn authorize() -> Result<AuthorizationResponse> {
 async fn get_token(input: AuthorizationResponse) -> Result<TokenResponse> {
     // create TokenRequest to 'send' to the app
     let body = json!({
-        "client_id": wallet::did(),
+        "client_id": wallet::CLIENT_ID,
         "grant_type": "authorization_code",
         "code": &input.code,
         "code_verifier": "ABCDEF12345",
@@ -114,13 +114,14 @@ async fn get_token(input: AuthorizationResponse) -> Result<TokenResponse> {
 async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     // create CredentialRequest to 'send' to the app
     let claims = ProofClaims {
-        iss: wallet::did(),
+        iss: Some(wallet::CLIENT_ID.into()),
         aud: ISSUER.to_string(),
         iat: Utc::now().timestamp(),
-        nonce: input.c_nonce.expect("nonce should be set"),
+        nonce: input.c_nonce,
     };
-    let jwt =
-        jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider).await.expect("should encode");
+    let jwt = jose::encode(jose::Typ::Proof, &claims, wallet::Provider::new())
+        .await
+        .expect("should encode");
 
     // HACK: get credential identifier
     let Some(auth_dets) = input.authorization_details else {

@@ -54,7 +54,7 @@ async fn get_offer() -> Result<CreateOfferResponse> {
     });
 
     let mut request = serde_json::from_value::<CreateOfferRequest>(body)?;
-    request.credential_issuer = ISSUER.to_string();
+    request.credential_issuer = ISSUER.into();
 
     let endpoint = Endpoint::new(PROVIDER.to_owned());
     let response = endpoint.create_offer(&request).await?;
@@ -70,14 +70,14 @@ async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
 
     // create TokenRequest to 'send' to the app
     let body = json!({
-        "client_id": wallet::did(),
+        "client_id": wallet::CLIENT_ID,
         "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
         "pre-authorized_code": &pre_authorized_code.pre_authorized_code,
         "user_code": input.user_code.unwrap_or_default(),
     });
 
     let mut request = serde_json::from_value::<TokenRequest>(body)?;
-    request.credential_issuer = ISSUER.to_string();
+    request.credential_issuer = ISSUER.into();
 
     let endpoint = Endpoint::new(PROVIDER.to_owned());
     let response = endpoint.token(&request).await?;
@@ -88,12 +88,12 @@ async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
 async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     // create CredentialRequest to 'send' to the app
     let claims = ProofClaims {
-        iss: wallet::did(),
-        aud: ISSUER.to_string(),
+        iss: Some(wallet::CLIENT_ID.into()),
+        aud: ISSUER.into(),
         iat: Utc::now().timestamp(),
-        nonce: input.c_nonce.expect("nonce should be set"),
+        nonce: input.c_nonce,
     };
-    let jwt = jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider)
+    let jwt = jose::encode(jose::Typ::Proof, &claims, wallet::Provider::new())
         .await
         .expect("should encode");
 
@@ -112,7 +112,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     });
 
     let mut request = serde_json::from_value::<CredentialRequest>(body)?;
-    request.credential_issuer = ISSUER.to_string();
+    request.credential_issuer = ISSUER.into();
     request.access_token = input.access_token;
 
     let endpoint = Endpoint::new(PROVIDER.to_owned());
@@ -124,7 +124,7 @@ async fn get_deferred(
     tkn: TokenResponse, cred_resp: CredentialResponse,
 ) -> Result<DeferredCredentialResponse> {
     let request = DeferredCredentialRequest {
-        credential_issuer: ISSUER.to_string(),
+        credential_issuer: ISSUER.into(),
         access_token: tkn.access_token,
         transaction_id: cred_resp.transaction_id.expect("should have transaction_id"),
     };

@@ -148,12 +148,12 @@ mod tests {
 
         // create CredentialRequest to 'send' to the app
         let claims = ProofClaims {
-            iss: wallet::did(),
-            aud: ISSUER.to_string(),
+            iss: Some(wallet::CLIENT_ID.into()),
+            aud: ISSUER.into(),
             iat: Utc::now().timestamp(),
-            nonce: c_nonce.clone(),
+            nonce: Some(c_nonce.clone()),
         };
-        let jwt = jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider)
+        let jwt = jose::encode(jose::Typ::Proof, &claims, wallet::Provider::new())
             .await
             .expect("should encode");
 
@@ -173,21 +173,21 @@ mod tests {
 
         let mut cred_req =
             serde_json::from_value::<CredentialRequest>(body).expect("request should deserialize");
-        cred_req.credential_issuer = ISSUER.to_string();
-        cred_req.access_token = access_token.to_string();
+        cred_req.credential_issuer = ISSUER.into();
+        cred_req.access_token = access_token.into();
 
         // set up state
         let mut state = State::builder()
-            .credential_issuer(ISSUER.to_string())
+            .credential_issuer(ISSUER.into())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
-            .holder_id(Some(NORMAL_USER.to_string()))
+            .holder_id(Some(NORMAL_USER.into()))
             .build()
             .expect("should build state");
 
         // state entry 1: token state keyed by access_token
         state.token = Some(Token {
-            access_token: access_token.to_string(),
+            access_token: access_token.into(),
             token_type: "Bearer".into(),
             c_nonce,
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
@@ -200,7 +200,7 @@ mod tests {
         // state entry 2: deferred state keyed by transaction_id
         state.token = None;
         state.deferred = Some(Deferred {
-            transaction_id: transaction_id.to_string(),
+            transaction_id: transaction_id.into(),
             credential_request: cred_req.clone(),
         });
         StateManager::put(&provider, transaction_id, state.to_vec(), state.expires_at)
@@ -208,9 +208,9 @@ mod tests {
             .expect("state exists");
 
         let request = DeferredCredentialRequest {
-            credential_issuer: ISSUER.to_string(),
-            access_token: access_token.to_string(),
-            transaction_id: transaction_id.to_string(),
+            credential_issuer: ISSUER.into(),
+            access_token: access_token.into(),
+            transaction_id: transaction_id.into(),
         };
 
         let response =

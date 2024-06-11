@@ -18,8 +18,6 @@ use vercre_core::subject;
 use vercre_core::vci::GrantType;
 use vercre_vc::proof::{Algorithm, Signer};
 
-use crate::wallet;
-
 pub const NORMAL_USER: &str = "normal_user";
 pub const PENDING_USER: &str = "pending_user";
 
@@ -138,9 +136,11 @@ struct ClientStore {
     clients: Arc<Mutex<HashMap<String, metadata::Client>>>,
 }
 
+const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
+
 impl ClientStore {
     fn new() -> Self {
-        let client_id = wallet::did();
+        let client_id = CLIENT_ID.to_string();
 
         let client = metadata::Client {
             client_id: client_id.clone(),

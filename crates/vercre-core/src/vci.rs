@@ -747,7 +747,7 @@ pub struct CredentialRequest {
 pub struct Proof {
     /// Proof type claim denotes the concrete proof type which determines the
     /// further claims in the proof object and associated processing rules.
-    /// MUST be "`jwt`" or "`cwt`".
+    /// MUST be one of "`jwt`", "`cwt`" or "`ldp_vp`".
     pub proof_type: String,
 
     /// The JWT containing the Wallet's proof of possession of key material.
@@ -763,20 +763,22 @@ pub struct Proof {
 /// used for binding an issued Credential.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ProofClaims {
-    /// The `client_id` of the Wallet client making the credential request.
-    pub iss: String,
+    /// The `client_id` of the Client making the Credential request.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub iss: Option<String>,
 
-    /// The Credential Issuer URL of the Credential Issuer.
+    /// The Credential Issuer Identifier.
     pub aud: String,
 
     /// The time at which the proof was issued, as
-    /// [RFC7519] `NumericDate`. For example, "1541493724".
-    ///
-    /// [RFC7519]: (https://www.rfc-editor.org/rfc/rfc7519)
+    /// [RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`.
+    /// 
+    /// For example, "1541493724".
     pub iat: i64,
 
-    /// The nonce value provided by the Credential Issuer.
-    pub nonce: String,
+    /// A server-provided `c_nonce`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nonce: Option<String>,
 }
 
 /// `CredentialResponseEncryption` contains information about whether the Credential

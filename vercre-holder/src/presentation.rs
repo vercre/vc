@@ -371,7 +371,7 @@ mod tests {
     use std::collections::HashMap;
 
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::wallet;
+    use providers::{issuance, presentation, wallet};
     use vercre_core::metadata::CredentialConfiguration;
     use vercre_vc::model::{
         Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition,
@@ -428,21 +428,13 @@ mod tests {
         }
     }
 
-    fn sample_credential() -> Credential {
+    async fn sample_credential() -> Credential {
         let vc = VerifiableCredential::sample();
 
-        let proofs = vc.proof.clone().unwrap_or_default();
-        let proof = &proofs[0];
-
-        let jwt = jose::Jwt {
-            header: jose::Header {
-                alg: jose::Algorithm::ES256K,
-                kid: Some(proof.verification_method.clone()),
-                ..jose::Header::default()
-            },
-            claims: vc.to_claims().expect("should get claims"),
-        };
-        let vc_str = serde_json::to_string(&jwt).expect("should serialize to string");
+        let claims = vc.to_claims().expect("should get claims");
+        let jwt = jose::encode(jose::Typ::Credential, &claims, issuance::Provider::new())
+            .await
+            .expect("should encode");
 
         let config = CredentialConfiguration::sample();
         Credential {
@@ -450,7 +442,7 @@ mod tests {
             id: vc.id.clone(),
             metadata: config,
             vc: vc.clone(),
-            issued: vc_str,
+            issued: jwt,
             logo: None,
         }
     }
@@ -475,7 +467,7 @@ mod tests {
             parse_request_object_response(&req_obj_res).expect("should parse with object");
         assert_eq!(obj, decoded);
 
-        let token = jose::encode(jose::Typ::Authorization, &obj.clone(), wallet::Provider)
+        let token = jose::encode(jose::Typ::Request, &obj.clone(), presentation::Provider::new())
             .await
             .expect("should encode");
 
@@ -498,10 +490,11 @@ mod tests {
         );
     }
 
-    #[test]
-    fn create_submission_test() {
+    #[tokio::test]
+    async fn create_submission_test() {
         let req_obj = sample_request();
-        let creds = vec![sample_credential()];
+        let creds = vec![sample_credential().await];
+
         let presentation = Presentation {
             id: "1234".into(),
             status: Status::Requested,
@@ -514,10 +507,11 @@ mod tests {
         assert_snapshot!("create_submission", &submission, {".id" => "[id]"});
     }
 
-    #[test]
-    fn vp_token_test() {
+    #[tokio::test]
+    async fn vp_token_test() {
         let req_obj = sample_request();
-        let creds = vec![sample_credential()];
+        let creds = vec![sample_credential().await];
+
         let mut presentation = Presentation {
             id: "1234".into(),
             status: Status::Requested,
@@ -529,7 +523,7 @@ mod tests {
         presentation.submission =
             create_submission(&presentation).expect("should create submission");
 
-        let vp = create_vp(&presentation, wallet::did()).expect("should create vp");
+        let vp = create_vp(&presentation, wallet::holder_did()).expect("should create vp");
         let mut claims = VpClaims::from(vp);
         claims.aud.clone_from(&req_obj.client_id);
         claims.nonce.clone_from(&req_obj.nonce);

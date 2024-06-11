@@ -131,7 +131,7 @@ mod tests {
             .expect("state saved");
 
         let body = json!({
-            "client_id": wallet::did(),
+            "client_id": wallet::CLIENT_ID,
             "redirect_uris": [
                 "http://localhost:3000/callback"
             ],

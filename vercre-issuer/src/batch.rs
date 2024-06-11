@@ -162,17 +162,17 @@ where
                 }
             };
             // proof type
-            if jwt.header.typ != jose::Typ::WalletProof {
+            if jwt.header.typ != jose::Typ::Proof {
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(
                     Err::InvalidProof(nonce, expires_in),
                     "Proof JWT 'typ' is not {}",
-                    jose::Typ::WalletProof
+                    jose::Typ::Proof
                 );
             }
 
             // previously issued c_nonce
-            if jwt.claims.nonce != token_state.c_nonce {
+            if jwt.claims.nonce.as_ref() != Some(&token_state.c_nonce) {
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(Err::InvalidProof(nonce, expires_in), "Proof JWT nonce claim is invalid");
             }
@@ -188,7 +188,7 @@ where
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(Err::InvalidProof(nonce, expires_in), "Proof JWT DID is invalid");
             };
-            self.holder_did = did.to_string();
+            self.holder_did = did.into();
         }
 
         Ok(self)
@@ -218,7 +218,7 @@ where
         // };
 
         // let c_nonce = gen::nonce();
-        // token_state.c_nonce = c_nonce.to_string();
+        // token_state.c_nonce = c_nonce.into();
         // token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
         // state.token = Some(token_state.clone());
         // let buf = serde_json::to_vec(&state)?;
@@ -263,6 +263,8 @@ where
             // only need to return transaction_id
             return Ok(CredentialResponse {
                 transaction_id: Some(txn_id),
+
+                // TODO: add `c_nonce` and `c_nonce_expires_in` to CredentialResponse
                 ..CredentialResponse::default()
             });
         };
@@ -270,11 +272,13 @@ where
         // transform to JWT
         let mut claims = vc.to_claims()?;
         claims.sub.clone_from(&self.holder_did);
-        let signed = jose::encode(jose::Typ::Credential, &claims, provider.clone()).await?;
+        let jwt = jose::encode(jose::Typ::Credential, &claims, provider.clone()).await?;
 
         Ok(CredentialResponse {
-            credential: Some(serde_json::to_value(signed)?),
-            ..Default::default()
+            credential: Some(serde_json::to_value(jwt)?),
+
+            // TODO: add `c_nonce` and `c_nonce_expires_in` to CredentialResponse
+            ..CredentialResponse::default()
         })
     }
 
@@ -315,8 +319,8 @@ where
             verification_method: Signer::verification_method(provider),
             created: Some(Utc::now()),
             expires: Utc::now().checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
-            //domain: Some(vec![request.client_id.clone()]),
-            ..Default::default()
+
+            ..Proof::default()
         };
 
         let credential_issuer = &self.issuer_meta.credential_issuer;
@@ -433,17 +437,17 @@ mod tests {
 
         // set up state
         let mut state = State::builder()
-            .credential_issuer(ISSUER.to_string())
+            .credential_issuer(ISSUER.into())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
-            .holder_id(Some(NORMAL_USER.to_string()))
+            .holder_id(Some(NORMAL_USER.into()))
             .build()
             .expect("should build state");
 
         state.token = Some(Token {
-            access_token: access_token.to_string(),
+            access_token: access_token.into(),
             token_type: "Bearer".into(),
-            c_nonce: c_nonce.to_string(),
+            c_nonce: c_nonce.into(),
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             ..Default::default()
         });
@@ -453,12 +457,12 @@ mod tests {
             .expect("state exists");
 
         let claims = ProofClaims {
-            iss: wallet::did(),
-            aud: ISSUER.to_string(),
+            iss: Some(wallet::CLIENT_ID.into()),
+            aud: ISSUER.into(),
             iat: Utc::now().timestamp(),
-            nonce: c_nonce.to_string(),
+            nonce: Some(c_nonce.into()),
         };
-        let jwt = jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider)
+        let jwt = jose::encode(jose::Typ::Proof, &claims, wallet::Provider::new())
             .await
             .expect("should encode");
 
@@ -481,8 +485,8 @@ mod tests {
 
         let mut request = serde_json::from_value::<BatchCredentialRequest>(body)
             .expect("request should deserialize");
-        request.credential_issuer = ISSUER.to_string();
-        request.access_token = access_token.to_string();
+        request.credential_issuer = ISSUER.into();
+        request.access_token = access_token.into();
 
         let response =
             Endpoint::new(provider.clone()).batch(&request).await.expect("response is valid");
@@ -527,16 +531,16 @@ mod tests {
 
     //     // set up state
     //     let mut state = State::builder()
-    //         .credential_issuer(ISSUER.to_string())
+    //         .credential_issuer(ISSUER.into())
     //         .expires_at(Utc::now() + Expire::AuthCode.duration())
-    //         .holder_id(Some(NORMAL_USER.to_string()))
+    //         .holder_id(Some(NORMAL_USER.into()))
     //         .build()
     //         .expect("should build state");
 
     //     state.token = Some(Token {
-    //         access_token: access_token.to_string(),
+    //         access_token: access_token.into(),
     //         token_type: "Bearer".into(),
-    //         c_nonce: c_nonce.to_string(),
+    //         c_nonce: c_nonce.into(),
     //         c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
     //         ..Default::default()
     //     });
@@ -548,12 +552,12 @@ mod tests {
     //     // create BatchCredentialRequest to 'send' to the app
 
     //     let claims = ProofClaims {
-    //         iss: wallet::did(),
-    //         aud: ISSUER.to_string(),
+    //         iss: wallet::CLIENT_ID,
+    //         aud: ISSUER.into(),
     //         iat: Utc::now().timestamp(),
-    //         nonce: c_nonce.to_string(),
+    //         nonce: c_nonce.into(),
     //     };
-    //     let jwt = jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider)
+    //     let jwt = jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider::new())
 
     //     let body = json!({
     //         "credential_requests":[{
@@ -567,8 +571,8 @@ mod tests {
 
     //     let mut request = serde_json::from_value::<BatchCredentialRequest>(body)
     //         .expect("request should deserialize");
-    //     request.credential_issuer = ISSUER.to_string();
-    //     request.access_token = access_token.to_string();
+    //     request.credential_issuer = ISSUER.into();
+    //     request.access_token = access_token.into();
 
     //     let response =
     //         Endpoint::new(provider.clone()).batch(&request).await.expect("response is valid");

@@ -168,17 +168,17 @@ mod tests {
 
         // set up state
         let mut state = State::builder()
-            .credential_issuer(ISSUER.to_string())
+            .credential_issuer(ISSUER.into())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
-            .holder_id(Some(NORMAL_USER.to_string()))
+            .holder_id(Some(NORMAL_USER.into()))
             .build()
             .expect("should build state");
 
         state.token = Some(Token {
-            access_token: access_token.to_string(),
+            access_token: access_token.into(),
             token_type: "Bearer".into(),
-            c_nonce: c_nonce.to_string(),
+            c_nonce: c_nonce.into(),
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             ..Default::default()
         });
@@ -189,12 +189,12 @@ mod tests {
 
         // create CredentialRequest to 'send' to the app
         let claims = ProofClaims {
-            iss: wallet::did(),
-            aud: ISSUER.to_string(),
+            iss: Some(wallet::CLIENT_ID.into()),
+            aud: ISSUER.into(),
             iat: Utc::now().timestamp(),
-            nonce: c_nonce.to_string(),
+            nonce: Some(c_nonce.into()),
         };
-        let jwt = jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider)
+        let jwt = jose::encode(jose::Typ::Proof, &claims, wallet::Provider::new())
             .await
             .expect("should encode");
 
@@ -214,8 +214,8 @@ mod tests {
 
         let mut request =
             serde_json::from_value::<CredentialRequest>(body).expect("request should deserialize");
-        request.credential_issuer = ISSUER.to_string();
-        request.access_token = access_token.to_string();
+        request.credential_issuer = ISSUER.into();
+        request.access_token = access_token.into();
 
         let response =
             Endpoint::new(provider.clone()).credential(&request).await.expect("response is valid");

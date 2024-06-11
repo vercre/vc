@@ -247,7 +247,7 @@ mod tests {
 
         // create TokenRequest to 'send' to the app
         let body = json!({
-            "client_id": wallet::did(),
+            "client_id": wallet::CLIENT_ID,
             "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
             "pre-authorized_code": pre_auth_code,
             "user_code": "1234"
@@ -286,7 +286,7 @@ mod tests {
 
         let mut state = State::builder()
             .credential_issuer(ISSUER.to_string())
-            .client_id(wallet::did())
+            .client_id(wallet::CLIENT_ID)
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
             .holder_id(Some(NORMAL_USER.to_string()))
@@ -326,7 +326,7 @@ mod tests {
 
         // create TokenRequest to 'send' to the app
         let body = json!({
-            "client_id": wallet::did(),
+            "client_id": wallet::CLIENT_ID,
             "grant_type": "authorization_code",
             "code": auth_code,
             "code_verifier": verifier,

@@ -200,17 +200,16 @@ where
 
         // Request each credential offered.
         // TODO: concurrent requests. Possible if wallet is WASM?
-
         for (id, cfg) in &issuance.offered {
             // Construct a proof to be used in credential requests.
             let claims = ProofClaims {
-                iss: provider.verification_method(),
+                // FIXME: This should be the issuer's DID, not the URL.
+                iss: Some(req.client_id.clone()),
                 aud: issuance.offer.credential_issuer.clone(),
                 iat: chrono::Utc::now().timestamp(),
-                nonce: issuance.token.c_nonce.clone().unwrap_or_default(),
+                nonce: issuance.token.c_nonce.clone(),
             };
-            let Ok(jwt) = jose::encode(jose::Typ::WalletProof, &claims, provider.clone()).await
-            else {
+            let Ok(jwt) = jose::encode(jose::Typ::Proof, &claims, provider.clone()).await else {
                 provider.notify(&issuance.id, Status::Failed("could not encode proof".into()));
                 return Ok(());
             };
@@ -430,7 +429,7 @@ mod tests {
         };
         metadata(&mut issuance, &meta_res).expect("metadata should update flow");
         let token_req = token_request(
-            "96bfb9cb-0513-7d64-5532-bed74c48f9ab",
+            wallet::CLIENT_ID,
             &issuance,
             "cVJ9o7fKUOxLbyQAEbHx3TPkTbvjTHHH",
         );
@@ -455,13 +454,13 @@ mod tests {
         metadata(&mut issuance, &meta_res).expect("metadata should update flow");
 
         let claims = ProofClaims {
-            iss: wallet::did(),
+            iss: Some(wallet::CLIENT_ID.into()),
             aud: issuance.offer.credential_issuer.clone(),
             iat: chrono::Utc::now().timestamp(),
-            nonce: issuance.token.c_nonce.clone().unwrap_or_default(),
+            nonce: issuance.token.c_nonce.clone(),
         };
 
-        let token = jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider)
+        let token = jose::encode(jose::Typ::Proof, &claims, wallet::Provider::new())
             .await
             .expect("should encode");
 
@@ -489,13 +488,13 @@ mod tests {
         let cfg = issuance.offered.get(id).expect("should have an offered configuration");
 
         let claims = ProofClaims {
-            iss: wallet::did(),
+            iss: Some(wallet::CLIENT_ID.into()),
             aud: "http://vercre.io".into(),
             iat: 1717546167,
-            nonce: "".into(),
+            nonce: None,
         };
 
-        let token = jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider)
+        let token = jose::encode(jose::Typ::Proof, &claims, wallet::Provider::new())
             .await
             .expect("should encode");
         let proof = Proof {
