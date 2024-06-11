@@ -1,30 +1,20 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
-import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
 import { ThemeProvider } from "@mui/material/styles";
-import Typography from '@mui/material/Typography';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
-import { useRecoilValue } from 'recoil';
+import { useRecoilState } from 'recoil';
 
-import { appState } from './model';
+import Credentials from './Credentials';
+import { AppState, appState } from './model';
 import Splash from './Splash';
 import { theme } from "./theme";
+import { ViewModel } from './types/generated';
 
 const App = () => {
-  const view = useRecoilValue(appState);
-  const [inputStatus, setInputStatus] = useState<string>("Inactive");
-  const [outputStatus, setOutputStatus] = useState<string>("Inactive");
+  const [view, setView] = useRecoilState<AppState>(appState);
   const init = useRef<boolean>(false);
-
-  type Model = {
-    status: string;
-  }
 
   // register listener for Tauri events
   useEffect(() => {
@@ -32,12 +22,18 @@ const App = () => {
         return;
     }
     init.current = true;
+
+    invoke("start");
+
     let unlisten: UnlistenFn;
     const statusListener = async () => {
-        unlisten = await listen<Model>("status_updated", ({ payload }) => {
-            const model = payload as Model;
-            console.log("status_updated", model);
-            setOutputStatus(model.status);
+        unlisten = await listen<ViewModel>("state_updated", ({ payload }) => {
+            const model = payload as ViewModel;
+            console.log("state_updated", model);
+            setView({
+              ...view,
+              viewModel: model,
+            })
         });
     }
     statusListener();
@@ -45,35 +41,13 @@ const App = () => {
     return () => {
         unlisten?.();
     };
-  }, []);
-
-  const submit = () => {
-    invoke("update_status", { status: inputStatus });
-  }
+  }, [setView, view]);
 
   return (
     <ThemeProvider theme={theme}>
         <CssBaseline />
-          {view.subApp === "splash" && <Splash />}
-          <Typography variant="body1">{`Current status: ${outputStatus}`}</Typography>
-          <FormControl>
-            <InputLabel id="status">Status</InputLabel>
-            <Select
-              labelId="status"
-              id="status"
-              value={inputStatus}
-              label="Status"
-              onChange={(e) => setInputStatus(e.target.value as string)}
-            >
-              <MenuItem value="Inactive">Inactive</MenuItem>
-              <MenuItem value="Offered">Offered</MenuItem>
-              <MenuItem value="Ready">Ready</MenuItem>
-              <MenuItem value="PendingPin">PendingPIN</MenuItem>
-              <MenuItem value="Accepted">Accepted</MenuItem>
-              <MenuItem value="Requested">Requested</MenuItem>
-            </Select>
-          </FormControl>
-          <Button onClick={submit}>Submit</Button>
+          {view.viewModel?.sub_app === "Splash" && <Splash />}
+          {view.viewModel?.sub_app === "Credential" && <Credentials />}
     </ThemeProvider>
   );
 }

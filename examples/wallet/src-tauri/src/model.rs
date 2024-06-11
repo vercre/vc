@@ -17,7 +17,7 @@ pub enum SubApp {
     Presentation,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 #[allow(clippy::module_name_repetitions)]
 pub struct ViewModel {

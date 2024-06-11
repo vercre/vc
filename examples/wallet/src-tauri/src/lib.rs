@@ -14,6 +14,7 @@ use tauri::{AppHandle, Manager, State};
 use tauri_plugin_log::{Target, TargetKind};
 
 use app::AppState;
+use model::ViewModel;
 use store::Store;
 
 struct StateModel(Mutex<AppState>);
@@ -56,18 +57,30 @@ pub fn run() {
         })
         .manage(StateModel(Mutex::new(AppState::default())))
         .invoke_handler(tauri::generate_handler![
-            start, // let Tauri know the app is ready so it can initialise state.
+            start, // called by the shell on load.
+            started, // called when the shell application has finished it's initialisation.
             // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
+/// The `start` command is called by the shell on load.
 #[tauri::command]
 async fn start(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
+    let model = state.0.lock().await.clone();
+    let view: ViewModel = model.into();
+    app.emit("state_updated", view).map_err(error::AppError::from)?;
+    Ok(())
+}
+
+/// The `started` command is called when the shell application has finished it's initialisation.
+#[tauri::command]
+async fn started(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     let mut model = state.0.lock().await;
     let store = Store::new(app.clone());
-    model.reset(store).await;
-    app.emit("state_updated", model.clone()).map_err(error::AppError::from)?;
+    model.reset(store).await?;
+    let view: ViewModel = model.clone().into();
+    app.emit("state_updated", view).map_err(error::AppError::from)?;
     Ok(())
 }
