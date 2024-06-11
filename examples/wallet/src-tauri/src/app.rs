@@ -3,6 +3,7 @@
 //! responding to an offer of issuance, or responding to a request for presentation. The underlying
 //! application state is translated into a view model for the shell to render.
 
+use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 use vercre_holder::credential::Credential;
 use vercre_holder::issuance::Issuance;
@@ -29,13 +30,17 @@ pub struct AppState {
 
 impl AppState {
     /// Reset the application state to its default values.
-    pub async fn reset(&mut self, credential_store: impl CredentialStorer) {
+    /// 
+    /// # Error
+    /// 
+    /// If loading the credentials from the credential store fails, an error is returned.
+    pub async fn reset(&mut self, credential_store: impl CredentialStorer) -> anyhow::Result<()> {
         self.error = None;
         let credentials = match credential_store.find(None).await {
             Ok(creds) => creds,
             Err(e) => {
                 self.error = Some(e.to_string());
-                vec![]
+                return Err(anyhow!("Failed to load credentials"));
             }
         };
         self.sub_app = model::SubApp::Credential;
@@ -45,6 +50,7 @@ impl AppState {
         };
         self.issuance = Issuance::default();
         self.presentation = Presentation::default();
+        Ok(())
     }
 }
 

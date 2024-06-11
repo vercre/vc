@@ -9,7 +9,7 @@ use vercre_holder::issuance::{Issuance, Status};
 use crate::model::credential::CredentialDisplay;
 
 /// Status of the issuance flow
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 #[allow(clippy::module_name_repetitions)]
 pub enum IssuanceStatus {
@@ -52,7 +52,7 @@ impl From<Status> for IssuanceStatus {
 }
 
 /// Issuance flow viewable state
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 #[allow(clippy::module_name_repetitions)]
 pub struct IssuanceView {

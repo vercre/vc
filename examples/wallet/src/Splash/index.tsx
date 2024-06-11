@@ -1,25 +1,30 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
-import { useRecoilState } from 'recoil';
+import { invoke } from '@tauri-apps/api/core';
+import { useRecoilValue } from 'recoil';
 
 import { appState } from '../model';
 
 const Splash = () => {
-    const [view, setView] = useRecoilState(appState);
+    const view = useRecoilValue(appState);
+    const init = useRef<boolean>(false);
 
     useEffect(() => {
+        if (init.current) {
+            return;
+        }
+        init.current = true;
+
         if (view.started) {
             return;
         }
         setTimeout(() => {
-            setView({
-                started: true,
-                subApp: 'credential',
-            });
-        }, 2500);
-    }, [view, setView]);
+            console.log("invoking started");
+            invoke("started");
+        }, 1500);
+    }, [view]);
 
     return (
         <Container

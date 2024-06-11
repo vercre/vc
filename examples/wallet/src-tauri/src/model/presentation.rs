@@ -9,7 +9,7 @@ use vercre_holder::presentation::{Presentation, Status};
 use crate::model::credential::CredentialDisplay;
 
 /// Status of the presentation flow
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 #[allow(clippy::module_name_repetitions)]
 pub enum PresentationStatus {
@@ -40,7 +40,7 @@ impl From<Status> for PresentationStatus {
 }
 
 /// Presentation flow viewable state
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 #[allow(clippy::module_name_repetitions)]
 pub struct PresentationView {
