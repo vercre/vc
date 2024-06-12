@@ -25,27 +25,11 @@ pub use vercre_core::vci::{
 };
 use vercre_core::{err, gen, Result};
 use vercre_vc::model::{CredentialSubject, VerifiableCredential};
-use vercre_vc::proof::jose::{self, Jwt};
-use vercre_vc::proof::{self, integrity, Signer};
+use vercre_vc::proof::jose::{self, Jwt, VcClaims};
+use vercre_vc::proof::{self, ProofType, Signer};
 
 use super::Endpoint;
 use crate::state::{Deferred, Expire, State};
-
-struct VcProof {
-    claims: jose::VcClaims,
-}
-
-impl proof::ProofData for VcProof {
-    type Claims = jose::VcClaims;
-
-    fn as_claims(&self) -> Self::Claims {
-        self.claims.clone()
-    }
-
-    fn as_proof(&self) -> integrity::Proof {
-        unimplemented!()
-    }
-}
 
 impl<P> Endpoint<P>
 where
@@ -284,24 +268,24 @@ where
             });
         };
 
-        // ********************************************************************
-        // Test Proof Provider
-        // ********************************************************************
-        let mut proof = VcProof {
-            claims: vc.to_claims()?,
-        };
-        proof.claims.sub.clone_from(&self.holder_did);
-
-        let jwt = proof::create_proof(proof, provider.clone()).await?;
-        // ********************************************************************
-
         // transform to JWT
-        // let mut claims = vc.to_claims()?;
-        // claims.sub.clone_from(&self.holder_did);
-        // let jwt = jose::encode(jose::Typ::Credential, &claims, provider.clone()).await?;
+        let mut claims: VcClaims = vc.into();
+        claims.sub.clone_from(&self.holder_did);
+        let jwt = proof::create(ProofType::VcJwt(claims), provider.clone()).await?;
+
+        // add data integrity proof payload
+        // TODO: add all fields required by JWT
+        // let proof = Proof {
+        //     id: Some(format!("urn:uuid:{}", Uuid::new_v4())),
+        //     type_: Signer::algorithm(provider).proof_type(),
+        //     verification_method: Signer::verification_method(provider),
+        //     created: Some(Utc::now()),
+        //     expires: Utc::now().checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
+        //     ..Proof::default()
+        // };
 
         Ok(CredentialResponse {
-            credential: Some(serde_json::to_value(jwt)?),
+            credential: Some(serde_json::Value::String(jwt)),
 
             // TODO: add `c_nonce` and `c_nonce_expires_in` to CredentialResponse
             ..CredentialResponse::default()
@@ -336,17 +320,6 @@ where
                 err!(Err::InvalidCredentialRequest, "mandatory claim {name} not populated");
             }
         }
-
-        // create proof
-        // TODO: add all fields required by JWT
-        // let proof = Proof {
-        //     id: Some(format!("urn:uuid:{}", Uuid::new_v4())),
-        //     type_: Signer::algorithm(provider).proof_type(),
-        //     verification_method: Signer::verification_method(provider),
-        //     created: Some(Utc::now()),
-        //     expires: Utc::now().checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
-        //     ..Proof::default()
-        // };
 
         let credential_issuer = &self.issuer_meta.credential_issuer;
 
@@ -487,7 +460,7 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = jose::encode(jose::Typ::Proof, &claims, wallet::Provider::new())
+        let jwt = proof::create(ProofType::ProofJwt(claims), wallet::Provider::new())
             .await
             .expect("should encode");
 
@@ -582,7 +555,7 @@ mod tests {
     //         iat: Utc::now().timestamp(),
     //         nonce: c_nonce.into(),
     //     };
-    //     let jwt = jose::encode(jose::Typ::WalletProof, &claims, wallet::Provider::new())
+    //     let jwt = proof::create(ProofType::ProofJwt(claims), wallet::Provider::new())
 
     //     let body = json!({
     //         "credential_requests":[{

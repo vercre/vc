@@ -14,7 +14,7 @@ use vercre_core::vci::{
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
 use vercre_core::{err, Result};
-use vercre_vc::proof::jose;
+use vercre_vc::proof::{self, jose, ProofType};
 
 use crate::credential::Credential;
 use crate::provider::{
@@ -209,7 +209,8 @@ where
                 iat: chrono::Utc::now().timestamp(),
                 nonce: issuance.token.c_nonce.clone(),
             };
-            let Ok(jwt) = jose::encode(jose::Typ::Proof, &claims, provider.clone()).await else {
+
+            let Ok(jwt) = proof::create(ProofType::ProofJwt(claims), provider.clone()).await else {
                 provider.notify(&issuance.id, Status::Failed("could not encode proof".into()));
                 return Ok(());
             };
@@ -428,11 +429,8 @@ mod tests {
             credential_issuer: vercre_core::metadata::Issuer::sample(),
         };
         metadata(&mut issuance, &meta_res).expect("metadata should update flow");
-        let token_req = token_request(
-            wallet::CLIENT_ID,
-            &issuance,
-            "cVJ9o7fKUOxLbyQAEbHx3TPkTbvjTHHH",
-        );
+        let token_req =
+            token_request(wallet::CLIENT_ID, &issuance, "cVJ9o7fKUOxLbyQAEbHx3TPkTbvjTHHH");
         assert_snapshot!("token_request", &token_req);
     }
 
@@ -460,7 +458,7 @@ mod tests {
             nonce: issuance.token.c_nonce.clone(),
         };
 
-        let token = jose::encode(jose::Typ::Proof, &claims, wallet::Provider::new())
+        let token = proof::create(ProofType::ProofJwt(claims), wallet::Provider::new())
             .await
             .expect("should encode");
 
@@ -494,7 +492,7 @@ mod tests {
             nonce: None,
         };
 
-        let token = jose::encode(jose::Typ::Proof, &claims, wallet::Provider::new())
+        let token = proof::create(ProofType::ProofJwt(claims), wallet::Provider::new())
             .await
             .expect("should encode");
         let proof = Proof {

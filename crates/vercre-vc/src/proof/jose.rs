@@ -93,8 +93,6 @@ impl Display for Typ {
     }
 }
 
-
-
 /// Encode the header and claims given and sign the payload using the algorithm from the header and the key.
 ///
 /// # Errors
@@ -131,43 +129,44 @@ where
 /// Decode the JWT token and return the claims.
 ///
 /// # Errors
+/// TODO: Add errors
 pub fn decode<T>(token: &str) -> anyhow::Result<Jwt<T>>
 where
     T: DeserializeOwned,
 {
-    // let jwt = Jwt::<T>::from_str(token)?;
-
-    // verify signature
     // TODO: cater for different key types
     let parts: Vec<&str> = token.split('.').collect();
     if parts.len() != 3 {
-        bail!("invalid proof JWT format");
+        bail!("invalid Compact JWS format");
     }
 
-    let Ok(decoded_header) = Base64UrlUnpadded::decode_vec(parts[0]) else {
-        bail!("unable to base64 decode proof JWT header");
+    let decoded_header = match Base64UrlUnpadded::decode_vec(parts[0]) {
+        Ok(decoded) => decoded,
+        Err(e) => {
+            bail!("unable to decode header: {e}");
+        }
     };
     let Ok(header) = serde_json::from_slice(&decoded_header) else {
-        bail!("unable to deserialize proof JWT header");
+        bail!("unable to deserialize header");
     };
     let Ok(decoded_claims) = Base64UrlUnpadded::decode_vec(parts[1]) else {
-        bail!("unable to base64 decode proof JWT claims");
+        bail!("unable to decode claims");
     };
     let Ok(claims) = serde_json::from_slice(&decoded_claims) else {
-        bail!("unable to deserialize proof JWT claims");
+        bail!("unable to deserialize claims");
     };
 
     let jwt = Jwt { header, claims };
 
     let msg = format!("{}.{}", parts[0], parts[1]);
     let Ok(sig) = Base64UrlUnpadded::decode_vec(parts[2]) else {
-        bail!("unable to base64 decode proof signature");
+        bail!("unable to decode proof signature");
     };
 
     let proof_jwk = match Jwk::from_str(&jwt.header.kid.clone().unwrap_or_default()) {
         Ok(proof_jwk) => proof_jwk,
         Err(e) => {
-            bail!("unable to parse proof JWT 'kid' into JWK: {}", e.to_string());
+            bail!("unable to parse 'kid' into JWK: {}", e.to_string());
         }
     };
 
@@ -175,7 +174,7 @@ where
 
     // algorithm
     if !(jwt.header.alg == Algorithm::ES256K || jwt.header.alg == Algorithm::EdDSA) {
-        bail!("Proof JWT 'alg' is not recognised");
+        bail!("'alg' is not recognised");
     }
 
     Ok(jwt)
@@ -232,44 +231,37 @@ pub struct Header {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions)]
 pub struct VcClaims {
-    /// MUST be the `id` property contained in the `credentialSubject`.
-    /// That is, the Holder ID the credential is intended for. Unused in
-    /// verifiable presentations.
-    ///
+    /// The `credentialSubject.id` property of the Credential. That is, the Holder ID
+    /// the Credential is intended for.
     /// For example, "did:example:ebfeb1f712ebc6f1c276e12ec21".
     pub sub: String,
 
-    /// MUST be the verifiable credential's `issuanceDate`, encoded as a
-    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
+    /// MUST be the Credential's `issuanceDate`, encoded as a UNIX timestamp
+    /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
     pub nbf: i64,
 
-    /// MUST be the `issuer` property of a verifiable credential or the `holder`.
-    ///
+    /// MUST be the `issuer` property of the Credential.
     /// For example, "did:example:123456789abcdefghi#keys-1".
     pub iss: String,
 
-    /// MUST be the verifiable credential's `issuanceDate`, encoded as a
-    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
+    /// MUST be the Credential's `issuanceDate`, encoded as a UNIX timestamp
+    /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
     pub iat: i64,
 
-    /// MUST be the `id` property of the verifiable credential or verifiable
-    /// presentation.
+    /// MUST be the `id` property of the Credential.
     pub jti: String,
 
-    /// MUST be the verifiable credential's `expirationDate`, encoded as a
-    /// UNIX timestamp ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
+    /// MUST be the Credential's `expirationDate`, encoded as a UNIX timestamp
+    /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub exp: Option<i64>,
 
-    /// The verifiable credential.
+    /// The Verifiable Credential.
     pub vc: VerifiableCredential,
 }
 
 impl From<VerifiableCredential> for VcClaims {
     fn from(vc: VerifiableCredential) -> Self {
-        let mut cleaned = vc.clone();
-        cleaned.proof = None;
-
         Self {
             // TODO: find better way to set sub (shouldn't need to be in vc)
             sub: vc.credential_subject[0].id.clone().unwrap_or_default(),
@@ -278,7 +270,7 @@ impl From<VerifiableCredential> for VcClaims {
             iat: vc.issuance_date.timestamp(),
             jti: vc.id.clone(),
             exp: vc.expiration_date.map(|exp| exp.timestamp()),
-            vc: cleaned,
+            vc,
         }
     }
 }
@@ -297,12 +289,11 @@ impl VerifiableCredential {
 /// ([JARM](https://openid.net/specs/oauth-v2-jarm-final.html)).
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct VpClaims {
-    /// MUST be the `holder` property of a Verifiable Presentation.
-    ///
+    /// The `holder` property of the Presentation.
     /// For example, "did:example:123456789abcdefghi".
     pub iss: String,
 
-    /// The `id` property of the Verifiable Presentation.
+    /// The `id` property of the Presentation.
     ///
     /// For example, "urn:uuid:3978344f-8596-4c3a-a978-8fcaba3903c5".
     pub jti: String,
@@ -313,15 +304,15 @@ pub struct VpClaims {
     /// The `nonce` value from the Verifier's Authorization Request.
     pub nonce: String,
 
-    /// The time the Verifiable Presentation was created, encoded as a UNIX timestamp
+    /// The time the Presentation was created, encoded as a UNIX timestamp
     /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
     pub nbf: i64,
 
-    /// The time the Verifiable Presentation was created, encoded as a UNIX timestamp
+    /// The time the Presentation was created, encoded as a UNIX timestamp
     /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
     pub iat: i64,
 
-    /// The time the Verifiable Presentation will expire, encoded as a UNIX timestamp
+    /// The time the Presentation will expire, encoded as a UNIX timestamp
     /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
     pub exp: i64,
 
@@ -331,12 +322,9 @@ pub struct VpClaims {
 
 impl From<VerifiablePresentation> for VpClaims {
     fn from(vp: VerifiablePresentation) -> Self {
-        let mut cleaned = vp;
-        cleaned.proof = None;
-
         Self {
-            iss: cleaned.holder.clone().unwrap_or_default(),
-            jti: cleaned.id.clone().unwrap_or_default(),
+            iss: vp.holder.clone().unwrap_or_default(),
+            jti: vp.id.clone().unwrap_or_default(),
             nbf: Utc::now().timestamp(),
             iat: Utc::now().timestamp(),
 
@@ -345,7 +333,7 @@ impl From<VerifiablePresentation> for VpClaims {
                 .checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default())
                 .unwrap_or_default()
                 .timestamp(),
-            vp: cleaned,
+            vp,
 
             ..Self::default()
         }

@@ -7,15 +7,15 @@ use vercre_holder::provider::CredentialStorer;
 use vercre_holder::Constraints;
 
 pub struct Store<R>
-    where
-        R: tauri::Runtime,
+where
+    R: tauri::Runtime,
 {
     app_handle: tauri::AppHandle<R>,
 }
 
 impl<R> Store<R>
-    where
-        R: tauri::Runtime,
+where
+    R: tauri::Runtime,
 {
     /// Create a new credential store provider with a handle to the Tauri application.
     #[must_use]
@@ -36,8 +36,8 @@ impl<R> Store<R>
 
 /// Provider implementation
 impl<R> CredentialStorer for Store<R>
-    where
-        R: tauri::Runtime,
+where
+    R: tauri::Runtime,
 {
     /// Save a `Credential` to the store. Overwrite any existing credential with the same ID. Create
     /// a new credential if one with the same ID does not exist.
@@ -71,9 +71,8 @@ impl<R> CredentialStorer for Store<R>
         let (path, collection) = self.store();
         let values = with_store(self.app_handle.clone(), collection, path, |store| {
             let values = store.values();
-            let list: Vec<Credential> = values
-                .filter_map(|v| serde_json::from_value(v.clone()).ok())
-                .collect();
+            let list: Vec<Credential> =
+                values.filter_map(|v| serde_json::from_value(v.clone()).ok()).collect();
             let Some(constraints) = filter else {
                 return Ok(list);
             };

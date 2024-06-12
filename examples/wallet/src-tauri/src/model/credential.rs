@@ -4,7 +4,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use vercre_holder::{credential::{self, Credential}, CredentialConfiguration};
+use vercre_holder::credential::{self, Credential};
+use vercre_holder::CredentialConfiguration;
 
 use crate::app::CredentialState;
 

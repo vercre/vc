@@ -7,7 +7,7 @@ use serde::de::value::MapAccessDeserializer;
 use serde::de::{Deserialize, DeserializeOwned, Deserializer, MapAccess, SeqAccess, Visitor};
 use serde::ser::{Serialize, SerializeSeq, Serializer};
 
-pub(crate) fn serialize<T, S>(value: &Option<Vec<T>>, serializer: S) -> Result<S::Ok, S::Error>
+pub fn serialize<T, S>(value: &Option<Vec<T>>, serializer: S) -> Result<S::Ok, S::Error>
 where
     T: Serialize,
     S: Serializer,
@@ -33,7 +33,7 @@ where
     }
 }
 
-pub(crate) fn deserialize<'de, T, D>(deserializer: D) -> Result<Option<Vec<T>>, D::Error>
+pub fn deserialize<'de, T, D>(deserializer: D) -> Result<Option<Vec<T>>, D::Error>
 where
     T: DeserializeOwned + FromStr,
     D: Deserializer<'de>,

@@ -152,31 +152,9 @@ impl VerifiableCredential {
                 id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
                 claims: HashMap::from([("employeeId".into(), serde_json::json!("1234567890"))]),
             }],
-            proof: Some(vec![Proof {
-                type_: "Ed25519Signature2020".into(),
-                cryptosuite: Some("EcdsaSecp256k1VerificationKey2019".into()),
-                proof_purpose: "assertionMethod".into(),
-                verification_method: "did:example:ebfeb1f712ebc6f1c276e12ec21".into(),
-                ..Default::default()
-            }]),
-
             expiration_date: Some(Utc.with_ymd_and_hms(2023, 12, 20, 23, 21, 55).unwrap()),
-            credential_status: Some(CredentialStatus::default()),
-            credential_schema: Some(vec![CredentialSchema::default()]),
-            refresh_service: Some(RefreshService::default()),
-            terms_of_use: Some(vec![Term {
-                obligation: Some(vec![Policy {
-                    action: vec![String::new()],
-                    ..Default::default()
-                }]),
-                prohibition: Some(vec![Policy::default()]),
-                permission: Some(vec![Policy::default()]),
-                ..Default::default()
-            }]),
-            evidence: Some(vec![Evidence {
-                type_: vec![String::new()],
-                ..Default::default()
-            }]),
+
+            ..Self::default()
         }
     }
 }
@@ -531,7 +509,7 @@ mod tests {
     }
 
     #[test]
-    fn test_builder() {
+    fn builder() {
         init_tracer();
 
         let vc = VerifiableCredential::sample();
@@ -579,13 +557,10 @@ mod tests {
     }
 
     #[test]
-    fn test_flexvec() {
+    fn flexvec() {
         init_tracer();
 
         let mut vc = VerifiableCredential::sample();
-
-        vc.proof = Some(vec![Proof { ..Default::default() }]);
-
         vc.credential_schema = Some(vec![
             CredentialSchema { ..Default::default() },
             CredentialSchema { ..Default::default() },
@@ -593,11 +568,7 @@ mod tests {
 
         // serialize
         let vc_json = serde_json::to_value(&vc).expect("should serialize to json");
-        assert_eq!(
-            *vc_json.get("proof").expect("proof should be set"),
-            json!({"proofPurpose": "", "proofValue": "", "type": "", "verificationMethod": ""}),
-            "Vec with len() == 1 should serialize to object"
-        );
+        assert!(vc_json.get("proof").is_none());
         assert_eq!(
             *vc_json.get("credentialSchema").expect("credentialSchema should be set"),
             json!([{"id":"","type":""},{"id":"","type":""}]),
@@ -615,7 +586,7 @@ mod tests {
     }
 
     #[test]
-    fn test_flexobj() {
+    fn flexobj() {
         init_tracer();
 
         let mut vc = VerifiableCredential::sample();

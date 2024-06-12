@@ -146,3 +146,8 @@ impl FromStr for Proof {
         unimplemented!("Proof::from_str")
     }
 }
+
+/// Encode proof
+pub fn encode() {
+    todo!()
+}

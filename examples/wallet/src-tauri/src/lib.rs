@@ -9,13 +9,12 @@ mod error;
 mod model;
 mod store;
 
-use futures::lock::Mutex;
-use tauri::{AppHandle, Manager, State};
-use tauri_plugin_log::{Target, TargetKind};
-
 use app::AppState;
+use futures::lock::Mutex;
 use model::ViewModel;
 use store::Store;
+use tauri::{AppHandle, Manager, State};
+use tauri_plugin_log::{Target, TargetKind};
 
 struct StateModel(Mutex<AppState>);
 
@@ -59,7 +58,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             start, // called by the shell on load.
             started, // called when the shell application has finished it's initialisation.
-            // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
+                   // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

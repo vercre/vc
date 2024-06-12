@@ -772,7 +772,7 @@ pub struct ProofClaims {
 
     /// The time at which the proof was issued, as
     /// [RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`.
-    /// 
+    ///
     /// For example, "1541493724".
     pub iat: i64,
 

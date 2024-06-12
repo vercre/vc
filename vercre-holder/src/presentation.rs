@@ -12,9 +12,10 @@ use vercre_core::vp::{RequestObject, RequestObjectResponse, ResponseRequest};
 use vercre_core::{err, Result};
 use vercre_issuer::jose;
 use vercre_vc::model::vp::{
-    Constraints, DescriptorMap, PathNested, PresentationSubmission, Proof, VerifiablePresentation,
+    Constraints, DescriptorMap, PathNested, PresentationSubmission, VerifiablePresentation,
 };
 use vercre_vc::proof::jose::VpClaims;
+use vercre_vc::proof::{self, ProofType};
 
 use crate::credential::Credential;
 use crate::provider::{
@@ -232,7 +233,7 @@ where
         let mut claims = VpClaims::from(vp);
         claims.aud.clone_from(&presentation.request.client_id);
         claims.nonce.clone_from(&presentation.request.nonce);
-        let jwt = jose::encode(jose::Typ::Presentation, &claims, provider.clone()).await?;
+        let jwt = proof::create(ProofType::VpJwt(claims), provider.clone()).await?;
 
         let vp_token = match serde_json::to_value(&jwt) {
             Ok(v) => v,
@@ -342,8 +343,6 @@ fn create_submission(presentation: &Presentation) -> anyhow::Result<Presentation
 fn create_vp(
     presentation: &Presentation, holder_did: impl Into<String>,
 ) -> anyhow::Result<VerifiablePresentation> {
-    let request = presentation.request.clone();
-
     // presentation with 2 VCs: one as JSON, one as base64url encoded JWT
     let mut builder = VerifiablePresentation::builder()
         .add_context(String::from("https://www.w3.org/2018/credentials/examples/v1"))
@@ -355,15 +354,7 @@ fn create_vp(
         builder = builder.add_credential(val);
     }
 
-    let mut vp = builder.build()?;
-
-    vp.proof = Some(vec![Proof {
-        domain: Some(vec![request.client_id.clone()]),
-        challenge: Some(request.nonce),
-        ..Proof::default()
-    }]);
-
-    Ok(vp)
+    builder.build()
 }
 
 #[cfg(test)]
@@ -377,7 +368,7 @@ mod tests {
         Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition,
         VerifiableCredential,
     };
-    use vercre_vc::proof::{jose, Algorithm};
+    use vercre_vc::proof::Algorithm;
 
     use super::*;
 
@@ -430,9 +421,8 @@ mod tests {
 
     async fn sample_credential() -> Credential {
         let vc = VerifiableCredential::sample();
-
         let claims = vc.to_claims().expect("should get claims");
-        let jwt = jose::encode(jose::Typ::Credential, &claims, issuance::Provider::new())
+        let jwt = proof::create(ProofType::VcJwt(claims), issuance::Provider::new())
             .await
             .expect("should encode");
 
@@ -467,9 +457,10 @@ mod tests {
             parse_request_object_response(&req_obj_res).expect("should parse with object");
         assert_eq!(obj, decoded);
 
-        let token = jose::encode(jose::Typ::Request, &obj.clone(), presentation::Provider::new())
-            .await
-            .expect("should encode");
+        let token =
+            proof::create(ProofType::RequestJwt(obj.clone()), presentation::Provider::new())
+                .await
+                .expect("should encode");
 
         let req_obj_res = RequestObjectResponse {
             request_object: None,

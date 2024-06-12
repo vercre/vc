@@ -42,6 +42,7 @@ impl proof::Signer for Provider {
     }
 }
 
+#[must_use]
 pub fn holder_did() -> String {
     let jwk = serde_json::json!({
         "kty": "OKP",
