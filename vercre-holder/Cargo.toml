@@ -13,7 +13,7 @@ repository.workspace = true
 rust-version.workspace = true
 version.workspace = true
 
-# [lib]
+[lib]
 # crate-type = ["cdylib", "rlib"]
 
 [lints]
@@ -22,7 +22,6 @@ workspace = true
 [dependencies]
 anyhow.workspace = true
 chrono = { version = "0.4.38", features = ["serde"] }
-providers.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_qs = "0.13.0"
@@ -35,11 +34,6 @@ vercre-vc.workspace = true
 
 [dev-dependencies]
 assert_let_bind = "0.1.1"
-axum = { version = "0.7.5", features = ["macros"] }
-axum-extra = { version = "0.9.3", features = ["typed-header"] }
-axum-test = "15.0.1"
 insta = { version = "1.39.0", features = ["redactions", "yaml"] }
-test-utils.workspace = true
+providers.workspace = true
 tokio = { version = "1.38.0", default-features = false, features = ["fs", "macros", "rt"] }
-tower-http = { version = "0.5.2", features = ["trace"] }
-providers={path="../examples/providers"}

@@ -62,6 +62,7 @@ vercre-core = { path = "crates/vercre-core" }
 vercre-issuer = { path = "vercre-issuer" }
 vercre-vc = { path = "crates/vercre-vc" }
 vercre-verifier = { path = "vercre-verifier" }
+vercre-holder = { path = "vercre-holder" }
 
 [workspace.metadata.bin]
 cargo-xcode = { version = "=1.7.0" }

@@ -15,7 +15,6 @@ rust-version.workspace = true
 version.workspace = true
 
 # [lib]
-# name = "vercre_vc"
 # crate-type = ["cdylib", "rlib"]
 
 [lints]
