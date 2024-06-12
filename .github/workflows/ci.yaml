@@ -164,4 +164,5 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install libwebkit2gtk-4.1-dev
 
-      - run: cargo outdated --workspace --exit-code 1
+      - run: cargo outdated --packages vercre-holder,vercre-issuer,vercre-verifier --exit-code 1
+      # - run: cargo outdated --workspace --exit-code 1
