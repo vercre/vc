@@ -58,7 +58,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             start, // called by the shell on load.
             reset, // called when the shell application has finished it's initialisation.
-            // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
+                   // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

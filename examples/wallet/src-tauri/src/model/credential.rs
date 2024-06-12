@@ -112,7 +112,7 @@ impl From<&CredentialConfiguration> for CredentialDisplay {
         // TODO: locale
         let display = displays[0].clone();
         Self {
-            id: String::new(),  // ID is not available in the configuration, only in the credential
+            id: String::new(), // ID is not available in the configuration, only in the credential
             background_color: display.background_color.clone(),
             color: display.text_color.clone(),
             issuer: None,
