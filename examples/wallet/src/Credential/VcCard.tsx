@@ -11,7 +11,7 @@ import { CredentialDisplay, Logo } from '../types/generated';
 
 export type VcCardProps = {
     credential: CredentialDisplay;
-    onSelect: () => void;
+    onSelect?: () => void;
 };
 
 const VcCard = (props: VcCardProps) => {

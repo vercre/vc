@@ -12,6 +12,8 @@ export interface Logo {
 
 /** Summary view for a verifiable credential */
 export interface CredentialDisplay {
+	/** Credential ID */
+	id: string;
 	/** CSS color to use for the background of a credential display */
 	background_color?: string;
 	/** CSS color to use for the text of a credential display */

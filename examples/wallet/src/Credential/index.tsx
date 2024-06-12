@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 import AddIcon from '@mui/icons-material/Add';
 import Box from '@mui/material/Box';
@@ -7,15 +7,11 @@ import Slide from '@mui/material/Slide';
 import Stack from '@mui/material/Stack';
 import { invoke } from "@tauri-apps/api/core";
 
+import Add from './Add';
+import Detail from './Detail';
 import List from './List';
-import { CredentialDisplay, CredentialView } from '../types/generated';
-
-// import Add from './Add';
-// import Detail from './Detail';
-// import Present from './Present';
-// import VcCard, { VcCardProps } from './VcCard';
-// import { Credential, CredentialViewModel } from '../model/credential';
-// import { useShellState } from '../Shell/Context';
+import Present from './Present';
+import { CredentialDetail, CredentialDisplay, CredentialView } from '../types/generated';
 
 export type CredentialProps = {
     model: CredentialView | undefined;
@@ -23,27 +19,23 @@ export type CredentialProps = {
 
 const Credential = (props: CredentialProps) => {
     const credentials = props.model?.credentials || [];
-    const [selected, setSelected] = useState<CredentialDisplay | undefined>(undefined);
+    const [selected, setSelected] = useState<CredentialDetail | undefined>(undefined);
     const [viewMode, setViewMode] = useState<'list' | 'detail' | 'add' | 'present'>('list');
-    const init = useRef<boolean>(false);
 
-    useEffect(() => {
-        if (!init.current) {
-            return;
+    const handleSelect = async (c: CredentialDisplay) => {
+        try {
+            const detail = await invoke<CredentialDetail>("select_credential", { id: c.id });
+            setSelected(detail);
+            setViewMode('detail');
+        } catch (e) {
+            console.error(e);
         }
-        init.current = false;
-        invoke("get_list", { filter: "" });
-    }, []);
-
-    const handleSelect = (c: CredentialDisplay) => {
-        setSelected(c);
-        setViewMode('detail');
     };
 
-    // const handleClose = () => {
-    //     setSelected(undefined);
-    //     setViewMode('list');
-    // };
+    const handleClose = () => {
+        setSelected(undefined);
+        setViewMode('list');
+    };
 
     const handleAdd = () => {
         setSelected(undefined);
@@ -78,6 +70,41 @@ const Credential = (props: CredentialProps) => {
                         <AddIcon />
                     </Fab>
                 </Stack>
+            </Slide>
+            <Slide direction="left" in={viewMode === 'detail'} mountOnEnter unmountOnExit>
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: 0,
+                        pt: 2,
+                    }}
+                >
+                    {selected &&
+                        <Detail credential={selected} onClose={handleClose} />
+                    }
+                </Box>
+            </Slide>
+            <Slide direction="left" in={viewMode === 'add'} mountOnEnter unmountOnExit>
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: 0,
+                        pt: 2,
+                    }}
+                >
+                    <Add onClose={handleClose} />
+                </Box>
+            </Slide>
+            <Slide direction="left" in={viewMode === 'present'} mountOnEnter unmountOnExit>
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: 0,
+                        pt: 2,
+                    }}
+                >
+                    <Present onClose={handleClose} />
+                </Box>
             </Slide>
         </Box>
     );

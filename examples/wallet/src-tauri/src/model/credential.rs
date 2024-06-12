@@ -24,6 +24,8 @@ pub struct CredentialView {
 #[typeshare]
 #[allow(clippy::module_name_repetitions)]
 pub struct CredentialDisplay {
+    /// Credential ID
+    pub id: String,
     /// CSS color to use for the background of a credential display
     pub background_color: Option<String>,
     /// CSS color to use for the text of a credential display
@@ -89,6 +91,7 @@ impl From<&Credential> for CredentialDisplay {
         // TODO: locale
         let display = displays[0].clone();
         Self {
+            id: credential.id.clone(),
             background_color: display.background_color.clone(),
             color: display.text_color.clone(),
             issuer: Some(credential.issuer.clone()),
@@ -108,6 +111,7 @@ impl From<&CredentialConfiguration> for CredentialDisplay {
         // TODO: locale
         let display = displays[0].clone();
         Self {
+            id: String::new(),  // ID is not available in the configuration, only in the credential
             background_color: display.background_color.clone(),
             color: display.text_color.clone(),
             issuer: None,
