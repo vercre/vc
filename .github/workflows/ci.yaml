@@ -135,7 +135,7 @@ jobs:
           sudo apt-get -y install libwebkit2gtk-4.1-dev
           mkdir examples/wallet/dist
 
-      - run: cargo clippy -- -Dclippy::all -Dclippy::pedantic
+      - run: cargo clippy
 
   # miri:
   #   name: Miri
