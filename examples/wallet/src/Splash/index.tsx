@@ -3,12 +3,8 @@ import { useEffect, useRef } from 'react';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import { invoke } from '@tauri-apps/api/core';
-import { useRecoilValue } from 'recoil';
-
-import { appState } from '../model';
 
 const Splash = () => {
-    const view = useRecoilValue(appState);
     const init = useRef<boolean>(false);
 
     useEffect(() => {
@@ -17,14 +13,10 @@ const Splash = () => {
         }
         init.current = true;
 
-        if (view.started) {
-            return;
-        }
         setTimeout(() => {
-            console.log("invoking started");
-            invoke("started");
+            invoke("reset");
         }, 1500);
-    }, [view]);
+    }, []);
 
     return (
         <Container

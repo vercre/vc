@@ -57,8 +57,8 @@ pub fn run() {
         .manage(StateModel(Mutex::new(AppState::default())))
         .invoke_handler(tauri::generate_handler![
             start, // called by the shell on load.
-            started, // called when the shell application has finished it's initialisation.
-                   // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
+            reset, // called when the shell application has finished it's initialisation.
+            // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -73,9 +73,10 @@ async fn start(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error
     Ok(())
 }
 
-/// The `started` command is called when the shell application has finished it's initialisation.
+/// The `reset` command is called whenever the shell finishes a workflow, including abandoning it.
+/// Is also called by the shell after start-up is complete to initialise state.
 #[tauri::command]
-async fn started(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
+async fn reset(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     let mut model = state.0.lock().await;
     let store = Store::new(app.clone());
     model.reset(store).await?;
