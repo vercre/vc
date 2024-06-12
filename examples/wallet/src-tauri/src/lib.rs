@@ -67,8 +67,11 @@ pub fn run() {
 /// The `start` command is called by the shell on load.
 #[tauri::command]
 async fn start(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
-    let model = state.0.lock().await.clone();
-    let view: ViewModel = model.into();
+    log::info!("start invoked");
+    let mut model = state.0.lock().await;
+    model.init();
+    let view: ViewModel = model.clone().into();
+    log::info!("emitting state_updated");
     app.emit("state_updated", view).map_err(error::AppError::from)?;
     Ok(())
 }
@@ -77,10 +80,12 @@ async fn start(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error
 /// Is also called by the shell after start-up is complete to initialise state.
 #[tauri::command]
 async fn reset(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
+    log::info!("reset invoked");
     let mut model = state.0.lock().await;
     let store = Store::new(app.clone());
     model.reset(store).await?;
     let view: ViewModel = model.clone().into();
+    log::info!("emitting state_updated");
     app.emit("state_updated", view).map_err(error::AppError::from)?;
     Ok(())
 }

@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 
 import AddIcon from '@mui/icons-material/Add';
 import Box from '@mui/material/Box';
 import Fab from '@mui/material/Fab';
 import Slide from '@mui/material/Slide';
-import Stack from '@mui/material/Stack';
 import { invoke } from "@tauri-apps/api/core";
 
 import Add from './Add';
@@ -24,7 +23,7 @@ const Credential = (props: CredentialProps) => {
 
     const handleSelect = async (c: CredentialDisplay) => {
         try {
-            const detail = await invoke<CredentialDetail>("select_credential", { id: c.id });
+            const detail = await invoke<CredentialDetail>("select", { id: c.id });
             setSelected(detail);
             setViewMode('detail');
         } catch (e) {
@@ -42,71 +41,58 @@ const Credential = (props: CredentialProps) => {
         setViewMode('add');
     };
 
+    const handlePresent = () => {
+        setSelected(undefined);
+        setViewMode('present');
+    };
+
     return (
         <Box
             sx={{
+                pt: 1,
                 position: 'relative',
             }}
         >
-            <Slide direction="right" in={viewMode === 'list'} mountOnEnter unmountOnExit>
-                <Stack
-                    spacing={-16}
-                    sx={{
-                        position: 'absolute',
-                        top: 0,
-                        pt: 2,
-                    }}
+            <SlideItem direction="right" in={viewMode === 'list'}>
+                <List
+                    credentials={credentials}
+                    onSecondaryAction={handlePresent}
+                    onSelect={handleSelect}
+                />
+                <Fab
+                    color="primary"
+                    onClick={handleAdd}
+                    sx={{ position: 'fixed', bottom: 56, right: 24 }}
                 >
-                    <List
-                        credentials={credentials}
-                        onSecondaryAction={handleAdd}
-                        onSelect={handleSelect}
-                    />
-                    <Fab
-                        color="primary"
-                        onClick={handleAdd}
-                        sx={{ position: 'fixed', bottom: 56, right: 24 }}
-                    >
-                        <AddIcon />
-                    </Fab>
-                </Stack>
-            </Slide>
-            <Slide direction="left" in={viewMode === 'detail'} mountOnEnter unmountOnExit>
-                <Box
-                    sx={{
-                        position: 'absolute',
-                        top: 0,
-                        pt: 2,
-                    }}
-                >
-                    {selected &&
-                        <Detail credential={selected} onClose={handleClose} />
-                    }
-                </Box>
-            </Slide>
-            <Slide direction="left" in={viewMode === 'add'} mountOnEnter unmountOnExit>
-                <Box
-                    sx={{
-                        position: 'absolute',
-                        top: 0,
-                        pt: 2,
-                    }}
-                >
-                    <Add onClose={handleClose} />
-                </Box>
-            </Slide>
-            <Slide direction="left" in={viewMode === 'present'} mountOnEnter unmountOnExit>
-                <Box
-                    sx={{
-                        position: 'absolute',
-                        top: 0,
-                        pt: 2,
-                    }}
-                >
-                    <Present onClose={handleClose} />
-                </Box>
-            </Slide>
+                    <AddIcon />
+                </Fab>
+            </SlideItem>
+            <SlideItem direction="left" in={viewMode === 'detail'}>
+                {selected &&
+                    <Detail credential={selected} onClose={handleClose} />
+                }
+            </SlideItem>
+            <SlideItem direction="left" in={viewMode === 'add'}>
+                <Add onClose={handleClose} />
+            </SlideItem>
+            <SlideItem direction="left" in={viewMode === 'present'}>
+                <Present onClose={handleClose} />
+            </SlideItem>
         </Box>
+    );
+};
+
+const SlideItem = (props: {
+    children: ReactNode,
+    direction: 'left' | 'right',
+    in: boolean }) => {
+
+    return (
+        <Slide direction={props.direction} in={props.in} mountOnEnter unmountOnExit>
+            <Box sx={{ position: 'absolute', top: 0, pt: 2 }} >
+                {props.children}
+            </Box>
+        </Slide>
     );
 };
 

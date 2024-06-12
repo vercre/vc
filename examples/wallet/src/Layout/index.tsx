@@ -4,17 +4,27 @@ import { Box } from "@mui/material";
 import Container from "@mui/material/Container";
 import Stack from "@mui/material/Stack";
 import Toolbar from '@mui/material/Toolbar';
+import { atom, useRecoilValue } from 'recoil';
 
 import Footer from './Footer';
 import Header, { HeaderProps } from './Header';
 
 export type LayoutProps = {
     children?: ReactNode;
-    headerProps: HeaderProps;
 };
 
+export const header = atom<HeaderProps>({
+    key: 'header',
+    default: {
+        title: 'Title',
+        action: undefined,
+        secondaryAction: undefined,
+    },
+});
+
 const Layout = (props: LayoutProps) => {
-    const { children, headerProps } = props;
+    const { children } = props;
+    const headerProps = useRecoilValue(header);
     return (
         <Stack
             sx = {{
