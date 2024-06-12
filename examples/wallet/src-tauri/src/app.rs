@@ -64,7 +64,7 @@ impl AppState {
         &mut self, id: &str, credential_store: impl CredentialStorer,
     ) -> anyhow::Result<()> {
         match credential_store.remove(id).await {
-            Ok(_) => {
+            Ok(()) => {
                 self.credential.retain(|c| c.id != id);
                 Ok(())
             }
