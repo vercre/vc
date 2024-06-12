@@ -15,7 +15,6 @@ workspace = true
 anyhow = "1.0.86"
 argon2 = { version = "2.1.0", package = "rust-argon2" }
 base64ct = { version = "1.6.0", default-features = false, features = ["std"] }
-http = "1.1.0"
 iota_stronghold = { git = "https://github.com/vercre/stronghold.rs", package = "iota_stronghold" }
 lazy_static = "1.4.0"
 log = "^0.4.21"
@@ -29,7 +28,6 @@ tauri-plugin-http = "2.0.0-beta.7"
 # tauri-plugin-shell = "2.0.0-beta.5"
 tauri-plugin-store = "2.0.0-beta.6"
 thiserror = "1.0.61"
-# vercre-wallet.workspace = true
 
 [dev-dependencies]
 assert_let_bind = "0.1.1"
