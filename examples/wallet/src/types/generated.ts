@@ -28,6 +28,12 @@ export interface CredentialDisplay {
 	name?: string;
 }
 
+/** View model for the credential sub-app */
+export interface CredentialView {
+	/** List of credentials */
+	credentials: CredentialDisplay[];
+}
+
 /** Detail view for a verifiable credential */
 export interface CredentialDetail {
 	/** Display */
@@ -40,14 +46,6 @@ export interface CredentialDetail {
 	description?: string;
 	/** Claims */
 	claims: Record<string, string>;
-}
-
-/** View model for the credential sub-app */
-export interface CredentialView {
-	/** List of credentials */
-	credentials: CredentialDisplay[];
-	/** Current credential being viewed */
-	current?: CredentialDetail;
 }
 
 /** Status of the issuance flow */

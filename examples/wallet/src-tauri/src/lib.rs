@@ -6,15 +6,16 @@
 
 mod app;
 mod error;
-mod model;
 mod store;
+mod view;
 
 use app::AppState;
 use futures::lock::Mutex;
-use model::ViewModel;
 use store::Store;
 use tauri::{AppHandle, Manager, State};
 use tauri_plugin_log::{Target, TargetKind};
+use view::credential::CredentialDetail;
+use view::ViewModel;
 
 struct StateModel(Mutex<AppState>);
 
@@ -56,9 +57,11 @@ pub fn run() {
         })
         .manage(StateModel(Mutex::new(AppState::default())))
         .invoke_handler(tauri::generate_handler![
-            start, // called by the shell on load.
-            reset, // called when the shell application has finished it's initialisation.
-                   // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
+            start,  // called by the shell on load.
+            reset,  // called when the shell application has finished it's initialisation.
+            select, // select a credential to view the detail.
+            delete, // delete a credential.
+                    // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -84,6 +87,34 @@ async fn reset(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error
     let mut model = state.0.lock().await;
     let store = Store::new(app.clone());
     model.reset(store).await?;
+    let view: ViewModel = model.clone().into();
+    log::info!("emitting state_updated");
+    app.emit("state_updated", view).map_err(error::AppError::from)?;
+    Ok(())
+}
+
+/// The `select` command returns credential claims details.
+#[tauri::command]
+async fn select(
+    state: State<'_, StateModel>, id: String,
+) -> Result<Option<CredentialDetail>, error::AppError> {
+    log::info!("select invoked");
+    let model = state.0.lock().await;
+    let Some(credential) = model.credential.iter().find(|c| c.id == id) else {
+        return Ok(None);
+    };
+    Ok(Some(credential.into()))
+}
+
+/// The `delete` command deletes a credential from storage and updates the view model.
+#[tauri::command]
+async fn delete(
+    state: State<'_, StateModel>, app: AppHandle, id: String,
+) -> Result<(), error::AppError> {
+    log::info!("delete invoked");
+    let mut model = state.0.lock().await;
+    let store = Store::new(app.clone());
+    model.delete(&id, store).await?;
     let view: ViewModel = model.clone().into();
     log::info!("emitting state_updated");
     app.emit("state_updated", view).map_err(error::AppError::from)?;

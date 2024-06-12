@@ -7,8 +7,6 @@ use typeshare::typeshare;
 use vercre_holder::credential::{self, Credential};
 use vercre_holder::CredentialConfiguration;
 
-use crate::app::CredentialState;
-
 /// View model for the credential sub-app
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
@@ -16,8 +14,6 @@ use crate::app::CredentialState;
 pub struct CredentialView {
     /// List of credentials
     pub credentials: Vec<CredentialDisplay>,
-    /// Current credential being viewed
-    pub current: Option<CredentialDetail>,
 }
 
 /// Summary view for a verifiable credential
@@ -77,11 +73,10 @@ pub struct CredentialDetail {
     claims: HashMap<String, String>,
 }
 
-impl From<CredentialState> for CredentialView {
-    fn from(state: CredentialState) -> Self {
+impl From<Vec<Credential>> for CredentialView {
+    fn from(state: Vec<Credential>) -> Self {
         Self {
-            credentials: state.credentials.iter().map(std::convert::Into::into).collect(),
-            current: state.current.as_ref().map(std::convert::Into::into),
+            credentials: state.iter().map(std::convert::Into::into).collect(),
         }
     }
 }

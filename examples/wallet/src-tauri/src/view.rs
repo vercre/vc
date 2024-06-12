@@ -1,6 +1,6 @@
-mod credential;
-mod issuance;
-mod presentation;
+pub mod credential;
+pub mod issuance;
+pub mod presentation;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;

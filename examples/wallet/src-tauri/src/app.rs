@@ -10,16 +10,16 @@ use vercre_holder::issuance::Issuance;
 use vercre_holder::presentation::Presentation;
 use vercre_holder::provider::CredentialStorer;
 
-use crate::model;
+use crate::view;
 
 /// Application state
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions)]
 pub struct AppState {
     /// The sub-app currently active
-    pub sub_app: model::SubApp,
+    pub sub_app: view::SubApp,
     /// Credentials stored in the wallet
-    pub credential: CredentialState,
+    pub credential: Vec<Credential>,
     /// State of issuance flow (if active)
     pub issuance: Issuance,
     /// State of presentation flow (if active)
@@ -31,8 +31,8 @@ pub struct AppState {
 impl AppState {
     /// Set the application state to a startup state.
     pub fn init(&mut self) {
-        self.sub_app = model::SubApp::Splash;
-        self.credential = CredentialState::default();
+        self.sub_app = view::SubApp::Splash;
+        self.credential = Vec::new();
         self.issuance = Issuance::default();
         self.presentation = Presentation::default();
         self.error = None;
@@ -52,22 +52,26 @@ impl AppState {
                 return Err(anyhow!("Failed to load credentials"));
             }
         };
-        self.sub_app = model::SubApp::Credential;
-        self.credential = CredentialState {
-            credentials,
-            current: None,
-        };
+        self.sub_app = view::SubApp::Credential;
+        self.credential = credentials;
         self.issuance = Issuance::default();
         self.presentation = Presentation::default();
         Ok(())
     }
-}
 
-/// Credential sub-app state
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct CredentialState {
-    /// List of credentials
-    pub credentials: Vec<Credential>,
-    /// Current credential being viewed
-    pub current: Option<Credential>,
+    /// Remove a credential from the wallet.
+    pub async fn delete(
+        &mut self, id: &str, credential_store: impl CredentialStorer,
+    ) -> anyhow::Result<()> {
+        match credential_store.remove(id).await {
+            Ok(_) => {
+                self.credential.retain(|c| c.id != id);
+                Ok(())
+            }
+            Err(e) => {
+                self.error = Some(e.to_string());
+                Err(anyhow!("Failed to delete credential"))
+            }
+        }
+    }
 }

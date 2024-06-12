@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 use vercre_holder::issuance::{Issuance, Status};
 
-use crate::model::credential::CredentialDisplay;
+use crate::view::credential::CredentialDisplay;
 
 /// Status of the issuance flow
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
