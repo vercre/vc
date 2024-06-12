@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
@@ -8,11 +8,12 @@ import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import { invoke } from "@tauri-apps/api/core";
+import { useSetRecoilState } from 'recoil';
 
 import { dateFromIso, domainFromUrl } from '.';
 import Delete from './Delete';
 import VcCard from "./VcCard";
-import Layout from '../Layout';
+import { header } from '../Layout';
 import { CredentialDetail } from '../types/generated';
 
 export type DetailProps = {
@@ -24,6 +25,28 @@ const Detail = (props: DetailProps) => {
     const { credential, onClose } = props;
     const [confirmDelete, setConfirmDelete] = useState<boolean>(false);
     const theme = useTheme();
+    const setHeader = useSetRecoilState(header);
+    const init = useRef<boolean>(false);
+
+    useEffect(() => {
+        if (init.current) {
+            return;
+        }
+        init.current = true;
+        setHeader({
+            title: credential.display.name || "Credential Detail",
+            action: (
+                <IconButton onClick={onClose} size="large">
+                    <ArrowBackIosIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
+                </IconButton>
+            ),
+            secondaryAction: (
+                <IconButton onClick={() => setConfirmDelete(true)} size="large">
+                    <DeleteForeverIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
+                </IconButton>
+            ),
+        });
+    }, [credential.display.name, onClose, setHeader, theme.palette.primary.contrastText]);
 
     const handleDelete = (id?: string) => {
         setConfirmDelete(false);
@@ -34,21 +57,7 @@ const Detail = (props: DetailProps) => {
         onClose();
     };
 
-    return (<Layout
-            headerProps={{
-                title: credential.display.name || "Credential Detail",
-                action: (
-                    <IconButton onClick={onClose} size="large">
-                        <ArrowBackIosIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
-                    </IconButton>
-                ),
-                secondaryAction: (
-                    <IconButton onClick={() => setConfirmDelete(true)} size="large">
-                        <DeleteForeverIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
-                    </IconButton>
-                ),
-            }}
-        >
+    return (<>
         <Stack spacing={2} sx={{ pt: 2 }}>
             <VcCard credential={credential.display} />
             <Typography variant="h5">
@@ -70,7 +79,7 @@ const Detail = (props: DetailProps) => {
             onClose={() => setConfirmDelete(false)}
             onDelete={() => handleDelete(credential.display.id)}
         />
-    </Layout>);
+    </>);
 };
 
 export default Detail;

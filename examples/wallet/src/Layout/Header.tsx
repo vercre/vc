@@ -25,8 +25,9 @@ const Header = (props: HeaderProps) => {
         >
             <Toolbar>
                 {action || <BrandIcon fontSize="large" /> }
-                <Typography variant="h4" sx={{ px: 3 }}>{title}</Typography>
-                <Box sx={{ flexGrow: 1 }} />
+                <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="h4" sx={{ px: 3 }}>{title}</Typography>
+                </Box>
                 {secondaryAction}
             </Toolbar>
         </AppBar>

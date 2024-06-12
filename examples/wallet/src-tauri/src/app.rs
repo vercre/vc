@@ -29,6 +29,15 @@ pub struct AppState {
 }
 
 impl AppState {
+    /// Set the application state to a startup state.
+    pub fn init(&mut self) {
+        self.sub_app = model::SubApp::Splash;
+        self.credential = CredentialState::default();
+        self.issuance = Issuance::default();
+        self.presentation = Presentation::default();
+        self.error = None;
+    }
+
     /// Reset the application state to its default values.
     ///
     /// # Error
