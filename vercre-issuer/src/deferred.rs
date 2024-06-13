@@ -132,7 +132,7 @@ mod tests {
     use serde_json::json;
     use vercre_core::vci::{CredentialRequest, ProofClaims};
     use vercre_vc::proof::jose::{self, Jwt, VcClaims};
-    use vercre_vc::proof::{self, ProofType};
+    use vercre_vc::proof::{self, Type};
 
     use super::*;
     use crate::state::{Deferred, Expire, Token};
@@ -154,7 +154,7 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.clone()),
         };
-        let jwt = proof::create(ProofType::ProofJwt(claims), wallet::Provider::new())
+        let jwt = proof::create(Type::ProofJwt(claims), wallet::Provider::new())
             .await
             .expect("should encode");
 

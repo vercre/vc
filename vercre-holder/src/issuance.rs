@@ -14,7 +14,7 @@ use vercre_core::vci::{
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
 use vercre_core::{err, Result};
-use vercre_vc::proof::{self, jose, ProofType};
+use vercre_vc::proof::{self, jose, Type};
 
 use crate::credential::Credential;
 use crate::provider::{
@@ -210,7 +210,7 @@ where
                 nonce: issuance.token.c_nonce.clone(),
             };
 
-            let Ok(jwt) = proof::create(ProofType::ProofJwt(claims), provider.clone()).await else {
+            let Ok(jwt) = proof::create(Type::ProofJwt(claims), provider.clone()).await else {
                 provider.notify(&issuance.id, Status::Failed("could not encode proof".into()));
                 return Ok(());
             };
@@ -458,7 +458,7 @@ mod tests {
             nonce: issuance.token.c_nonce.clone(),
         };
 
-        let token = proof::create(ProofType::ProofJwt(claims), wallet::Provider::new())
+        let token = proof::create(Type::ProofJwt(claims), wallet::Provider::new())
             .await
             .expect("should encode");
 
@@ -492,7 +492,7 @@ mod tests {
             nonce: None,
         };
 
-        let token = proof::create(ProofType::ProofJwt(claims), wallet::Provider::new())
+        let token = proof::create(Type::ProofJwt(claims), wallet::Provider::new())
             .await
             .expect("should encode");
         let proof = Proof {

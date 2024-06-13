@@ -14,7 +14,7 @@ repository.workspace = true
 rust-version.workspace = true
 version.workspace = true
 
-# [lib]
+[lib]
 # crate-type = ["cdylib", "rlib"]
 
 [lints]
@@ -36,4 +36,3 @@ uuid = { version = "1.8.0", features = ["fast-rng", "v4"] }
 
 [dev-dependencies]
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
-

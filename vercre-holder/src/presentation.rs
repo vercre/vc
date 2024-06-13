@@ -14,8 +14,7 @@ use vercre_issuer::jose;
 use vercre_vc::model::vp::{
     Constraints, DescriptorMap, PathNested, PresentationSubmission, VerifiablePresentation,
 };
-use vercre_vc::proof::jose::VpClaims;
-use vercre_vc::proof::{self, ProofType};
+use vercre_vc::proof::{self, Type};
 
 use crate::credential::Credential;
 use crate::provider::{
@@ -230,10 +229,12 @@ where
             }
         };
 
-        let mut claims = VpClaims::from(vp);
-        claims.aud.clone_from(&presentation.request.client_id);
-        claims.nonce.clone_from(&presentation.request.nonce);
-        let jwt = proof::create(ProofType::VpJwt(claims), provider.clone()).await?;
+        let proof = Type::<VerifiablePresentation>::Vp {
+            vp,
+            client_id: presentation.request.client_id.clone(),
+            nonce: presentation.request.nonce.clone(),
+        };
+        let jwt = proof::create(proof, provider.clone()).await?;
 
         let vp_token = match serde_json::to_value(&jwt) {
             Ok(v) => v,
@@ -368,6 +369,7 @@ mod tests {
         Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition,
         VerifiableCredential,
     };
+    use vercre_vc::proof::jose::VpClaims;
     use vercre_vc::proof::Algorithm;
 
     use super::*;
@@ -421,10 +423,9 @@ mod tests {
 
     async fn sample_credential() -> Credential {
         let vc = VerifiableCredential::sample();
-        let claims = vc.to_claims().expect("should get claims");
-        let jwt = proof::create(ProofType::VcJwt(claims), issuance::Provider::new())
-            .await
-            .expect("should encode");
+
+        let proof = Type::<VerifiableCredential>::Vc(vc.clone());
+        let jwt = proof::create(proof, issuance::Provider::new()).await.expect("should encode");
 
         let config = CredentialConfiguration::sample();
         Credential {
@@ -457,10 +458,9 @@ mod tests {
             parse_request_object_response(&req_obj_res).expect("should parse with object");
         assert_eq!(obj, decoded);
 
-        let token =
-            proof::create(ProofType::RequestJwt(obj.clone()), presentation::Provider::new())
-                .await
-                .expect("should encode");
+        let token = proof::create(Type::RequestJwt(obj.clone()), presentation::Provider::new())
+            .await
+            .expect("should encode");
 
         let req_obj_res = RequestObjectResponse {
             request_object: None,
@@ -519,7 +519,8 @@ mod tests {
         claims.aud.clone_from(&req_obj.client_id);
         claims.nonce.clone_from(&req_obj.nonce);
 
-        assert_snapshot!("vp_claims", &claims, {".jti" => "[jti]",
+        assert_snapshot!("vp_claims", &claims, {
+            ".jti" => "[jti]",
             ".nbf" => "[nbf]",
             ".iat" => "[iat]" ,
             ".exp" => "[exp]",

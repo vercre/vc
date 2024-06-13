@@ -34,7 +34,7 @@ use std::future::{Future, IntoFuture};
 
 use serde::{Deserialize, Serialize};
 
-// use serde::Serialize;
+use crate::model::{VerifiableCredential, VerifiablePresentation};
 pub use crate::proof::jose::Algorithm;
 
 /// Signer is used by implementers to provide signing functionality for
@@ -57,27 +57,32 @@ pub trait Signer: Send + Sync {
     fn try_sign(&self, msg: &[u8]) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
 }
 
-/// `ProofType` is used to identify the type of proof to be created.
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[allow(clippy::module_name_repetitions)]
-pub enum ProofType<T>
+/// `Type` is used to identify the type of proof to be created.
+#[derive(Debug, Deserialize, Serialize)]
+#[allow(clippy::module_name_repetitions, clippy::large_enum_variant)]
+pub enum Type<T>
 where
     T: Serialize + Send + Sync,
 {
     /// A Verifiable Credential proof encoded as a JWT.
-    #[serde(rename = "jwt")]
-    VcJwt(T),
+    Vc(VerifiableCredential),
 
     /// A Verifiable Presentation proof encoded as a JWT.
-    #[serde(rename = "jwt")]
-    VpJwt(T),
+    Vp {
+        /// The Presentation to create a proof for.
+        vp: VerifiablePresentation,
+
+        /// The Verifier's OpenID `client_id` (from Presentation request).
+        client_id: String,
+
+        /// The Verifier's `nonce` (from Presentation request).
+        nonce: String,
+    },
 
     /// Authorization Request Object encoded as JWT.
-    #[serde(rename = "oauth-authz-req+jwt")]
     RequestJwt(T),
 
-    /// JWT `typ` for Wallet's Proof of possession of key material.
-    #[serde(rename = "openidvci-proof+jwt")]
+    /// JWT for Wallet's Proof of possession of key material.
     ProofJwt(T),
 }
 
@@ -85,15 +90,33 @@ where
 ///
 /// # Errors
 /// TODO: Add errors
-pub async fn create<T>(proof: ProofType<T>, signer: impl Signer) -> anyhow::Result<String>
+pub async fn create<T>(proof: Type<T>, signer: impl Signer) -> anyhow::Result<String>
 where
     T: Serialize + Send + Sync,
 {
     let jwt = match proof {
-        ProofType::VcJwt(claims) => jose::encode(jose::Typ::Credential, &claims, signer).await?,
-        ProofType::VpJwt(claims) => jose::encode(jose::Typ::Presentation, &claims, signer).await?,
-        ProofType::RequestJwt(claims) => jose::encode(jose::Typ::Request, &claims, signer).await?,
-        ProofType::ProofJwt(claims) => jose::encode(jose::Typ::Proof, &claims, signer).await?,
+        Type::Vc(vc) => {
+            let claims: jose::VcClaims = vc.into();
+            jose::encode(jose::Typ::Credential, &claims, signer).await?
+
+            // TODO: add data integrity proof payload
+            // let proof = Proof {
+            //     id: Some(format!("urn:uuid:{}", Uuid::new_v4())),
+            //     type_: Signer::algorithm(provider).proof_type(),
+            //     verification_method: Signer::verification_method(provider),
+            //     created: Some(Utc::now()),
+            //     expires: Utc::now().checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
+            //     ..Proof::default()
+            // };
+        }
+        Type::Vp { vp, client_id, nonce } => {
+            let mut claims = jose::VpClaims::from(vp);
+            claims.aud.clone_from(&client_id);
+            claims.nonce.clone_from(&nonce);
+            jose::encode(jose::Typ::Presentation, &claims, signer).await?
+        }
+        Type::RequestJwt(claims) => jose::encode(jose::Typ::Request, &claims, signer).await?,
+        Type::ProofJwt(claims) => jose::encode(jose::Typ::Proof, &claims, signer).await?,
     };
 
     // Ok(serde_json::to_value(jwt)?)

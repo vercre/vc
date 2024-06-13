@@ -25,8 +25,8 @@ pub use vercre_core::vci::{
 };
 use vercre_core::{err, gen, Result};
 use vercre_vc::model::{CredentialSubject, VerifiableCredential};
-use vercre_vc::proof::jose::{self, Jwt, VcClaims};
-use vercre_vc::proof::{self, ProofType, Signer};
+use vercre_vc::proof::jose::{self, Jwt};
+use vercre_vc::proof::{self, Signer, Type};
 
 use super::Endpoint;
 use crate::state::{Deferred, Expire, State};
@@ -268,21 +268,9 @@ where
             });
         };
 
-        // transform to JWT
-        let mut claims: VcClaims = vc.into();
-        claims.sub.clone_from(&self.holder_did);
-        let jwt = proof::create(ProofType::VcJwt(claims), provider.clone()).await?;
-
-        // add data integrity proof payload
-        // TODO: add all fields required by JWT
-        // let proof = Proof {
-        //     id: Some(format!("urn:uuid:{}", Uuid::new_v4())),
-        //     type_: Signer::algorithm(provider).proof_type(),
-        //     verification_method: Signer::verification_method(provider),
-        //     created: Some(Utc::now()),
-        //     expires: Utc::now().checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
-        //     ..Proof::default()
-        // };
+        // generate proof for the credential
+        let proof = Type::<VerifiableCredential>::Vc(vc);
+        let jwt = proof::create(proof, provider.clone()).await?;
 
         Ok(CredentialResponse {
             credential: Some(serde_json::Value::String(jwt)),
@@ -460,7 +448,7 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = proof::create(ProofType::ProofJwt(claims), wallet::Provider::new())
+        let jwt = proof::create(Type::ProofJwt(claims), wallet::Provider::new())
             .await
             .expect("should encode");
 
@@ -555,7 +543,7 @@ mod tests {
     //         iat: Utc::now().timestamp(),
     //         nonce: c_nonce.into(),
     //     };
-    //     let jwt = proof::create(ProofType::ProofJwt(claims), wallet::Provider::new())
+    //     let jwt = proof::create(Type::ProofJwt(claims), wallet::Provider::new())
 
     //     let body = json!({
     //         "credential_requests":[{

@@ -12,7 +12,7 @@ use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
 use vercre_issuer::deferred::{DeferredCredentialRequest, DeferredCredentialResponse};
 use vercre_issuer::token::{TokenRequest, TokenResponse};
 use vercre_issuer::{Endpoint, ProofClaims};
-use vercre_vc::proof::{self, ProofType};
+use vercre_vc::proof::{self, Type};
 
 lazy_static! {
     static ref PROVIDER: Provider = Provider::new();
@@ -94,7 +94,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
         iat: Utc::now().timestamp(),
         nonce: input.c_nonce,
     };
-    let jwt = proof::create(ProofType::ProofJwt(claims), wallet::Provider::new())
+    let jwt = proof::create(Type::ProofJwt(claims), wallet::Provider::new())
         .await
         .expect("should encode");
 
