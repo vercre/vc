@@ -6,18 +6,22 @@
 
 mod app;
 mod error;
-mod store;
+mod provider;
 mod view;
 
 use app::AppState;
 use futures::lock::Mutex;
-use store::Store;
+use provider::Provider;
 use tauri::{AppHandle, Manager, State};
 use tauri_plugin_log::{Target, TargetKind};
 use view::credential::CredentialDetail;
 use view::ViewModel;
 
 struct StateModel(Mutex<AppState>);
+
+/// Unique identifier for this wallet application as a client of the issuance service. In a real
+/// application, this may be provided by registering the client with the issuer.
+pub const CLIENT_ID: &str = "wallet";
 
 /// Tauri entry point
 ///
@@ -61,6 +65,7 @@ pub fn run() {
             reset,  // called when the shell application has finished it's initialisation.
             select, // select a credential to view the detail.
             delete, // delete a credential.
+            offer,  // submit a credential issuance offer directly from shell input.
                     // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
         ])
         .run(tauri::generate_context!())
@@ -85,7 +90,7 @@ async fn start(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error
 async fn reset(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("reset invoked");
     let mut model = state.0.lock().await;
-    let store = Store::new(app.clone());
+    let store = Provider::new(app.clone());
     model.reset(store).await?;
     let view: ViewModel = model.clone().into();
     log::info!("emitting state_updated");
@@ -113,8 +118,24 @@ async fn delete(
 ) -> Result<(), error::AppError> {
     log::info!("delete invoked");
     let mut model = state.0.lock().await;
-    let store = Store::new(app.clone());
+    let store = Provider::new(app.clone());
     model.delete(&id, store).await?;
+    let view: ViewModel = model.clone().into();
+    log::info!("emitting state_updated");
+    app.emit("state_updated", view).map_err(error::AppError::from)?;
+    Ok(())
+}
+
+/// The `offer` command submits a credential issuance offer directly from shell input. Performs the
+/// same operation as the deep link listener but is useful for demo and testing purposes.
+#[tauri::command]
+async fn offer(
+    state: State<'_, StateModel>, app: AppHandle, encoded_offer: String,
+) -> Result<(), error::AppError> {
+    log::info!("offer invoked");
+    let mut model = state.0.lock().await;
+    let provider = Provider::new(app.clone());
+    model.offer(&encoded_offer, provider).await?;
     let view: ViewModel = model.clone().into();
     log::info!("emitting state_updated");
     app.emit("state_updated", view).map_err(error::AppError::from)?;

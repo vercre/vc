@@ -5733,6 +5733,7 @@ name = "wallet"
 version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
+ "base64ct",
  "futures",
  "http 1.1.0",
  "lazy_static",
@@ -5749,6 +5750,7 @@ dependencies = [
  "tauri-plugin-store",
  "tokio",
  "typeshare",
+ "urlencoding",
  "vercre-holder",
 ]
 

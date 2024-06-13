@@ -1,15 +1,21 @@
 //! # Issuance
 //!
-//! The Issuance endpoint implements the vercre-wallet's credential issuance flow.
+//! The Issuance endpoints implement the vercre-wallet's credential issuance flow.
+
+mod accept;
+mod offer;
+mod pin;
+mod token;
+
 use std::collections::HashMap;
 use std::fmt::Debug;
 
+pub use offer::OfferRequest;
 use serde::{Deserialize, Serialize};
-use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
 use vercre_core::metadata::CredentialConfiguration;
-use vercre_core::vci::{
+pub use vercre_core::vci::{
     CredentialOffer, CredentialRequest, CredentialResponse, GrantType, MetadataRequest,
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
@@ -17,12 +23,9 @@ use vercre_core::{err, Result};
 use vercre_vc::proof::{self, jose, Type};
 
 use crate::credential::Credential;
-use crate::provider::{
-    Callback, CredentialStorer, IssuanceInput, IssuanceListener, IssuerClient, Signer,
-};
-use crate::Endpoint;
+use crate::provider::{CredentialStorer, IssuanceInput, IssuanceListener, IssuerClient, Signer};
 
-/// `Issuance` maintains app state across the steps of the issuance flow.
+/// `Issuance` represents app state across the steps of the issuance flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Issuance {
     /// The unique identifier for the issuance flow. Not used internally but passed to providers
@@ -72,7 +75,7 @@ pub enum Status {
     Failed(String),
 }
 
-/// The `ReceiveOfferRequest` is the input to the `receive_offer` endpoint.
+/// The `ReceiveOfferRequest` is the input to the `offer` endpoint.
 #[derive(Clone, Debug, Default)]
 pub struct ReceiveOfferRequest {
     /// Wallet client identifier. This is used by the issuance service to issue an access token so
@@ -81,28 +84,6 @@ pub struct ReceiveOfferRequest {
     pub client_id: String,
     /// The credential offer from the issuer.
     pub offer: CredentialOffer,
-}
-
-impl<P> Endpoint<P>
-where
-    P: Callback
-        + CredentialStorer
-        + IssuanceInput
-        + IssuanceListener
-        + IssuerClient
-        + Signer
-        + Clone
-        + Debug,
-{
-    /// Orchestrates the issuance flow triggered by a new credential offer.
-    #[instrument(level = "debug", skip(self))]
-    pub async fn receive_offer(&self, request: &ReceiveOfferRequest) -> Result<()> {
-        let ctx = Context {
-            _p: std::marker::PhantomData,
-        };
-
-        vercre_core::Endpoint::handle_request(self, request, ctx).await
-    }
 }
 
 #[derive(Debug, Default)]

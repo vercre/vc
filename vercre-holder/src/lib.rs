@@ -43,16 +43,14 @@ use std::fmt::Debug;
 
 pub use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::provider::Callback;
-pub use vercre_core::vci::{GrantType, TxCode};
 pub use vercre_core::{callback, Result};
 pub use vercre_vc::model::vp::Constraints;
-use vercre_vc::proof::Signer;
 
 /// Endpoint is used to surface the public wallet endpoints to clients.
 #[derive(Debug)]
 pub struct Endpoint<P>
 where
-    P: Signer + Clone + Debug,
+    P: Debug,
 {
     provider: P,
 }
@@ -65,7 +63,7 @@ where
 /// endpoint implementation of `Endpoint::call` specific to the request.
 impl<P> Endpoint<P>
 where
-    P: Signer + Clone + Debug,
+    P: Debug,
 {
     /// Create a new `Endpoint` with the provided `Provider`.
     pub fn new(provider: P) -> Self {
@@ -75,7 +73,7 @@ where
 
 impl<P> vercre_core::Endpoint for Endpoint<P>
 where
-    P: Callback + Signer + Clone + Debug,
+    P: Callback + Debug,
 {
     type Provider = P;
 
@@ -89,6 +87,7 @@ mod tests {
     use providers::issuance::Provider;
     use vercre_core::err;
     use vercre_core::error::Err;
+    use vercre_vc::proof::Signer;
 
     use super::*;
 

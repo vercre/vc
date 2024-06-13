@@ -5,25 +5,20 @@ pub mod presentation;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::app::AppState;
+use crate::app::{AppState, SubApp};
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-#[typeshare]
-pub enum SubApp {
-    #[default]
-    Splash,
-    Credential,
-    Issuance,
-    Presentation,
-}
-
+/// View model for the shell to render. All state is translated into this model.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 #[allow(clippy::module_name_repetitions)]
 pub struct ViewModel {
+    /// The sub-app currently active
     pub sub_app: SubApp,
+    /// Credential sub-app view state.
     pub credential: Option<credential::CredentialView>,
+    /// Issuance sub-app view state.
     pub issuance: Option<issuance::IssuanceView>,
+    /// Presentation sub-app view state.
     pub presentation: Option<presentation::PresentationView>,
     /// Error message, if any
     pub error: Option<String>,

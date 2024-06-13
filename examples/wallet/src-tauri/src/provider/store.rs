@@ -6,23 +6,12 @@ use vercre_holder::credential::Credential;
 use vercre_holder::provider::CredentialStorer;
 use vercre_holder::Constraints;
 
-pub struct Store<R>
+use crate::provider::Provider;
+
+impl<R> Provider<R>
 where
     R: tauri::Runtime,
 {
-    app_handle: tauri::AppHandle<R>,
-}
-
-impl<R> Store<R>
-where
-    R: tauri::Runtime,
-{
-    /// Create a new credential store provider with a handle to the Tauri application.
-    #[must_use]
-    pub const fn new(app_handle: tauri::AppHandle<R>) -> Self {
-        Self { app_handle }
-    }
-
     /// Get a reference to the file store.
     fn store(&self) -> (PathBuf, State<StoreCollection<R>>)
     where
@@ -35,7 +24,7 @@ where
 }
 
 /// Provider implementation
-impl<R> CredentialStorer for Store<R>
+impl<R> CredentialStorer for Provider<R>
 where
     R: tauri::Runtime,
 {
@@ -128,7 +117,7 @@ mod test {
         .expect("should return count");
 
         // query for all credentials ("" or "$[:]")
-        let store = Store::new(app.app_handle().clone());
+        let store = Provider::new(app.app_handle().clone());
         let res = store.find(None).await.expect("should be ok");
         assert_eq!(count, res.len());
     }
