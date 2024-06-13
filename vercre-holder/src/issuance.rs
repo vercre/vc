@@ -20,7 +20,7 @@ pub use vercre_core::vci::{
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
 use vercre_core::{err, Result};
-use vercre_vc::proof::{self, jose, Type};
+use vercre_vc::proof::jose;
 
 use crate::credential::Credential;
 use crate::provider::{CredentialStorer, IssuanceInput, IssuanceListener, IssuerClient, Signer};
@@ -191,7 +191,13 @@ where
                 nonce: issuance.token.c_nonce.clone(),
             };
 
-            let Ok(jwt) = proof::create(Type::ProofJwt(claims), provider.clone()).await else {
+            let Ok(jwt) = vercre_proof::jose::encode(
+                vercre_proof::jose::Typ::Proof,
+                &claims,
+                provider.clone(),
+            )
+            .await
+            else {
                 provider.notify(&issuance.id, Status::Failed("could not encode proof".into()));
                 return Ok(());
             };
@@ -439,11 +445,16 @@ mod tests {
             nonce: issuance.token.c_nonce.clone(),
         };
 
-        let token = proof::create(Type::ProofJwt(claims), wallet::Provider::new())
-            .await
-            .expect("should encode");
+        let token = vercre_proof::jose::encode(
+            vercre_proof::jose::Typ::Proof,
+            &claims,
+            wallet::Provider::new(),
+        )
+        .await
+        .expect("should encode");
 
-        let jwt: jose::Jwt<ProofClaims> = jose::decode(&token).expect("should decode");
+        let jwt: vercre_proof::jose::Jwt<ProofClaims> =
+            vercre_proof::jose::decode(&token).expect("should decode");
 
         assert_eq!(jwt.claims.aud, "http://vercre.io");
         assert_snapshot!("proof_jwt", &jwt, { ".claims.iat" => "[timestamp]" });
@@ -473,9 +484,13 @@ mod tests {
             nonce: None,
         };
 
-        let token = proof::create(Type::ProofJwt(claims), wallet::Provider::new())
-            .await
-            .expect("should encode");
+        let token = vercre_proof::jose::encode(
+            vercre_proof::jose::Typ::Proof,
+            &claims,
+            wallet::Provider::new(),
+        )
+        .await
+        .expect("should encode");
         let proof = Proof {
             proof_type: "jwt".into(),
             jwt: Some(token),

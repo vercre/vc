@@ -49,7 +49,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::model::serde::option_flexvec;
-pub use crate::proof::jose::Algorithm;
+pub use crate::proof::Algorithm;
 
 /// To be verifiable, a credential must contain at least one proof mechanism,
 /// and details necessary to evaluate that proof. A proof may be external — an

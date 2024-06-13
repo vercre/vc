@@ -61,6 +61,7 @@ uuid = { version = "1.8.0", features = ["fast-rng", "v4"] }
 vercre-core = { path = "crates/vercre-core" }
 vercre-holder = { path = "vercre-holder" }
 vercre-issuer = { path = "vercre-issuer" }
+vercre-proof = { path = "crates/vercre-proof" }
 vercre-vc = { path = "crates/vercre-vc" }
 vercre-verifier = { path = "vercre-verifier" }
 

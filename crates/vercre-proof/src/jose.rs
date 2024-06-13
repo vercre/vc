@@ -38,14 +38,30 @@ use std::str::{self, FromStr};
 
 use anyhow::bail;
 use base64ct::{Base64UrlUnpadded, Encoding};
-use chrono::{TimeDelta, Utc};
 use ecdsa::signature::Verifier;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
-use crate::model::vc::VerifiableCredential;
-use crate::model::vp::VerifiablePresentation;
-use crate::proof::{Algorithm, Signer};
+use super::Signer;
+
+/// Algorithm is used to specify the signing algorithm used by the signer.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub enum Algorithm {
+    /// Algorithm for the secp256k1 curve
+    #[serde(rename = "ES256K")]
+    ES256K,
+
+    /// Algorithm for the Ed25519 curve
+    #[default]
+    #[serde(rename = "EdDSA")]
+    EdDSA,
+}
+
+impl Display for Algorithm {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
 
 /// The JWT `typ` claim.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
@@ -206,119 +222,6 @@ pub struct Header {
     /// When used for signature verification, the header parameter kid MUST be present.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub trust_chain: Option<String>,
-}
-
-/// Claims used for Verifiable Credential issuance when format is "`jwt_vc_json`".
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-#[allow(clippy::module_name_repetitions)]
-pub struct VcClaims {
-    /// The `credentialSubject.id` property of the Credential. That is, the Holder ID
-    /// the Credential is intended for.
-    /// For example, "did:example:ebfeb1f712ebc6f1c276e12ec21".
-    pub sub: String,
-
-    /// MUST be the Credential's `issuanceDate`, encoded as a UNIX timestamp
-    /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
-    pub nbf: i64,
-
-    /// MUST be the `issuer` property of the Credential.
-    /// For example, "did:example:123456789abcdefghi#keys-1".
-    pub iss: String,
-
-    /// MUST be the Credential's `issuanceDate`, encoded as a UNIX timestamp
-    /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
-    pub iat: i64,
-
-    /// MUST be the `id` property of the Credential.
-    pub jti: String,
-
-    /// MUST be the Credential's `expirationDate`, encoded as a UNIX timestamp
-    /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub exp: Option<i64>,
-
-    /// The Verifiable Credential.
-    pub vc: VerifiableCredential,
-}
-
-impl From<VerifiableCredential> for VcClaims {
-    fn from(vc: VerifiableCredential) -> Self {
-        Self {
-            // TODO: find better way to set sub (shouldn't need to be in vc)
-            sub: vc.credential_subject[0].id.clone().unwrap_or_default(),
-            nbf: vc.issuance_date.timestamp(),
-            iss: vc.issuer.id.clone(),
-            iat: vc.issuance_date.timestamp(),
-            jti: vc.id.clone(),
-            exp: vc.expiration_date.map(|exp| exp.timestamp()),
-            vc,
-        }
-    }
-}
-
-impl VerifiableCredential {
-    /// Transform the `VerifiableCredential` into JWT-compatible claims.
-    ///
-    /// # Errors
-    pub fn to_claims(&self) -> anyhow::Result<VcClaims> {
-        Ok(VcClaims::from(self.clone()))
-    }
-}
-
-/// To sign, or sign and encrypt the Authorization Response, implementations MAY
-/// use JWT Secured Authorization Response Mode for OAuth 2.0
-/// ([JARM](https://openid.net/specs/oauth-v2-jarm-final.html)).
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct VpClaims {
-    /// The `holder` property of the Presentation.
-    /// For example, "did:example:123456789abcdefghi".
-    pub iss: String,
-
-    /// The `id` property of the Presentation.
-    ///
-    /// For example, "urn:uuid:3978344f-8596-4c3a-a978-8fcaba3903c5".
-    pub jti: String,
-
-    /// The `client_id` value from the Verifier's Authorization Request.
-    pub aud: String,
-
-    /// The `nonce` value from the Verifier's Authorization Request.
-    pub nonce: String,
-
-    /// The time the Presentation was created, encoded as a UNIX timestamp
-    /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
-    pub nbf: i64,
-
-    /// The time the Presentation was created, encoded as a UNIX timestamp
-    /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
-    pub iat: i64,
-
-    /// The time the Presentation will expire, encoded as a UNIX timestamp
-    /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
-    pub exp: i64,
-
-    /// The Verifiable Presentation.
-    pub vp: VerifiablePresentation,
-}
-
-impl From<VerifiablePresentation> for VpClaims {
-    fn from(vp: VerifiablePresentation) -> Self {
-        Self {
-            iss: vp.holder.clone().unwrap_or_default(),
-            jti: vp.id.clone().unwrap_or_default(),
-            nbf: Utc::now().timestamp(),
-            iat: Utc::now().timestamp(),
-
-            // TODO: configure `exp` time
-            exp: Utc::now()
-                .checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default())
-                .unwrap_or_default()
-                .timestamp(),
-            vp,
-
-            ..Self::default()
-        }
-    }
 }
 
 /// Simplified JSON Web Key (JWK) key structure.

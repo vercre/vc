@@ -30,32 +30,10 @@ pub mod controller;
 pub mod integrity;
 pub mod jose;
 
-use std::future::{Future, IntoFuture};
-
 use serde::{Deserialize, Serialize};
+pub use vercre_proof::{Algorithm, Signer};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
-pub use crate::proof::jose::Algorithm;
-
-/// Signer is used by implementers to provide signing functionality for
-/// Verifiable Credential issuance and Verifiable Presentation submissions.
-pub trait Signer: Send + Sync {
-    /// Algorithm returns the algorithm used by the signer.
-    fn algorithm(&self) -> Algorithm;
-
-    /// The verification method the verifier should use to verify the signer's
-    /// signature. This is typically a DID URL + # + verification key ID.
-    fn verification_method(&self) -> String;
-
-    /// Sign is a convenience method for infallible Signer implementations.
-    fn sign(&self, msg: &[u8]) -> impl Future<Output = Vec<u8>> + Send {
-        let v = async { self.try_sign(msg).await.expect("should sign") };
-        v.into_future()
-    }
-
-    /// `TrySign` is the fallible version of Sign.
-    fn try_sign(&self, msg: &[u8]) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
-}
 
 /// `Type` is used to identify the type of proof to be created.
 #[derive(Debug, Deserialize, Serialize)]

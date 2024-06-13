@@ -10,7 +10,7 @@ use uuid::Uuid;
 use vercre_core::error::Err;
 use vercre_core::vp::{RequestObject, RequestObjectResponse, ResponseRequest};
 use vercre_core::{err, Result};
-use vercre_issuer::jose;
+use vercre_proof::jose;
 use vercre_vc::model::vp::{
     Constraints, DescriptorMap, PathNested, PresentationSubmission, VerifiablePresentation,
 };
@@ -458,9 +458,13 @@ mod tests {
             parse_request_object_response(&req_obj_res).expect("should parse with object");
         assert_eq!(obj, decoded);
 
-        let token = proof::create(Type::RequestJwt(obj.clone()), presentation::Provider::new())
-            .await
-            .expect("should encode");
+        let token = vercre_proof::jose::encode(
+            vercre_proof::jose::Typ::Request,
+            &obj,
+            presentation::Provider::new(),
+        )
+        .await
+        .expect("should encode");
 
         let req_obj_res = RequestObjectResponse {
             request_object: None,
