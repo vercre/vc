@@ -39,7 +39,6 @@ where
         let ctx = Context {
             _p: std::marker::PhantomData,
         };
-
         vercre_core::Endpoint::handle_request(self, request, ctx).await
     }
 }
