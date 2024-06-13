@@ -18,7 +18,6 @@ version.workspace = true
 # crate-type = ["cdylib", "rlib"]
 
 [features]
-typegen = []
 wasm = ["fastrand/js"]
 
 [lints]

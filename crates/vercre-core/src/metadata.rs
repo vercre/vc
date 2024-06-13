@@ -502,7 +502,7 @@ pub struct CredentialDefinition {
     /// in accordance with the W3C Verifiable Credentials Data Model.
     ///
     /// REQUIRED when `format` is "`jwt_vc_json-ld`" or "`ldp_vc`".
-    #[cfg_attr(not(feature = "typegen"), serde(rename = "@context"))]
+    #[serde(rename = "@context")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub context: Option<Vec<String>>,
 
