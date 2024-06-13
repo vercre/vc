@@ -21,18 +21,18 @@ version.workspace = true
 workspace = true
 
 [dependencies]
-anyhow = "1.0.86"
-base64ct = { version = "1.6.0", features = ["std"] }
-chrono = { version = "0.4.38", features = ["serde"] }
-ecdsa = { version = "0.16.9", features = ["verifying"] }
+anyhow.workspace = true
+base64ct.workspace = true
+chrono.workspace = true
+ecdsa = { workspace = true, features = ["verifying"] }
 ed25519-dalek = "2.1.1"
-k256 = "0.13.3"
+k256.workspace = true
 regex = "1.10.5"
-serde = { version = "1.0.203", features = ["derive"] }
-serde_json = { version = "1.0.117", features = ["alloc"] }
+serde.workspace = true
+serde_json.workspace = true
 serde_json_path = "0.6.7"
-tracing = "0.1.40"
-uuid = { version = "1.8.0", features = ["fast-rng", "v4"] }
+tracing.workspace = true
+uuid.workspace = true
 
 [dev-dependencies]
-tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
+tracing-subscriber.workspace = true
