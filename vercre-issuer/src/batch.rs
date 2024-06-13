@@ -407,7 +407,6 @@ mod tests {
     use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
-    use vercre_vc::proof::jose::VcClaims;
 
     use super::*;
     use crate::state::Token;
@@ -491,14 +490,16 @@ mod tests {
         let credential = response.credential_responses[0].credential.clone();
 
         let vc_val = credential.expect("VC is present");
-        let vc_b64 = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
-        let vc_jwt: vercre_proof::jose::Jwt<VcClaims> =
-            vercre_proof::jose::decode(&vc_b64).expect("should encode");
-        assert_snapshot!("ad-vc_jwt", vc_jwt, {
-            ".claims.iat" => "[iat]",
-            ".claims.nbf" => "[nbf]",
-            ".claims.vc.issuanceDate" => "[issuanceDate]",
-            ".claims.vc.credentialSubject" => insta::sorted_redaction()
+        let token = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
+        let proof::Type::Vc(vc) =
+            proof::verify(&token, proof::DataType::Vc).await.expect("should decode")
+        else {
+            panic!("should be VC");
+        };
+
+        assert_snapshot!("ad-vc", vc, {
+            ".issuanceDate" => "[issuanceDate]",
+            ".credentialSubject" => insta::sorted_redaction()
         });
 
         // token state should remain unchanged

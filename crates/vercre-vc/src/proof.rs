@@ -26,9 +26,9 @@
 //! [ECDSA Cryptosuites v1.0]: https://www.w3.org/TR/vc-di-ecdsa
 //! [BBS Cryptosuites v1.0]: https://w3c.github.io/vc-di-bbs
 
-pub mod controller;
+mod controller;
 pub mod integrity;
-pub mod jose;
+mod jose;
 
 use serde::{Deserialize, Serialize};
 pub use vercre_proof::{Algorithm, Signer};
