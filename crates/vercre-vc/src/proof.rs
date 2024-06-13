@@ -38,10 +38,7 @@ use crate::model::{VerifiableCredential, VerifiablePresentation};
 /// `Type` is used to identify the type of proof to be created.
 #[derive(Debug, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions, clippy::large_enum_variant)]
-pub enum Type<T>
-where
-    T: Serialize + Send + Sync,
-{
+pub enum Type {
     /// A Verifiable Credential proof encoded as a JWT.
     Vc(VerifiableCredential),
 
@@ -56,22 +53,13 @@ where
         /// The Verifier's `nonce` (from Presentation request).
         nonce: String,
     },
-
-    /// Authorization Request Object encoded as JWT.
-    RequestJwt(T),
-
-    /// JWT for Wallet's Proof of possession of key material.
-    ProofJwt(T),
 }
 
 /// Create a proof from a proof provider.
 ///
 /// # Errors
 /// TODO: Add errors
-pub async fn create<T>(proof: Type<T>, signer: impl Signer) -> anyhow::Result<String>
-where
-    T: Serialize + Send + Sync,
-{
+pub async fn create(proof: Type, signer: impl Signer) -> anyhow::Result<String> {
     let jwt = match proof {
         Type::Vc(vc) => {
             let claims: jose::VcClaims = vc.into();
@@ -93,8 +81,6 @@ where
             claims.nonce.clone_from(&nonce);
             jose::encode(jose::Typ::Presentation, &claims, signer).await?
         }
-        Type::RequestJwt(claims) => jose::encode(jose::Typ::Request, &claims, signer).await?,
-        Type::ProofJwt(claims) => jose::encode(jose::Typ::Proof, &claims, signer).await?,
     };
 
     // Ok(serde_json::to_value(jwt)?)

@@ -59,13 +59,13 @@ pub enum Typ {
     #[serde(rename = "jwt")]
     Presentation,
 
-    /// JWT `typ` for Authorization Request Object.
-    #[serde(rename = "oauth-authz-req+jwt")]
-    Request,
+    // /// JWT `typ` for Authorization Request Object.
+    // #[serde(rename = "oauth-authz-req+jwt")]
+    // Request,
 
-    /// JWT `typ` for Wallet's Proof of possession of key material.
-    #[serde(rename = "openidvci-proof+jwt")]
-    Proof,
+    // /// JWT `typ` for Wallet's Proof of possession of key material.
+    // #[serde(rename = "openidvci-proof+jwt")]
+    // Proof,
 }
 
 impl Display for Typ {

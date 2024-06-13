@@ -229,7 +229,7 @@ where
             }
         };
 
-        let proof = Type::<VerifiablePresentation>::Vp {
+        let proof = Type::Vp {
             vp,
             client_id: presentation.request.client_id.clone(),
             nonce: presentation.request.nonce.clone(),
@@ -424,7 +424,7 @@ mod tests {
     async fn sample_credential() -> Credential {
         let vc = VerifiableCredential::sample();
 
-        let proof = Type::<VerifiableCredential>::Vc(vc.clone());
+        let proof = Type::Vc(vc.clone());
         let jwt = proof::create(proof, issuance::Provider::new()).await.expect("should encode");
 
         let config = CredentialConfiguration::sample();

@@ -5643,6 +5643,7 @@ dependencies = [
  "tokio",
  "tracing",
  "vercre-core",
+ "vercre-proof",
  "vercre-vc",
 ]
 

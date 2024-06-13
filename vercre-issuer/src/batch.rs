@@ -25,7 +25,6 @@ pub use vercre_core::vci::{
 };
 use vercre_core::{err, gen, Result};
 use vercre_vc::model::{CredentialSubject, VerifiableCredential};
-use vercre_vc::proof::jose::{self, Jwt};
 use vercre_vc::proof::{self, Signer, Type};
 
 use super::Endpoint;
@@ -153,20 +152,21 @@ where
             };
 
             // TODO: allow passing verifier into this method
-            let jwt: Jwt<ProofClaims> = match jose::decode(proof_jwt) {
-                Ok(jwt) => jwt,
-                Err(e) => {
-                    let (nonce, expires_in) = self.err_nonce(provider).await?;
-                    err!(Err::InvalidProof(nonce, expires_in), "{}", e.to_string());
-                }
-            };
+            let jwt: vercre_proof::jose::Jwt<ProofClaims> =
+                match vercre_proof::jose::decode(proof_jwt) {
+                    Ok(jwt) => jwt,
+                    Err(e) => {
+                        let (nonce, expires_in) = self.err_nonce(provider).await?;
+                        err!(Err::InvalidProof(nonce, expires_in), "{}", e.to_string());
+                    }
+                };
             // proof type
-            if jwt.header.typ != jose::Typ::Proof {
+            if jwt.header.typ != vercre_proof::jose::Typ::Proof {
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(
                     Err::InvalidProof(nonce, expires_in),
                     "Proof JWT 'typ' is not {}",
-                    jose::Typ::Proof
+                    vercre_proof::jose::Typ::Proof
                 );
             }
 
@@ -269,7 +269,7 @@ where
         };
 
         // generate proof for the credential
-        let proof = Type::<VerifiableCredential>::Vc(vc);
+        let proof = Type::Vc(vc);
         let jwt = proof::create(proof, provider.clone()).await?;
 
         Ok(CredentialResponse {
@@ -407,7 +407,7 @@ mod tests {
     use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
-    use vercre_vc::proof::jose::{self, VcClaims};
+    use vercre_vc::proof::jose::VcClaims;
 
     use super::*;
     use crate::state::Token;
@@ -448,9 +448,13 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = proof::create(Type::ProofJwt(claims), wallet::Provider::new())
-            .await
-            .expect("should encode");
+        let jwt = vercre_proof::jose::encode(
+            vercre_proof::jose::Typ::Proof,
+            &claims,
+            wallet::Provider::new(),
+        )
+        .await
+        .expect("should encode");
 
         let body = json!({
             "credential_requests":[{
@@ -488,7 +492,8 @@ mod tests {
 
         let vc_val = credential.expect("VC is present");
         let vc_b64 = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
-        let vc_jwt: Jwt<VcClaims> = jose::decode(&vc_b64).expect("should encode");
+        let vc_jwt: vercre_proof::jose::Jwt<VcClaims> =
+            vercre_proof::jose::decode(&vc_b64).expect("should encode");
         assert_snapshot!("ad-vc_jwt", vc_jwt, {
             ".claims.iat" => "[iat]",
             ".claims.nbf" => "[nbf]",
