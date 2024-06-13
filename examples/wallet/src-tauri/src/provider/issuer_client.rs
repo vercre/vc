@@ -19,11 +19,7 @@ where
     ) -> anyhow::Result<MetadataResponse> {
         let client = reqwest::Client::new();
         let url = format!("{}/.well-known/openid-credential-issuer", req.credential_issuer);
-        let result = client
-            .get(&url)
-            .header(ACCEPT, "application/json")
-            .send()
-            .await?;
+        let result = client.get(&url).header(ACCEPT, "application/json").send().await?;
         // let body = match result.text().await {
         //     Ok(b) => b,
         //     Err(e) => {
