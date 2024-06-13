@@ -132,7 +132,7 @@ async fn delete(
 async fn offer(
     state: State<'_, StateModel>, app: AppHandle, encoded_offer: String,
 ) -> Result<(), error::AppError> {
-    log::info!("offer invoked");
+    log::info!("offer invoked: {encoded_offer}");
     let mut model = state.0.lock().await;
     let provider = Provider::new(app.clone());
     model.offer(&encoded_offer, provider).await?;

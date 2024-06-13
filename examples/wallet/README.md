@@ -91,7 +91,7 @@ openid-vc://request_uri=http://localhost:8080/request/R1BjcyojV01ZVjhvY0shayV-c3
 
 ### Forms to bypass deep links
 
-To bypass the deep links to initiate issuance or presentation, the user interface has forms that accept the JSON responses from the issuance and verification services. This is not the intended end user experience but allows faster shell development and testing.
+To bypass the deep links to initiate issuance or presentation, the user interface has forms that accept the JSON responses from the issuance and verification services. This is not the intended user experience but allows faster shell development and testing.
 
 For issuance, run the issuance example service as above then
 

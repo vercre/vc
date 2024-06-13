@@ -55,7 +55,8 @@ const Add = (props: AddProps) => {
             return;
         }
         const encoded = encodeURIComponent(offer);
-        invoke("offer", { url: encoded });
+        console.log("invoking offer:", encoded);
+        invoke("offer", { encodedOffer: encoded });
     };
 
     return (
