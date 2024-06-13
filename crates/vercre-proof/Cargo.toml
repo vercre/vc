@@ -1,6 +1,6 @@
 [package]
-name = "vercre-vc"
-description = "Primary Verifiable Credential building blocks, including dependencies."
+name = "vercre-proof"
+description = "Create and verify proofs for Vercre"
 license = "MIT OR Apache-2.0"
 publish = false
 readme = "README.md"
@@ -17,20 +17,20 @@ version.workspace = true
 [lib]
 # crate-type = ["cdylib", "rlib"]
 
+[features]
+
 [lints]
 workspace = true
 
 [dependencies]
 anyhow.workspace = true
 base64ct.workspace = true
-chrono.workspace = true
-regex = "1.10.5"
+ecdsa.workspace = true
+ed25519-dalek = "2.1.1"
+k256.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-serde_json_path = "0.6.7"
 tracing.workspace = true
-uuid.workspace = true
-vercre-proof.workspace = true
 
 [dev-dependencies]
-tracing-subscriber.workspace = true
+insta = { version = "1.39.0", features = ["filters", "redactions", "yaml"] }

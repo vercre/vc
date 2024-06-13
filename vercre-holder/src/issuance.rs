@@ -20,7 +20,7 @@ pub use vercre_core::vci::{
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
 use vercre_core::{err, Result};
-use vercre_vc::proof::{self, jose, Type};
+use vercre_vc::proof;
 
 use crate::credential::Credential;
 use crate::provider::{CredentialStorer, IssuanceInput, IssuanceListener, IssuerClient, Signer};
@@ -191,7 +191,13 @@ where
                 nonce: issuance.token.c_nonce.clone(),
             };
 
-            let Ok(jwt) = proof::create(Type::ProofJwt(claims), provider.clone()).await else {
+            let Ok(jwt) = vercre_proof::jose::encode(
+                vercre_proof::jose::Typ::Proof,
+                &claims,
+                provider.clone(),
+            )
+            .await
+            else {
                 provider.notify(&issuance.id, Status::Failed("could not encode proof".into()));
                 return Ok(());
             };
@@ -220,7 +226,7 @@ where
             }
 
             // Create a credential in a useful wallet format.
-            let mut credential = match credential(&issuance, cfg, &cred_res) {
+            let mut credential = match credential(&issuance, cfg, &cred_res).await {
                 Ok(c) => c,
                 Err(e) => {
                     provider.notify(&issuance.id, Status::Failed(e.to_string()));
@@ -311,7 +317,7 @@ fn credential_request(
 }
 
 /// Construct a credential from a credential response.
-fn credential(
+async fn credential(
     issuance: &Issuance, credential_configuration: &CredentialConfiguration,
     res: &CredentialResponse,
 ) -> Result<Credential> {
@@ -321,15 +327,15 @@ fn credential(
     let Some(token) = value.as_str() else {
         err!(Err::InvalidRequest, "credential is not a string");
     };
-    let Ok(jwt) = jose::decode::<jose::VcClaims>(token) else {
+    let Ok(proof::Type::Vc(vc)) = proof::verify(token, proof::DataType::Vc).await else {
         err!(Err::InvalidRequest, "could not parse credential");
     };
 
     Ok(Credential {
-        id: jwt.claims.vc.id.clone(),
+        id: vc.id.clone(),
         issuer: issuance.offer.credential_issuer.clone(),
         metadata: credential_configuration.clone(),
-        vc: jwt.claims.vc,
+        vc,
         issued: token.into(),
 
         ..Credential::default()
@@ -439,11 +445,16 @@ mod tests {
             nonce: issuance.token.c_nonce.clone(),
         };
 
-        let token = proof::create(Type::ProofJwt(claims), wallet::Provider::new())
-            .await
-            .expect("should encode");
+        let token = vercre_proof::jose::encode(
+            vercre_proof::jose::Typ::Proof,
+            &claims,
+            wallet::Provider::new(),
+        )
+        .await
+        .expect("should encode");
 
-        let jwt: jose::Jwt<ProofClaims> = jose::decode(&token).expect("should decode");
+        let jwt: vercre_proof::jose::Jwt<ProofClaims> =
+            vercre_proof::jose::decode(&token).expect("should decode");
 
         assert_eq!(jwt.claims.aud, "http://vercre.io");
         assert_snapshot!("proof_jwt", &jwt, { ".claims.iat" => "[timestamp]" });
@@ -473,9 +484,13 @@ mod tests {
             nonce: None,
         };
 
-        let token = proof::create(Type::ProofJwt(claims), wallet::Provider::new())
-            .await
-            .expect("should encode");
+        let token = vercre_proof::jose::encode(
+            vercre_proof::jose::Typ::Proof,
+            &claims,
+            wallet::Provider::new(),
+        )
+        .await
+        .expect("should encode");
         let proof = Proof {
             proof_type: "jwt".into(),
             jwt: Some(token),

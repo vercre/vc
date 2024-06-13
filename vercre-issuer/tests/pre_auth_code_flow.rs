@@ -9,10 +9,9 @@ use providers::wallet;
 use serde_json::json;
 use vercre_issuer::create_offer::{CreateOfferRequest, CreateOfferResponse};
 use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
-use vercre_issuer::jose::{self, Jwt};
 use vercre_issuer::token::{TokenRequest, TokenResponse};
-use vercre_issuer::{Endpoint, ProofClaims, VcClaims};
-use vercre_vc::proof::{self, Type};
+use vercre_issuer::{Endpoint, ProofClaims};
+use vercre_vc::proof;
 
 lazy_static! {
     static ref PROVIDER: Provider = Provider::new();
@@ -27,14 +26,16 @@ async fn pre_auth_flow() {
     let resp = get_offer().and_then(get_token).and_then(get_credential).await.expect("Ok");
 
     let vc_val = resp.credential.expect("VC is present");
-    let vc_b64 = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
-    let vc_jwt: Jwt<VcClaims> = jose::decode(&vc_b64).expect("should encode");
+    let token = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
+    let proof::Type::Vc(vc) =
+        proof::verify(&token, proof::DataType::Vc).await.expect("should decode")
+    else {
+        panic!("should be VC");
+    };
 
-    assert_snapshot!("vc_jwt", vc_jwt, {
-        ".claims.iat" => "[iat]",
-        ".claims.nbf" => "[nbf]",
-        ".claims.vc.issuanceDate" => "[issuanceDate]",
-        ".claims.vc.credentialSubject" => insta::sorted_redaction()
+    assert_snapshot!("vc", vc, {
+        ".issuanceDate" => "[issuanceDate]",
+        ".credentialSubject" => insta::sorted_redaction()
     });
 }
 
@@ -89,9 +90,13 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
         iat: Utc::now().timestamp(),
         nonce: input.c_nonce,
     };
-    let jwt = proof::create(Type::ProofJwt(claims), wallet::Provider::new())
-        .await
-        .expect("should encode");
+    let jwt = vercre_proof::jose::encode(
+        vercre_proof::jose::Typ::Proof,
+        &claims,
+        wallet::Provider::new(),
+    )
+    .await
+    .expect("should encode");
 
     let body = json!({
         "format": "jwt_vc_json",

@@ -152,8 +152,7 @@ mod tests {
     use providers::wallet;
     use serde_json::json;
     use vercre_core::vci::ProofClaims;
-    use vercre_vc::proof::jose::{self, Jwt, VcClaims};
-    use vercre_vc::proof::{self, Type};
+    use vercre_vc::proof;
 
     use super::*;
     use crate::state::{Expire, Token};
@@ -195,9 +194,13 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = proof::create(Type::ProofJwt(claims), wallet::Provider::new())
-            .await
-            .expect("should encode");
+        let jwt = vercre_proof::jose::encode(
+            vercre_proof::jose::Typ::Proof,
+            &claims,
+            wallet::Provider::new(),
+        )
+        .await
+        .expect("should encode");
 
         let body = json!({
             "format": "jwt_vc_json",
@@ -228,13 +231,16 @@ mod tests {
 
         // verify credential
         let vc_val = response.credential.expect("VC is present");
-        let vc_b64 = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
-        let vc_jwt: Jwt<VcClaims> = jose::decode(&vc_b64).expect("should encode");
-        assert_snapshot!("vc_jwt", vc_jwt, {
-            ".claims.iat" => "[iat]",
-            ".claims.nbf" => "[nbf]",
-            ".claims.vc.issuanceDate" => "[issuanceDate]",
-            ".claims.vc.credentialSubject" => insta::sorted_redaction()
+        let token = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
+        let proof::Type::Vc(vc) =
+            proof::verify(&token, proof::DataType::Vc).await.expect("should decode")
+        else {
+            panic!("should be VC");
+        };
+
+        assert_snapshot!("vc", vc, {
+            ".issuanceDate" => "[issuanceDate]",
+            ".credentialSubject" => insta::sorted_redaction()
         });
 
         // token state should remain unchanged

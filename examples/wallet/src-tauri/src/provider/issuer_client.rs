@@ -19,11 +19,7 @@ where
     ) -> anyhow::Result<MetadataResponse> {
         let client = reqwest::Client::new();
         let url = format!("{}/.well-known/openid-credential-issuer", req.credential_issuer);
-        let result = client
-            .get(&url)
-            .header(ACCEPT, "application/json")
-            .send()
-            .await?;
+        let result = client.get(&url).header(ACCEPT, "application/json").send().await?;
         // let body = match result.text().await {
         //     Ok(b) => b,
         //     Err(e) => {
@@ -50,9 +46,7 @@ where
     }
 
     /// Get an access token.
-    async fn get_token(
-        &self, _flow_id: &str, req: &TokenRequest,
-    ) -> anyhow::Result<TokenResponse> {
+    async fn get_token(&self, _flow_id: &str, req: &TokenRequest) -> anyhow::Result<TokenResponse> {
         let client = reqwest::Client::new();
         let result = client
             .post(&req.credential_issuer)
@@ -85,11 +79,7 @@ where
     /// Get a base64 encoded form of the credential logo.
     async fn get_logo(&self, _flow_id: &str, logo_url: &str) -> anyhow::Result<Logo> {
         let client = reqwest::Client::new();
-        let result = client
-            .get(logo_url)
-            .header(ACCEPT, "image/*")
-            .send()
-            .await?;
+        let result = client.get(logo_url).header(ACCEPT, "image/*").send().await?;
         let headers = result.headers().clone();
         let media_type = match headers.get(CONTENT_TYPE) {
             Some(mt) => mt.to_str()?,

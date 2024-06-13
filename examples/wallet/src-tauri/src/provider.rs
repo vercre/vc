@@ -13,7 +13,7 @@ where
 }
 
 impl<R> Provider<R>
-    where
+where
     R: tauri::Runtime,
 {
     /// Create a new credential store provider with a handle to the Tauri application.
@@ -25,7 +25,7 @@ impl<R> Provider<R>
 
 /// Provide a benign implementation of the `Callback` trait that is not needed for this example.
 impl<R> Callback for Provider<R>
-    where
+where
     R: tauri::Runtime,
 {
     async fn callback(&self, _pl: &callback::Payload) -> anyhow::Result<()> {

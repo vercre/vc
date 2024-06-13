@@ -15,11 +15,9 @@ rust-version.workspace = true
 version.workspace = true
 
 [lib]
-bench = false
-crate-type = ["cdylib", "rlib"]
+# crate-type = ["cdylib", "rlib"]
 
 [features]
-typegen = []
 wasm = ["fastrand/js"]
 
 [lints]
@@ -40,6 +38,7 @@ serde_qs = "0.13.0"
 thiserror = "1.0.61"
 tracing.workspace = true
 vercre-vc.workspace = true
+vercre-proof.workspace = true
 
 [dev-dependencies]
 insta = { version = "1.39.0", features = ["filters", "redactions", "yaml"] }

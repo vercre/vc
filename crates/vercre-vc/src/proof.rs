@@ -30,40 +30,15 @@ pub mod controller;
 pub mod integrity;
 pub mod jose;
 
-use std::future::{Future, IntoFuture};
-
 use serde::{Deserialize, Serialize};
+pub use vercre_proof::{Algorithm, Signer};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
-pub use crate::proof::jose::Algorithm;
-
-/// Signer is used by implementers to provide signing functionality for
-/// Verifiable Credential issuance and Verifiable Presentation submissions.
-pub trait Signer: Send + Sync {
-    /// Algorithm returns the algorithm used by the signer.
-    fn algorithm(&self) -> Algorithm;
-
-    /// The verification method the verifier should use to verify the signer's
-    /// signature. This is typically a DID URL + # + verification key ID.
-    fn verification_method(&self) -> String;
-
-    /// Sign is a convenience method for infallible Signer implementations.
-    fn sign(&self, msg: &[u8]) -> impl Future<Output = Vec<u8>> + Send {
-        let v = async { self.try_sign(msg).await.expect("should sign") };
-        v.into_future()
-    }
-
-    /// `TrySign` is the fallible version of Sign.
-    fn try_sign(&self, msg: &[u8]) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
-}
 
 /// `Type` is used to identify the type of proof to be created.
 #[derive(Debug, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions, clippy::large_enum_variant)]
-pub enum Type<T>
-where
-    T: Serialize + Send + Sync,
-{
+pub enum Type {
     /// A Verifiable Credential proof encoded as a JWT.
     Vc(VerifiableCredential),
 
@@ -78,26 +53,17 @@ where
         /// The Verifier's `nonce` (from Presentation request).
         nonce: String,
     },
-
-    /// Authorization Request Object encoded as JWT.
-    RequestJwt(T),
-
-    /// JWT for Wallet's Proof of possession of key material.
-    ProofJwt(T),
 }
 
 /// Create a proof from a proof provider.
 ///
 /// # Errors
 /// TODO: Add errors
-pub async fn create<T>(proof: Type<T>, signer: impl Signer) -> anyhow::Result<String>
-where
-    T: Serialize + Send + Sync,
-{
+pub async fn create(proof: Type, signer: impl Signer) -> anyhow::Result<String> {
     let jwt = match proof {
         Type::Vc(vc) => {
             let claims: jose::VcClaims = vc.into();
-            jose::encode(jose::Typ::Credential, &claims, signer).await?
+            vercre_proof::jose::encode(vercre_proof::jose::Typ::Credential, &claims, signer).await?
 
             // TODO: add data integrity proof payload
             // let proof = Proof {
@@ -113,12 +79,42 @@ where
             let mut claims = jose::VpClaims::from(vp);
             claims.aud.clone_from(&client_id);
             claims.nonce.clone_from(&nonce);
-            jose::encode(jose::Typ::Presentation, &claims, signer).await?
+            vercre_proof::jose::encode(vercre_proof::jose::Typ::Presentation, &claims, signer)
+                .await?
         }
-        Type::RequestJwt(claims) => jose::encode(jose::Typ::Request, &claims, signer).await?,
-        Type::ProofJwt(claims) => jose::encode(jose::Typ::Proof, &claims, signer).await?,
     };
 
     // Ok(serde_json::to_value(jwt)?)
     Ok(jwt)
+}
+
+/// Data type to verify.
+pub enum DataType {
+    /// A Verifiable Credential proof encoded as a JWT.
+    Vc,
+
+    /// A Verifiable Presentation proof encoded as a JWT.
+    Vp,
+}
+
+/// Verify a proof.
+///
+/// # Errors
+/// TODO: Add errors
+#[allow(clippy::unused_async)]
+pub async fn verify(token: &str, data_type: DataType) -> anyhow::Result<Type> {
+    match data_type {
+        DataType::Vc => {
+            let jwt = vercre_proof::jose::decode::<jose::VcClaims>(token)?;
+            Ok(Type::Vc(jwt.claims.vc))
+        }
+        DataType::Vp => {
+            let jwt = vercre_proof::jose::decode::<jose::VpClaims>(token)?;
+            Ok(Type::Vp {
+                vp: jwt.claims.vp,
+                client_id: jwt.claims.aud,
+                nonce: jwt.claims.nonce,
+            })
+        }
+    }
 }

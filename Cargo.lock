@@ -3500,6 +3500,7 @@ dependencies = [
  "tracing-subscriber",
  "uuid",
  "vercre-core",
+ "vercre-proof",
  "vercre-vc",
 ]
 
@@ -5597,6 +5598,7 @@ dependencies = [
  "serde_qs",
  "thiserror",
  "tracing",
+ "vercre-proof",
  "vercre-vc",
 ]
 
@@ -5618,6 +5620,7 @@ dependencies = [
  "uuid",
  "vercre-core",
  "vercre-issuer",
+ "vercre-proof",
  "vercre-vc",
 ]
 
@@ -5641,7 +5644,23 @@ dependencies = [
  "tokio",
  "tracing",
  "vercre-core",
+ "vercre-proof",
  "vercre-vc",
+]
+
+[[package]]
+name = "vercre-proof"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "ecdsa",
+ "ed25519-dalek",
+ "insta",
+ "k256",
+ "serde",
+ "serde_json",
+ "tracing",
 ]
 
 [[package]]
@@ -5651,9 +5670,6 @@ dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
- "ecdsa",
- "ed25519-dalek",
- "k256",
  "regex",
  "serde",
  "serde_json",
@@ -5661,6 +5677,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
+ "vercre-proof",
 ]
 
 [[package]]
@@ -5683,6 +5700,7 @@ dependencies = [
  "tracing",
  "uuid",
  "vercre-core",
+ "vercre-proof",
  "vercre-vc",
 ]
 
