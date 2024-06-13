@@ -1,6 +1,5 @@
 //! # Controller Document
 use serde::{Deserialize, Serialize};
-
 use vercre_proof::jose::Jwk;
 
 /// A controller document contains a set of verification methods that specify

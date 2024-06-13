@@ -38,7 +38,6 @@ use std::str;
 
 use chrono::{TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
-// pub use vercre_proof::jose::{decode, Jwt};
 
 use crate::model::vc::VerifiableCredential;
 use crate::model::vp::VerifiablePresentation;

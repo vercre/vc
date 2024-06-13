@@ -20,6 +20,7 @@ pub use vercre_core::vci::{
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
 use vercre_core::{err, Result};
+use vercre_vc::proof;
 
 use crate::credential::Credential;
 use crate::provider::{CredentialStorer, IssuanceInput, IssuanceListener, IssuerClient, Signer};
@@ -326,9 +327,7 @@ async fn credential(
     let Some(token) = value.as_str() else {
         err!(Err::InvalidRequest, "credential is not a string");
     };
-    let Ok(vercre_vc::proof::Type::Vc(vc)) =
-        vercre_vc::proof::verify(token, vercre_vc::proof::DataType::Vc).await
-    else {
+    let Ok(proof::Type::Vc(vc)) = proof::verify(token, proof::DataType::Vc).await else {
         err!(Err::InvalidRequest, "could not parse credential");
     };
 

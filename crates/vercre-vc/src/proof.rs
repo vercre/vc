@@ -98,6 +98,10 @@ pub enum DataType {
 }
 
 /// Verify a proof.
+///
+/// # Errors
+/// TODO: Add errors
+#[allow(clippy::unused_async)]
 pub async fn verify(token: &str, data_type: DataType) -> anyhow::Result<Type> {
     match data_type {
         DataType::Vc => {
@@ -108,8 +112,8 @@ pub async fn verify(token: &str, data_type: DataType) -> anyhow::Result<Type> {
             let jwt = vercre_proof::jose::decode::<jose::VpClaims>(token)?;
             Ok(Type::Vp {
                 vp: jwt.claims.vp,
-                client_id: "".into(),
-                nonce: "".into(),
+                client_id: jwt.claims.aud,
+                nonce: jwt.claims.nonce,
             })
         }
     }
