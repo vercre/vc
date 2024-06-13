@@ -20,7 +20,6 @@ pub use vercre_core::vci::{
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
 use vercre_core::{err, Result};
-use vercre_vc::proof::jose;
 
 use crate::credential::Credential;
 use crate::provider::{CredentialStorer, IssuanceInput, IssuanceListener, IssuerClient, Signer};
@@ -226,7 +225,7 @@ where
             }
 
             // Create a credential in a useful wallet format.
-            let mut credential = match credential(&issuance, cfg, &cred_res) {
+            let mut credential = match credential(&issuance, cfg, &cred_res).await {
                 Ok(c) => c,
                 Err(e) => {
                     provider.notify(&issuance.id, Status::Failed(e.to_string()));
@@ -317,7 +316,7 @@ fn credential_request(
 }
 
 /// Construct a credential from a credential response.
-fn credential(
+async fn credential(
     issuance: &Issuance, credential_configuration: &CredentialConfiguration,
     res: &CredentialResponse,
 ) -> Result<Credential> {
@@ -327,15 +326,17 @@ fn credential(
     let Some(token) = value.as_str() else {
         err!(Err::InvalidRequest, "credential is not a string");
     };
-    let Ok(jwt) = jose::decode::<jose::VcClaims>(token) else {
+    let Ok(vercre_vc::proof::Type::Vc(vc)) =
+        vercre_vc::proof::verify(token, vercre_vc::proof::DataType::Vc).await
+    else {
         err!(Err::InvalidRequest, "could not parse credential");
     };
 
     Ok(Credential {
-        id: jwt.claims.vc.id.clone(),
+        id: vc.id.clone(),
         issuer: issuance.offer.credential_issuer.clone(),
         metadata: credential_configuration.clone(),
-        vc: jwt.claims.vc,
+        vc,
         issued: token.into(),
 
         ..Credential::default()

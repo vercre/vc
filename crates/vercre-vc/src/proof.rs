@@ -79,10 +79,38 @@ pub async fn create(proof: Type, signer: impl Signer) -> anyhow::Result<String> 
             let mut claims = jose::VpClaims::from(vp);
             claims.aud.clone_from(&client_id);
             claims.nonce.clone_from(&nonce);
-            vercre_proof::jose::encode(vercre_proof::jose::Typ::Presentation, &claims, signer).await?
+            vercre_proof::jose::encode(vercre_proof::jose::Typ::Presentation, &claims, signer)
+                .await?
         }
     };
 
     // Ok(serde_json::to_value(jwt)?)
     Ok(jwt)
+}
+
+/// Data type to verify.
+pub enum DataType {
+    /// A Verifiable Credential proof encoded as a JWT.
+    Vc,
+
+    /// A Verifiable Presentation proof encoded as a JWT.
+    Vp,
+}
+
+/// Verify a proof.
+pub async fn verify(token: &str, data_type: DataType) -> anyhow::Result<Type> {
+    match data_type {
+        DataType::Vc => {
+            let jwt = vercre_proof::jose::decode::<jose::VcClaims>(token)?;
+            Ok(Type::Vc(jwt.claims.vc))
+        }
+        DataType::Vp => {
+            let jwt = vercre_proof::jose::decode::<jose::VpClaims>(token)?;
+            Ok(Type::Vp {
+                vp: jwt.claims.vp,
+                client_id: "".into(),
+                nonce: "".into(),
+            })
+        }
+    }
 }

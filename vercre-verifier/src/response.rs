@@ -30,7 +30,6 @@ use vercre_core::provider::{Callback, ClientMetadata, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{ResponseRequest, ResponseResponse};
 use vercre_core::{err, Result};
-use vercre_vc::proof::jose::{self, VcClaims, VpClaims};
 use vercre_vc::proof::Signer;
 
 use super::Endpoint;
@@ -119,14 +118,17 @@ where
                     }
                     vp_val
                 }
-                Value::String(string) => {
-                    let Ok(jwt) = jose::decode::<VpClaims>(&string) else {
+                Value::String(token) => {
+                    let Ok(vercre_vc::proof::Type::Vp { vp, nonce, .. }) =
+                        vercre_vc::proof::verify(&token, vercre_vc::proof::DataType::Vc).await
+                    else {
                         err!(Err::InvalidRequest, "invalid vp_token format");
                     };
-                    if jwt.claims.nonce != saved_req.nonce {
+
+                    if nonce != saved_req.nonce {
                         err!(Err::InvalidRequest, "nonce does not match");
                     }
-                    serde_json::to_value(jwt.claims.vp)?
+                    serde_json::to_value(vp)?
                 }
                 _ => {
                     err!(Err::InvalidRequest, "invalid vp_token format");
@@ -190,11 +192,13 @@ where
 
             // convert Value (req_obj or base64url string) to VerifiableCredential
             let vc = match vc_node {
-                Value::String(s) => {
-                    let Ok(jwt) = jose::decode::<VcClaims>(s) else {
-                        err!(Err::InvalidRequest, "invalid VC format: {}", s);
+                Value::String(token) => {
+                    let Ok(vercre_vc::proof::Type::Vc(vc)) =
+                        vercre_vc::proof::verify(&token, vercre_vc::proof::DataType::Vc).await
+                    else {
+                        err!(Err::InvalidRequest, "invalid VC format: {}", token);
                     };
-                    jwt.claims.vc
+                    vc
                 }
                 Value::Object(_) => serde_json::from_value(vc_node.clone())?,
                 _ => err!(Err::InvalidRequest, "unexpected VC format: {}", vc_node),

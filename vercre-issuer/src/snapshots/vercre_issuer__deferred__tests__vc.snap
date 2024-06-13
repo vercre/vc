@@ -1,0 +1,19 @@
+---
+source: vercre-issuer/src/deferred.rs
+assertion_line: 241
+expression: vc
+---
+"@context":
+  - "https://www.w3.org/2018/credentials/v1"
+  - "http://vercre.io/credentials/v1"
+id: "http://vercre.io/credentials/EmployeeIDCredential"
+type:
+  - VerifiableCredential
+  - EmployeeIDCredential
+issuer: "http://vercre.io"
+issuanceDate: "[issuanceDate]"
+credentialSubject:
+  email: normal.user@example.com
+  familyName: Person
+  givenName: Normal
+  id: "did:jwk:eyJjcnYiOiJYMjU1MTkiLCJrdHkiOiJPS1AiLCJ1c2UiOiJlbmMiLCJ4IjoiM0xnOXl2aUFtVERDdVZPeUxYSTNscTlTMnBIbTczeXIzd3dBa2p3Q0FodyJ9"
