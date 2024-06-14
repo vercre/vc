@@ -24,7 +24,7 @@ pub use vercre_core::vci::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialRequest, CredentialResponse,
 };
 use vercre_core::{err, gen, Result};
-use vercre_proof::jose;
+use vercre_proof::jwt;
 use vercre_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_vc::proof::{self, Payload, Signer};
 
@@ -153,7 +153,7 @@ where
             };
 
             // TODO: allow passing verifier into this method
-            let jwt: jose::Jwt<ProofClaims> = match jose::decode(proof_jwt) {
+            let jwt: jwt::Jwt<ProofClaims> = match jwt::decode(proof_jwt) {
                 Ok(jwt) => jwt,
                 Err(e) => {
                     let (nonce, expires_in) = self.err_nonce(provider).await?;
@@ -161,12 +161,12 @@ where
                 }
             };
             // proof type
-            if jwt.header.typ != jose::Typ::Proof {
+            if jwt.header.typ != jwt::Payload::Proof {
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(
                     Err::InvalidProof(nonce, expires_in),
                     "Proof JWT 'typ' is not {}",
-                    jose::Typ::Proof
+                    jwt::Payload::Proof
                 );
             }
 
@@ -269,8 +269,7 @@ where
         };
 
         // generate proof for the credential
-        let proof = Payload::Vc(vc);
-        let jwt = proof::create(proof, provider.clone()).await?;
+        let jwt = proof::create(Payload::Vc(vc), provider.clone()).await?;
 
         Ok(CredentialResponse {
             credential: Some(serde_json::Value::String(jwt)),
@@ -448,7 +447,7 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = jose::encode(jose::Typ::Proof, &claims, wallet::Provider::new())
+        let jwt = jwt::encode(jwt::Payload::Proof, &claims, wallet::Provider::new())
             .await
             .expect("should encode");
 
@@ -545,7 +544,9 @@ mod tests {
     //         iat: Utc::now().timestamp(),
     //         nonce: c_nonce.into(),
     //     };
-    //     let jwt = proof::create(Type::ProofJwt(claims), wallet::Provider::new())
+    //  let jwt = jose::encode(jose::Payload::Proof, &claims, wallet::Provider::new())
+    //         .await
+    //         .expect("should encode");
 
     //     let body = json!({
     //         "credential_requests":[{
@@ -575,8 +576,12 @@ mod tests {
     //     let credential = response.credential_responses[0].credential.clone();
 
     //     let vc_val = credential.expect("VC is present");
-    //     let vc_b64 = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
-    //     let vc_jwt = Jwt::<VcClaims>::from_str(&vc_b64).expect("should encode");
+    //     let token = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
+    //     let Payload::Vc(vc) = proof::verify(&token, Verify::Vc).await.expect("should decode")
+    //     else {
+    //         panic!("should be VC");
+    //     };
+
     //     assert_snapshot!("ci-vc_jwt", vc_jwt, {
     //         ".claims.iat" => "[iat]",
     //         ".claims.nbf" => "[nbf]",

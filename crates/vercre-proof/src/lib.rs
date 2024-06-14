@@ -26,11 +26,11 @@
 //! [ECDSA Cryptosuites v1.0]: https://www.w3.org/TR/vc-di-ecdsa
 //! [BBS Cryptosuites v1.0]: https://w3c.github.io/vc-di-bbs
 
-pub mod jose;
+pub mod jwt;
 
 use std::future::{Future, IntoFuture};
 
-pub use crate::jose::Algorithm;
+pub use crate::jwt::Algorithm;
 
 /// Signer is used by implementers to provide signing functionality for
 /// Verifiable Credential issuance and Verifiable Presentation submissions.

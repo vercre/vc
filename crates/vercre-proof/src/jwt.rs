@@ -65,7 +65,7 @@ impl Display for Algorithm {
 
 /// The JWT `typ` claim.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub enum Typ {
+pub enum Payload {
     /// JWT `typ` for Verifiable Credential.
     #[default]
     #[serde(rename = "jwt")]
@@ -84,7 +84,7 @@ pub enum Typ {
     Proof,
 }
 
-impl Display for Typ {
+impl Display for Payload {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{self:?}")
     }
@@ -94,7 +94,7 @@ impl Display for Typ {
 ///
 /// # Errors
 /// TODO: add error docs
-pub async fn encode<T>(typ: Typ, claims: &T, signer: impl Signer) -> anyhow::Result<String>
+pub async fn encode<T>(typ: Payload, claims: &T, signer: impl Signer) -> anyhow::Result<String>
 where
     T: Serialize + Send + Sync,
 {
@@ -196,7 +196,7 @@ pub struct Header {
 
     /// Used to declare the media type [IANA.MediaTypes](http://www.iana.org/assignments/media-types)
     /// of the JWS.
-    pub typ: Typ,
+    pub typ: Payload,
 
     /// MAY be used if there are multiple keys associated with the issuer of the
     /// JWT. For example, kid can refer to a key in a DID document or a key

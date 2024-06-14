@@ -20,7 +20,7 @@ pub use vercre_core::vci::{
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
 use vercre_core::{err, Result};
-use vercre_proof::jose;
+use vercre_proof::jwt;
 use vercre_vc::proof::{self, Payload, Verify};
 
 use crate::credential::Credential;
@@ -192,7 +192,7 @@ where
                 nonce: issuance.token.c_nonce.clone(),
             };
 
-            let Ok(jwt) = jose::encode(jose::Typ::Proof, &claims, provider.clone()).await else {
+            let Ok(jwt) = jwt::encode(jwt::Payload::Proof, &claims, provider.clone()).await else {
                 provider.notify(&issuance.id, Status::Failed("could not encode proof".into()));
                 return Ok(());
             };
@@ -440,11 +440,11 @@ mod tests {
             nonce: issuance.token.c_nonce.clone(),
         };
 
-        let token = jose::encode(jose::Typ::Proof, &claims, wallet::Provider::new())
+        let token = jwt::encode(jwt::Payload::Proof, &claims, wallet::Provider::new())
             .await
             .expect("should encode");
 
-        let jwt: jose::Jwt<ProofClaims> = jose::decode(&token).expect("should decode");
+        let jwt: jwt::Jwt<ProofClaims> = jwt::decode(&token).expect("should decode");
 
         assert_eq!(jwt.claims.aud, "http://vercre.io");
         assert_snapshot!("proof_jwt", &jwt, { ".claims.iat" => "[timestamp]" });
@@ -474,7 +474,7 @@ mod tests {
             nonce: None,
         };
 
-        let token = jose::encode(jose::Typ::Proof, &claims, wallet::Provider::new())
+        let token = jwt::encode(jwt::Payload::Proof, &claims, wallet::Provider::new())
             .await
             .expect("should encode");
         let proof = Proof {

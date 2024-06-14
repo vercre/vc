@@ -10,7 +10,7 @@ use uuid::Uuid;
 use vercre_core::error::Err;
 use vercre_core::vp::{RequestObject, RequestObjectResponse, ResponseRequest};
 use vercre_core::{err, Result};
-use vercre_proof::jose;
+use vercre_proof::jwt;
 use vercre_vc::model::vp::{
     Constraints, DescriptorMap, PathNested, PresentationSubmission, VerifiablePresentation,
 };
@@ -229,12 +229,12 @@ where
             }
         };
 
-        let proof = Payload::Vp {
+        let payload = Payload::Vp {
             vp,
             client_id: presentation.request.client_id.clone(),
             nonce: presentation.request.nonce.clone(),
         };
-        let jwt = proof::create(proof, provider.clone()).await?;
+        let jwt = proof::create(payload, provider.clone()).await?;
 
         let vp_token = match serde_json::to_value(&jwt) {
             Ok(v) => v,
@@ -281,7 +281,7 @@ fn parse_request_object_response(res: &RequestObjectResponse) -> Result<RequestO
     let Some(token) = &res.jwt else {
         err!(Err::InvalidRequest, "no serialized JWT found in response");
     };
-    let jwt = match jose::decode(token) {
+    let jwt = match jwt::decode(token) {
         Ok(jwt) => jwt,
         Err(e) => err!(Err::InvalidRequest, "failed to parse JWT: {e}"),
     };
@@ -423,8 +423,8 @@ mod tests {
     async fn sample_credential() -> Credential {
         let vc = VerifiableCredential::sample();
 
-        let proof = Payload::Vc(vc.clone());
-        let jwt = proof::create(proof, issuance::Provider::new()).await.expect("should encode");
+        let payload = Payload::Vc(vc.clone());
+        let jwt = proof::create(payload, issuance::Provider::new()).await.expect("should encode");
 
         let config = CredentialConfiguration::sample();
         Credential {
@@ -457,7 +457,7 @@ mod tests {
             parse_request_object_response(&req_obj_res).expect("should parse with object");
         assert_eq!(obj, decoded);
 
-        let token = jose::encode(jose::Typ::Request, &obj, presentation::Provider::new())
+        let token = jwt::encode(jwt::Payload::Request, &obj, presentation::Provider::new())
             .await
             .expect("should encode");
 
