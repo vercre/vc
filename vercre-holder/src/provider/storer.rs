@@ -5,7 +5,7 @@
 
 use std::future::Future;
 
-use vercre_vc::model::vp::Constraints;
+use vercre_pe::Constraints;
 
 use crate::credential::Credential;
 use crate::provider::Result;

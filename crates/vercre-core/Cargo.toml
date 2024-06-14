@@ -37,7 +37,7 @@ serde_json_path = "0.6.7"
 serde_qs.workspace = true
 thiserror = "1.0.61"
 tracing.workspace = true
-vercre-vc.workspace = true
+vercre-pe.workspace = true
 vercre-proof.workspace = true
 
 [dev-dependencies]

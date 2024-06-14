@@ -16,7 +16,7 @@ where
     R: tauri::Runtime,
 {
     app_handle: tauri::AppHandle<R>,
-    store: Arc<Mutex<HashMap<String, Vec<u8>>>>
+    store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
 }
 
 impl<R> Provider<R>

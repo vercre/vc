@@ -29,6 +29,7 @@ tracing.workspace = true
 urlencoding = "2.1.3"
 uuid.workspace = true
 vercre-core.workspace = true
+vercre-pe.workspace = true
 vercre-proof.workspace = true
 vercre-vc.workspace = true
 

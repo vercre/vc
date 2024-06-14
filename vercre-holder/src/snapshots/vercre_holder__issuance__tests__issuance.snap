@@ -1,9 +1,10 @@
 ---
 source: vercre-holder/src/issuance.rs
-assertion_line: 434
+assertion_line: 400
 expression: "&issuance"
 ---
 id: 1fdb69d1-8bcb-4cc9-9749-750ca285124f
+client_id: ""
 status: Ready
 offer:
   credential_issuer: "http://vercre.io"

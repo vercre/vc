@@ -30,7 +30,7 @@ where
         });
         let jwk_str = jwk.to_string();
         let jwk_b64 = Base64UrlUnpadded::encode_string(jwk_str.as_bytes());
-    
+
         let holder_did = format!("did:jwk:{jwk_b64}");
         format!("{holder_did}#0")
     }

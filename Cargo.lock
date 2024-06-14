@@ -5598,8 +5598,8 @@ dependencies = [
  "serde_qs",
  "thiserror",
  "tracing",
+ "vercre-pe",
  "vercre-proof",
- "vercre-vc",
 ]
 
 [[package]]
@@ -5620,6 +5620,7 @@ dependencies = [
  "uuid",
  "vercre-core",
  "vercre-issuer",
+ "vercre-pe",
  "vercre-proof",
  "vercre-vc",
 ]
@@ -5684,10 +5685,8 @@ dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
- "regex",
  "serde",
  "serde_json",
- "serde_json_path",
  "tracing",
  "tracing-subscriber",
  "uuid",
@@ -5714,6 +5713,7 @@ dependencies = [
  "tracing",
  "uuid",
  "vercre-core",
+ "vercre-pe",
  "vercre-proof",
  "vercre-vc",
 ]
