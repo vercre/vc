@@ -131,7 +131,7 @@ mod tests {
     use providers::wallet;
     use serde_json::json;
     use vercre_core::vci::{CredentialRequest, ProofClaims};
-    use vercre_vc::proof;
+    use vercre_vc::proof::{self, Payload, Verify};
 
     use super::*;
     use crate::state::{Deferred, Expire, Token};
@@ -231,8 +231,7 @@ mod tests {
         // verify credential
         let vc_val = cred_resp.credential.expect("VC is present");
         let token = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
-        let proof::Type::Vc(vc) =
-            proof::verify(&token, proof::DataType::Vc).await.expect("should decode")
+        let Payload::Vc(vc) = proof::verify(&token, Verify::Vc).await.expect("should decode")
         else {
             panic!("should be VC");
         };

@@ -38,7 +38,7 @@ use crate::model::{VerifiableCredential, VerifiablePresentation};
 /// `Type` is used to identify the type of proof to be created.
 #[derive(Debug, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions, clippy::large_enum_variant)]
-pub enum Type {
+pub enum Payload {
     /// A Verifiable Credential proof encoded as a JWT.
     Vc(VerifiableCredential),
 
@@ -59,9 +59,9 @@ pub enum Type {
 ///
 /// # Errors
 /// TODO: Add errors
-pub async fn create(proof: Type, signer: impl Signer) -> anyhow::Result<String> {
-    let jwt = match proof {
-        Type::Vc(vc) => {
+pub async fn create(payload: Payload, signer: impl Signer) -> anyhow::Result<String> {
+    let jwt = match payload {
+        Payload::Vc(vc) => {
             let claims: jose::VcClaims = vc.into();
             vercre_proof::jose::encode(vercre_proof::jose::Typ::Credential, &claims, signer).await?
 
@@ -75,7 +75,7 @@ pub async fn create(proof: Type, signer: impl Signer) -> anyhow::Result<String> 
             //     ..Proof::default()
             // };
         }
-        Type::Vp { vp, client_id, nonce } => {
+        Payload::Vp { vp, client_id, nonce } => {
             let mut claims = jose::VpClaims::from(vp);
             claims.aud.clone_from(&client_id);
             claims.nonce.clone_from(&nonce);
@@ -89,7 +89,7 @@ pub async fn create(proof: Type, signer: impl Signer) -> anyhow::Result<String> 
 }
 
 /// Data type to verify.
-pub enum DataType {
+pub enum Verify {
     /// A Verifiable Credential proof encoded as a JWT.
     Vc,
 
@@ -102,15 +102,15 @@ pub enum DataType {
 /// # Errors
 /// TODO: Add errors
 #[allow(clippy::unused_async)]
-pub async fn verify(token: &str, data_type: DataType) -> anyhow::Result<Type> {
-    match data_type {
-        DataType::Vc => {
+pub async fn verify(token: &str, payload: Verify) -> anyhow::Result<Payload> {
+    match payload {
+        Verify::Vc => {
             let jwt = vercre_proof::jose::decode::<jose::VcClaims>(token)?;
-            Ok(Type::Vc(jwt.claims.vc))
+            Ok(Payload::Vc(jwt.claims.vc))
         }
-        DataType::Vp => {
+        Verify::Vp => {
             let jwt = vercre_proof::jose::decode::<jose::VpClaims>(token)?;
-            Ok(Type::Vp {
+            Ok(Payload::Vp {
                 vp: jwt.claims.vp,
                 client_id: jwt.claims.aud,
                 nonce: jwt.claims.nonce,

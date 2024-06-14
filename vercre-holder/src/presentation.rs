@@ -14,7 +14,7 @@ use vercre_proof::jose;
 use vercre_vc::model::vp::{
     Constraints, DescriptorMap, PathNested, PresentationSubmission, VerifiablePresentation,
 };
-use vercre_vc::proof::{self, Type};
+use vercre_vc::proof::{self, Payload};
 
 use crate::credential::Credential;
 use crate::provider::{
@@ -229,7 +229,7 @@ where
             }
         };
 
-        let proof = Type::Vp {
+        let proof = Payload::Vp {
             vp,
             client_id: presentation.request.client_id.clone(),
             nonce: presentation.request.nonce.clone(),
@@ -423,7 +423,7 @@ mod tests {
     async fn sample_credential() -> Credential {
         let vc = VerifiableCredential::sample();
 
-        let proof = Type::Vc(vc.clone());
+        let proof = Payload::Vc(vc.clone());
         let jwt = proof::create(proof, issuance::Provider::new()).await.expect("should encode");
 
         let config = CredentialConfiguration::sample();

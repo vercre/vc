@@ -30,7 +30,7 @@ use vercre_core::provider::{Callback, ClientMetadata, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{ResponseRequest, ResponseResponse};
 use vercre_core::{err, Result};
-use vercre_vc::proof::{self, Signer};
+use vercre_vc::proof::{self, Payload, Signer, Verify};
 
 use super::Endpoint;
 use crate::state::State;
@@ -119,8 +119,7 @@ where
                     vp_val
                 }
                 Value::String(token) => {
-                    let Ok(proof::Type::Vp { vp, nonce, .. }) =
-                        proof::verify(&token, proof::DataType::Vc).await
+                    let Ok(Payload::Vp { vp, nonce, .. }) = proof::verify(&token, Verify::Vc).await
                     else {
                         err!(Err::InvalidRequest, "invalid vp_token format");
                     };
@@ -193,8 +192,7 @@ where
             // convert Value (req_obj or base64url string) to VerifiableCredential
             let vc = match vc_node {
                 Value::String(token) => {
-                    let Ok(proof::Type::Vc(vc)) = proof::verify(token, proof::DataType::Vc).await
-                    else {
+                    let Ok(Payload::Vc(vc)) = proof::verify(token, Verify::Vc).await else {
                         err!(Err::InvalidRequest, "invalid VC format: {}", token);
                     };
                     vc

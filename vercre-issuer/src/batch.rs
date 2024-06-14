@@ -25,7 +25,7 @@ pub use vercre_core::vci::{
 };
 use vercre_core::{err, gen, Result};
 use vercre_vc::model::{CredentialSubject, VerifiableCredential};
-use vercre_vc::proof::{self, Signer, Type};
+use vercre_vc::proof::{self, Payload, Signer};
 
 use super::Endpoint;
 use crate::state::{Deferred, Expire, State};
@@ -269,7 +269,7 @@ where
         };
 
         // generate proof for the credential
-        let proof = Type::Vc(vc);
+        let proof = Payload::Vc(vc);
         let jwt = proof::create(proof, provider.clone()).await?;
 
         Ok(CredentialResponse {
@@ -407,6 +407,7 @@ mod tests {
     use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
+    use vercre_vc::proof::Verify;
 
     use super::*;
     use crate::state::Token;
@@ -491,8 +492,7 @@ mod tests {
 
         let vc_val = credential.expect("VC is present");
         let token = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
-        let proof::Type::Vc(vc) =
-            proof::verify(&token, proof::DataType::Vc).await.expect("should decode")
+        let Payload::Vc(vc) = proof::verify(&token, Verify::Vc).await.expect("should decode")
         else {
             panic!("should be VC");
         };

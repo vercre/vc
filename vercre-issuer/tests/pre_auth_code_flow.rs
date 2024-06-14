@@ -11,7 +11,7 @@ use vercre_issuer::create_offer::{CreateOfferRequest, CreateOfferResponse};
 use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
 use vercre_issuer::token::{TokenRequest, TokenResponse};
 use vercre_issuer::{Endpoint, ProofClaims};
-use vercre_vc::proof;
+use vercre_vc::proof::{self, Payload, Verify};
 
 lazy_static! {
     static ref PROVIDER: Provider = Provider::new();
@@ -27,9 +27,7 @@ async fn pre_auth_flow() {
 
     let vc_val = resp.credential.expect("VC is present");
     let token = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
-    let proof::Type::Vc(vc) =
-        proof::verify(&token, proof::DataType::Vc).await.expect("should decode")
-    else {
+    let Payload::Vc(vc) = proof::verify(&token, Verify::Vc).await.expect("should decode") else {
         panic!("should be VC");
     };
 
