@@ -5649,6 +5649,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "vercre-pe"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_json_path",
+ "tracing-subscriber",
+ "vercre-vc",
+]
+
+[[package]]
 name = "vercre-proof"
 version = "0.1.0-alpha.4"
 dependencies = [
