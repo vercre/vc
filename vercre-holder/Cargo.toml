@@ -21,10 +21,10 @@ workspace = true
 
 [dependencies]
 anyhow.workspace = true
-chrono = { version = "0.4.38", features = ["serde"] }
+chrono.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-serde_qs = "0.13.0"
+serde_qs.workspace = true
 tracing.workspace = true
 urlencoding = "2.1.3"
 uuid.workspace = true
@@ -33,8 +33,8 @@ vercre-proof.workspace = true
 vercre-vc.workspace = true
 
 [dev-dependencies]
-assert_let_bind = "0.1.1"
-insta = { version = "1.39.0", features = ["redactions", "yaml"] }
+assert_let_bind.workspace = true
+insta.workspace = true
 providers.workspace = true
-tokio = { version = "1.38.0", default-features = false, features = ["fs", "macros", "rt"] }
+tokio.workspace = true
 vercre-issuer.workspace = true

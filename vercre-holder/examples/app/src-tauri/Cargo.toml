@@ -16,7 +16,7 @@ anyhow.workspace = true
 argon2 = { version = "2.1.0", package = "rust-argon2" }
 base64ct.workspace = true
 iota_stronghold = { git = "https://github.com/vercre/stronghold.rs", package = "iota_stronghold" }
-lazy_static = "1.4.0"
+lazy_static.workspace = true
 log = "^0.4.21"
 reqwest = { version = "0.12.4", features = ["json"] }
 serde.workspace = true
@@ -30,8 +30,8 @@ tauri-plugin-store = "2.0.0-beta.6"
 thiserror = "1.0.61"
 
 [dev-dependencies]
-assert_let_bind = "0.1.1"
-tokio = { version = "1.37.0", default-features = false, features = ["fs", "macros", "rt"] }
+assert_let_bind.workspace = true
+tokio.workspace = true
 
 [build-dependencies]
 tauri-build = { version = "2.0.0-beta.15", features = [] }
