@@ -152,6 +152,7 @@ mod tests {
     use providers::wallet;
     use serde_json::json;
     use vercre_core::vci::ProofClaims;
+    use vercre_proof::jose;
     use vercre_vc::proof::{self, Payload, Verify};
 
     use super::*;
@@ -194,13 +195,9 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = vercre_proof::jose::encode(
-            vercre_proof::jose::Typ::Proof,
-            &claims,
-            wallet::Provider::new(),
-        )
-        .await
-        .expect("should encode");
+        let jwt = jose::encode(jose::Typ::Proof, &claims, wallet::Provider::new())
+            .await
+            .expect("should encode");
 
         let body = json!({
             "format": "jwt_vc_json",

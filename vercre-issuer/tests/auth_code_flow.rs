@@ -12,6 +12,7 @@ use vercre_issuer::authorize::{AuthorizationRequest, AuthorizationResponse};
 use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
 use vercre_issuer::token::{TokenRequest, TokenResponse};
 use vercre_issuer::{Endpoint, ProofClaims};
+use vercre_proof::jose;
 use vercre_vc::proof::{self, Payload, Verify};
 
 lazy_static! {
@@ -119,13 +120,9 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
         iat: Utc::now().timestamp(),
         nonce: input.c_nonce,
     };
-    let jwt = vercre_proof::jose::encode(
-        vercre_proof::jose::Typ::Proof,
-        &claims,
-        wallet::Provider::new(),
-    )
-    .await
-    .expect("should encode");
+    let jwt = jose::encode(jose::Typ::Proof, &claims, wallet::Provider::new())
+        .await
+        .expect("should encode");
 
     // HACK: get credential identifier
     let Some(auth_dets) = input.authorization_details else {

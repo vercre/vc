@@ -2,6 +2,7 @@ use std::str;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ed25519_dalek::{Signature, Signer, SigningKey};
+use vercre_proof::Algorithm;
 
 pub const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
 
@@ -24,8 +25,8 @@ impl Default for Provider {
 }
 
 impl vercre_proof::Signer for Provider {
-    fn algorithm(&self) -> vercre_proof::Algorithm {
-        vercre_proof::Algorithm::EdDSA
+    fn algorithm(&self) -> Algorithm {
+        Algorithm::EdDSA
     }
 
     fn verification_method(&self) -> String {

@@ -22,7 +22,7 @@ use vercre_core::provider::{Callback, ClientMetadata, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{RequestObjectRequest, RequestObjectResponse};
 use vercre_core::{err, Result};
-use vercre_proof::Signer;
+use vercre_proof::{jose, Signer};
 
 use super::Endpoint;
 use crate::state::State;
@@ -87,12 +87,7 @@ where
             err!(Err::InvalidRequest, "client ID mismatch");
         }
 
-        let jwt = vercre_proof::jose::encode(
-            vercre_proof::jose::Typ::Request,
-            &req_obj,
-            provider.clone(),
-        )
-        .await?;
+        let jwt = jose::encode(jose::Typ::Request, &req_obj, provider.clone()).await?;
 
         Ok(RequestObjectResponse {
             request_object: None,
@@ -150,8 +145,7 @@ mod tests {
             .expect("response is valid");
 
         let jwt_enc = response.jwt.expect("jwt exists");
-        let jwt: vercre_proof::jose::Jwt<RequestObject> =
-            vercre_proof::jose::decode(&jwt_enc).expect("jwt is valid");
+        let jwt: jose::Jwt<RequestObject> = jose::decode(&jwt_enc).expect("jwt is valid");
 
         assert_snapshot!("response", jwt);
 

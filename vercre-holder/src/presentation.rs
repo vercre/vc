@@ -457,13 +457,9 @@ mod tests {
             parse_request_object_response(&req_obj_res).expect("should parse with object");
         assert_eq!(obj, decoded);
 
-        let token = vercre_proof::jose::encode(
-            vercre_proof::jose::Typ::Request,
-            &obj,
-            presentation::Provider::new(),
-        )
-        .await
-        .expect("should encode");
+        let token = jose::encode(jose::Typ::Request, &obj, presentation::Provider::new())
+            .await
+            .expect("should encode");
 
         let req_obj_res = RequestObjectResponse {
             request_object: None,

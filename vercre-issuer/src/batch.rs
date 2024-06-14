@@ -24,6 +24,7 @@ pub use vercre_core::vci::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialRequest, CredentialResponse,
 };
 use vercre_core::{err, gen, Result};
+use vercre_proof::jose;
 use vercre_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_vc::proof::{self, Payload, Signer};
 
@@ -152,21 +153,20 @@ where
             };
 
             // TODO: allow passing verifier into this method
-            let jwt: vercre_proof::jose::Jwt<ProofClaims> =
-                match vercre_proof::jose::decode(proof_jwt) {
-                    Ok(jwt) => jwt,
-                    Err(e) => {
-                        let (nonce, expires_in) = self.err_nonce(provider).await?;
-                        err!(Err::InvalidProof(nonce, expires_in), "{}", e.to_string());
-                    }
-                };
+            let jwt: jose::Jwt<ProofClaims> = match jose::decode(proof_jwt) {
+                Ok(jwt) => jwt,
+                Err(e) => {
+                    let (nonce, expires_in) = self.err_nonce(provider).await?;
+                    err!(Err::InvalidProof(nonce, expires_in), "{}", e.to_string());
+                }
+            };
             // proof type
-            if jwt.header.typ != vercre_proof::jose::Typ::Proof {
+            if jwt.header.typ != jose::Typ::Proof {
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(
                     Err::InvalidProof(nonce, expires_in),
                     "Proof JWT 'typ' is not {}",
-                    vercre_proof::jose::Typ::Proof
+                    jose::Typ::Proof
                 );
             }
 
@@ -448,13 +448,9 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = vercre_proof::jose::encode(
-            vercre_proof::jose::Typ::Proof,
-            &claims,
-            wallet::Provider::new(),
-        )
-        .await
-        .expect("should encode");
+        let jwt = jose::encode(jose::Typ::Proof, &claims, wallet::Provider::new())
+            .await
+            .expect("should encode");
 
         let body = json!({
             "credential_requests":[{
