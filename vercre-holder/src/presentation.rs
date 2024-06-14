@@ -18,7 +18,8 @@ use vercre_vc::proof::{self, Payload};
 
 use crate::credential::Credential;
 use crate::provider::{
-    Callback, CredentialStorer, PresentationInput, PresentationListener, Signer, VerifierClient,
+    Callback, CredentialStorer, PresentationInput, PresentationListener, Signer, StateManager,
+    VerifierClient,
 };
 use crate::Endpoint;
 
@@ -106,6 +107,7 @@ where
         + PresentationListener
         + VerifierClient
         + Signer
+        + StateManager
         + Clone
         + Debug,
 {
@@ -133,6 +135,7 @@ where
         + PresentationListener
         + VerifierClient
         + Signer
+        + StateManager
         + Clone
         + Debug,
 {

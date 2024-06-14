@@ -31,7 +31,7 @@ impl AppState {
     where
         R: tauri::Runtime,
     {
-        let new_state = Endpoint::new(provider).accept(&self.issuance).await?;
+        let new_state = Endpoint::new(provider).accept(self.issuance.id.clone()).await?;
         self.issuance = new_state;
         Ok(())
     }

@@ -1,8 +1,13 @@
+use std::collections::HashMap;
+use std::sync::Arc;
+
+use futures::lock::Mutex;
 use vercre_holder::callback;
 use vercre_holder::provider::Callback;
 
 pub mod issuer_client;
 pub mod signer;
+pub mod state;
 pub mod store;
 
 #[derive(Clone, Debug)]
@@ -11,6 +16,7 @@ where
     R: tauri::Runtime,
 {
     app_handle: tauri::AppHandle<R>,
+    store: Arc<Mutex<HashMap<String, Vec<u8>>>>
 }
 
 impl<R> Provider<R>
@@ -19,8 +25,11 @@ where
 {
     /// Create a new credential store provider with a handle to the Tauri application.
     #[must_use]
-    pub const fn new(app_handle: tauri::AppHandle<R>) -> Self {
-        Self { app_handle }
+    pub fn new(app_handle: tauri::AppHandle<R>) -> Self {
+        Self {
+            app_handle,
+            store: Arc::new(Mutex::new(HashMap::new())),
+        }
     }
 }
 

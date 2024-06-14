@@ -6,6 +6,7 @@
 
 use std::fmt::Debug;
 
+use chrono::{DateTime, Utc};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
@@ -14,7 +15,7 @@ use vercre_core::vci::{CredentialOffer, MetadataRequest};
 use vercre_core::{err, Result};
 
 use crate::issuance::{Issuance, Status};
-use crate::provider::{Callback, IssuerClient};
+use crate::provider::{Callback, IssuerClient, StateManager};
 use crate::Endpoint;
 
 /// `OfferRequest` is the request to the `offer` endpoint to initiate an issuance flow.
@@ -31,7 +32,7 @@ pub struct OfferRequest {
 
 impl<P> Endpoint<P>
 where
-    P: Callback + IssuerClient + Debug,
+    P: Callback + IssuerClient + StateManager + Debug,
 {
     /// Initiates the issuance flow triggered by a new credential offer.
     #[instrument(level = "debug", skip(self))]
@@ -50,7 +51,7 @@ struct Context<P> {
 
 impl<P> vercre_core::Context for Context<P>
 where
-    P: IssuerClient + Debug + Sync + Send,
+    P: IssuerClient + StateManager + Debug + Sync + Send,
 {
     type Provider = P;
     type Request = OfferRequest;
@@ -109,6 +110,9 @@ where
             *cred_cfg = found.clone();
         }
         issuance.status = Status::Ready;
+
+        // Stash the state for the next step.
+        provider.put(&issuance.id, serde_json::to_vec(&issuance)?, DateTime::<Utc>::MAX_UTC).await?;
 
         Ok(issuance)
     }

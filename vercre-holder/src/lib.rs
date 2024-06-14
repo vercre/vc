@@ -42,7 +42,7 @@ pub mod provider;
 use std::fmt::Debug;
 
 pub use vercre_core::metadata::CredentialConfiguration;
-use vercre_core::provider::Callback;
+use vercre_core::provider::{Callback, StateManager};
 pub use vercre_core::{callback, Result};
 pub use vercre_vc::model::vp::Constraints;
 
@@ -50,7 +50,7 @@ pub use vercre_vc::model::vp::Constraints;
 #[derive(Debug)]
 pub struct Endpoint<P>
 where
-    P: Debug,
+    P: StateManager + Debug,
 {
     provider: P,
 }
@@ -63,7 +63,7 @@ where
 /// endpoint implementation of `Endpoint::call` specific to the request.
 impl<P> Endpoint<P>
 where
-    P: Debug,
+    P: StateManager + Debug,
 {
     /// Create a new `Endpoint` with the provided `Provider`.
     pub fn new(provider: P) -> Self {
@@ -73,7 +73,7 @@ where
 
 impl<P> vercre_core::Endpoint for Endpoint<P>
 where
-    P: Callback + Debug,
+    P: Callback + StateManager + Debug,
 {
     type Provider = P;
 
@@ -119,7 +119,7 @@ mod tests {
 
     impl<P> Endpoint<P>
     where
-        P: Callback + Signer + Clone + Debug,
+        P: Callback + StateManager + Signer + Clone + Debug,
     {
         async fn test(&mut self, request: &TestRequest) -> Result<TestResponse> {
             let ctx = Context {
