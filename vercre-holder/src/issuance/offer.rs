@@ -33,7 +33,7 @@ impl<P> Endpoint<P>
 where
     P: Callback + IssuerClient + Debug,
 {
-    /// Orchestrates the issuance flow triggered by a new credential offer.
+    /// Initiates the issuance flow triggered by a new credential offer.
     #[instrument(level = "debug", skip(self))]
     pub async fn offer(&self, request: &OfferRequest) -> Result<Issuance> {
         let ctx = Context {
@@ -78,6 +78,7 @@ where
         // Establish a new issuance flow state
         let mut issuance = Issuance {
             id: Uuid::new_v4().to_string(),
+            client_id: req.client_id.clone(),
             status: Status::Offered,
             ..Default::default()
         };

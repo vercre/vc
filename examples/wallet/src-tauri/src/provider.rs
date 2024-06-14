@@ -2,6 +2,7 @@ use vercre_holder::callback;
 use vercre_holder::provider::Callback;
 
 pub mod issuer_client;
+pub mod signer;
 pub mod store;
 
 #[derive(Clone, Debug)]

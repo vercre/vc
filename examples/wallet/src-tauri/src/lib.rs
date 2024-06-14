@@ -66,11 +66,17 @@ pub fn run() {
             select, // select a credential to view the detail.
             delete, // delete a credential.
             offer,  // submit a credential issuance offer directly from shell input.
+            accept, // accept a credential issuance offer.
+            //pin, // set a user PIN on the token request.
                     // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
+
+//-----------------------------------------------------------------------------------------------
+// Global State and Credential Management Commands
+//-----------------------------------------------------------------------------------------------
 
 /// The `start` command is called by the shell on load.
 #[tauri::command]
@@ -126,6 +132,10 @@ async fn delete(
     Ok(())
 }
 
+//-----------------------------------------------------------------------------------------------
+// Issuance Commands
+//-----------------------------------------------------------------------------------------------
+
 /// The `offer` command submits a credential issuance offer directly from shell input. Performs the
 /// same operation as the deep link listener but is useful for demo and testing purposes.
 #[tauri::command]
@@ -141,3 +151,32 @@ async fn offer(
     app.emit("state_updated", view).map_err(error::AppError::from)?;
     Ok(())
 }
+
+/// The `accept` command accepts a credential issuance offer. This will emit a status update to
+/// imply the shell needs to get a user PIN, or in the case where no PIN is required, will proceed
+/// directly to getting the credential.
+#[tauri::command]
+async fn accept(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
+    log::info!("accept invoked");
+    let mut model = state.0.lock().await;
+    let provider = Provider::new(app.clone());
+    model.accept(provider).await?;
+    let view: ViewModel = model.clone().into();
+    log::info!("emitting state_updated");
+    app.emit("state_updated", view).map_err(error::AppError::from)?;
+    Ok(())
+}
+
+// /// The `pin` command sets a user PIN on for use in the token request as part of the issuance flow.
+// /// The flow will proceed from token request to credential issuance and emit a status update.
+// #[tauri::command]
+// async fn pin(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
+//     log::info!("accept invoked");
+//     let mut model = state.0.lock().await;
+//     let provider = Provider::new(app.clone());
+//     model.pin(provider).await?;
+//     let view: ViewModel = model.clone().into();
+//     log::info!("emitting state_updated");
+//     app.emit("state_updated", view).map_err(error::AppError::from)?;
+//     Ok(())
+// }

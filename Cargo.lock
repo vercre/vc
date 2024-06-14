@@ -5752,6 +5752,7 @@ version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
  "base64ct",
+ "ed25519-dalek",
  "futures",
  "http 1.1.0",
  "lazy_static",
@@ -5770,6 +5771,7 @@ dependencies = [
  "typeshare",
  "urlencoding",
  "vercre-holder",
+ "vercre-vc",
 ]
 
 [[package]]

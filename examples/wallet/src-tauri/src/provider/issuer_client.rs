@@ -48,8 +48,9 @@ where
     /// Get an access token.
     async fn get_token(&self, _flow_id: &str, req: &TokenRequest) -> anyhow::Result<TokenResponse> {
         let client = reqwest::Client::new();
+        let url = format!("{}/token", req.credential_issuer);
         let result = client
-            .post(&req.credential_issuer)
+            .post(&url)
             .header(CONTENT_TYPE, "application/json")
             .header(ACCEPT, "application/json")
             .json(&req)
@@ -64,8 +65,9 @@ where
         &self, _flow_id: &str, req: &CredentialRequest,
     ) -> anyhow::Result<CredentialResponse> {
         let client = reqwest::Client::new();
+        let url = format!("{}/credential", req.credential_issuer);
         let result = client
-            .post(&req.credential_issuer)
+            .post(&url)
             .header(CONTENT_TYPE, "application/json")
             .header(ACCEPT, "application/json")
             .header(AUTHORIZATION, &format!("Bearer {}", req.access_token))

@@ -5,7 +5,6 @@
 mod accept;
 mod offer;
 mod pin;
-mod token;
 
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -32,6 +31,9 @@ pub struct Issuance {
     /// The unique identifier for the issuance flow. Not used internally but passed to providers
     /// so that wallet clients can track interactions with specific flows.
     pub id: String,
+
+    /// Client ID of the holder's agent (eg. wallet)
+    pub client_id: String,
 
     /// The current status of the issuance flow.
     pub status: Status,
@@ -158,7 +160,7 @@ where
         // Get PIN if required. Unwraps are OK since verify was called to check existence.
         let grants = req.offer.grants.as_ref().expect("grants exist on offer");
         let pre_auth_code =
-            grants.pre_authorized_code.as_ref().expect("pre-authorization code exists on offer");
+            grants.pre_authorized_code.as_ref().expect("pre-authorized code exists on offer");
         if let Some(tx_code) = &pre_auth_code.tx_code {
             issuance.status = Status::PendingPin;
             provider.notify(&issuance.id, Status::PendingPin);
@@ -170,7 +172,7 @@ where
 
         // Request an access token from the issuer.
         let token_request =
-            token_request(&req.client_id, &issuance, &pre_auth_code.pre_authorized_code);
+            token_request(&issuance);
         let token_response = match provider.get_token(&issuance.id, &token_request).await {
             Ok(resp) => resp,
             Err(e) => {
@@ -285,12 +287,18 @@ fn metadata(issuance: &mut Issuance, md: &MetadataResponse) -> Result<()> {
 }
 
 /// Construct a token request.
-fn token_request(client_id: &str, issuance: &Issuance, pre_authorized_code: &str) -> TokenRequest {
+fn token_request(issuance: &Issuance) -> TokenRequest {
+    // Get pre-authorized code. Unwraps are OK since verification should be called on outer endpoint
+    // to check existence.
+    let grants = issuance.offer.grants.as_ref().expect("grants exist on offer");
+    let pre_auth_code =
+        grants.pre_authorized_code.as_ref().expect("pre-authorized code exists on offer");
+
     TokenRequest {
         credential_issuer: issuance.offer.credential_issuer.clone(),
-        client_id: client_id.into(),
+        client_id: issuance.client_id.clone(),
         grant_type: GrantType::PreAuthorizedCode,
-        pre_authorized_code: Some(pre_authorized_code.to_string()),
+        pre_authorized_code: Some(pre_auth_code.pre_authorized_code.clone()),
         user_code: issuance.pin.clone(),
         ..Default::default()
     }
@@ -401,6 +409,7 @@ mod tests {
     fn token_request_test() {
         let mut issuance = Issuance {
             id: "1fdb69d1-8bcb-4cc9-9749-750ca285124f".into(),
+            client_id: wallet::CLIENT_ID.into(),
             status: Status::Accepted,
             offer: sample_offer(),
             offered: HashMap::from([("EmployeeID_JWT".into(), CredentialConfiguration::default())]),
@@ -412,7 +421,7 @@ mod tests {
         };
         metadata(&mut issuance, &meta_res).expect("metadata should update flow");
         let token_req =
-            token_request(wallet::CLIENT_ID, &issuance, "cVJ9o7fKUOxLbyQAEbHx3TPkTbvjTHHH");
+            token_request(&issuance);
         assert_snapshot!("token_request", &token_req);
     }
 

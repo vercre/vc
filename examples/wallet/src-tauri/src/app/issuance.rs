@@ -1,5 +1,7 @@
-use vercre_holder::issuance::{CredentialOffer, OfferRequest};
+//! Application state implementation for issuance operations.
+
 use vercre_holder::Endpoint;
+use vercre_holder::issuance::{CredentialOffer, OfferRequest};
 
 use crate::app::AppState;
 use crate::provider::Provider;
@@ -20,6 +22,16 @@ impl AppState {
             offer,
         };
         let new_state = Endpoint::new(provider).offer(&request).await?;
+        self.issuance = new_state;
+        Ok(())
+    }
+
+    /// Accept a credential issuance offer.
+    pub async fn accept<R>(&mut self, provider: Provider<R>) -> anyhow::Result<()>
+    where
+        R: tauri::Runtime,
+    {
+        let new_state = Endpoint::new(provider).accept(&self.issuance).await?;
         self.issuance = new_state;
         Ok(())
     }
