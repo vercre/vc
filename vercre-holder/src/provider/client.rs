@@ -4,11 +4,11 @@
 //! uses these traits to interact with the issuer and verifier services.
 use std::future::Future;
 
-use vercre_core::vci::{
+use vercre_core::types::issuance::{
     CredentialRequest, CredentialResponse, MetadataRequest, MetadataResponse, TokenRequest,
     TokenResponse,
 };
-use vercre_core::vp::{RequestObjectResponse, ResponseRequest};
+use vercre_core::types::presentation::{RequestObjectResponse, ResponseRequest};
 
 use crate::credential::Logo;
 use crate::provider::Result;

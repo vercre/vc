@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
-use vercre_core::vp::{RequestObject, RequestObjectResponse, ResponseRequest};
+use vercre_core::types::presentation::{RequestObject, RequestObjectResponse, ResponseRequest};
 use vercre_core::{err, jws, Result};
 use vercre_exch::{Constraints, DescriptorMap, PathNested, PresentationSubmission};
 use vercre_vc::model::vp::VerifiablePresentation;

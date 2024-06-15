@@ -76,12 +76,11 @@ use anyhow::anyhow;
 use chrono::Utc;
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::Issuer;
 use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
+    Callback, ClientMetadata, Issuer, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
-use vercre_core::vci::GrantType;
-pub use vercre_core::vci::{
+use vercre_core::types::issuance::GrantType;
+pub use vercre_core::types::issuance::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
     TokenAuthorizationDetail,
 };

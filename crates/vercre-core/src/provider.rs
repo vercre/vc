@@ -1,7 +1,6 @@
 //! # `OpenID` Core
 
 mod callback;
-mod metadata;
 mod signature;
 mod subject;
 
@@ -10,11 +9,13 @@ use std::future::{Future, IntoFuture};
 use chrono::{DateTime, Utc};
 
 pub use self::callback::{Payload, Status};
-pub use self::metadata::{
-    Claim, Client, CredentialConfiguration, CredentialDefinition, Issuer, Server, VpFormat,
-};
 pub use self::signature::{Algorithm, Signer, Verifier};
 pub use self::subject::Claims;
+pub use crate::types::issuance::{
+    ClaimDefinition, CredentialConfiguration, CredentialDefinition, Issuer,
+};
+pub use crate::types::presentation::VpFormat;
+pub use crate::types::{Client, Server};
 
 /// Result is used for all external errors.
 pub type Result<T> = anyhow::Result<T>;

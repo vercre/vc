@@ -6,7 +6,7 @@ use futures::executor::block_on;
 use providers::presentation::Provider;
 use serde_json::json;
 use test::Bencher;
-use vercre_core::vp::CreateRequestRequest;
+use vercre_core::types::presentation::CreateRequestRequest;
 use vercre_verifier::Endpoint;
 
 #[bench]

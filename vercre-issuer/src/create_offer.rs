@@ -74,7 +74,7 @@ use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
 #[allow(clippy::module_name_repetitions)]
-pub use vercre_core::vci::{
+pub use vercre_core::types::issuance::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer, Grants,
     PreAuthorizedCodeGrant, TxCode,
 };

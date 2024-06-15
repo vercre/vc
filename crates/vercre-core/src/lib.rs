@@ -9,8 +9,7 @@ pub mod gen;
 pub mod jws;
 pub mod provider;
 pub mod stringify;
-pub mod vci;
-pub mod vp;
+pub mod types;
 
 use std::fmt::Debug;
 

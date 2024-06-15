@@ -30,7 +30,7 @@ use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
 #[allow(clippy::module_name_repetitions)]
-pub use vercre_core::vci::{MetadataRequest, MetadataResponse};
+pub use vercre_core::types::issuance::{MetadataRequest, MetadataResponse};
 use vercre_core::Result;
 use vercre_vc::proof::Signer;
 

@@ -167,8 +167,8 @@ use std::fmt::Debug;
 
 pub use vercre_core::error::Error;
 use vercre_core::provider::{Callback, ClientMetadata, StateManager};
-pub use vercre_core::vci::{Format, GrantType};
-pub use vercre_core::{ provider, Result};
+pub use vercre_core::types::issuance::{Format, GrantType};
+pub use vercre_core::{provider, Result};
 use vercre_vc::proof::Signer;
 
 // TODO: remove double borrow for traits (i.e. &self -> self)

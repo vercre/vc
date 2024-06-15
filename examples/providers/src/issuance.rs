@@ -13,7 +13,7 @@ use vercre_core::provider::{
     self as metadata, Callback, Claims, ClientMetadata, CredentialDefinition, IssuerMetadata,
     Payload, Result, ServerMetadata, StateManager, Subject,
 };
-use vercre_core::vci::GrantType;
+use vercre_core::types::issuance::GrantType;
 use vercre_vc::proof::{Algorithm, Signer};
 
 pub const NORMAL_USER: &str = "normal_user";
@@ -234,9 +234,7 @@ impl SubjectStore {
         Ok(true)
     }
 
-    fn get_claims(
-        &self, holder_subject: &str, credential: &CredentialDefinition,
-    ) -> Claims {
+    fn get_claims(&self, holder_subject: &str, credential: &CredentialDefinition) -> Claims {
         // get holder subject while allowing mutex to go out of scope and release
         // lock so we can take another lock for insert further down
         let subject =

@@ -14,13 +14,13 @@ use anyhow::anyhow;
 use chrono::Utc;
 use tracing::instrument;
 use vercre_core::error::{Ancillary as _, Err};
-use vercre_core::provider::{CredentialDefinition, Issuer};
 use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
+    Callback, ClientMetadata, CredentialDefinition, Issuer, IssuerMetadata, ServerMetadata,
+    StateManager, Subject,
 };
-use vercre_core::vci::ProofClaims;
+use vercre_core::types::issuance::ProofClaims;
 #[allow(clippy::module_name_repetitions)]
-pub use vercre_core::vci::{
+pub use vercre_core::types::issuance::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialRequest, CredentialResponse,
 };
 use vercre_core::{err, gen, jws, Result};

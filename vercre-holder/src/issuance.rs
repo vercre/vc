@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use vercre_core::error::Err;
 use vercre_core::provider::CredentialConfiguration;
-pub use vercre_core::vci::{
+pub use vercre_core::types::issuance::{
     CredentialOffer, CredentialRequest, CredentialResponse, GrantType, MetadataRequest,
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
@@ -347,7 +347,7 @@ async fn credential(
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use providers::wallet;
-    use vercre_core::vci::{Grants, PreAuthorizedCodeGrant, TxCode};
+    use vercre_core::types::issuance::{Grants, PreAuthorizedCodeGrant, TxCode};
 
     use super::*;
 

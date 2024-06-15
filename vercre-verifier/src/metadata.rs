@@ -11,7 +11,7 @@ use tracing::instrument;
 pub use vercre_core::provider as types;
 use vercre_core::provider::{Callback, ClientMetadata, StateManager};
 #[allow(clippy::module_name_repetitions)]
-pub use vercre_core::vp::{MetadataRequest, MetadataResponse};
+pub use vercre_core::types::presentation::{MetadataRequest, MetadataResponse};
 use vercre_core::Result;
 use vercre_vc::proof::Signer;
 

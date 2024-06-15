@@ -9,7 +9,7 @@ use vercre_core::error::Err;
 use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
-pub use vercre_core::vci::{RegistrationRequest, RegistrationResponse};
+pub use vercre_core::types::issuance::{RegistrationRequest, RegistrationResponse};
 use vercre_core::{err, Result};
 use vercre_vc::proof::Signer;
 

@@ -7,10 +7,10 @@ use chrono::{DateTime, Utc};
 use ecdsa::signature::Signer as _;
 use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
-use vercre_core::provider::Payload;
-use vercre_core::provider::{self as metadata, VpFormat};
-use vercre_core::provider::{Callback, ClientMetadata, Result, StateManager};
-use vercre_core::vci::{Format, GrantType};
+use vercre_core::provider::{
+    self as metadata, Callback, ClientMetadata, Payload, Result, StateManager, VpFormat,
+};
+use vercre_core::types::issuance::{Format, GrantType};
 use vercre_vc::proof::{Algorithm, Signer};
 
 pub const VERIFIER: &str = "http://vercre.io";
