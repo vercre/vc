@@ -13,9 +13,8 @@ use crate::error::Err;
 use crate::vci::{Format, GrantType};
 use crate::{err, error, provider, Result};
 
-/// The `ClientMetadata` trait is used by implementers to provide `Client` metadata to 
-/// the library.
-#[allow(clippy::module_name_repetitions)]
+/// The `ClientMetadata` trait is used by implementers to provide `Client` metadata to the
+/// library.
 pub trait ClientMetadata: Send + Sync {
     /// Returns client metadata for the specified client.
     fn metadata(&self, client_id: &str) -> impl Future<Output = provider::Result<Client>> + Send;
@@ -27,17 +26,13 @@ pub trait ClientMetadata: Send + Sync {
     ) -> impl Future<Output = provider::Result<Client>> + Send;
 }
 
-/// The `IssuerMetadata` trait is used by implementers to provide Credential Issuer
-/// metadata.
-#[allow(clippy::module_name_repetitions)]
+/// The `IssuerMetadata` trait is used by implementers to provide Credential Issuer metadata.
 pub trait IssuerMetadata: Send + Sync {
     /// Returns the Credential Issuer's metadata.
     fn metadata(&self, issuer_id: &str) -> impl Future<Output = provider::Result<Issuer>> + Send;
 }
 
-/// The `ServerMetadata` trait is used by implementers to provide Authorization Server
-/// metadata.
-#[allow(clippy::module_name_repetitions)]
+/// The `ServerMetadata` trait is used by implementers to provide Authorization Server metadata.
 pub trait ServerMetadata: Send + Sync {
     /// Returns the Authorization Server's metadata.
     fn metadata(&self, server_id: &str) -> impl Future<Output = provider::Result<Server>> + Send;
