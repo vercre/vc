@@ -159,6 +159,14 @@ impl VerifiableCredential {
     }
 }
 
+// impl TryFrom<VerifiableCredential> for Value {
+//     type Error = anyhow::Error;
+
+//     fn try_from(vc: VerifiableCredential) -> Result<Self> {
+//         serde_json::to_value(vc).map_err(Into::into)
+//     }
+// }
+
 /// Issuer identifies the issuer of the credential.
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq)]
 #[serde(default)]

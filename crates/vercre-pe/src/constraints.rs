@@ -13,12 +13,6 @@ use super::{Constraints, Field, FilterValue};
 
 // LATER: add support for Zero-Knowledge Proofs by enabling the `predicate` feature
 
-// impl From<VerifiableCredential> for Value {
-//     fn from(vc: VerifiableCredential) -> Self {
-//         serde_json::to_value(vc).expect("should serialize")
-//     }
-// }
-
 impl Constraints {
     /// Check if a `VerifiableCredential` satisfies constraints provided in the
     /// Presentation Definition.

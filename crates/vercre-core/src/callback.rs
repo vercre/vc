@@ -3,8 +3,6 @@
 //! This module defines the callback trait and helper functions used for
 //! callbacks to client applications.
 
-use std::fmt::{self, Display, Formatter};
-
 /// Indication of the status of an issuance or presentation flow.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Status {
@@ -22,19 +20,6 @@ pub enum Status {
 
     /// An error occurred.
     Error,
-}
-
-/// Display implementation for Status.
-impl Display for Status {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::IssuanceRequested => write!(f, "issuance_requested"),
-            Self::CredentialIssued => write!(f, "credential_issued"),
-            Self::PresentationRequested => write!(f, "presentation_requested"),
-            Self::PresentationVerified => write!(f, "presentation_verified"),
-            Self::Error => write!(f, "error"),
-        }
-    }
 }
 
 /// Content of a status update.
