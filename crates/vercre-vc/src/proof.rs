@@ -32,7 +32,7 @@ mod jose;
 
 use serde::{Deserialize, Serialize};
 use vercre_core::jwt;
-pub use vercre_core::provider::{Algorithm, Signer};
+pub use vercre_core::signature::{Algorithm, Signer};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
 

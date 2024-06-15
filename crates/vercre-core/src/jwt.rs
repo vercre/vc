@@ -42,7 +42,7 @@ use ecdsa::signature::Verifier;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
-use crate::provider::Signer;
+use crate::signature::Signer;
 
 /// Algorithm is used to specify the signing algorithm used by the signer.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]

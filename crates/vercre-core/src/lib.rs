@@ -10,6 +10,7 @@ pub mod gen;
 pub mod jwt;
 pub mod metadata;
 pub mod provider;
+pub mod signature;
 pub mod stringify;
 pub mod subject;
 pub mod vci;

@@ -24,7 +24,7 @@ impl Default for Provider {
     }
 }
 
-impl vercre_core::provider::Signer for Provider {
+impl vercre_core::signature::Signer for Provider {
     fn algorithm(&self) -> Algorithm {
         Algorithm::EdDSA
     }
