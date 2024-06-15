@@ -4,44 +4,13 @@
 
 use std::collections::HashMap;
 use std::fmt;
-use std::future::Future;
 use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
 use crate::error::Err;
 use crate::vci::{Format, GrantType};
-use crate::{err, error, provider, Result};
-
-/// The `ClientMetadata` trait is used by implementers to provide `Client` metadata to 
-/// the library.
-#[allow(clippy::module_name_repetitions)]
-pub trait ClientMetadata: Send + Sync {
-    /// Returns client metadata for the specified client.
-    fn metadata(&self, client_id: &str) -> impl Future<Output = provider::Result<Client>> + Send;
-
-    /// Used by OAuth 2.0 clients to dynamically register with the authorization
-    /// server.
-    fn register(
-        &self, client_meta: &Client,
-    ) -> impl Future<Output = provider::Result<Client>> + Send;
-}
-
-/// The `IssuerMetadata` trait is used by implementers to provide Credential Issuer
-/// metadata.
-#[allow(clippy::module_name_repetitions)]
-pub trait IssuerMetadata: Send + Sync {
-    /// Returns the Credential Issuer's metadata.
-    fn metadata(&self, issuer_id: &str) -> impl Future<Output = provider::Result<Issuer>> + Send;
-}
-
-/// The `ServerMetadata` trait is used by implementers to provide Authorization Server
-/// metadata.
-#[allow(clippy::module_name_repetitions)]
-pub trait ServerMetadata: Send + Sync {
-    /// Returns the Authorization Server's metadata.
-    fn metadata(&self, server_id: &str) -> impl Future<Output = provider::Result<Server>> + Send;
-}
+use crate::{err, error, Result};
 
 // /// OAuth 2.0 Authorization Code grant type.
 // pub const AUTH_CODE_GRANT_TYPE: &str = "authorization_code";
