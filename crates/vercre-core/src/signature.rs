@@ -30,7 +30,9 @@ pub trait Signer: Send + Sync {
 /// Verifiable Credential issuance and Verifiable Presentation submissions.
 pub trait Verifier: Send + Sync {
     /// Verify the provided signature for a given message.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the signature is invalid.
     fn verify(&self, msg: &[u8], signature: &[u8]) -> anyhow::Result<()>;
-
-    
 }
