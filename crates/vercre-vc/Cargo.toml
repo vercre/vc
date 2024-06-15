@@ -29,7 +29,7 @@ serde_json.workspace = true
 tracing.workspace = true
 uuid.workspace = true
 vercre-exch.workspace = true
-vercre-jwt.workspace = true
+vercre-core.workspace = true
 
 [dev-dependencies]
 tracing-subscriber.workspace = true

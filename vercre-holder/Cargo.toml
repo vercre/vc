@@ -30,7 +30,6 @@ urlencoding = "2.1.3"
 uuid.workspace = true
 vercre-core.workspace = true
 vercre-exch.workspace = true
-vercre-jwt.workspace = true
 vercre-vc.workspace = true
 
 [dev-dependencies]

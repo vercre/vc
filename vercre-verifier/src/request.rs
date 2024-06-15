@@ -18,11 +18,10 @@ use std::fmt::Debug;
 use anyhow::anyhow;
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::provider::{Callback, ClientMetadata, StateManager};
+use vercre_core::provider::{Callback, ClientMetadata, Signer, StateManager};
 #[allow(clippy::module_name_repetitions)]
 pub use vercre_core::vp::{RequestObjectRequest, RequestObjectResponse};
-use vercre_core::{err, Result};
-use vercre_jwt::{jwt, Signer};
+use vercre_core::{err, jwt, Result};
 
 use super::Endpoint;
 use crate::state::State;

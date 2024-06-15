@@ -28,8 +28,10 @@ anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true
 ecdsa.workspace = true
+ed25519-dalek = "2.1.1"
 fastrand = "2.1.0"
 image = { version = "0.25.1", default-features = false, features = ["png"] }
+k256.workspace = true
 qrcode = { version = "0.14.0", default-features = false, features = ["image"] }
 serde.workspace = true
 serde_json.workspace = true
@@ -38,7 +40,6 @@ serde_qs.workspace = true
 thiserror = "1.0.61"
 tracing.workspace = true
 vercre-exch.workspace = true
-vercre-jwt.workspace = true
 
 [dev-dependencies]
 insta = { version = "1.39.0", features = ["filters", "redactions", "yaml"] }

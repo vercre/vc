@@ -8,12 +8,12 @@ use insta::assert_yaml_snapshot as assert_snapshot;
 use providers::issuance::{Provider, CREDENTIAL_ISSUER, PENDING_USER};
 use providers::wallet;
 use serde_json::json;
+use vercre_core::jwt;
 use vercre_issuer::create_offer::{CreateOfferRequest, CreateOfferResponse};
 use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
 use vercre_issuer::deferred::{DeferredCredentialRequest, DeferredCredentialResponse};
 use vercre_issuer::token::{TokenRequest, TokenResponse};
 use vercre_issuer::{Endpoint, ProofClaims};
-use vercre_jwt::jwt;
 
 static PROVIDER: LazyLock<Provider> = LazyLock::new(|| Provider::new());
 

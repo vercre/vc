@@ -3499,7 +3499,6 @@ dependencies = [
  "tracing-subscriber",
  "uuid",
  "vercre-core",
- "vercre-jwt",
  "vercre-vc",
 ]
 
@@ -5587,9 +5586,11 @@ dependencies = [
  "base64ct",
  "chrono",
  "ecdsa",
+ "ed25519-dalek",
  "fastrand",
  "image",
  "insta",
+ "k256",
  "qrcode",
  "serde",
  "serde_json",
@@ -5598,7 +5599,6 @@ dependencies = [
  "thiserror",
  "tracing",
  "vercre-exch",
- "vercre-jwt",
 ]
 
 [[package]]
@@ -5633,7 +5633,6 @@ dependencies = [
  "vercre-core",
  "vercre-exch",
  "vercre-issuer",
- "vercre-jwt",
  "vercre-vc",
 ]
 
@@ -5656,23 +5655,7 @@ dependencies = [
  "tokio",
  "tracing",
  "vercre-core",
- "vercre-jwt",
  "vercre-vc",
-]
-
-[[package]]
-name = "vercre-jwt"
-version = "0.1.0-alpha.4"
-dependencies = [
- "anyhow",
- "base64ct",
- "ecdsa",
- "ed25519-dalek",
- "insta",
- "k256",
- "serde",
- "serde_json",
- "tracing",
 ]
 
 [[package]]
@@ -5687,8 +5670,8 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
+ "vercre-core",
  "vercre-exch",
- "vercre-jwt",
 ]
 
 [[package]]
@@ -5711,7 +5694,6 @@ dependencies = [
  "uuid",
  "vercre-core",
  "vercre-exch",
- "vercre-jwt",
  "vercre-vc",
 ]
 

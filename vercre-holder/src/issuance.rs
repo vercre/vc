@@ -18,8 +18,7 @@ pub use vercre_core::vci::{
     CredentialOffer, CredentialRequest, CredentialResponse, GrantType, MetadataRequest,
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
-use vercre_core::{err, Result};
-use vercre_jwt::jwt;
+use vercre_core::{err, jwt, Result};
 use vercre_vc::proof::{self, Payload, Verify};
 
 use crate::credential::Credential;

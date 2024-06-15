@@ -130,8 +130,8 @@ mod tests {
     use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
+    use vercre_core::jwt;
     use vercre_core::vci::{CredentialRequest, ProofClaims};
-    use vercre_jwt::jwt;
     use vercre_vc::proof::{self, Payload, Verify};
 
     use super::*;

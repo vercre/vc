@@ -9,9 +9,9 @@ use base64ct::{Base64, Encoding};
 use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use vercre_jwt::jwt::Jwk;
 
 use crate::error::{self, Err};
+use crate::jwt::Jwk;
 use crate::metadata::{
     Claim, Client as ClientMetadata, CredentialDefinition, Issuer as IssuerMetadata,
 };

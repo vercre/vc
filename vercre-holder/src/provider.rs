@@ -15,7 +15,6 @@ pub use input::{IssuanceInput, PresentationInput};
 pub use status_listener::{IssuanceListener, PresentationListener};
 pub use storer::CredentialStorer;
 pub use vercre_core::metadata::CredentialConfiguration;
-pub use vercre_core::provider::{Callback, Result, StateManager};
+pub use vercre_core::provider::{Algorithm, Callback, Result, Signer, StateManager};
 pub use vercre_core::vci::TxCode;
 pub use vercre_exch::Constraints;
-pub use vercre_jwt::{Algorithm, Signer};

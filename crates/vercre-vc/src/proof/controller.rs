@@ -1,6 +1,6 @@
 //! # Controller Document
 use serde::{Deserialize, Serialize};
-use vercre_jwt::jwt::Jwk;
+use vercre_core::jwt::Jwk;
 
 /// A controller document contains a set of verification methods that specify
 /// relationships between the controller and a set of public keys.

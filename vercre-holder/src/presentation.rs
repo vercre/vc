@@ -9,9 +9,8 @@ use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
 use vercre_core::vp::{RequestObject, RequestObjectResponse, ResponseRequest};
-use vercre_core::{err, Result};
+use vercre_core::{err, jwt, Result};
 use vercre_exch::{Constraints, DescriptorMap, PathNested, PresentationSubmission};
-use vercre_jwt::jwt;
 use vercre_vc::model::vp::VerifiablePresentation;
 use vercre_vc::proof::{self, Payload};
 
