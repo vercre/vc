@@ -4,7 +4,7 @@
 
 use std::future::{Future, IntoFuture};
 
-pub use crate::jwt::Algorithm;
+pub use crate::jws::Algorithm;
 
 /// Signer is used by implementers to provide signing functionality for
 /// Verifiable Credential issuance and Verifiable Presentation submissions.
@@ -31,4 +31,6 @@ pub trait Signer: Send + Sync {
 pub trait Verifier: Send + Sync {
     /// Verify the provided signature for a given message.
     fn verify(&self, msg: &[u8], signature: &[u8]) -> anyhow::Result<()>;
+
+    
 }

@@ -36,7 +36,7 @@
 use std::fmt::{Debug, Display};
 use std::str::{self, FromStr};
 
-use anyhow::bail;
+use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ecdsa::signature::Verifier;
 use serde::de::DeserializeOwned;
@@ -90,7 +90,7 @@ impl Display for Payload {
     }
 }
 
-/// Encode the header and claims given and sign the payload using the algorithm from the header and the key.
+/// Encode the provided header and claims and sign, returning a JWT in compact JWS form.
 ///
 /// # Errors
 /// TODO: add error docs
@@ -132,49 +132,34 @@ where
     T: DeserializeOwned,
 {
     // TODO: cater for different key types
-    let parts: Vec<&str> = token.split('.').collect();
+    let parts = token.split('.').collect::<Vec<&str>>();
     if parts.len() != 3 {
         bail!("invalid Compact JWS format");
     }
 
-    let decoded_header = match Base64UrlUnpadded::decode_vec(parts[0]) {
-        Ok(decoded) => decoded,
-        Err(e) => {
-            bail!("unable to decode header: {e}");
-        }
-    };
-    let Ok(header) = serde_json::from_slice(&decoded_header) else {
-        bail!("unable to deserialize header");
-    };
-    let Ok(decoded_claims) = Base64UrlUnpadded::decode_vec(parts[1]) else {
-        bail!("unable to decode claims");
-    };
-    let Ok(claims) = serde_json::from_slice(&decoded_claims) else {
-        bail!("unable to deserialize claims");
-    };
+    // deserialize header, claims, and signature
+    let decoded = Base64UrlUnpadded::decode_vec(parts[0])
+        .map_err(|e| anyhow!("issue decoding header: {e}"))?;
+    let header: Header =
+        serde_json::from_slice(&decoded).map_err(|e| anyhow!("issue deserializing header: {e}"))?;
+    let decoded = Base64UrlUnpadded::decode_vec(parts[1])
+        .map_err(|e| anyhow!("issue decoding claims: {e}"))?;
+    let claims =
+        serde_json::from_slice(&decoded).map_err(|e| anyhow!("issue deserializing claims:{e}"))?;
+    let sig = Base64UrlUnpadded::decode_vec(parts[2])
+        .map_err(|e| anyhow!("issue decoding signature: {e}"))?;
 
-    let jwt = Jwt { header, claims };
-
-    let msg = format!("{}.{}", parts[0], parts[1]);
-    let Ok(sig) = Base64UrlUnpadded::decode_vec(parts[2]) else {
-        bail!("unable to decode proof signature");
-    };
-
-    let proof_jwk = match Jwk::from_str(&jwt.header.kid.clone().unwrap_or_default()) {
-        Ok(proof_jwk) => proof_jwk,
-        Err(e) => {
-            bail!("unable to parse 'kid' into JWK: {}", e.to_string());
-        }
-    };
-
-    proof_jwk.verify(&msg, &sig)?;
-
-    // algorithm
-    if !(jwt.header.alg == Algorithm::ES256K || jwt.header.alg == Algorithm::EdDSA) {
+    // check algorithm
+    if !(header.alg == Algorithm::ES256K || header.alg == Algorithm::EdDSA) {
         bail!("'alg' is not recognised");
     }
 
-    Ok(jwt)
+    // verify signature
+    let proof_jwk = Jwk::from_str(&header.kid.clone().unwrap_or_default())
+        .map_err(|e| anyhow!("unable to parse 'kid' into JWK: {e}"))?;
+    proof_jwk.verify(&format!("{}.{}", parts[0], parts[1]), &sig)?;
+
+    Ok(Jwt { header, claims })
 }
 
 /// Represents a JWT as used for proof and credential presentation.

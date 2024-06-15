@@ -23,7 +23,7 @@ use vercre_core::vci::ProofClaims;
 pub use vercre_core::vci::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialRequest, CredentialResponse,
 };
-use vercre_core::{err, gen, jwt, Result};
+use vercre_core::{err, gen, jws, Result};
 use vercre_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_vc::proof::{self, Payload, Signer};
 
@@ -152,7 +152,7 @@ where
             };
 
             // TODO: allow passing verifier into this method
-            let jwt: jwt::Jwt<ProofClaims> = match jwt::decode(proof_jwt) {
+            let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt) {
                 Ok(jwt) => jwt,
                 Err(e) => {
                     let (nonce, expires_in) = self.err_nonce(provider).await?;
@@ -160,12 +160,12 @@ where
                 }
             };
             // proof type
-            if jwt.header.typ != jwt::Payload::Proof {
+            if jwt.header.typ != jws::Payload::Proof {
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(
                     Err::InvalidProof(nonce, expires_in),
                     "Proof JWT 'typ' is not {}",
-                    jwt::Payload::Proof
+                    jws::Payload::Proof
                 );
             }
 
@@ -446,7 +446,7 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = jwt::encode(jwt::Payload::Proof, &claims, wallet::Provider::new())
+        let jwt = jws::encode(jws::Payload::Proof, &claims, wallet::Provider::new())
             .await
             .expect("should encode");
 

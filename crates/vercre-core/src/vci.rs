@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::error::{self, Err};
-use crate::jwt::Jwk;
+use crate::jws::Jwk;
 use crate::metadata::{
     Claim, Client as ClientMetadata, CredentialDefinition, Issuer as IssuerMetadata,
 };

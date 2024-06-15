@@ -9,7 +9,7 @@ use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
 use providers::wallet;
 use serde_json::json;
 use sha2::{Digest, Sha256};
-use vercre_core::jwt;
+use vercre_core::jws;
 use vercre_issuer::authorize::{AuthorizationRequest, AuthorizationResponse};
 use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
 use vercre_issuer::token::{TokenRequest, TokenResponse};
@@ -119,7 +119,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
         iat: Utc::now().timestamp(),
         nonce: input.c_nonce,
     };
-    let jwt = jwt::encode(jwt::Payload::Proof, &claims, wallet::Provider::new())
+    let jwt = jws::encode(jws::Payload::Proof, &claims, wallet::Provider::new())
         .await
         .expect("should encode");
 

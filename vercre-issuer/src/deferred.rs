@@ -130,7 +130,7 @@ mod tests {
     use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
-    use vercre_core::jwt;
+    use vercre_core::jws;
     use vercre_core::vci::{CredentialRequest, ProofClaims};
     use vercre_vc::proof::{self, Payload, Verify};
 
@@ -154,7 +154,7 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.clone()),
         };
-        let jwt = jwt::encode(jwt::Payload::Proof, &claims, wallet::Provider::new())
+        let jwt = jws::encode(jws::Payload::Proof, &claims, wallet::Provider::new())
             .await
             .expect("should encode");
 

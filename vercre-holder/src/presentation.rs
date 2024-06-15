@@ -9,7 +9,7 @@ use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
 use vercre_core::vp::{RequestObject, RequestObjectResponse, ResponseRequest};
-use vercre_core::{err, jwt, Result};
+use vercre_core::{err, jws, Result};
 use vercre_exch::{Constraints, DescriptorMap, PathNested, PresentationSubmission};
 use vercre_vc::model::vp::VerifiablePresentation;
 use vercre_vc::proof::{self, Payload};
@@ -282,7 +282,7 @@ fn parse_request_object_response(res: &RequestObjectResponse) -> Result<RequestO
     let Some(token) = &res.jwt else {
         err!(Err::InvalidRequest, "no serialized JWT found in response");
     };
-    let jwt = match jwt::decode(token) {
+    let jwt = match jws::decode(token) {
         Ok(jwt) => jwt,
         Err(e) => err!(Err::InvalidRequest, "failed to parse JWT: {e}"),
     };
@@ -458,7 +458,7 @@ mod tests {
             parse_request_object_response(&req_obj_res).expect("should parse with object");
         assert_eq!(obj, decoded);
 
-        let token = jwt::encode(jwt::Payload::Request, &obj, presentation::Provider::new())
+        let token = jws::encode(jws::Payload::Request, &obj, presentation::Provider::new())
             .await
             .expect("should encode");
 

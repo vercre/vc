@@ -31,7 +31,7 @@ pub mod integrity;
 mod jose;
 
 use serde::{Deserialize, Serialize};
-use vercre_core::jwt;
+use vercre_core::jws;
 pub use vercre_core::signature::{Algorithm, Signer};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
@@ -64,7 +64,7 @@ pub async fn create(payload: Payload, signer: impl Signer) -> anyhow::Result<Str
     let jwt = match payload {
         Payload::Vc(vc) => {
             let claims: jose::VcClaims = vc.into();
-            jwt::encode(jwt::Payload::Credential, &claims, signer).await?
+            jws::encode(jws::Payload::Credential, &claims, signer).await?
 
             // TODO: add data integrity proof payload
             // let proof = Proof {
@@ -80,7 +80,7 @@ pub async fn create(payload: Payload, signer: impl Signer) -> anyhow::Result<Str
             let mut claims = jose::VpClaims::from(vp);
             claims.aud.clone_from(&client_id);
             claims.nonce.clone_from(&nonce);
-            vercre_core::jwt::encode(vercre_core::jwt::Payload::Presentation, &claims, signer)
+            vercre_core::jws::encode(vercre_core::jws::Payload::Presentation, &claims, signer)
                 .await?
         }
     };
@@ -106,11 +106,11 @@ pub enum Verify {
 pub async fn verify(token: &str, payload: Verify) -> anyhow::Result<Payload> {
     match payload {
         Verify::Vc => {
-            let jwt = jwt::decode::<jose::VcClaims>(token)?;
+            let jwt = jws::decode::<jose::VcClaims>(token)?;
             Ok(Payload::Vc(jwt.claims.vc))
         }
         Verify::Vp => {
-            let jwt = jwt::decode::<jose::VpClaims>(token)?;
+            let jwt = jws::decode::<jose::VpClaims>(token)?;
             Ok(Payload::Vp {
                 vp: jwt.claims.vp,
                 client_id: jwt.claims.aud,
