@@ -44,7 +44,7 @@ use std::fmt::Debug;
 pub use vercre_core::metadata::CredentialConfiguration;
 use vercre_core::provider::{Callback, StateManager};
 pub use vercre_core::{callback, Result};
-pub use vercre_pe::Constraints;
+pub use vercre_exch::Constraints;
 
 /// Endpoint is used to surface the public wallet endpoints to clients.
 #[derive(Debug)]

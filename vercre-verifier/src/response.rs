@@ -255,7 +255,7 @@ mod tests {
     use providers::presentation::Provider;
     use serde_json::json;
     use vercre_core::vp::RequestObject;
-    use vercre_pe::PresentationDefinition;
+    use vercre_exch::PresentationDefinition;
 
     use super::*;
 

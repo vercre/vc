@@ -159,7 +159,7 @@ impl VerifiableCredential {
     }
 }
 
-impl vercre_pe::Claims for VerifiableCredential {
+impl vercre_exch::Claims for VerifiableCredential {
     fn to_json(&self) -> anyhow::Result<serde_json::Value> {
         serde_json::to_value(self).map_err(Into::into)
     }

@@ -11,7 +11,7 @@ Claim formats. This could include JSON Web Tokens (JWTs), Verifiable Credentials
 JWT-VCs, etc..
 
 ```rust,ignore
-use vercre_pe::Claim;
+use vercre_exch::Claim;
 
 impl Claims for VerifiableCredential {
     fn to_json(&self) -> anyhow::Result<serde_json::Value> {

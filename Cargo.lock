@@ -5597,8 +5597,21 @@ dependencies = [
  "serde_qs",
  "thiserror",
  "tracing",
- "vercre-pe",
+ "vercre-exch",
  "vercre-proof",
+]
+
+[[package]]
+name = "vercre-exch"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_json_path",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -5618,8 +5631,8 @@ dependencies = [
  "urlencoding",
  "uuid",
  "vercre-core",
+ "vercre-exch",
  "vercre-issuer",
- "vercre-pe",
  "vercre-proof",
  "vercre-vc",
 ]
@@ -5645,19 +5658,6 @@ dependencies = [
  "vercre-core",
  "vercre-proof",
  "vercre-vc",
-]
-
-[[package]]
-name = "vercre-pe"
-version = "0.1.0-alpha.4"
-dependencies = [
- "anyhow",
- "chrono",
- "regex",
- "serde",
- "serde_json",
- "serde_json_path",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -5687,7 +5687,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
- "vercre-pe",
+ "vercre-exch",
  "vercre-proof",
 ]
 
@@ -5710,7 +5710,7 @@ dependencies = [
  "tracing",
  "uuid",
  "vercre-core",
- "vercre-pe",
+ "vercre-exch",
  "vercre-proof",
  "vercre-vc",
 ]

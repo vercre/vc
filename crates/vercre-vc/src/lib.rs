@@ -8,5 +8,5 @@
 
 pub mod model;
 pub mod proof;
-pub mod status;
 pub mod schema;
+pub mod status;

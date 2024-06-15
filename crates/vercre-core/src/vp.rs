@@ -10,7 +10,7 @@ use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use vercre_pe::{InputDescriptor, PresentationDefinition, PresentationSubmission};
+use vercre_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 
 use crate::error::Err;
 use crate::metadata::Client as ClientMetadata;
