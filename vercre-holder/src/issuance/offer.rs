@@ -112,7 +112,9 @@ where
         issuance.status = Status::Ready;
 
         // Stash the state for the next step.
-        provider.put(&issuance.id, serde_json::to_vec(&issuance)?, DateTime::<Utc>::MAX_UTC).await?;
+        provider
+            .put(&issuance.id, serde_json::to_vec(&issuance)?, DateTime::<Utc>::MAX_UTC)
+            .await?;
 
         Ok(issuance)
     }

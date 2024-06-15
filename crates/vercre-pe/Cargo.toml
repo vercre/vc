@@ -1,6 +1,6 @@
 [package]
-name = "vercre-vc"
-description = "Primary Verifiable Credential building blocks, including dependencies."
+name = "vercre-pe"
+description = "An implementation of DIF Presentation Exchange specification."
 license = "MIT OR Apache-2.0"
 publish = false
 readme = "README.md"
@@ -22,13 +22,12 @@ workspace = true
 
 [dependencies]
 anyhow.workspace = true
-base64ct.workspace = true
 chrono.workspace = true
+regex = "1.10.5"
 serde.workspace = true
 serde_json.workspace = true
-tracing.workspace = true
-uuid.workspace = true
-vercre-proof.workspace = true
+serde_json_path = "0.6.7"
+vercre-vc.workspace = true
 
 [dev-dependencies]
 tracing-subscriber.workspace = true

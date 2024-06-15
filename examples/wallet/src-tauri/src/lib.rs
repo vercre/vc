@@ -67,7 +67,7 @@ pub fn run() {
             delete, // delete a credential.
             offer,  // submit a credential issuance offer directly from shell input.
             accept, // accept a credential issuance offer.
-            //pin, // set a user PIN on the token request.
+                    //pin, // set a user PIN on the token request.
                     // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
         ])
         .run(tauri::generate_context!())

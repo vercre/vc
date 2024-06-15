@@ -171,8 +171,7 @@ where
         provider.notify(&issuance.id, Status::Accepted);
 
         // Request an access token from the issuer.
-        let token_request =
-            token_request(&issuance);
+        let token_request = token_request(&issuance);
         let token_response = match provider.get_token(&issuance.id, &token_request).await {
             Ok(resp) => resp,
             Err(e) => {
@@ -398,11 +397,9 @@ mod tests {
             credential_issuer: vercre_core::metadata::Issuer::sample(),
         };
         metadata(&mut issuance, &meta_res).expect("metadata should update flow");
-        assert_snapshot!(
-            "issuance",
-            &issuance,
-            { ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction() }
-        );
+        assert_snapshot!("issuance", &issuance, {
+            ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction()
+        });
     }
 
     #[test]
@@ -420,8 +417,7 @@ mod tests {
             credential_issuer: vercre_core::metadata::Issuer::sample(),
         };
         metadata(&mut issuance, &meta_res).expect("metadata should update flow");
-        let token_req =
-            token_request(&issuance);
+        let token_req = token_request(&issuance);
         assert_snapshot!("token_request", &token_req);
     }
 

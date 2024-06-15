@@ -10,10 +10,9 @@ use uuid::Uuid;
 use vercre_core::error::Err;
 use vercre_core::vp::{RequestObject, RequestObjectResponse, ResponseRequest};
 use vercre_core::{err, Result};
+use vercre_pe::{Constraints, DescriptorMap, PathNested, PresentationSubmission};
 use vercre_proof::jwt;
-use vercre_vc::model::vp::{
-    Constraints, DescriptorMap, PathNested, PresentationSubmission, VerifiablePresentation,
-};
+use vercre_vc::model::vp::VerifiablePresentation;
 use vercre_vc::proof::{self, Payload};
 
 use crate::credential::Credential;
@@ -368,10 +367,8 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use providers::{issuance, presentation};
     use vercre_core::metadata::CredentialConfiguration;
-    use vercre_vc::model::{
-        Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition,
-        VerifiableCredential,
-    };
+    use vercre_pe::{Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition};
+    use vercre_vc::model::VerifiableCredential;
     use vercre_vc::proof::Algorithm;
 
     use super::*;

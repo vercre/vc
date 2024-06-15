@@ -1,5 +1,5 @@
 //! # Issuance Offer Acceptance
-//! 
+//!
 //! The `accept` endpoint is used to register acceptance of a credential issuance offer with the
 //! issuance flow. If a PIN is required, this endpoint will simply update the state to indicate
 //! that, otherwise it will proceed with the token request and credential requests.
@@ -84,7 +84,9 @@ where
         new_state.status = Status::Accepted;
 
         // Stash the state for the next step.
-        provider.put(&new_state.id, serde_json::to_vec(&new_state)?, DateTime::<Utc>::MAX_UTC).await?;
+        provider
+            .put(&new_state.id, serde_json::to_vec(&new_state)?, DateTime::<Utc>::MAX_UTC)
+            .await?;
 
         Ok(new_state)
     }

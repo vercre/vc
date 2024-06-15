@@ -7,17 +7,17 @@ use chrono::{DateTime, NaiveDate};
 use regex::Regex;
 use serde_json::Value;
 use serde_json_path::JsonPath;
+use vercre_vc::model::VerifiableCredential;
 
-use crate::model::vp::{Constraints, Field, FilterValue};
-use crate::model::VerifiableCredential;
+use super::{Constraints, Field, FilterValue};
 
 // LATER: add support for Zero-Knowledge Proofs by enabling the `predicate` feature
 
-impl From<VerifiableCredential> for Value {
-    fn from(vc: VerifiableCredential) -> Self {
-        serde_json::to_value(vc).expect("should serialize")
-    }
-}
+// impl From<VerifiableCredential> for Value {
+//     fn from(vc: VerifiableCredential) -> Self {
+//         serde_json::to_value(vc).expect("should serialize")
+//     }
+// }
 
 impl Constraints {
     /// Check if a `VerifiableCredential` satisfies constraints provided in the
