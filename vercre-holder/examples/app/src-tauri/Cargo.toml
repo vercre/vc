@@ -16,7 +16,6 @@ anyhow.workspace = true
 argon2 = { version = "2.1.0", package = "rust-argon2" }
 base64ct.workspace = true
 iota_stronghold = { git = "https://github.com/vercre/stronghold.rs", package = "iota_stronghold" }
-lazy_static.workspace = true
 log = "^0.4.21"
 reqwest = { version = "0.12.4", features = ["json"] }
 serde.workspace = true

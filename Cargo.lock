@@ -2320,7 +2320,6 @@ version = "0.0.0"
 dependencies = [
  "axum",
  "axum-extra",
- "lazy_static",
  "oauth2",
  "providers",
  "serde",
@@ -5636,7 +5635,6 @@ dependencies = [
  "derive_builder",
  "futures",
  "insta",
- "lazy_static",
  "providers",
  "serde",
  "serde_json",
@@ -5660,7 +5658,6 @@ dependencies = [
  "serde_json",
  "serde_json_path",
  "tracing-subscriber",
- "vercre-vc",
 ]
 
 [[package]]
@@ -5690,6 +5687,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
+ "vercre-pe",
  "vercre-proof",
 ]
 
@@ -5703,7 +5701,6 @@ dependencies = [
  "derive_builder",
  "futures",
  "insta",
- "lazy_static",
  "providers",
  "serde",
  "serde_json",
@@ -5770,7 +5767,6 @@ dependencies = [
  "ed25519-dalek",
  "futures",
  "http 1.1.0",
- "lazy_static",
  "log",
  "reqwest 0.12.4",
  "rust-argon2",
@@ -5786,7 +5782,6 @@ dependencies = [
  "typeshare",
  "urlencoding",
  "vercre-holder",
- "vercre-vc",
 ]
 
 [[package]]

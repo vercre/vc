@@ -28,6 +28,7 @@ serde.workspace = true
 serde_json.workspace = true
 tracing.workspace = true
 uuid.workspace = true
+vercre-pe.workspace = true
 vercre-proof.workspace = true
 
 [dev-dependencies]

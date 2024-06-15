@@ -1,15 +1,18 @@
-//! Verifiable Credential Presentation Exchange Constraints
+//! # [Presentation Exchange] Constraints
 //!
-//! [Presentation Exchange 2.0.0]: (https://identity.foundation/presentation-exchange/spec/v2.0.0)
+//! Checks whether a `VerifiableCredential` satisfies constraints specified in a
+//! [Presentation Definition].
+//!
+//! [Presentation Exchange]: (https://identity.foundation/presentation-exchange/spec/v2.0.0)
+//! [Presentation Definition]: (https://identity.foundation/presentation-exchange/spec/v2.0.0/#presentation-definition)
 
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, NaiveDate};
 use regex::Regex;
 use serde_json::Value;
 use serde_json_path::JsonPath;
-use vercre_vc::model::VerifiableCredential;
 
-use super::{Constraints, Field, FilterValue};
+use super::{Claims, Constraints, Field, FilterValue};
 
 // LATER: add support for Zero-Knowledge Proofs by enabling the `predicate` feature
 
@@ -20,11 +23,11 @@ impl Constraints {
     /// # Errors
     ///
     /// Returns an error if the `JSONPath` query is invalid.
-    pub fn satisfied(&self, vc: &VerifiableCredential) -> Result<bool> {
+    pub fn satisfied(&self, claims: &impl Claims) -> Result<bool> {
         let Some(fields) = &self.fields else {
             return Ok(true);
         };
-        let Ok(vc_val) = serde_json::to_value(vc) else {
+        let Ok(vc_val) = claims.to_json() else {
             return Err(anyhow!("error serializing credential"));
         };
 
@@ -147,7 +150,6 @@ fn match_format(filter_val: &FilterValue, vc_node: &Value) -> Result<bool> {
 
 #[cfg(test)]
 mod test {
-    // use std::sync::LazyLock;
 
     use serde_json::json;
 
@@ -166,9 +168,7 @@ mod test {
         });
 
         let constraints: Constraints = serde_json::from_value(constr).expect("should deserialize");
-        let vc = VerifiableCredential::sample();
-
-        assert!(constraints.satisfied(&vc).unwrap());
+        assert!(constraints.satisfied(&Credential).unwrap());
     }
 
     #[test]
@@ -184,9 +184,7 @@ mod test {
         });
 
         let constraints: Constraints = serde_json::from_value(constr).expect("should deserialize");
-        let vc = VerifiableCredential::sample();
-
-        assert!(constraints.satisfied(&vc).unwrap());
+        assert!(constraints.satisfied(&Credential).unwrap());
     }
 
     #[test]
@@ -202,20 +200,31 @@ mod test {
         });
 
         let constraints: Constraints = serde_json::from_value(constr).expect("should deserialize");
-        let vc = VerifiableCredential::sample();
 
-        assert!(constraints.satisfied(&vc).unwrap());
+        assert!(constraints.satisfied(&Credential).unwrap());
     }
 
-    // static CONSTRAINTS: LazyLock<Value> = LazyLock::new(|| {
-    //     json!({
-    //         "fields": [{
-    //             "path":["$.type"],
-    //             "filter": {
-    //                 "type": "string",
-    //                 "const": "EmployeeIDCredential"
-    //             }
-    //         }]
-    //     })
-    // });
+    struct Credential;
+    impl Claims for Credential {
+        fn to_json(&self) -> Result<Value> {
+            Ok(json!({
+                "@context":[
+                    "https://www.w3.org/2018/credentials/v1",
+                    "https://www.w3.org/2018/credentials/examples/v1"
+                ],
+                "type":[
+                    "VerifiableCredential",
+                    "EmployeeIDCredential"
+                ],
+                "id":"https://example.com/credentials/3732",
+                "issuer":"https://example.com/issuers/14",
+                "issuanceDate":"2023-11-20T23:21:55Z",
+                "expirationDate":"2023-12-20T23:21:55Z",
+                "credentialSubject":{
+                    "employeeId":"1234567890",
+                    "id":"did:example:ebfeb1f712ebc6f1c276e12ec21"
+                }
+            }))
+        }
+    }
 }

@@ -9,7 +9,6 @@ workspace = true
 [dependencies]
 axum-extra.workspace = true
 axum.workspace = true
-lazy_static.workspace = true
 oauth2 = { version = "4.4.2" }
 providers.workspace = true
 serde.workspace = true

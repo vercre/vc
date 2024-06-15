@@ -159,10 +159,16 @@ impl VerifiableCredential {
     }
 }
 
+impl vercre_pe::Claims for VerifiableCredential {
+    fn to_json(&self) -> anyhow::Result<serde_json::Value> {
+        serde_json::to_value(self).map_err(Into::into)
+    }
+}
+
 // impl TryFrom<VerifiableCredential> for Value {
 //     type Error = anyhow::Error;
 
-//     fn try_from(vc: VerifiableCredential) -> Result<Self> {
+//     fn try_from(vc: VerifiableCredential) -> anyhow::Result<Self> {
 //         serde_json::to_value(vc).map_err(Into::into)
 //     }
 // }
@@ -521,6 +527,8 @@ mod tests {
         init_tracer();
 
         let vc = VerifiableCredential::sample();
+        let json_vc = serde_json::to_value(&vc).expect("should serialize to json");
+        println!("{}", json_vc);
 
         // serialize
         let vc_json = serde_json::to_value(&vc).expect("should serialize to json");

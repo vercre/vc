@@ -1,9 +1,10 @@
+use std::sync::LazyLock;
+
 use anyhow::Result;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
-use lazy_static::lazy_static;
 use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
 use providers::wallet;
 use serde_json::json;
@@ -15,9 +16,7 @@ use vercre_issuer::{Endpoint, ProofClaims};
 use vercre_proof::jwt;
 use vercre_vc::proof::{self, Payload, Verify};
 
-lazy_static! {
-    static ref PROVIDER: Provider = Provider::new();
-}
+static PROVIDER: LazyLock<Provider> = LazyLock::new(|| Provider::new());
 
 // Run through entire authorization code flow.
 #[tokio::test]

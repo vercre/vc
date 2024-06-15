@@ -3,7 +3,7 @@
 //! This example demonstrates how to use the Verifiable Credential Issuer (VCI)
 
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 use axum::extract::State;
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
@@ -33,9 +33,8 @@ use vercre_issuer::metadata::{MetadataRequest, MetadataResponse};
 use vercre_issuer::token::{TokenRequest, TokenResponse};
 use vercre_issuer::Endpoint;
 
-lazy_static::lazy_static! {
-    static ref AUTHORIZED: RwLock<HashMap<String, AuthorizationRequest>> = RwLock::new(HashMap::new());
-}
+static AUTHORIZED: LazyLock<RwLock<HashMap<String, AuthorizationRequest>>> =
+    LazyLock::new(|| RwLock::new(HashMap::new()));
 
 #[tokio::main]
 async fn main() {

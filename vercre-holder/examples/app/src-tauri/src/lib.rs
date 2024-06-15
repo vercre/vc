@@ -4,18 +4,15 @@
 // mod signer;
 // mod store;
 
-// use std::sync::Arc;
+// use std::sync::{Arc, LazyLock};
 
-// use lazy_static::lazy_static;
 // use tauri::{AppHandle, Manager};
 // use tauri_plugin_log::{Target, TargetKind};
 // use vercre_holder::signer::SignerResponse;
 // use vercre_holder::store::StoreResponse;
 // use vercre_holder::{credential, issuance, presentation, App, Capabilities, Core, Effect, Event};
 
-// lazy_static! {
-//     static ref CORE: Arc<Core<Effect, App>> = Arc::new(Core::new::<Capabilities>());
-// }
+// static CORE: LazyLock<Arc<Core<Effect, App>>> = LazyLock::new(|| Arc::new(Core::new::<Capabilities>()));
 
 // /// Tauri entry point
 // ///
