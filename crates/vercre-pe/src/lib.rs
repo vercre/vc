@@ -21,7 +21,9 @@ pub trait Claims {
     /// Serialize Claims as a JSON object.
     ///
     /// # Errors
-    /// TODO: add error types
+    /// 
+    /// The implementation should return an error if the Claims cannot be
+    /// serialized to JSON.
     fn to_json(&self) -> anyhow::Result<serde_json::Value>;
 }
 
