@@ -3,6 +3,17 @@
 //! This module defines the callback trait and helper functions used for
 //! callbacks to client applications.
 
+use std::future::Future;
+
+use crate::provider::Result;
+
+/// Callback describes behaviours required for notifying a client application of
+/// issuance or presentation flow status.
+pub trait Callback: Send + Sync {
+    /// Callback method to process status updates.
+    fn callback(&self, pl: &Payload) -> impl Future<Output = Result<()>> + Send;
+}
+
 /// Indication of the status of an issuance or presentation flow.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Status {
