@@ -13,7 +13,7 @@ use serde_json::Value;
 use vercre_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 
 use crate::error::Err;
-use crate::metadata::Client as ClientMetadata;
+use crate::provider::Client as ClientMetadata;
 use crate::{err, stringify, Result};
 
 /// The Request Object Request is created by the Verifier to generate an

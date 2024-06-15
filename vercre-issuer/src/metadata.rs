@@ -25,7 +25,7 @@
 use std::fmt::Debug;
 
 use tracing::instrument;
-pub use vercre_core::metadata as types;
+pub use vercre_core::provider as types;
 use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };

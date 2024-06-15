@@ -41,9 +41,9 @@ pub mod provider;
 
 use std::fmt::Debug;
 
-pub use vercre_core::metadata::CredentialConfiguration;
+pub use vercre_core::provider::CredentialConfiguration;
 use vercre_core::provider::{Callback, StateManager};
-pub use vercre_core::{callback, Result};
+pub use vercre_core::{provider as callback, Result};
 pub use vercre_exch::Constraints;
 
 /// Endpoint is used to surface the public wallet endpoints to clients.

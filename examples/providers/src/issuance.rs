@@ -9,12 +9,10 @@ use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
 use serde_json::Value;
 use uuid::Uuid;
-use vercre_core::callback::Payload;
-use vercre_core::metadata::{self, CredentialDefinition};
 use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, Result, ServerMetadata, StateManager, Subject,
+    self as metadata, Callback, Claims, ClientMetadata, CredentialDefinition, IssuerMetadata,
+    Payload, Result, ServerMetadata, StateManager, Subject,
 };
-use vercre_core::subject;
 use vercre_core::vci::GrantType;
 use vercre_vc::proof::{Algorithm, Signer};
 
@@ -83,7 +81,7 @@ impl Subject for Provider {
 
     async fn claims(
         &self, holder_subject: &str, credential: &CredentialDefinition,
-    ) -> Result<subject::Claims> {
+    ) -> Result<Claims> {
         Ok(self.subject.get_claims(holder_subject, credential))
     }
 }
@@ -238,7 +236,7 @@ impl SubjectStore {
 
     fn get_claims(
         &self, holder_subject: &str, credential: &CredentialDefinition,
-    ) -> subject::Claims {
+    ) -> Claims {
         // get holder subject while allowing mutex to go out of scope and release
         // lock so we can take another lock for insert further down
         let subject =
@@ -266,7 +264,7 @@ impl SubjectStore {
         updated.pending = false;
         self.subjects.lock().expect("should lock").insert(holder_subject.to_string(), updated);
 
-        subject::Claims {
+        Claims {
             claims,
             pending: subject.pending,
         }

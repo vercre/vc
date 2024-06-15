@@ -12,7 +12,7 @@ use serde_json::Value;
 
 use crate::error::{self, Err};
 use crate::jws::Jwk;
-use crate::metadata::{
+use crate::provider::{
     Claim, Client as ClientMetadata, CredentialDefinition, Issuer as IssuerMetadata,
 };
 use crate::{err, stringify, Result};

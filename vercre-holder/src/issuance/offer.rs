@@ -10,7 +10,7 @@ use chrono::{DateTime, Utc};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
-use vercre_core::metadata::CredentialConfiguration;
+use vercre_core::provider::CredentialConfiguration;
 use vercre_core::vci::{CredentialOffer, MetadataRequest};
 use vercre_core::{err, Result};
 

@@ -4,15 +4,11 @@
 // https://github.com/rust-lang/rust/issues/99301
 #![feature(error_generic_member_access)]
 
-pub mod callback;
 pub mod error;
 pub mod gen;
 pub mod jws;
-pub mod metadata;
 pub mod provider;
-pub mod signature;
 pub mod stringify;
-pub mod subject;
 pub mod vci;
 pub mod vp;
 
@@ -20,9 +16,8 @@ use std::fmt::Debug;
 
 use tracing::instrument;
 
-use crate::callback::{Payload, Status};
 use crate::error::Error;
-use crate::provider::Callback;
+use crate::provider::{Callback, Payload, Status};
 
 // LATER: investigate `async_fn_in_trait` warning
 

@@ -7,7 +7,7 @@
 use std::collections::HashMap;
 use std::future::Future;
 
-use vercre_core::metadata::CredentialConfiguration;
+use vercre_core::provider::CredentialConfiguration;
 use vercre_core::vci::TxCode;
 
 use crate::credential::Credential;

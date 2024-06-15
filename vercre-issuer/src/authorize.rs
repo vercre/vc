@@ -76,7 +76,7 @@ use anyhow::anyhow;
 use chrono::Utc;
 use tracing::instrument;
 use vercre_core::error::Err;
-use vercre_core::metadata::Issuer;
+use vercre_core::provider::Issuer;
 use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
