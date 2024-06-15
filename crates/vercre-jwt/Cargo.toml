@@ -1,5 +1,5 @@
 [package]
-name = "vercre-proof"
+name = "vercre-jwt"
 description = "Create and verify proofs for Vercre"
 license = "MIT OR Apache-2.0"
 publish = false

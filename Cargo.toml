@@ -62,7 +62,7 @@ vercre-core = { path = "crates/vercre-core" }
 vercre-exch = { path = "crates/vercre-exch" }
 vercre-holder = { path = "vercre-holder" }
 vercre-issuer = { path = "vercre-issuer" }
-vercre-proof = { path = "crates/vercre-proof" }
+vercre-jwt = { path = "crates/vercre-jwt" }
 vercre-vc = { path = "crates/vercre-vc" }
 vercre-verifier = { path = "vercre-verifier" }
 

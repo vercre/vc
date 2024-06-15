@@ -24,7 +24,7 @@ pub use vercre_core::vci::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialRequest, CredentialResponse,
 };
 use vercre_core::{err, gen, Result};
-use vercre_proof::jwt;
+use vercre_jwt::jwt;
 use vercre_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_vc::proof::{self, Payload, Signer};
 

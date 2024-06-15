@@ -35,7 +35,7 @@ serde_json.workspace = true
 sha2 = "0.10.8"
 tracing.workspace = true
 vercre-core.workspace = true
-vercre-proof.workspace = true
+vercre-jwt.workspace = true
 vercre-vc.workspace = true
 
 [dev-dependencies]

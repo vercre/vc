@@ -3499,7 +3499,7 @@ dependencies = [
  "tracing-subscriber",
  "uuid",
  "vercre-core",
- "vercre-proof",
+ "vercre-jwt",
  "vercre-vc",
 ]
 
@@ -5598,7 +5598,7 @@ dependencies = [
  "thiserror",
  "tracing",
  "vercre-exch",
- "vercre-proof",
+ "vercre-jwt",
 ]
 
 [[package]]
@@ -5633,7 +5633,7 @@ dependencies = [
  "vercre-core",
  "vercre-exch",
  "vercre-issuer",
- "vercre-proof",
+ "vercre-jwt",
  "vercre-vc",
 ]
 
@@ -5656,12 +5656,12 @@ dependencies = [
  "tokio",
  "tracing",
  "vercre-core",
- "vercre-proof",
+ "vercre-jwt",
  "vercre-vc",
 ]
 
 [[package]]
-name = "vercre-proof"
+name = "vercre-jwt"
 version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
@@ -5688,7 +5688,7 @@ dependencies = [
  "tracing-subscriber",
  "uuid",
  "vercre-exch",
- "vercre-proof",
+ "vercre-jwt",
 ]
 
 [[package]]
@@ -5711,7 +5711,7 @@ dependencies = [
  "uuid",
  "vercre-core",
  "vercre-exch",
- "vercre-proof",
+ "vercre-jwt",
  "vercre-vc",
 ]
 

@@ -19,7 +19,7 @@ pub use vercre_core::vci::{
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
 use vercre_core::{err, Result};
-use vercre_proof::jwt;
+use vercre_jwt::jwt;
 use vercre_vc::proof::{self, Payload, Verify};
 
 use crate::credential::Credential;

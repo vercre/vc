@@ -12,7 +12,7 @@ use vercre_issuer::create_offer::{CreateOfferRequest, CreateOfferResponse};
 use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
 use vercre_issuer::token::{TokenRequest, TokenResponse};
 use vercre_issuer::{Endpoint, ProofClaims};
-use vercre_proof::jwt;
+use vercre_jwt::jwt;
 use vercre_vc::proof::{self, Payload, Verify};
 
 static PROVIDER: LazyLock<Provider> = LazyLock::new(|| Provider::new());

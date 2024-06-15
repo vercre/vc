@@ -31,8 +31,8 @@ pub mod integrity;
 mod jose;
 
 use serde::{Deserialize, Serialize};
-use vercre_proof::jwt;
-pub use vercre_proof::{Algorithm, Signer};
+use vercre_jwt::jwt;
+pub use vercre_jwt::{Algorithm, Signer};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
 
@@ -80,8 +80,7 @@ pub async fn create(payload: Payload, signer: impl Signer) -> anyhow::Result<Str
             let mut claims = jose::VpClaims::from(vp);
             claims.aud.clone_from(&client_id);
             claims.nonce.clone_from(&nonce);
-            vercre_proof::jwt::encode(vercre_proof::jwt::Payload::Presentation, &claims, signer)
-                .await?
+            vercre_jwt::jwt::encode(vercre_jwt::jwt::Payload::Presentation, &claims, signer).await?
         }
     };
 

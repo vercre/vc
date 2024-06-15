@@ -131,7 +131,7 @@ mod tests {
     use providers::wallet;
     use serde_json::json;
     use vercre_core::vci::{CredentialRequest, ProofClaims};
-    use vercre_proof::jwt;
+    use vercre_jwt::jwt;
     use vercre_vc::proof::{self, Payload, Verify};
 
     use super::*;
