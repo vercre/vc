@@ -11,8 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::Err;
 use crate::vci::{Format, GrantType};
-use crate::{err, error, Result};
-use crate::provider;
+use crate::{err, error, provider, Result};
 
 /// The `ClientMetadata` trait is used by implementers to provide `Client` metadata to the
 /// library.
@@ -22,7 +21,9 @@ pub trait ClientMetadata: Send + Sync {
 
     /// Used by OAuth 2.0 clients to dynamically register with the authorization
     /// server.
-    fn register(&self, client_meta: &Client) -> impl Future<Output = provider::Result<Client>> + Send;
+    fn register(
+        &self, client_meta: &Client,
+    ) -> impl Future<Output = provider::Result<Client>> + Send;
 }
 
 /// The `IssuerMetadata` trait is used by implementers to provide Credential Issuer metadata.
