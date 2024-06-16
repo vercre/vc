@@ -17,5 +17,5 @@ pub use storer::CredentialStorer;
 pub use vercre_core::provider::{
     Algorithm, Callback, Result, Signer, StateManager,
 };
-pub use vercre_core::types::issuance::TxCode;
+pub use openid4vc::issuance::TxCode;
 pub use vercre_exch::Constraints;

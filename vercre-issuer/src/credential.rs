@@ -51,7 +51,7 @@ use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
 #[allow(clippy::module_name_repetitions)]
-pub use vercre_core::types::issuance::{
+pub use openid4vc::issuance::{
     BatchCredentialRequest, CredentialRequest, CredentialResponse,
 };
 use vercre_core::{err, Result};
@@ -154,7 +154,7 @@ mod tests {
     use providers::wallet;
     use serde_json::json;
     use vercre_core::jws;
-    use vercre_core::types::issuance::ProofClaims;
+    use openid4vc::issuance::ProofClaims;
     use vercre_vc::proof::{self, Payload, Verify};
 
     use super::*;

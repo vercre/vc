@@ -2996,6 +2996,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "openid4vc"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "ecdsa",
+ "ed25519-dalek",
+ "fastrand",
+ "image",
+ "insta",
+ "k256",
+ "qrcode",
+ "serde",
+ "serde_json",
+ "serde_json_path",
+ "serde_qs",
+ "thiserror",
+ "tracing",
+ "vercre-exch",
+]
+
+[[package]]
 name = "openssl"
 version = "0.10.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3494,6 +3517,7 @@ dependencies = [
  "ecdsa",
  "ed25519-dalek",
  "k256",
+ "openid4vc",
  "serde_json",
  "tracing",
  "tracing-subscriber",
@@ -5591,6 +5615,7 @@ dependencies = [
  "image",
  "insta",
  "k256",
+ "openid4vc",
  "qrcode",
  "serde",
  "serde_json",
@@ -5622,6 +5647,7 @@ dependencies = [
  "assert_let_bind",
  "chrono",
  "insta",
+ "openid4vc",
  "providers",
  "serde",
  "serde_json",
@@ -5647,6 +5673,7 @@ dependencies = [
  "derive_builder",
  "futures",
  "insta",
+ "openid4vc",
  "providers",
  "serde",
  "serde_json",
@@ -5684,6 +5711,7 @@ dependencies = [
  "derive_builder",
  "futures",
  "insta",
+ "openid4vc",
  "providers",
  "serde",
  "serde_json",

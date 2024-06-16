@@ -22,8 +22,8 @@ use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
 #[allow(clippy::module_name_repetitions)]
-pub use vercre_core::types::issuance::{AuthorizationDetailType, TokenRequest, TokenResponse};
-use vercre_core::types::issuance::{GrantType, TokenType};
+pub use openid4vc::issuance::{AuthorizationDetailType, TokenRequest, TokenResponse};
+use openid4vc::issuance::{GrantType, TokenType};
 use vercre_core::{err, gen, Result};
 use vercre_vc::proof::Signer;
 
@@ -211,9 +211,9 @@ mod tests {
     use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
-    use vercre_core::types::issuance::CredentialDefinition;
-    use vercre_core::types::issuance::{AuthorizationDetail, TokenAuthorizationDetail};
-use vercre_core::types::CredentialFormat;
+    use openid4vc::issuance::CredentialDefinition;
+    use openid4vc::issuance::{AuthorizationDetail, TokenAuthorizationDetail};
+use openid4vc::CredentialFormat;
 
     use super::*;
     use crate::state::Auth;

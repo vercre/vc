@@ -5,8 +5,8 @@
 
 use std::ops::Deref;
 
+use openid4vc::issuance::CredentialConfiguration;
 use serde::{Deserialize, Serialize};
-use vercre_core::types::issuance::CredentialConfiguration;
 use vercre_vc::model::vc::VerifiableCredential;
 
 /// The Credential model contains information about a credential owned by the

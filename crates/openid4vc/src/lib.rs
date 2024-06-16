@@ -1,9 +1,15 @@
+// generic member access API on the error trait
+// https://github.com/rust-lang/rust/issues/99301
+#![feature(error_generic_member_access)]
+
 //! # `OpenID4VC` Types
 //!
 //! Types used in the `OpenID4VC` specifications.
 
+pub mod error;
 pub mod issuance;
 pub mod presentation;
+mod stringify;
 
 use std::collections::HashMap;
 use std::fmt::{self, Display};
@@ -13,7 +19,11 @@ use serde::{Deserialize, Serialize};
 
 use self::issuance::GrantType;
 use self::presentation::VpFormat;
-use crate::{err, error};
+// use crate::{err, error};
+
+/// Result type for `OpenID` for Verifiable Credential Issuance and Verifiable
+/// Presentations.
+pub type Result<T, E = error::Error> = std::result::Result<T, E>;
 
 /// OAuth 2 client metadata used for registering clients of the issuance and
 /// vercre-wallet authorization servers.

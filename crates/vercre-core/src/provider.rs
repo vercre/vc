@@ -7,12 +7,12 @@ mod subject;
 use std::future::{Future, IntoFuture};
 
 use chrono::{DateTime, Utc};
+use openid4vc::issuance::{CredentialDefinition, Issuer};
+use openid4vc::{Client, Server};
 
 pub use self::callback::{Payload, Status};
 pub use self::signature::{Algorithm, Signer, Verifier};
 pub use self::subject::Claims;
-use crate::types::issuance::{CredentialDefinition, Issuer};
-use crate::types::{Client, Server};
 
 /// Result is used for all external errors.
 pub type Result<T> = anyhow::Result<T>;

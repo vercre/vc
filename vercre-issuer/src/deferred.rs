@@ -17,7 +17,7 @@ use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
 #[allow(clippy::module_name_repetitions)]
-pub use vercre_core::types::issuance::{DeferredCredentialRequest, DeferredCredentialResponse};
+pub use openid4vc::issuance::{DeferredCredentialRequest, DeferredCredentialResponse};
 use vercre_core::{err, Result};
 use vercre_vc::proof::Signer;
 
@@ -131,7 +131,7 @@ mod tests {
     use providers::wallet;
     use serde_json::json;
     use vercre_core::jws;
-    use vercre_core::types::issuance::{CredentialRequest, ProofClaims};
+    use openid4vc::issuance::{CredentialRequest, ProofClaims};
     use vercre_vc::proof::{self, Payload, Verify};
 
     use super::*;

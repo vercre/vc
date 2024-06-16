@@ -103,7 +103,7 @@ use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
 // TODO: move Claims into jwt module
-pub use vercre_core::types::issuance::{GrantType, ProofClaims};
+pub use openid4vc::issuance::{GrantType, ProofClaims};
 pub use vercre_core::{provider, Result};
 use vercre_vc::proof::Signer;
 

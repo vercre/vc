@@ -2,9 +2,9 @@
 //! in the issuance process.
 use chrono::{DateTime, TimeDelta, Utc};
 use derive_builder::Builder;
+use openid4vc::presentation::RequestObject;
 use serde::{Deserialize, Serialize};
 use vercre_core::error::Err;
-use vercre_core::types::presentation::RequestObject;
 use vercre_core::{err, Result};
 
 pub enum Expire {

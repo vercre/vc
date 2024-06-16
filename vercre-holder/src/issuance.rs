@@ -13,8 +13,8 @@ pub use offer::OfferRequest;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use vercre_core::error::Err;
-use vercre_core::types::issuance::CredentialConfiguration;
-pub use vercre_core::types::issuance::{
+use openid4vc::issuance::CredentialConfiguration;
+pub use openid4vc::issuance::{
     CredentialOffer, CredentialRequest, CredentialResponse, GrantType, Issuer, MetadataRequest,
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
@@ -347,7 +347,7 @@ async fn credential(
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use providers::wallet;
-    use vercre_core::types::issuance::{Grants, PreAuthorizedCodeGrant, TxCode};
+    use openid4vc::issuance::{Grants, PreAuthorizedCodeGrant, TxCode};
 
     use super::*;
 

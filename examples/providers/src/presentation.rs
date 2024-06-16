@@ -7,12 +7,9 @@ use chrono::{DateTime, Utc};
 use ecdsa::signature::Signer as _;
 use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
-use vercre_core::provider::{
-     Callback, ClientMetadata, Payload, Result, StateManager,
-};
-use vercre_core::types;
-use vercre_core::types::CredentialFormat;
-use vercre_core::types::presentation::VpFormat;
+use openid4vc::presentation::VpFormat;
+use openid4vc::CredentialFormat;
+use vercre_core::provider::{Callback, ClientMetadata, Payload, Result, StateManager};
 use vercre_vc::proof::{Algorithm, Signer};
 
 pub const VERIFIER: &str = "http://vercre.io";
@@ -39,11 +36,11 @@ impl Provider {
 }
 
 impl ClientMetadata for Provider {
-    async fn metadata(&self, client_id: &str) -> Result<types::Client> {
+    async fn metadata(&self, client_id: &str) -> Result<openid4vc::Client> {
         self.client.get(client_id)
     }
 
-    async fn register(&self, _: &types::Client) -> Result<types::Client> {
+    async fn register(&self, _: &openid4vc::Client) -> Result<openid4vc::Client> {
         unimplemented!("register not implemented")
     }
 }
@@ -91,12 +88,12 @@ impl Callback for Provider {
 
 #[derive(Clone, Debug, Default)]
 struct ClientStore {
-    clients: HashMap<String, types::Client>,
+    clients: HashMap<String, openid4vc::Client>,
 }
 
 impl ClientStore {
     fn new() -> Self {
-        let client_meta = types::Client {
+        let client_meta = openid4vc::Client {
             client_id: "http://vercre.io".into(),
             redirect_uris: Some(vec!["http://localhost:3000/callback".into()]),
             grant_types: None,
@@ -131,7 +128,7 @@ impl ClientStore {
         Self { clients }
     }
 
-    fn get(&self, client_id: &str) -> Result<types::Client> {
+    fn get(&self, client_id: &str) -> Result<openid4vc::Client> {
         let Some(client) = self.clients.get(client_id) else {
             return Err(anyhow!("verifier not found"));
         };

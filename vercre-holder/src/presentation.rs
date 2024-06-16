@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
-use vercre_core::types::presentation::{RequestObject, RequestObjectResponse, ResponseRequest};
+use openid4vc::presentation::{RequestObject, RequestObjectResponse, ResponseRequest};
 use vercre_core::{err, jws, Result};
 use vercre_exch::{Constraints, DescriptorMap, PathNested, PresentationSubmission};
 use vercre_vc::model::vp::VerifiablePresentation;
@@ -365,7 +365,7 @@ mod tests {
 
     use insta::assert_yaml_snapshot as assert_snapshot;
     use providers::{issuance, presentation};
-    use vercre_core::types::issuance::CredentialConfiguration;
+    use openid4vc::issuance::CredentialConfiguration;
     use vercre_exch::{
         Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition,
     };

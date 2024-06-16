@@ -11,7 +11,7 @@
 // use lazy_static::lazy_static;
 // use serde_json::{json, Value};
 // use test_utils::wallet_provider::wallet;
-// use vercre_core::types::presentation::{CreateRequestResponse, RequestObjectResponse, ResponseRequest};
+// use openid4vc::presentation::{CreateRequestResponse, RequestObjectResponse, ResponseRequest};
 // use vercre_holder::capabilities::signer::{SignerRequest, SignerResponse};
 // use vercre_holder::capabilities::store::{StoreEntry, StoreRequest, StoreResponse};
 // use vercre_holder::credential::Credential;

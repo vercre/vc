@@ -44,14 +44,14 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 use anyhow::anyhow;
+#[allow(clippy::module_name_repetitions)]
+pub use openid4vc::presentation::{
+    CreateRequestRequest, CreateRequestResponse, DeviceFlow, RequestObject,
+};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
 use vercre_core::provider::{Callback, ClientMetadata, StateManager};
-#[allow(clippy::module_name_repetitions)]
-pub use vercre_core::types::presentation::{
-    CreateRequestRequest, CreateRequestResponse, DeviceFlow, RequestObject,
-};
 use vercre_core::{err, gen, Result};
 use vercre_exch::{Format, PresentationDefinition};
 use vercre_vc::proof::{Algorithm, Signer};

@@ -5,7 +5,7 @@ use chrono::{DateTime, TimeDelta, Utc};
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use vercre_core::error::Err;
-use vercre_core::types::issuance::{CredentialRequest, TokenAuthorizationDetail};
+use openid4vc::issuance::{CredentialRequest, TokenAuthorizationDetail};
 use vercre_core::{err, Result};
 pub enum Expire {
     AuthCode,

@@ -28,7 +28,7 @@ use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{Callback, ClientMetadata, StateManager};
 #[allow(clippy::module_name_repetitions)]
-pub use vercre_core::types::presentation::{ResponseRequest, ResponseResponse};
+pub use openid4vc::presentation::{ResponseRequest, ResponseResponse};
 use vercre_core::{err, Result};
 use vercre_vc::proof::{self, Payload, Signer, Verify};
 
@@ -102,7 +102,7 @@ where
         };
 
         // use serde::de::{self, Deserialize, Deserializer, SeqAccess, Visitor};
-        // use vercre_core::types::presentation::vp_token as deser;
+        // use openid4vc::presentation::vp_token as deser;
 
         let mut vp_values = vec![];
 
@@ -254,7 +254,7 @@ mod tests {
 
     use providers::presentation::Provider;
     use serde_json::json;
-    use vercre_core::types::presentation::RequestObject;
+    use openid4vc::presentation::RequestObject;
     use vercre_exch::PresentationDefinition;
 
     use super::*;

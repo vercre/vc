@@ -10,8 +10,8 @@ use chrono::{DateTime, Utc};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
-use vercre_core::types::issuance::CredentialConfiguration;
-use vercre_core::types::issuance::{CredentialOffer, MetadataRequest};
+use openid4vc::issuance::CredentialConfiguration;
+use openid4vc::issuance::{CredentialOffer, MetadataRequest};
 use vercre_core::{err, Result};
 
 use crate::issuance::{Issuance, Status};

@@ -79,11 +79,11 @@ use vercre_core::error::Err;
 use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
-pub use vercre_core::types::issuance::{
+pub use openid4vc::issuance::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
     TokenAuthorizationDetail,
 };
-use vercre_core::types::issuance::{GrantType, Issuer};
+use openid4vc::issuance::{GrantType, Issuer};
 use vercre_core::{err, gen, Result};
 use vercre_vc::proof::Signer;
 
