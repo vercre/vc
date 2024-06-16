@@ -10,14 +10,14 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 pub use offer::OfferRequest;
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-use vercre_core::error::Err;
 use openid4vc::issuance::CredentialConfiguration;
 pub use openid4vc::issuance::{
     CredentialOffer, CredentialRequest, CredentialResponse, GrantType, Issuer, MetadataRequest,
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+use vercre_core::error::Err;
 use vercre_core::{err, jws, Result};
 use vercre_vc::proof::{self, Payload, Verify};
 
@@ -346,8 +346,8 @@ async fn credential(
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::wallet;
     use openid4vc::issuance::{Grants, PreAuthorizedCodeGrant, TxCode};
+    use provider::wallet;
 
     use super::*;
 

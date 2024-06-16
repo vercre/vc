@@ -36,6 +36,6 @@ vercre-vc.workspace = true
 [dev-dependencies]
 assert_let_bind.workspace = true
 insta.workspace = true
-providers.workspace = true
+provider.workspace = true
 tokio.workspace = true
 vercre-issuer.workspace = true

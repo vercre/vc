@@ -24,13 +24,13 @@
 //! ```
 use std::fmt::Debug;
 
+#[allow(clippy::module_name_repetitions)]
+pub use openid4vc::issuance::{MetadataRequest, MetadataResponse};
 use tracing::instrument;
 pub use vercre_core::provider as types;
 use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
-#[allow(clippy::module_name_repetitions)]
-pub use openid4vc::issuance::{MetadataRequest, MetadataResponse};
 use vercre_core::Result;
 use vercre_vc::proof::Signer;
 
@@ -96,7 +96,7 @@ where
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::issuance::{Provider, CREDENTIAL_ISSUER};
+    use provider::issuance::{Provider, CREDENTIAL_ISSUER};
 
     use super::*;
 

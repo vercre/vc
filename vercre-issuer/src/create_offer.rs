@@ -68,15 +68,15 @@ use std::fmt::Debug;
 
 use anyhow::anyhow;
 use chrono::Utc;
-use tracing::instrument;
-use vercre_core::error::Err;
-use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer, Grants,
     PreAuthorizedCodeGrant, TxCode,
+};
+use tracing::instrument;
+use vercre_core::error::Err;
+use vercre_core::provider::{
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
 use vercre_core::{err, gen, Result};
 use vercre_vc::proof::Signer;
@@ -248,7 +248,7 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    use provider::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use serde_json::json;
 
     use super::*;

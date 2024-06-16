@@ -3,10 +3,10 @@
 extern crate test;
 
 use futures::executor::block_on;
-use providers::presentation::Provider;
+use openid4vc::presentation::CreateRequestRequest;
+use provider::presentation::Provider;
 use serde_json::json;
 use test::Bencher;
-use openid4vc::presentation::CreateRequestRequest;
 use vercre_verifier::Endpoint;
 
 #[bench]

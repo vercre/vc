@@ -7,11 +7,10 @@
 use std::fmt::Debug;
 
 use chrono::{DateTime, Utc};
+use openid4vc::issuance::{CredentialConfiguration, CredentialOffer, MetadataRequest};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
-use openid4vc::issuance::CredentialConfiguration;
-use openid4vc::issuance::{CredentialOffer, MetadataRequest};
 use vercre_core::{err, Result};
 
 use crate::issuance::{Issuance, Status};

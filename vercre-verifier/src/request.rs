@@ -16,11 +16,11 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
+#[allow(clippy::module_name_repetitions)]
+pub use openid4vc::presentation::{RequestObjectRequest, RequestObjectResponse};
 use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{Callback, ClientMetadata, Signer, StateManager};
-#[allow(clippy::module_name_repetitions)]
-pub use openid4vc::presentation::{RequestObjectRequest, RequestObjectResponse};
 use vercre_core::{err, jws, Result};
 
 use super::Endpoint;
@@ -98,8 +98,8 @@ where
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::presentation::{Provider, VERIFIER};
     use openid4vc::presentation::RequestObject;
+    use provider::presentation::{Provider, VERIFIER};
 
     use super::*;
 

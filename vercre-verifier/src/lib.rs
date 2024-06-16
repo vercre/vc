@@ -214,7 +214,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use providers::presentation::Provider;
+    use ::provider::presentation::Provider;
     use vercre_core::error::Err;
     use vercre_core::{err, Result};
 

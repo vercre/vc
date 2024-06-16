@@ -22,13 +22,13 @@
 
 use std::fmt::Debug;
 
+#[allow(clippy::module_name_repetitions)]
+pub use openid4vc::presentation::{ResponseRequest, ResponseResponse};
 use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{Callback, ClientMetadata, StateManager};
-#[allow(clippy::module_name_repetitions)]
-pub use openid4vc::presentation::{ResponseRequest, ResponseResponse};
 use vercre_core::{err, Result};
 use vercre_vc::proof::{self, Payload, Signer, Verify};
 
@@ -252,9 +252,9 @@ where
 mod tests {
     use std::sync::LazyLock;
 
-    use providers::presentation::Provider;
-    use serde_json::json;
     use openid4vc::presentation::RequestObject;
+    use provider::presentation::Provider;
+    use serde_json::json;
     use vercre_exch::PresentationDefinition;
 
     use super::*;

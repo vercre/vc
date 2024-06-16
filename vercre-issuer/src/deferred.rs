@@ -11,13 +11,13 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
+#[allow(clippy::module_name_repetitions)]
+pub use openid4vc::issuance::{DeferredCredentialRequest, DeferredCredentialResponse};
 use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
-#[allow(clippy::module_name_repetitions)]
-pub use openid4vc::issuance::{DeferredCredentialRequest, DeferredCredentialResponse};
 use vercre_core::{err, Result};
 use vercre_vc::proof::Signer;
 
@@ -127,11 +127,11 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
-    use providers::wallet;
+    use openid4vc::issuance::{CredentialRequest, ProofClaims};
+    use provider::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    use provider::wallet;
     use serde_json::json;
     use vercre_core::jws;
-    use openid4vc::issuance::{CredentialRequest, ProofClaims};
     use vercre_vc::proof::{self, Payload, Verify};
 
     use super::*;

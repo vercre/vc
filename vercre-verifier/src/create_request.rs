@@ -196,7 +196,7 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::presentation::Provider;
+    use provider::presentation::Provider;
     use serde_json::json;
 
     use super::*;

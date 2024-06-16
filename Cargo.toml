@@ -3,7 +3,7 @@ members = [
     "crates/*",
     "examples/issuance",
     "examples/presentation",
-    "examples/providers",
+    "examples/provider",
     "examples/wallet/src-tauri",
     "vercre-holder",
     "vercre-issuer",
@@ -49,7 +49,8 @@ futures = "0.3.30"
 insta = { version = "1.39.0", features = ["redactions", "yaml"] }
 k256 = "0.13.3"
 openid4vc = { path = "crates/openid4vc" }
-providers = { path = "examples/providers" }
+provider = { path = "examples/provider" }
+providers = { path = "crates/providers" }
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = { version = "1.0.117", features = ["alloc"] }
 serde_qs = "0.13.0"

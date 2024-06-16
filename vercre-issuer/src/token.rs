@@ -15,15 +15,15 @@ use std::fmt::Debug;
 
 use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded, Encoding};
+#[allow(clippy::module_name_repetitions)]
+pub use openid4vc::issuance::{AuthorizationDetailType, TokenRequest, TokenResponse};
+use openid4vc::issuance::{GrantType, TokenType};
 use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::error::Err;
 use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
-#[allow(clippy::module_name_repetitions)]
-pub use openid4vc::issuance::{AuthorizationDetailType, TokenRequest, TokenResponse};
-use openid4vc::issuance::{GrantType, TokenType};
 use vercre_core::{err, gen, Result};
 use vercre_vc::proof::Signer;
 
@@ -208,12 +208,13 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
-    use providers::wallet;
+    use openid4vc::issuance::{
+        AuthorizationDetail, CredentialDefinition, TokenAuthorizationDetail,
+    };
+    use openid4vc::CredentialFormat;
+    use provider::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    use provider::wallet;
     use serde_json::json;
-    use openid4vc::issuance::CredentialDefinition;
-    use openid4vc::issuance::{AuthorizationDetail, TokenAuthorizationDetail};
-use openid4vc::CredentialFormat;
 
     use super::*;
     use crate::state::Auth;

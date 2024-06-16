@@ -84,7 +84,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use providers::issuance::Provider;
+    use ::provider::issuance::Provider;
     use vercre_core::err;
     use vercre_core::error::Err;
     use vercre_vc::proof::Signer;

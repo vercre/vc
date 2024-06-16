@@ -7,15 +7,14 @@
 pub mod error;
 pub mod gen;
 pub mod jws;
-pub mod provider;
 pub mod stringify;
+pub mod provider;
 
 use std::fmt::Debug;
 
 use tracing::instrument;
 
 use crate::error::Error;
-use crate::provider::{Callback, Payload, Status};
 
 // LATER: investigate `async_fn_in_trait` warning
 

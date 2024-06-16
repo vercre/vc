@@ -1,5 +1,5 @@
 [package]
-name = "providers"
+name = "provider"
 description = "Test utilities"
 edition.workspace = true
 authors.workspace = true

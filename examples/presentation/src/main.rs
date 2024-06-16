@@ -15,7 +15,7 @@ use axum::routing::{get, post};
 use axum::{Form, Json, Router};
 use axum_extra::headers::Host;
 use axum_extra::TypedHeader;
-use providers::presentation::Provider;
+use provider::presentation::Provider;
 use serde::Serialize;
 use serde_json::json;
 use tokio::net::TcpListener;

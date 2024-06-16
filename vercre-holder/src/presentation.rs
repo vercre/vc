@@ -4,11 +4,11 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
+use openid4vc::presentation::{RequestObject, RequestObjectResponse, ResponseRequest};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::error::Err;
-use openid4vc::presentation::{RequestObject, RequestObjectResponse, ResponseRequest};
 use vercre_core::{err, jws, Result};
 use vercre_exch::{Constraints, DescriptorMap, PathNested, PresentationSubmission};
 use vercre_vc::model::vp::VerifiablePresentation;
@@ -363,8 +363,8 @@ fn create_vp(
 mod tests {
     use std::collections::HashMap;
 
+    use ::provider::{issuance, presentation};
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::{issuance, presentation};
     use openid4vc::issuance::CredentialConfiguration;
     use vercre_exch::{
         Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition,
