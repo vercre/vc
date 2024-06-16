@@ -9,6 +9,9 @@ mod error;
 mod provider;
 mod view;
 
+use std::collections::HashMap;
+use std::sync::Arc;
+
 use app::AppState;
 use futures::lock::Mutex;
 use provider::Provider;
@@ -17,7 +20,10 @@ use tauri_plugin_log::{Target, TargetKind};
 use view::credential::CredentialDetail;
 use view::ViewModel;
 
-struct StateModel(Mutex<AppState>);
+struct StateModel {
+    app_state: Mutex<AppState>,
+    state_store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
+}
 
 /// Unique identifier for this wallet application as a client of the issuance service. In a real
 /// application, this may be provided by registering the client with the issuer.
@@ -59,7 +65,10 @@ pub fn run() {
 
             Ok(())
         })
-        .manage(StateModel(Mutex::new(AppState::default())))
+        .manage(StateModel {
+            app_state: Mutex::new(AppState::default()),
+            state_store: Arc::new(Mutex::new(HashMap::<String, Vec<u8>>::new())),
+        })
         .invoke_handler(tauri::generate_handler![
             start,  // called by the shell on load.
             reset,  // called when the shell application has finished it's initialisation.
@@ -82,7 +91,7 @@ pub fn run() {
 #[tauri::command]
 async fn start(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("start invoked");
-    let mut model = state.0.lock().await;
+    let mut model = state.app_state.lock().await;
     model.init();
     let view: ViewModel = model.clone().into();
     log::info!("emitting state_updated");
@@ -95,8 +104,8 @@ async fn start(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error
 #[tauri::command]
 async fn reset(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("reset invoked");
-    let mut model = state.0.lock().await;
-    let store = Provider::new(app.clone());
+    let mut model = state.app_state.lock().await;
+    let store = Provider::new(app.clone(), state.state_store.clone());
     model.reset(store).await?;
     let view: ViewModel = model.clone().into();
     log::info!("emitting state_updated");
@@ -110,7 +119,7 @@ async fn select(
     state: State<'_, StateModel>, id: String,
 ) -> Result<Option<CredentialDetail>, error::AppError> {
     log::info!("select invoked");
-    let model = state.0.lock().await;
+    let model = state.app_state.lock().await;
     let Some(credential) = model.credential.iter().find(|c| c.id == id) else {
         return Ok(None);
     };
@@ -123,8 +132,8 @@ async fn delete(
     state: State<'_, StateModel>, app: AppHandle, id: String,
 ) -> Result<(), error::AppError> {
     log::info!("delete invoked");
-    let mut model = state.0.lock().await;
-    let store = Provider::new(app.clone());
+    let mut model = state.app_state.lock().await;
+    let store = Provider::new(app.clone(), state.state_store.clone());
     model.delete(&id, store).await?;
     let view: ViewModel = model.clone().into();
     log::info!("emitting state_updated");
@@ -143,8 +152,8 @@ async fn offer(
     state: State<'_, StateModel>, app: AppHandle, encoded_offer: String,
 ) -> Result<(), error::AppError> {
     log::info!("offer invoked: {encoded_offer}");
-    let mut model = state.0.lock().await;
-    let provider = Provider::new(app.clone());
+    let mut model = state.app_state.lock().await;
+    let provider = Provider::new(app.clone(), state.state_store.clone());
     model.offer(&encoded_offer, provider).await?;
     let view: ViewModel = model.clone().into();
     log::info!("emitting state_updated");
@@ -158,8 +167,8 @@ async fn offer(
 #[tauri::command]
 async fn accept(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("accept invoked");
-    let mut model = state.0.lock().await;
-    let provider = Provider::new(app.clone());
+    let mut model = state.app_state.lock().await;
+    let provider = Provider::new(app.clone(), state.state_store.clone());
     model.accept(provider).await?;
     // if model.is_accepted() {
     //     let provider = Provider::new(app.clone());

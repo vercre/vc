@@ -33,11 +33,11 @@ impl From<AppState> for ViewModel {
                 _ => None,
             },
             issuance: match state.sub_app {
-                SubApp::Issuance => Some(issuance::IssuanceView::default()),
+                SubApp::Issuance => Some(issuance::IssuanceView::from(state.issuance)),
                 _ => None,
             },
             presentation: match state.sub_app {
-                SubApp::Presentation => Some(presentation::PresentationView::default()),
+                SubApp::Presentation => Some(presentation::PresentationView::from(state.presentation)),
                 _ => None,
             },
             error: None,

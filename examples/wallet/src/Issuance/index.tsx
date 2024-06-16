@@ -6,7 +6,7 @@ import Slide from '@mui/material/Slide';
 import Accept from './Accept';
 import Pin from './Pin';
 import Error from '../Error';
-import Request from './Request';
+import Loading from '../Loading';
 import { IssuanceView } from '../types/generated';
 
 export type IssuanceProps = {
@@ -47,7 +47,7 @@ export const Issuance = (props: IssuanceProps) => {
                 </Box>
             </Slide>
             {mode === 'request' &&
-                <Request issuance={issuance} />
+                <Loading status="loading" />
             }
             {mode === 'error' &&
                 <Error />

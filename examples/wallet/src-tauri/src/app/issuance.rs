@@ -4,9 +4,10 @@
 use vercre_holder::issuance::{CredentialOffer, OfferRequest, Status};
 use vercre_holder::Endpoint;
 
-use crate::app::AppState;
 use crate::provider::Provider;
 use crate::CLIENT_ID;
+
+use super::{AppState, SubApp};
 
 impl AppState {
     /// Process a credential issuance offer.
@@ -24,6 +25,7 @@ impl AppState {
         };
         let new_state = Endpoint::new(provider).offer(&request).await?;
         self.issuance = new_state;
+        self.sub_app = SubApp::Issuance;
         Ok(())
     }
 

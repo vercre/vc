@@ -24,10 +24,10 @@ where
 {
     /// Create a new credential store provider with a handle to the Tauri application.
     #[must_use]
-    pub fn new(app_handle: tauri::AppHandle<R>) -> Self {
+    pub fn new(app_handle: tauri::AppHandle<R>, store: Arc<Mutex<HashMap<String, Vec<u8>>>>) -> Self {
         Self {
             app_handle,
-            store: Arc::new(Mutex::new(HashMap::new())),
+            store,
         }
     }
 }
