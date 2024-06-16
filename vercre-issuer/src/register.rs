@@ -7,10 +7,8 @@ use chrono::Utc;
 use openid4vc::error::Err;
 pub use openid4vc::issuance::{RegistrationRequest, RegistrationResponse};
 use openid4vc::{err, Result};
+use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use tracing::instrument;
-use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
 use vercre_vc::proof::Signer;
 
 use super::Endpoint;
@@ -99,8 +97,8 @@ where
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use provider::issuance::{Provider, CREDENTIAL_ISSUER};
-    use provider::wallet;
+    use providers::issuance::{Provider, CREDENTIAL_ISSUER};
+    use providers::wallet;
     use serde_json::json;
 
     use super::*;

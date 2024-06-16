@@ -13,7 +13,7 @@ mod storer;
 pub use client::{IssuerClient, VerifierClient};
 pub use input::{IssuanceInput, PresentationInput};
 pub use openid4vc::issuance::TxCode;
+pub use provider::{Algorithm, Callback, Payload, Result, Signer, StateManager};
 pub use status_listener::{IssuanceListener, PresentationListener};
 pub use storer::CredentialStorer;
-pub use vercre_core::provider::{Algorithm, Callback, Result, Signer, StateManager};
 pub use vercre_exch::Constraints;

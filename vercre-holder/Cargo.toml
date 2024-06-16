@@ -23,6 +23,7 @@ workspace = true
 anyhow.workspace = true
 chrono.workspace = true
 openid4vc.workspace = true
+provider.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_qs.workspace = true
@@ -36,6 +37,6 @@ vercre-vc.workspace = true
 [dev-dependencies]
 assert_let_bind.workspace = true
 insta.workspace = true
-provider.workspace = true
+providers.workspace = true
 tokio.workspace = true
 vercre-issuer.workspace = true

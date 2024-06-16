@@ -20,9 +20,9 @@ use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{RequestObjectRequest, RequestObjectResponse};
 use openid4vc::{err, Result};
+use provider::{Callback, ClientMetadata, Signer, StateManager};
 use tracing::instrument;
 use vercre_core::jws;
-use vercre_core::provider::{Callback, ClientMetadata, Signer, StateManager};
 
 use super::Endpoint;
 use crate::state::State;
@@ -100,7 +100,7 @@ where
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::presentation::RequestObject;
-    use provider::presentation::{Provider, VERIFIER};
+    use providers::presentation::{Provider, VERIFIER};
 
     use super::*;
 

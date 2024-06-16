@@ -39,29 +39,9 @@ use std::str::{self, FromStr};
 use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ecdsa::signature::Verifier;
+use provider::{Algorithm, Signer};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-
-use crate::provider::Signer;
-
-/// Algorithm is used to specify the signing algorithm used by the signer.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub enum Algorithm {
-    /// Algorithm for the secp256k1 curve
-    #[serde(rename = "ES256K")]
-    ES256K,
-
-    /// Algorithm for the Ed25519 curve
-    #[default]
-    #[serde(rename = "EdDSA")]
-    EdDSA,
-}
-
-impl Display for Algorithm {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self:?}")
-    }
-}
 
 /// The JWT `typ` claim.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]

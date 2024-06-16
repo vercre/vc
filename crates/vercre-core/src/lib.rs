@@ -6,15 +6,13 @@
 
 pub mod gen;
 pub mod jws;
-pub mod provider;
 pub mod stringify;
 
 use std::fmt::Debug;
 
 use openid4vc::error::Error;
+use provider::{Callback, Payload, Status};
 use tracing::instrument;
-
-use crate::provider::{Callback, Payload, Status};
 
 // LATER: investigate `async_fn_in_trait` warning
 

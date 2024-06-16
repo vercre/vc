@@ -2,8 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use futures::lock::Mutex;
-use vercre_holder::callback;
-use vercre_holder::provider::Callback;
+use vercre_holder::provider::{Callback, Payload};
 
 pub mod issuer_client;
 pub mod signer;
@@ -38,7 +37,7 @@ impl<R> Callback for Provider<R>
 where
     R: tauri::Runtime,
 {
-    async fn callback(&self, _pl: &callback::Payload) -> anyhow::Result<()> {
+    async fn callback(&self, _pl: &Payload) -> anyhow::Result<()> {
         Ok(())
     }
 }

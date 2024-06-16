@@ -2322,7 +2322,7 @@ dependencies = [
  "axum-extra",
  "oauth2",
  "openid4vc",
- "provider",
+ "providers",
  "serde",
  "serde_json",
  "serde_qs",
@@ -3435,7 +3435,7 @@ dependencies = [
  "axum",
  "axum-extra",
  "openid4vc",
- "provider",
+ "providers",
  "serde",
  "serde_json",
  "tokio",
@@ -3506,6 +3506,17 @@ dependencies = [
 
 [[package]]
 name = "provider"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "openid4vc",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "providers"
 version = "0.0.0"
 dependencies = [
  "anyhow",
@@ -3515,11 +3526,11 @@ dependencies = [
  "ed25519-dalek",
  "k256",
  "openid4vc",
+ "provider",
  "serde_json",
  "tracing",
  "tracing-subscriber",
  "uuid",
- "vercre-core",
  "vercre-vc",
 ]
 
@@ -5605,18 +5616,15 @@ version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
  "base64ct",
- "chrono",
  "ecdsa",
  "ed25519-dalek",
  "fastrand",
  "insta",
  "k256",
  "openid4vc",
+ "provider",
  "serde",
  "serde_json",
- "serde_json_path",
- "serde_qs",
- "thiserror",
  "tracing",
 ]
 
@@ -5643,6 +5651,7 @@ dependencies = [
  "insta",
  "openid4vc",
  "provider",
+ "providers",
  "serde",
  "serde_json",
  "serde_qs",
@@ -5669,6 +5678,7 @@ dependencies = [
  "insta",
  "openid4vc",
  "provider",
+ "providers",
  "serde",
  "serde_json",
  "sha2",
@@ -5686,6 +5696,7 @@ dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
+ "provider",
  "serde",
  "serde_json",
  "tracing",
@@ -5707,6 +5718,7 @@ dependencies = [
  "insta",
  "openid4vc",
  "provider",
+ "providers",
  "serde",
  "serde_json",
  "serde_json_path",

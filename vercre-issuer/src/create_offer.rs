@@ -75,11 +75,9 @@ pub use openid4vc::issuance::{
     PreAuthorizedCodeGrant, TxCode,
 };
 use openid4vc::{err, Result};
+use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use tracing::instrument;
 use vercre_core::gen;
-use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
 use vercre_vc::proof::Signer;
 
 use super::Endpoint;
@@ -249,7 +247,7 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use provider::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use serde_json::json;
 
     use super::*;

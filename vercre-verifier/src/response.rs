@@ -26,10 +26,10 @@ use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{ResponseRequest, ResponseResponse};
 use openid4vc::{err, Result};
+use provider::{Callback, ClientMetadata, StateManager};
 use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
-use vercre_core::provider::{Callback, ClientMetadata, StateManager};
 use vercre_vc::proof::{self, Payload, Signer, Verify};
 
 use super::Endpoint;
@@ -253,7 +253,7 @@ mod tests {
     use std::sync::LazyLock;
 
     use openid4vc::presentation::RequestObject;
-    use provider::presentation::Provider;
+    use providers::presentation::Provider;
     use serde_json::json;
     use vercre_exch::PresentationDefinition;
 

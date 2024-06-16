@@ -20,12 +20,10 @@ use openid4vc::error::Err;
 pub use openid4vc::issuance::{AuthorizationDetailType, TokenRequest, TokenResponse};
 use openid4vc::issuance::{GrantType, TokenType};
 use openid4vc::{err, Result};
+use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
-use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
 use vercre_vc::proof::Signer;
 
 use super::Endpoint;
@@ -213,15 +211,15 @@ mod tests {
         AuthorizationDetail, CredentialDefinition, TokenAuthorizationDetail,
     };
     use openid4vc::CredentialFormat;
-    use provider::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
-    use provider::wallet;
+    use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    use providers::wallet;
     use serde_json::json;
 
     use super::*;
     use crate::state::Auth;
 
     #[tokio::test]
-    async fn simple_token() {
+    async fn simple_tossken() {
         test_utils::init_tracer();
 
         let provider = Provider::new();

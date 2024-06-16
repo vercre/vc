@@ -9,7 +9,7 @@ use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
 use openid4vc::presentation::VpFormat;
 use openid4vc::CredentialFormat;
-use vercre_core::provider::{Callback, ClientMetadata, Payload, Result, StateManager};
+use provider::{Callback, ClientMetadata, Payload, Result, StateManager};
 use vercre_vc::proof::{Algorithm, Signer};
 
 pub const VERIFIER: &str = "http://vercre.io";

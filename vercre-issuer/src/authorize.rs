@@ -81,11 +81,9 @@ pub use openid4vc::issuance::{
 };
 use openid4vc::issuance::{GrantType, Issuer};
 use openid4vc::{err, Result};
+use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use tracing::instrument;
 use vercre_core::gen;
-use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
 use vercre_vc::proof::Signer;
 
 use super::Endpoint;
@@ -413,8 +411,8 @@ where
 mod tests {
     use base64ct::{Base64UrlUnpadded, Encoding};
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use provider::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
-    use provider::wallet;
+    use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    use providers::wallet;
     use serde_json::json;
     use sha2::{Digest, Sha256};
 

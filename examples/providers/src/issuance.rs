@@ -8,12 +8,12 @@ use ecdsa::signature::Signer as _;
 use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
 use openid4vc::issuance::{CredentialDefinition, GrantType, Issuer};
-use serde_json::Value;
-use uuid::Uuid;
-use vercre_core::provider::{
+use provider::{
     Callback, Claims, ClientMetadata, IssuerMetadata, Payload, Result, ServerMetadata,
     StateManager, Subject,
 };
+use serde_json::Value;
+use uuid::Uuid;
 use vercre_vc::proof::{Algorithm, Signer};
 
 pub const NORMAL_USER: &str = "normal_user";

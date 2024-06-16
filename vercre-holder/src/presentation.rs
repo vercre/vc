@@ -364,7 +364,7 @@ fn create_vp(
 mod tests {
     use std::collections::HashMap;
 
-    use ::provider::{issuance, presentation};
+    use ::providers::{issuance, presentation};
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::issuance::CredentialConfiguration;
     use vercre_exch::{

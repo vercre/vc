@@ -19,10 +19,8 @@ pub use openid4vc::issuance::{
 };
 use openid4vc::issuance::{CredentialDefinition, Issuer, ProofClaims};
 use openid4vc::{err, Result};
+use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use tracing::instrument;
-use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
 use vercre_core::{gen, jws};
 use vercre_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_vc::proof::{self, Payload, Signer};
@@ -402,8 +400,8 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use provider::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
-    use provider::wallet;
+    use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    use providers::wallet;
     use serde_json::json;
     use vercre_vc::proof::Verify;
 

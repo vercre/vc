@@ -50,10 +50,10 @@ pub use openid4vc::presentation::{
     CreateRequestRequest, CreateRequestResponse, DeviceFlow, RequestObject,
 };
 use openid4vc::{err, Result};
+use provider::{Callback, ClientMetadata, StateManager};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::gen;
-use vercre_core::provider::{Callback, ClientMetadata, StateManager};
 use vercre_exch::{Format, PresentationDefinition};
 use vercre_vc::proof::{Algorithm, Signer};
 
@@ -197,7 +197,7 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use provider::presentation::Provider;
+    use providers::presentation::Provider;
     use serde_json::json;
 
     use super::*;

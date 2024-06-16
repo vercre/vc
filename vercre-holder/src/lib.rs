@@ -42,8 +42,8 @@ pub mod provider;
 use std::fmt::Debug;
 
 pub use openid4vc::issuance::CredentialConfiguration;
-pub use vercre_core::provider as callback;
-use vercre_core::provider::{Callback, StateManager};
+pub use provider as callback;
+use provider::{Callback, StateManager};
 pub use vercre_exch::Constraints;
 
 /// Endpoint is used to surface the public wallet endpoints to clients.
@@ -84,7 +84,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use ::provider::issuance::Provider;
+    use ::providers::issuance::Provider;
     use openid4vc::err;
     use openid4vc::error::Err;
     use vercre_vc::proof::Signer;
