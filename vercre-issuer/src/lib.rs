@@ -98,8 +98,12 @@ pub mod token;
 
 use std::fmt::Debug;
 
-// TODO: move Claims into jwt module
+//----------------------
+// Re-exports
+//----------------------
 pub use openid4vc::issuance::{GrantType, ProofClaims};
+pub use openid4vc::Result;
+//----------------------
 use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use vercre_vc::proof::Signer;
 

@@ -2339,7 +2339,6 @@ dependencies = [
  "axum",
  "axum-extra",
  "oauth2",
- "openid4vc",
  "providers",
  "serde",
  "serde_json",
@@ -3452,7 +3451,6 @@ version = "0.0.0"
 dependencies = [
  "axum",
  "axum-extra",
- "openid4vc",
  "providers",
  "serde",
  "serde_json",

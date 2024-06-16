@@ -247,7 +247,7 @@ async fn batch_credential(
 // ----------------------------------------------------------------------------
 
 /// Wrapper for `axum::Response`
-pub struct AxResult<T>(openid4vc::Result<T>);
+pub struct AxResult<T>(vercre_issuer::Result<T>);
 
 impl<T> IntoResponse for AxResult<T>
 where
@@ -262,8 +262,8 @@ where
     }
 }
 
-impl<T> From<openid4vc::Result<T>> for AxResult<T> {
-    fn from(val: openid4vc::Result<T>) -> Self {
+impl<T> From<vercre_issuer::Result<T>> for AxResult<T> {
+    fn from(val: vercre_issuer::Result<T>) -> Self {
         Self(val)
     }
 }

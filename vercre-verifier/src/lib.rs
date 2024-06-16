@@ -165,6 +165,12 @@ mod state;
 
 use std::fmt::Debug;
 
+//----------------------
+// Re-exports
+//----------------------
+pub use openid4vc::Result;
+//----------------------
+
 use provider::{Callback, ClientMetadata, StateManager};
 use vercre_vc::proof::Signer;
 
