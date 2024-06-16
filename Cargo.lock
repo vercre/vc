@@ -3527,31 +3527,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "providersx"
-version = "0.1.0-alpha.4"
-dependencies = [
- "anyhow",
- "base64ct",
- "chrono",
- "ecdsa",
- "ed25519-dalek",
- "fastrand",
- "image",
- "insta",
- "k256",
- "openid4vc",
- "qrcode",
- "serde",
- "serde_json",
- "serde_json_path",
- "serde_qs",
- "thiserror",
- "tracing",
- "vercre-core",
- "vercre-exch",
-]
-
-[[package]]
 name = "ptr_meta"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
