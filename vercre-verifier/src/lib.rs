@@ -165,9 +165,7 @@ mod state;
 
 use std::fmt::Debug;
 
-pub use vercre_core::error::Error;
 use vercre_core::provider::{Callback, ClientMetadata, StateManager};
-pub use vercre_core::{provider, Result};
 use vercre_vc::proof::Signer;
 
 // TODO: remove double borrow for traits (i.e. &self -> self)
@@ -215,8 +213,8 @@ where
 #[cfg(test)]
 mod tests {
     use ::provider::presentation::Provider;
-    use vercre_core::error::Err;
-    use vercre_core::{err, Result};
+    use openid4vc::error::Err;
+    use openid4vc::{err, Result};
 
     use super::*;
 

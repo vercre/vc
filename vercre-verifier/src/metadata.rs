@@ -9,10 +9,10 @@ use std::fmt::Debug;
 
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{MetadataRequest, MetadataResponse};
+use openid4vc::Result;
 use tracing::instrument;
 pub use vercre_core::provider as types;
 use vercre_core::provider::{Callback, ClientMetadata, StateManager};
-use vercre_core::Result;
 use vercre_vc::proof::Signer;
 
 use super::Endpoint;

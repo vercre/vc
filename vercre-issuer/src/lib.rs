@@ -100,11 +100,9 @@ use std::fmt::Debug;
 
 // TODO: move Claims into jwt module
 pub use openid4vc::issuance::{GrantType, ProofClaims};
-pub use vercre_core::error::Error;
 use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
-pub use vercre_core::{provider, Result};
 use vercre_vc::proof::Signer;
 
 /// Endpoint is used to surface the public Verifiable Presentation endpoints to
@@ -173,8 +171,8 @@ where
 #[cfg(test)]
 mod tests {
     use ::provider::issuance::Provider;
-    use vercre_core::err;
-    use vercre_core::error::Err;
+    use openid4vc::error::Err;
+    use openid4vc::{err, Result};
 
     use super::*;
 

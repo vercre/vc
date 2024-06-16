@@ -2,10 +2,10 @@
 //! in the issuance process.
 use chrono::{DateTime, TimeDelta, Utc};
 use derive_builder::Builder;
+use openid4vc::error::Err;
 use openid4vc::presentation::RequestObject;
+use openid4vc::{err, Result};
 use serde::{Deserialize, Serialize};
-use vercre_core::error::Err;
-use vercre_core::{err, Result};
 
 pub enum Expire {
     Request,
@@ -71,7 +71,7 @@ impl State {
 }
 
 impl TryFrom<&[u8]> for State {
-    type Error = vercre_core::error::Error;
+    type Error = openid4vc::error::Error;
 
     fn try_from(value: &[u8]) -> Result<Self> {
         Self::from_slice(value)
@@ -79,7 +79,7 @@ impl TryFrom<&[u8]> for State {
 }
 
 impl TryFrom<Vec<u8>> for State {
-    type Error = vercre_core::error::Error;
+    type Error = openid4vc::error::Error;
 
     fn try_from(value: Vec<u8>) -> Result<Self> {
         Self::try_from(value.as_slice())

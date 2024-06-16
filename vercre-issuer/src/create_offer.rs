@@ -68,17 +68,18 @@ use std::fmt::Debug;
 
 use anyhow::anyhow;
 use chrono::Utc;
+use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer, Grants,
     PreAuthorizedCodeGrant, TxCode,
 };
+use openid4vc::{err, Result};
 use tracing::instrument;
-use vercre_core::error::Err;
+use vercre_core::gen;
 use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
-use vercre_core::{err, gen, Result};
 use vercre_vc::proof::Signer;
 
 use super::Endpoint;

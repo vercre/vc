@@ -11,14 +11,14 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
+use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{DeferredCredentialRequest, DeferredCredentialResponse};
+use openid4vc::{err, Result};
 use tracing::instrument;
-use vercre_core::error::Err;
 use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
-use vercre_core::{err, Result};
 use vercre_vc::proof::Signer;
 
 use super::Endpoint;

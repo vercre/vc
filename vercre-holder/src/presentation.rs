@@ -4,12 +4,13 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
+use openid4vc::error::Err;
 use openid4vc::presentation::{RequestObject, RequestObjectResponse, ResponseRequest};
+use openid4vc::{err, Result};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
-use vercre_core::error::Err;
-use vercre_core::{err, jws, Result};
+use vercre_core::jws;
 use vercre_exch::{Constraints, DescriptorMap, PathNested, PresentationSubmission};
 use vercre_vc::model::vp::VerifiablePresentation;
 use vercre_vc::proof::{self, Payload};

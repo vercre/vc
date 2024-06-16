@@ -42,8 +42,8 @@ pub mod provider;
 use std::fmt::Debug;
 
 pub use openid4vc::issuance::CredentialConfiguration;
+pub use vercre_core::provider as callback;
 use vercre_core::provider::{Callback, StateManager};
-pub use vercre_core::{provider as callback, Result};
 pub use vercre_exch::Constraints;
 
 /// Endpoint is used to surface the public wallet endpoints to clients.
@@ -85,8 +85,8 @@ where
 #[cfg(test)]
 mod tests {
     use ::provider::issuance::Provider;
-    use vercre_core::err;
-    use vercre_core::error::Err;
+    use openid4vc::err;
+    use openid4vc::error::Err;
     use vercre_vc::proof::Signer;
 
     use super::*;
@@ -121,7 +121,7 @@ mod tests {
     where
         P: Callback + StateManager + Signer + Clone + Debug,
     {
-        async fn test(&mut self, request: &TestRequest) -> Result<TestResponse> {
+        async fn test(&mut self, request: &TestRequest) -> openid4vc::Result<TestResponse> {
             let ctx = Context {
                 _p: std::marker::PhantomData,
             };
@@ -148,7 +148,7 @@ mod tests {
 
         async fn process(
             &self, _provider: &Self::Provider, request: &Self::Request,
-        ) -> Result<Self::Response> {
+        ) -> openid4vc::Result<Self::Response> {
             match request.return_ok {
                 true => Ok(TestResponse {}),
                 false => err!(Err::InvalidRequest, "invalid request"),

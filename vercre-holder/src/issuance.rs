@@ -10,15 +10,16 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 pub use offer::OfferRequest;
+use openid4vc::error::Err;
 use openid4vc::issuance::CredentialConfiguration;
 pub use openid4vc::issuance::{
     CredentialOffer, CredentialRequest, CredentialResponse, GrantType, Issuer, MetadataRequest,
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
+use openid4vc::{err, Result};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use vercre_core::error::Err;
-use vercre_core::{err, jws, Result};
+use vercre_core::jws;
 use vercre_vc::proof::{self, Payload, Verify};
 
 use crate::credential::Credential;

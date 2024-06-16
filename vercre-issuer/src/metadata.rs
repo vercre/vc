@@ -26,12 +26,12 @@ use std::fmt::Debug;
 
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{MetadataRequest, MetadataResponse};
+use openid4vc::Result;
 use tracing::instrument;
 pub use vercre_core::provider as types;
 use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
-use vercre_core::Result;
 use vercre_vc::proof::Signer;
 
 use super::Endpoint;

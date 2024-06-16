@@ -16,12 +16,13 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
+use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{RequestObjectRequest, RequestObjectResponse};
+use openid4vc::{err, Result};
 use tracing::instrument;
-use vercre_core::error::Err;
+use vercre_core::jws;
 use vercre_core::provider::{Callback, ClientMetadata, Signer, StateManager};
-use vercre_core::{err, jws, Result};
 
 use super::Endpoint;
 use crate::state::State;

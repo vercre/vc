@@ -15,16 +15,17 @@ use std::fmt::Debug;
 
 use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded, Encoding};
+use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{AuthorizationDetailType, TokenRequest, TokenResponse};
 use openid4vc::issuance::{GrantType, TokenType};
+use openid4vc::{err, Result};
 use sha2::{Digest, Sha256};
 use tracing::instrument;
-use vercre_core::error::Err;
+use vercre_core::gen;
 use vercre_core::provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
-use vercre_core::{err, gen, Result};
 use vercre_vc::proof::Signer;
 
 use super::Endpoint;

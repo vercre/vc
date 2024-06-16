@@ -22,14 +22,14 @@
 
 use std::fmt::Debug;
 
+use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{ResponseRequest, ResponseResponse};
+use openid4vc::{err, Result};
 use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
-use vercre_core::error::Err;
 use vercre_core::provider::{Callback, ClientMetadata, StateManager};
-use vercre_core::{err, Result};
 use vercre_vc::proof::{self, Payload, Signer, Verify};
 
 use super::Endpoint;

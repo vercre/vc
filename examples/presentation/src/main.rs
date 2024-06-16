@@ -88,7 +88,7 @@ async fn response(
 // ----------------------------------------------------------------------------
 
 /// Axum response wrapper
-pub struct AxResult<T>(vercre_verifier::Result<T>);
+pub struct AxResult<T>(openid4vc::Result<T>);
 
 impl<T> IntoResponse for AxResult<T>
 where
@@ -103,8 +103,8 @@ where
     }
 }
 
-impl<T> From<vercre_verifier::Result<T>> for AxResult<T> {
-    fn from(val: vercre_verifier::Result<T>) -> Self {
+impl<T> From<openid4vc::Result<T>> for AxResult<T> {
+    fn from(val: openid4vc::Result<T>) -> Self {
         Self(val)
     }
 }
