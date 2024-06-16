@@ -11,7 +11,7 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
-use self::issuance::{Format, GrantType};
+use self::issuance::GrantType;
 use self::presentation::VpFormat;
 use crate::{err, error};
 
@@ -150,7 +150,7 @@ pub struct Client {
     /// }
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub vp_formats: Option<HashMap<Format, VpFormat>>,
+    pub vp_formats: Option<HashMap<CredentialFormat, VpFormat>>,
 }
 
 impl Client {
@@ -159,7 +159,7 @@ impl Client {
     pub fn new(client_id: &str) -> Self {
         Self {
             client_id: client_id.to_string(),
-            ..Default::default()
+            ..Self::default()
         }
     }
 }
@@ -314,7 +314,7 @@ pub struct Server {
     /// **`OpenID4VP`**
     /// A list of key value pairs, where the key identifies a Credential format
     /// supported by the Wallet.
-    pub vp_formats_supported: Option<HashMap<String, SupportedVpFormat>>,
+    pub vp_formats_supported: Option<HashMap<String, VpFormat>>,
 }
 
 impl Server {
@@ -355,13 +355,13 @@ impl Server {
             // vp_formats_supported: Some(HashMap::from([
             //     (
             //         "jwt_vc_json".into(),
-            //         SupportedVpFormat {
+            //         VpFormat {
             //             alg_values_supported: Some(vec!["ES256K".into(), "EdDSA".into()]),
             //         },
             //     ),
             //     (
             //         "jwt_vp_json".into(),
-            //         SupportedVpFormat {
+            //         VpFormat {
             //             alg_values_supported: Some(vec!["ES256K"into(), "EdDSA".into()]),
             //         },
             //     ),
@@ -370,16 +370,63 @@ impl Server {
     }
 }
 
-/// Credential format supported by the Wallet.
-/// Valid Credential format identifier values are defined in Annex E of [OpenID4VCI].
+/// The `OpenID4VCI` specification defines commonly used [Credential Format Profiles]
+/// to support.  The profiles define Credential format specific parameters or claims
+/// used to support a particular format.
 ///
-/// [OpenID4VCI]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct SupportedVpFormat {
-    /// An object where the value is an array of case sensitive strings that
-    /// identify the cryptographic suites that are supported. Parties will
-    /// need to agree upon the meanings of the values used, which may be
-    /// context-specific.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub alg_values_supported: Option<Vec<String>>,
+///
+/// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq, Hash)]
+pub enum CredentialFormat {
+    /// A W3C Verifiable Credential.
+    ///
+    /// When this format is specified, Credential Offer, Authorization Details,
+    /// Credential Request, and Credential Issuer metadata, including
+    /// `credential_definition` object, MUST NOT be processed using JSON-LD rules.
+    #[default]
+    #[serde(rename = "jwt_vc_json")]
+    JwtVcJson,
+
+    /// A W3C Verifiable Credential.
+    ///
+    /// When using this format, data MUST NOT be processed using JSON-LD rules.
+    ///
+    /// N.B. The `@context` value in the `credential_definition` object can be used by
+    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
+    /// could apply JSON-LD processing to the Credential issued.
+    #[serde(rename = "ldp-vc")]
+    LdpVc,
+
+    /// A W3C Verifiable Credential.
+    ///
+    /// When using this format, data MUST NOT be processed using JSON-LD rules.
+    ///
+    /// N.B. The `@context` value in the `credential_definition` object can be used by
+    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
+    /// could apply JSON-LD processing to the Credential issued.
+    #[serde(rename = "jwt_vc_json-ld")]
+    JwtVcJsonLd,
+
+    /// ISO mDL.
+    ///
+    /// A Credential Format Profile for Credentials complying with [ISO.18013-5] —
+    /// ISO-compliant driving licence specification.
+    ///
+    /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
+    #[serde(rename = "mso_mdoc")]
+    MsoDoc,
+
+    /// IETF SD-JWT VC.
+    ///
+    /// A Credential Format Profile for Credentials complying with
+    /// [I-D.ietf-oauth-sd-jwt-vc] — SD-JWT-based Verifiable Credentials for
+    /// selective disclosure.
+    ///
+    /// [I-D.ietf-oauth-sd-jwt-vc]: (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-01)
+    #[serde(rename = "vc+sd-jwt")]
+    VcSdJwt,
+
+    /// W3C Verifiable Credential.
+    #[serde(rename = "jwt_vp_json")]
+    JwtVpJson,
 }

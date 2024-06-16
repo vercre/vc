@@ -10,7 +10,7 @@ use k256::Secp256k1;
 use vercre_core::provider::{
     self as metadata, Callback, ClientMetadata, Payload, Result, StateManager, VpFormat,
 };
-use vercre_core::types::issuance::{Format, GrantType};
+use vercre_core::types::CredentialFormat;
 use vercre_vc::proof::{Algorithm, Signer};
 
 pub const VERIFIER: &str = "http://vercre.io";
@@ -97,18 +97,18 @@ impl ClientStore {
         let client_meta = metadata::Client {
             client_id: "http://vercre.io".into(),
             redirect_uris: Some(vec!["http://localhost:3000/callback".into()]),
-            grant_types: Some(vec![GrantType::AuthorizationCode]),
+            grant_types: None,
             response_types: Some(vec!["vp_token".into(), "id_token vp_token".into()]),
             vp_formats: Some(HashMap::from([
                 (
-                    Format::JwtVcJson,
+                    CredentialFormat::JwtVcJson,
                     VpFormat {
                         alg: Some(vec!["ES256K".into()]),
                         proof_type: Some(vec!["JsonWebSignature2020".into()]),
                     },
                 ),
                 (
-                    Format::JwtVcJson,
+                    CredentialFormat::JwtVcJson,
                     VpFormat {
                         alg: Some(vec!["ES256K".into()]),
                         proof_type: Some(vec!["JsonWebSignature2020".into()]),

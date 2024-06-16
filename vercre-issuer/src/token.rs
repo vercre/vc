@@ -212,7 +212,8 @@ mod tests {
     use providers::wallet;
     use serde_json::json;
     use vercre_core::provider::CredentialDefinition;
-    use vercre_core::types::issuance::{AuthorizationDetail, Format, TokenAuthorizationDetail};
+    use vercre_core::types::issuance::{AuthorizationDetail, TokenAuthorizationDetail};
+use vercre_core::types::CredentialFormat;
 
     use super::*;
     use crate::state::Auth;
@@ -304,7 +305,7 @@ mod tests {
             authorization_details: Some(vec![TokenAuthorizationDetail {
                 authorization_detail: AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,
-                    format: Some(Format::JwtVcJson),
+                    format: Some(CredentialFormat::JwtVcJson),
                     credential_definition: Some(CredentialDefinition {
                         type_: Some(vec![
                             "VerifiableCredential".into(),

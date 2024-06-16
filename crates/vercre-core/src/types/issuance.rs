@@ -10,7 +10,7 @@ use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use super::Client;
+use super::{Client, CredentialFormat};
 use crate::error::{self, Err};
 use crate::jws::Jwk;
 use crate::{err, stringify, Result};
@@ -31,69 +31,6 @@ pub enum GrantType {
     #[serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")]
     PreAuthorizedCode,
 }
-
-/// The `OpenID4VCI` specification defines commonly used [Credential Format Profiles]
-/// to support.  The profiles define Credential format specific parameters or claims
-/// used to support a particular format.
-///
-///
-/// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq, Hash)]
-pub enum Format {
-    /// A W3C Verifiable Credential.
-    ///
-    /// When this format is specified, Credential Offer, Authorization Details,
-    /// Credential Request, and Credential Issuer metadata, including
-    /// `credential_definition` object, MUST NOT be processed using JSON-LD rules.
-    #[default]
-    #[serde(rename = "jwt_vc_json")]
-    JwtVcJson,
-
-    /// A W3C Verifiable Credential.
-    ///
-    /// When using this format, data MUST NOT be processed using JSON-LD rules.
-    ///
-    /// N.B. The `@context` value in the `credential_definition` object can be used by
-    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
-    /// could apply JSON-LD processing to the Credential issued.
-    #[serde(rename = "ldp-vc")]
-    LdpVc,
-
-    /// A W3C Verifiable Credential.
-    ///
-    /// When using this format, data MUST NOT be processed using JSON-LD rules.
-    ///
-    /// N.B. The `@context` value in the `credential_definition` object can be used by
-    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
-    /// could apply JSON-LD processing to the Credential issued.
-    #[serde(rename = "jwt_vc_json-ld")]
-    JwtVcJsonLd,
-
-    /// ISO mDL.
-    ///
-    /// A Credential Format Profile for Credentials complying with [ISO.18013-5] —
-    /// ISO-compliant driving licence specification.
-    ///
-    /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
-    #[serde(rename = "mso_mdoc")]
-    MsoDoc,
-
-    /// IETF SD-JWT VC.
-    ///
-    /// A Credential Format Profile for Credentials complying with
-    /// [I-D.ietf-oauth-sd-jwt-vc] — SD-JWT-based Verifiable Credentials for
-    /// selective disclosure.
-    ///
-    /// [I-D.ietf-oauth-sd-jwt-vc]: (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-01)
-    #[serde(rename = "vc+sd-jwt")]
-    VcSdJwt,
-
-    /// W3C Verifiable Credential.
-    #[serde(rename = "jwt_vp_json")]
-    JwtVpJson,
-}
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
 
 /// Request a Credential Offer for a Credential Issuer.
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
@@ -482,7 +419,7 @@ pub struct AuthorizationDetail {
     ///
     /// One of "`jwt_vc_json`", "`jwt_vc_json`-ld", "`ldp_vc`", or "`vc+sd-jwt`".
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub format: Option<Format>,
+    pub format: Option<CredentialFormat>,
 
     /// Contains the type values the Wallet requests authorization for at the Credential
     /// Issuer.
@@ -704,7 +641,7 @@ pub struct CredentialRequest {
     /// REQUIRED when `credential_identifiers` was not returned from the Token
     /// Response. Otherwise, MUST NOT be used.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub format: Option<Format>,
+    pub format: Option<CredentialFormat>,
 
     /// Wallet's proof of possession of cryptographic key material the issued Credential
     /// will be bound to.
@@ -1102,8 +1039,8 @@ pub struct CredentialConfiguration {
     ///
     /// See [Credential Format Profiles] in the `OpenID4VCI` specification.
     ///
-    /// [Appendix A]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles
-    pub format: Format,
+    /// [Credential Format Profiles]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles
+    pub format: CredentialFormat,
 
     /// Identifies the scope value that this Credential Issuer supports for this
     /// particular credential. The value can be the same accross multiple
@@ -1208,7 +1145,7 @@ impl CredentialConfiguration {
     #[must_use]
     pub fn sample() -> Self {
         Self {
-            format: Format::JwtVcJson,
+            format: CredentialFormat::JwtVcJson,
             scope: Some("EmployeeIDCredential".into()),
             cryptographic_binding_methods_supported: Some(vec!["did:jwk".into(), "did:ion".into()]),
             credential_signing_alg_values_supported: Some(vec!["ES256K".into(), "EdDSA".into()]),
@@ -1291,7 +1228,7 @@ impl CredentialConfiguration {
     #[must_use]
     pub fn sample2() -> Self {
         Self {
-            format: Format::JwtVcJson,
+            format: CredentialFormat::JwtVcJson,
             scope: Some("DeveloperCredential".into()),
             cryptographic_binding_methods_supported: Some(vec!["did:jwk".into(), "did:ion".into()]),
             credential_signing_alg_values_supported: Some(vec!["ES256K".into(), "EdDSA".into()]),
@@ -1554,7 +1491,7 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                format: Some(Format::JwtVcJson),
+                format: Some(CredentialFormat::JwtVcJson),
                 credential_definition: Some(CredentialDefinition {
                     context: Some(vec![
                         "https://www.w3.org/2018/credentials/v1".into(),
