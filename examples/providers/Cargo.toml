@@ -14,10 +14,10 @@ chrono.workspace = true
 ecdsa.workspace = true
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 k256.workspace = true
-openid4vc.workspace = true
-provider.workspace = true
 serde_json.workspace = true
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 tracing.workspace = true
 uuid.workspace = true
-vercre-vc.workspace = true
+vercre-holder.workspace = true
+vercre-issuer.workspace = true
+vercre-verifier.workspace = true

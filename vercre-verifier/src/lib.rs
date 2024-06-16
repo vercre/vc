@@ -163,14 +163,21 @@ pub mod request;
 pub mod response;
 mod state;
 
+/// Re-export provider traits and types.
+pub mod provider {
+    pub use openid4vc::Client;
+    pub use provider::{
+        Algorithm, Callback, ClientMetadata, Payload, Result, Signer, StateManager,
+    };
+}
 use std::fmt::Debug;
 
 //----------------------
 // Re-exports
 //----------------------
-pub use openid4vc::Result;
+pub use openid4vc::presentation::VpFormat;
+pub use openid4vc::{CredentialFormat, Result};
 //----------------------
-
 use provider::{Callback, ClientMetadata, StateManager};
 use vercre_vc::proof::Signer;
 

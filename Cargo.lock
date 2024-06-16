@@ -3541,13 +3541,13 @@ dependencies = [
  "ecdsa",
  "ed25519-dalek",
  "k256",
- "openid4vc",
- "provider",
  "serde_json",
  "tracing",
  "tracing-subscriber",
  "uuid",
- "vercre-vc",
+ "vercre-holder",
+ "vercre-issuer",
+ "vercre-verifier",
 ]
 
 [[package]]

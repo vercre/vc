@@ -96,16 +96,24 @@ pub mod register;
 mod state;
 pub mod token;
 
+/// Re-export provider traits and types.
+pub mod provider {
+    pub use openid4vc::{Server,Client};
+    pub use provider::{
+        Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Payload, Result,
+        ServerMetadata, Signer, StateManager, Subject,
+    };
+    pub use openid4vc::issuance::{CredentialDefinition, GrantType, Issuer};
+}
+
 use std::fmt::Debug;
 
-//----------------------
-// Re-exports
-//----------------------
 pub use openid4vc::issuance::{GrantType, ProofClaims};
 pub use openid4vc::Result;
+use provider::{
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
+};
 //----------------------
-use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
-use vercre_vc::proof::Signer;
 
 /// Endpoint is used to surface the public Verifiable Presentation endpoints to
 /// clients.

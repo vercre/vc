@@ -7,14 +7,12 @@ use chrono::{DateTime, Utc};
 use ecdsa::signature::Signer as _;
 use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
-use openid4vc::issuance::{CredentialDefinition, GrantType, Issuer};
-use provider::{
-    Callback, Claims, ClientMetadata, IssuerMetadata, Payload, Result, ServerMetadata,
-    StateManager, Subject,
-};
 use serde_json::Value;
 use uuid::Uuid;
-use vercre_vc::proof::{Algorithm, Signer};
+use vercre_issuer::provider::{
+    Algorithm, Callback, Claims, Client, ClientMetadata, CredentialDefinition, GrantType, Issuer,
+    IssuerMetadata, Payload, Result, Server, ServerMetadata, Signer, StateManager, Subject,
+};
 
 pub const NORMAL_USER: &str = "normal_user";
 pub const PENDING_USER: &str = "pending_user";
@@ -50,11 +48,11 @@ impl Provider {
 }
 
 impl ClientMetadata for Provider {
-    async fn metadata(&self, client_id: &str) -> Result<openid4vc::Client> {
+    async fn metadata(&self, client_id: &str) -> Result<Client> {
         self.client.get(client_id)
     }
 
-    async fn register(&self, client_meta: &openid4vc::Client) -> Result<openid4vc::Client> {
+    async fn register(&self, client_meta: &Client) -> Result<Client> {
         self.client.add(client_meta)
     }
 }
@@ -66,7 +64,7 @@ impl IssuerMetadata for Provider {
 }
 
 impl ServerMetadata for Provider {
-    async fn metadata(&self, server_id: &str) -> Result<openid4vc::Server> {
+    async fn metadata(&self, server_id: &str) -> Result<Server> {
         self.server.get(server_id)
     }
 }
@@ -131,7 +129,7 @@ impl Callback for Provider {
 //-----------------------------------------------------------------------------
 #[derive(Default, Clone, Debug)]
 struct ClientStore {
-    clients: Arc<Mutex<HashMap<String, openid4vc::Client>>>,
+    clients: Arc<Mutex<HashMap<String, Client>>>,
 }
 
 const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
@@ -140,7 +138,7 @@ impl ClientStore {
     fn new() -> Self {
         let client_id = CLIENT_ID.to_string();
 
-        let client = openid4vc::Client {
+        let client = Client {
             client_id: client_id.clone(),
             redirect_uris: Some(vec!["http://localhost:3000/callback".into()]),
             grant_types: Some(vec![GrantType::AuthorizationCode, GrantType::PreAuthorizedCode]),
@@ -156,7 +154,7 @@ impl ClientStore {
         }
     }
 
-    fn get(&self, client_id: &str) -> Result<openid4vc::Client> {
+    fn get(&self, client_id: &str) -> Result<Client> {
         let Some(client) = self.clients.lock().expect("should lock").get(client_id).cloned() else {
             return Err(anyhow!("client not found for client_id: {client_id}"));
         };
@@ -164,8 +162,8 @@ impl ClientStore {
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn add(&self, client_meta: &openid4vc::Client) -> Result<openid4vc::Client> {
-        let client_meta = openid4vc::Client {
+    fn add(&self, client_meta: &Client) -> Result<Client> {
+        let client_meta = Client {
             client_id: Uuid::new_v4().to_string(),
             ..client_meta.to_owned()
         };
@@ -335,12 +333,12 @@ impl IssuerStore {
 
 #[derive(Default, Clone, Debug)]
 struct ServerStore {
-    servers: HashMap<String, openid4vc::Server>,
+    servers: HashMap<String, Server>,
 }
 
 impl ServerStore {
     fn new() -> Self {
-        let server = openid4vc::Server::sample();
+        let server = Server::sample();
         Self {
             servers: HashMap::from([
                 ("http://localhost:8080".into(), server.clone()),
@@ -349,7 +347,7 @@ impl ServerStore {
         }
     }
 
-    fn get(&self, server_id: &str) -> Result<openid4vc::Server> {
+    fn get(&self, server_id: &str) -> Result<Server> {
         let Some(server) = self.servers.get(server_id) else {
             return Err(anyhow!("issuer not found"));
         };
