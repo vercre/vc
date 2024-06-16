@@ -2,9 +2,10 @@
 //!
 //! The `signature` module provides `Signer` and `Verifier` traits for Vercre.
 
+use std::fmt::{Debug, Display};
 use std::future::{Future, IntoFuture};
 
-pub use crate::jws::Algorithm;
+use serde::{Deserialize, Serialize};
 
 /// Signer is used by implementers to provide signing functionality for
 /// Verifiable Credential issuance and Verifiable Presentation submissions.
@@ -35,4 +36,23 @@ pub trait Verifier: Send + Sync {
     ///
     /// Returns an error if the signature is invalid.
     fn verify(&self, msg: &[u8], signature: &[u8]) -> anyhow::Result<()>;
+}
+
+/// Algorithm is used to specify the signing algorithm used by the signer.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub enum Algorithm {
+    /// Algorithm for the secp256k1 curve
+    #[serde(rename = "ES256K")]
+    ES256K,
+
+    /// Algorithm for the Ed25519 curve
+    #[default]
+    #[serde(rename = "EdDSA")]
+    EdDSA,
+}
+
+impl Display for Algorithm {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
 }

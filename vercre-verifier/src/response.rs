@@ -22,14 +22,14 @@
 
 use std::fmt::Debug;
 
+use openid4vc::error::Err;
+#[allow(clippy::module_name_repetitions)]
+pub use openid4vc::presentation::{ResponseRequest, ResponseResponse};
+use openid4vc::{err, Result};
+use provider::{Callback, ClientMetadata, StateManager};
 use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
-use vercre_core::error::Err;
-use vercre_core::provider::{Callback, ClientMetadata, StateManager};
-#[allow(clippy::module_name_repetitions)]
-pub use vercre_core::vp::{ResponseRequest, ResponseResponse};
-use vercre_core::{err, Result};
 use vercre_vc::proof::{self, Payload, Signer, Verify};
 
 use super::Endpoint;
@@ -102,7 +102,7 @@ where
         };
 
         // use serde::de::{self, Deserialize, Deserializer, SeqAccess, Visitor};
-        // use vercre_core::vp::vp_token as deser;
+        // use openid4vc::presentation::vp_token as deser;
 
         let mut vp_values = vec![];
 
@@ -252,9 +252,9 @@ where
 mod tests {
     use std::sync::LazyLock;
 
+    use openid4vc::presentation::RequestObject;
     use providers::presentation::Provider;
     use serde_json::json;
-    use vercre_core::vp::RequestObject;
     use vercre_exch::PresentationDefinition;
 
     use super::*;

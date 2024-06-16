@@ -12,18 +12,16 @@ use std::fmt::Debug;
 
 use anyhow::anyhow;
 use chrono::Utc;
-use tracing::instrument;
-use vercre_core::error::{Ancillary as _, Err};
-use vercre_core::metadata::{CredentialDefinition, Issuer};
-use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
-use vercre_core::vci::ProofClaims;
+use openid4vc::error::{Ancillary as _, Err};
 #[allow(clippy::module_name_repetitions)]
-pub use vercre_core::vci::{
+pub use openid4vc::issuance::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialRequest, CredentialResponse,
 };
-use vercre_core::{err, gen, jws, Result};
+use openid4vc::issuance::{CredentialDefinition, Issuer, ProofClaims};
+use openid4vc::{err, Result};
+use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
+use tracing::instrument;
+use vercre_core::{gen, jws};
 use vercre_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_vc::proof::{self, Payload, Signer};
 

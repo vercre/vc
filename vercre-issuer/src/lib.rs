@@ -98,13 +98,9 @@ pub mod token;
 
 use std::fmt::Debug;
 
-pub use vercre_core::error::Error;
-use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
 // TODO: move Claims into jwt module
-pub use vercre_core::vci::{GrantType, ProofClaims};
-pub use vercre_core::{callback, provider, subject, Result};
+pub use openid4vc::issuance::{GrantType, ProofClaims};
+use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use vercre_vc::proof::Signer;
 
 /// Endpoint is used to surface the public Verifiable Presentation endpoints to
@@ -172,9 +168,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use providers::issuance::Provider;
-    use vercre_core::err;
-    use vercre_core::error::Err;
+    use ::providers::issuance::Provider;
+    use openid4vc::error::Err;
+    use openid4vc::{err, Result};
 
     use super::*;
 

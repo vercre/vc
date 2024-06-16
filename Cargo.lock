@@ -2321,6 +2321,7 @@ dependencies = [
  "axum",
  "axum-extra",
  "oauth2",
+ "openid4vc",
  "providers",
  "serde",
  "serde_json",
@@ -2996,6 +2997,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "openid4vc"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "ecdsa",
+ "image",
+ "insta",
+ "qrcode",
+ "serde",
+ "serde_json",
+ "serde_json_path",
+ "serde_qs",
+ "thiserror",
+ "vercre-exch",
+]
+
+[[package]]
 name = "openssl"
 version = "0.10.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3415,6 +3434,7 @@ version = "0.0.0"
 dependencies = [
  "axum",
  "axum-extra",
+ "openid4vc",
  "providers",
  "serde",
  "serde_json",
@@ -3485,6 +3505,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "provider"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "openid4vc",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "providers"
 version = "0.0.0"
 dependencies = [
@@ -3494,11 +3525,12 @@ dependencies = [
  "ecdsa",
  "ed25519-dalek",
  "k256",
+ "openid4vc",
+ "provider",
  "serde_json",
  "tracing",
  "tracing-subscriber",
  "uuid",
- "vercre-core",
  "vercre-vc",
 ]
 
@@ -5584,21 +5616,16 @@ version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
  "base64ct",
- "chrono",
  "ecdsa",
  "ed25519-dalek",
  "fastrand",
- "image",
  "insta",
  "k256",
- "qrcode",
+ "openid4vc",
+ "provider",
  "serde",
  "serde_json",
- "serde_json_path",
- "serde_qs",
- "thiserror",
  "tracing",
- "vercre-exch",
 ]
 
 [[package]]
@@ -5622,6 +5649,8 @@ dependencies = [
  "assert_let_bind",
  "chrono",
  "insta",
+ "openid4vc",
+ "provider",
  "providers",
  "serde",
  "serde_json",
@@ -5647,6 +5676,8 @@ dependencies = [
  "derive_builder",
  "futures",
  "insta",
+ "openid4vc",
+ "provider",
  "providers",
  "serde",
  "serde_json",
@@ -5665,6 +5696,7 @@ dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
+ "provider",
  "serde",
  "serde_json",
  "tracing",
@@ -5684,6 +5716,8 @@ dependencies = [
  "derive_builder",
  "futures",
  "insta",
+ "openid4vc",
+ "provider",
  "providers",
  "serde",
  "serde_json",

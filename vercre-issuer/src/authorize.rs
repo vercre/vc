@@ -74,18 +74,16 @@ use std::vec;
 
 use anyhow::anyhow;
 use chrono::Utc;
-use tracing::instrument;
-use vercre_core::error::Err;
-use vercre_core::metadata::Issuer;
-use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
-use vercre_core::vci::GrantType;
-pub use vercre_core::vci::{
+use openid4vc::error::Err;
+pub use openid4vc::issuance::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
     TokenAuthorizationDetail,
 };
-use vercre_core::{err, gen, Result};
+use openid4vc::issuance::{GrantType, Issuer};
+use openid4vc::{err, Result};
+use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
+use tracing::instrument;
+use vercre_core::gen;
 use vercre_vc::proof::Signer;
 
 use super::Endpoint;

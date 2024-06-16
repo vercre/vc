@@ -7,10 +7,9 @@ use chrono::{DateTime, Utc};
 use ecdsa::signature::Signer as _;
 use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
-use vercre_core::callback::Payload;
-use vercre_core::metadata::{self, VpFormat};
-use vercre_core::provider::{Callback, ClientMetadata, Result, StateManager};
-use vercre_core::vci::{Format, GrantType};
+use openid4vc::presentation::VpFormat;
+use openid4vc::CredentialFormat;
+use provider::{Callback, ClientMetadata, Payload, Result, StateManager};
 use vercre_vc::proof::{Algorithm, Signer};
 
 pub const VERIFIER: &str = "http://vercre.io";
@@ -37,11 +36,11 @@ impl Provider {
 }
 
 impl ClientMetadata for Provider {
-    async fn metadata(&self, client_id: &str) -> Result<metadata::Client> {
+    async fn metadata(&self, client_id: &str) -> Result<openid4vc::Client> {
         self.client.get(client_id)
     }
 
-    async fn register(&self, _: &metadata::Client) -> Result<metadata::Client> {
+    async fn register(&self, _: &openid4vc::Client) -> Result<openid4vc::Client> {
         unimplemented!("register not implemented")
     }
 }
@@ -89,26 +88,26 @@ impl Callback for Provider {
 
 #[derive(Clone, Debug, Default)]
 struct ClientStore {
-    clients: HashMap<String, metadata::Client>,
+    clients: HashMap<String, openid4vc::Client>,
 }
 
 impl ClientStore {
     fn new() -> Self {
-        let client_meta = metadata::Client {
+        let client_meta = openid4vc::Client {
             client_id: "http://vercre.io".into(),
             redirect_uris: Some(vec!["http://localhost:3000/callback".into()]),
-            grant_types: Some(vec![GrantType::AuthorizationCode]),
+            grant_types: None,
             response_types: Some(vec!["vp_token".into(), "id_token vp_token".into()]),
             vp_formats: Some(HashMap::from([
                 (
-                    Format::JwtVcJson,
+                    CredentialFormat::JwtVcJson,
                     VpFormat {
                         alg: Some(vec!["ES256K".into()]),
                         proof_type: Some(vec!["JsonWebSignature2020".into()]),
                     },
                 ),
                 (
-                    Format::JwtVcJson,
+                    CredentialFormat::JwtVcJson,
                     VpFormat {
                         alg: Some(vec!["ES256K".into()]),
                         proof_type: Some(vec!["JsonWebSignature2020".into()]),
@@ -129,7 +128,7 @@ impl ClientStore {
         Self { clients }
     }
 
-    fn get(&self, client_id: &str) -> Result<metadata::Client> {
+    fn get(&self, client_id: &str) -> Result<openid4vc::Client> {
         let Some(client) = self.clients.get(client_id) else {
             return Err(anyhow!("verifier not found"));
         };

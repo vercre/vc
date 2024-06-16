@@ -4,31 +4,17 @@
 // https://github.com/rust-lang/rust/issues/99301
 #![feature(error_generic_member_access)]
 
-pub mod callback;
-pub mod error;
 pub mod gen;
 pub mod jws;
-pub mod metadata;
-pub mod provider;
-pub mod signature;
 pub mod stringify;
-pub mod subject;
-pub mod vci;
-pub mod vp;
 
 use std::fmt::Debug;
 
+use openid4vc::error::Error;
+use provider::{Callback, Payload, Status};
 use tracing::instrument;
 
-use crate::callback::{Payload, Status};
-use crate::error::Error;
-use crate::provider::Callback;
-
 // LATER: investigate `async_fn_in_trait` warning
-
-/// Result type for `OpenID` for Verifiable Credential Issuance and Verifiable
-/// Presentations.
-pub type Result<T, E = error::Error> = std::result::Result<T, E>;
 
 /// Context is implemented by every endpoint to set up a context for each
 /// request.
@@ -51,14 +37,14 @@ pub trait Context: Send + Sync + Debug {
 
     /// Verify the request.
     #[allow(clippy::unused_async)]
-    async fn verify(&mut self, _: &Self::Provider, _: &Self::Request) -> Result<&Self> {
+    async fn verify(&mut self, _: &Self::Provider, _: &Self::Request) -> openid4vc::Result<&Self> {
         Ok(self)
     }
 
     /// Process the request.
     async fn process(
         &self, provider: &Self::Provider, request: &Self::Request,
-    ) -> Result<Self::Response>;
+    ) -> openid4vc::Result<Self::Response>;
 }
 
 // TODO: replace async fn in trait with async trait
@@ -79,7 +65,7 @@ pub trait Endpoint: Debug {
     /// calls `Endpoint::handle_request` to handle shared functionality.
     #[allow(async_fn_in_trait)]
     #[instrument(level = "debug", skip(self))]
-    async fn handle_request<R, C, U>(&self, request: &R, mut ctx: C) -> Result<U>
+    async fn handle_request<R, C, U>(&self, request: &R, mut ctx: C) -> openid4vc::Result<U>
     where
         C: Context<Request = R, Response = U, Provider = Self::Provider>,
         R: Default + Clone + Debug + Send + Sync,

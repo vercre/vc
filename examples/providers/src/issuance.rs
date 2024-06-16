@@ -7,15 +7,13 @@ use chrono::{DateTime, Utc};
 use ecdsa::signature::Signer as _;
 use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
+use openid4vc::issuance::{CredentialDefinition, GrantType, Issuer};
+use provider::{
+    Callback, Claims, ClientMetadata, IssuerMetadata, Payload, Result, ServerMetadata,
+    StateManager, Subject,
+};
 use serde_json::Value;
 use uuid::Uuid;
-use vercre_core::callback::Payload;
-use vercre_core::metadata::{self, CredentialDefinition};
-use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, Result, ServerMetadata, StateManager, Subject,
-};
-use vercre_core::subject;
-use vercre_core::vci::GrantType;
 use vercre_vc::proof::{Algorithm, Signer};
 
 pub const NORMAL_USER: &str = "normal_user";
@@ -52,23 +50,23 @@ impl Provider {
 }
 
 impl ClientMetadata for Provider {
-    async fn metadata(&self, client_id: &str) -> Result<metadata::Client> {
+    async fn metadata(&self, client_id: &str) -> Result<openid4vc::Client> {
         self.client.get(client_id)
     }
 
-    async fn register(&self, client_meta: &metadata::Client) -> Result<metadata::Client> {
+    async fn register(&self, client_meta: &openid4vc::Client) -> Result<openid4vc::Client> {
         self.client.add(client_meta)
     }
 }
 
 impl IssuerMetadata for Provider {
-    async fn metadata(&self, issuer_id: &str) -> Result<metadata::Issuer> {
+    async fn metadata(&self, issuer_id: &str) -> Result<Issuer> {
         self.issuer.get(issuer_id)
     }
 }
 
 impl ServerMetadata for Provider {
-    async fn metadata(&self, server_id: &str) -> Result<metadata::Server> {
+    async fn metadata(&self, server_id: &str) -> Result<openid4vc::Server> {
         self.server.get(server_id)
     }
 }
@@ -83,7 +81,7 @@ impl Subject for Provider {
 
     async fn claims(
         &self, holder_subject: &str, credential: &CredentialDefinition,
-    ) -> Result<subject::Claims> {
+    ) -> Result<Claims> {
         Ok(self.subject.get_claims(holder_subject, credential))
     }
 }
@@ -133,7 +131,7 @@ impl Callback for Provider {
 //-----------------------------------------------------------------------------
 #[derive(Default, Clone, Debug)]
 struct ClientStore {
-    clients: Arc<Mutex<HashMap<String, metadata::Client>>>,
+    clients: Arc<Mutex<HashMap<String, openid4vc::Client>>>,
 }
 
 const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
@@ -142,7 +140,7 @@ impl ClientStore {
     fn new() -> Self {
         let client_id = CLIENT_ID.to_string();
 
-        let client = metadata::Client {
+        let client = openid4vc::Client {
             client_id: client_id.clone(),
             redirect_uris: Some(vec!["http://localhost:3000/callback".into()]),
             grant_types: Some(vec![GrantType::AuthorizationCode, GrantType::PreAuthorizedCode]),
@@ -158,7 +156,7 @@ impl ClientStore {
         }
     }
 
-    fn get(&self, client_id: &str) -> Result<metadata::Client> {
+    fn get(&self, client_id: &str) -> Result<openid4vc::Client> {
         let Some(client) = self.clients.lock().expect("should lock").get(client_id).cloned() else {
             return Err(anyhow!("client not found for client_id: {client_id}"));
         };
@@ -166,8 +164,8 @@ impl ClientStore {
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn add(&self, client_meta: &metadata::Client) -> Result<metadata::Client> {
-        let client_meta = metadata::Client {
+    fn add(&self, client_meta: &openid4vc::Client) -> Result<openid4vc::Client> {
+        let client_meta = openid4vc::Client {
             client_id: Uuid::new_v4().to_string(),
             ..client_meta.to_owned()
         };
@@ -236,9 +234,7 @@ impl SubjectStore {
         Ok(true)
     }
 
-    fn get_claims(
-        &self, holder_subject: &str, credential: &CredentialDefinition,
-    ) -> subject::Claims {
+    fn get_claims(&self, holder_subject: &str, credential: &CredentialDefinition) -> Claims {
         // get holder subject while allowing mutex to go out of scope and release
         // lock so we can take another lock for insert further down
         let subject =
@@ -266,7 +262,7 @@ impl SubjectStore {
         updated.pending = false;
         self.subjects.lock().expect("should lock").insert(holder_subject.to_string(), updated);
 
-        subject::Claims {
+        Claims {
             claims,
             pending: subject.pending,
         }
@@ -314,12 +310,12 @@ impl StateStore {
 //-----------------------------------------------------------------------------
 #[derive(Default, Clone, Debug)]
 struct IssuerStore {
-    issuers: HashMap<String, metadata::Issuer>,
+    issuers: HashMap<String, Issuer>,
 }
 
 impl IssuerStore {
     fn new() -> Self {
-        let issuer = metadata::Issuer::sample();
+        let issuer = Issuer::sample();
 
         Self {
             issuers: HashMap::from([
@@ -329,7 +325,7 @@ impl IssuerStore {
         }
     }
 
-    fn get(&self, issuer_id: &str) -> Result<metadata::Issuer> {
+    fn get(&self, issuer_id: &str) -> Result<Issuer> {
         let Some(issuer) = self.issuers.get(issuer_id) else {
             return Err(anyhow!("issuer not found"));
         };
@@ -339,12 +335,12 @@ impl IssuerStore {
 
 #[derive(Default, Clone, Debug)]
 struct ServerStore {
-    servers: HashMap<String, metadata::Server>,
+    servers: HashMap<String, openid4vc::Server>,
 }
 
 impl ServerStore {
     fn new() -> Self {
-        let server = metadata::Server::sample();
+        let server = openid4vc::Server::sample();
         Self {
             servers: HashMap::from([
                 ("http://localhost:8080".into(), server.clone()),
@@ -353,7 +349,7 @@ impl ServerStore {
         }
     }
 
-    fn get(&self, server_id: &str) -> Result<metadata::Server> {
+    fn get(&self, server_id: &str) -> Result<openid4vc::Server> {
         let Some(server) = self.servers.get(server_id) else {
             return Err(anyhow!("issuer not found"));
         };

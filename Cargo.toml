@@ -48,6 +48,8 @@ ecdsa = "0.16.9"
 futures = "0.3.30"
 insta = { version = "1.39.0", features = ["redactions", "yaml"] }
 k256 = "0.13.3"
+openid4vc = { path = "crates/openid4vc" }
+provider = { path = "crates/provider" }
 providers = { path = "examples/providers" }
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = { version = "1.0.117", features = ["alloc"] }

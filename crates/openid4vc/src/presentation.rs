@@ -12,8 +12,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use vercre_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 
+use super::Client as ClientMetadata;
 use crate::error::Err;
-use crate::metadata::Client as ClientMetadata;
 use crate::{err, stringify, Result};
 
 /// The Request Object Request is created by the Verifier to generate an
@@ -498,4 +498,20 @@ pub struct MetadataResponse {
     /// The Client metadata for the specified Verifier.
     #[serde(flatten)]
     pub client: ClientMetadata,
+}
+
+/// Used to define the format and proof types of Verifiable Presentations and
+/// Verifiable Credentials that a Verifier supports.
+/// Deployments can extend the formats supported, provided Issuers, Holders and
+/// Verifiers all understand the new format.
+/// See <https://openid.net/specs/openid-4-verifiable-presentations-1_0.html#alternative_credential_formats>
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct VpFormat {
+    /// Algorithms supported by the format.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alg: Option<Vec<String>>,
+
+    /// Proof types supported by the format.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub proof_type: Option<Vec<String>>,
 }

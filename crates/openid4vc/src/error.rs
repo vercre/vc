@@ -421,7 +421,7 @@ impl From<std::convert::Infallible> for Error {
 /// # Example
 ///
 /// ```rust,ignore
-/// use vercre_core::error::Err;
+/// use openid4vc::error::Err;
 /// use vercre_core::{err, error, Result};
 ///
 /// fn with_hint() -> Result<()> {
@@ -566,7 +566,7 @@ mod test {
         // check backtrace, if it is enabled
         if env::var("RUST_BACKTRACE").is_ok_and(|s| s == "1") {
             assert!(error.backtrace.to_string().contains(
-                "<vercre_core::error::Error as core::convert::From<serde_qs::error::Error>"
+                "<openid4vc::error::Error as core::convert::From<serde_qs::error::Error>"
             ));
         }
     }

@@ -7,12 +7,11 @@
 
 use std::fmt::Debug;
 
-use tracing::instrument;
-pub use vercre_core::metadata as types;
-use vercre_core::provider::{Callback, ClientMetadata, StateManager};
 #[allow(clippy::module_name_repetitions)]
-pub use vercre_core::vp::{MetadataRequest, MetadataResponse};
-use vercre_core::Result;
+pub use openid4vc::presentation::{MetadataRequest, MetadataResponse};
+use openid4vc::Result;
+use provider::{Callback, ClientMetadata, StateManager};
+use tracing::instrument;
 use vercre_vc::proof::Signer;
 
 use super::Endpoint;

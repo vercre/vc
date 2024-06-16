@@ -1,12 +1,18 @@
 //! # `OpenID` Core
 
+mod callback;
+mod signature;
+mod subject;
+
 use std::future::{Future, IntoFuture};
 
 use chrono::{DateTime, Utc};
+use openid4vc::issuance::{CredentialDefinition, Issuer};
+use openid4vc::{Client, Server};
 
-use crate::callback;
-use crate::metadata::{Client, CredentialDefinition, Issuer, Server};
-use crate::subject::Claims;
+pub use self::callback::{Payload, Status};
+pub use self::signature::{Algorithm, Signer, Verifier};
+pub use self::subject::Claims;
 
 /// Result is used for all external errors.
 pub type Result<T> = anyhow::Result<T>;
@@ -92,4 +98,3 @@ pub trait Subject: Send + Sync {
         &self, holder_subject: &str, credential: &CredentialDefinition,
     ) -> impl Future<Output = Result<Claims>> + Send;
 }
-

@@ -1,5 +1,5 @@
 [package]
-name = "vercre-core"
+name = "openid4vc"
 description = "OpenID Data Model"
 license = "MIT OR Apache-2.0"
 publish = false
@@ -17,9 +17,6 @@ version.workspace = true
 [lib]
 # crate-type = ["cdylib", "rlib"]
 
-[features]
-wasm = ["fastrand/js"]
-
 [lints]
 workspace = true
 
@@ -27,14 +24,14 @@ workspace = true
 anyhow.workspace = true
 base64ct.workspace = true
 ecdsa.workspace = true
-ed25519-dalek = "2.1.1"
-fastrand = "2.1.0"
-k256.workspace = true
-openid4vc.workspace = true
-provider.workspace = true
+image = { version = "0.25.1", default-features = false, features = ["png"] }
+qrcode = { version = "0.14.0", default-features = false, features = ["image"] }
 serde.workspace = true
 serde_json.workspace = true
-tracing.workspace = true
+serde_json_path = "0.6.7"
+serde_qs.workspace = true
+thiserror = "1.0.61"
+vercre-exch.workspace = true
 
 [dev-dependencies]
 insta = { version = "1.39.0", features = ["filters", "redactions", "yaml"] }

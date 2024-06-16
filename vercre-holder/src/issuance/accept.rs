@@ -7,9 +7,9 @@
 use std::fmt::Debug;
 
 use chrono::{DateTime, Utc};
+use openid4vc::error::Err;
+use openid4vc::{err, Result};
 use tracing::instrument;
-use vercre_core::error::Err;
-use vercre_core::{err, Result};
 
 use crate::issuance::{Issuance, Status};
 use crate::provider::{Callback, StateManager};

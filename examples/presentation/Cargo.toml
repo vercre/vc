@@ -9,6 +9,7 @@ workspace = true
 [dependencies]
 axum-extra.workspace = true
 axum.workspace = true
+openid4vc.workspace = true
 providers.workspace = true
 serde.workspace = true
 serde_json.workspace = true

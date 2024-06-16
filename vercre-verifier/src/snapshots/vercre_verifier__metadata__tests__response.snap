@@ -1,13 +1,11 @@
 ---
 source: vercre-verifier/src/metadata.rs
-assertion_line: 84
+assertion_line: 85
 expression: response
 ---
 client_id: "http://vercre.io"
 redirect_uris:
   - "http://localhost:3000/callback"
-grant_types:
-  - authorization_code
 response_types:
   - vp_token
   - id_token vp_token

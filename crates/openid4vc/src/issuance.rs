@@ -10,11 +10,8 @@ use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use super::{Client, CredentialFormat};
 use crate::error::{self, Err};
-use crate::jws::Jwk;
-use crate::metadata::{
-    Claim, Client as ClientMetadata, CredentialDefinition, Issuer as IssuerMetadata,
-};
 use crate::{err, stringify, Result};
 
 // ----------------------------------------------------------------------------
@@ -33,69 +30,6 @@ pub enum GrantType {
     #[serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")]
     PreAuthorizedCode,
 }
-
-/// The `OpenID4VCI` specification defines commonly used [Credential Format Profiles]
-/// to support.  The profiles define Credential format specific parameters or claims
-/// used to support a particular format.
-///
-///
-/// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq, Hash)]
-pub enum Format {
-    /// A W3C Verifiable Credential.
-    ///
-    /// When this format is specified, Credential Offer, Authorization Details,
-    /// Credential Request, and Credential Issuer metadata, including
-    /// `credential_definition` object, MUST NOT be processed using JSON-LD rules.
-    #[default]
-    #[serde(rename = "jwt_vc_json")]
-    JwtVcJson,
-
-    /// A W3C Verifiable Credential.
-    ///
-    /// When using this format, data MUST NOT be processed using JSON-LD rules.
-    ///
-    /// N.B. The `@context` value in the `credential_definition` object can be used by
-    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
-    /// could apply JSON-LD processing to the Credential issued.
-    #[serde(rename = "ldp-vc")]
-    LdpVc,
-
-    /// A W3C Verifiable Credential.
-    ///
-    /// When using this format, data MUST NOT be processed using JSON-LD rules.
-    ///
-    /// N.B. The `@context` value in the `credential_definition` object can be used by
-    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
-    /// could apply JSON-LD processing to the Credential issued.
-    #[serde(rename = "jwt_vc_json-ld")]
-    JwtVcJsonLd,
-
-    /// ISO mDL.
-    ///
-    /// A Credential Format Profile for Credentials complying with [ISO.18013-5] —
-    /// ISO-compliant driving licence specification.
-    ///
-    /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
-    #[serde(rename = "mso_mdoc")]
-    MsoDoc,
-
-    /// IETF SD-JWT VC.
-    ///
-    /// A Credential Format Profile for Credentials complying with
-    /// [I-D.ietf-oauth-sd-jwt-vc] — SD-JWT-based Verifiable Credentials for
-    /// selective disclosure.
-    ///
-    /// [I-D.ietf-oauth-sd-jwt-vc]: (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-01)
-    #[serde(rename = "vc+sd-jwt")]
-    VcSdJwt,
-
-    /// W3C Verifiable Credential.
-    #[serde(rename = "jwt_vp_json")]
-    JwtVpJson,
-}
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
 
 /// Request a Credential Offer for a Credential Issuer.
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
@@ -484,7 +418,7 @@ pub struct AuthorizationDetail {
     ///
     /// One of "`jwt_vc_json`", "`jwt_vc_json`-ld", "`ldp_vc`", or "`vc+sd-jwt`".
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub format: Option<Format>,
+    pub format: Option<CredentialFormat>,
 
     /// Contains the type values the Wallet requests authorization for at the Credential
     /// Issuer.
@@ -496,7 +430,7 @@ pub struct AuthorizationDetail {
     /// issued Credential.
     /// OPTIONAL when format is "`vc+sd-jwt`", otherwise, it MUST not be set.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub claims: Option<HashMap<String, Claim>>,
+    pub claims: Option<HashMap<String, ClaimDefinition>>,
 
     /// The detailed description of the credential type requested. At a minimum,
     /// the Credential Definition 'type' field MUST be set.
@@ -706,7 +640,7 @@ pub struct CredentialRequest {
     /// REQUIRED when `credential_identifiers` was not returned from the Token
     /// Response. Otherwise, MUST NOT be used.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub format: Option<Format>,
+    pub format: Option<CredentialFormat>,
 
     /// Wallet's proof of possession of cryptographic key material the issued Credential
     /// will be bound to.
@@ -797,6 +731,36 @@ pub struct CredentialResponseEncryption {
     /// [RFC7516]: (https://www.rfc-editor.org/rfc/rfc7516)
     /// [RFC7518]: (https://www.rfc-editor.org/rfc/rfc7518)
     pub enc: String,
+}
+
+/// Simplified JSON Web Key (JWK) key structure.
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub struct Jwk {
+    /// Key identifier.
+    /// For example, "_Qq0UL2Fq651Q0Fjd6TvnYE-faHiOpRlPVQcY_-tA4A".
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub kid: Option<String>,
+
+    /// Key type. For example, "EC" for elliptic curve or "OKP" for octet
+    /// key pair (Edwards curve).
+    pub kty: String,
+
+    /// Cryptographic curve type. For example, "ES256K" for secp256k1 and
+    /// "X25519" for ed25519.
+    pub crv: String,
+
+    /// X coordinate.
+    pub x: String,
+
+    /// Y coordinate. Not required for `EdDSA` verification keys.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub y: Option<String>,
+
+    /// Use of the key. For example, "sig" for signing or "enc" for
+    /// encryption.
+    #[serde(rename = "use")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub use_: Option<String>,
 }
 
 /// The Credential Response can be Synchronous or Deferred. The Credential
@@ -924,7 +888,7 @@ pub struct MetadataRequest {
 pub struct MetadataResponse {
     /// The Credential Issuer metadata for the specified Credential Issuer.
     #[serde(flatten)]
-    pub credential_issuer: IssuerMetadata,
+    pub credential_issuer: Issuer,
 }
 
 /// The registration request.
@@ -942,7 +906,7 @@ pub struct RegistrationRequest {
 
     /// Metadata provided by the client undertaking registration.
     #[serde(flatten)]
-    pub client_metadata: ClientMetadata,
+    pub client_metadata: Client,
 }
 
 /// The registration response for a successful request.
@@ -950,7 +914,578 @@ pub struct RegistrationRequest {
 pub struct RegistrationResponse {
     /// Registered Client metadata.
     #[serde(flatten)]
-    pub client_metadata: ClientMetadata,
+    pub client_metadata: Client,
+}
+
+/// The Credential Issuer's configuration.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Issuer {
+    /// The Credential Issuer's identifier.
+    pub credential_issuer: String,
+
+    /// Authorization Server's identifier (metadata `issuer` parameter). If
+    /// omitted, the Credential Issuer is acting as the AS. That is, the
+    /// `credential_issuer` value is also used as the Authorization Server
+    /// `issuer` value in metadata requests.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub authorization_servers: Option<Vec<String>>,
+
+    /// URL of the Credential Issuer's Credential Endpoint. MAY contain port,
+    /// path and query parameter components.
+    pub credential_endpoint: String,
+
+    /// URL of the Credential Issuer's Batch Credential Endpoint. MAY contain
+    /// port, path and query parameter components. When omitted, the
+    /// Credential Issuer does not support the Batch Credential Handler.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub batch_credential_endpoint: Option<String>,
+
+    /// URL of the Credential Issuer's Deferred Credential Endpoint. This URL
+    /// MUST use the https scheme and MAY contain port, path, and query parameter
+    /// components. If omitted, the Credential Issuer does not support the
+    /// Deferred Credential Endpoint.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deferred_credential_endpoint: Option<String>,
+
+    /// Specifies whether (and how) the Credential Issuer supports encryption of the
+    /// Credential and Batch Credential Response on top of TLS.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_response_encryption: Option<SupportedCredentialResponseEncryption>,
+
+    /// Specifies whether the Credential Issuer supports returning `credential_identifiers`
+    /// parameter in the `authorization_details` Token Response parameter, with true
+    /// indicating support. The default value is "false".
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_identifiers_supported: Option<bool>,
+
+    /// A signed JWT containing Credential Issuer metadata parameters as claims. The
+    /// signed metadata MUST be secured using JSON Web Signature (JWS) [RFC7515] and
+    /// MUST contain an iat (Issued At) claim, an iss (Issuer) claim denoting the party
+    /// attesting to the claims in the signed metadata, and sub (Subject) claim matching
+    /// the Credential Issuer identifier. If the Wallet supports signed metadata,
+    /// metadata values conveyed in the signed JWT MUST take precedence over the
+    /// corresponding values conveyed using plain JSON elements. If the Credential Issuer
+    /// wants to enforce use of signed metadata, it omits the respective metadata
+    /// parameters from the unsigned part of the Credential Issuer metadata. A signed_
+    /// metadata metadata value MUST NOT appear as a claim in the JWT. The Wallet MUST
+    /// establish trust in the signer of the metadata, and obtain the keys to validate
+    /// the signature before processing the metadata.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signed_metadata: Option<String>,
+
+    /// Credential Issuer display properties for supported languages.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display: Option<Display>,
+
+    /// A list of name/value pairs of credentials supported by the Credential Issuer.
+    /// Each name is a unique identifier for the supported credential described. The
+    /// identifier is used in the Credential Offer to communicate to the Wallet which
+    /// Credential is being offered. The value is a Credential object containing
+    /// metadata about specific credential.
+    pub credential_configurations_supported: HashMap<String, CredentialConfiguration>,
+}
+
+impl Issuer {
+    /// Create a new `Issuer` with the specified `credential_issuer` and
+    /// `credential_endpoint`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the JSON does not serialize to an `Issuer` object
+    #[must_use]
+    pub fn sample() -> Self {
+        const ISSUER_URI: &str = "http://vercre.io";
+
+        let issuer = serde_json::json!({
+            "credential_issuer": ISSUER_URI,
+            "credential_endpoint": format!("{ISSUER_URI}/credential"),
+            "batch_credential_endpoint": format!("{ISSUER_URI}/batch"),
+            "deferred_credential_endpoint": format!("{ISSUER_URI}/deferred"),
+            "display": {
+                "name": "Vercre",
+                "locale": "en-NZ"
+            },
+            "credential_configurations_supported": {
+                "EmployeeID_JWT": CredentialConfiguration::sample(),
+                "Developer_JWT": CredentialConfiguration::sample2(),
+            },
+        });
+
+        serde_json::from_value(issuer).expect("should serialize to Issuer")
+    }
+}
+
+/// `SupportedCredentialResponseEncryption` contains information about whether the
+/// Credential Issuer supports encryption of the Credential and Batch Credential
+/// Response on top of TLS.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct SupportedCredentialResponseEncryption {
+    /// JWE [RFC7516] alg algorithm [RFC7518] REQUIRED for encrypting Credential
+    /// Responses.
+    ///
+    /// [RFC7516]: (https://www.rfc-editor.org/rfc/rfc7516)
+    /// [RFC7518]: (https://www.rfc-editor.org/rfc/rfc7518)
+    pub alg_values_supported: Vec<String>,
+
+    /// JWE [RFC7516] enc algorithm [RFC7518] REQUIRED for encrypting Credential
+    /// Responses. If `credential_response_encryption_alg` is specified, the default
+    /// for this value is "`A256GCM`".
+    ///
+    /// [RFC7516]: (https://www.rfc-editor.org/rfc/rfc7516)
+    /// [RFC7518]: (https://www.rfc-editor.org/rfc/rfc7518)
+    pub enc_values_supported: Vec<String>,
+
+    /// Specifies whether the Credential Issuer requires the additional encryption
+    /// on top of TLS for the Credential Response. If the value is true, the Credential
+    /// Issuer requires encryption for every Credential Response and therefore the
+    /// Wallet MUST provide encryption keys in the Credential Request. If the value is
+    /// false, the Wallet MAY chose whether it provides encryption keys or not.
+    pub encryption_required: bool,
+}
+
+/// Language-based display properties for Issuer or Claim.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Display {
+    /// The name to use when displaying the name of the `Issuer` or `Claim` for the
+    /// specified locale. If no locale is set, then this value is the default value.
+    pub name: String,
+
+    /// A BCP47 [RFC5646] language tag identifying the display language.
+    ///
+    /// [RFC5646]: (https://www.rfc-editor.org/rfc/rfc5646)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub locale: Option<String>,
+}
+
+/// Credential configuration.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(default)]
+pub struct CredentialConfiguration {
+    /// Identifies the format of the credential, e.g. "`jwt_vc_json`" or "`ldp_vc`".
+    /// Each object will contain further elements defining the type and
+    /// claims the credential MAY contain, as well as information on how to
+    /// display the credential.
+    ///
+    /// See [Credential Format Profiles] in the `OpenID4VCI` specification.
+    ///
+    /// [Credential Format Profiles]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles
+    pub format: CredentialFormat,
+
+    /// Identifies the scope value that this Credential Issuer supports for this
+    /// particular credential. The value can be the same accross multiple
+    /// `credential_configurations_supported` objects. The Authorization Server MUST be able to
+    /// uniquely identify the Credential Issuer based on the scope value. The Wallet
+    /// can use this value in the Authorization Request Scope values in this
+    /// Credential Issuer metadata MAY duplicate those in the `scopes_supported`
+    /// parameter of the Authorization Server.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scope: Option<String>,
+
+    // /// Identifies this CredentialConfiguration object. MUST be unique across all
+    // /// `credential_configurations_supported` entries in the Credential Issuer's Metadata.
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub id: Option<String>,
+    /// Identifies how the Credential should be bound to the identifier of the
+    /// End-User who possesses the Credential. Is case sensitive.
+    ///
+    /// Support for keys in JWK format [RFC7517] is indicated by the value "`jwk`".
+    /// Support for keys expressed as a COSE Key object [RFC8152] (for example, used in
+    /// [ISO.18013-5]) is indicated by the value "`cose_key`".
+    ///
+    /// When Cryptographic Binding Method is a DID, valid values MUST be a "did:" prefix
+    /// followed by a method-name using a syntax as defined in Section 3.1 of
+    /// [DID-Core], but without a ":" and method-specific-id. For example, support for
+    /// the DID method with a method-name "example" would be represented by
+    /// "did:example". Support for all DID methods listed in Section 13 of
+    /// [DID Specification Registries] is indicated by sending a DID without any
+    /// method-name.
+    ///
+    /// [RFC7517]: (https://www.rfc-editor.org/rfc/rfc7517)
+    /// [RFC8152]: (https://www.rfc-editor.org/rfc/rfc8152)
+    /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
+    /// [DID-Core]: (https://www.w3.org/TR/did-core/)
+    /// [DID Specification Registries]: (https://www.w3.org/TR/did-spec-registries/)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cryptographic_binding_methods_supported: Option<Vec<String>>,
+
+    /// Case sensitive strings that identify the cryptographic suites supported for
+    /// the `cryptographic_binding_methods_supported`. Cryptographic algorithms for
+    /// Credentials in `jwt_vc` format should use algorithm names defined in IANA JOSE
+    /// Algorithms Registry. Cryptographic algorithms for Credentials in `ldp_vc` format
+    /// should use signature suites names defined in Linked Data Cryptographic Suite
+    /// Registry.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_signing_alg_values_supported: Option<Vec<String>>,
+
+    /// The key proof(s) that the Credential Issuer supports. This object contains
+    /// a list of name/value pairs, where each name is a unique identifier of the
+    /// supported proof type(s). Valid values are defined in Section 7.2.1,
+    /// other values MAY be used. This identifier is also used by the Wallet in the
+    /// Credential Request as defined in Section 7.2. The value in the name/value
+    /// pair is an object that contains metadata about the key proof and contains
+    /// the following parameters defined by this specification:
+    ///
+    ///  - `jwt`: A JWT [RFC7519] is used as proof of possession. A proof object MUST
+    ///    include a jwt claim containing a JWT defined in Section 7.2.1.1.
+    ///
+    ///  - `cwt`: A CWT [RFC8392] is used as proof of possession. A proof object MUST
+    ///    include a cwt claim containing a CWT defined in Section 7.2.1.3.
+    ///
+    ///  - `ldp_vp`: A W3C Verifiable Presentation object signed using the Data Integrity
+    ///    Proof as defined in [VC_DATA_2.0] or [VC_DATA], and where the proof of
+    ///    possession MUST be done in accordance with [VC_Data_Integrity]. When
+    ///    `proof_type` is set to `ldp_vp`, the proof object MUST include a `ldp_vp`
+    ///    claim containing a W3C Verifiable Presentation defined in Section 7.2.1.2.
+    ///
+    /// # Example
+    ///
+    /// ```json
+    /// "proof_types_supported": {
+    ///     "jwt": {
+    ///         "proof_signing_alg_values_supported": [
+    ///             "ES256"
+    ///         ]
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// [RFC7519]: (https://www.rfc-editor.org/rfc/rfc7519)
+    /// [RFC8392]: (https://www.rfc-editor.org/rfc/rfc8392)
+    /// [VC_DATA]: (https://www.w3.org/TR/vc-data-model/)
+    /// [VC_DATA_2.0]: (https://www.w3.org/TR/vc-data-model-2.0/)
+    /// [VC_Data_Integrity]: (https://www.w3.org/TR/vc-data-integrity/)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub proof_types_supported: Option<HashMap<String, ProofTypesSupported>>,
+
+    /// Language-based display properties of the supported credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display: Option<Vec<CredentialDisplay>>,
+
+    /// Language-based display properties for the associated Credential Definition.
+    pub credential_definition: CredentialDefinition,
+}
+
+impl CredentialConfiguration {
+    /// Create a new `CredentialConfiguration` with the specified format.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the JSON does not serialize to an `CredentialConfiguration` object
+    #[must_use]
+    pub fn sample() -> Self {
+        Self {
+            format: CredentialFormat::JwtVcJson,
+            scope: Some("EmployeeIDCredential".into()),
+            cryptographic_binding_methods_supported: Some(vec!["did:jwk".into(), "did:ion".into()]),
+            credential_signing_alg_values_supported: Some(vec!["ES256K".into(), "EdDSA".into()]),
+            proof_types_supported: Some(HashMap::from([(
+                "jwt".into(),
+                ProofTypesSupported {
+                    proof_signing_alg_values_supported: vec!["ES256K".into(), "EdDSA".into()],
+                },
+            )])),
+            display: Some(vec![CredentialDisplay {
+                name: "Employee ID".into(),
+                description: Some("Vercre employee ID credential".into()),
+                locale: Some("en-NZ".into()),
+                logo: Some(Image {
+                    uri: Some("https://vercre.github.io/assets/employee.png".into()),
+                    alt_text: Some("Vercre Logo".into()),
+                }),
+                text_color: Some("#ffffff".into()),
+                background_color: Some("#323ed2".into()),
+                background_image: Some(Image {
+                    uri: Some("https://vercre.github.io/assets/vercre-background.png".into()),
+                    alt_text: Some("Vercre Background".into()),
+                }),
+            }]),
+            credential_definition: CredentialDefinition {
+                context: Some(vec![
+                    "https://www.w3.org/2018/credentials/v1".into(),
+                    "https://www.w3.org/2018/credentials/examples/v1".into(),
+                ]),
+                type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
+                credential_subject: Some(HashMap::from([
+                    (
+                        "email".into(),
+                        ClaimDefinition {
+                            mandatory: Some(true),
+                            value_type: Some(ValueType::String),
+                            display: Some(vec![Display {
+                                name: "Email".into(),
+                                locale: Some("en-NZ".into()),
+                            }]),
+                            claim_nested: None,
+                        },
+                    ),
+                    (
+                        "familyName".into(),
+                        ClaimDefinition {
+                            mandatory: Some(true),
+                            value_type: Some(ValueType::String),
+                            display: Some(vec![Display {
+                                name: "Family name".into(),
+                                locale: Some("en-NZ".into()),
+                            }]),
+                            claim_nested: None,
+                        },
+                    ),
+                    (
+                        "givenName".into(),
+                        ClaimDefinition {
+                            mandatory: Some(true),
+                            value_type: Some(ValueType::String),
+                            display: Some(vec![Display {
+                                name: "Given name".into(),
+                                locale: Some("en-NZ".into()),
+                            }]),
+                            claim_nested: None,
+                        },
+                    ),
+                ])),
+            },
+        }
+    }
+
+    // TODO: Better demonstrate standards variation from that supplied by sample().
+
+    /// Create a new `CredentialConfiguration` with the specified format.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the JSON does not serialize to an `CredentialConfiguration` object.
+    #[must_use]
+    pub fn sample2() -> Self {
+        Self {
+            format: CredentialFormat::JwtVcJson,
+            scope: Some("DeveloperCredential".into()),
+            cryptographic_binding_methods_supported: Some(vec!["did:jwk".into(), "did:ion".into()]),
+            credential_signing_alg_values_supported: Some(vec!["ES256K".into(), "EdDSA".into()]),
+            proof_types_supported: Some(HashMap::from([(
+                "jwt".into(),
+                ProofTypesSupported {
+                    proof_signing_alg_values_supported: vec!["ES256K".into(), "EdDSA".into()],
+                },
+            )])),
+            display: Some(vec![CredentialDisplay {
+                name: "Developer".into(),
+                description: Some("Vercre certified developer credential".into()),
+                locale: Some("en-NZ".into()),
+                logo: Some(Image {
+                    uri: Some("https://vercre.github.io/assets/developer.png".into()),
+                    alt_text: Some("Vercre Logo".into()),
+                }),
+                text_color: Some("#ffffff".into()),
+                background_color: Some("#010100".into()),
+                background_image: Some(Image {
+                    uri: Some("https://vercre.github.io/assets/vercre-background.png".into()),
+                    alt_text: Some("Vercre Background".into()),
+                }),
+            }]),
+            credential_definition: CredentialDefinition {
+                context: Some(vec![
+                    "https://www.w3.org/2018/credentials/v1".into(),
+                    "https://www.w3.org/2018/credentials/examples/v1".into(),
+                ]),
+                type_: Some(vec!["VerifiableCredential".into(), "DeveloperCredential".into()]),
+                credential_subject: Some(HashMap::from([
+                    (
+                        "proficiency".into(),
+                        ClaimDefinition {
+                            mandatory: Some(true),
+                            value_type: Some(ValueType::Number),
+                            display: Some(vec![Display {
+                                name: "Proficiency".into(),
+                                locale: Some("en-NZ".into()),
+                            }]),
+                            claim_nested: None,
+                        },
+                    ),
+                    (
+                        "familyName".into(),
+                        ClaimDefinition {
+                            mandatory: Some(true),
+                            value_type: Some(ValueType::String),
+                            display: Some(vec![Display {
+                                name: "Family name".into(),
+                                locale: Some("en-NZ".into()),
+                            }]),
+                            claim_nested: None,
+                        },
+                    ),
+                    (
+                        "givenName".into(),
+                        ClaimDefinition {
+                            mandatory: Some(true),
+                            value_type: Some(ValueType::String),
+                            display: Some(vec![Display {
+                                name: "Given name".into(),
+                                locale: Some("en-NZ".into()),
+                            }]),
+                            claim_nested: None,
+                        },
+                    ),
+                ])),
+            },
+        }
+    }
+}
+
+/// `ProofTypesSupported` describes specifics of the key proof(s) that the Credential
+/// Issuer supports. This object contains a list of name/value pairs, where each name
+/// is a unique identifier of the supported proof type(s). Valid values are defined in
+/// Section 7.2.1, other values MAY be used. This identifier is also used by the Wallet
+/// in the Credential Request as defined in Section 7.2. The value in the name/value
+/// pair is an object that contains metadata about the key proof.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct ProofTypesSupported {
+    /// One or more case sensitive strings that identify the algorithms that the Issuer
+    /// supports for this proof type. The Wallet uses one of them to sign the proof.
+    /// Algorithm names used are determined by the key proof type.
+    ///
+    /// For example, for JWT, the algorithm names are defined in IANA JOSE Algorithms
+    /// Registry.
+    ///
+    /// # Example
+    ///
+    /// ```json
+    /// "proof_signing_alg_values_supported": ["ES256K", "EdDSA"]
+    /// ```
+    pub proof_signing_alg_values_supported: Vec<String>,
+}
+
+/// `CredentialDisplay` holds language-based display properties of the supported
+/// credential.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct CredentialDisplay {
+    /// The value to use when displaying the name of the `Credential` for the
+    /// specified locale. If no locale is set, then this is the default value.
+    pub name: String,
+
+    /// A BCP47 [RFC5646] language tag identifying the display language.
+    ///
+    /// [RFC5646]: (https://www.rfc-editor.org/rfc/rfc5646)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub locale: Option<String>,
+
+    /// Information about the logo of the Credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub logo: Option<Image>,
+
+    /// Description of the Credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+
+    /// Background color of the Credential using CSS Color Module Level 37
+    /// values.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub background_color: Option<String>,
+
+    /// Information about the background image of the Credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub background_image: Option<Image>,
+
+    /// Text color color of the Credential using CSS Color Module Level 37
+    /// values.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub text_color: Option<String>,
+}
+
+/// Image contains information about the logo of the Credential.
+/// N.B. The list is non-exhaustive and may be extended in the future.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Image {
+    /// URL where the Wallet can obtain a logo of the Credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub uri: Option<String>,
+
+    /// Alternative text of a logo image.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alt_text: Option<String>,
+}
+
+/// `CredentialDefinition` defines a Supported Credential that may requested by
+/// Wallets.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct CredentialDefinition {
+    /// The @context property is used to map property URIs into short-form aliases,
+    /// in accordance with the W3C Verifiable Credentials Data Model.
+    ///
+    /// REQUIRED when `format` is "`jwt_vc_json-ld`" or "`ldp_vc`".
+    #[serde(rename = "@context")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub context: Option<Vec<String>>,
+
+    /// Uniquely identifies the credential type the Credential Definition display
+    /// properties are for, in accordance with the W3C Verifiable Credentials Data
+    /// Model.
+    /// Contains the type values the Wallet requests authorization for at the
+    /// Credential Issuer. It MUST be present if the claim format is present in the
+    /// root of the authorization details object. It MUST not be present otherwise.
+    #[serde(rename = "type")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub type_: Option<Vec<String>>,
+
+    /// A list of name/value pairs identifying claims offered in the Credential.
+    /// A value can be another such object (nested data structures), or an array of
+    /// objects. Each claim defines language-based display properties for
+    /// `credentialSubject` fields.
+    ///
+    /// N.B. This property is used by the Wallet to specify which claims it is
+    /// requesting to be issued out of all the claims the Credential Issuer is capable
+    /// of issuing for this particular Credential (data minimization).
+    #[serde(rename = "credentialSubject")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_subject: Option<HashMap<String, ClaimDefinition>>,
+}
+
+/// Claim is used to hold language-based display properties for a
+/// credentialSubject field.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(default)]
+pub struct ClaimDefinition {
+    /// When true, indicates that the Credential Issuer will always include this claim
+    /// in the issued Credential. When false, the claim is not included in the issued
+    /// Credential if the wallet did not request the inclusion of the claim, and/or if
+    /// the Credential Issuer chose to not include the claim. If the mandatory parameter
+    /// is omitted, the default value is false. Defaults to false.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mandatory: Option<bool>,
+
+    /// The type of value of the claim. Defaults to string. Supported values include
+    /// `string`, `number`, and `image` media types such as image/jpeg. See
+    /// [IANA media type registry] for a complete list of media types.
+    ///
+    /// [IANA media type registry]: (https://www.iana.org/assignments/media-types/media-types.xhtml#image)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value_type: Option<ValueType>,
+
+    /// Language-based display properties of the field.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display: Option<Vec<Display>>,
+
+    /// A list nested claims.
+    #[serde(flatten)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub claim_nested: Option<HashMap<String, Box<ClaimDefinition>>>,
+}
+
+/// `ValueType` is used to define a claim's value type.
+#[derive(Default, Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ValueType {
+    /// Value of type String. The default.
+    #[default]
+    String,
+
+    /// Value of type Number.
+    Number,
+
+    /// Image media types such as `image/jpeg`. See [IANA media type registry]
+    /// for a complete list of media types.
+    ///
+    ///[IANA media type registry]: (https://www.iana.org/assignments/media-types/media-types.xhtml#image)
+    Image,
 }
 
 #[cfg(test)]
@@ -985,7 +1520,7 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                format: Some(Format::JwtVcJson),
+                format: Some(CredentialFormat::JwtVcJson),
                 credential_definition: Some(CredentialDefinition {
                     context: Some(vec![
                         "https://www.w3.org/2018/credentials/v1".into(),

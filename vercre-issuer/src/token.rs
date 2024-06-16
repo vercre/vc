@@ -15,16 +15,15 @@ use std::fmt::Debug;
 
 use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded, Encoding};
+use openid4vc::error::Err;
+#[allow(clippy::module_name_repetitions)]
+pub use openid4vc::issuance::{AuthorizationDetailType, TokenRequest, TokenResponse};
+use openid4vc::issuance::{GrantType, TokenType};
+use openid4vc::{err, Result};
+use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use sha2::{Digest, Sha256};
 use tracing::instrument;
-use vercre_core::error::Err;
-use vercre_core::provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
-#[allow(clippy::module_name_repetitions)]
-pub use vercre_core::vci::{AuthorizationDetailType, TokenRequest, TokenResponse};
-use vercre_core::vci::{GrantType, TokenType};
-use vercre_core::{err, gen, Result};
+use vercre_core::gen;
 use vercre_vc::proof::Signer;
 
 use super::Endpoint;
@@ -208,17 +207,19 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use openid4vc::issuance::{
+        AuthorizationDetail, CredentialDefinition, TokenAuthorizationDetail,
+    };
+    use openid4vc::CredentialFormat;
     use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
-    use vercre_core::metadata::CredentialDefinition;
-    use vercre_core::vci::{AuthorizationDetail, Format, TokenAuthorizationDetail};
 
     use super::*;
     use crate::state::Auth;
 
     #[tokio::test]
-    async fn simple_token() {
+    async fn simple_tossken() {
         test_utils::init_tracer();
 
         let provider = Provider::new();
@@ -304,7 +305,7 @@ mod tests {
             authorization_details: Some(vec![TokenAuthorizationDetail {
                 authorization_detail: AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,
-                    format: Some(Format::JwtVcJson),
+                    format: Some(CredentialFormat::JwtVcJson),
                     credential_definition: Some(CredentialDefinition {
                         type_: Some(vec![
                             "VerifiableCredential".into(),
