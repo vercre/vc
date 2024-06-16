@@ -167,7 +167,6 @@ use std::fmt::Debug;
 
 pub use vercre_core::error::Error;
 use vercre_core::provider::{Callback, ClientMetadata, StateManager};
-pub use vercre_core::types::issuance::GrantType;
 pub use vercre_core::{provider, Result};
 use vercre_vc::proof::Signer;
 
