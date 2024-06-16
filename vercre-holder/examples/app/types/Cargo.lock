@@ -2749,7 +2749,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7cdbaf5e132e593e9fc1de6a15bbec912395b11fb9719e061cf64f804524c503"
 
 [[package]]
-name = "vercre-core"
+name = "core-utils"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -2791,7 +2791,7 @@ dependencies = [
  "uniffi",
  "urlencoding",
  "uuid",
- "vercre-core",
+ "core-utils",
  "wasm-bindgen",
 ]
 

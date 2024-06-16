@@ -74,6 +74,7 @@ use std::vec;
 
 use anyhow::anyhow;
 use chrono::Utc;
+use core_utils::gen;
 use openid4vc::error::Err;
 pub use openid4vc::issuance::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
@@ -83,7 +84,6 @@ use openid4vc::issuance::{GrantType, Issuer};
 use openid4vc::{err, Result};
 use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use tracing::instrument;
-use vercre_core::gen;
 use vercre_vc::proof::Signer;
 
 use super::Endpoint;
@@ -129,7 +129,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        vercre_core::Endpoint::handle_request(self, request, ctx).await
+        core_utils::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -142,7 +142,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> vercre_core::Context for Context<P>
+impl<P> core_utils::Context for Context<P>
 where
     P: ClientMetadata + ServerMetadata + Subject + StateManager + Debug,
 {

@@ -2133,7 +2133,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "vercre-core"
+name = "core-utils"
 version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
@@ -2175,7 +2175,7 @@ dependencies = [
  "uniffi",
  "urlencoding",
  "uuid",
- "vercre-core",
+ "core-utils",
  "wasm-bindgen",
 ]
 

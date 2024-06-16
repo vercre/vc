@@ -16,8 +16,8 @@ This crate is primarily of interest to developers using any of the following cra
 
 ## Additional
 
-[![Crates.io Status](https://img.shields.io/crates/v/vercre-core.svg)](https://crates.io/crates/vercre-core)
-[![Docs.rs Status](https://docs.rs/vercre-core/badge.svg)](https://docs.rs/vercre-core/)
+[![Crates.io Status](https://img.shields.io/crates/v/core-utils.svg)](https://crates.io/crates/core-utils)
+[![Docs.rs Status](https://docs.rs/core-utils/badge.svg)](https://docs.rs/core-utils/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE-MIT)
 [![License](https://img.shields.io/badge/license-Apache-blue.svg)](./LICENSE-APACHE)
 

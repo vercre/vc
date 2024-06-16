@@ -13,7 +13,7 @@ publication of this crate from CI. This repository requires all PRs are reviewed
 by a Vercre maintainer and it owned by Vercre itself.
 """
 
-[[trusted.vercre-core]]
+[[trusted.core-utils]]
 criteria = "safe-to-deploy"
 user-id = 1                 # Andrew Weston (andrewweston)
 start = "2019-03-04"

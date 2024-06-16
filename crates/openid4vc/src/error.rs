@@ -422,7 +422,7 @@ impl From<std::convert::Infallible> for Error {
 ///
 /// ```rust,ignore
 /// use openid4vc::error::Err;
-/// use vercre_core::{err, error, Result};
+/// use core_utils::{err, error, Result};
 ///
 /// fn with_hint() -> Result<()> {
 ///     err!(Err::InvalidRequest, "hint: {}", "some hint")

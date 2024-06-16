@@ -23,7 +23,7 @@
 
 use tracing::instrument;
 use openid4vc::issuance::{MetadataRequest, MetadataResponse};
-use vercre_core::{Callback, Client, Issuer, Result, Server, Signer, StateManager, Subject};
+use core_utils::{Callback, Client, Issuer, Result, Server, Signer, StateManager, Subject};
 
 use super::Endpoint;
 

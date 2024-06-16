@@ -120,7 +120,7 @@ jobs:
   #     - uses: dtolnay/install@cargo-docs-rs
   #     - run: cargo docs-rs -p vercre
   #     - run: cargo docs-rs -p vercre_issuer
-  #     - run: cargo docs-rs -p vercre_core
+  #     - run: cargo docs-rs -p core_utils
 
   clippy:
     name: Clippy

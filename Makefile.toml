@@ -84,7 +84,7 @@ run_task = { name = ["pre-pub-core", "pre-pub-issuer", "pre-pub-vp", "pre-pub-ho
 
 [tasks.pre-pub-core]
 command = "cargo"
-args = ["publish", "--allow-dirty", "--dry-run", "--package", "vercre-core"]
+args = ["publish", "--allow-dirty", "--dry-run", "--package", "core-utils"]
 
 [tasks.pre-pub-issuer]
 command = "cargo"

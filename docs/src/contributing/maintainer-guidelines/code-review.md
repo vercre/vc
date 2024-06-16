@@ -69,11 +69,11 @@ rather than creating a team for each fine-grained division in the repository
 such as individual target architectures or WASI extensions, we use a few
 coarse-grained teams:
 
-- [vercre-core-reviewers][]: Vercre's core functionality
+- [core-utils-reviewers][]: Vercre's core functionality
 - [vercre-fuzz-reviewers][]: Fuzz testing targets
 - [vercre-default-reviewers][]: Anything else, including CI and documentation
 
-[vercre-core-reviewers]: https://github.com/orgs/vercre/teams/vercre-core-reviewers
+[core-utils-reviewers]: https://github.com/orgs/vercre/teams/core-utils-reviewers
 [vercre-fuzz-reviewers]: https://github.com/orgs/vercre/teams/vercre-fuzz-reviewers
 [vercre-default-reviewers]: https://github.com/orgs/vercre/teams/vercre-default-reviewers
 

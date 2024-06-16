@@ -16,13 +16,13 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
+use core_utils::jws;
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{RequestObjectRequest, RequestObjectResponse};
 use openid4vc::{err, Result};
 use provider::{Callback, ClientMetadata, Signer, StateManager};
 use tracing::instrument;
-use vercre_core::jws;
 
 use super::Endpoint;
 use crate::state::State;
@@ -46,7 +46,7 @@ where
         let ctx = Context {
             _p: std::marker::PhantomData,
         };
-        vercre_core::Endpoint::handle_request(self, request, ctx).await
+        core_utils::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -55,7 +55,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> vercre_core::Context for Context<P>
+impl<P> core_utils::Context for Context<P>
 where
     P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
 {

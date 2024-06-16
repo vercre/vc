@@ -1,5 +1,5 @@
 [package]
-name = "vercre-core"
+name = "core-utils"
 description = "OpenID Data Model"
 license = "MIT OR Apache-2.0"
 publish = false

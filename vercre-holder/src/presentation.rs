@@ -4,13 +4,13 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
+use core_utils::jws;
 use openid4vc::error::Err;
 use openid4vc::presentation::{RequestObject, RequestObjectResponse, ResponseRequest};
 use openid4vc::{err, Result};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
-use vercre_core::jws;
 use vercre_exch::{Constraints, DescriptorMap, PathNested, PresentationSubmission};
 use vercre_vc::model::vp::VerifiablePresentation;
 use vercre_vc::proof::{self, Payload};
@@ -117,7 +117,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        vercre_core::Endpoint::handle_request(self, request, ctx).await
+        core_utils::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -126,7 +126,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> vercre_core::Context for Context<P>
+impl<P> core_utils::Context for Context<P>
 where
     P: Callback
         + CredentialStorer

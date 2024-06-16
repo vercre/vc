@@ -88,7 +88,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        vercre_core::Endpoint::handle_request(self, request, ctx).await
+        core_utils::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -98,7 +98,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> vercre_core::Context for Context<P>
+impl<P> core_utils::Context for Context<P>
 where
     P: ClientMetadata
         + IssuerMetadata
@@ -145,12 +145,12 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
+    use core_utils::jws;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::issuance::ProofClaims;
     use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
-    use vercre_core::jws;
     use vercre_vc::proof::{self, Payload, Verify};
 
     use super::*;

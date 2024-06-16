@@ -9,6 +9,7 @@ mod pin;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
+use core_utils::jws;
 pub use offer::OfferRequest;
 use openid4vc::error::Err;
 use openid4vc::issuance::CredentialConfiguration;
@@ -19,7 +20,6 @@ pub use openid4vc::issuance::{
 use openid4vc::{err, Result};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use vercre_core::jws;
 use vercre_vc::proof::{self, Payload, Verify};
 
 use crate::credential::Credential;
@@ -94,7 +94,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> vercre_core::Context for Context<P>
+impl<P> core_utils::Context for Context<P>
 where
     P: CredentialStorer + IssuanceInput + IssuanceListener + IssuerClient + Signer + Clone + Debug,
 {

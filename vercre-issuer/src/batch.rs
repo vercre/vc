@@ -12,6 +12,7 @@ use std::fmt::Debug;
 
 use anyhow::anyhow;
 use chrono::Utc;
+use core_utils::{gen, jws};
 use openid4vc::error::{Ancillary as _, Err};
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{
@@ -21,7 +22,6 @@ use openid4vc::issuance::{CredentialDefinition, Issuer, ProofClaims};
 use openid4vc::{err, Result};
 use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use tracing::instrument;
-use vercre_core::{gen, jws};
 use vercre_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_vc::proof::{self, Payload, Signer};
 
@@ -64,7 +64,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        vercre_core::Endpoint::handle_request(self, request, ctx).await
+        core_utils::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -77,7 +77,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> vercre_core::Context for Context<P>
+impl<P> core_utils::Context for Context<P>
 where
     P: IssuerMetadata + Subject + StateManager + Signer + Clone + Debug,
 {

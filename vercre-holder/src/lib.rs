@@ -22,7 +22,7 @@
 //! ** Provider **
 //!
 //! Implementors need to implement 'Provider' traits that are responsible for handling storage and
-//! signing. See [`vercre-core`](https://docs.rs/vercre-core/latest/vercre_core/).
+//! signing. See [`core-utils`](https://docs.rs/core-utils/latest/core_utils/).
 //!
 //! # Example
 //!
@@ -71,7 +71,7 @@ where
     }
 }
 
-impl<P> vercre_core::Endpoint for Endpoint<P>
+impl<P> core_utils::Endpoint for Endpoint<P>
 where
     P: Callback + StateManager + Debug,
 {
@@ -125,7 +125,7 @@ mod tests {
             let ctx = Context {
                 _p: std::marker::PhantomData,
             };
-            vercre_core::Endpoint::handle_request(self, request, ctx).await
+            core_utils::Endpoint::handle_request(self, request, ctx).await
         }
     }
 
@@ -134,7 +134,7 @@ mod tests {
         _p: std::marker::PhantomData<P>,
     }
 
-    impl<P> vercre_core::Context for Context<P>
+    impl<P> core_utils::Context for Context<P>
     where
         P: Signer + Clone + Debug,
     {

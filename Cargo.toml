@@ -43,6 +43,7 @@ axum = { version = "0.7.5", features = ["macros"] }
 axum-extra = { version = "0.9.3", features = ["typed-header"] }
 base64ct = { version = "1.6.0", features = ["std"] }
 chrono = { version = "0.4.38", features = ["serde"] }
+core-utils = { path = "crates/core-utils" }
 derive_builder = "0.20.0"
 ecdsa = "0.16.9"
 futures = "0.3.30"
@@ -60,7 +61,6 @@ tower-http = { version = "0.5.2", features = ["cors", "set-header", "trace"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 uuid = { version = "1.8.0", features = ["fast-rng", "v4"] }
-vercre-core = { path = "crates/vercre-core" }
 vercre-exch = { path = "crates/vercre-exch" }
 vercre-holder = { path = "vercre-holder" }
 vercre-issuer = { path = "vercre-issuer" }

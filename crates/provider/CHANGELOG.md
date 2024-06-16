@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
-## [v0.1.0-alpha.5](https://github.com/vercre/vercre/compare/vercre-core-v0.1.0-alpha.4...vercre-core-v0.1.0-alpha.5) - 2024-03-01
+## [v0.1.0-alpha.5](https://github.com/vercre/vercre/compare/core-utils-v0.1.0-alpha.4...core-utils-v0.1.0-alpha.5) - 2024-03-01
 
 ### Breaking changes
 

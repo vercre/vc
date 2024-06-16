@@ -27,6 +27,7 @@ workspace = true
 [dependencies]
 anyhow.workspace = true
 chrono.workspace = true
+core-utils.workspace = true
 derive_builder.workspace = true
 openid4vc.workspace = true
 provider.workspace = true
@@ -35,7 +36,6 @@ serde_json.workspace = true
 serde_json_path = { version = "0.6.7", default-features = true }
 tracing.workspace = true
 uuid.workspace = true
-vercre-core.workspace = true
 vercre-exch.workspace = true
 vercre-vc.workspace = true
 
