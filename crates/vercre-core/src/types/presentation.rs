@@ -12,8 +12,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use vercre_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 
+use super::Client as ClientMetadata;
 use crate::error::Err;
-use crate::provider::Client as ClientMetadata;
 use crate::{err, stringify, Result};
 
 /// The Request Object Request is created by the Verifier to generate an

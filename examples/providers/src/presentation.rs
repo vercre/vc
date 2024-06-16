@@ -8,9 +8,11 @@ use ecdsa::signature::Signer as _;
 use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
 use vercre_core::provider::{
-    self as metadata, Callback, ClientMetadata, Payload, Result, StateManager, VpFormat,
+     Callback, ClientMetadata, Payload, Result, StateManager,
 };
+use vercre_core::types;
 use vercre_core::types::CredentialFormat;
+use vercre_core::types::presentation::VpFormat;
 use vercre_vc::proof::{Algorithm, Signer};
 
 pub const VERIFIER: &str = "http://vercre.io";
@@ -37,11 +39,11 @@ impl Provider {
 }
 
 impl ClientMetadata for Provider {
-    async fn metadata(&self, client_id: &str) -> Result<metadata::Client> {
+    async fn metadata(&self, client_id: &str) -> Result<types::Client> {
         self.client.get(client_id)
     }
 
-    async fn register(&self, _: &metadata::Client) -> Result<metadata::Client> {
+    async fn register(&self, _: &types::Client) -> Result<types::Client> {
         unimplemented!("register not implemented")
     }
 }
@@ -89,12 +91,12 @@ impl Callback for Provider {
 
 #[derive(Clone, Debug, Default)]
 struct ClientStore {
-    clients: HashMap<String, metadata::Client>,
+    clients: HashMap<String, types::Client>,
 }
 
 impl ClientStore {
     fn new() -> Self {
-        let client_meta = metadata::Client {
+        let client_meta = types::Client {
             client_id: "http://vercre.io".into(),
             redirect_uris: Some(vec!["http://localhost:3000/callback".into()]),
             grant_types: None,
@@ -129,7 +131,7 @@ impl ClientStore {
         Self { clients }
     }
 
-    fn get(&self, client_id: &str) -> Result<metadata::Client> {
+    fn get(&self, client_id: &str) -> Result<types::Client> {
         let Some(client) = self.clients.get(client_id) else {
             return Err(anyhow!("verifier not found"));
         };

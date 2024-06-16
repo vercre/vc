@@ -41,7 +41,7 @@ pub mod provider;
 
 use std::fmt::Debug;
 
-pub use vercre_core::provider::CredentialConfiguration;
+pub use vercre_core::types::issuance::CredentialConfiguration;
 use vercre_core::provider::{Callback, StateManager};
 pub use vercre_core::{provider as callback, Result};
 pub use vercre_exch::Constraints;

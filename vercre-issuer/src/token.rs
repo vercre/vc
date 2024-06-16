@@ -211,7 +211,7 @@ mod tests {
     use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
-    use vercre_core::provider::CredentialDefinition;
+    use vercre_core::types::issuance::CredentialDefinition;
     use vercre_core::types::issuance::{AuthorizationDetail, TokenAuthorizationDetail};
 use vercre_core::types::CredentialFormat;
 

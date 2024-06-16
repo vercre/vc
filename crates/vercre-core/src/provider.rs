@@ -11,11 +11,8 @@ use chrono::{DateTime, Utc};
 pub use self::callback::{Payload, Status};
 pub use self::signature::{Algorithm, Signer, Verifier};
 pub use self::subject::Claims;
-pub use crate::types::issuance::{
-    ClaimDefinition, CredentialConfiguration, CredentialDefinition, Issuer,
-};
-pub use crate::types::presentation::VpFormat;
-pub use crate::types::{Client, Server};
+use crate::types::issuance::{CredentialDefinition, Issuer};
+use crate::types::{Client, Server};
 
 /// Result is used for all external errors.
 pub type Result<T> = anyhow::Result<T>;

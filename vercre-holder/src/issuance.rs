@@ -13,9 +13,9 @@ pub use offer::OfferRequest;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use vercre_core::error::Err;
-use vercre_core::provider::CredentialConfiguration;
+use vercre_core::types::issuance::CredentialConfiguration;
 pub use vercre_core::types::issuance::{
-    CredentialOffer, CredentialRequest, CredentialResponse, GrantType, MetadataRequest,
+    CredentialOffer, CredentialRequest, CredentialResponse, GrantType, Issuer, MetadataRequest,
     MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
 };
 use vercre_core::{err, jws, Result};
@@ -393,7 +393,7 @@ mod tests {
             ..Default::default()
         };
         let meta_res = MetadataResponse {
-            credential_issuer: vercre_core::provider::Issuer::sample(),
+            credential_issuer: Issuer::sample(),
         };
         metadata(&mut issuance, &meta_res).expect("metadata should update flow");
         assert_snapshot!("issuance", &issuance, {
@@ -413,7 +413,7 @@ mod tests {
             ..Default::default()
         };
         let meta_res = MetadataResponse {
-            credential_issuer: vercre_core::provider::Issuer::sample(),
+            credential_issuer: Issuer::sample(),
         };
         metadata(&mut issuance, &meta_res).expect("metadata should update flow");
         let token_req = token_request(&issuance);
@@ -433,7 +433,7 @@ mod tests {
         };
 
         let meta_res = MetadataResponse {
-            credential_issuer: vercre_core::provider::Issuer::sample(),
+            credential_issuer: Issuer::sample(),
         };
         metadata(&mut issuance, &meta_res).expect("metadata should update flow");
 
@@ -465,7 +465,7 @@ mod tests {
             ..Default::default()
         };
         let meta_res = MetadataResponse {
-            credential_issuer: vercre_core::provider::Issuer::sample(),
+            credential_issuer: Issuer::sample(),
         };
         metadata(&mut issuance, &meta_res).expect("metadata should update flow");
         let id = issuance.offered.keys().next().expect("should have an offered configuration key");
