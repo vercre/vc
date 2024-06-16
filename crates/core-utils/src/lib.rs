@@ -6,7 +6,6 @@
 
 pub mod gen;
 pub mod jws;
-pub mod stringify;
 
 use std::fmt::Debug;
 
