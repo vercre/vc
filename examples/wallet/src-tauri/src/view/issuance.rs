@@ -80,7 +80,7 @@ impl From<Issuance> for IssuanceView {
             if let Some(pre_authorized_code) = grants.pre_authorized_code {
                 if let Some(tx_code) = pre_authorized_code.tx_code {
                     schema = Some(tx_code.into());
-                } 
+                }
             }
         }
         Self {

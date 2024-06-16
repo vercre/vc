@@ -1,8 +1,8 @@
 //! Application state implementation for issuance operations.
 
-use vercre_holder::Endpoint;
 // use vercre_holder::credential::Credential;
 use vercre_holder::issuance::{CredentialOffer, OfferRequest, Status};
+use vercre_holder::Endpoint;
 
 use crate::app::AppState;
 use crate::provider::Provider;

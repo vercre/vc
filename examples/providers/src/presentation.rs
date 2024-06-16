@@ -8,7 +8,7 @@ use ecdsa::signature::Signer as _;
 use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
 use vercre_verifier::provider::{
-    Algorithm, Callback, ClientMetadata, Payload, Result, Signer, StateManager,Client
+    Algorithm, Callback, Client, ClientMetadata, Payload, Result, Signer, StateManager,
 };
 use vercre_verifier::{CredentialFormat, VpFormat};
 

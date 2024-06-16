@@ -98,12 +98,12 @@ pub mod token;
 
 /// Re-export provider traits and types.
 pub mod provider {
-    pub use openid4vc::{Server,Client};
+    pub use openid4vc::issuance::{CredentialDefinition, GrantType, Issuer};
+    pub use openid4vc::{Client, Server};
     pub use provider::{
         Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Payload, Result,
         ServerMetadata, Signer, StateManager, Subject,
     };
-    pub use openid4vc::issuance::{CredentialDefinition, GrantType, Issuer};
 }
 
 use std::fmt::Debug;
