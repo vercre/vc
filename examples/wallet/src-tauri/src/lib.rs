@@ -153,14 +153,19 @@ async fn offer(
 }
 
 /// The `accept` command accepts a credential issuance offer. This will emit a status update to
-/// imply the shell needs to get a user PIN, or in the case where no PIN is required, will proceed
-/// directly to getting the credential.
+/// indicate the holder has accepted the offer and we can proceed directly to getting the
+/// credentials or a further PIN is required.
 #[tauri::command]
 async fn accept(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("accept invoked");
     let mut model = state.0.lock().await;
     let provider = Provider::new(app.clone());
     model.accept(provider).await?;
+    // if model.is_accepted() {
+    //     let provider = Provider::new(app.clone());
+    //     model.get_credentials(provider).await?;
+    // }
+
     let view: ViewModel = model.clone().into();
     log::info!("emitting state_updated");
     app.emit("state_updated", view).map_err(error::AppError::from)?;

@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import Box from '@mui/material/Box';
 import Slide from '@mui/material/Slide';
 
 import Accept from './Accept';
-import EnterPin from './EnterPin';
+import Pin from './Pin';
 import Error from '../Error';
 import Request from './Request';
 import { IssuanceView } from '../types/generated';
@@ -43,7 +43,7 @@ export const Issuance = (props: IssuanceProps) => {
             }
             <Slide direction="left" in={mode === 'pin'} mountOnEnter unmountOnExit>
                 <Box>
-                    <EnterPin />
+                    <Pin issuance={issuance} />
                 </Box>
             </Slide>
             {mode === 'request' &&

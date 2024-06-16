@@ -12,10 +12,10 @@ use std::fmt::Debug;
 use core_utils::jws;
 pub use offer::OfferRequest;
 use openid4vc::error::Err;
-use openid4vc::issuance::CredentialConfiguration;
 pub use openid4vc::issuance::{
-    CredentialOffer, CredentialRequest, CredentialResponse, GrantType, Issuer, MetadataRequest,
-    MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
+    CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse, GrantType,
+    Issuer, MetadataRequest, MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
+    TxCode,
 };
 use openid4vc::{err, Result};
 use serde::{Deserialize, Serialize};

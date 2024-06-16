@@ -66,16 +66,6 @@ export enum IssuanceStatus {
 	Failed = "Failed",
 }
 
-/** Issuance flow viewable state */
-export interface IssuanceView {
-	/** Credential offer status */
-	status: IssuanceStatus;
-	/** Credentials on offer */
-	credentials: Record<string, CredentialDisplay>;
-	/** PIN */
-	pin?: string;
-}
-
 /** Types of PIN characters */
 export enum PinInputMode {
 	/** Only digits */
@@ -95,6 +85,18 @@ export interface PinSchema {
 	length: number;
 	/** Guidance for the Holder of the Wallet on how to obtain the Transaction Code, */
 	description?: string;
+}
+
+/** Issuance flow viewable state */
+export interface IssuanceView {
+	/** Credential offer status */
+	status: IssuanceStatus;
+	/** Credentials on offer */
+	credentials: Record<string, CredentialDisplay>;
+	/** PIN */
+	pin?: string;
+	/** PIN schema */
+	pin_schema?: PinSchema;
 }
 
 /** Status of the presentation flow */
@@ -124,10 +126,15 @@ export enum SubApp {
 	Presentation = "Presentation",
 }
 
+/** View model for the shell to render. All state is translated into this model. */
 export interface ViewModel {
+	/** The sub-app currently active */
 	sub_app: SubApp;
+	/** Credential sub-app view state. */
 	credential?: CredentialView;
+	/** Issuance sub-app view state. */
 	issuance?: IssuanceView;
+	/** Presentation sub-app view state. */
 	presentation?: PresentationView;
 	/** Error message, if any */
 	error?: string;

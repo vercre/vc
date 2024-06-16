@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use vercre_holder::issuance::{Issuance, Status};
+use vercre_holder::issuance::{Issuance, Status, TxCode};
 
 use crate::view::credential::CredentialDisplay;
 
@@ -62,6 +62,8 @@ pub struct IssuanceView {
     pub credentials: HashMap<String, CredentialDisplay>,
     /// PIN
     pub pin: Option<String>,
+    /// PIN schema
+    pub pin_schema: Option<PinSchema>,
 }
 
 /// Convert the underlying issuance flow state to a view model of the same
@@ -73,16 +75,25 @@ impl From<Issuance> for IssuanceView {
             cred.issuer = Some(state.offer.credential_issuer.clone());
             creds.insert(id.clone(), cred);
         }
+        let mut schema = None;
+        if let Some(grants) = state.offer.grants {
+            if let Some(pre_authorized_code) = grants.pre_authorized_code {
+                if let Some(tx_code) = pre_authorized_code.tx_code {
+                    schema = Some(tx_code.into());
+                } 
+            }
+        }
         Self {
             status: state.status.into(),
             credentials: creds,
             pin: state.pin,
+            pin_schema: schema,
         }
     }
 }
 
 /// Types of PIN characters
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 pub enum PinInputMode {
     /// Only digits
@@ -93,7 +104,7 @@ pub enum PinInputMode {
 }
 
 /// Criteria for PIN
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 pub struct PinSchema {
     /// Input mode for the PIN
@@ -105,4 +116,20 @@ pub struct PinSchema {
 
     /// Guidance for the Holder of the Wallet on how to obtain the Transaction Code,
     pub description: Option<String>,
+}
+
+impl From<TxCode> for PinSchema {
+    fn from(tx_code: TxCode) -> Self {
+        let mut input_mode: PinInputMode = PinInputMode::Numeric;
+        if let Some(mode) = tx_code.input_mode {
+            if mode == "text" {
+                input_mode = PinInputMode::Text;
+            }
+        }
+        Self {
+            input_mode,
+            length: tx_code.length.unwrap_or(6),
+            description: tx_code.description.clone(),
+        }
+    }
 }

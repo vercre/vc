@@ -41,7 +41,6 @@ pub mod provider;
 
 use std::fmt::Debug;
 
-pub use openid4vc::issuance::CredentialConfiguration;
 pub use provider as callback;
 use provider::{Callback, StateManager};
 pub use vercre_exch::Constraints;
