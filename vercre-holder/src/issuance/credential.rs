@@ -77,7 +77,12 @@ where
 
         // Request an access token from the issuer.
         let token_request = token_request(&issuance);
+
+        println!("requesting token {token_request:?}");
+
         issuance.token = provider.get_token(&issuance.id, &token_request).await?;
+
+        println!("issance with token {issuance:?}");
 
         // Request each credential offered.
         // TODO: concurrent requests. Possible if wallet is WASM?

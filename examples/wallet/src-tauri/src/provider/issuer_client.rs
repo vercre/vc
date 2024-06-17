@@ -48,9 +48,9 @@ impl IssuerClient for Provider {
         let url = format!("{}/token", req.credential_issuer);
         let result = client
             .post(&url)
-            .header(CONTENT_TYPE, "application/json")
+            .header(CONTENT_TYPE, "multipart/form-data")
             .header(ACCEPT, "application/json")
-            .json(&req)
+            .form(&req)
             .send()
             .await?;
         let token = result.json::<TokenResponse>().await?;

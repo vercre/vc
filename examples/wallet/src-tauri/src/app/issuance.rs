@@ -1,7 +1,7 @@
 //! Application state implementation for issuance operations.
 
 // use vercre_holder::credential::Credential;
-use vercre_holder::issuance::{CredentialOffer, OfferRequest};
+use vercre_holder::issuance::{CredentialOffer, OfferRequest, PinRequest};
 use vercre_holder::Endpoint;
 
 use super::{AppState, SubApp};
@@ -33,8 +33,12 @@ impl AppState {
     }
 
     /// Set a PIN
-    pub async fn pin(&mut self, provider: Provider) -> anyhow::Result<()> {
-        let issuance = Endpoint::new(provider).pin(self.issuance.id.clone()).await?;
+    pub async fn pin(&mut self, provider: Provider, pin: &str) -> anyhow::Result<()> {
+        let request = PinRequest {
+            id: self.issuance.id.clone(),
+            pin: pin.into(),
+        };
+        let issuance = Endpoint::new(provider).pin(&request).await?;
         self.issuance = issuance;
         Ok(())
     }

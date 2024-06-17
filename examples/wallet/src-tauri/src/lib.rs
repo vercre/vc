@@ -180,11 +180,11 @@ async fn accept(state: State<'_, StateModel>, app: AppHandle) -> Result<(), erro
 /// The `pin` command sets a user PIN on for use in the token request as part of the issuance flow.
 /// The flow will proceed from token request to credential issuance and emit a status update.
 #[tauri::command]
-async fn pin(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
+async fn pin(state: State<'_, StateModel>, app: AppHandle, pin: String) -> Result<(), error::AppError> {
     log::info!("pin invoked");
     let mut app_state = state.app_state.lock().await;
     let provider = Provider::new(app.clone(), state.state_store.clone());
-    app_state.pin(provider).await?;
+    app_state.pin(provider, &pin).await?;
     let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
     app.emit("state_updated", view).map_err(error::AppError::from)?;

@@ -40,7 +40,7 @@ export const Issuance = (props: IssuanceProps) => {
     // go get the credentials if the user has accepted (and entered a pin if necessary)
     useEffect(() => {
         if (issuance.status === 'Accepted') {
-            invoke('getCredentials');
+            invoke('get_credentials');
         }
     }, [issuance.status]);
 

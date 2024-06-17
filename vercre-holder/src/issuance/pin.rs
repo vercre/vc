@@ -15,6 +15,16 @@ use crate::Endpoint;
 
 use super::{Issuance, Status};
 
+/// A `PinRequest` is a request to set a PIN for use in the issuance flow.
+#[derive(Clone, Debug, Default)]
+#[allow(clippy::module_name_repetitions)]
+pub struct PinRequest {
+    /// The issuance flow ID.
+    pub id: String,
+    /// The PIN to set.
+    pub pin: String,
+}
+
 impl<P> Endpoint<P>
 where
     P: Callback + StateManager + Debug,
@@ -22,12 +32,12 @@ where
     /// Progresses the issuance flow triggered by a holder setting a PIN.
     /// The request is the issuance flow ID.
     #[instrument(level = "debug", skip(self))]
-    pub async fn pin(&self, request: String) -> Result<Issuance> {
+    pub async fn pin(&self, request: &PinRequest) -> Result<Issuance> {
         let ctx = Context {
             issuance: Issuance::default(),
             _p: std::marker::PhantomData,
         };
-        core_utils::Endpoint::handle_request(self, &request, ctx).await
+        core_utils::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -42,7 +52,7 @@ where
     P: StateManager + Debug,
 {
     type Provider = P;
-    type Request = String;
+    type Request = PinRequest;
     type Response = Issuance;
 
     async fn verify(&mut self, provider: &P, req: &Self::Request) -> Result<&Self> {
@@ -51,7 +61,7 @@ where
         println!("verifying PIN request");
 
         // Get current state of flow and check internals for consistency with request.
-        let current_state = provider.get(req).await?;
+        let current_state = provider.get(&req.id).await?;
         let Ok(issuance) = serde_json::from_slice::<Issuance>(&current_state) else {
             err!(Err::InvalidRequest, "unable to decode issuance state");
         };
@@ -73,7 +83,7 @@ where
 
         // Update the state of the flow to indicate the PIN has been set.
         let mut issuance = self.issuance.clone();
-        issuance.pin = Some(req.clone());
+        issuance.pin = Some(req.pin.clone());
         issuance.status = Status::Accepted;
 
         // Stash the state for the next step.

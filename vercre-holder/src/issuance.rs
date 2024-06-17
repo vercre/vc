@@ -12,6 +12,7 @@ use std::fmt::Debug;
 
 use core_utils::jws::{self, Type};
 pub use offer::OfferRequest;
+pub use pin::PinRequest;
 use openid4vc::error::Err;
 pub use openid4vc::issuance::{
     CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse, GrantType,
