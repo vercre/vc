@@ -327,7 +327,7 @@ async fn credential(
         err!(Err::InvalidRequest, "no credential in response");
     };
     let Some(token) = value.as_str() else {
-        err!(Err::InvalidRequest, "credential is not a string");
+        err!(Err::InvalidRequest, "credential is not a JWT");
     };
     let Ok(Payload::Vc(vc)) = proof::verify(token, Verify::Vc).await else {
         err!(Err::InvalidRequest, "could not parse credential");

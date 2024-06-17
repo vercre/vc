@@ -13,7 +13,7 @@ use tracing::instrument;
 use uuid::Uuid;
 use vercre_exch::{Constraints, DescriptorMap, PathNested, PresentationSubmission};
 use vercre_vc::model::vp::VerifiablePresentation;
-use vercre_vc::proof::{self, Payload};
+use vercre_vc::proof::{self, Format, Payload};
 
 use crate::credential::Credential;
 use crate::provider::{
@@ -236,7 +236,7 @@ where
             client_id: presentation.request.client_id.clone(),
             nonce: presentation.request.nonce.clone(),
         };
-        let jwt = proof::create(payload, provider.clone()).await?;
+        let jwt = proof::create(Format::JwtVcJson, payload, provider.clone()).await?;
 
         let vp_token = match serde_json::to_value(&jwt) {
             Ok(v) => v,
@@ -368,7 +368,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::issuance::CredentialConfiguration;
     use vercre_exch::{
-        Field, Filter, FilterValue, Format, InputDescriptor, PresentationDefinition,
+        ClaimFormat, Field, Filter, FilterValue, InputDescriptor, PresentationDefinition,
     };
     use vercre_vc::model::VerifiableCredential;
     use vercre_vc::proof::Algorithm;
@@ -378,7 +378,7 @@ mod tests {
     fn sample_request() -> RequestObject {
         let state_key = "ABCDEF123456";
         let nonce = "1234567890";
-        let fmt = Format {
+        let fmt = ClaimFormat {
             alg: Some(vec![Algorithm::EdDSA.to_string()]),
             proof_type: None,
         };
@@ -426,7 +426,9 @@ mod tests {
         let vc = VerifiableCredential::sample();
 
         let payload = Payload::Vc(vc.clone());
-        let jwt = proof::create(payload, issuance::Provider::new()).await.expect("should encode");
+        let jwt = proof::create(Format::JwtVcJson, payload, issuance::Provider::new())
+            .await
+            .expect("should encode");
 
         let config = CredentialConfiguration::sample();
         Credential {

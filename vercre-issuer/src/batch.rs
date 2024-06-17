@@ -23,7 +23,7 @@ use openid4vc::{err, Result};
 use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use tracing::instrument;
 use vercre_vc::model::{CredentialSubject, VerifiableCredential};
-use vercre_vc::proof::{self, Payload, Signer};
+use vercre_vc::proof::{self, Format, Payload, Signer};
 
 use super::Endpoint;
 use crate::state::{Deferred, Expire, State};
@@ -266,7 +266,7 @@ where
         };
 
         // generate proof for the credential
-        let jwt = proof::create(Payload::Vc(vc), provider.clone()).await?;
+        let jwt = proof::create(Format::JwtVcJson, Payload::Vc(vc), provider.clone()).await?;
 
         Ok(CredentialResponse {
             credential: Some(serde_json::Value::String(jwt)),

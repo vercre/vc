@@ -92,7 +92,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use std::{collections::HashMap, sync::{Arc, LazyLock}};
+    use std::collections::HashMap;
+    use std::sync::{Arc, LazyLock};
 
     use futures::lock::Mutex;
     use serde_json::{json, Value};
@@ -119,7 +120,10 @@ mod test {
         .expect("should return count");
 
         // query for all credentials ("" or "$[:]")
-        let store = Provider::new(app.app_handle().clone(), Arc::new(Mutex::new(HashMap::<String, Vec<u8>>::new())));
+        let store = Provider::new(
+            app.app_handle().clone(),
+            Arc::new(Mutex::new(HashMap::<String, Vec<u8>>::new())),
+        );
         let res = store.find(None).await.expect("should be ok");
         assert_eq!(count, res.len());
     }

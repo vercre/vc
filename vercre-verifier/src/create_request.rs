@@ -54,7 +54,7 @@ use openid4vc::{err, Result};
 use provider::{Callback, ClientMetadata, StateManager};
 use tracing::instrument;
 use uuid::Uuid;
-use vercre_exch::{Format, PresentationDefinition};
+use vercre_exch::{ClaimFormat, PresentationDefinition};
 use vercre_vc::proof::{Algorithm, Signer};
 
 use super::Endpoint;
@@ -139,7 +139,7 @@ where
         tracing::debug!("Context::process");
 
         // TODO: build dynamically...
-        let fmt = Format {
+        let fmt = ClaimFormat {
             alg: Some(vec![Algorithm::EdDSA.to_string()]),
             proof_type: None,
         };

@@ -38,8 +38,8 @@ use std::str::{self, FromStr};
 
 use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
-use ecdsa::signature::Verifier;
-use provider::{Algorithm, Signer};
+use ecdsa::signature::Verifier as _;
+use provider::{Algorithm, Signer}; //, Verifier};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 

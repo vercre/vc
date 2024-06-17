@@ -37,7 +37,9 @@ impl From<AppState> for ViewModel {
                 _ => None,
             },
             presentation: match state.sub_app {
-                SubApp::Presentation => Some(presentation::PresentationView::from(state.presentation)),
+                SubApp::Presentation => {
+                    Some(presentation::PresentationView::from(state.presentation))
+                }
                 _ => None,
             },
             error: None,

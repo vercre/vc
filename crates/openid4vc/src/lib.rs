@@ -4,7 +4,7 @@
 
 //! # `OpenID4VC` Types
 //!
-//! Types and logic used in the `OpenID4VC` specifications and consumed by 
+//! Types and logic used in the `OpenID4VC` specifications and consumed by
 //! `vercre-issuer`,`vercre-verifier`, and `vercre-holder` crates.
 //!
 //! The crate is for internal use within Vercre project and is not intended to be used

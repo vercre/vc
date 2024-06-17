@@ -63,7 +63,7 @@ pub struct PresentationDefinition {
     ///   },
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub format: Option<HashMap<String, Format>>,
+    pub format: Option<HashMap<String, ClaimFormat>>,
 }
 
 /// Input Descriptors describe the information a Verifier requires from the
@@ -90,12 +90,14 @@ pub struct InputDescriptor {
     /// submission of a single input to a subset of the top-level formats or
     /// algorithms specified in the Presentation Definition.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub format: Option<HashMap<String, Format>>,
+    pub format: Option<HashMap<String, ClaimFormat>>,
 
     /// Contraints specify constraints on data values, and an explanation why a
     /// certain item or set of data is being requested.
     pub constraints: Constraints,
 }
+
+// TODO: create enum for ClaimFormat
 
 /// A registered Claim Format Designation object (e.g., `jwt`, `jwt_vc`, `jwt_vp`,
 /// etc.) used to inform the Holder of a Claim format the Verifier can process.
@@ -103,7 +105,7 @@ pub struct InputDescriptor {
 /// `alg`, `proof_type`) that specify which algorithms the Verifier supports for the
 /// format.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Format {
+pub struct ClaimFormat {
     /// An array of one or more algorithmic identifiers, e.g. `["Ed2219",
     /// "ES256K"]`.
     #[serde(skip_serializing_if = "Option::is_none")]
