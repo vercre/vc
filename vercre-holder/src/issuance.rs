@@ -20,11 +20,15 @@ pub use openid4vc::issuance::{
 };
 use openid4vc::{err, Result};
 use serde::{Deserialize, Serialize};
+use tracing::instrument;
 use uuid::Uuid;
 use vercre_vc::proof::{self, Payload, Verify};
 
 use crate::credential::Credential;
-use crate::provider::{CredentialStorer, IssuanceInput, IssuanceListener, IssuerClient, Signer};
+use crate::provider::{
+    Callback, CredentialStorer, IssuanceInput, IssuanceListener, IssuerClient, Signer, StateManager,
+};
+use crate::Endpoint;
 
 /// `Issuance` represents app state across the steps of the issuance flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -88,6 +92,29 @@ pub struct ReceiveOfferRequest {
     pub client_id: String,
     /// The credential offer from the issuer.
     pub offer: CredentialOffer,
+}
+
+impl<P> Endpoint<P>
+where
+    P: Callback
+        + CredentialStorer
+        + IssuanceInput
+        + IssuanceListener
+        + IssuerClient
+        + Signer
+        + StateManager
+        + Clone
+        + Debug,
+{
+    /// Progresses the issuance flow by getting an access token then using that to get the
+    /// credentials contained in the offer.
+    #[instrument(level = "debug", skip(self))]
+    pub async fn receive_offer(&self, request: ReceiveOfferRequest) -> Result<()> {
+        let ctx = Context {
+            _p: std::marker::PhantomData,
+        };
+        core_utils::Endpoint::handle_request(self, &request, ctx).await
+    }
 }
 
 #[derive(Debug, Default)]

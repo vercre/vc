@@ -4,7 +4,7 @@
 
 use std::fmt::Debug;
 
-use core_utils::jws;
+use core_utils::jws::{self, Type};
 use openid4vc::error::Err;
 use openid4vc::issuance::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, GrantType, Proof, ProofClaims,
@@ -19,12 +19,9 @@ use crate::credential::Credential;
 use crate::provider::{Callback, CredentialStorer, IssuerClient, Signer, StateManager};
 use crate::Endpoint;
 
-/// The `GetCredentialsRequest` is the request to the `get_credentials` endpoint to retrieve the
-/// credentials for an accepted issuance offer.
-
 impl<P> Endpoint<P>
 where
-    P: Callback + CredentialStorer + IssuerClient + Signer + StateManager + Debug,
+    P: Callback + CredentialStorer + IssuerClient + Signer + StateManager + Clone + Debug,
 {
     /// Progresses the issuance flow by getting an access token then using that to get the
     /// credentials contained in the offer.
@@ -46,7 +43,7 @@ struct Context<P> {
 
 impl<P> core_utils::Context for Context<P>
 where
-    P: CredentialStorer + IssuerClient + StateManager  + Debug,
+    P: CredentialStorer + IssuerClient + StateManager + Signer + Clone + Debug,
 {
     type Provider = P;
     type Request = String;
@@ -93,7 +90,7 @@ where
                 nonce: issuance.token.c_nonce.clone(),
             };
 
-            let jwt = jws::encode(jws::Payload::Proof, &claims, provider.clone()).await?;
+            let jwt = jws::encode(Type::Proof, &claims, provider.clone()).await?;
 
             let proof = Proof {
                 proof_type: "jwt".into(),
