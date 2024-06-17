@@ -87,6 +87,9 @@ where
         // Request each credential offered.
         // TODO: concurrent requests. Possible if wallet is WASM?
         for (id, cfg) in &issuance.offered {
+
+            println!("requesting credential {id:?}");
+
             // Construct a proof to be used in credential requests.
             let claims = ProofClaims {
                 iss: Some(issuance.client_id.clone()),
@@ -97,6 +100,8 @@ where
 
             let jwt = jws::encode(Type::Proof, &claims, provider.clone()).await?;
 
+            println!("jwt {jwt:?}");
+
             let proof = Proof {
                 proof_type: "jwt".into(),
                 jwt: Some(jwt),
@@ -105,7 +110,13 @@ where
 
             let request = credential_request(&issuance, id, cfg, &proof);
             issuance.status = Status::Requested;
+
+            println!("credential request {request:?}");
+
             let cred_res = provider.get_credential(&issuance.id, &request).await?;
+
+            println!("credential response {cred_res:?}");
+
             if cred_res.c_nonce.is_some() {
                 issuance.token.c_nonce.clone_from(&cred_res.c_nonce);
             }
@@ -115,6 +126,8 @@ where
 
             // Create a credential in a useful wallet format.
             let mut credential = credential(&issuance, cfg, &cred_res).await?;
+
+            println!("credential before logo: {credential:?}");
 
             // Base64-encoded logo if possible.
             if let Some(display) = &cfg.display {
@@ -127,7 +140,12 @@ where
                     }
                 }
             }
+
+            println!("saving credential {credential:?}");
+
             provider.save(&credential).await?;
+
+            println!("credential saved");
         }
 
         Ok(())
@@ -154,14 +172,15 @@ fn token_request(issuance: &Issuance) -> TokenRequest {
 
 /// Construct a credential request from an offered credential configuration.
 fn credential_request(
-    issuance: &Issuance, id: &str, cfg: &CredentialConfiguration, proof: &Proof,
+    issuance: &Issuance, _id: &str, cfg: &CredentialConfiguration, proof: &Proof,
 ) -> CredentialRequest {
     CredentialRequest {
         credential_issuer: issuance.offer.credential_issuer.clone(),
         access_token: issuance.token.access_token.clone(),
         format: Some(cfg.format.clone()),
         proof: Some(proof.clone()),
-        credential_identifier: Some(id.into()),
+        // credential_identifier: Some(id.into()),
+        credential_identifier: None,
         credential_definition: Some(cfg.credential_definition.clone()),
         credential_response_encryption: None,
     }

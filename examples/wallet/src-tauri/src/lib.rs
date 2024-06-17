@@ -200,7 +200,8 @@ async fn get_credentials(
     log::info!("get_credentials invoked");
     let mut app_state = state.app_state.lock().await;
     let provider = Provider::new(app.clone(), state.state_store.clone());
-    app_state.get_credentials(provider).await?;
+    app_state.get_credentials(provider.clone()).await?;
+    app_state.reset(provider.clone()).await?;
     let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
     app.emit("state_updated", view).map_err(error::AppError::from)?;
