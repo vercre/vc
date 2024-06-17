@@ -16,7 +16,7 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
-use core_utils::jws;
+use core_utils::jws::{self,Type};
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{RequestObjectRequest, RequestObjectResponse};
@@ -87,7 +87,7 @@ where
             err!(Err::InvalidRequest, "client ID mismatch");
         }
 
-        let jwt = jws::encode(jws::Payload::Request, &req_obj, provider.clone()).await?;
+        let jwt = jws::encode(Type::Request, &req_obj, provider.clone()).await?;
 
         Ok(RequestObjectResponse {
             request_object: None,

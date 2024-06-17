@@ -12,7 +12,8 @@ use std::fmt::Debug;
 
 use anyhow::anyhow;
 use chrono::Utc;
-use core_utils::{gen, jws};
+use core_utils::gen;
+use core_utils::jws::{self, Type};
 use openid4vc::error::{Ancillary as _, Err};
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{
@@ -158,12 +159,12 @@ where
                 }
             };
             // proof type
-            if jwt.header.typ != jws::Payload::Proof {
+            if jwt.header.typ != Type::Proof {
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(
                     Err::InvalidProof(nonce, expires_in),
                     "Proof JWT 'typ' is not {}",
-                    jws::Payload::Proof
+                    Type::Proof
                 );
             }
 
@@ -444,7 +445,7 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = jws::encode(jws::Payload::Proof, &claims, wallet::Provider::new())
+        let jwt = jws::encode(Type::Proof, &claims, wallet::Provider::new())
             .await
             .expect("should encode");
 

@@ -9,7 +9,7 @@ mod pin;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-use core_utils::jws;
+use core_utils::jws::{self, Type};
 pub use offer::OfferRequest;
 use openid4vc::error::Err;
 pub use openid4vc::issuance::{
@@ -193,7 +193,7 @@ where
                 nonce: issuance.token.c_nonce.clone(),
             };
 
-            let Ok(jwt) = jws::encode(jws::Payload::Proof, &claims, provider.clone()).await else {
+            let Ok(jwt) = jws::encode(Type::Proof, &claims, provider.clone()).await else {
                 provider.notify(&issuance.id, Status::Failed("could not encode proof".into()));
                 return Ok(());
             };
@@ -445,7 +445,7 @@ mod tests {
             nonce: issuance.token.c_nonce.clone(),
         };
 
-        let token = jws::encode(jws::Payload::Proof, &claims, wallet::Provider::new())
+        let token = jws::encode(Type::Proof, &claims, wallet::Provider::new())
             .await
             .expect("should encode");
 
@@ -479,7 +479,7 @@ mod tests {
             nonce: None,
         };
 
-        let token = jws::encode(jws::Payload::Proof, &claims, wallet::Provider::new())
+        let token = jws::encode(Type::Proof, &claims, wallet::Provider::new())
             .await
             .expect("should encode");
         let proof = Proof {

@@ -364,9 +364,10 @@ fn create_vp(
 mod tests {
     use std::collections::HashMap;
 
-    use ::providers::{issuance, presentation};
+    use core_utils::jws::Type;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::issuance::CredentialConfiguration;
+    use providers::{issuance, presentation};
     use vercre_exch::{
         ClaimFormat, Field, Filter, FilterValue, InputDescriptor, PresentationDefinition,
     };
@@ -461,7 +462,7 @@ mod tests {
             parse_request_object_response(&req_obj_res).expect("should parse with object");
         assert_eq!(obj, decoded);
 
-        let token = jws::encode(jws::Payload::Request, &obj, presentation::Provider::new())
+        let token = jws::encode(Type::Request, &obj, presentation::Provider::new())
             .await
             .expect("should encode");
 

@@ -3,7 +3,7 @@ use std::sync::LazyLock;
 use anyhow::Result;
 use assert_let_bind::assert_let;
 use chrono::Utc;
-use core_utils::jws;
+use core_utils::jws::{self, Type};
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use providers::issuance::{Provider, CREDENTIAL_ISSUER, PENDING_USER};
@@ -93,7 +93,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
         iat: Utc::now().timestamp(),
         nonce: input.c_nonce,
     };
-    let jwt = jws::encode(jws::Payload::Proof, &claims, wallet::Provider::new())
+    let jwt = jws::encode(Type::Proof, &claims, wallet::Provider::new())
         .await
         .expect("should encode");
 

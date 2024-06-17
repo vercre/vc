@@ -124,7 +124,7 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
-    use core_utils::jws;
+    use core_utils::jws::{self, Type};
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::issuance::{CredentialRequest, ProofClaims};
     use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -152,7 +152,7 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.clone()),
         };
-        let jwt = jws::encode(jws::Payload::Proof, &claims, wallet::Provider::new())
+        let jwt = jws::encode(Type::Proof, &claims, wallet::Provider::new())
             .await
             .expect("should encode");
 

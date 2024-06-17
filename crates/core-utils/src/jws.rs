@@ -45,7 +45,7 @@ use serde::{Deserialize, Serialize};
 
 /// The JWT `typ` claim.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub enum Payload {
+pub enum Type {
     /// JWT `typ` for Verifiable Credential.
     #[default]
     #[serde(rename = "jwt")]
@@ -60,11 +60,11 @@ pub enum Payload {
     Request,
 
     /// JWT `typ` for Wallet's Proof of possession of key material.
-    #[serde(rename = "openidvci-proof+jwt")]
+    #[serde(rename = "openid4vci-proof+jwt")]
     Proof,
 }
 
-impl Display for Payload {
+impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{self:?}")
     }
@@ -74,7 +74,7 @@ impl Display for Payload {
 ///
 /// # Errors
 /// TODO: add error docs
-pub async fn encode<T>(typ: Payload, claims: &T, signer: impl Signer) -> anyhow::Result<String>
+pub async fn encode<T>(typ: Type, claims: &T, signer: impl Signer) -> anyhow::Result<String>
 where
     T: Serialize + Send + Sync,
 {
@@ -137,9 +137,59 @@ where
     // verify signature
     let proof_jwk = Jwk::from_str(&header.kid.clone().unwrap_or_default())
         .map_err(|e| anyhow!("unable to parse 'kid' into JWK: {e}"))?;
-    proof_jwk.verify(&format!("{}.{}", parts[0], parts[1]), &sig)?;
+
+    verify(&proof_jwk, &format!("{}.{}", parts[0], parts[1]), &sig)?;
 
     Ok(Jwt { header, claims })
+}
+
+/// Verify the signature of the provided message using the JWK.
+///
+/// # Errors
+///
+/// Will return an error if the signature is invalid, the JWK is invalid, or the
+/// algorithm is unsupported.
+pub fn verify(jwk: &Jwk, msg: &str, sig: &[u8]) -> anyhow::Result<()> {
+    match jwk.crv.as_str() {
+        "ES256K" | "secp256k1" => verify_es256k(jwk, msg, sig), // kty: "EC"
+        "X25519" => verify_eddsa(jwk, msg, sig),                // kty: "OKP"
+        _ => bail!("Unsupported JWT signature algorithm"),
+    }
+}
+
+// Verify the signature of the provided message using the ES256K algorithm.
+fn verify_es256k(jwk: &Jwk, msg: &str, sig: &[u8]) -> anyhow::Result<()> {
+    use ecdsa::{Signature, VerifyingKey};
+    use k256::Secp256k1;
+
+    // build verifying key
+    let y = jwk.y.as_ref().ok_or(anyhow!("Proof JWT 'y' is invalid"))?;
+    let mut sec1 = vec![0x04]; // uncompressed format
+    sec1.append(&mut Base64UrlUnpadded::decode_vec(&jwk.x)?);
+    sec1.append(&mut Base64UrlUnpadded::decode_vec(y)?);
+
+    let verifying_key = VerifyingKey::<Secp256k1>::from_sec1_bytes(&sec1)?;
+    let signature: Signature<Secp256k1> = Signature::from_slice(sig)?;
+
+    Ok(verifying_key.verify(msg.as_bytes(), &signature)?)
+}
+
+// Verify the signature of the provided message using the EdDSA algorithm.
+fn verify_eddsa(jwk: &Jwk, msg: &str, sig_bytes: &[u8]) -> anyhow::Result<()> {
+    use ed25519_dalek::{Signature, VerifyingKey};
+
+    // build verifying key
+    let x_bytes = Base64UrlUnpadded::decode_vec(&jwk.x)
+        .map_err(|e| anyhow!("unable to base64 decode proof JWK 'x': {e}"))?;
+    let bytes = &x_bytes.try_into().map_err(|_| anyhow!("invalid public key length"))?;
+    let verifying_key = VerifyingKey::from_bytes(bytes)
+        .map_err(|e| anyhow!("unable to build verifying key: {e}"))?;
+    let signature =
+        Signature::from_slice(sig_bytes).map_err(|e| anyhow!("unable to build signature: {e}"))?;
+
+    verifying_key
+        .verify(msg.as_bytes(), &signature)
+        .map_err(|e| anyhow!("unable to verify signature: {e}"))
 }
 
 /// Represents a JWT as used for proof and credential presentation.
@@ -161,20 +211,23 @@ pub struct Header {
 
     /// Used to declare the media type [IANA.MediaTypes](http://www.iana.org/assignments/media-types)
     /// of the JWS.
-    pub typ: Payload,
+    pub typ: Type,
 
-    /// MAY be used if there are multiple keys associated with the issuer of the
-    /// JWT. For example, kid can refer to a key in a DID document or a key
-    /// inside a JWKS.
+    /// Contains the key ID. If the Credential is bound to a DID, the kid refers to a
+    /// DID URL which identifies a particular key in the DID Document that the
+    /// Credential should bound to. Alternatively, may refer to  a key inside a JWKS.
+    ///
+    /// MUST NOT be set if `jwk` property is set.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub kid: Option<String>,
 
-    /// Contains the key material the new Credential shall be bound to. It MUST NOT be
-    /// present if kid is present.
+    /// Contains the key material the new Credential shall be bound to.
+    ///
+    /// MUST NOT be set if `kid` is set.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub jwk: Option<Jwk>,
 
-    /// Contains a certificate or certificate chain corresponding to the key used to
+    /// Contains a certificate (or certificate chain) corresponding to the key used to
     /// sign the JWT. This element MAY be used to convey a key attestation. In such a
     /// case, the actual key certificate will contain attributes related to the key
     /// properties.
@@ -184,7 +237,8 @@ pub struct Header {
     /// Contains an OpenID.Federation Trust Chain. This element MAY be used to convey
     /// key attestation, metadata, metadata policies, federation Trust Marks and any
     /// other information related to a specific federation, if available in the chain.
-    /// When used for signature verification, the header parameter kid MUST be present.
+    ///
+    /// When used for signature verification, `kid` MUST be set.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub trust_chain: Option<String>,
 }
@@ -217,65 +271,6 @@ pub struct Jwk {
     #[serde(rename = "use")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub use_: Option<String>,
-}
-
-impl Jwk {
-    /// Verify the signature of the provided message using the JWK.
-    ///
-    /// # Errors
-    /// TODO: Add error descriptions
-    pub fn verify(&self, msg: &str, sig: &[u8]) -> anyhow::Result<()> {
-        match self.crv.as_str() {
-            "ES256K" | "secp256k1" => self.verify_es256k(msg, sig), // kty: "EC"
-            "X25519" => self.verify_eddsa(msg, sig),                // kty: "OKP"
-            _ => bail!("Unsupported JWT signature algorithm"),
-        }
-    }
-
-    // Verify the signature of the provided message using the ES256K algorithm.
-    fn verify_es256k(&self, msg: &str, sig: &[u8]) -> anyhow::Result<()> {
-        use ecdsa::{Signature, VerifyingKey};
-        use k256::Secp256k1;
-
-        // build verifying key
-        let Some(y) = &self.y else {
-            bail!("Proof JWT 'y' is invalid");
-        };
-        let mut sec1 = vec![0x04]; // uncompressed format
-        sec1.append(&mut Base64UrlUnpadded::decode_vec(&self.x)?);
-        sec1.append(&mut Base64UrlUnpadded::decode_vec(y)?);
-
-        let verifying_key = VerifyingKey::<Secp256k1>::from_sec1_bytes(&sec1)?;
-        let signature: Signature<Secp256k1> = Signature::from_slice(sig)?;
-
-        Ok(verifying_key.verify(msg.as_bytes(), &signature)?)
-    }
-
-    // Verify the signature of the provided message using the EdDSA algorithm.
-    fn verify_eddsa(&self, msg: &str, sig_bytes: &[u8]) -> anyhow::Result<()> {
-        use ed25519_dalek::{Signature, VerifyingKey};
-
-        // build verifying key
-        let Ok(x_bytes) = Base64UrlUnpadded::decode_vec(&self.x) else {
-            bail!("unable to base64 decode proof JWK 'x'");
-        };
-        let Ok(bytes) = &x_bytes.try_into() else {
-            bail!("invalid public key length");
-        };
-
-        let Ok(verifying_key) = VerifyingKey::from_bytes(bytes) else {
-            bail!("unable to build verifying key")
-        };
-        let Ok(signature) = Signature::from_slice(sig_bytes) else {
-            bail!("unable to build signature")
-        };
-
-        let Ok(()) = verifying_key.verify(msg.as_bytes(), &signature) else {
-            bail!("unable to verify signature")
-        };
-
-        Ok(())
-    }
 }
 
 impl Display for Jwk {
