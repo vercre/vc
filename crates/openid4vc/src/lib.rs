@@ -4,7 +4,12 @@
 
 //! # `OpenID4VC` Types
 //!
-//! Types used in the `OpenID4VC` specifications.
+//! Types and logic used in the `OpenID4VC` specifications and consumed by 
+//! `vercre-issuer`,`vercre-verifier`, and `vercre-holder` crates.
+//!
+//! The crate is for internal use within Vercre project and is not intended to be used
+//! directly by the end users. Any public types are re-exported through the respective
+//! top-level `vercre-xxx` crates.
 
 pub mod error;
 pub mod issuance;
