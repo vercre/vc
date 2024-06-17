@@ -1,6 +1,6 @@
 ---
 source: vercre-verifier/src/metadata.rs
-assertion_line: 85
+assertion_line: 84
 expression: response
 ---
 client_id: "http://vercre.io"
@@ -9,6 +9,7 @@ redirect_uris:
 response_types:
   - vp_token
   - id_token vp_token
+client_name: Verifier
 vp_formats:
   jwt_vc_json:
     alg:

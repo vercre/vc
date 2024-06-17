@@ -153,8 +153,6 @@ where
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(Err::InvalidProof(nonce, expires_in), "Proof not set");
             };
-
-            // TODO: allow passing verifier into this method
             let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, provider) {
                 Ok(jwt) => jwt,
                 Err(e) => {

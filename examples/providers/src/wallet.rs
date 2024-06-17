@@ -1,31 +1,35 @@
+use std::ops::Deref;
 use std::str;
 
-use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
-use ed25519_dalek::{Signature, Signer, SigningKey};
-use vercre_holder::provider::{self, Algorithm, Jwk};
+use ed25519_dalek::{Signature, Signer as _, SigningKey};
+use vercre_holder::provider::{Algorithm, Jwk, Signer, Verifier};
 
-pub const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
+pub use crate::client::WALLET_CLIENT_ID as CLIENT_ID;
+use crate::proof::Enclave;
 
 const JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
 
-pub struct Provider;
+#[derive(Default, Clone, Debug)]
+pub struct Provider(super::Provider);
 
 impl Provider {
     #[must_use]
-    pub const fn new() -> Self {
-        Self
+    pub fn new() -> Self {
+        Self(super::Provider::new())
     }
 }
 
-impl Default for Provider {
-    fn default() -> Self {
-        Self::new()
+impl Deref for Provider {
+    type Target = super::Provider;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
-impl provider::Signer for Provider {
+impl Signer for Provider {
     fn algorithm(&self) -> Algorithm {
         Algorithm::EdDSA
     }
@@ -43,50 +47,9 @@ impl provider::Signer for Provider {
     }
 }
 
-//-----------------------------------------------------------------------------
-// Verifier
-//-----------------------------------------------------------------------------
-impl provider::Verifier for Provider {
+impl Verifier for Provider {
     fn deref_jwk(&self, did_url: impl AsRef<str>) -> anyhow::Result<Jwk> {
-        let did =
-            did_url.as_ref().split('#').next().ok_or_else(|| anyhow!("Unable to parse DID"))?;
-
-        // if have long-form DID then try to extract key from metadata
-        let did_parts = did.split(':').collect::<Vec<&str>>();
-
-        // if DID is a JWK then return it
-        if did.starts_with("did:jwk:") {
-            let decoded = Base64UrlUnpadded::decode_vec(did_parts[2])
-                .map_err(|e| anyhow!("Unable to decode DID: {e}"))?;
-            return serde_json::from_slice::<Jwk>(&decoded).map_err(anyhow::Error::from);
-        }
-
-        // DID should be long-form ION
-        if did_parts.len() != 4 {
-            bail!("Short-form DID's are not supported");
-        }
-
-        let decoded = Base64UrlUnpadded::decode_vec(did_parts[3])
-            .map_err(|e| anyhow!("Unable to decode DID: {e}"))?;
-        let ion_op = serde_json::from_slice::<serde_json::Value>(&decoded)?;
-
-        let pk_val = ion_op
-            .get("delta")
-            .unwrap()
-            .get("patches")
-            .unwrap()
-            .get(0)
-            .unwrap()
-            .get("document")
-            .unwrap()
-            .get("publicKeys")
-            .unwrap()
-            .get(0)
-            .unwrap()
-            .get("publicKeyJwk")
-            .unwrap();
-
-        Ok(serde_json::from_value(pk_val.clone())?)
+        Enclave::deref_jwk(did_url)
     }
 }
 
