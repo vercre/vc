@@ -74,7 +74,7 @@ where
     async fn process(&self, provider: &P, _req: &Self::Request) -> Result<Self::Response> {
         tracing::debug!("Context::process");
 
-        let mut new_state = self.issuance.clone();
+        let mut issuance = self.issuance.clone();
 
         // Check if PIN is required. Unwraps are OK because we've already checked these fields in
         // verify.
@@ -82,16 +82,16 @@ where
         let pre_auth_code =
             grants.pre_authorized_code.as_ref().expect("pre-authorized code exists on offer");
         if pre_auth_code.tx_code.is_some() {
-            new_state.status = Status::PendingPin;
-            return Ok(new_state);
-        };
-        new_state.status = Status::Accepted;
+            issuance.status = Status::PendingPin;
+        } else {
+            issuance.status = Status::Accepted;
+        }
 
         // Stash the state for the next step.
         provider
-            .put(&new_state.id, serde_json::to_vec(&new_state)?, DateTime::<Utc>::MAX_UTC)
+            .put(&issuance.id, serde_json::to_vec(&issuance)?, DateTime::<Utc>::MAX_UTC)
             .await?;
 
-        Ok(new_state)
+        Ok(issuance)
     }
 }

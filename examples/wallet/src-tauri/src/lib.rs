@@ -76,7 +76,7 @@ pub fn run() {
             delete, // delete a credential.
             offer,  // submit a credential issuance offer directly from shell input.
             accept, // accept a credential issuance offer.
-                    //pin, // set a user PIN on the token request.
+            pin, // set a user PIN on the token request.
                     // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
         ])
         .run(tauri::generate_context!())
@@ -91,9 +91,9 @@ pub fn run() {
 #[tauri::command]
 async fn start(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("start invoked");
-    let mut model = state.app_state.lock().await;
-    model.init();
-    let view: ViewModel = model.clone().into();
+    let mut app_state = state.app_state.lock().await;
+    app_state.init();
+    let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
     app.emit("state_updated", view).map_err(error::AppError::from)?;
     Ok(())
@@ -104,10 +104,10 @@ async fn start(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error
 #[tauri::command]
 async fn reset(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("reset invoked");
-    let mut model = state.app_state.lock().await;
+    let mut app_state = state.app_state.lock().await;
     let store = Provider::new(app.clone(), state.state_store.clone());
-    model.reset(store).await?;
-    let view: ViewModel = model.clone().into();
+    app_state.reset(store).await?;
+    let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
     app.emit("state_updated", view).map_err(error::AppError::from)?;
     Ok(())
@@ -119,8 +119,8 @@ async fn select(
     state: State<'_, StateModel>, id: String,
 ) -> Result<Option<CredentialDetail>, error::AppError> {
     log::info!("select invoked");
-    let model = state.app_state.lock().await;
-    let Some(credential) = model.credential.iter().find(|c| c.id == id) else {
+    let app_state = state.app_state.lock().await;
+    let Some(credential) = app_state.credential.iter().find(|c| c.id == id) else {
         return Ok(None);
     };
     Ok(Some(credential.into()))
@@ -132,10 +132,10 @@ async fn delete(
     state: State<'_, StateModel>, app: AppHandle, id: String,
 ) -> Result<(), error::AppError> {
     log::info!("delete invoked");
-    let mut model = state.app_state.lock().await;
+    let mut app_state = state.app_state.lock().await;
     let store = Provider::new(app.clone(), state.state_store.clone());
-    model.delete(&id, store).await?;
-    let view: ViewModel = model.clone().into();
+    app_state.delete(&id, store).await?;
+    let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
     app.emit("state_updated", view).map_err(error::AppError::from)?;
     Ok(())
@@ -152,10 +152,10 @@ async fn offer(
     state: State<'_, StateModel>, app: AppHandle, encoded_offer: String,
 ) -> Result<(), error::AppError> {
     log::info!("offer invoked: {encoded_offer}");
-    let mut model = state.app_state.lock().await;
+    let mut app_state = state.app_state.lock().await;
     let provider = Provider::new(app.clone(), state.state_store.clone());
-    model.offer(&encoded_offer, provider).await?;
-    let view: ViewModel = model.clone().into();
+    app_state.offer(&encoded_offer, provider).await?;
+    let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
     app.emit("state_updated", view).map_err(error::AppError::from)?;
     Ok(())
@@ -167,30 +167,25 @@ async fn offer(
 #[tauri::command]
 async fn accept(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("accept invoked");
-    let mut model = state.app_state.lock().await;
+    let mut app_state = state.app_state.lock().await;
     let provider = Provider::new(app.clone(), state.state_store.clone());
-    model.accept(provider).await?;
-    // if model.is_accepted() {
-    //     let provider = Provider::new(app.clone());
-    //     model.get_credentials(provider).await?;
-    // }
-
-    let view: ViewModel = model.clone().into();
+    app_state.accept(provider).await?;
+    let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
     app.emit("state_updated", view).map_err(error::AppError::from)?;
     Ok(())
 }
 
-// /// The `pin` command sets a user PIN on for use in the token request as part of the issuance flow.
-// /// The flow will proceed from token request to credential issuance and emit a status update.
-// #[tauri::command]
-// async fn pin(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
-//     log::info!("accept invoked");
-//     let mut model = state.0.lock().await;
-//     let provider = Provider::new(app.clone());
-//     model.pin(provider).await?;
-//     let view: ViewModel = model.clone().into();
-//     log::info!("emitting state_updated");
-//     app.emit("state_updated", view).map_err(error::AppError::from)?;
-//     Ok(())
-// }
+/// The `pin` command sets a user PIN on for use in the token request as part of the issuance flow.
+/// The flow will proceed from token request to credential issuance and emit a status update.
+#[tauri::command]
+async fn pin(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
+    log::info!("pin invoked");
+    let mut app_state = state.app_state.lock().await;
+    let provider = Provider::new(app.clone(), state.state_store.clone());
+    app_state.pin(provider).await?;
+    let view: ViewModel = app_state.clone().into();
+    log::info!("emitting state_updated");
+    app.emit("state_updated", view).map_err(error::AppError::from)?;
+    Ok(())
+}

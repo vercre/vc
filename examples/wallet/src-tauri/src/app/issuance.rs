@@ -1,7 +1,7 @@
 //! Application state implementation for issuance operations.
 
 // use vercre_holder::credential::Credential;
-use vercre_holder::issuance::{CredentialOffer, OfferRequest, Status};
+use vercre_holder::issuance::{CredentialOffer, OfferRequest};
 use vercre_holder::Endpoint;
 
 use crate::provider::Provider;
@@ -39,9 +39,14 @@ impl AppState {
         Ok(())
     }
 
-    /// Indicate if the issuance offer is accepted.
-    pub fn is_accepted(&self) -> bool {
-        self.issuance.status == Status::Accepted
+    /// Set a PIN
+    pub async fn pin<R>(&mut self, provider: Provider<R>) -> anyhow::Result<()>
+    where
+        R: tauri::Runtime,
+    {
+        let new_state = Endpoint::new(provider).pin(self.issuance.id.clone()).await?;
+        self.issuance = new_state;
+        Ok(())
     }
 
     // /// Get the credentials for the accepted issuance offer.
