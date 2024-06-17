@@ -10,9 +10,7 @@ use crate::CLIENT_ID;
 
 impl AppState {
     /// Process a credential issuance offer.
-    pub async fn offer(
-        &mut self, encoded_offer: &str, provider: Provider,
-    ) -> anyhow::Result<()> {
+    pub async fn offer(&mut self, encoded_offer: &str, provider: Provider) -> anyhow::Result<()> {
         let offer_str = urlencoding::decode(encoded_offer)?;
         let offer = serde_json::from_str::<CredentialOffer>(&offer_str)?;
         let request = OfferRequest {

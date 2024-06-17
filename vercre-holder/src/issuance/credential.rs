@@ -16,12 +16,19 @@ use vercre_vc::proof::{self, Payload, Verify};
 
 use super::{Issuance, Status};
 use crate::credential::Credential;
-use crate::provider::{Callback, CredentialStorer, IssuerClient, Signer, StateManager};
+use crate::provider::{Callback, CredentialStorer, IssuerClient, Signer, StateManager, Verifier};
 use crate::Endpoint;
 
 impl<P> Endpoint<P>
 where
-    P: Callback + CredentialStorer + IssuerClient + Signer + StateManager + Clone + Debug,
+    P: Callback
+        + CredentialStorer
+        + IssuerClient
+        + Signer
+        + Verifier
+        + StateManager
+        + Clone
+        + Debug,
 {
     /// Progresses the issuance flow by getting an access token then using that to get the
     /// credentials contained in the offer.
@@ -43,7 +50,7 @@ struct Context<P> {
 
 impl<P> core_utils::Context for Context<P>
 where
-    P: CredentialStorer + IssuerClient + StateManager + Signer + Clone + Debug,
+    P: CredentialStorer + IssuerClient + StateManager + Signer + Verifier + Clone + Debug,
 {
     type Provider = P;
     type Request = String;
@@ -87,7 +94,6 @@ where
         // Request each credential offered.
         // TODO: concurrent requests. Possible if wallet is WASM?
         for (id, cfg) in &issuance.offered {
-
             println!("requesting credential {id:?}");
 
             // Construct a proof to be used in credential requests.
@@ -125,7 +131,7 @@ where
             }
 
             // Create a credential in a useful wallet format.
-            let mut credential = credential(&issuance, cfg, &cred_res).await?;
+            let mut credential = credential(cfg, &cred_res, provider).await?;
 
             println!("credential before logo: {credential:?}");
 
@@ -188,8 +194,8 @@ fn credential_request(
 
 /// Construct a credential from a credential response.
 async fn credential(
-    issuance: &Issuance, credential_configuration: &CredentialConfiguration,
-    res: &CredentialResponse,
+    credential_configuration: &CredentialConfiguration, res: &CredentialResponse,
+    verifier: &impl Verifier,
 ) -> Result<Credential> {
     let Some(value) = res.credential.as_ref() else {
         err!(Err::InvalidRequest, "no credential in response");
@@ -197,13 +203,13 @@ async fn credential(
     let Some(token) = value.as_str() else {
         err!(Err::InvalidRequest, "credential is not a string");
     };
-    let Ok(Payload::Vc(vc)) = proof::verify(token, Verify::Vc).await else {
+    let Ok(Payload::Vc(vc)) = proof::verify(token, Verify::Vc, verifier).await else {
         err!(Err::InvalidRequest, "could not parse credential");
     };
 
     Ok(Credential {
         id: vc.id.clone(),
-        issuer: issuance.offer.credential_issuer.clone(),
+        issuer: vc.issuer.id.clone(),
         metadata: credential_configuration.clone(),
         vc,
         issued: token.into(),

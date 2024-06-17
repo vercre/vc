@@ -10,10 +10,9 @@ use openid4vc::error::Err;
 use openid4vc::{err, Result};
 use tracing::instrument;
 
+use super::{Issuance, Status};
 use crate::provider::{Callback, StateManager};
 use crate::Endpoint;
-
-use super::{Issuance, Status};
 
 /// A `PinRequest` is a request to set a PIN for use in the issuance flow.
 #[derive(Clone, Debug, Default)]

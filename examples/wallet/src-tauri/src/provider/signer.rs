@@ -1,9 +1,10 @@
 //! Sample Signer implementation. This is a hard-coded signer for example purposes only. Real
 //! implementations should use a secure key store and secure signing methods.
 
+use anyhow::bail;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ed25519_dalek::{Signature, Signer as _, SigningKey};
-use vercre_holder::provider::{Algorithm, Signer};
+use vercre_holder::provider::{Algorithm, Jwk, Signer, Verifier};
 
 use super::Provider;
 
@@ -39,5 +40,46 @@ impl Signer for Provider {
         let signing_key = SigningKey::from_bytes(&bytes);
         let sig: Signature = signing_key.sign(msg);
         Ok(sig.to_vec())
+    }
+}
+
+impl Verifier for Provider {
+    fn deref_jwk(&self, did_url: impl AsRef<str>) -> anyhow::Result<Jwk> {
+        let Some(did) = did_url.as_ref().split('#').next() else {
+            bail!("Unable to parse DID");
+        };
+
+        // if have long-form DID then try to extract key from metadata
+        let did_parts: Vec<&str> = did.split(':').collect();
+        if did_parts.len() != 4 {
+            bail!("Short-form DID's are not supported");
+        }
+
+        let dec = match Base64UrlUnpadded::decode_vec(did_parts[3]) {
+            Ok(dec) => dec,
+            Err(e) => {
+                bail!("Unable to decode DID: {e}");
+            }
+        };
+
+        // let ion_op = serde_json::from_slice::<IonOperation>(&dec)?;
+        let ion_op = serde_json::from_slice::<serde_json::Value>(&dec)?;
+        let pk_val = ion_op
+            .get("delta")
+            .unwrap()
+            .get("patches")
+            .unwrap()
+            .get(0)
+            .unwrap()
+            .get("document")
+            .unwrap()
+            .get("publicKeys")
+            .unwrap()
+            .get(0)
+            .unwrap()
+            .get("publicKeyJwk")
+            .unwrap();
+
+        Ok(serde_json::from_value(pk_val.clone())?)
     }
 }
