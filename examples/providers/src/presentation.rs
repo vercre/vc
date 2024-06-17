@@ -6,7 +6,7 @@ use vercre_verifier::provider::{
     Verifier,
 };
 
-use crate::proof::Enclave;
+use crate::logic::proof::Enclave;
 
 pub const VERIFIER: &str = "http://vercre.io";
 pub const VERIFY_KEY_ID: &str = "publicKeyModel1Id";

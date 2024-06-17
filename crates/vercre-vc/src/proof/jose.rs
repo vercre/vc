@@ -154,4 +154,3 @@ impl From<VerifiablePresentation> for VpClaims {
         }
     }
 }
-

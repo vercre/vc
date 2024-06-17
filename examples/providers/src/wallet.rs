@@ -6,7 +6,7 @@ use ed25519_dalek::{Signature, Signer as _, SigningKey};
 use vercre_holder::provider::{Algorithm, Jwk, Signer, Verifier};
 
 pub use crate::client::WALLET_CLIENT_ID as CLIENT_ID;
-use crate::proof::Enclave;
+use crate::logic::proof::Enclave;
 
 const JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";

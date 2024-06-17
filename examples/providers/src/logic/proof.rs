@@ -12,7 +12,7 @@ const JWK_D: &str = "0Md3MhPaKEpnKAyKE498EdDFerD5NLeKJ5Rb-vC16Gs";
 pub struct Enclave;
 
 impl Enclave {
-    pub fn try_sign( msg: &[u8]) -> Result<Vec<u8>> {
+    pub fn try_sign(msg: &[u8]) -> Result<Vec<u8>> {
         let decoded = Base64UrlUnpadded::decode_vec(JWK_D)?;
         let signing_key: SigningKey<Secp256k1> = SigningKey::from_slice(&decoded)?;
         let sig: Signature<Secp256k1> = signing_key.sign(msg);

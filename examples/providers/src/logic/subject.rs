@@ -24,7 +24,7 @@ impl Store {
         // issuer
         let subjects = HashMap::from([
             (
-                super::NORMAL_USER.into(),
+                crate::NORMAL_USER.into(),
                 Person {
                     given_name: "Normal",
                     family_name: "Person",
@@ -34,7 +34,7 @@ impl Store {
                 },
             ),
             (
-                super::PENDING_USER.into(),
+                crate::PENDING_USER.into(),
                 Person {
                     given_name: "Pending",
                     family_name: "Person",

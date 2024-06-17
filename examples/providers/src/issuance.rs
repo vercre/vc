@@ -7,7 +7,7 @@ use vercre_issuer::provider::{
     Verifier,
 };
 
-use crate::proof::Enclave;
+use crate::logic::proof::Enclave;
 
 pub const NORMAL_USER: &str = "normal_user";
 pub const PENDING_USER: &str = "pending_user";
@@ -40,8 +40,8 @@ impl ClientMetadata for Provider {
         self.client.get(client_id)
     }
 
-    async fn register(&self, client_meta: &Client) -> Result<Client> {
-        self.client.add(client_meta)
+    async fn register(&self, client: &Client) -> Result<Client> {
+        self.client.add(client)
     }
 }
 
