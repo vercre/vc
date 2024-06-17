@@ -12,7 +12,6 @@ use std::fmt::Debug;
 
 use core_utils::jws::{self, Type};
 pub use offer::OfferRequest;
-pub use pin::PinRequest;
 use openid4vc::error::Err;
 pub use openid4vc::issuance::{
     CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse, GrantType,
@@ -20,6 +19,7 @@ pub use openid4vc::issuance::{
     TxCode,
 };
 use openid4vc::{err, Result};
+pub use pin::PinRequest;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
@@ -27,7 +27,8 @@ use vercre_vc::proof::{self, Payload, Verify};
 
 use crate::credential::Credential;
 use crate::provider::{
-    Callback, CredentialStorer, IssuanceInput, IssuanceListener, IssuerClient, Signer, StateManager,
+    Callback, CredentialStorer, IssuanceInput, IssuanceListener, IssuerClient, Signer,
+    StateManager, Verifier,
 };
 use crate::Endpoint;
 
@@ -103,6 +104,7 @@ where
         + IssuanceListener
         + IssuerClient
         + Signer
+        + Verifier
         + StateManager
         + Clone
         + Debug,
@@ -125,7 +127,14 @@ struct Context<P> {
 
 impl<P> core_utils::Context for Context<P>
 where
-    P: CredentialStorer + IssuanceInput + IssuanceListener + IssuerClient + Signer + Clone + Debug,
+    P: CredentialStorer
+        + IssuanceInput
+        + IssuanceListener
+        + IssuerClient
+        + Signer
+        + Verifier
+        + Clone
+        + Debug,
 {
     type Provider = P;
     type Request = ReceiveOfferRequest;
@@ -251,7 +260,7 @@ where
             }
 
             // Create a credential in a useful wallet format.
-            let mut credential = match credential(&issuance, cfg, &cred_res).await {
+            let mut credential = match credential(cfg, &cred_res, provider).await {
                 Ok(c) => c,
                 Err(e) => {
                     provider.notify(&issuance.id, Status::Failed(e.to_string()));
@@ -349,8 +358,8 @@ fn credential_request(
 
 /// Construct a credential from a credential response.
 async fn credential(
-    issuance: &Issuance, credential_configuration: &CredentialConfiguration,
-    res: &CredentialResponse,
+    credential_configuration: &CredentialConfiguration, res: &CredentialResponse,
+    verifier: &impl Verifier,
 ) -> Result<Credential> {
     let Some(value) = res.credential.as_ref() else {
         err!(Err::InvalidRequest, "no credential in response");
@@ -358,13 +367,13 @@ async fn credential(
     let Some(token) = value.as_str() else {
         err!(Err::InvalidRequest, "credential is not a JWT");
     };
-    let Ok(Payload::Vc(vc)) = proof::verify(token, Verify::Vc).await else {
+    let Ok(Payload::Vc(vc)) = proof::verify(token, Verify::Vc, verifier).await else {
         err!(Err::InvalidRequest, "could not parse credential");
     };
 
     Ok(Credential {
         id: vc.id.clone(),
-        issuer: issuance.offer.credential_issuer.clone(),
+        issuer: vc.issuer.id.clone(),
         metadata: credential_configuration.clone(),
         vc,
         issued: token.into(),
@@ -377,7 +386,7 @@ async fn credential(
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::issuance::{Grants, PreAuthorizedCodeGrant, TxCode};
-    use providers::wallet;
+    use providers::{issuance, wallet};
 
     use super::*;
 
@@ -478,7 +487,8 @@ mod tests {
             .await
             .expect("should encode");
 
-        let jwt: jws::Jwt<ProofClaims> = jws::decode(&token).expect("should decode");
+        let jwt: jws::Jwt<ProofClaims> =
+            jws::decode(&token, &issuance::Provider::new()).expect("should decode");
 
         assert_eq!(jwt.claims.aud, "http://vercre.io");
         assert_snapshot!("proof_jwt", &jwt, { ".claims.iat" => "[timestamp]" });

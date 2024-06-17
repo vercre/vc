@@ -16,7 +16,7 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
-use core_utils::jws::{self,Type};
+use core_utils::jws::{self, Type};
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{RequestObjectRequest, RequestObjectResponse};
@@ -101,6 +101,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::presentation::RequestObject;
     use providers::presentation::{Provider, VERIFIER};
+    use providers::wallet;
 
     use super::*;
 
@@ -145,7 +146,8 @@ mod tests {
             .expect("response is valid");
 
         let jwt_enc = response.jwt.expect("jwt exists");
-        let jwt: jws::Jwt<RequestObject> = jws::decode(&jwt_enc).expect("jwt is valid");
+        let jwt: jws::Jwt<RequestObject> =
+            jws::decode(&jwt_enc, &wallet::Provider::new()).expect("jwt is valid");
 
         assert_snapshot!("response", jwt);
 

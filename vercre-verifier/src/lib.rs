@@ -167,7 +167,7 @@ mod state;
 pub mod provider {
     pub use openid4vc::Client;
     pub use provider::{
-        Algorithm, Callback, ClientMetadata, Payload, Result, Signer, StateManager,
+        Algorithm, Callback, ClientMetadata, Jwk, Payload, Result, Signer, StateManager, Verifier,
     };
 }
 use std::fmt::Debug;

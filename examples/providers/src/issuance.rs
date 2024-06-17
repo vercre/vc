@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::{DateTime, Utc};
 use ecdsa::signature::Signer as _;
@@ -11,7 +11,8 @@ use serde_json::Value;
 use uuid::Uuid;
 use vercre_issuer::provider::{
     Algorithm, Callback, Claims, Client, ClientMetadata, CredentialDefinition, GrantType, Issuer,
-    IssuerMetadata, Payload, Result, Server, ServerMetadata, Signer, StateManager, Subject,
+    IssuerMetadata, Jwk, Payload, Result, Server, ServerMetadata, Signer, StateManager, Subject,
+    Verifier,
 };
 
 pub const NORMAL_USER: &str = "normal_user";
@@ -118,6 +119,56 @@ impl Signer for Provider {
     }
 }
 
+//-----------------------------------------------------------------------------
+// Verifier
+//-----------------------------------------------------------------------------
+impl Verifier for Provider {
+    fn deref_jwk(&self, did_url: impl AsRef<str>) -> anyhow::Result<Jwk> {
+        let did =
+            did_url.as_ref().split('#').next().ok_or_else(|| anyhow!("Unable to parse DID"))?;
+
+        // if have long-form DID then try to extract key from metadata
+        let did_parts = did.split(':').collect::<Vec<&str>>();
+
+        // if DID is a JWK then return it
+        if did.starts_with("did:jwk:") {
+            let decoded = Base64UrlUnpadded::decode_vec(did_parts[2])
+                .map_err(|e| anyhow!("Unable to decode DID: {e}"))?;
+            return serde_json::from_slice::<Jwk>(&decoded).map_err(anyhow::Error::from);
+        }
+
+        // DID should be long-form ION
+        if did_parts.len() != 4 {
+            bail!("Short-form DID's are not supported");
+        }
+
+        let decoded = Base64UrlUnpadded::decode_vec(did_parts[3])
+            .map_err(|e| anyhow!("Unable to decode DID: {e}"))?;
+        let ion_op = serde_json::from_slice::<serde_json::Value>(&decoded)?;
+
+        let pk_val = ion_op
+            .get("delta")
+            .unwrap()
+            .get("patches")
+            .unwrap()
+            .get(0)
+            .unwrap()
+            .get("document")
+            .unwrap()
+            .get("publicKeys")
+            .unwrap()
+            .get(0)
+            .unwrap()
+            .get("publicKeyJwk")
+            .unwrap();
+
+        Ok(serde_json::from_value(pk_val.clone())?)
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Callback
+//-----------------------------------------------------------------------------
 impl Callback for Provider {
     async fn callback(&self, pl: &Payload) -> Result<()> {
         self.callback.callback(pl)

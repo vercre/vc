@@ -101,8 +101,8 @@ pub mod provider {
     pub use openid4vc::issuance::{CredentialDefinition, GrantType, Issuer};
     pub use openid4vc::{Client, Server};
     pub use provider::{
-        Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Payload, Result,
-        ServerMetadata, Signer, StateManager, Subject,
+        Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Jwk, Payload, Result,
+        ServerMetadata, Signer, StateManager, Subject, Verifier,
     };
 }
 

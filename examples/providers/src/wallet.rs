@@ -1,8 +1,9 @@
 use std::str;
 
+use anyhow::bail;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ed25519_dalek::{Signature, Signer, SigningKey};
-use vercre_holder::provider::{self, Algorithm};
+use vercre_holder::provider::{self, Algorithm, Jwk};
 
 pub const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
 
@@ -39,6 +40,50 @@ impl provider::Signer for Provider {
         let signing_key = SigningKey::from_bytes(&bytes);
         let sig: Signature = signing_key.sign(msg);
         Ok(sig.to_vec())
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Verifier
+//-----------------------------------------------------------------------------
+impl provider::Verifier for Provider {
+    fn deref_jwk(&self, did_url: impl AsRef<str>) -> anyhow::Result<Jwk> {
+        let Some(did) = did_url.as_ref().split('#').next() else {
+            bail!("Unable to parse DID");
+        };
+
+        // if have long-form DID then try to extract key from metadata
+        let did_parts: Vec<&str> = did.split(':').collect();
+        if did_parts.len() != 4 {
+            bail!("Short-form DID's are not supported");
+        }
+
+        let dec = match Base64UrlUnpadded::decode_vec(did_parts[3]) {
+            Ok(dec) => dec,
+            Err(e) => {
+                bail!("Unable to decode DID: {e}");
+            }
+        };
+
+        // let ion_op = serde_json::from_slice::<IonOperation>(&dec)?;
+        let ion_op = serde_json::from_slice::<serde_json::Value>(&dec)?;
+        let pk_val = ion_op
+            .get("delta")
+            .unwrap()
+            .get("patches")
+            .unwrap()
+            .get(0)
+            .unwrap()
+            .get("document")
+            .unwrap()
+            .get("publicKeys")
+            .unwrap()
+            .get(0)
+            .unwrap()
+            .get("publicKeyJwk")
+            .unwrap();
+
+        Ok(serde_json::from_value(pk_val.clone())?)
     }
 }
 

@@ -21,10 +21,13 @@ pub use openid4vc::issuance::{
 };
 use openid4vc::issuance::{CredentialDefinition, Issuer, ProofClaims};
 use openid4vc::{err, Result};
-use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
+use provider::{
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
+    Verifier,
+};
 use tracing::instrument;
 use vercre_vc::model::{CredentialSubject, VerifiableCredential};
-use vercre_vc::proof::{self, Format, Payload, Signer};
+use vercre_vc::proof::{self, Format, Payload};
 
 use super::Endpoint;
 use crate::state::{Deferred, Expire, State};
@@ -37,6 +40,7 @@ where
         + Subject
         + StateManager
         + Signer
+        + Verifier
         + Callback
         + Clone
         + Debug,
@@ -80,7 +84,7 @@ struct Context<P> {
 
 impl<P> core_utils::Context for Context<P>
 where
-    P: IssuerMetadata + Subject + StateManager + Signer + Clone + Debug,
+    P: IssuerMetadata + Subject + StateManager + Signer + Verifier + Clone + Debug,
 {
     type Provider = P;
     type Request = BatchCredentialRequest;
@@ -151,7 +155,7 @@ where
             };
 
             // TODO: allow passing verifier into this method
-            let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt) {
+            let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, provider) {
                 Ok(jwt) => jwt,
                 Err(e) => {
                     let (nonce, expires_in) = self.err_nonce(provider).await?;
@@ -401,6 +405,7 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
+    // use openid4vc::issuance;
     use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use providers::wallet;
     use serde_json::json;
@@ -485,7 +490,8 @@ mod tests {
 
         let vc_val = credential.expect("VC is present");
         let token = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
-        let Payload::Vc(vc) = proof::verify(&token, Verify::Vc).await.expect("should decode")
+        let Payload::Vc(vc) =
+            proof::verify(&token, Verify::Vc, &provider).await.expect("should decode")
         else {
             panic!("should be VC");
         };

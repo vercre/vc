@@ -26,11 +26,11 @@ use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{ResponseRequest, ResponseResponse};
 use openid4vc::{err, Result};
-use provider::{Callback, ClientMetadata, StateManager};
+use provider::{Callback, ClientMetadata, Signer, StateManager, Verifier};
 use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
-use vercre_vc::proof::{self, Payload, Signer, Verify};
+use vercre_vc::proof::{self, Payload, Verify};
 
 use super::Endpoint;
 use crate::state::State;
@@ -38,7 +38,7 @@ use crate::state::State;
 /// Authorization Response request handler.
 impl<P> Endpoint<P>
 where
-    P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
+    P: ClientMetadata + StateManager + Signer + Verifier + Callback + Clone + Debug,
 {
     /// Endpoint for the Wallet to respond Verifier's Authorization Request.
     ///
@@ -75,7 +75,7 @@ struct Context<P> {
 
 impl<P> core_utils::Context for Context<P>
 where
-    P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
+    P: ClientMetadata + StateManager + Signer + Verifier + Callback + Clone + Debug,
 {
     type Provider = P;
     type Request = ResponseRequest;
@@ -86,7 +86,9 @@ where
     }
 
     // Verfiy the vp_token and presentation subm
-    async fn verify(&mut self, _: &Self::Provider, request: &Self::Request) -> Result<&Self> {
+    async fn verify(
+        &mut self, provider: &Self::Provider, request: &Self::Request,
+    ) -> Result<&Self> {
         tracing::debug!("Context::verify");
 
         // TODO:
@@ -119,7 +121,8 @@ where
                     vp_val
                 }
                 Value::String(token) => {
-                    let Ok(Payload::Vp { vp, nonce, .. }) = proof::verify(&token, Verify::Vc).await
+                    let Ok(Payload::Vp { vp, nonce, .. }) =
+                        proof::verify(&token, Verify::Vc, provider).await
                     else {
                         err!(Err::InvalidRequest, "invalid vp_token format");
                     };
@@ -192,7 +195,8 @@ where
             // convert Value (req_obj or base64url string) to VerifiableCredential
             let vc = match vc_node {
                 Value::String(token) => {
-                    let Ok(Payload::Vc(vc)) = proof::verify(token, Verify::Vc).await else {
+                    let Ok(Payload::Vc(vc)) = proof::verify(token, Verify::Vc, provider).await
+                    else {
                         err!(Err::InvalidRequest, "invalid VC format: {}", token);
                     };
                     vc

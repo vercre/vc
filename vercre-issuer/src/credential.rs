@@ -49,7 +49,9 @@ use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{BatchCredentialRequest, CredentialRequest, CredentialResponse};
 use openid4vc::{err, Result};
-use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
+use provider::{
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject, Verifier,
+};
 use tracing::instrument;
 use vercre_vc::proof::Signer;
 
@@ -64,6 +66,7 @@ where
         + Subject
         + StateManager
         + Signer
+        + Verifier
         + Callback
         + Clone
         + Debug,
@@ -106,6 +109,7 @@ where
         + Subject
         + StateManager
         + Signer
+        + Verifier
         + Callback
         + Clone
         + Debug,
@@ -227,7 +231,8 @@ mod tests {
         // verify credential
         let vc_val = response.credential.expect("VC is present");
         let token = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
-        let Payload::Vc(vc) = proof::verify(&token, Verify::Vc).await.expect("should decode")
+        let Payload::Vc(vc) =
+            proof::verify(&token, Verify::Vc, &provider).await.expect("should decode")
         else {
             panic!("should be VC");
         };

@@ -27,7 +27,9 @@ async fn pre_auth_flow() {
 
     let vc_val = resp.credential.expect("VC is present");
     let token = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
-    let Payload::Vc(vc) = proof::verify(&token, Verify::Vc).await.expect("should decode") else {
+    let Payload::Vc(vc) =
+        proof::verify(&token, Verify::Vc, &PROVIDER.to_owned()).await.expect("should decode")
+    else {
         panic!("should be VC");
     };
 
@@ -88,9 +90,8 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
         iat: Utc::now().timestamp(),
         nonce: input.c_nonce,
     };
-    let jwt = jws::encode(Type::Proof, &claims, wallet::Provider::new())
-        .await
-        .expect("should encode");
+    let jwt =
+        jws::encode(Type::Proof, &claims, wallet::Provider::new()).await.expect("should encode");
 
     let body = json!({
         "format": "jwt_vc_json",

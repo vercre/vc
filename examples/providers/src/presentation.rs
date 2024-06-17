@@ -1,14 +1,15 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::{DateTime, Utc};
 use ecdsa::signature::Signer as _;
 use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
 use vercre_verifier::provider::{
-    Algorithm, Callback, Client, ClientMetadata, Payload, Result, Signer, StateManager,
+    Algorithm, Callback, Client, ClientMetadata, Jwk, Payload, Result, Signer, StateManager,
+    Verifier,
 };
 use vercre_verifier::{CredentialFormat, VpFormat};
 
@@ -76,6 +77,53 @@ impl Signer for Provider {
     }
 }
 
+//-----------------------------------------------------------------------------
+// Verifier
+//-----------------------------------------------------------------------------
+impl Verifier for Provider {
+    fn deref_jwk(&self, did_url: impl AsRef<str>) -> anyhow::Result<Jwk> {
+        let Some(did) = did_url.as_ref().split('#').next() else {
+            bail!("Unable to parse DID");
+        };
+
+        // if have long-form DID then try to extract key from metadata
+        let did_parts: Vec<&str> = did.split(':').collect();
+        if did_parts.len() != 4 {
+            bail!("Short-form DID's are not supported");
+        }
+
+        let dec = match Base64UrlUnpadded::decode_vec(did_parts[3]) {
+            Ok(dec) => dec,
+            Err(e) => {
+                bail!("Unable to decode DID: {e}");
+            }
+        };
+
+        // let ion_op = serde_json::from_slice::<IonOperation>(&dec)?;
+        let ion_op = serde_json::from_slice::<serde_json::Value>(&dec)?;
+        let pk_val = ion_op
+            .get("delta")
+            .unwrap()
+            .get("patches")
+            .unwrap()
+            .get(0)
+            .unwrap()
+            .get("document")
+            .unwrap()
+            .get("publicKeys")
+            .unwrap()
+            .get(0)
+            .unwrap()
+            .get("publicKeyJwk")
+            .unwrap();
+
+        Ok(serde_json::from_value(pk_val.clone())?)
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Callback
+//-----------------------------------------------------------------------------
 impl Callback for Provider {
     async fn callback(&self, pl: &Payload) -> Result<()> {
         self.callback.callback(pl)
@@ -83,9 +131,8 @@ impl Callback for Provider {
 }
 
 //-----------------------------------------------------------------------------
-// Verifier
+// ClientStore
 //-----------------------------------------------------------------------------
-
 #[derive(Clone, Debug, Default)]
 struct ClientStore {
     clients: HashMap<String, Client>,

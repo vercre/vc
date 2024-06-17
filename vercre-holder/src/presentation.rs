@@ -18,7 +18,7 @@ use vercre_vc::proof::{self, Format, Payload};
 use crate::credential::Credential;
 use crate::provider::{
     Callback, CredentialStorer, PresentationInput, PresentationListener, Signer, StateManager,
-    VerifierClient,
+    Verifier, VerifierClient,
 };
 use crate::Endpoint;
 
@@ -106,6 +106,7 @@ where
         + PresentationListener
         + VerifierClient
         + Signer
+        + Verifier
         + StateManager
         + Clone
         + Debug,
@@ -134,6 +135,7 @@ where
         + PresentationListener
         + VerifierClient
         + Signer
+        + Verifier
         + StateManager
         + Clone
         + Debug,
@@ -170,7 +172,7 @@ where
             }
         } else {
             match provider.get_request_object(&presentation.id, &request).await {
-                Ok(req_obj_res) => match parse_request_object_response(&req_obj_res) {
+                Ok(req_obj_res) => match parse_request_object_response(&req_obj_res, provider) {
                     Ok(req_obj) => req_obj,
                     Err(e) => {
                         provider.notify(&presentation.id, Status::Failed(e.to_string()));
@@ -275,7 +277,9 @@ fn parse_presentation_definition(request: &str) -> Result<RequestObject> {
 }
 
 /// Extract a presentation `RequestObject` from a `RequestObjectResponse`.
-fn parse_request_object_response(res: &RequestObjectResponse) -> Result<RequestObject> {
+fn parse_request_object_response(
+    res: &RequestObjectResponse, verifier: &impl Verifier,
+) -> Result<RequestObject> {
     if res.request_object.is_some() {
         return Ok(res.request_object.clone().unwrap());
     }
@@ -283,7 +287,7 @@ fn parse_request_object_response(res: &RequestObjectResponse) -> Result<RequestO
     let Some(token) = &res.jwt else {
         err!(Err::InvalidRequest, "no serialized JWT found in response");
     };
-    let jwt = match jws::decode(token) {
+    let jwt = match jws::decode(token, verifier) {
         Ok(jwt) => jwt,
         Err(e) => err!(Err::InvalidRequest, "failed to parse JWT: {e}"),
     };
@@ -367,7 +371,7 @@ mod tests {
     use core_utils::jws::Type;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::issuance::CredentialConfiguration;
-    use providers::{issuance, presentation};
+    use providers::{issuance, presentation, wallet};
     use vercre_exch::{
         ClaimFormat, Field, Filter, FilterValue, InputDescriptor, PresentationDefinition,
     };
@@ -458,8 +462,8 @@ mod tests {
             request_object: Some(obj.clone()),
             jwt: None,
         };
-        let decoded =
-            parse_request_object_response(&req_obj_res).expect("should parse with object");
+        let decoded = parse_request_object_response(&req_obj_res, &wallet::Provider::new())
+            .expect("should parse with object");
         assert_eq!(obj, decoded);
 
         let token = jws::encode(Type::Request, &obj, presentation::Provider::new())
@@ -471,7 +475,8 @@ mod tests {
             jwt: Some(token),
         };
 
-        let decoded = parse_request_object_response(&req_obj_res).expect("should parse with jwt");
+        let decoded = parse_request_object_response(&req_obj_res, &wallet::Provider::new())
+            .expect("should parse with jwt");
         assert_eq!(obj, decoded);
     }
 

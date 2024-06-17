@@ -93,9 +93,8 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
         iat: Utc::now().timestamp(),
         nonce: input.c_nonce,
     };
-    let jwt = jws::encode(Type::Proof, &claims, wallet::Provider::new())
-        .await
-        .expect("should encode");
+    let jwt =
+        jws::encode(Type::Proof, &claims, wallet::Provider::new()).await.expect("should encode");
 
     let body = json!({
         "format": "jwt_vc_json",

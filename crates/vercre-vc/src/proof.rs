@@ -136,14 +136,16 @@ pub enum Verify {
 /// # Errors
 /// TODO: Add errors
 #[allow(clippy::unused_async)]
-pub async fn verify(token: &str, payload: Verify) -> anyhow::Result<Payload> {
+pub async fn verify(
+    token: &str, payload: Verify, verifier: &impl Verifier,
+) -> anyhow::Result<Payload> {
     match payload {
         Verify::Vc => {
-            let jwt = jws::decode::<jose::VcClaims>(token)?;
+            let jwt = jws::decode::<jose::VcClaims>(token, verifier)?;
             Ok(Payload::Vc(jwt.claims.vc))
         }
         Verify::Vp => {
-            let jwt = jws::decode::<jose::VpClaims>(token)?;
+            let jwt = jws::decode::<jose::VpClaims>(token, verifier)?;
             Ok(Payload::Vp {
                 vp: jwt.claims.vp,
                 client_id: jwt.claims.aud,
