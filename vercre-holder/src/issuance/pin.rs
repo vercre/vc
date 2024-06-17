@@ -10,9 +10,10 @@ use openid4vc::error::Err;
 use openid4vc::{err, Result};
 use tracing::instrument;
 
-use crate::issuance::{Issuance, Status};
 use crate::provider::{Callback, StateManager};
 use crate::Endpoint;
+
+use super::{Issuance, Status};
 
 impl<P> Endpoint<P>
 where
@@ -43,6 +44,7 @@ where
     type Provider = P;
     type Request = String;
     type Response = Issuance;
+
     async fn verify(&mut self, provider: &P, req: &Self::Request) -> Result<&Self> {
         tracing::debug!("Context::verify");
 

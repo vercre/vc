@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import Box from '@mui/material/Box';
 import Slide from '@mui/material/Slide';
+import { invoke } from '@tauri-apps/api/core';
 
 import Accept from './Accept';
 import Pin from './Pin';
@@ -35,6 +36,13 @@ export const Issuance = (props: IssuanceProps) => {
                 break;
         }
     }, [issuance]);
+
+    // go get the credentials if the user has accepted (and entered a pin if necessary)
+    useEffect(() => {
+        if (issuance.status === 'Accepted') {
+            invoke('getCredentials');
+        }
+    }, [issuance.status]);
 
     return (
         <Box sx={{ pt: 1, position: 'relative'}}>

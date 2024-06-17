@@ -10,12 +10,9 @@ use crate::CLIENT_ID;
 
 impl AppState {
     /// Process a credential issuance offer.
-    pub async fn offer<R>(
-        &mut self, encoded_offer: &str, provider: Provider<R>,
-    ) -> anyhow::Result<()>
-    where
-        R: tauri::Runtime,
-    {
+    pub async fn offer(
+        &mut self, encoded_offer: &str, provider: Provider,
+    ) -> anyhow::Result<()> {
         let offer_str = urlencoding::decode(encoded_offer)?;
         let offer = serde_json::from_str::<CredentialOffer>(&offer_str)?;
         let request = OfferRequest {
@@ -29,32 +26,23 @@ impl AppState {
     }
 
     /// Accept a credential issuance offer.
-    pub async fn accept<R>(&mut self, provider: Provider<R>) -> anyhow::Result<()>
-    where
-        R: tauri::Runtime,
-    {
-        let new_state = Endpoint::new(provider).accept(self.issuance.id.clone()).await?;
-        self.issuance = new_state;
+    pub async fn accept(&mut self, provider: Provider) -> anyhow::Result<()> {
+        let issuance = Endpoint::new(provider).accept(self.issuance.id.clone()).await?;
+        self.issuance = issuance;
         Ok(())
     }
 
     /// Set a PIN
-    pub async fn pin<R>(&mut self, provider: Provider<R>) -> anyhow::Result<()>
-    where
-        R: tauri::Runtime,
-    {
-        let new_state = Endpoint::new(provider).pin(self.issuance.id.clone()).await?;
-        self.issuance = new_state;
+    pub async fn pin(&mut self, provider: Provider) -> anyhow::Result<()> {
+        let issuance = Endpoint::new(provider).pin(self.issuance.id.clone()).await?;
+        self.issuance = issuance;
         Ok(())
     }
 
-    // /// Get the credentials for the accepted issuance offer.
-    // pub async fn get_credentials<R>(&mut self, _provider: Provider<R>) -> anyhow::Result<Vec<Credential>>
-    // where
-    //     R: tauri::Runtime,
-    // {
-    //     // let new_state = Endpoint::new(provider).get_credentials(self.issuance.id.clone()).await?;
-    //     // self.issuance = new_state;
-    //     todo!();
-    // }
+    /// Get the credentials for the accepted issuance offer.
+    pub async fn get_credentials(&mut self, provider: Provider) -> anyhow::Result<()> {
+        Endpoint::new(provider).get_credentials(self.issuance.id.clone()).await?;
+        self.sub_app = SubApp::Credential;
+        Ok(())
+    }
 }

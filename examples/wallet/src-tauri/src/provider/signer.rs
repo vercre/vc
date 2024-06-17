@@ -5,15 +5,12 @@ use base64ct::{Base64UrlUnpadded, Encoding};
 use ed25519_dalek::{Signature, Signer as _, SigningKey};
 use vercre_holder::provider::{Algorithm, Signer};
 
-use crate::provider::Provider;
+use super::Provider;
 
 const JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
 
-impl<R> Signer for Provider<R>
-where
-    R: tauri::Runtime,
-{
+impl Signer for Provider {
     /// Algorithm returns the algorithm used by the signer.
     fn algorithm(&self) -> Algorithm {
         Algorithm::EdDSA

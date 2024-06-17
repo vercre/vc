@@ -7,12 +7,9 @@ use vercre_holder::issuance::{
 };
 use vercre_holder::provider::IssuerClient;
 
-use crate::provider::Provider;
+use super::Provider;
 
-impl<R> IssuerClient for Provider<R>
-where
-    R: tauri::Runtime,
-{
+impl IssuerClient for Provider {
     /// Get issuer metadata.
     async fn get_metadata(
         &self, _flow_id: &str, req: &MetadataRequest,

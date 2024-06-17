@@ -2,12 +2,9 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use vercre_holder::provider::StateManager;
 
-use crate::provider::Provider;
+use super::Provider;
 
-impl<R> StateManager for Provider<R>
-where
-    R: tauri::Runtime,
-{
+impl StateManager for Provider {
     async fn put(&self, key: &str, state: Vec<u8>, _: DateTime<Utc>) -> anyhow::Result<()> {
         self.store.lock().await.insert(key.to_string(), state);
         Ok(())

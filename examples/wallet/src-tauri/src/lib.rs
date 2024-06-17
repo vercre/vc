@@ -76,7 +76,8 @@ pub fn run() {
             delete, // delete a credential.
             offer,  // submit a credential issuance offer directly from shell input.
             accept, // accept a credential issuance offer.
-            pin, // set a user PIN on the token request.
+            pin,    // set a user PIN on the token request.
+            get_credentials, // get the credentials for the accepted issuance offer.
                     // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
         ])
         .run(tauri::generate_context!())
@@ -184,6 +185,22 @@ async fn pin(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::
     let mut app_state = state.app_state.lock().await;
     let provider = Provider::new(app.clone(), state.state_store.clone());
     app_state.pin(provider).await?;
+    let view: ViewModel = app_state.clone().into();
+    log::info!("emitting state_updated");
+    app.emit("state_updated", view).map_err(error::AppError::from)?;
+    Ok(())
+}
+
+/// The `get_credentials` command gets the credentials for the accepted issuance offer using the
+/// `get_credentials` endpoint in the `vercre-holder` crate.
+#[tauri::command]
+async fn get_credentials(
+    state: State<'_, StateModel>, app: AppHandle,
+) -> Result<(), error::AppError> {
+    log::info!("get_credentials invoked");
+    let mut app_state = state.app_state.lock().await;
+    let provider = Provider::new(app.clone(), state.state_store.clone());
+    app_state.get_credentials(provider).await?;
     let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
     app.emit("state_updated", view).map_err(error::AppError::from)?;
