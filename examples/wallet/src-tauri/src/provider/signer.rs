@@ -1,7 +1,7 @@
 //! Sample Signer implementation. This is a hard-coded signer for example purposes only. Real
 //! implementations should use a secure key store and secure signing methods.
 
-use anyhow::bail;
+use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ed25519_dalek::{Signature, Signer as _, SigningKey};
 use vercre_holder::provider::{Algorithm, Jwk, Signer, Verifier};
@@ -45,25 +45,28 @@ impl Signer for Provider {
 
 impl Verifier for Provider {
     fn deref_jwk(&self, did_url: impl AsRef<str>) -> anyhow::Result<Jwk> {
-        let Some(did) = did_url.as_ref().split('#').next() else {
-            bail!("Unable to parse DID");
-        };
+        let did =
+            did_url.as_ref().split('#').next().ok_or_else(|| anyhow!("Unable to parse DID"))?;
 
         // if have long-form DID then try to extract key from metadata
-        let did_parts: Vec<&str> = did.split(':').collect();
+        let did_parts = did.split(':').collect::<Vec<&str>>();
+
+        // if DID is a JWK then return it
+        if did.starts_with("did:jwk:") {
+            let decoded = Base64UrlUnpadded::decode_vec(did_parts[2])
+                .map_err(|e| anyhow!("Unable to decode DID: {e}"))?;
+            return serde_json::from_slice::<Jwk>(&decoded).map_err(anyhow::Error::from);
+        }
+
+        // DID should be long-form ION
         if did_parts.len() != 4 {
             bail!("Short-form DID's are not supported");
         }
 
-        let dec = match Base64UrlUnpadded::decode_vec(did_parts[3]) {
-            Ok(dec) => dec,
-            Err(e) => {
-                bail!("Unable to decode DID: {e}");
-            }
-        };
+        let decoded = Base64UrlUnpadded::decode_vec(did_parts[3])
+            .map_err(|e| anyhow!("Unable to decode DID: {e}"))?;
+        let ion_op = serde_json::from_slice::<serde_json::Value>(&decoded)?;
 
-        // let ion_op = serde_json::from_slice::<IonOperation>(&dec)?;
-        let ion_op = serde_json::from_slice::<serde_json::Value>(&dec)?;
         let pk_val = ion_op
             .get("delta")
             .unwrap()
