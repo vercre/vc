@@ -229,17 +229,10 @@ async fn parse_request_object_response(
     let Some(token) = &res.jwt else {
         err!(Err::InvalidRequest, "no serialized JWT found in response");
     };
-    let jwt = match jws::decode(token, verifier).await {
+    let jwt: jws::Jwt<RequestObject> = match jws::decode(token, verifier).await {
         Ok(jwt) => jwt,
         Err(e) => err!(Err::InvalidRequest, "failed to parse JWT: {e}"),
     };
-
-    // Note: commented code below represents case where JWT is encoded and signed.
-    // TODO: Check that above simple deserialization is spec compliant (see associated test for
-    // simple serialization). If so, remove this comment and code.
-    // let Ok(jwt) = jwt_enc.parse::<Jwt<RequestObject>>() else {
-    //     err!(Err::InvalidRequest, "failed to parse JWT");
-    // };
 
     Ok(jwt.claims)
 }

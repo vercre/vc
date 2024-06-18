@@ -20,22 +20,26 @@ pub struct Enclave;
 
 impl Enclave {
     pub fn try_sign(entity: &Entity, msg: &[u8]) -> Result<Vec<u8>> {
-        match entity {
+        let sig_bytes = match entity {
             Entity::Issuer | Entity::Verifier => {
                 let decoded = Base64UrlUnpadded::decode_vec(SERVER_JWK_D)?;
                 let signing_key: SigningKey<Secp256k1> = SigningKey::from_slice(&decoded)?;
-                let sig: Signature<Secp256k1> = signing_key.sign(msg);
-                Ok(sig.to_vec())
+                let signature: Signature<Secp256k1> = signing_key.sign(msg);
+                signature.to_vec()
             }
             Entity::Holder => {
                 let decoded = Base64UrlUnpadded::decode_vec(WALLET_JWK_D)?;
                 let bytes: [u8; 32] = decoded.as_slice().try_into().expect("should convert ");
                 let signing_key = ed25519_dalek::SigningKey::from_bytes(&bytes);
-                let sig: ed25519_dalek::Signature = signing_key.sign(msg);
-                Ok(sig.to_vec())
+                let signature: ed25519_dalek::Signature = signing_key.sign(msg);
+                signature.to_vec()
             }
-        }
+        };
+
+        Ok(sig_bytes)
     }
+
+    // TODO: use vercre-did crate to dereference DID URL
 
     pub fn deref_jwk(did_url: &str) -> Result<Jwk> {
         let did = did_url.split('#').next().ok_or_else(|| anyhow!("Unable to parse DID"))?;
@@ -49,6 +53,9 @@ impl Enclave {
                 .map_err(|e| anyhow!("Unable to decode DID: {e}"))?;
             return serde_json::from_slice::<Jwk>(&decoded).map_err(anyhow::Error::from);
         }
+
+        // HACK: for now, assume DID is long-form with delta operation containing public key
+        // TODO: use vercre-did crate to dereference DID URL
 
         // DID should be long-form ION
         if did_parts.len() != 4 {
@@ -75,6 +82,6 @@ impl Enclave {
             .get("publicKeyJwk")
             .unwrap();
 
-        Ok(serde_json::from_value(pk_val.clone())?)
+        serde_json::from_value(pk_val.clone()).map_err(anyhow::Error::from)
     }
 }
