@@ -11,11 +11,9 @@ impl StateManager for Provider {
     }
 
     async fn get(&self, key: &str) -> anyhow::Result<Vec<u8>> {
-        println!("looking for stored state for key {key}");
         let Some(state) = self.store.lock().await.get(key).cloned() else {
             return Err(anyhow!("state not found for key: {key}"));
         };
-        println!("returning stored state for key {key}");
         Ok(state)
     }
 

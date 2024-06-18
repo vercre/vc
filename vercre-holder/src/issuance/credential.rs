@@ -59,8 +59,6 @@ where
     async fn verify(&mut self, provider: &P, req: &Self::Request) -> Result<&Self> {
         tracing::debug!("Context::verify");
 
-        println!("verifying get_credentials request");
-
         // Get current state of flow and check internals for consistency with request.
         let current_state = provider.get(req).await?;
         let Ok(issuance) = serde_json::from_slice::<Issuance>(&current_state) else {
@@ -70,8 +68,6 @@ where
         if issuance.status != Status::Accepted {
             err!(Err::InvalidRequest, "Invalid issuance state");
         };
-
-        println!("restored issuance from state {issuance:?}");
 
         self.issuance = issuance;
         Ok(self)
@@ -85,17 +81,11 @@ where
         // Request an access token from the issuer.
         let token_request = token_request(&issuance);
 
-        println!("requesting token {token_request:?}");
-
         issuance.token = provider.get_token(&issuance.id, &token_request).await?;
-
-        println!("issance with token {issuance:?}");
 
         // Request each credential offered.
         // TODO: concurrent requests. Possible if wallet is WASM?
         for (id, cfg) in &issuance.offered {
-            println!("requesting credential {id:?}");
-
             // Construct a proof to be used in credential requests.
             let claims = ProofClaims {
                 iss: Some(issuance.client_id.clone()),
@@ -103,11 +93,7 @@ where
                 iat: chrono::Utc::now().timestamp(),
                 nonce: issuance.token.c_nonce.clone(),
             };
-
             let jwt = jws::encode(Type::Proof, &claims, provider.clone()).await?;
-
-            println!("jwt {jwt:?}");
-
             let proof = Proof {
                 proof_type: "jwt".into(),
                 jwt: Some(jwt),
@@ -117,12 +103,7 @@ where
             let request = credential_request(&issuance, id, cfg, &proof);
             issuance.status = Status::Requested;
 
-            println!("credential request {request:?}");
-
             let cred_res = provider.get_credential(&issuance.id, &request).await?;
-
-            println!("credential response {cred_res:?}");
-
             if cred_res.c_nonce.is_some() {
                 issuance.token.c_nonce.clone_from(&cred_res.c_nonce);
             }
@@ -132,8 +113,6 @@ where
 
             // Create a credential in a useful wallet format.
             let mut credential = credential(cfg, &cred_res, provider).await?;
-
-            println!("credential before logo: {credential:?}");
 
             // Base64-encoded logo if possible.
             if let Some(display) = &cfg.display {
@@ -146,12 +125,7 @@ where
                     }
                 }
             }
-
-            println!("saving credential {credential:?}");
-
             provider.save(&credential).await?;
-
-            println!("credential saved");
         }
 
         Ok(())

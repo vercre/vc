@@ -57,28 +57,20 @@ where
     async fn verify(&mut self, provider: &P, req: &Self::Request) -> Result<&Self> {
         tracing::debug!("Context::verify");
 
-        println!("verifying PIN request");
-
         // Get current state of flow and check internals for consistency with request.
         let current_state = provider.get(&req.id).await?;
         let Ok(issuance) = serde_json::from_slice::<Issuance>(&current_state) else {
             err!(Err::InvalidRequest, "unable to decode issuance state");
         };
-
         if issuance.status != Status::PendingPin {
             err!(Err::InvalidRequest, "Invalid issuance state");
         };
-
-        println!("restored issuance from state {issuance:?}");
-
         self.issuance = issuance;
         Ok(self)
     }
 
     async fn process(&self, provider: &P, req: &Self::Request) -> Result<Self::Response> {
         tracing::debug!("Context::process");
-
-        println!("processing PIN request");
 
         // Update the state of the flow to indicate the PIN has been set.
         let mut issuance = self.issuance.clone();
@@ -89,9 +81,6 @@ where
         provider
             .put(&issuance.id, serde_json::to_vec(&issuance)?, DateTime::<Utc>::MAX_UTC)
             .await?;
-
-        println!("PIN set");
-
         Ok(issuance)
     }
 }

@@ -36,7 +36,6 @@ impl TestProvider {
 
 impl Callback for TestProvider {
     async fn callback(&self, _payload: &Payload) -> anyhow::Result<()> {
-        println!("Callback from TestProvider");
         Ok(())
     }
 }

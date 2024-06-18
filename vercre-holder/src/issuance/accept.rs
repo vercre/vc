@@ -48,15 +48,11 @@ where
     async fn verify(&mut self, provider: &P, req: &Self::Request) -> Result<&Self> {
         tracing::debug!("Context::verify");
 
-        println!("verifying accept request");
-
         // Get current state of flow and check internals for consistency with request.
         let current_state = provider.get(req).await?;
         let Ok(issuance) = serde_json::from_slice::<Issuance>(&current_state) else {
             err!(Err::InvalidRequest, "unable to decode issuance state");
         };
-
-        println!("restored issuance from state {issuance:?}");
 
         if issuance.status != Status::Ready {
             err!(Err::InvalidRequest, "Invalid issuance state");
