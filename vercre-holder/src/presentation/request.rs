@@ -1,11 +1,12 @@
 //! # Presentation Request Endpoint
 //!
-//! The request endpoint can take a request for presentation in the form of a URI to go get the
+//! The `request` endpoint can take a request for presentation in the form of a URI to go get the
 //! request details or all of the details as a `PresentationRequest` struct serialized to a URL
 //! query parameter.
 
 use std::fmt::Debug;
 
+use chrono::{DateTime, Utc};
 use core_utils::jws;
 use openid4vc::error::Err;
 use openid4vc::presentation::{RequestObject, RequestObjectResponse};
@@ -14,9 +15,10 @@ use tracing::instrument;
 use uuid::Uuid;
 use vercre_exch::Constraints;
 
-use super::{Presentation, Status};
 use crate::provider::{Callback, CredentialStorer, StateManager, Verifier, VerifierClient};
 use crate::Endpoint;
+
+use super::{Presentation, Status};
 
 impl<P> Endpoint<P>
 where
@@ -75,7 +77,6 @@ where
     async fn process(
         &self, provider: &Self::Provider, _req: &Self::Request,
     ) -> Result<Self::Response> {
-
         // Initiate a new presentation flow
         let mut presentation = Presentation {
             id: Uuid::new_v4().to_string(),
@@ -99,6 +100,11 @@ where
         presentation.filter.clone_from(&filter);
         let credentials = provider.find(Some(filter)).await?;
         presentation.credentials.clone_from(&credentials);
+
+        // Stash the presentation flow for subsequent steps
+        provider
+            .put(&presentation.id, serde_json::to_vec(&presentation)?, DateTime::<Utc>::MAX_UTC)
+            .await?;
 
         Ok(presentation)
     }

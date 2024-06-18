@@ -128,11 +128,18 @@ impl From<&Credential> for CredentialDetail {
         let display = displays[0].clone();
         let vc = credential.vc.clone();
         let mut claims = HashMap::new();
-        for subject in vc.credential_subject {
+
+        let subjects = match &vc.credential_subject {
+            credential::OneSet::One(sub) => vec![sub.clone()],
+            credential::OneSet::Set(subs) => subs.clone(),
+        };
+
+        for subject in subjects {
             for (key, value) in subject.claims {
                 claims.insert(key, value.to_string());
             }
         }
+
         Self {
             display: credential.into(),
             issuance_date: vc.issuance_date.to_rfc2822(),

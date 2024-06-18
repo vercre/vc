@@ -26,7 +26,7 @@ use provider::{
     Verifier,
 };
 use tracing::instrument;
-use vercre_vc::model::{CredentialSubject, VerifiableCredential};
+use vercre_vc::model::{self, CredentialSubject, VerifiableCredential};
 use vercre_vc::proof::{self, Format, Payload};
 
 use super::Endpoint;
@@ -318,7 +318,7 @@ where
         let vc_id = format!("{credential_issuer}/credentials/{}", types[1].clone());
 
         let vc = VerifiableCredential::builder()
-            .add_context(credential_issuer.clone() + "/credentials/v1")
+            .add_context(model::Context::Url(credential_issuer.clone() + "/credentials/v1"))
             // TODO: generate credential id
             .id(vc_id)
             .add_type(types[1].clone())

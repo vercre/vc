@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::model::serde::option_flexvec;
+use crate::model::{Context, OneSet};
 pub use crate::proof::integrity::Proof;
 
 /// A Verifiable Presentation is used to combine and present credentials to a
@@ -31,7 +31,7 @@ pub struct VerifiablePresentation {
     /// or objects. Each URI, if dereferenced, should result in a document
     /// containing machine-readable information about the @context.
     #[serde(rename = "@context")]
-    pub context: Vec<String>,
+    pub context: Vec<Context>,
 
     /// MAY be used to provide a unique identifier for the presentation.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -59,8 +59,7 @@ pub struct VerifiablePresentation {
 
     /// An embedded proof ensures that the presentation is verifiable.
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "option_flexvec")]
-    pub proof: Option<Vec<Proof>>,
+    pub proof: Option<OneSet<Proof>>,
 }
 
 impl VerifiablePresentation {
@@ -105,15 +104,15 @@ impl VpBuilder {
 
         // sensibile defaults
         builder.vp.id = Some(format!("urn:uuid:{}", Uuid::new_v4()));
-        builder.vp.context.push("https://www.w3.org/2018/credentials/v1".into());
+        builder.vp.context.push(Context::Url("https://www.w3.org/2018/credentials/v1".into()));
         builder.vp.type_.push("VerifiablePresentation".into());
         builder
     }
 
     /// Sets the `@context` property
     #[must_use]
-    pub fn add_context(mut self, context: impl Into<String>) -> Self {
-        self.vp.context.push(context.into());
+    pub fn add_context(mut self, context: Context) -> Self {
+        self.vp.context.push(context);
         self
     }
 
@@ -229,7 +228,7 @@ mod tests {
         subj.claims.insert("employeeID".into(), json!("1234567890"));
 
         let vc = VerifiableCredential::builder()
-            .add_context("https://www.w3.org/2018/credentials/examples/v1")
+            .add_context(Context::Url("https://www.w3.org/2018/credentials/examples/v1".into()))
             .id("https://example.com/credentials/3732")
             .add_type("EmployeeIDCredential")
             .issuer("https://example.com/issuers/14")
@@ -237,7 +236,7 @@ mod tests {
             .build()?;
 
         VerifiablePresentation::builder()
-            .add_context("https://www.w3.org/2018/credentials/examples/v1")
+            .add_context(Context::Url("https://www.w3.org/2018/credentials/examples/v1".into()))
             .add_type("EmployeeIDCredential")
             .add_credential(serde_json::to_value(vc)?)
             .build()

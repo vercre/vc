@@ -67,7 +67,9 @@ where
         Ok(self)
     }
 
-    async fn process(&self, provider: &P, _req: &Self::Request) -> Result<Self::Response> {
+    async fn process(
+        &self, provider: &Self::Provider, _req: &Self::Request,
+    ) -> Result<Self::Response> {
         tracing::debug!("Context::process");
 
         let mut issuance = self.issuance.clone();

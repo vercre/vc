@@ -17,24 +17,23 @@ use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::model::serde::{flexobj, flexvec, option_flexvec};
+use crate::model::{Context, OneSet, StrObj};
 use crate::proof::integrity::Proof;
 
 /// `VerifiableCredential` represents a naive implementation of the W3C Verifiable
 /// Credential data model v1.1.
 /// See <https://www.w3.org/TR/vc-data-model>.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(default)]
+#[serde(rename_all = "camelCase", default)]
 pub struct VerifiableCredential {
     // LATER: add support for @context objects
     #[allow(rustdoc::bare_urls)]
     /// The @context property is used to map property URIs into short-form aliases.
     /// It is an ordered set where the first item is "`https://www.w3.org/2018/credentials/v1`".
-    /// Subsequent items MUST express context information and can be either URIs or
-    /// objects. Each URI, if dereferenced, should result in a document containing
-    /// machine-readable information about the @context.
+    /// Subsequent items may be composed of any combination of URLs and/or objects,
+    /// each processable as a [JSON-LD Context](https://www.w3.org/TR/json-ld11/#the-context).
     #[serde(rename = "@context")]
-    pub context: Vec<String>,
+    pub context: Vec<Context>,
 
     #[allow(rustdoc::bare_urls)]
     /// The credential's URI. It is RECOMMENDED that if dereferenced, the URI
@@ -54,56 +53,45 @@ pub struct VerifiableCredential {
     /// A URI or object with an id property. It is RECOMMENDED that the
     /// URI/object id, dereferences to machine-readable information about
     /// the issuer that can be used to verify credential information.
-    #[serde(with = "flexobj")]
-    pub issuer: Issuer,
+    pub issuer: StrObj<Issuer>,
 
     /// An XMLSCHEMA11-2 (RFC3339) date-time the credential becomes valid.
     /// e.g. 2010-01-01T19:23:24Z.
-    #[serde(rename = "issuanceDate")]
     pub issuance_date: DateTime<Utc>,
 
     /// A set of objects containing claims about credential subjects(s).
-    #[serde(rename = "credentialSubject")]
-    #[serde(with = "flexvec")]
-    pub credential_subject: Vec<CredentialSubject>,
+    pub credential_subject: OneSet<CredentialSubject>,
 
     /// One or more cryptographic proofs that can be used to detect tampering
     /// and verify authorship of a credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "option_flexvec")]
-    pub proof: Option<Vec<Proof>>,
+    pub proof: Option<OneSet<Proof>>,
 
     /// An XMLSCHEMA11-2 (RFC3339) date-time the credential ceases to be valid.
     /// e.g. 2010-06-30T19:23:24Z
-    #[serde(rename = "expirationDate")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub expiration_date: Option<DateTime<Utc>>,
 
     /// Used to determine the status of the credential, such as whether it is
     /// suspended or revoked.
-    #[serde(rename = "credentialStatus")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_status: Option<CredentialStatus>,
 
     /// The credentialSchema defines the structure and datatypes of the
     /// credential. Consists of one or more schemas that can be used to
     /// check credential data conformance.
-    #[serde(rename = "credentialSchema")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "option_flexvec")]
-    pub credential_schema: Option<Vec<CredentialSchema>>,
+    pub credential_schema: Option<OneSet<CredentialSchema>>,
 
     /// `RefreshService` can be used to provide a link to the issuer's refresh
     /// service so Holder's can refresh (manually or automatically) an
     /// expired credential.
-    #[serde(rename = "refreshService")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub refresh_service: Option<RefreshService>,
 
     /// Terms of use can be utilized by an issuer or a holder to communicate the
     /// terms under which a verifiable credential or verifiable presentation
     /// was issued.
-    #[serde(rename = "termsOfUse")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub terms_of_use: Option<Vec<Term>>,
 
@@ -114,6 +102,8 @@ pub struct VerifiableCredential {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub evidence: Option<Vec<Evidence>>,
 }
+
+// TODO: create structured @context object
 
 impl VerifiableCredential {
     /// Returns a new [`VerifiableCredential`] configured with defaults.
@@ -138,20 +128,17 @@ impl VerifiableCredential {
 
         Self {
             context: vec![
-                "https://www.w3.org/2018/credentials/v1".into(),
-                "https://www.w3.org/2018/credentials/examples/v1".into(),
+                Context::Url("https://www.w3.org/2018/credentials/v1".into()),
+                Context::Url("https://www.w3.org/2018/credentials/examples/v1".into()),
             ],
             type_: vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()],
-            issuer: Issuer {
-                id: "https://example.com/issuers/14".into(),
-                extra: None,
-            },
+            issuer: StrObj::String("https://example.com/issuers/14".into()),
             id: "https://example.com/credentials/3732".into(),
             issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
-            credential_subject: vec![CredentialSubject {
+            credential_subject: OneSet::One(CredentialSubject {
                 id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
                 claims: HashMap::from([("employeeId".into(), serde_json::json!("1234567890"))]),
-            }],
+            }),
             expiration_date: Some(Utc.with_ymd_and_hms(2023, 12, 20, 23, 21, 55).unwrap()),
 
             ..Self::default()
@@ -408,7 +395,7 @@ impl VcBuilder {
         let mut builder: Self = Self::default();
 
         // set some sensibile defaults
-        builder.vc.context.push("https://www.w3.org/2018/credentials/v1".into());
+        builder.vc.context.push(Context::Url("https://www.w3.org/2018/credentials/v1".into()));
         builder.vc.type_.push("VerifiableCredential".into());
         builder.vc.issuance_date = chrono::Utc::now(); //.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
 
@@ -417,8 +404,8 @@ impl VcBuilder {
 
     /// Sets the `@context` property
     #[must_use]
-    pub fn add_context(mut self, context: impl Into<String>) -> Self {
-        self.vc.context.push(context.into());
+    pub fn add_context(mut self, context: Context) -> Self {
+        self.vc.context.push(context);
         self
     }
 
@@ -439,28 +426,44 @@ impl VcBuilder {
     /// Sets the `issuer` property
     #[must_use]
     pub fn issuer(mut self, issuer: impl Into<String>) -> Self {
-        self.vc.issuer = Issuer {
-            id: issuer.into(),
-            extra: None,
-        };
+        self.vc.issuer = StrObj::String(issuer.into());
         self
     }
 
     /// Adds one or more `credential_subject` properties.
     #[must_use]
     pub fn add_subject(mut self, subj: CredentialSubject) -> Self {
-        self.vc.credential_subject.push(subj);
+        let one_set = match self.vc.credential_subject {
+            OneSet::One(one) => {
+                if one == CredentialSubject::default() {
+                    OneSet::One(subj)
+                } else {
+                    OneSet::Set(vec![one, subj])
+                }
+            }
+            OneSet::Set(mut set) => {
+                set.push(subj);
+                OneSet::Set(set)
+            }
+        };
+
+        self.vc.credential_subject = one_set;
         self
     }
 
     /// Adds one or more `proof` properties.
     #[must_use]
     pub fn add_proof(mut self, proof: Proof) -> Self {
-        if let Some(proofs) = self.vc.proof.as_mut() {
-            proofs.push(proof);
-        } else {
-            self.vc.proof = Some(vec![proof]);
-        }
+        let one_set = match self.vc.proof {
+            None => OneSet::One(proof),
+            Some(OneSet::One(one)) => OneSet::Set(vec![one, proof]),
+            Some(OneSet::Set(mut set)) => {
+                set.push(proof);
+                OneSet::Set(set)
+            }
+        };
+
+        self.vc.proof = Some(one_set);
         self
     }
 
@@ -481,11 +484,17 @@ impl VcBuilder {
         if self.vc.type_.len() < 2 {
             bail!("no type set");
         }
-        if self.vc.issuer.id.is_empty() {
-            bail!("no issuer.id set");
+
+        if let StrObj::String(id) = &self.vc.issuer {
+            if id.is_empty() {
+                bail!("no issuer.id set");
+            }
         }
-        if self.vc.credential_subject.is_empty() {
-            bail!("no credential_subject set");
+
+        if let OneSet::One(subj) = &self.vc.credential_subject {
+            if *subj == CredentialSubject::default() {
+                bail!("no credential_subject set");
+            }
         }
 
         Ok(self.vc)
@@ -577,10 +586,10 @@ mod tests {
         init_tracer();
 
         let mut vc = VerifiableCredential::sample();
-        vc.credential_schema = Some(vec![
+        vc.credential_schema = Some(OneSet::Set(vec![
             CredentialSchema { ..Default::default() },
             CredentialSchema { ..Default::default() },
-        ]);
+        ]));
 
         // serialize
         let vc_json = serde_json::to_value(&vc).expect("should serialize to json");
@@ -602,7 +611,7 @@ mod tests {
     }
 
     #[test]
-    fn flexobj() {
+    fn strobj() {
         init_tracer();
 
         let mut vc = VerifiableCredential::sample();
@@ -618,8 +627,17 @@ mod tests {
         let vc_de: VerifiableCredential =
             serde_json::from_value(vc_json).expect("should deserialize");
         assert_eq!(vc_de.issuer, vc.issuer);
-        vc.issuer.extra =
+
+        let mut issuer = match &vc.issuer {
+            StrObj::Object(issuer) => issuer.clone(),
+            StrObj::String(id) => Issuer {
+                id: id.clone(),
+                ..Issuer::default()
+            },
+        };
+        issuer.extra =
             Some(HashMap::from([("name".into(), Value::String("Example University".into()))]));
+        vc.issuer = StrObj::Object(issuer);
 
         // serialize
         let vc_json = serde_json::to_value(&vc).expect("should serialize to json");

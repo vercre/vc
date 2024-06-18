@@ -3,8 +3,8 @@
 //! The Presentation endpoints implement the vercre-holder's credential presentation flow.
 
 mod authorize;
-mod request;
 mod present;
+mod request;
 
 use std::fmt::Debug;
 
@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_exch::{Constraints, DescriptorMap, PathNested, PresentationSubmission};
-use vercre_vc::model::vp::VerifiablePresentation;
+use vercre_vc::model::{self, VerifiablePresentation};
 use vercre_vc::proof::{self, Format, Payload};
 
 use crate::credential::Credential;
@@ -292,7 +292,7 @@ fn create_vp(
 ) -> anyhow::Result<VerifiablePresentation> {
     // presentation with 2 VCs: one as JSON, one as base64url encoded JWT
     let mut builder = VerifiablePresentation::builder()
-        .add_context(String::from("https://www.w3.org/2018/credentials/examples/v1"))
+        .add_context(model::Context::Url("https://www.w3.org/2018/credentials/examples/v1".into()))
         .add_type(String::from("EmployeeIDPresentation"))
         .holder(holder_did);
 

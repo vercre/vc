@@ -7,7 +7,8 @@ use std::ops::Deref;
 
 use openid4vc::issuance::CredentialConfiguration;
 use serde::{Deserialize, Serialize};
-use vercre_vc::model::vc::VerifiableCredential;
+pub use vercre_vc::model::OneSet;
+use vercre_vc::model::VerifiableCredential;
 
 /// The Credential model contains information about a credential owned by the
 /// Wallet.
