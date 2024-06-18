@@ -1,0 +1,44 @@
+[package]
+name = "did-core"
+description = "OpenID Data Model"
+license = "MIT OR Apache-2.0"
+publish = false
+readme = "README.md"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+exclude.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[lib]
+# crate-type = ["cdylib", "rlib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow.workspace = true
+base64ct.workspace = true
+ecdsa.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+
+async-trait = "0.1"
+bs58 = { version = "0.4", features = ["check"] }
+derive_builder = "0.9"
+hex = "0.4"
+iref = { version = "2.2.2", features = ["serde"] }
+multibase = "0.8"
+percent-encoding = { version = "2.1", optional = true }
+reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"], optional = true }
+serde_urlencoded = "0.7"
+static-iref = "2.0.0"
+thiserror = "1.0"
+
+[dev-dependencies]
+insta = { version = "1.39.0", features = ["filters", "redactions", "yaml"] }
