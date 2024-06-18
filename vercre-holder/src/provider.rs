@@ -10,7 +10,7 @@ mod input;
 mod storer;
 
 pub use client::{IssuerClient, VerifierClient};
-pub use input::{IssuanceInput, PresentationInput};
+pub use input::PresentationInput;
 pub use openid4vc::issuance::TxCode;
 pub use provider::{Algorithm, Callback, Jwk, Payload, Result, Signer, StateManager, Verifier};
 pub use storer::CredentialStorer;

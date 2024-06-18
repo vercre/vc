@@ -6,6 +6,7 @@
 
 use std::fmt::Debug;
 
+use chrono::{DateTime, Utc};
 use core_utils::jws;
 use openid4vc::error::Err;
 use openid4vc::presentation::{RequestObject, RequestObjectResponse};
@@ -75,7 +76,6 @@ where
     async fn process(
         &self, provider: &Self::Provider, _req: &Self::Request,
     ) -> Result<Self::Response> {
-
         // Initiate a new presentation flow
         let mut presentation = Presentation {
             id: Uuid::new_v4().to_string(),
@@ -99,6 +99,11 @@ where
         presentation.filter.clone_from(&filter);
         let credentials = provider.find(Some(filter)).await?;
         presentation.credentials.clone_from(&credentials);
+
+        // Stash the presentation flow for subsequent steps
+        provider
+            .put(&presentation.id, serde_json::to_vec(&presentation)?, DateTime::<Utc>::MAX_UTC)
+            .await?;
 
         Ok(presentation)
     }
