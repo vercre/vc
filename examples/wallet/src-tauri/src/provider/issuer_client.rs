@@ -17,21 +17,6 @@ impl IssuerClient for Provider {
         let client = reqwest::Client::new();
         let url = format!("{}/.well-known/openid-credential-issuer", req.credential_issuer);
         let result = client.get(&url).header(ACCEPT, "application/json").send().await?;
-        // let body = match result.text().await {
-        //     Ok(b) => b,
-        //     Err(e) => {
-        //         log::error!("Error getting response body: {}", e);
-        //         return Err(e.into());
-        //     }
-        // };
-        // println!("body: {}", body);
-        // let md = match serde_json::from_str::<MetadataResponse>(&body) {
-        //     Ok(md) => md,
-        //     Err(e) => {
-        //         log::error!("Error parsing metadata: {}", e);
-        //         return Err(e.into());
-        //     }
-        // };
         let md = match result.json::<MetadataResponse>().await {
             Ok(md) => md,
             Err(e) => {

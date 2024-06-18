@@ -1,6 +1,6 @@
 //! # Issuance
 //!
-//! The Issuance endpoints implement the vercre-wallet's credential issuance flow.
+//! The Issuance endpoints implement the vercre-holder's credential issuance flow.
 
 mod accept;
 mod credential;

@@ -13,9 +13,10 @@ use openid4vc::{err, Result};
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::issuance::{Issuance, Status};
 use crate::provider::{Callback, IssuerClient, StateManager};
 use crate::Endpoint;
+
+use super::{Issuance, Status};
 
 /// `OfferRequest` is the request to the `offer` endpoint to initiate an issuance flow.
 #[derive(Clone, Debug, Default)]

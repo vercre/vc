@@ -1,6 +1,11 @@
 //! # Presentation
 //!
-//! The Presentation endpoint implements the vercre-wallet's credential presentation flow.
+//! The Presentation endpoints implement the vercre-holder's credential presentation flow.
+
+mod authorize;
+mod request;
+mod present;
+
 use std::fmt::Debug;
 
 use anyhow::anyhow;
