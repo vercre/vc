@@ -7,7 +7,8 @@ use openid4vc::issuance::{
 };
 use openid4vc::{Client, Server};
 use provider::{
-    Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Payload, ServerMetadata, Signer, StateManager, Subject
+    Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Payload, ServerMetadata, Signer,
+    StateManager, Subject,
 };
 use providers::issuance::{Provider as ExampleIssuanceProvider, CREDENTIAL_ISSUER};
 use providers::wallet::Provider as ExampleWalletProvider;

@@ -16,7 +16,7 @@ fn sample_offer_request() -> CreateOfferRequest {
         holder_id: Some(NORMAL_USER.into()),
         pre_authorize: true,
         tx_code_required: true,
-        callback_id: Some("1234".into())
+        callback_id: Some("1234".into()),
     }
 }
 
@@ -24,5 +24,8 @@ fn sample_offer_request() -> CreateOfferRequest {
 async fn e2e_test() {
     // Use the issuance service endpoint to create a sample offer so that we can get a valid
     // pre-auhorized code.
-    let _offer = vercre_issuer::Endpoint::new(PROVIDER.clone()).create_offer(&sample_offer_request()).await.expect("should get offer");
+    let _offer = vercre_issuer::Endpoint::new(PROVIDER.clone())
+        .create_offer(&sample_offer_request())
+        .await
+        .expect("should get offer");
 }

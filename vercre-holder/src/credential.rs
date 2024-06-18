@@ -1,5 +1,5 @@
 //! # Holder Agent (Wallet)
-//! 
+//!
 //! This module defines types and traits to enable wallets or other holder agents to interact with
 //! the `vercre-holder` endpoints.
 
@@ -22,10 +22,10 @@ pub struct Credential {
 
     /// The unpacked Verifiable Credential. Used to display VC details and for `JSONPath`
     /// Presentation Definition queries.
-   pub vc: VerifiableCredential,
+    pub vc: VerifiableCredential,
 
     /// `CredentialConfiguration` metadata
-   pub metadata: CredentialConfiguration,
+    pub metadata: CredentialConfiguration,
 
     /// The Verifiable Credential as issued, for use in Presentation Submissions.
     /// This could be a base64-encoded JWT or 'stringified' JSON.
