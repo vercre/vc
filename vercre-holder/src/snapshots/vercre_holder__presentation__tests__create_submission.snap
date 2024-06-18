@@ -1,6 +1,6 @@
 ---
 source: vercre-holder/src/presentation.rs
-assertion_line: 503
+assertion_line: 449
 expression: "&submission"
 ---
 id: "[id]"

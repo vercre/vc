@@ -17,8 +17,7 @@ use vercre_vc::proof::{self, Format, Payload};
 
 use crate::credential::Credential;
 use crate::provider::{
-    Callback, CredentialStorer, PresentationInput, PresentationListener, Signer, StateManager,
-    Verifier, VerifierClient,
+    Callback, CredentialStorer, PresentationInput, Signer, StateManager, Verifier, VerifierClient,
 };
 use crate::Endpoint;
 
@@ -103,7 +102,6 @@ where
     P: Callback
         + CredentialStorer
         + PresentationInput
-        + PresentationListener
         + VerifierClient
         + Signer
         + Verifier
@@ -132,7 +130,6 @@ where
     P: Callback
         + CredentialStorer
         + PresentationInput
-        + PresentationListener
         + VerifierClient
         + Signer
         + Verifier
@@ -160,78 +157,35 @@ where
             status: Status::Requested,
             ..Default::default()
         };
-        provider.notify(&presentation.id, Status::Requested);
 
         let request_object = if request.contains("&presentation_definition=") {
-            match parse_presentation_definition(&request) {
-                Ok(req_obj) => req_obj,
-                Err(e) => {
-                    provider.notify(&presentation.id, Status::Failed(e.to_string()));
-                    return Ok(());
-                }
-            }
+            parse_presentation_definition(&request)?
         } else {
-            match provider.get_request_object(&presentation.id, &request).await {
-                Ok(req_obj_res) => match parse_request_object_response(&req_obj_res, provider) {
-                    Ok(req_obj) => req_obj,
-                    Err(e) => {
-                        provider.notify(&presentation.id, Status::Failed(e.to_string()));
-                        return Ok(());
-                    }
-                },
-                Err(e) => {
-                    provider.notify(&presentation.id, Status::Failed(e.to_string()));
-                    return Ok(());
-                }
-            }
+            let req_obj_res = provider.get_request_object(&presentation.id, &request).await?;
+            parse_request_object_response(&req_obj_res, provider)?
         };
         presentation.request = request_object;
 
         // Get the credentials from wallet storage that match the verifier's request.
-        let filter = match build_filter(&presentation.request) {
-            Ok(filter) => filter,
-            Err(e) => {
-                provider.notify(&presentation.id, Status::Failed(e.to_string()));
-                return Ok(());
-            }
-        };
+        let filter = build_filter(&presentation.request)?;
         presentation.filter = filter.clone();
-        let credentials = match provider.find(Some(filter)).await {
-            Ok(creds) => creds,
-            Err(e) => {
-                provider.notify(&presentation.id, Status::Failed(e.to_string()));
-                return Ok(());
-            }
-        };
+        let credentials = provider.find(Some(filter)).await?;
         presentation.credentials.clone_from(&credentials);
 
         // Request authorization from the wallet client to proceed with the presentation.
         if !provider.authorize(&presentation.id, credentials).await {
             return Ok(());
         }
-        provider.notify(&presentation.id, Status::Authorized);
 
         // Construct a presentation submission.
-        let submission = match create_submission(&presentation) {
-            Ok(submission) => submission,
-            Err(e) => {
-                provider.notify(&presentation.id, Status::Failed(e.to_string()));
-                return Ok(());
-            }
-        };
+        let submission = create_submission(&presentation)?;
         presentation.submission = submission.clone();
 
         // create vp
         let kid = &provider.verification_method();
         let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
 
-        let vp = match create_vp(&presentation, holder_did) {
-            Ok(token) => token,
-            Err(e) => {
-                provider.notify(&presentation.id, Status::Failed(e.to_string()));
-                return Ok(());
-            }
-        };
+        let vp = create_vp(&presentation, holder_did)?;
 
         let payload = Payload::Vp {
             vp,
@@ -240,13 +194,7 @@ where
         };
         let jwt = proof::create(Format::JwtVcJson, payload, provider.clone()).await?;
 
-        let vp_token = match serde_json::to_value(&jwt) {
-            Ok(v) => v,
-            Err(e) => {
-                provider.notify(&presentation.id, Status::Failed(e.to_string()));
-                return Ok(());
-            }
-        };
+        let vp_token = serde_json::to_value(&jwt)?;
 
         // Assemble the presentation response to the verifier and ask the wallet client to send it.
         let res_req = ResponseRequest {
@@ -255,18 +203,12 @@ where
             state: presentation.request.state.clone(),
         };
         let Some(mut res_uri) = presentation.request.response_uri.clone() else {
-            provider.notify(&presentation.id, Status::Failed("no response uri".to_string()));
-            return Ok(());
+            err!(Err::InvalidRequest, "no response uri found");
         };
         res_uri = res_uri.trim_end_matches('/').to_string();
 
-        match provider.present(&presentation.id, &res_uri, &res_req).await {
-            Ok(()) => Ok(()),
-            Err(e) => {
-                provider.notify(&presentation.id, Status::Failed(e.to_string()));
-                Ok(())
-            }
-        }
+        provider.present(&presentation.id, &res_uri, &res_req).await?;
+        Ok(())
     }
 }
 
