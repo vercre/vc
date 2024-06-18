@@ -153,7 +153,7 @@ where
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(Err::InvalidProof(nonce, expires_in), "Proof not set");
             };
-            let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, provider) {
+            let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, provider).await {
                 Ok(jwt) => jwt,
                 Err(e) => {
                     let (nonce, expires_in) = self.err_nonce(provider).await?;

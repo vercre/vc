@@ -147,7 +147,7 @@ mod tests {
 
         let jwt_enc = response.jwt.expect("jwt exists");
         let jwt: jws::Jwt<RequestObject> =
-            jws::decode(&jwt_enc, &wallet::Provider::new()).expect("jwt is valid");
+            jws::decode(&jwt_enc, &wallet::Provider::new()).await.expect("jwt is valid");
 
         assert_snapshot!("response", jwt);
 

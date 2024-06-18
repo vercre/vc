@@ -7,7 +7,7 @@ use vercre_issuer::provider::{
     Verifier,
 };
 
-use crate::logic::proof::Enclave;
+use crate::logic::proof::{Enclave, Entity};
 
 pub const NORMAL_USER: &str = "normal_user";
 pub const PENDING_USER: &str = "pending_user";
@@ -96,12 +96,12 @@ impl Signer for Provider {
     }
 
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
-        Enclave::try_sign(msg)
+        Enclave::try_sign(&Entity::Issuer, msg)
     }
 }
 
 impl Verifier for Provider {
-    fn deref_jwk(&self, did_url: impl AsRef<str>) -> anyhow::Result<Jwk> {
+    async fn deref_jwk(&self, did_url: &str) -> Result<Jwk> {
         Enclave::deref_jwk(did_url)
     }
 }

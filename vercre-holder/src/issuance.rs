@@ -72,7 +72,6 @@ pub enum Status {
     Failed(String),
 }
 
-
 // /// Convert a `CredentialOffer` into a `MetadataRequest` and update flow state.
 // fn offer(issuance: &mut Issuance, req: &CredentialOffer) -> MetadataRequest {
 //     issuance.offer = req.clone();

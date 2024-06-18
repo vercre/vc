@@ -6,7 +6,7 @@ use vercre_verifier::provider::{
     Verifier,
 };
 
-use crate::logic::proof::Enclave;
+use crate::logic::proof::{Enclave, Entity};
 
 pub const VERIFIER: &str = "http://vercre.io";
 pub const VERIFY_KEY_ID: &str = "publicKeyModel1Id";
@@ -65,12 +65,12 @@ impl Signer for Provider {
     }
 
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
-        Enclave::try_sign(msg)
+        Enclave::try_sign(&Entity::Verifier, msg)
     }
 }
 
 impl Verifier for Provider {
-    fn deref_jwk(&self, did_url: impl AsRef<str>) -> anyhow::Result<Jwk> {
+    async fn deref_jwk(&self, did_url: &str) -> Result<Jwk> {
         Enclave::deref_jwk(did_url)
     }
 }

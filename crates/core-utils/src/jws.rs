@@ -106,9 +106,9 @@ where
 ///
 /// # Errors
 /// TODO: Add errors
-pub fn decode<T>(token: &str, verifier: &impl Verifier) -> anyhow::Result<Jwt<T>>
+pub async fn decode<T>(token: &str, verifier: &impl Verifier) -> anyhow::Result<Jwt<T>>
 where
-    T: DeserializeOwned,
+    T: DeserializeOwned + Send,
 {
     // TODO: cater for different key types
     let parts = token.split('.').collect::<Vec<&str>>();
@@ -134,7 +134,7 @@ where
     }
 
     // verify signature
-    let jwk = verifier.deref_jwk(header.kid.clone().unwrap_or_default())?;
+    let jwk = verifier.deref_jwk(&header.kid.clone().unwrap_or_default()).await?;
     verify(&jwk, &format!("{}.{}", parts[0], parts[1]), &sig)?;
 
     Ok(Jwt { header, claims })

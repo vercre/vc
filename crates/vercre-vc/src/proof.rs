@@ -141,11 +141,11 @@ pub async fn verify(
 ) -> anyhow::Result<Payload> {
     match payload {
         Verify::Vc => {
-            let jwt = jws::decode::<jose::VcClaims>(token, verifier)?;
+            let jwt = jws::decode::<jose::VcClaims>(token, verifier).await?;
             Ok(Payload::Vc(jwt.claims.vc))
         }
         Verify::Vp => {
-            let jwt = jws::decode::<jose::VpClaims>(token, verifier)?;
+            let jwt = jws::decode::<jose::VpClaims>(token, verifier).await?;
             Ok(Payload::Vp {
                 vp: jwt.claims.vp,
                 client_id: jwt.claims.aud,

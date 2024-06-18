@@ -162,7 +162,7 @@ where
             parse_presentation_definition(&request)?
         } else {
             let req_obj_res = provider.get_request_object(&presentation.id, &request).await?;
-            parse_request_object_response(&req_obj_res, provider)?
+            parse_request_object_response(&req_obj_res, provider).await?
         };
         presentation.request = request_object;
 
@@ -219,7 +219,7 @@ fn parse_presentation_definition(request: &str) -> Result<RequestObject> {
 }
 
 /// Extract a presentation `RequestObject` from a `RequestObjectResponse`.
-fn parse_request_object_response(
+async fn parse_request_object_response(
     res: &RequestObjectResponse, verifier: &impl Verifier,
 ) -> Result<RequestObject> {
     if res.request_object.is_some() {
@@ -229,7 +229,7 @@ fn parse_request_object_response(
     let Some(token) = &res.jwt else {
         err!(Err::InvalidRequest, "no serialized JWT found in response");
     };
-    let jwt = match jws::decode(token, verifier) {
+    let jwt = match jws::decode(token, verifier).await {
         Ok(jwt) => jwt,
         Err(e) => err!(Err::InvalidRequest, "failed to parse JWT: {e}"),
     };
@@ -405,6 +405,7 @@ mod tests {
             jwt: None,
         };
         let decoded = parse_request_object_response(&req_obj_res, &wallet::Provider::new())
+            .await
             .expect("should parse with object");
         assert_eq!(obj, decoded);
 
@@ -418,6 +419,7 @@ mod tests {
         };
 
         let decoded = parse_request_object_response(&req_obj_res, &wallet::Provider::new())
+            .await
             .expect("should parse with jwt");
         assert_eq!(obj, decoded);
     }

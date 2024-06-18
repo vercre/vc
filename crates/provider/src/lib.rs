@@ -15,7 +15,8 @@ pub use self::signature::{Algorithm, Jwk, Signer, Verifier};
 pub use self::subject::Claims;
 
 /// Result is used for all external errors.
-pub type Result<T> = anyhow::Result<T>;
+// pub type Result<T> = anyhow::Result<T>;
+pub type Result<T, E = anyhow::Error> = std::result::Result<T, E>;
 
 /// The `ClientMetadata` trait is used by implementers to provide `Client` metadata to the
 /// library.

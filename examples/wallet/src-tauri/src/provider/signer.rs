@@ -4,7 +4,7 @@
 use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ed25519_dalek::{Signature, Signer as _, SigningKey};
-use vercre_holder::provider::{Algorithm, Jwk, Signer, Verifier};
+use vercre_holder::provider::{Algorithm, Jwk, Result, Signer, Verifier};
 
 use super::Provider;
 
@@ -44,9 +44,8 @@ impl Signer for Provider {
 }
 
 impl Verifier for Provider {
-    fn deref_jwk(&self, did_url: impl AsRef<str>) -> anyhow::Result<Jwk> {
-        let did =
-            did_url.as_ref().split('#').next().ok_or_else(|| anyhow!("Unable to parse DID"))?;
+    async fn deref_jwk(&self, did_url: &str) -> Result<Jwk> {
+        let did = did_url.split('#').next().ok_or_else(|| anyhow!("Unable to parse DID"))?;
 
         // if have long-form DID then try to extract key from metadata
         let did_parts = did.split(':').collect::<Vec<&str>>();

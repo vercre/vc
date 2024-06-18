@@ -35,7 +35,7 @@ pub trait Verifier: Send + Sync {
     /// # Errors
     ///
     /// Returns an error if the DID URL cannot be dereferenced to a JWK
-    fn deref_jwk(&self, did_url: impl AsRef<str>) -> anyhow::Result<Jwk>;
+    fn deref_jwk(&self, did_url: &str) -> impl Future<Output = anyhow::Result<Jwk>> + Send;
 }
 
 /// Algorithm is used to specify the signing algorithm used by the signer.
