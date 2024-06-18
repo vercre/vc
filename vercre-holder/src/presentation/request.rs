@@ -1,6 +1,6 @@
 //! # Presentation Request Endpoint
 //!
-//! The request endpoint can take a request for presentation in the form of a URI to go get the
+//! The `request` endpoint can take a request for presentation in the form of a URI to go get the
 //! request details or all of the details as a `PresentationRequest` struct serialized to a URL
 //! query parameter.
 
@@ -15,9 +15,10 @@ use tracing::instrument;
 use uuid::Uuid;
 use vercre_exch::Constraints;
 
-use super::{Presentation, Status};
 use crate::provider::{Callback, CredentialStorer, StateManager, Verifier, VerifierClient};
 use crate::Endpoint;
+
+use super::{Presentation, Status};
 
 impl<P> Endpoint<P>
 where
