@@ -20,7 +20,6 @@ fn sample_offer_request() -> CreateOfferRequest {
         pre_authorize: true,
         tx_code_required: true,
         callback_id: Some("1234".into()),
-        callback_id: Some("1234".into()),
     }
 }
 
