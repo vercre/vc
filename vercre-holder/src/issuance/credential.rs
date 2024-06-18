@@ -12,6 +12,7 @@ use openid4vc::issuance::{
 };
 use openid4vc::{err, Result};
 use tracing::instrument;
+use vercre_vc::model::StrObj;
 use vercre_vc::proof::{self, Payload, Verify};
 
 use super::{Issuance, Status};
@@ -181,9 +182,14 @@ async fn credential(
         err!(Err::InvalidRequest, "could not parse credential");
     };
 
+    let issuer_id = match &vc.issuer {
+        StrObj::String(id) => id,
+        StrObj::Object(issuer) => &issuer.id,
+    };
+
     Ok(Credential {
         id: vc.id.clone(),
-        issuer: vc.issuer.id.clone(),
+        issuer: issuer_id.clone(),
         metadata: credential_configuration.clone(),
         vc,
         issued: token.into(),

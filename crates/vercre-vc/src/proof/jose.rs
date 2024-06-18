@@ -39,8 +39,7 @@ use std::str;
 use chrono::{TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::model::vc::VerifiableCredential;
-use crate::model::vp::VerifiablePresentation;
+use crate::model::{OneSet, StrObj, VerifiableCredential, VerifiablePresentation};
 
 /// Claims used for Verifiable Credential issuance when format is "`jwt_vc_json`".
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -77,11 +76,21 @@ pub struct VcClaims {
 
 impl From<VerifiableCredential> for VcClaims {
     fn from(vc: VerifiableCredential) -> Self {
+        let subject = match &vc.credential_subject {
+            OneSet::One(sub) => sub,
+            OneSet::Set(subs) => &subs[0],
+        };
+
+        let issuer_id = match &vc.issuer {
+            StrObj::String(id) => id,
+            StrObj::Object(issuer) => &issuer.id,
+        };
+
         Self {
             // TODO: find better way to set sub (shouldn't need to be in vc)
-            sub: vc.credential_subject[0].id.clone().unwrap_or_default(),
+            sub: subject.id.clone().unwrap_or_default(),
             nbf: vc.issuance_date.timestamp(),
-            iss: vc.issuer.id.clone(),
+            iss: issuer_id.clone(),
             iat: vc.issuance_date.timestamp(),
             jti: vc.id.clone(),
             exp: vc.expiration_date.map(|exp| exp.timestamp()),

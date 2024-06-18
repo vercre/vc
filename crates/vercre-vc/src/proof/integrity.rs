@@ -48,7 +48,7 @@ use std::str::FromStr;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::model::serde::option_flexvec;
+use crate::model::OneSet;
 pub use crate::proof::Algorithm;
 
 /// To be verifiable, a credential must contain at least one proof mechanism,
@@ -58,7 +58,7 @@ pub use crate::proof::Algorithm;
 /// Enveloping proofs are implemented using JOSE and COSE, while embedded proofs
 /// are implemented using the `Proof` object described here.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(default)]
+#[serde(rename_all = "camelCase", default)]
 pub struct Proof {
     /// An optional identifier for the proof. MUST be a URL, such as a UUID as a
     /// URN e.g. "`urn:uuid:6a1676b8-b51f-11ed-937b-d76685a20ff5`".
@@ -84,13 +84,11 @@ pub struct Proof {
 
     /// The reason for the proof. MUST map to a URL. The proof purpose acts as a
     /// safeguard to prevent the proof from being misused.
-    #[serde(rename = "proofPurpose")]
     pub proof_purpose: String,
 
     /// Used to verify the proof. MUST map to a URL. For example, a link to a
     /// public key that is used by a verifier during the verification
     /// process. e.g did:example:123456789abcdefghi#keys-1.
-    #[serde(rename = "verificationMethod")]
     pub verification_method: String,
 
     /// The date-time the proof was created. MUST be an XMLSCHEMA11-2 date-time.
@@ -105,8 +103,7 @@ pub struct Proof {
     /// MUST be either a string, or a set of strings. SHOULD be used by the
     /// verifier to ensure the proof is used in the correct security domain.
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "option_flexvec")]
-    pub domain: Option<Vec<String>>,
+    pub domain: Option<OneSet<String>>,
 
     /// Used to mitigate replay attacks. SHOULD be included if a domain is
     /// specified.
@@ -116,15 +113,12 @@ pub struct Proof {
     /// Contains the data needed to verify the proof using the
     /// verificationMethod specified. MUST be a MULTIBASE-encoded binary
     /// value.
-    #[serde(rename = "proofValue")]
     pub proof_value: String,
 
     /// Each value identifies another data integrity proof that MUST verify
     /// before the current proof is processed.
-    #[serde(rename = "previousProof")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "option_flexvec")]
-    pub previous_proof: Option<Vec<String>>,
+    pub previous_proof: Option<OneSet<String>>,
 
     /// Supplied by the proof creator. Can be used to increase privacy by
     /// decreasing linkability that results from deterministically generated
