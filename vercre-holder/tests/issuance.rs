@@ -6,7 +6,7 @@ use insta::assert_yaml_snapshot as assert_snapshot;
 use providers::issuance::{CREDENTIAL_ISSUER, NORMAL_USER};
 use providers::wallet::CLIENT_ID;
 use test_provider::TestProvider;
-use vercre_holder::issuance::OfferRequest;
+use vercre_holder::issuance::{OfferRequest, PinRequest, Status};
 use vercre_holder::Endpoint;
 use vercre_issuer::create_offer::CreateOfferRequest;
 
@@ -39,7 +39,7 @@ async fn e2e_test() {
     };
     let issuance =
         Endpoint::new(PROVIDER.clone()).offer(&offer_req).await.expect("should process offer");
-    assert_snapshot!("issuance", issuance, {
+    assert_snapshot!("issuance_created", issuance, {
         ".id" => "[id]",
         ".offer" => insta::sorted_redaction(),
         ".offer.grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
@@ -47,4 +47,34 @@ async fn e2e_test() {
     });
 
     // Accept offer
+    let issuance = Endpoint::new(PROVIDER.clone())
+        .accept(issuance.id.clone())
+        .await
+        .expect("should accept offer");
+    assert_eq!(issuance.status, Status::PendingPin);
+    assert_snapshot!("issuance_accepted", issuance, {
+        ".id" => "[id]",
+        ".offer" => insta::sorted_redaction(),
+        ".offer.grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
+        ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
+    });
+
+    // Enter PIN
+    let pin_req = PinRequest {
+        id: issuance.id.clone(),
+        pin: offer.user_code.expect("should have user code"),
+    };
+    let issuance = Endpoint::new(PROVIDER.clone())
+        .pin(&pin_req)
+        .await
+        .expect("should apply pin");
+    assert_eq!(issuance.status, Status::Accepted);
+    assert_eq!(issuance.pin, Some(pin_req.pin.clone()));
+    assert_snapshot!("issuance_pin", issuance, {
+        ".id" => "[id]",
+        ".offer" => insta::sorted_redaction(),
+        ".offer.grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
+        ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
+        ".pin" => "[pin]",
+    });
 }
