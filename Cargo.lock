@@ -5835,6 +5835,7 @@ dependencies = [
  "futures",
  "http 1.1.0",
  "log",
+ "providers",
  "reqwest 0.12.5",
  "rust-argon2",
  "serde",
