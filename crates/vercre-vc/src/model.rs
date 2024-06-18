@@ -37,7 +37,7 @@ pub enum Context {
     Object(Value),
 }
 
-/// OneSet allows serde to serialize/deserialize a single object or a set of objects.
+/// `OneSet` allows serde to serialize/deserialize a single object or a set of objects.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum OneSet<T> {
@@ -50,11 +50,11 @@ pub enum OneSet<T> {
 
 impl<T: Default> Default for OneSet<T> {
     fn default() -> Self {
-        OneSet::One(T::default())
+        Self::One(T::default())
     }
 }
 
-/// OneSet allows serde to serialize/deserialize a single object or a set of objects.
+/// `StrObj` allows serde to serialize/deserialize a string or an object.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum StrObj<T> {
@@ -67,6 +67,6 @@ pub enum StrObj<T> {
 
 impl<T: Default> Default for StrObj<T> {
     fn default() -> Self {
-        StrObj::String("".into())
+        Self::String(String::new())
     }
 }

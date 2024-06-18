@@ -15,10 +15,9 @@ use vercre_exch::{DescriptorMap, PathNested, PresentationSubmission};
 use vercre_vc::model::vp::VerifiablePresentation;
 use vercre_vc::proof::{self, Format, Payload};
 
+use super::{Presentation, Status};
 use crate::provider::{Callback, Signer, StateManager, Verifier, VerifierClient};
 use crate::Endpoint;
-
-use super::{Presentation, Status};
 
 impl<P> Endpoint<P>
 where
@@ -36,7 +35,6 @@ where
         core_utils::Endpoint::handle_request(self, request, ctx).await
     }
 }
-
 
 #[derive(Debug, Default)]
 struct Context<P> {
@@ -143,7 +141,9 @@ fn create_vp(
 ) -> anyhow::Result<VerifiablePresentation> {
     // presentation with 2 VCs: one as JSON, one as base64url encoded JWT
     let mut builder = VerifiablePresentation::builder()
-        .add_context(String::from("https://www.w3.org/2018/credentials/examples/v1"))
+        .add_context(vercre_vc::model::Context::Url(
+            "https://www.w3.org/2018/credentials/examples/v1".into(),
+        ))
         .add_type(String::from("EmployeeIDPresentation"))
         .holder(holder_did);
 

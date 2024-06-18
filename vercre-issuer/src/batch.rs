@@ -318,7 +318,7 @@ where
         let vc_id = format!("{credential_issuer}/credentials/{}", types[1].clone());
 
         let vc = VerifiableCredential::builder()
-            .add_context(model::Context::Url(credential_issuer.clone() + "/credentials/v1".into()))
+            .add_context(model::Context::Url(credential_issuer.clone() + "/credentials/v1"))
             // TODO: generate credential id
             .id(vc_id)
             .add_type(types[1].clone())
