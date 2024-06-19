@@ -11,7 +11,7 @@ use openid4vc::presentation::{ResponseRequest, ResponseResponse};
 use openid4vc::{err, Result};
 use tracing::instrument;
 use uuid::Uuid;
-use vercre_exch::{DescriptorMap, PathNested, PresentationSubmission};
+use vercre_exch::{DescriptorMap, FilterValue, PathNested, PresentationSubmission};
 use vercre_vc::model::vp::VerifiablePresentation;
 use vercre_vc::proof::{self, Format, Payload};
 
@@ -144,10 +144,22 @@ fn create_vp(
         .add_context(vercre_vc::model::Context::Url(
             "https://www.w3.org/2018/credentials/examples/v1".into(),
         ))
-        // URGENT: where should this hardcoded type come from?
-        .add_type(String::from("EmployeeIDPresentation"))
         .holder(holder_did);
 
+    if let Some(pd) = &presentation.request.presentation_definition {
+        for input in &pd.input_descriptors {
+            if let Some(fields) = &input.constraints.fields {
+                for field in fields {
+                    if let Some(filter) = &field.filter {
+                        if let FilterValue::Const(val) = &filter.value {
+                            builder = builder.add_type(val.clone());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     for c in &presentation.credentials {
         let val = serde_json::to_value(&c.issued)?;
         builder = builder.add_credential(val);

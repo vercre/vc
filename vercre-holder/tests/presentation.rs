@@ -92,6 +92,12 @@ async fn e2e_presentation() {
         ".request.presentation_definition" => "[presentation_definition]",
         ".credentials[0].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
     });
+    // Because of the presentation definition ID being unique per call, we redact it in the snapshot
+    // above, so do a check of a couple of key fields just to make sure we have data we know will
+    // be helpful further in the process.
+    let pd = presentation.request.presentation_definition.clone().expect("should have pd");
+    assert_eq!(pd.input_descriptors.len(), 1);
+    assert_eq!(pd.input_descriptors[0].id, "EmployeeID_JWT");
 
     // Authorize the presentation
     let presentation = Endpoint::new(PROVIDER.clone())
