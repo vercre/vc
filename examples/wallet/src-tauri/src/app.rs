@@ -5,6 +5,7 @@
 
 mod credential;
 mod issuance;
+mod presentation;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;

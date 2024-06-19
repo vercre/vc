@@ -12,7 +12,6 @@ use vercre_vc::model::VerifiableCredential;
 
 /// The Credential model contains information about a credential owned by the
 /// Wallet.
-// TODO: Move this type to `provider` crate (see problem with vc field below)
 #[derive(Clone, Default, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Credential {
     /// Credential `id` is the credential's unique identifier
@@ -24,8 +23,8 @@ pub struct Credential {
 
     /// The unpacked Verifiable Credential. Used to display VC details and for `JSONPath`
     /// Presentation Definition queries.
-    // TODO: Make this a Value or a serialised VC or a stripped-down struct that helps with
-    // display and filtering.
+    // TODO: Simplify. Make this a Value or a serialised VC or a stripped-down struct that helps
+    // with display and filtering.
     pub vc: VerifiableCredential,
 
     /// `CredentialConfiguration` metadata

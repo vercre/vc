@@ -8,6 +8,7 @@ use vercre_holder::provider::{Algorithm, Callback, Jwk, Payload, Signer, Verifie
 pub mod issuer_client;
 pub mod state;
 pub mod store;
+pub mod verifier_client;
 
 #[derive(Clone, Debug)]
 #[allow(clippy::struct_field_names)]
