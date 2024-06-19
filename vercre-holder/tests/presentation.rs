@@ -7,7 +7,7 @@ use openid4vc::presentation::{CreateRequestRequest, DeviceFlow};
 use providers::presentation::VERIFIER;
 use test_provider::TestProvider;
 use vercre_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
-use vercre_holder::Endpoint;
+use vercre_holder::{presentation::Status, Endpoint};
 
 static PROVIDER: LazyLock<TestProvider> = LazyLock::new(|| TestProvider::new());
 
@@ -119,7 +119,22 @@ async fn e2e_presentation() {
     let url = init_request.request_uri.expect("should have request uri");
     let presentation =
         Endpoint::new(PROVIDER.clone()).request(&url).await.expect("should process request");
+    assert_eq!(presentation.status, Status::Requested);
     assert_snapshot!("presentation_requested", presentation, {
+        ".id" => "[id]",
+        ".request" => insta::sorted_redaction(),
+        ".request.nonce" => "[nonce]",
+        ".request.state" => "[state]",
+        ".request.presentation_definition" => "[presentation_definition]",
+    });
+
+    // Authorize the presentation
+    let presentation = Endpoint::new(PROVIDER.clone())
+        .authorize(presentation.id.clone())
+        .await
+        .expect("should authorize presentation");
+    assert_eq!(presentation.status, Status::Authorized);
+    assert_snapshot!("presentation_authorized", presentation, {
         ".id" => "[id]",
         ".request" => insta::sorted_redaction(),
         ".request.nonce" => "[nonce]",
