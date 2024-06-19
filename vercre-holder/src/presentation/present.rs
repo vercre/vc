@@ -7,7 +7,7 @@ use std::fmt::Debug;
 
 use anyhow::anyhow;
 use openid4vc::error::Err;
-use openid4vc::presentation::ResponseRequest;
+use openid4vc::presentation::{ResponseRequest, ResponseResponse};
 use openid4vc::{err, Result};
 use tracing::instrument;
 use uuid::Uuid;
@@ -27,7 +27,7 @@ where
     /// parameter is the presentation flow ID of an authorized presentation request created in
     /// prior steps.
     #[instrument(level = "debug", skip(self))]
-    pub async fn present(&self, request: &String) -> Result<()> {
+    pub async fn present(&self, request: &String) -> Result<ResponseResponse> {
         let ctx = Context {
             presentation: Presentation::default(),
             _p: std::marker::PhantomData,
@@ -48,7 +48,7 @@ where
 {
     type Provider = P;
     type Request = String;
-    type Response = ();
+    type Response = ResponseResponse;
 
     async fn verify(&mut self, provider: &Self::Provider, req: &Self::Request) -> Result<&Self> {
         tracing::debug!("Context::verify");
@@ -100,9 +100,9 @@ where
         };
         res_uri = res_uri.trim_end_matches('/').to_string();
 
-        provider.present(&self.presentation.id, &res_uri, &res_req).await?;
+        let response = provider.present(&self.presentation.id, &res_uri, &res_req).await?;
 
-        Ok(())
+        Ok(response)
     }
 }
 

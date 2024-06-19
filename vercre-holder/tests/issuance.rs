@@ -25,8 +25,8 @@ fn sample_offer_request() -> CreateOfferRequest {
 }
 
 #[tokio::test]
-async fn e2e_test() {
-    // Use the issuance service endpoint to create a sample offer so that we can get a valid
+async fn e2e_issuance() {
+    // Use the issuance service endpoint to create a sample offer so we can get a valid
     // pre-auhorized code.
     let offer = vercre_issuer::Endpoint::new(PROVIDER.clone())
         .create_offer(&sample_offer_request())

@@ -40,3 +40,4 @@ insta.workspace = true
 providers.workspace = true
 tokio.workspace = true
 vercre-issuer.workspace = true
+vercre-verifier.workspace = true

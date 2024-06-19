@@ -8,7 +8,7 @@ use openid4vc::issuance::{
     CredentialRequest, CredentialResponse, MetadataRequest, MetadataResponse, TokenRequest,
     TokenResponse,
 };
-use openid4vc::presentation::{RequestObjectResponse, ResponseRequest};
+use openid4vc::presentation::{RequestObjectResponse, ResponseRequest, ResponseResponse};
 
 use crate::credential::Logo;
 use crate::provider::Result;
@@ -51,5 +51,5 @@ pub trait VerifierClient {
     /// Send the presentation to the verifier.
     fn present(
         &self, flow_id: &str, uri: &str, presentation: &ResponseRequest,
-    ) -> impl Future<Output = Result<()>> + Send;
+    ) -> impl Future<Output = Result<ResponseResponse>> + Send;
 }
