@@ -11,81 +11,151 @@ pub struct DidDocument {
     #[serde(rename = "@context")]
     pub context: Vec<Context>,
 
-    /// The DID URI for the document
+    /// The DID for a particular DID subject.
+    ///
+    /// The subject is defined as the entity identified by the DID and described by the
+    /// DID document. Anything can be a DID subject: person, group, organization,
+    /// physical thing, digital thing, logical thing, etc.
     pub id: String,
 
-    /// A set of URI other identifiers for the subject of the DID.
+    /// A set of URIs taht are other identifiers for the subject of the above DID.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub also_known_as: Option<Vec<String>>,
 
-    /// a string or a set of strings that conform to the rules in 3.1 DID Syntax. The corresponding DID document(s) SHOULD contain verification relationships that explicitly permit the use of certain verification methods for specific purposes.
-    // When a controller property is present in a DID document, its value expresses one or more DIDs. Any verification methods contained in the DID documents for those DIDs SHOULD be accepted as authoritative, such that proofs that satisfy those verification methods are to be considered equivalent to proofs provided by the DID subject.
+    /// One or more strings that conform to the rules DID Syntax. The corresponding
+    /// DID document(s) SHOULD contain verification relationships that explicitly
+    /// permit the use of certain verification methods for specific purposes.
+    ///
+    /// Any verification methods contained in the related DID documents
+    /// SHOULD be accepted as authoritative, such that proofs that satisfy those
+    /// verification methods are to be considered equivalent to proofs provided by the
+    /// DID subject.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub controller: Option<Controller<String>>,
+    pub controller: Option<OneSet<String>>,
 
-    // #[serde(with = "str_obj")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub service: Option<Vec<Service>>,
-
-    /// A set of objects containing claims about credential subjects(s).
+    /// If set, MUST be a set of verification methods for the DID subject.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub verification_method: Option<Vec<VerificationMethod>>,
 
-    // #[serde(with = "str_obj")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub authentication: Option<Vec<Method>>,
+    /// -----------------------------------------------------------------------
+    /// Verification Relationships
+    ///
+    /// A verification relationship expresses the relationship between the DID subject
+    /// and a verification method.
+    /// -----------------------------------------------------------------------
 
-    // #[serde(with = "str_obj")]
+    /// The `authentication` verification relationship is used to specify how the DID
+    /// subject is expected to be authenticated, for purposes such as logging into
+    /// a website or engaging in any sort of challenge-response protocol.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub assertion_method: Option<Vec<Method>>,
+    pub authentication: Option<Vec<StrMap<VerificationMethod>>>,
 
-    // #[serde(with = "str_obj")]
+    /// The `assertion_method` verification relationship is used to specify how the DID
+    /// subject is expected to express claims, such as for the purposes of issuing a
+    /// Verifiable Credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub capability_delegation: Option<Vec<Method>>,
+    pub assertion_method: Option<Vec<StrMap<VerificationMethod>>>,
 
-    // #[serde(with = "str_obj")]
+    /// The `key_agreement` verification relationship is used to specify how an entity
+    /// can generate encryption material in order to transmit confidential information
+    /// intended for the DID subject, such as for the purposes of establishing a secure
+    /// communication channel with the recipient.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub capability_invocation: Option<Vec<Method>>,
+    pub key_agreement: Option<Vec<StrMap<VerificationMethod>>>,
 
-    // #[serde(with = "str_obj")]
+    /// The `capability_invocation` verification relationship is used to specify a
+    /// verification method that might be used by the DID subject to invoke a
+    /// cryptographic capability, such as the authorization to update the DID Document.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub key_agreement: Option<Vec<Method>>,
+    pub capability_invocation: Option<Vec<StrMap<VerificationMethod>>>,
+
+    /// The `capability_delegation` verification relationship is used to specify a
+    /// mechanism that might be used by the DID subject to delegate a cryptographic
+    /// capability to another party, such as delegating the authority to access a
+    /// specific HTTP API to a subordinate.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub capability_delegation: Option<Vec<StrMap<VerificationMethod>>>,
+
+    /// A set of services, that express ways of communicating with the DID subject
+    /// or related entities.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub service: Option<Vec<Service>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub did_document_metadata: Option<DidDocumentMetadata>,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct Service {
-    pub id: String,
-
-    #[serde(rename = "type")]
-    pub type_: String,
-
-    pub service_endpoint: ServiceEndpoint,
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct ServiceEndpoint {
-    pub origins: Vec<String>,
-}
-
+/// A DID document can express verification methods, such as cryptographic public keys,
+/// which can be used to authenticate or authorize interactions with the DID subject or
+/// associated parties. For example, a cryptographic public key can be used as a
+/// verification method with respect to a digital signature; in such usage, it verifies
+/// that the signer could use the associated cryptographic private key. Verification
+/// methods might take many parameters. An example of this is a set of five
+/// cryptographic keys from which any three are required to contribute to a
+/// cryptographic threshold signature.
+///
+/// MAY include additional properties which can be determined from the verification
+/// method as registered in the
+/// [DID Specification Registries](https://www.w3.org/TR/did-spec-registries/).
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct VerificationMethod {
+    /// Only used when the verification method uses terms not defined in the containing
+    /// document.
+    #[serde(rename = "@context")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub context: Option<Context>,
+
+    /// A DID that identifies the verification method.
     pub id: String,
 
+    /// Type references a verification method type.
+    ///
+    /// The verification method type SHOULD be registered in the DID Specification
+    /// Registries
     #[serde(rename = "type")]
     pub type_: String,
 
+    /// The DID of the controller of the verification method.
     pub controller: String,
 
+    /// The public key material for the verification method. MUST NOT be set if the
+    /// `public_key_jwk` property is set.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub public_key_multibase: Option<String>,
 
+    /// The public key material for the verification method. MUST NOT be set if the
+    /// `public_key_multibase` property is set.
+    ///
+    /// It is RECOMMENDED that verification methods that use JWKs use the `kid` value
+    /// as the fragment identifier.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub public_key_jwk: Option<PublicKeyJwk>,
+}
+
+/// Services are used to express ways of communicating with the DID subject or
+/// associated entities. They can be any type of service the DID subject wants
+/// to advertise, including decentralized identity management services for further
+/// discovery, authentication, authorization, or interaction.
+///
+/// Service information is often service specific. For example, a reference to an
+/// encrypted messaging service can detail how to initiate the encrypted link before
+/// messaging begins.
+///
+/// Due to privacy concerns, revealing public information through services, such as
+/// social media accounts, personal websites, and email addresses, is discouraged.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct Service {
+    /// A URI unique to the service.
+    pub id: String,
+
+    /// The service type. SHOULD be registered in the DID Specification Registries.
+    #[serde(rename = "type")]
+    pub type_: String,
+
+    /// One or more endpoints for the service.
+    pub service_endpoint: OneSet<StrMap<Value>>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
@@ -113,32 +183,58 @@ pub struct MethodMetadata {
     pub update_commitment: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum Method {
-    String(String),
-    Map(VerificationMethod),
-}
+// ----------------------------------------------------------------------------
+// TODO: move deserialize/serialize enums to shared location
+// ----------------------------------------------------------------------------
 
+/// Wrap the @context property to support serialization/deserialization of an ordered
+/// set composed of any combination of URLs and/or objects, each processable as a
+/// [JSON-LD Context](https://www.w3.org/TR/json-ld11/#the-context).
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Context {
+    /// A single JSON-LD term.
     String(String),
+    /// A map of JSON-LD terms.
     Map(Value),
 }
 
+/// `OneSet` allows serde to serialize/deserialize a single object or a set of objects.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
-// #[serde(try_from = "String")]
-// #[serde(into = "String")]
-pub enum Controller<T> {
+pub enum OneSet<T> {
+    /// Single object
     One(T),
+
+    /// Set of objects
     Set(Vec<T>),
+}
+
+impl<T: Default> Default for OneSet<T> {
+    fn default() -> Self {
+        Self::One(T::default())
+    }
+}
+
+/// `StrMap` allows serde to serialize/deserialize a string or an object.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum StrMap<T> {
+    /// Field is a string
+    String(String),
+
+    /// Field is an object
+    Map(T),
+}
+
+impl<T: Default> Default for StrMap<T> {
+    fn default() -> Self {
+        Self::String(String::new())
+    }
 }
 
 #[cfg(test)]
 mod test {
-
     use std::sync::LazyLock;
 
     use serde_json::{json, Value};

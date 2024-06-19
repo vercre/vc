@@ -2,7 +2,7 @@
 //!
 //! https://w3c-ccg.github.io/did-method-key/#create
 
-use crate::document::{Context, DidDocument, Method, VerificationMethod};
+use crate::document::{Context, DidDocument, StrMap, VerificationMethod};
 use crate::{DidResolution, DidResolutionMetadata, DidResolver, ResolutionOptions};
 
 pub struct DidJwk;
@@ -20,8 +20,8 @@ impl DidResolver for DidJwk {
                 public_key_multibase: Some(did.to_string()),
                 ..VerificationMethod::default()
             }]),
-            authentication: Some(vec![Method::String(did.to_string())]),
-            assertion_method: Some(vec![Method::String(did.to_string())]),
+            authentication: Some(vec![StrMap::String(did.to_string())]),
+            assertion_method: Some(vec![StrMap::String(did.to_string())]),
 
             ..DidDocument::default()
         };
