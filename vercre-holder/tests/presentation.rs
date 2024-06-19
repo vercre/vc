@@ -2,12 +2,12 @@ mod test_provider;
 
 use std::sync::LazyLock;
 
+use insta::assert_yaml_snapshot as assert_snapshot;
 use openid4vc::presentation::{CreateRequestRequest, DeviceFlow};
 use providers::presentation::VERIFIER;
 use test_provider::TestProvider;
-use vercre_exch::{
-    Constraints, Field, Filter, FilterValue, InputDescriptor,
-};
+use vercre_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
+use vercre_holder::Endpoint;
 
 static PROVIDER: LazyLock<TestProvider> = LazyLock::new(|| TestProvider::new());
 
@@ -111,4 +111,19 @@ async fn e2e_presentation() {
         .await
         .expect("should get request");
     println!("{:#?}", init_request);
+
+    // TODO: Test initiating a presentation flow using a full request object
+    //let req_obj = init_request.request_object.expect("should have request object");
+
+    // Intiate the presentation flow using a url
+    let url = init_request.request_uri.expect("should have request uri");
+    let presentation =
+        Endpoint::new(PROVIDER.clone()).request(&url).await.expect("should process request");
+    assert_snapshot!("presentation_requested", presentation, {
+        ".id" => "[id]",
+        ".request" => insta::sorted_redaction(),
+        ".request.nonce" => "[nonce]",
+        ".request.state" => "[state]",
+        ".request.presentation_definition" => "[presentation_definition]",
+    });
 }

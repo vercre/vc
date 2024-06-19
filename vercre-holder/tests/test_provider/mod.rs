@@ -80,8 +80,8 @@ impl VerifierClient for TestProvider {
             return Err(anyhow::anyhow!("invalid request string"));
         }
         let request = RequestObjectRequest {
-            client_id: parts[0].into(),
-            state: parts[2].into(),
+            client_id: parts[2].into(),
+            state: parts[0].into(),
         };
         let endpoint = vercre_verifier::Endpoint::new(self.issuance_provider.clone());
         let response = endpoint.request_object(&request).await?;
