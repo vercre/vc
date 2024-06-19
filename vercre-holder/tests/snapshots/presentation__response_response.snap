@@ -1,0 +1,7 @@
+---
+source: vercre-holder/tests/presentation.rs
+assertion_line: 116
+expression: response
+---
+redirect_uri: "http://localhost:3000/cb"
+response_code: ~

@@ -122,7 +122,7 @@ where
                 }
                 Value::String(token) => {
                     let Ok(Payload::Vp { vp, nonce, .. }) =
-                        proof::verify(&token, Verify::Vc, provider).await
+                        proof::verify(&token, Verify::Vp, provider).await
                     else {
                         err!(Err::InvalidRequest, "invalid vp_token format");
                     };

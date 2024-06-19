@@ -144,6 +144,7 @@ fn create_vp(
         .add_context(vercre_vc::model::Context::Url(
             "https://www.w3.org/2018/credentials/examples/v1".into(),
         ))
+        // URGENT: where should this hardcoded type come from?
         .add_type(String::from("EmployeeIDPresentation"))
         .holder(holder_did);
 
@@ -151,6 +152,5 @@ fn create_vp(
         let val = serde_json::to_value(&c.issued)?;
         builder = builder.add_credential(val);
     }
-
     builder.build()
 }

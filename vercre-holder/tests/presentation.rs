@@ -3,11 +3,17 @@ mod test_provider;
 use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
+use openid4vc::issuance::CredentialConfiguration;
 use openid4vc::presentation::{CreateRequestRequest, DeviceFlow};
 use providers::presentation::VERIFIER;
 use test_provider::TestProvider;
 use vercre_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
-use vercre_holder::{presentation::Status, Endpoint};
+use vercre_holder::callback::CredentialStorer;
+use vercre_holder::credential::Credential;
+use vercre_holder::presentation::Status;
+use vercre_holder::Endpoint;
+use vercre_vc::model::VerifiableCredential;
+use vercre_vc::proof::{self, Format, Payload};
 
 static PROVIDER: LazyLock<TestProvider> = LazyLock::new(|| TestProvider::new());
 
@@ -20,7 +26,7 @@ fn sample_create_request() -> CreateRequestRequest {
             id: "EmployeeID_JWT".into(),
             constraints: Constraints {
                 fields: Some(vec![Field {
-                    path: vec!["$.type_".into()],
+                    path: vec!["$.type".into()],
                     filter: Some(Filter {
                         type_: "string".into(),
                         value: FilterValue::Const("EmployeeIDCredential".into()),
@@ -37,73 +43,31 @@ fn sample_create_request() -> CreateRequestRequest {
     }
 }
 
-// fn sample_request() -> RequestObject {
-//     let state_key = "ABCDEF123456";
-//     let nonce = "1234567890";
-//     let fmt = ClaimFormat {
-//         alg: Some(vec![Algorithm::EdDSA.to_string()]),
-//         proof_type: None,
-//     };
+async fn sample_credential() -> Credential {
+    let vc = VerifiableCredential::sample();
 
-//     RequestObject {
-//         response_type: "vp_token".into(),
-//         client_id: "https://vercre.io/post".into(),
-//         state: Some(state_key.into()),
-//         nonce: nonce.into(),
-//         response_mode: Some("direct_post".into()),
-//         response_uri: Some("https://vercre.io/post".into()),
-//         presentation_definition: Some(PresentationDefinition {
-//             id: "cd4cf88c-adc9-48b9-91cf-12d8643bff73".into(),
-//             purpose: Some("To verify employment status".into()),
-//             format: Some(HashMap::from([("jwt_vc".into(), fmt)])),
-//             name: None,
-//             input_descriptors: vec![InputDescriptor {
-//                 id: "EmployeeID_JWT".into(),
-//                 constraints: Constraints {
-//                     fields: Some(vec![Field {
-//                         path: vec!["$.type_".into()],
-//                         filter: Some(Filter {
-//                             type_: "string".into(),
-//                             value: FilterValue::Const("EmployeeIDCredential".into()),
-//                         }),
-//                         ..Default::default()
-//                     }]),
-//                     limit_disclosure: None,
-//                 },
-//                 name: None,
-//                 purpose: None,
-//                 format: None,
-//             }],
-//         }),
-//         client_id_scheme: Some("redirect_uri".into()),
-//         client_metadata: None, // Some(self.client_meta.clone()),
-//         redirect_uri: None,
-//         scope: None,
-//         presentation_definition_uri: None,
-//         client_metadata_uri: None,
-//     }
-// }
+    let payload = Payload::Vc(vc.clone());
+    let jwt =
+        proof::create(Format::JwtVcJson, payload, PROVIDER.clone()).await.expect("should encode");
 
-// async fn sample_credential() -> Credential {
-//     let vc = VerifiableCredential::sample();
-
-//     let payload = Payload::Vc(vc.clone());
-//     let jwt =
-//         proof::create(Format::JwtVcJson, payload, PROVIDER.clone()).await.expect("should encode");
-
-//     let config = CredentialConfiguration::sample();
-//     Credential {
-//         issuer: "https://vercre.io".into(),
-//         id: vc.id.clone(),
-//         metadata: config,
-//         vc: vc.clone(),
-//         issued: jwt,
-//         logo: None,
-//     }
-// }
+    let config = CredentialConfiguration::sample();
+    Credential {
+        issuer: "https://vercre.io".into(),
+        id: vc.id.clone(),
+        metadata: config,
+        vc: vc.clone(),
+        issued: jwt,
+        logo: None,
+    }
+}
 
 #[tokio::test]
 async fn e2e_presentation() {
+    // Add the credential to the holder's store so it can be found and used by the presentation
+    // flow.
+    let credential = sample_credential().await;
+    CredentialStorer::save(&PROVIDER.clone(), &credential).await.expect("should save credential");
+    
     // Use the presentation service endpoint to create a sample request so we can get a valid
     // presentation request object.
     let init_request = vercre_verifier::Endpoint::new(PROVIDER.clone())
@@ -126,6 +90,7 @@ async fn e2e_presentation() {
         ".request.nonce" => "[nonce]",
         ".request.state" => "[state]",
         ".request.presentation_definition" => "[presentation_definition]",
+        ".credentials[0].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
     });
 
     // Authorize the presentation
@@ -140,5 +105,13 @@ async fn e2e_presentation() {
         ".request.nonce" => "[nonce]",
         ".request.state" => "[state]",
         ".request.presentation_definition" => "[presentation_definition]",
+        ".credentials" => "[credentials checked on previous step]",
     });
+
+    // Process the presentation
+    let response = Endpoint::new(PROVIDER.clone())
+        .present(&presentation.id.clone())
+        .await
+        .expect("should process present");
+    assert_snapshot!("response_response", response);
 }

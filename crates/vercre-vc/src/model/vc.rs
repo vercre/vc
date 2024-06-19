@@ -121,7 +121,7 @@ impl VerifiableCredential {
         VcBuilder::new()
     }
 
-    /// Returns a sample [`VerifiableCredential`] for use in type generation
+    /// Returns a sample [`VerifiableCredential`] for use in type generation and tests
     #[must_use]
     pub fn sample() -> Self {
         use chrono::TimeZone;
@@ -139,7 +139,7 @@ impl VerifiableCredential {
                 id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
                 claims: HashMap::from([("employeeId".into(), serde_json::json!("1234567890"))]),
             }),
-            expiration_date: Some(Utc.with_ymd_and_hms(2023, 12, 20, 23, 21, 55).unwrap()),
+            expiration_date: Some(Utc.with_ymd_and_hms(2033, 12, 20, 23, 21, 55).unwrap()),
 
             ..Self::default()
         }

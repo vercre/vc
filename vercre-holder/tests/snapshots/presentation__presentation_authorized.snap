@@ -1,6 +1,6 @@
 ---
 source: vercre-holder/tests/presentation.rs
-assertion_line: 137
+assertion_line: 102
 expression: presentation
 ---
 id: "[id]"
@@ -15,11 +15,11 @@ request:
   response_type: vp_token
   response_uri: "http://vercre.io/post"
   state: "[state]"
-credentials: []
+credentials: "[credentials checked on previous step]"
 filter:
   fields:
     - path:
-        - $.type_
+        - $.type
       filter:
         type: string
         const: EmployeeIDCredential
