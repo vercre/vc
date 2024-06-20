@@ -8,6 +8,7 @@ import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import Credential from './Credential';
 import Issuance from './Issuance';
 import Layout from './Layout';
+import Presentation from './Presentation';
 import Splash from './Splash';
 import { theme } from "./theme";
 import { ViewModel } from './types/generated';
@@ -54,6 +55,7 @@ const App = () => {
                 : <Layout>
                 {view?.sub_app === "Credential" && <Credential model={view.credential}  /> }
                 {(view?.sub_app === "Issuance" && view?.issuance) && <Issuance issuance={view.issuance} />}
+                {(view?.sub_app === "Presentation" && view?.presentation) && <Presentation presentation={view.presentation} />}
                 </Layout>
             }
         </ThemeProvider>

@@ -5,27 +5,27 @@ import Typography from "@mui/material/Typography";
 import { invoke } from '@tauri-apps/api/core';
 
 import VcCard from '../Credential/VcCard';
-import { IssuanceView } from '../types/generated';
+import { PresentationView } from '../types/generated';
 
-export type AcceptProps = {
-    issuance: IssuanceView;
+export type AuthorizeProps = {
+    presentation: PresentationView;
 };
 
-const Accept = (props: AcceptProps) => {
-    const { issuance } = props;
+const Authorize = (props: AuthorizeProps) => {
+    const { presentation } = props;
 
-    const cred = Object.entries(issuance.credentials).length > 1 ? 'credentials' : 'credential';
+    const cred = Object.entries(presentation.credentials).length > 1 ? 'credentials' : 'credential';
 
     return (
         <Stack spacing={2} sx={{ pt: 2 }}>
             <Typography sx={{ pb: 1, textAlign: 'center' }}>
-                {`Do you accept the following ${cred}?`}
+                {`Do you authorize presentation of the following ${cred}?`}
             </Typography>
-            {Object.entries(issuance.credentials).map(([key, credential]) => (
-                <Box key={key} sx={{ display: 'flex', justifyContent: 'center'}}>
+            {Object.entries(presentation.credentials).map(([key, credential]) =>
+                <Box key={key} sx={{ display: 'flex', justifyContent: 'center' }}>
                     <VcCard credential={credential} />
                 </Box>
-            ))}
+            )}
             <Box
                 sx={{
                     display: 'flex',
@@ -41,14 +41,14 @@ const Accept = (props: AcceptProps) => {
                     Cancel
                 </Button>
                 <Button
-                    onClick={() => invoke('accept')}
+                    onClick={() => invoke('authorize')}
                     variant="contained"
                 >
-                    Accept
+                    Authorize
                 </Button>
             </Box>
         </Stack>
-    );
+    )
 };
 
-export default Accept;
+export default Authorize;

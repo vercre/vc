@@ -1,12 +1,13 @@
 import CheckIcon from '@mui/icons-material/Check';
-import DownloadingIcon from '@mui/icons-material/Downloading';
+import DownloadIcon from '@mui/icons-material/Download';
+import UploadIcon from '@mui/icons-material/Upload';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 export type LoadingProps = {
-    status: 'loading' | 'loaded';
+    status: 'uploading' | 'downloading' | 'finished';
 };
 
 export const Loading = (props: LoadingProps) => {
@@ -15,7 +16,8 @@ export const Loading = (props: LoadingProps) => {
     return (
         <Stack spacing={2} sx={{ pt: 2 }}>
             <Typography sx={{ pb: 2, textAlign: 'center' }}>
-                Retrieving credentials...
+                {status === 'uploading' && 'Sending credentials...'}
+                {status === 'downloading' && 'Retrieving credentials...'}
             </Typography>
             <Box sx={{ display: 'flex', justifyContent: 'center'}}>
                 <Box sx={{ display: 'inline-flex', position: 'relative' }}>
@@ -29,10 +31,9 @@ export const Loading = (props: LoadingProps) => {
                             zIndex: 1,
                         }}
                     />
-                    {status === 'loading'
-                        ? <DownloadingIcon color="secondary" />
-                        : <CheckIcon color="success" />
-                    }
+                    {status === 'uploading' && <UploadIcon color="secondary" />}
+                    {status === 'downloading' && <DownloadIcon color="secondary" />}
+                    {status === 'finished' && <CheckIcon color="success" />}
                 </Box>
             </Box>
         </Stack>

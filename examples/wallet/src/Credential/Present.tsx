@@ -55,7 +55,7 @@ const Present = (props: PresentProps) => {
             return;
         }
         const encoded = encodeURIComponent(request);
-        invoke('present', { url: encoded });
+        invoke('request', { request: encoded });
     };
 
     return (

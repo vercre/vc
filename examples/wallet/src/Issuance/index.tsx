@@ -18,7 +18,7 @@ export const Issuance = (props: IssuanceProps) => {
     const { issuance } = props;
     const [mode, setMode] = useState<'accept' | 'pin' | 'request' | 'error'>('accept');
 
-    // translate status to mode
+    // Translate status to mode
     useEffect(() => {
         switch (issuance.status) {
             case 'PendingPin':
@@ -37,7 +37,7 @@ export const Issuance = (props: IssuanceProps) => {
         }
     }, [issuance]);
 
-    // go get the credentials if the user has accepted (and entered a pin if necessary)
+    // Go get the credentials if the user has accepted (and entered a pin if necessary)
     useEffect(() => {
         if (issuance.status === 'Accepted') {
             invoke('get_credentials');
@@ -55,7 +55,7 @@ export const Issuance = (props: IssuanceProps) => {
                 </Box>
             </Slide>
             {mode === 'request' &&
-                <Loading status="loading" />
+                <Loading status="downloading" />
             }
             {mode === 'error' &&
                 <Error />
