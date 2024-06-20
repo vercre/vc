@@ -285,7 +285,7 @@ fn deep_link(event: &tauri::Event, app: &AppHandle) {
             async move {
                 log::info!("issuance offer deep link: {offer}");
                 let mut app_state = state.app_state.lock().await;
-                if let Err(e) = app_state.offer(&offer, provider.clone()).await {
+                if let Err(e) = app_state.offer(offer, provider.clone()).await {
                     log::error!("error processing offer: {e}");
                     return;
                 }
@@ -293,7 +293,6 @@ fn deep_link(event: &tauri::Event, app: &AppHandle) {
                 log::info!("emitting state_updated");
                 if let Err(e) = app.emit("state_updated", view).map_err(error::AppError::from) {
                     log::error!("error emitting state_updated: {e}");
-                    return;
                 };
             }
         });
@@ -304,7 +303,7 @@ fn deep_link(event: &tauri::Event, app: &AppHandle) {
                 log::info!("presentation request deep link: {request}");
                 let mut app_state = state.app_state.lock().await;
                 let provider = Provider::new(app.clone(), state.state_store.clone());
-                if let Err(e) = app_state.request(&request, provider).await {
+                if let Err(e) = app_state.request(request, provider).await {
                     log::error!("error processing request: {e}");
                     return;
                 };
@@ -312,7 +311,6 @@ fn deep_link(event: &tauri::Event, app: &AppHandle) {
                 log::info!("emitting state_updated");
                 if let Err(e) = app.emit("state_updated", view).map_err(error::AppError::from) {
                     log::error!("error emitting state_updated: {e}");
-                    return;
                 };
             }
         });
