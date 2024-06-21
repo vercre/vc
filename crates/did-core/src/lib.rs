@@ -11,6 +11,8 @@ mod did;
 mod document;
 mod key;
 
+use std::collections::HashMap;
+
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -85,6 +87,9 @@ pub trait Resolver {
     /// DID URL's components, including the DID method, method-specific identifier, path,
     /// query, and fragment.
     ///
+    /// See <https://w3c-ccg.github.io/did-resolution/#dereferencing> for more
+    /// detail.
+    ///
     /// # Errors
     ///
     /// Returns an error if the DID cannot be dereferenced.
@@ -107,18 +112,20 @@ pub trait Resolver {
 ///
 /// This property is OPTIONAL for the resolveRepresentation function and MUST NOT be
 /// used with the resolve function.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Options<'a> {
-    options: Vec<(&'a str, &'a str)>,
+    #[serde(borrow = "'a")]
+    #[serde(flatten)]
+    options: HashMap<&'a str, &'a str>,
 }
 
 impl<'a> Options<'a> {
     pub fn add(&mut self, key: &'a str, value: &'a str) {
-        self.options.push((key, value));
+        self.options.insert(key, value);
     }
 
     #[must_use]
-    pub fn options(&self) -> Vec<(&str, &str)> {
+    pub fn options(&self) -> HashMap<&str, &str> {
         self.options.clone()
     }
 }

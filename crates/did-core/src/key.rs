@@ -2,26 +2,43 @@
 //!
 //! See <https://w3c-ccg.github.io/did-method-key/#create>
 
+use std::sync::LazyLock;
+
 use base64ct::{Base64UrlUnpadded, Encoding};
+use regex::Regex;
 use serde_json::json;
 
 use crate::did::{self, Error};
 use crate::document::{Document, Kind, VerificationMethod};
-use crate::{ContentType, Curve, Jwk, KeyType, Metadata, Options, Resolution, Resolver, Resource};
+use crate::{
+    ContentMetadata, ContentType, Curve, Jwk, KeyType, Metadata, Options, Resolution, Resolver,
+    Resource,
+};
 
 const ED25519_PREFIX: [u8; 2] = [0xed, 0x01];
+const VALID_DID: &str = "^did:key:z[a-km-zA-HJ-NP-Z1-9]+$";
+
+static DID_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(VALID_DID).expect("should compile"));
+static URL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new("^did:key:z[a-km-zA-HJ-NP-Z1-9]+(?:&?[^=&]*=[^=&]*)*(#z[a-km-zA-HJ-NP-Z1-9]+)*$")
+        .expect("should compile")
+});
 
 #[allow(clippy::module_name_repetitions)]
 pub struct DidKey;
 
 impl Resolver for DidKey {
     fn resolve(&self, did: &str, _opts: Option<Options>) -> did::Result<Resolution> {
-        if !did.starts_with("did:key:") {
-            return Err(Error::InvalidDid("DID is not did:key".into()));
+        if !DID_REGEX.is_match(did) {
+            return Err(Error::InvalidDidUrl(format!("invalid did:key URL")));
         }
-        if did.split('#').count() > 1 {
-            return Err(Error::InvalidDid("DID contains fragment".into()));
-        }
+        // if !did.starts_with("did:key:") {
+        //     return Err(Error::InvalidDid("DID is not did:key".into()));
+        // }
+        // if did.split('#').count() > 1 {
+        //     return Err(Error::InvalidDid("DID contains fragment".into()));
+        // }
 
         // decode the the DID key
         let (_, raw) = multibase::decode(&did[8..])
@@ -72,7 +89,7 @@ impl Resolver for DidKey {
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
                 additional: Some(json!({
-                    "pattern": "^did:(?:tz:|pkh:|key:(?:z6Mk|z6LS|zQ3s|z.{200,})).+$",
+                    "pattern": VALID_DID,
                     "did": {
                         "didString": did,
                         "methodSpecificId": key,
@@ -87,36 +104,36 @@ impl Resolver for DidKey {
     }
 
     fn dereference(&self, did_url: &str, _opts: Option<Options>) -> did::Result<Resource> {
+        // validate URL against pattern
+        if !URL_REGEX.is_match(did_url) {
+            return Err(Error::InvalidDidUrl(format!("invalid did:key URL")));
+        }
         let url = url::Url::parse(did_url)
             .map_err(|e| Error::InvalidDidUrl(format!("issue parsing URL: {e}")))?;
 
-        let _metadata = match url.query().as_ref() {
-            Some(query) => serde_urlencoded::from_str::<Metadata>(query)
-                .map_err(|e| Error::InvalidDidUrl(format!("issue decoding query: {e}")))?,
-            None => Metadata::default(),
+        let options = if let Some(query) = url.query().as_ref() {
+            Some(
+                serde_urlencoded::from_str::<Options>(query)
+                    .map_err(|e| Error::InvalidDidUrl(format!("issue decoding query: {e}")))?,
+            )
+        } else {
+            None
         };
 
+        // get DID document
         let did = format!("did:{}", url.path());
-        let document = self.resolve(&did, None)?;
-
-        // let doc_val = serde_json::to_value(&document)?;
-        // let Ok(jpath) = JsonPath::parse(path) else {
-        //     return Err(anyhow!("Invalid JSONPath: {path}"));
-        // };
-        // let nodes = jpath.query(vc).all();
-
-        // println!("document: {:?}", document);
+        let resolution = self.resolve(&did, options)?;
 
         Ok(Resource {
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
                 ..Metadata::default()
             },
-            content_stream: None,
-            content_metadata: None,
+            content_stream: resolution.document,
+            content_metadata: Some(ContentMetadata {
+                document_metadata: resolution.document_metadata,
+            }),
         })
-
-        // unimplemented!("Dereferencing is not supported for did:key")
     }
 }
 
@@ -149,7 +166,7 @@ mod test {
         println!("did_url: {:?}", resolved);
     }
 
-    static DID_URL: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
+    static DID_URL: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK?test=aw#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
     static DOCUMENT: LazyLock<Value> = LazyLock::new(|| {
         json!({
             "@context": [
@@ -186,7 +203,7 @@ mod test {
     static METADATA: LazyLock<Value> = LazyLock::new(|| {
         json!({
           "contentType": "application/did+ld+json",
-          "pattern": "^did:(?:tz:|pkh:|key:(?:z6Mk|z6LS|zQ3s|z.{200,})).+$",
+          "pattern": "^did:key:z[a-km-zA-HJ-NP-Z1-9]+$",
           "did": {
             "didString": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
             "methodSpecificId": "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
