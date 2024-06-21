@@ -67,7 +67,9 @@ where
         tracing::debug!("Context::process");
         let mut presentation = self.presentation.clone();
         presentation.status = Status::Authorized;
-        provider.put(&presentation.id, serde_json::to_vec(&presentation)?, DateTime::<Utc>::MAX_UTC).await?;
+        provider
+            .put(&presentation.id, serde_json::to_vec(&presentation)?, DateTime::<Utc>::MAX_UTC)
+            .await?;
         Ok(presentation)
     }
 }

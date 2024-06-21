@@ -31,7 +31,7 @@ pub struct DidKey;
 impl Resolver for DidKey {
     fn resolve(&self, did: &str, _opts: Option<Options>) -> did::Result<Resolution> {
         if !DID_REGEX.is_match(did) {
-            return Err(Error::InvalidDidUrl(format!("invalid did:key URL")));
+            return Err(Error::InvalidDidUrl("invalid did:key URL".to_string()));
         }
         // if !did.starts_with("did:key:") {
         //     return Err(Error::InvalidDid("DID is not did:key".into()));
@@ -106,7 +106,7 @@ impl Resolver for DidKey {
     fn dereference(&self, did_url: &str, _opts: Option<Options>) -> did::Result<Resource> {
         // validate URL against pattern
         if !URL_REGEX.is_match(did_url) {
-            return Err(Error::InvalidDidUrl(format!("invalid did:key URL")));
+            return Err(Error::InvalidDidUrl("invalid did:key URL".to_string()));
         }
         let url = url::Url::parse(did_url)
             .map_err(|e| Error::InvalidDidUrl(format!("issue parsing URL: {e}")))?;

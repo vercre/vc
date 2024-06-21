@@ -15,10 +15,9 @@ use tracing::instrument;
 use uuid::Uuid;
 use vercre_exch::Constraints;
 
+use super::{Presentation, Status};
 use crate::provider::{Callback, CredentialStorer, StateManager, Verifier, VerifierClient};
 use crate::Endpoint;
-
-use super::{Presentation, Status};
 
 impl<P> Endpoint<P>
 where

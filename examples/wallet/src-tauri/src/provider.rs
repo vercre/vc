@@ -20,9 +20,7 @@ pub struct Provider {
 impl Provider {
     /// Create a new capability provider.
     #[must_use]
-    pub fn new(
-        app_handle: tauri::AppHandle, store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
-    ) -> Self {
+    pub fn new(app_handle: tauri::AppHandle, store: Arc<Mutex<HashMap<String, Vec<u8>>>>) -> Self {
         Self {
             app_handle,
             store,
