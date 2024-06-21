@@ -14,6 +14,8 @@ use uuid::Uuid;
 use crate::provider::{IssuerClient, StateManager};
 use crate::Endpoint;
 
+use super::{Issuance, Status};
+
 /// `OfferRequest` is the request to the `offer` endpoint to initiate an issuance flow.
 #[derive(Clone, Debug, Default)]
 #[allow(clippy::module_name_repetitions)]
