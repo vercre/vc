@@ -23,7 +23,7 @@ impl AppState {
 
     /// Present the authorized presentation request.
     pub async fn present(&self, provider: Provider) -> anyhow::Result<()> {
-        let _response = Endpoint::new(provider).present(&self.presentation.id.clone()).await?;
+        let _response = Endpoint::new(provider).present(self.presentation.id.clone()).await?;
         Ok(())
     }
 }

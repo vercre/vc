@@ -5,13 +5,11 @@
 
 use std::fmt::Debug;
 
-use chrono::{DateTime, Utc};
-use openid4vc::error::Err;
-use openid4vc::{err, Result};
+use anyhow::anyhow;
 use tracing::instrument;
 
 use super::{Issuance, Status};
-use crate::provider::{Callback, StateManager};
+use crate::provider::StateManager;
 use crate::Endpoint;
 
 /// A `PinRequest` is a request to set a PIN for use in the issuance flow.
@@ -26,61 +24,37 @@ pub struct PinRequest {
 
 impl<P> Endpoint<P>
 where
-    P: Callback + StateManager + Debug,
+    P: StateManager + Debug,
 {
     /// Progresses the issuance flow triggered by a holder setting a PIN.
     /// The request is the issuance flow ID.
     #[instrument(level = "debug", skip(self))]
-    pub async fn pin(&self, request: &PinRequest) -> Result<Issuance> {
-        let ctx = Context {
-            issuance: Issuance::default(),
-            _p: std::marker::PhantomData,
-        };
-        core_utils::Endpoint::handle_request(self, request, ctx).await
-    }
-}
+    pub async fn pin(&self, request: &PinRequest) -> anyhow::Result<Issuance> {
+        tracing::debug!("Endpoint::pin");
 
-#[derive(Debug, Default)]
-struct Context<P> {
-    issuance: Issuance,
-    _p: std::marker::PhantomData<P>,
-}
-
-impl<P> core_utils::Context for Context<P>
-where
-    P: StateManager + Debug,
-{
-    type Provider = P;
-    type Request = PinRequest;
-    type Response = Issuance;
-
-    async fn verify(&mut self, provider: &P, req: &Self::Request) -> Result<&Self> {
-        tracing::debug!("Context::verify");
-
-        // Get current state of flow and check internals for consistency with request.
-        let current_state = provider.get(&req.id).await?;
-        let Ok(issuance) = serde_json::from_slice::<Issuance>(&current_state) else {
-            err!(Err::InvalidRequest, "unable to decode issuance state");
+        let mut issuance = match self.get_issuance(&request.id).await {
+            Ok(issuance) => issuance,
+            Err(e) => {
+                tracing::error!(target: "Endpoint::pin", ?e);
+                return Err(e);
+            }
         };
         if issuance.status != Status::PendingPin {
-            err!(Err::InvalidRequest, "Invalid issuance state");
+            let e = anyhow!("invalid issuance state");
+            tracing::error!(target: "Endpoint::pin", ?e);
+            return Err(e);
         };
-        self.issuance = issuance;
-        Ok(self)
-    }
-
-    async fn process(&self, provider: &P, req: &Self::Request) -> Result<Self::Response> {
-        tracing::debug!("Context::process");
 
         // Update the state of the flow to indicate the PIN has been set.
-        let mut issuance = self.issuance.clone();
-        issuance.pin = Some(req.pin.clone());
+        issuance.pin = Some(request.pin.clone());
         issuance.status = Status::Accepted;
 
         // Stash the state for the next step.
-        provider
-            .put(&issuance.id, serde_json::to_vec(&issuance)?, DateTime::<Utc>::MAX_UTC)
-            .await?;
+        if let Err(e) = self.put_issuance(&issuance).await {
+            tracing::error!(target: "Endpoint::pin", ?e);
+            return Err(e);
+        };
+
         Ok(issuance)
     }
 }

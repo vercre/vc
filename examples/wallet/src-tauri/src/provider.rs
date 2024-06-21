@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use futures::lock::Mutex;
 use providers::wallet::Provider as ExampleWalletProvider;
-use vercre_holder::provider::{Algorithm, Callback, Jwk, Payload, Signer, Verifier};
+use vercre_holder::provider::{Algorithm, Jwk, Signer, Verifier};
 
 pub mod issuer_client;
 pub mod state;
@@ -29,13 +29,6 @@ impl Provider {
             store,
             wallet_provider: ExampleWalletProvider::new(),
         }
-    }
-}
-
-/// Provide a benign implementation of the `Callback` trait that is not needed for this example.
-impl Callback for Provider {
-    async fn callback(&self, _pl: &Payload) -> anyhow::Result<()> {
-        Ok(())
     }
 }
 

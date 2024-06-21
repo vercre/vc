@@ -116,7 +116,7 @@ async fn e2e_presentation() {
 
     // Process the presentation
     let response = Endpoint::new(PROVIDER.clone())
-        .present(&presentation.id.clone())
+        .present(presentation.id.clone())
         .await
         .expect("should process present");
     assert_snapshot!("response_response", response);

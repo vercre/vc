@@ -4,26 +4,24 @@
 
 use std::fmt::Debug;
 
+use anyhow::bail;
 use core_utils::jws::{self, Type};
-use openid4vc::error::Err;
 use openid4vc::issuance::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, GrantType, Proof, ProofClaims,
     TokenRequest,
 };
-use openid4vc::{err, Result};
 use tracing::instrument;
 use vercre_vc::model::StrObj;
 use vercre_vc::proof::{self, Payload, Verify};
 
 use super::{Issuance, Status};
 use crate::credential::Credential;
-use crate::provider::{Callback, CredentialStorer, IssuerClient, Signer, StateManager, Verifier};
+use crate::provider::{CredentialStorer, IssuerClient, Signer, StateManager, Verifier};
 use crate::Endpoint;
 
 impl<P> Endpoint<P>
 where
-    P: Callback
-        + CredentialStorer
+    P: CredentialStorer
         + IssuerClient
         + Signer
         + Verifier
@@ -34,58 +32,29 @@ where
     /// Progresses the issuance flow by getting an access token then using that to get the
     /// credentials contained in the offer.
     #[instrument(level = "debug", skip(self))]
-    pub async fn get_credentials(&self, request: String) -> Result<()> {
-        let ctx = Context {
-            issuance: Issuance::default(),
-            _p: std::marker::PhantomData,
+    pub async fn get_credentials(&self, request: String) -> anyhow::Result<()> {
+        tracing::debug!("Endpoint::get_credentials");
+
+        let mut issuance = match self.get_issuance(&request).await {
+            Ok(issuance) => issuance,
+            Err(e) => {
+                tracing::error!(target: "Endpoint::get_credentials", ?e);
+                return Err(e);
+            }
         };
-        core_utils::Endpoint::handle_request(self, &request, ctx).await
-    }
-}
-
-#[derive(Debug, Default)]
-struct Context<P> {
-    issuance: Issuance,
-    _p: std::marker::PhantomData<P>,
-}
-
-impl<P> core_utils::Context for Context<P>
-where
-    P: CredentialStorer + IssuerClient + StateManager + Signer + Verifier + Clone + Debug,
-{
-    type Provider = P;
-    type Request = String;
-    type Response = ();
-
-    async fn verify(&mut self, provider: &P, req: &Self::Request) -> Result<&Self> {
-        tracing::debug!("Context::verify");
-
-        // Get current state of flow and check internals for consistency with request.
-        let current_state = provider.get(req).await?;
-        let Ok(issuance) = serde_json::from_slice::<Issuance>(&current_state) else {
-            err!(Err::InvalidRequest, "unable to decode issuance state");
-        };
-
-        if issuance.status != Status::Accepted {
-            err!(Err::InvalidRequest, "Invalid issuance state");
-        };
-
-        self.issuance = issuance;
-        Ok(self)
-    }
-
-    async fn process(&self, provider: &P, _req: &Self::Request) -> Result<Self::Response> {
-        tracing::debug!("Context::process");
-
-        let mut issuance = self.issuance.clone();
 
         // Request an access token from the issuer.
         let token_request = token_request(&issuance);
-
-        issuance.token = provider.get_token(&issuance.id, &token_request).await?;
+        issuance.token = match self.provider.get_token(&issuance.id, &token_request).await {
+            Ok(token) => token,
+            Err(e) => {
+                tracing::error!(target: "Endpoint::get_credentials", ?e);
+                return Err(e);
+            }
+        };
 
         // Request each credential offered.
-        // TODO: concurrent requests. Possible if wallet is WASM?
+        // TODO: concurrent requests. Would that be possible if wallet is WASM/WASI?
         for (id, cfg) in &issuance.offered {
             // Construct a proof to be used in credential requests.
             let claims = ProofClaims {
@@ -94,7 +63,13 @@ where
                 iat: chrono::Utc::now().timestamp(),
                 nonce: issuance.token.c_nonce.clone(),
             };
-            let jwt = jws::encode(Type::Proof, &claims, provider.clone()).await?;
+            let jwt = match jws::encode(Type::Proof, &claims, self.provider.clone()).await {
+                Ok(jwt) => jwt,
+                Err(e) => {
+                    tracing::error!(target: "Endpoint::get_credentials", ?e);
+                    return Err(e);
+                }
+            };
             let proof = Proof {
                 proof_type: "jwt".into(),
                 jwt: Some(jwt),
@@ -104,7 +79,13 @@ where
             let request = credential_request(&issuance, id, cfg, &proof);
             issuance.status = Status::Requested;
 
-            let cred_res = provider.get_credential(&issuance.id, &request).await?;
+            let cred_res = match self.provider.get_credential(&issuance.id, &request).await {
+                Ok(cred_res) => cred_res,
+                Err(e) => {
+                    tracing::error!(target: "Endpoint::get_credentials", ?e);
+                    return Err(e);
+                }
+            };
             if cred_res.c_nonce.is_some() {
                 issuance.token.c_nonce.clone_from(&cred_res.c_nonce);
             }
@@ -113,22 +94,34 @@ where
             }
 
             // Create a credential in a useful wallet format.
-            let mut credential = credential(cfg, &cred_res, provider).await?;
+            let mut credential = match credential(cfg, &cred_res, &self.provider).await {
+                Ok(credential) => credential,
+                Err(e) => {
+                    tracing::error!(target: "Endpoint::get_credentials", ?e);
+                    return Err(e);
+                }
+            };
 
             // Base64-encoded logo if possible.
             if let Some(display) = &cfg.display {
                 // TODO: Locale?
                 if let Some(logo_info) = &display[0].logo {
                     if let Some(uri) = &logo_info.uri {
-                        if let Ok(logo) = provider.get_logo(&issuance.id, uri).await {
+                        if let Ok(logo) = self.provider.get_logo(&issuance.id, uri).await {
                             credential.logo = Some(logo);
                         }
                     }
                 }
             }
-            provider.save(&credential).await?;
+            match self.provider.save(&credential).await {
+                Ok(()) => (),
+                Err(e) => {
+                    tracing::error!(target: "Endpoint::get_credentials", ?e);
+                    return Err(e);
+                }
+            };
         }
-
+ 
         Ok(())
     }
 }
@@ -171,15 +164,15 @@ fn credential_request(
 async fn credential(
     credential_configuration: &CredentialConfiguration, res: &CredentialResponse,
     verifier: &impl Verifier,
-) -> Result<Credential> {
+) -> anyhow::Result<Credential> {
     let Some(value) = res.credential.as_ref() else {
-        err!(Err::InvalidRequest, "no credential in response");
+        bail!("no credential in response");
     };
     let Some(token) = value.as_str() else {
-        err!(Err::InvalidRequest, "credential is not a string");
+        bail!("credential is not a string");
     };
     let Ok(Payload::Vc(vc)) = proof::verify(token, Verify::Vc, verifier).await else {
-        err!(Err::InvalidRequest, "could not parse credential");
+        bail!("could not parse credential");
     };
 
     let issuer_id = match &vc.issuer {

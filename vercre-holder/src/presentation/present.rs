@@ -5,10 +5,8 @@
 
 use std::fmt::Debug;
 
-use anyhow::anyhow;
-use openid4vc::error::Err;
+use anyhow::{anyhow, bail};
 use openid4vc::presentation::{ResponseRequest, ResponseResponse};
-use openid4vc::{err, Result};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_exch::{DescriptorMap, FilterValue, PathNested, PresentationSubmission};
@@ -16,78 +14,73 @@ use vercre_vc::model::vp::VerifiablePresentation;
 use vercre_vc::proof::{self, Format, Payload};
 
 use super::{Presentation, Status};
-use crate::provider::{Callback, Signer, StateManager, Verifier, VerifierClient};
+use crate::provider::{Signer, StateManager, Verifier, VerifierClient};
 use crate::Endpoint;
 
 impl<P> Endpoint<P>
 where
-    P: Callback + Signer + StateManager + Verifier + VerifierClient + Clone + Debug,
+    P: Signer + StateManager + Verifier + VerifierClient + Clone + Debug,
 {
     /// Creates a presentation submission, signs it and sends it to the verifier. The `request`
     /// parameter is the presentation flow ID of an authorized presentation request created in
     /// prior steps.
     #[instrument(level = "debug", skip(self))]
-    pub async fn present(&self, request: &String) -> Result<ResponseResponse> {
-        let ctx = Context {
-            presentation: Presentation::default(),
-            _p: std::marker::PhantomData,
-        };
-        core_utils::Endpoint::handle_request(self, request, ctx).await
-    }
-}
+    pub async fn present(&self, request: String) -> anyhow::Result<ResponseResponse> {
+        tracing::debug!("Endpoint::present");
 
-#[derive(Debug, Default)]
-struct Context<P> {
-    presentation: Presentation,
-    _p: std::marker::PhantomData<P>,
-}
-
-impl<P> core_utils::Context for Context<P>
-where
-    P: Signer + StateManager + VerifierClient + Verifier + Clone + Debug,
-{
-    type Provider = P;
-    type Request = String;
-    type Response = ResponseResponse;
-
-    async fn verify(&mut self, provider: &Self::Provider, req: &Self::Request) -> Result<&Self> {
-        tracing::debug!("Context::verify");
-
-        let current_state = provider.get(req).await?;
-        let Ok(presentation) = serde_json::from_slice::<Presentation>(&current_state) else {
-            err!(Err::InvalidRequest, "unable to decode presentation state");
+        let Ok(mut presentation) = self.get_presentation(&request).await else {
+            let e = anyhow!("unable to retrieve presentation state");
+            tracing::error!(target: "Endpoint::present", ?e);
+            return Err(e);
         };
         if presentation.status != Status::Authorized {
-            err!(Err::InvalidRequest, "Invalid presentation state");
+            let e = anyhow!("Invalid presentation state");
+            tracing::error!(target: "Endpoint::present", ?e);
+            return Err(e);
         }
-        self.presentation = presentation;
-
-        Ok(self)
-    }
-
-    async fn process(
-        &self, provider: &Self::Provider, _req: &Self::Request,
-    ) -> Result<Self::Response> {
-        let mut presentation = self.presentation.clone();
 
         // Construct a presentation submission.
-        let submission = create_submission(&presentation)?;
-        presentation.submission = submission.clone();
+        let submission = match create_submission(&presentation) {
+            Ok(submission) => submission,
+            Err(e) => {
+                tracing::error!(target: "Endpoint::present", ?e);
+                return Err(e);
+            }
+        };
+        presentation.submission.clone_from(&submission);
 
         // create vp
-        let kid = &provider.verification_method();
+        let kid = &self.provider.verification_method();
         let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
 
-        let vp = create_vp(&presentation, holder_did)?;
+        let vp = match create_vp(&presentation, holder_did) {
+            Ok(vp) => vp,
+            Err(e) => {
+                tracing::error!(target: "Endpoint::present", ?e);
+                return Err(e);
+            }
+        };
 
         let payload = Payload::Vp {
             vp,
             client_id: presentation.request.client_id.clone(),
             nonce: presentation.request.nonce.clone(),
         };
-        let jwt = proof::create(Format::JwtVcJson, payload, provider.clone()).await?;
+        let jwt = match proof::create(Format::JwtVcJson, payload, self.provider.clone()).await {
+            Ok(jwt) => jwt,
+            Err(e) => {
+                tracing::error!(target: "Endpoint::present", ?e);
+                return Err(e);
+            }
+        };
 
-        let vp_token = serde_json::to_value(&jwt)?;
+        let vp_token = match serde_json::to_value(&jwt) {
+            Ok(vp_token) => vp_token,
+            Err(e) => {
+                tracing::error!(target: "Endpoint::present", ?e);
+                return Err(e.into());
+            }
+        };
 
         // Assemble the presentation response to the verifier and ask the wallet client to send it.
         let res_req = ResponseRequest {
@@ -96,11 +89,19 @@ where
             state: presentation.request.state.clone(),
         };
         let Some(mut res_uri) = presentation.request.response_uri.clone() else {
-            err!(Err::InvalidRequest, "no response uri found");
+            let e = anyhow!("no response uri found");
+            tracing::error!(target: "Endpoint::present", ?e);
+            return Err(e);
         };
         res_uri = res_uri.trim_end_matches('/').to_string();
 
-        let response = provider.present(&self.presentation.id, &res_uri, &res_req).await?;
+        let response = match self.provider.present(&presentation.id, &res_uri, &res_req).await {
+            Ok(response) => response,
+            Err(e) => {
+                tracing::error!(target: "Endpoint::present", ?e);
+                return Err(e);
+            }
+        };
 
         Ok(response)
     }
@@ -110,7 +111,7 @@ where
 fn create_submission(presentation: &Presentation) -> anyhow::Result<PresentationSubmission> {
     let request = presentation.request.clone();
     let Some(pd) = &request.presentation_definition else {
-        return Err(anyhow!("No presentation definition on request in context"));
+        bail!("No presentation definition on request in context");
     };
     let mut desc_map: Vec<DescriptorMap> = vec![];
     for n in 0..pd.input_descriptors.len() {
@@ -159,7 +160,7 @@ fn create_vp(
             }
         }
     }
-    
+
     for c in &presentation.credentials {
         let val = serde_json::to_value(&c.issued)?;
         builder = builder.add_credential(val);

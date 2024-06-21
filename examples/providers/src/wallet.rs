@@ -2,7 +2,7 @@ use std::ops::Deref;
 use std::str;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
-use vercre_holder::provider::{Algorithm, Jwk, Result, Signer, Verifier};
+use vercre_holder::provider::{Algorithm, Jwk, Signer, Verifier};
 
 pub use crate::client::WALLET_CLIENT_ID as CLIENT_ID;
 use crate::logic::proof::{Enclave, Entity};
@@ -36,13 +36,13 @@ impl Signer for Provider {
         format!("{}#0", holder_did())
     }
 
-    async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
+    async fn try_sign(&self, msg: &[u8]) -> anyhow::Result<Vec<u8>> {
         Enclave::try_sign(&Entity::Holder, msg)
     }
 }
 
 impl Verifier for Provider {
-    async fn deref_jwk(&self, did_url: &str) -> Result<Jwk> {
+    async fn deref_jwk(&self, did_url: &str) -> anyhow::Result<Jwk> {
         Enclave::deref_jwk(did_url)
     }
 }

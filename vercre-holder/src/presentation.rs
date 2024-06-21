@@ -9,6 +9,7 @@ mod request;
 use std::fmt::Debug;
 
 use anyhow::anyhow;
+use chrono::{DateTime, Utc};
 pub use openid4vc::presentation::{
     RequestObject, RequestObjectResponse, ResponseRequest, ResponseResponse,
 };
@@ -16,6 +17,8 @@ use serde::{Deserialize, Serialize};
 use vercre_exch::{Constraints, PresentationSubmission};
 
 use crate::credential::Credential;
+use crate::provider::StateManager;
+use crate::Endpoint;
 
 /// `Presentation` maintains app state across steps of the presentation flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -86,5 +89,23 @@ impl std::str::FromStr for Status {
             "Authorized" => Ok(Self::Authorized),
             _ => Err(anyhow!("Invalid status: {s}")),
         }
+    }
+}
+
+/// Get and put presentation state information using the supplied provider.
+impl<P> Endpoint<P>
+    where P: StateManager + Debug
+{
+    async fn get_presentation(&self, id: &str) -> anyhow::Result<Presentation> {
+        let current_state = self.provider.get(id).await?;
+        let presentation = serde_json::from_slice::<Presentation>(&current_state)?;
+        Ok(presentation)
+    }
+
+    async fn put_presentation(&self, presentation: &Presentation) -> anyhow::Result<()> {
+        self.provider
+            .put(&presentation.id, serde_json::to_vec(&presentation)?, DateTime::<Utc>::MAX_UTC)
+            .await?;
+        Ok(())
     }
 }

@@ -6,14 +6,12 @@
 
 use std::fmt::Debug;
 
-use chrono::{DateTime, Utc};
-use openid4vc::error::Err;
+use anyhow::anyhow;
 use openid4vc::issuance::{CredentialConfiguration, CredentialOffer, MetadataRequest};
-use openid4vc::{err, Result};
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::provider::{Callback, IssuerClient, StateManager};
+use crate::provider::{IssuerClient, StateManager};
 use crate::Endpoint;
 
 use super::{Issuance, Status};
@@ -32,72 +30,58 @@ pub struct OfferRequest {
 
 impl<P> Endpoint<P>
 where
-    P: Callback + IssuerClient + StateManager + Debug,
+    P: IssuerClient + StateManager + Debug,
 {
     /// Initiates the issuance flow triggered by a new credential offer.
     #[instrument(level = "debug", skip(self))]
-    pub async fn offer(&self, request: &OfferRequest) -> Result<Issuance> {
-        let ctx = Context {
-            _p: std::marker::PhantomData,
-        };
-        core_utils::Endpoint::handle_request(self, request, ctx).await
-    }
-}
+    pub async fn offer(&self, request: &OfferRequest) -> anyhow::Result<Issuance> {
+        tracing::debug!("Endpoint::offer");
 
-#[derive(Debug, Default)]
-struct Context<P> {
-    _p: std::marker::PhantomData<P>,
-}
-
-impl<P> core_utils::Context for Context<P>
-where
-    P: IssuerClient + StateManager + Debug + Sync + Send,
-{
-    type Provider = P;
-    type Request = OfferRequest;
-    type Response = Issuance;
-
-    async fn verify(&mut self, _provider: &P, req: &Self::Request) -> Result<&Self> {
-        tracing::debug!("Context::verify");
-
-        if req.offer.credential_configuration_ids.is_empty() {
-            err!(Err::InvalidRequest, "no credential IDs");
+        if request.offer.credential_configuration_ids.is_empty() {
+            let e = anyhow!("no credential IDs");
+            tracing::error!(target: "Endpoint::offer", ?e);
+            return Err(e);
         }
-        let Some(grants) = &req.offer.grants else {
-            err!(Err::InvalidRequest, "no grants");
+        let Some(grants) = &request.offer.grants else {
+            let e = anyhow!("no grants");
+            tracing::error!(target: "Endpoint::offer", ?e);
+            return Err(e);
         };
         if grants.pre_authorized_code.is_none() {
-            err!(Err::InvalidRequest, "no pre-authorized code");
+            let e = anyhow!("no pre-authorized code");
+            tracing::error!(target: "Endpoint::offer", ?e);
+            return Err(e);
         }
 
-        Ok(self)
-    }
-
-    async fn process(
-        &self, provider: &Self::Provider, req: &Self::Request,
-    ) -> Result<Self::Response> {
         // Establish a new issuance flow state
         let mut issuance = Issuance {
             id: Uuid::new_v4().to_string(),
-            client_id: req.client_id.clone(),
+            client_id: request.client_id.clone(),
             status: Status::Offered,
             ..Default::default()
         };
+
         // Set up a credential configuration for each credential offered
-        issuance.offer = req.offer.clone();
-        for id in &req.offer.credential_configuration_ids {
+        issuance.offer = request.offer.clone();
+        for id in &request.offer.credential_configuration_ids {
             issuance.offered.insert(id.into(), CredentialConfiguration::default());
         }
 
         // Process the offer and establish a metadata request, passing that to the provider to
         // use.
         let md_request = MetadataRequest {
-            credential_issuer: req.offer.credential_issuer.clone(),
+            credential_issuer: request.offer.credential_issuer.clone(),
             languages: None, // The wallet client should provide any specific languages required.
         };
 
         // The wallet client's provider makes the metadata request to the issuer.
-        let md_response = provider.get_metadata(&issuance.id, &md_request).await?;
+        let md_response = match self.provider.get_metadata(&issuance.id, &md_request).await {
+            Ok(md) => md,
+            Err(e) => {
+                tracing::error!(target: "Endpoint::offer", ?e);
+                return Err(e);
+            }
+        };
 
         // Update the flow state with issuer's metadata.
         let creds_supported = &md_response.credential_issuer.credential_configurations_supported;
@@ -105,16 +89,19 @@ where
         for (cfg_id, cred_cfg) in &mut issuance.offered {
             // find supported credential in metadata and copy to state object.
             let Some(found) = creds_supported.get(cfg_id) else {
-                err!(Err::InvalidRequest, "unsupported credential type in offer");
+                let e = anyhow!("unsupported credential type in offer");
+                tracing::error!(target: "Endpoint::offer", ?e);
+                return Err(e);
             };
             *cred_cfg = found.clone();
         }
         issuance.status = Status::Ready;
 
         // Stash the state for the next step.
-        provider
-            .put(&issuance.id, serde_json::to_vec(&issuance)?, DateTime::<Utc>::MAX_UTC)
-            .await?;
+        if let Err(e) = self.put_issuance(&issuance).await {
+            tracing::error!(target: "Endpoint::offer", ?e);
+            return Err(e);
+        };
 
         Ok(issuance)
     }
