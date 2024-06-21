@@ -9,6 +9,7 @@
 
 mod did;
 mod document;
+mod error;
 mod key;
 
 use std::collections::HashMap;
@@ -77,10 +78,11 @@ pub trait Resolver {
     ///
     /// Returns an error if the DID cannot be resolved.
     fn resolve_representation(&self, did: &str, opts: Option<Options>) -> did::Result<Vec<u8>> {
-        let document = self.resolve(did, opts)?;
+        let resolution = self.resolve(did, opts)?;
 
-        // TODO: honour the accept property's media type
-        serde_json::to_vec(&document).map_err(|e| Error::Other(anyhow!("issue decoding key: {e}")))
+        // TODO: honour the `accept` property's media type
+        serde_json::to_vec(&resolution)
+            .map_err(|e| Error::Other(anyhow!("issue serializing resolution: {e}")))
     }
 
     /// Dereferences the provided DID URL into a resource with contents depending on the
@@ -97,8 +99,8 @@ pub trait Resolver {
     fn dereference(&self, did_url: &str, opts: Option<Options>) -> did::Result<Resource>;
 }
 
-/// `ResolutionOptions` is used to pass addtional values to a `resolve` method. The
-/// properties and values should be registered in the DID Specification Registries.
+/// Used to pass addtional values to a `resolve` and `dereference` methods. Any
+/// properties used should be registered in the DID Specification Registries.
 ///
 /// The `accept` property is common to all resolver implementations. It is used by
 /// users to specify the Media Type when calling the `resolve_representation` method.
@@ -112,22 +114,49 @@ pub trait Resolver {
 ///
 /// This property is OPTIONAL for the resolveRepresentation function and MUST NOT be
 /// used with the resolve function.
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Options<'a> {
-    #[serde(borrow = "'a")]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Options {
+    /// [`accept`](https://www.w3.org/TR/did-spec-registries/#accept) resolution option.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub accept: Option<ContentType>,
+
+    /// Additional options.
     #[serde(flatten)]
-    options: HashMap<&'a str, &'a str>,
+    pub additional: Option<HashMap<String, Metadata>>,
 }
 
-impl<'a> Options<'a> {
-    pub fn add(&mut self, key: &'a str, value: &'a str) {
-        self.options.insert(key, value);
-    }
+/// [DID Parameters](https://www.w3.org/TR/did-core/#did-parameters).
+///
+/// As specified in DID Core and/or in [DID Specification
+/// Registries](https://www.w3.org/TR/did-spec-registries/#parameters).
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Parameters {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub service: Option<String>, // ASCII
 
-    #[must_use]
-    pub fn options(&self) -> HashMap<&str, &str> {
-        self.options.clone()
-    }
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(alias = "relative-ref")]
+    /// [`relativeRef`](https://www.w3.org/TR/did-spec-registries/#relativeRef-param) parameter.
+    pub relative_ref: Option<String>, // ASCII, percent-encoding
+
+    /// [`versionId`](https://www.w3.org/TR/did-spec-registries/#versionId-param) parameter.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub version_id: Option<String>, // ASCII
+
+    /// [`versionTime`](https://www.w3.org/TR/did-spec-registries/#versionTime-param) parameter.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub version_time: Option<String>, // ASCII
+
+    /// [`hl`](https://www.w3.org/TR/did-spec-registries/#hl-param) parameter.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "hl")]
+    pub hashlink: Option<String>, // ASCII
+
+    /// Additional parameters.
+    #[serde(flatten)]
+    pub additional: Option<HashMap<String, Value>>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]

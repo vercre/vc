@@ -111,16 +111,16 @@ impl Resolver for DidKey {
         let url = url::Url::parse(did_url)
             .map_err(|e| Error::InvalidDidUrl(format!("issue parsing URL: {e}")))?;
 
-        let options = if let Some(query) = url.query().as_ref() {
-            Some(
+        // extract resolution options from query string (if any)
+        let options = match url.query().as_ref() {
+            Some(query) => Some(
                 serde_urlencoded::from_str::<Options>(query)
-                    .map_err(|e| Error::InvalidDidUrl(format!("issue decoding query: {e}")))?,
-            )
-        } else {
-            None
+                    .map_err(|e| Error::InvalidDidUrl(format!("issue parsing query: {e}")))?,
+            ),
+            None => None,
         };
 
-        // get DID document
+        // resolve DID document
         let did = format!("did:{}", url.path());
         let resolution = self.resolve(&did, options)?;
 
