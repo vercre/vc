@@ -5759,6 +5759,7 @@ dependencies = [
  "vercre-exch",
  "vercre-issuer",
  "vercre-vc",
+ "vercre-verifier",
 ]
 
 [[package]]

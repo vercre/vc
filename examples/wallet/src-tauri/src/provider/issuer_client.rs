@@ -35,7 +35,7 @@ impl IssuerClient for Provider {
             .post(&url)
             .header(CONTENT_TYPE, "multipart/form-data")
             .header(ACCEPT, "application/json")
-            .form(&req)
+            .form(req)
             .send()
             .await?;
         let token = result.json::<TokenResponse>().await?;

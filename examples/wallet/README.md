@@ -164,7 +164,7 @@ $LSREGISTER -kill -r -domain local -domain system -domain user
 To re-register the URL scheme, run the following from the `tauri` directory:
 
 ```bash
-cargo tauri build --debug
+pnpm tauri build --debug
 ```
 
 ### Hanging Tauri Process

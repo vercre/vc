@@ -1,6 +1,0 @@
-extend = "../../../Makefile.toml"
-
-[tasks.dev]
-env = { TAURI_CONFIG = '{"build":{"frontendDist":"http://localhost:1420"}}' }
-command = "cargo"
-args = ["tauri", "build", "--debug"]

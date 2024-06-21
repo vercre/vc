@@ -6,79 +6,46 @@
 
 use std::fmt::Debug;
 
-use chrono::{DateTime, Utc};
-use openid4vc::error::Err;
-use openid4vc::{err, Result};
+use anyhow::anyhow;
 use tracing::instrument;
 
 use crate::issuance::{Issuance, Status};
-use crate::provider::{Callback, StateManager};
+use crate::provider::StateManager;
 use crate::Endpoint;
 
 impl<P> Endpoint<P>
 where
-    P: Callback + StateManager + Debug,
+    P: StateManager + Debug,
 {
     /// Progresses the issuance flow triggered by a holder accepting a credential offer.
     /// The request is the issuance flow ID.
     #[instrument(level = "debug", skip(self))]
-    pub async fn accept(&self, request: String) -> Result<Issuance> {
-        let ctx = Context {
-            issuance: Issuance::default(),
-            _p: std::marker::PhantomData,
-        };
-        core_utils::Endpoint::handle_request(self, &request, ctx).await
-    }
-}
+    pub async fn accept(&self, request: String) -> anyhow::Result<Issuance> {
+        tracing::debug!("Endpoint::accept");
 
-#[derive(Debug, Default)]
-struct Context<P> {
-    issuance: Issuance,
-    _p: std::marker::PhantomData<P>,
-}
-
-impl<P> core_utils::Context for Context<P>
-where
-    P: StateManager + Debug,
-{
-    type Provider = P;
-    type Request = String;
-    type Response = Issuance;
-
-    async fn verify(&mut self, provider: &P, req: &Self::Request) -> Result<&Self> {
-        tracing::debug!("Context::verify");
-
-        // Get current state of flow and check internals for consistency with request.
-        let current_state = provider.get(req).await?;
-        let Ok(issuance) = serde_json::from_slice::<Issuance>(&current_state) else {
-            err!(Err::InvalidRequest, "unable to decode issuance state");
+        let mut issuance = match self.get_issuance(&request).await {
+            Ok(issuance) => issuance,
+            Err(e) => {
+                tracing::error!(target: "Endpoint::accept", ?e);
+                return Err(e);
+            }
         };
 
         if issuance.status != Status::Ready {
-            err!(Err::InvalidRequest, "Invalid issuance state");
+            let e = anyhow!("invalid issuance state");
+            tracing::error!(target: "Endpoint::accept", ?e);
+            return Err(e);
         }
         let Some(grants) = &issuance.offer.grants else {
-            err!(Err::InvalidRequest, "no grants");
+            let e = anyhow!("no grants");
+            tracing::error!(target: "Endpoint::accept", ?e);
+            return Err(e);
         };
-        if grants.pre_authorized_code.is_none() {
-            err!(Err::InvalidRequest, "no pre-authorized code");
-        }
-        self.issuance = issuance;
-        Ok(self)
-    }
-
-    async fn process(
-        &self, provider: &Self::Provider, _req: &Self::Request,
-    ) -> Result<Self::Response> {
-        tracing::debug!("Context::process");
-
-        let mut issuance = self.issuance.clone();
-
-        // Check if PIN is required. Unwraps are OK because we've already checked these fields in
-        // verify.
-        let grants = self.issuance.offer.grants.as_ref().expect("grants exist on offer");
-        let pre_auth_code =
-            grants.pre_authorized_code.as_ref().expect("pre-authorized code exists on offer");
+        let Some(pre_auth_code) = &grants.pre_authorized_code else {
+            let e = anyhow!("no pre-authorized code");
+            tracing::error!(target: "Endpoint::accept", ?e);
+            return Err(e);
+        };
         if pre_auth_code.tx_code.is_some() {
             issuance.status = Status::PendingPin;
         } else {
@@ -86,9 +53,10 @@ where
         }
 
         // Stash the state for the next step.
-        provider
-            .put(&issuance.id, serde_json::to_vec(&issuance)?, DateTime::<Utc>::MAX_UTC)
-            .await?;
+        if let Err(e) = self.put_issuance(&issuance).await {
+            tracing::error!(target: "Endpoint::accept", ?e);
+            return Err(e);
+        };
 
         Ok(issuance)
     }

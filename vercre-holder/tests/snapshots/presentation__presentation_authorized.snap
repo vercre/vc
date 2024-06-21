@@ -1,0 +1,29 @@
+---
+source: vercre-holder/tests/presentation.rs
+assertion_line: 102
+expression: presentation
+---
+id: "[id]"
+status: Authorized
+request:
+  client_id: "http://vercre.io/post"
+  client_id_scheme: redirect_uri
+  client_metadata: "{\"client_id\":\"http://vercre.io\",\"redirect_uris\":[\"http://localhost:3000/callback\"],\"response_types\":[\"vp_token\",\"id_token vp_token\"],\"client_name\":\"Verifier\",\"vp_formats\":{\"jwt_vc_json\":{\"alg\":[\"ES256K\"],\"proof_type\":[\"JsonWebSignature2020\"]}}}"
+  nonce: "[nonce]"
+  presentation_definition: "[presentation_definition]"
+  response_mode: direct_post
+  response_type: vp_token
+  response_uri: "http://vercre.io/post"
+  state: "[state]"
+credentials: "[credentials checked on previous step]"
+filter:
+  fields:
+    - path:
+        - $.type
+      filter:
+        type: string
+        const: EmployeeIDCredential
+submission:
+  id: ""
+  definition_id: ""
+  descriptor_map: []

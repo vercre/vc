@@ -1,12 +1,12 @@
 //! Application state implementation for issuance operations.
 
-// use vercre_holder::credential::Credential;
 use vercre_holder::issuance::{CredentialOffer, OfferRequest, PinRequest};
 use vercre_holder::Endpoint;
 
-use super::{AppState, SubApp};
 use crate::provider::Provider;
 use crate::CLIENT_ID;
+
+use super::{AppState, SubApp};
 
 impl AppState {
     /// Process a credential issuance offer.
@@ -17,8 +17,8 @@ impl AppState {
             client_id: CLIENT_ID.into(),
             offer,
         };
-        let new_state = Endpoint::new(provider).offer(&request).await?;
-        self.issuance = new_state;
+        let issuance = Endpoint::new(provider).offer(&request).await?;
+        self.issuance = issuance;
         self.sub_app = SubApp::Issuance;
         Ok(())
     }

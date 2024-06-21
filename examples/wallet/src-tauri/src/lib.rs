@@ -46,14 +46,18 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_shell::init())
+        .manage(StateModel {
+            app_state: Mutex::new(AppState::default()),
+            state_store: Arc::new(Mutex::new(HashMap::<String, Vec<u8>>::new())),
+        })
         .setup(|app| {
-            let _handle = app.handle().clone();
+            let handle = app.handle().clone();
 
             // initialise stronghold
             // FIXME: get passphrase from user and salt from file(?)
-            let passphrase = b"pass-phrase";
-            let salt = b"randomsalt";
-            let _hash = argon2::hash_raw(passphrase, salt, &argon2::Config::default())?;
+            // let passphrase = b"pass-phrase";
+            // let salt = b"randomsalt";
+            // let _hash = argon2::hash_raw(passphrase, salt, &argon2::Config::default())?;
 
             // open/initialize Stronghold snapshot
             // let path = handle.path().app_local_data_dir()?.join("stronghold.bin");
@@ -61,13 +65,9 @@ pub fn run() {
             // handle.manage(stronghold);
 
             // initialise deep link listener
-            // app.listen("deep-link://new-url", move |event| deep_link(&event, &handle));
+            app.listen("deep-link://new-url", move |event| deep_link(&event, &handle));
 
             Ok(())
-        })
-        .manage(StateModel {
-            app_state: Mutex::new(AppState::default()),
-            state_store: Arc::new(Mutex::new(HashMap::<String, Vec<u8>>::new())),
         })
         .invoke_handler(tauri::generate_handler![
             start,  // called by the shell on load.
@@ -78,7 +78,9 @@ pub fn run() {
             accept, // accept a credential issuance offer.
             pin,    // set a user PIN on the token request.
             get_credentials, // get the credentials for the accepted issuance offer.
-                    // accept, authorize, cancel, delete, get_list, set_pin, start, offer, present
+            request, // process a presentation request.
+            authorize, // authorize the presentation request.
+            present, // present the authorized presentation request.
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -90,14 +92,11 @@ pub fn run() {
 
 /// The `start` command is called by the shell on load.
 #[tauri::command]
-async fn start(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
+async fn start(state: State<'_, StateModel>) -> Result<ViewModel, error::AppError> {
     log::info!("start invoked");
-    let mut app_state = state.app_state.lock().await;
-    app_state.init();
+    let app_state = state.app_state.lock().await;
     let view: ViewModel = app_state.clone().into();
-    log::info!("emitting state_updated");
-    app.emit("state_updated", view).map_err(error::AppError::from)?;
-    Ok(())
+    Ok(view)
 }
 
 /// The `reset` command is called whenever the shell finishes a workflow, including abandoning it.
@@ -208,4 +207,109 @@ async fn get_credentials(
     log::info!("emitting state_updated");
     app.emit("state_updated", view).map_err(error::AppError::from)?;
     Ok(())
+}
+
+//-----------------------------------------------------------------------------------------------
+// Presentation Commands
+//-----------------------------------------------------------------------------------------------
+
+/// The `request` command processes a presentation request. Performs the same operation as the deep
+/// link listener but is useful for demo and testing purposes.
+#[tauri::command]
+async fn request(
+    state: State<'_, StateModel>, app: AppHandle, request: String,
+) -> Result<(), error::AppError> {
+    log::info!("request invoked: {request}");
+    let mut app_state = state.app_state.lock().await;
+    let provider = Provider::new(app.clone(), state.state_store.clone());
+    app_state.request(&request, provider).await?;
+    let view: ViewModel = app_state.clone().into();
+    log::info!("emitting state_updated");
+    app.emit("state_updated", view).map_err(error::AppError::from)?;
+    Ok(())
+}
+
+/// The `authorize` command authorizes the verifier's presentation request. This will emit a status
+/// update to indicate the holder has authorized the request and we can proceed to making the
+/// presentation.
+#[tauri::command]
+async fn authorize(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
+    log::info!("authorize invoked");
+    let mut app_state = state.app_state.lock().await;
+    let provider = Provider::new(app.clone(), state.state_store.clone());
+    app_state.authorize(provider).await?;
+    let view: ViewModel = app_state.clone().into();
+    log::info!("emitting state_updated");
+    app.emit("state_updated", view).map_err(error::AppError::from)?;
+    Ok(())
+}
+
+/// The `present` command presents the authorized presentation request.
+#[tauri::command]
+async fn present(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
+    log::info!("present invoked");
+    let mut app_state = state.app_state.lock().await;
+    let provider = Provider::new(app.clone(), state.state_store.clone());
+    app_state.present(provider.clone()).await?;
+    app_state.reset(provider.clone()).await?;
+    let view: ViewModel = app_state.clone().into();
+    log::info!("emitting state_updated");
+    app.emit("state_updated", view).map_err(error::AppError::from)?;
+    Ok(())
+}
+
+//-----------------------------------------------------------------------------------------------
+// Handle deep links
+//-----------------------------------------------------------------------------------------------
+
+fn deep_link(event: &tauri::Event, app: &AppHandle) {
+    const OFFER_PREFIX: &str = "openid-credential-offer://?credential_offer=";
+    const REQUEST_PREFIX: &str = "openid-vc://request_uri=";
+
+    // trim '[]' wrapping payload
+    let payload = event.payload();
+    let Some(link) = payload.get(2..payload.len() - 2) else {
+        return;
+    };
+
+    let state: tauri::State<StateModel> = app.state();
+
+    let provider = Provider::new(app.clone(), state.state_store.clone());
+
+    if link.starts_with(OFFER_PREFIX) {
+        let offer = link.strip_prefix(OFFER_PREFIX).unwrap_or_default();
+        tauri::async_runtime::block_on({
+            async move {
+                log::info!("issuance offer deep link: {offer}");
+                let mut app_state = state.app_state.lock().await;
+                if let Err(e) = app_state.offer(offer, provider.clone()).await {
+                    log::error!("error processing offer: {e}");
+                    return;
+                }
+                let view: ViewModel = app_state.clone().into();
+                log::info!("emitting state_updated");
+                if let Err(e) = app.emit("state_updated", view).map_err(error::AppError::from) {
+                    log::error!("error emitting state_updated: {e}");
+                };
+            }
+        });
+    } else if link.starts_with(REQUEST_PREFIX) {
+        let request = link.strip_prefix(REQUEST_PREFIX).unwrap_or_default();
+        tauri::async_runtime::block_on({
+            async move {
+                log::info!("presentation request deep link: {request}");
+                let mut app_state = state.app_state.lock().await;
+                let provider = Provider::new(app.clone(), state.state_store.clone());
+                if let Err(e) = app_state.request(request, provider).await {
+                    log::error!("error processing request: {e}");
+                    return;
+                };
+                let view: ViewModel = app_state.clone().into();
+                log::info!("emitting state_updated");
+                if let Err(e) = app.emit("state_updated", view).map_err(error::AppError::from) {
+                    log::error!("error emitting state_updated: {e}");
+                };
+            }
+        });
+    }
 }

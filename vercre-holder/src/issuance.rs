@@ -10,6 +10,9 @@ mod pin;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+
 pub use offer::OfferRequest;
 pub use openid4vc::issuance::{
     CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse, GrantType,
@@ -17,7 +20,9 @@ pub use openid4vc::issuance::{
     TxCode,
 };
 pub use pin::PinRequest;
-use serde::{Deserialize, Serialize};
+
+use crate::provider::StateManager;
+use crate::Endpoint;
 
 /// `Issuance` represents app state across the steps of the issuance flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -70,4 +75,22 @@ pub enum Status {
 
     /// The credential offer has failed, with an error message.
     Failed(String),
+}
+
+/// Get and put issuance state information using the supplied provider.
+impl<P> Endpoint<P>
+    where P: StateManager + Debug
+{
+    async fn get_issuance(&self, id: &str) -> anyhow::Result<Issuance> {
+        let current_state = self.provider.get(id).await?;
+        let issuance = serde_json::from_slice::<Issuance>(&current_state)?;
+        Ok(issuance)
+    }
+
+    async fn put_issuance(&self, issuance: &Issuance) -> anyhow::Result<()> {
+        self.provider
+            .put(&issuance.id, serde_json::to_vec(&issuance)?, DateTime::<Utc>::MAX_UTC)
+            .await?;
+        Ok(())
+    }
 }

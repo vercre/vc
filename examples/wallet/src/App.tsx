@@ -8,6 +8,7 @@ import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import Credential from './Credential';
 import Issuance from './Issuance';
 import Layout from './Layout';
+import Presentation from './Presentation';
 import Splash from './Splash';
 import { theme } from "./theme";
 import { ViewModel } from './types/generated';
@@ -40,11 +41,20 @@ const App = () => {
 
     // Invoke start if view is not set
     useEffect(() => {
-        if (!view) {
-            console.log("invoking start");
-            invoke("start");
+        if (view) {
+            return;
         }
-    }, [view])
+        const initView = async () => {
+            console.log("invoking start");
+            try {
+                const startView = await invoke("start") as ViewModel;
+                setView(startView);
+            } catch (e) {
+                console.error("Error invoking start", e);
+            }
+        };
+        initView();
+    }, [view]);
 
     return (
         <ThemeProvider theme={theme}>
@@ -54,6 +64,7 @@ const App = () => {
                 : <Layout>
                 {view?.sub_app === "Credential" && <Credential model={view.credential}  /> }
                 {(view?.sub_app === "Issuance" && view?.issuance) && <Issuance issuance={view.issuance} />}
+                {(view?.sub_app === "Presentation" && view?.presentation) && <Presentation presentation={view.presentation} />}
                 </Layout>
             }
         </ThemeProvider>

@@ -7,6 +7,7 @@ use openid4vc::issuance::{
     CredentialDefinition, CredentialRequest, CredentialResponse, Issuer, MetadataRequest,
     MetadataResponse, TokenRequest, TokenResponse,
 };
+use openid4vc::presentation::{RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse};
 use openid4vc::{Client, Server};
 use provider::{
     Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Jwk, Payload, ServerMetadata,
@@ -15,7 +16,7 @@ use provider::{
 use providers::issuance::{Provider as ExampleIssuanceProvider, CREDENTIAL_ISSUER};
 use providers::wallet::Provider as ExampleWalletProvider;
 use vercre_exch::Constraints;
-use vercre_holder::callback::{CredentialStorer, IssuerClient};
+use vercre_holder::callback::{CredentialStorer, IssuerClient, VerifierClient};
 use vercre_holder::credential::{Credential, Logo};
 
 #[derive(Default, Debug, Clone)]
@@ -67,6 +68,32 @@ impl IssuerClient for TestProvider {
 
     async fn get_logo(&self, _flow_id: &str, _logo_url: &str) -> anyhow::Result<Logo> {
         Ok(Logo::default())
+    }
+}
+
+impl VerifierClient for TestProvider {
+    async fn get_request_object(
+        &self, _flow_id: &str, req: &str,
+    ) -> anyhow::Result<RequestObjectResponse> {
+        let parts = req.rsplitn(3, '/').collect::<Vec<&str>>();
+        if parts.len() < 3 {
+            return Err(anyhow::anyhow!("invalid request string"));
+        }
+        let request = RequestObjectRequest {
+            client_id: parts[2].into(),
+            state: parts[0].into(),
+        };
+        let endpoint = vercre_verifier::Endpoint::new(self.issuance_provider.clone());
+        let response = endpoint.request_object(&request).await?;
+        Ok(response)
+    }
+
+    async fn present(
+        &self, _flow_id: &str, _uri: &str, presentation: &ResponseRequest,
+    ) -> anyhow::Result<ResponseResponse> {
+        let endpoint = vercre_verifier::Endpoint::new(self.issuance_provider.clone());
+        let response = endpoint.response(&presentation).await?;
+        Ok(response)
     }
 }
 

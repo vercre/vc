@@ -23,6 +23,8 @@ pub struct Credential {
 
     /// The unpacked Verifiable Credential. Used to display VC details and for `JSONPath`
     /// Presentation Definition queries.
+    // TODO: Simplify. Make this a Value or a serialised VC or a stripped-down struct that helps
+    // with display and filtering.
     pub vc: VerifiableCredential,
 
     /// `CredentialConfiguration` metadata
