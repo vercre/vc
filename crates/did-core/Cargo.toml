@@ -17,6 +17,10 @@ version.workspace = true
 [lib]
 # crate-type = ["cdylib", "rlib"]
 
+[features]
+default = []
+secp256k1 = []
+
 [lints]
 workspace = true
 
@@ -36,9 +40,10 @@ iref = { version = "2.2.2", features = ["serde"] }
 multibase = "0.8"
 percent-encoding = { version = "2.1", optional = true }
 reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls"], optional = true }
+serde_json_path = "0.6.7"
 serde_urlencoded = "0.7"
-static-iref = "2.0.0"
 thiserror = "1.0"
+url = "2.5.2"
 
 [dev-dependencies]
 insta = { version = "1.39.0", features = ["filters", "redactions", "yaml"] }

@@ -5,11 +5,13 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::Jwk;
+
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub struct DidDocument {
+pub struct Document {
     #[serde(rename = "@context")]
-    pub context: Vec<Context>,
+    pub context: Vec<Kind<Value>>,
 
     /// The DID for a particular DID subject.
     ///
@@ -31,7 +33,7 @@ pub struct DidDocument {
     /// verification methods are to be considered equivalent to proofs provided by the
     /// DID subject.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub controller: Option<OneSet<String>>,
+    pub controller: Option<Quota<String>>,
 
     /// If set, MUST be a set of verification methods for the DID subject.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -48,33 +50,33 @@ pub struct DidDocument {
     /// subject is expected to be authenticated, for purposes such as logging into
     /// a website or engaging in any sort of challenge-response protocol.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub authentication: Option<Vec<StrMap<VerificationMethod>>>,
+    pub authentication: Option<Vec<Kind<VerificationMethod>>>,
 
     /// The `assertion_method` verification relationship is used to specify how the DID
     /// subject is expected to express claims, such as for the purposes of issuing a
     /// Verifiable Credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub assertion_method: Option<Vec<StrMap<VerificationMethod>>>,
+    pub assertion_method: Option<Vec<Kind<VerificationMethod>>>,
 
     /// The `key_agreement` verification relationship is used to specify how an entity
     /// can generate encryption material in order to transmit confidential information
     /// intended for the DID subject, such as for the purposes of establishing a secure
     /// communication channel with the recipient.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub key_agreement: Option<Vec<StrMap<VerificationMethod>>>,
+    pub key_agreement: Option<Vec<Kind<VerificationMethod>>>,
 
     /// The `capability_invocation` verification relationship is used to specify a
     /// verification method that might be used by the DID subject to invoke a
     /// cryptographic capability, such as the authorization to update the DID Document.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub capability_invocation: Option<Vec<StrMap<VerificationMethod>>>,
+    pub capability_invocation: Option<Vec<Kind<VerificationMethod>>>,
 
     /// The `capability_delegation` verification relationship is used to specify a
     /// mechanism that might be used by the DID subject to delegate a cryptographic
     /// capability to another party, such as delegating the authority to access a
     /// specific HTTP API to a subordinate.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub capability_delegation: Option<Vec<StrMap<VerificationMethod>>>,
+    pub capability_delegation: Option<Vec<Kind<VerificationMethod>>>,
 
     /// A set of services, that express ways of communicating with the DID subject
     /// or related entities.
@@ -82,7 +84,7 @@ pub struct DidDocument {
     pub service: Option<Vec<Service>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub did_document_metadata: Option<DidDocumentMetadata>,
+    pub did_document_metadata: Option<DocumentMetadata>,
 }
 
 /// A DID document can express verification methods, such as cryptographic public keys,
@@ -104,12 +106,12 @@ pub struct VerificationMethod {
     /// document.
     #[serde(rename = "@context")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub context: Option<Context>,
+    pub context: Option<Kind<Value>>,
 
     /// A DID that identifies the verification method.
     pub id: String,
 
-    /// Type references a verification method type.
+    /// Kind references a verification method type.
     ///
     /// The verification method type SHOULD be registered in the DID Specification
     /// Registries
@@ -130,7 +132,7 @@ pub struct VerificationMethod {
     /// It is RECOMMENDED that verification methods that use JWKs use the `kid` value
     /// as the fragment identifier.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub public_key_jwk: Option<PublicKeyJwk>,
+    pub public_key_jwk: Option<Jwk>,
 }
 
 /// Services are used to express ways of communicating with the DID subject or
@@ -155,22 +157,14 @@ pub struct Service {
     pub type_: String,
 
     /// One or more endpoints for the service.
-    pub service_endpoint: OneSet<StrMap<Value>>,
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct PublicKeyJwk {
-    pub kty: String,
-    pub crv: String,
-    pub x: String,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub y: Option<String>,
+    #[allow(clippy::struct_field_names)]
+    pub service_endpoint: Quota<Kind<Value>>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub struct DidDocumentMetadata {
+#[allow(clippy::module_name_repetitions)]
+pub struct DocumentMetadata {
     pub method: MethodMetadata,
     pub equivalent_id: Vec<String>,
 }
@@ -183,53 +177,39 @@ pub struct MethodMetadata {
     pub update_commitment: String,
 }
 
-// ----------------------------------------------------------------------------
-// TODO: move deserialize/serialize enums to shared location
-// ----------------------------------------------------------------------------
-
-/// Wrap the @context property to support serialization/deserialization of an ordered
-/// set composed of any combination of URLs and/or objects, each processable as a
-/// [JSON-LD Context](https://www.w3.org/TR/json-ld11/#the-context).
+/// Determines how Serde will serialize/deserialize the field: as a single entity
+/// or a set of entities.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum Context {
-    /// A single JSON-LD term.
-    String(String),
-    /// A map of JSON-LD terms.
-    Map(Value),
-}
-
-/// `OneSet` allows serde to serialize/deserialize a single object or a set of objects.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum OneSet<T> {
-    /// Single object
+pub enum Quota<T> {
+    /// Value is a singleton.
     One(T),
 
-    /// Set of objects
-    Set(Vec<T>),
+    /// Value is a set.
+    Many(Vec<T>),
 }
 
-impl<T: Default> Default for OneSet<T> {
+impl<T: Default> Default for Quota<T> {
     fn default() -> Self {
         Self::One(T::default())
     }
 }
 
-/// `StrMap` allows serde to serialize/deserialize a string or an object.
+/// Determines how Serde will serialize/deserialize the field: as a string or the
+/// type specified by `T`.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum StrMap<T> {
-    /// Field is a string
-    String(String),
+pub enum Kind<T> {
+    /// Value is a string
+    Simple(String),
 
-    /// Field is an object
-    Map(T),
+    /// Value is an object
+    Rich(T),
 }
 
-impl<T: Default> Default for StrMap<T> {
+impl<T: Default> Default for Kind<T> {
     fn default() -> Self {
-        Self::String(String::new())
+        Self::Simple(String::new())
     }
 }
 
@@ -242,14 +222,10 @@ mod test {
     use super::*;
 
     #[test]
-    fn serialize() {}
+    fn test_key() {
+        let de: Document = serde_json::from_value(DID_KEY.to_owned()).expect("should deserialize");
 
-    #[test]
-    fn deserialize_key() {
-        let de: DidDocument =
-            serde_json::from_value(DID_KEY.to_owned()).expect("should deserialize");
-        println!("de: {de:?}");
-
+        // re-serialise and compare with original
         let ser = serde_json::to_value(de).expect("should serialize");
         assert_eq!(DID_KEY.to_owned(), ser)
     }
