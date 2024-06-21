@@ -92,14 +92,11 @@ pub fn run() {
 
 /// The `start` command is called by the shell on load.
 #[tauri::command]
-async fn start(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
+async fn start(state: State<'_, StateModel>) -> Result<ViewModel, error::AppError> {
     log::info!("start invoked");
-    let mut app_state = state.app_state.lock().await;
-    app_state.init();
+    let app_state = state.app_state.lock().await;
     let view: ViewModel = app_state.clone().into();
-    log::info!("emitting state_updated");
-    app.emit("state_updated", view).map_err(error::AppError::from)?;
-    Ok(())
+    Ok(view)
 }
 
 /// The `reset` command is called whenever the shell finishes a workflow, including abandoning it.

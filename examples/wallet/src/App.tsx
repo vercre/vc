@@ -41,11 +41,20 @@ const App = () => {
 
     // Invoke start if view is not set
     useEffect(() => {
-        if (!view) {
-            console.log("invoking start");
-            invoke("start");
+        if (view) {
+            return;
         }
-    }, [view])
+        const initView = async () => {
+            console.log("invoking start");
+            try {
+                const startView = await invoke("start") as ViewModel;
+                setView(startView);
+            } catch (e) {
+                console.error("Error invoking start", e);
+            }
+        };
+        initView();
+    }, [view]);
 
     return (
         <ThemeProvider theme={theme}>
