@@ -19,14 +19,11 @@ use crate::document::{
 use crate::{Curve, KeyType, PublicKeyJwk};
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
-const CURVE25519_CODEC: [u8; 2] = [0xec, 0x01];
+const X25519_CODEC: [u8; 2] = [0xec, 0x01];
 
 static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new("^did:key:(?<key>z[a-km-zA-HJ-NP-Z1-9]+)$").expect("should compile")
 });
-
-// TODO: key agreement
-// https://w3c-ccg.github.io/did-method-key/#encryption-method-creation-algorithm
 
 pub struct DidOp;
 
@@ -74,9 +71,9 @@ impl Operator for DidOp {
             )
         };
 
+        // key agreement
+        // See <https://w3c-ccg.github.io/did-method-key/#encryption-method-creation-algorithm>
         let key_agreement = if options.enable_encryption_key_derivation {
-            // See <https://w3c-ccg.github.io/did-method-key/#encryption-method-creation-algorithm>
-
             // derive an X25519 public encryption key from the Ed25519 key
             let edwards_y = CompressedEdwardsY::from_slice(&key_bytes[2..]).map_err(|e| {
                 Error::InvalidPublicKey(format!("public key is not Edwards Y: {e}"))
@@ -90,7 +87,7 @@ impl Operator for DidOp {
 
             // base58B encode the raw key
             let mut multi_bytes = vec![];
-            multi_bytes.extend_from_slice(&CURVE25519_CODEC);
+            multi_bytes.extend_from_slice(&X25519_CODEC);
             multi_bytes.extend_from_slice(&x25519_bytes);
             let ek_multibase = multibase::encode(Base58Btc, &multi_bytes);
 

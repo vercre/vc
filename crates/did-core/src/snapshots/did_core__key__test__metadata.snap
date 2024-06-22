@@ -1,0 +1,14 @@
+---
+source: crates/did-core/src/key.rs
+assertion_line: 114
+expression: resolved.metadata
+---
+{
+  "contentType": "application/did+ld+json",
+  "did": {
+    "didString": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+    "method": "key",
+    "methodSpecificId": "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+  },
+  "pattern": "^did:key:z[a-km-zA-HJ-NP-Z1-9]+$"
+}

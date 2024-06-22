@@ -96,114 +96,25 @@ impl Resolver for DidKey {
 
 #[cfg(test)]
 mod test {
-    use std::sync::LazyLock;
-
-    use serde_json::{json, Value};
+    use insta::assert_json_snapshot as assert_snapshot;
 
     use super::*;
-    use crate::document::Document;
+
+    const DID: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
+    const DID_URL: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
 
     #[test]
     fn resolve() {
         let resolved = DidKey.resolve(DID, None).expect("should resolve");
 
-        // check document is expected
-        let document: Document =
-            serde_json::from_value(DOCUMENT_MULTI.to_owned()).expect("should deserialize");
-        assert_eq!(resolved.document, Some(document));
-
-        // check metadata is expected
-        let metadata: Metadata =
-            serde_json::from_value(METADATA.to_owned()).expect("should deserialize");
-        assert_eq!(resolved.metadata, metadata);
+        assert_snapshot!("document", resolved.document);
+        assert_snapshot!("metadata", resolved.metadata);
     }
 
     #[test]
     fn dereference() {
-        let resolved = DidKey.dereference(DID_URL, None).expect("should resolve");
-        println!("did_url: {:?}", resolved);
-    }
+        let resource = DidKey.dereference(DID_URL, None).expect("should resolve");
 
-    const DID: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
-    // const DID: &str = "did:key:z6LSj72tK8brWgZja8NLRwPigth2T9QRiG1uH9oKZuKjdh9p";
-    const DID_URL: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
-    static DOCUMENT_MULTI: LazyLock<Value> = LazyLock::new(|| {
-        json!({
-            "@context": [
-                "https://www.w3.org/ns/did/v1",
-                "https://w3id.org/security/data-integrity/v1"
-            ],
-            "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-            "verificationMethod": [
-                {
-                    "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-                    "type": "Multikey",
-                    "controller": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-                    "publicKeyMultibase": "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
-                }
-            ],
-            "authentication": [
-                "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
-            ],
-            "assertionMethod": [
-                "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
-            ],
-            "capabilityInvocation": [
-                "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
-            ],
-            "capabilityDelegation": [
-                "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
-            ],
-            "keyAgreement": [{
-                "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6LSj72tK8brWgZja8NLRwPigth2T9QRiG1uH9oKZuKjdh9p",
-                "type": "Multikey",
-                "controller": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-                "publicKeyMultibase": "z6LSj72tK8brWgZja8NLRwPigth2T9QRiG1uH9oKZuKjdh9p"
-            }]
-        })
-    });
-    // static DOCUMENT_JWK: LazyLock<Value> = LazyLock::new(|| {
-    //     json!({
-    //         "@context": [
-    //             "https://www.w3.org/ns/did/v1",
-    //             {
-    //                 "Ed25519VerificationKey2020": "https://w3id.org/security#Ed25519VerificationKey2020",
-    //                 "publicKeyJwk": {
-    //                     "@id": "https://w3id.org/security#publicKeyJwk",
-    //                     "@type": "@json"
-    //                 }
-    //             }
-    //         ],
-    //         "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-    //         "verificationMethod": [
-    //             {
-    //                 "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-    //                 "type": "Ed25519VerificationKey2020",
-    //                 "controller": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-    //                 "publicKeyJwk": {
-    //                     "kty": "OKP",
-    //                     "crv": "Ed25519",
-    //                     "x": "Lm_M42cB3HkUiODQsXRcweM6TByfzEHGO9ND274JcOY"
-    //                 }
-    //             }
-    //         ],
-    //         "authentication": [
-    //             "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
-    //         ],
-    //         "assertionMethod": [
-    //             "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
-    //         ]
-    //     })
-    // });
-    static METADATA: LazyLock<Value> = LazyLock::new(|| {
-        json!({
-          "contentType": "application/did+ld+json",
-          "pattern": "^did:key:z[a-km-zA-HJ-NP-Z1-9]+$",
-          "did": {
-            "didString": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-            "methodSpecificId": "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-            "method": "key"
-          }
-        })
-    });
+        assert_snapshot!("resource", resource);
+    }
 }

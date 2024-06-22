@@ -96,6 +96,11 @@ pub struct Document {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub controller: Option<Quota<String>>,
 
+    /// A set of services, that express ways of communicating with the DID subject
+    /// or related entities.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub service: Option<Vec<Service>>,
+
     /// If set, MUST be a set of verification methods for the DID subject.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub verification_method: Option<Vec<VerificationMethod>>,
@@ -119,13 +124,6 @@ pub struct Document {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub assertion_method: Option<Vec<Kind<VerificationMethod>>>,
 
-    /// The `key_agreement` verification relationship is used to specify how an entity
-    /// can generate encryption material in order to transmit confidential information
-    /// intended for the DID subject, such as for the purposes of establishing a secure
-    /// communication channel with the recipient.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub key_agreement: Option<Vec<Kind<VerificationMethod>>>,
-
     /// The `capability_invocation` verification relationship is used to specify a
     /// verification method that might be used by the DID subject to invoke a
     /// cryptographic capability, such as the authorization to update the DID Document.
@@ -139,10 +137,12 @@ pub struct Document {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub capability_delegation: Option<Vec<Kind<VerificationMethod>>>,
 
-    /// A set of services, that express ways of communicating with the DID subject
-    /// or related entities.
+    /// The `key_agreement` verification relationship is used to specify how an entity
+    /// can generate encryption material in order to transmit confidential information
+    /// intended for the DID subject, such as for the purposes of establishing a secure
+    /// communication channel with the recipient.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub service: Option<Vec<Service>>,
+    pub key_agreement: Option<Vec<Kind<VerificationMethod>>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub did_document_metadata: Option<DocumentMetadata>,
