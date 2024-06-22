@@ -28,7 +28,7 @@ impl Resolver for DidKey {
     fn resolve(&self, did: &str, _opts: Option<Options>) -> did::Result<Resolution> {
         // check DID is valid AND extract key
         let Some(caps) = DID_REGEX.captures(did) else {
-            return Err(Error::InvalidDid("DID is not a valid did:key".to_string()));
+            return Err(Error::InvalidDid("DID is not a valid did:key".into()));
         };
         let key = &caps["key"];
 
@@ -39,6 +39,7 @@ impl Resolver for DidKey {
             .map_err(|e| Error::InvalidDid(e.to_string()))?;
 
         Ok(Resolution {
+            context: "https://w3id.org/did-resolution/v1".into(),
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
                 additional: Some(json!({
@@ -59,23 +60,23 @@ impl Resolver for DidKey {
     fn dereference(&self, did_url: &str, _opts: Option<Options>) -> did::Result<Resource> {
         // validate URL against pattern
         if !URL_REGEX.is_match(did_url) {
-            return Err(Error::InvalidDidUrl("invalid did:key URL".to_string()));
+            return Err(Error::InvalidDidUrl("invalid did:key URL".into()));
         }
         let url = url::Url::parse(did_url)
             .map_err(|e| Error::InvalidDidUrl(format!("issue parsing URL: {e}")))?;
 
-        // extract resolution options from query string (if any)
-        let options = match url.query().as_ref() {
-            Some(query) => Some(
-                serde_urlencoded::from_str::<Options>(query)
-                    .map_err(|e| Error::InvalidDidUrl(format!("issue parsing query: {e}")))?,
-            ),
-            None => None,
-        };
+        // extract URL parameters from query string (if any)
+        // let params = match url.query().as_ref() {
+        //     Some(query) => Some(
+        //         serde_urlencoded::from_str::<Parameters>(query)
+        //             .map_err(|e| Error::InvalidDidUrl(format!("issue parsing query: {e}")))?,
+        //     ),
+        //     None => None,
+        // };
 
         // resolve DID document
         let did = format!("did:{}", url.path());
-        let resolution = self.resolve(&did, options)?;
+        let resolution = self.resolve(&did, None)?;
 
         Ok(Resource {
             metadata: Metadata {

@@ -134,33 +134,40 @@ pub struct Options {
     pub additional: Option<HashMap<String, Metadata>>,
 }
 
-/// [DID Parameters](https://www.w3.org/TR/did-core/#did-parameters).
-///
-/// As specified in DID Core and/or in [DID Specification
-/// Registries](https://www.w3.org/TR/did-spec-registries/#parameters).
+/// The DID URL syntax supports parameters in the URL query component. Adding a DID
+/// parameter to a DID URL means the parameter becomes part of the identifier for a
+/// resource.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Parameters {
+    /// Identifies a service from the DID document by service's ID.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub service: Option<String>, // ASCII
+    pub service: Option<String>,
 
+    /// A relative URI reference that identifies a resource at a service endpoint,
+    /// which is selected from a DID document by using the service parameter.
+    /// MUST use URL encoding if set.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(alias = "relative-ref")]
-    /// [`relativeRef`](https://www.w3.org/TR/did-spec-registries/#relativeRef-param) parameter.
-    pub relative_ref: Option<String>, // ASCII, percent-encoding
+    pub relative_ref: Option<String>,
 
-    /// [`versionId`](https://www.w3.org/TR/did-spec-registries/#versionId-param) parameter.
+    /// Identifies a specific version of a DID document to be resolved (the version ID
+    /// could be sequential, or a UUID, or method-specific).
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub version_id: Option<String>, // ASCII
+    pub version_id: Option<String>,
 
-    /// [`versionTime`](https://www.w3.org/TR/did-spec-registries/#versionTime-param) parameter.
+    /// Identifies a version timestamp of a DID document to be resolved. That is, the
+    /// DID document that was valid for a DID at a certain time.
+    /// An XML datetime value [XMLSCHEMA11-2] normalized to UTC 00:00:00 without
+    /// sub-second decimal precision. For example: 2020-12-20T19:17:47Z.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub version_time: Option<String>, // ASCII
+    pub version_time: Option<String>,
 
-    /// [`hl`](https://www.w3.org/TR/did-spec-registries/#hl-param) parameter.
+    /// A resource hash of the DID document to add integrity protection, as specified
+    /// in [HASHLINK]. This parameter is non-normative.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "hl")]
-    pub hashlink: Option<String>, // ASCII
+    pub hashlink: Option<String>,
 
     /// Additional parameters.
     #[serde(flatten)]
@@ -184,10 +191,6 @@ pub struct Resolution {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub document_metadata: Option<DocumentMetadata>,
 }
-
-// fn default_context() -> String {
-//     "https://w3id.org/did-resolution/v1".to_string()
-// }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
