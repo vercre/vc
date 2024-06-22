@@ -70,17 +70,17 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            start,  // called by the shell on load.
-            reset,  // called when the shell application has finished it's initialisation.
-            select, // select a credential to view the detail.
-            delete, // delete a credential.
-            offer,  // submit a credential issuance offer directly from shell input.
-            accept, // accept a credential issuance offer.
-            pin,    // set a user PIN on the token request.
+            start,           // called by the shell on load.
+            reset,           // called when the shell application has finished it's initialisation.
+            select,          // select a credential to view the detail.
+            delete,          // delete a credential.
+            offer,           // submit a credential issuance offer directly from shell input.
+            accept,          // accept a credential issuance offer.
+            pin,             // set a user PIN on the token request.
             get_credentials, // get the credentials for the accepted issuance offer.
-            request, // process a presentation request.
-            authorize, // authorize the presentation request.
-            present, // present the authorized presentation request.
+            request,         // process a presentation request.
+            authorize,       // authorize the presentation request.
+            present,         // present the authorized presentation request.
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

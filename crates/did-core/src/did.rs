@@ -24,6 +24,20 @@ pub enum Error {
     #[error("invalidDidUrl")]
     InvalidDidUrl(String),
 
+    // ---- Creation Errors ----  //
+    /// The byte length of raw public key does not match that expected for the
+    /// associated multicodecValue.
+    #[error("invalidPublicKeyLength")]
+    InvalidPublicKeyLength(String),
+
+    /// The public key is invalid
+    #[error("invalidPublicKey")]
+    InvalidPublicKey(String),
+
+    /// Public key format is not known to the implementation.
+    #[error("unsupportedPublicKeyType")]
+    UnsupportedPublicKeyType(String),
+
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
@@ -39,7 +53,10 @@ impl Error {
             | Self::InvalidDid(msg)
             | Self::NotFound(msg)
             | Self::InvalidDidUrl(msg)
-            | Self::RepresentationNotSupported(msg) => msg.clone(),
+            | Self::RepresentationNotSupported(msg)
+            | Self::InvalidPublicKeyLength(msg)
+            | Self::InvalidPublicKey(msg)
+            | Self::UnsupportedPublicKeyType(msg) => msg.clone(),
             Self::Other(err) => err.to_string(),
         }
     }

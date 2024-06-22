@@ -2,10 +2,59 @@
 //!
 //! A DID Document is a JSON-LD document that contains information related to a DID.
 
+use std::collections::HashMap;
+use std::fmt::{self, Display, Formatter};
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::Jwk;
+use crate::{did, PublicKeyJwk};
+
+/// DID resolution functions required to be implemented by conforming DID resolvers.
+pub trait Operator {
+    /// Creates a DID document for the given DID method.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the DID Document cannot be created.
+    fn create(&self, did: &str, options: CreateOptions) -> did::Result<Document>;
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateOptions {
+    /// Format to use for the the public key.
+    pub public_key_format: PublicKeyFormat,
+
+    /// Default context for the DID document. SHOULD be set to
+    /// `"https://www.w3.org/ns/did/v1"`.
+    pub default_context: String,
+
+    /// Enable experimental public key types. SHOULD be set to "false".
+    pub enable_experimental_public_key_types: bool,
+
+    /// Will add a `keyAgreement` object to the DID document.
+    pub enable_encryption_key_derivation: bool,
+
+    // service_endpoints: Vec<Value>,
+    // verification_methods: Vec<Value>,
+    // authentication: Vec<Value>,
+    /// Additional options.
+    #[serde(flatten)]
+    pub additional: Option<HashMap<String, String>>,
+}
+
+impl Default for CreateOptions {
+    fn default() -> Self {
+        Self {
+            public_key_format: PublicKeyFormat::default(),
+            enable_experimental_public_key_types: false,
+            default_context: "https://www.w3.org/ns/did/v1".to_string(),
+            enable_encryption_key_derivation: false,
+            additional: None,
+        }
+    }
+}
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -111,28 +160,57 @@ pub struct VerificationMethod {
     /// A DID that identifies the verification method.
     pub id: String,
 
-    /// Kind references a verification method type.
-    ///
-    /// The verification method type SHOULD be registered in the DID Specification
-    /// Registries
+    /// Kind references a verification method type. SHOULD be a registered type
+    /// (in DID Specification Registries).
     #[serde(rename = "type")]
-    pub type_: String,
+    pub type_: PublicKeyFormat,
 
     /// The DID of the controller of the verification method.
     pub controller: String,
 
-    /// The public key material for the verification method. MUST NOT be set if the
-    /// `public_key_jwk` property is set.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub public_key_multibase: Option<String>,
+    /// The public key material for the verification method.
+    #[serde(flatten)]
+    pub public_key: PublicKey,
+}
 
-    /// The public key material for the verification method. MUST NOT be set if the
-    /// `public_key_multibase` property is set.
-    ///
-    /// It is RECOMMENDED that verification methods that use JWKs use the `kid` value
-    /// as the fragment identifier.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub public_key_jwk: Option<Jwk>,
+/// Cryptographic curve type.
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub enum PublicKeyFormat {
+    /// Key is encoded as a Multibase.
+    #[default]
+    Multikey,
+
+    /// ED2559 Verification Key, 2020 version
+    Ed25519VerificationKey2020,
+    // /// JsonWebKey2020
+    // JsonWebKey2020,
+}
+
+impl Display for PublicKeyFormat {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Multikey => write!(f, "Multikey"),
+            Self::Ed25519VerificationKey2020 => write!(f, "Ed25519VerificationKey2020"),
+        }
+    }
+}
+
+/// Cryptographic curve type.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum PublicKey {
+    /// Public key encoded as a Multibase.
+    #[serde(rename = "publicKeyMultibase")]
+    Multibase(String),
+
+    /// Public key encoded as a JWK.
+    #[serde(rename = "publicKeyJwk")]
+    Jwk(PublicKeyJwk),
+}
+
+impl Default for PublicKey {
+    fn default() -> Self {
+        Self::Multibase(String::new())
+    }
 }
 
 /// Services are used to express ways of communicating with the DID subject or

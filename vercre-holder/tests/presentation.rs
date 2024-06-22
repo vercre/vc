@@ -67,7 +67,7 @@ async fn e2e_presentation() {
     // flow.
     let credential = sample_credential().await;
     CredentialStorer::save(&PROVIDER.clone(), &credential).await.expect("should save credential");
-    
+
     // Use the presentation service endpoint to create a sample request so we can get a valid
     // presentation request object.
     let init_request = vercre_verifier::Endpoint::new(PROVIDER.clone())

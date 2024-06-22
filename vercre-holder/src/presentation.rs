@@ -94,7 +94,8 @@ impl std::str::FromStr for Status {
 
 /// Get and put presentation state information using the supplied provider.
 impl<P> Endpoint<P>
-    where P: StateManager + Debug
+where
+    P: StateManager + Debug,
 {
     async fn get_presentation(&self, id: &str) -> anyhow::Result<Presentation> {
         let current_state = self.provider.get(id).await?;

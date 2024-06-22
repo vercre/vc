@@ -2,8 +2,8 @@
 
 use vercre_holder::Endpoint;
 
-use crate::provider::Provider;
 use super::{AppState, SubApp};
+use crate::provider::Provider;
 
 impl AppState {
     /// Process a presentation request.

@@ -11,10 +11,9 @@ use openid4vc::issuance::{CredentialConfiguration, CredentialOffer, MetadataRequ
 use tracing::instrument;
 use uuid::Uuid;
 
+use super::{Issuance, Status};
 use crate::provider::{IssuerClient, StateManager};
 use crate::Endpoint;
-
-use super::{Issuance, Status};
 
 /// `OfferRequest` is the request to the `offer` endpoint to initiate an issuance flow.
 #[derive(Clone, Debug, Default)]

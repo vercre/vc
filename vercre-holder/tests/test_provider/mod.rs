@@ -7,7 +7,9 @@ use openid4vc::issuance::{
     CredentialDefinition, CredentialRequest, CredentialResponse, Issuer, MetadataRequest,
     MetadataResponse, TokenRequest, TokenResponse,
 };
-use openid4vc::presentation::{RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse};
+use openid4vc::presentation::{
+    RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
+};
 use openid4vc::{Client, Server};
 use provider::{
     Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Jwk, Payload, ServerMetadata,

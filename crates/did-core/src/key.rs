@@ -2,24 +2,20 @@
 //!
 //! See <https://w3c-ccg.github.io/did-method-key/#create>
 
+mod operations;
+
 use std::sync::LazyLock;
 
-use base64ct::{Base64UrlUnpadded, Encoding};
 use regex::Regex;
 use serde_json::json;
 
 use crate::did::{self, Error};
-use crate::document::{Document, Kind, VerificationMethod};
-use crate::{
-    ContentMetadata, ContentType, Curve, Jwk, KeyType, Metadata, Options, Resolution, Resolver,
-    Resource,
-};
+use crate::document::{CreateOptions, Operator};
+use crate::{ContentMetadata, ContentType, Metadata, Options, Resolution, Resolver, Resource};
 
-const ED25519_PREFIX: [u8; 2] = [0xed, 0x01];
-const VALID_DID: &str = "^did:key:z[a-km-zA-HJ-NP-Z1-9]+$";
-
-static DID_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(VALID_DID).expect("should compile"));
+static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new("^did:key:(?<key>z[a-km-zA-HJ-NP-Z1-9]+)$").expect("should compile")
+});
 static URL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new("^did:key:z[a-km-zA-HJ-NP-Z1-9]+(?:&?[^=&]*=[^=&]*)*(#z[a-km-zA-HJ-NP-Z1-9]+)*$")
         .expect("should compile")
@@ -30,66 +26,23 @@ pub struct DidKey;
 
 impl Resolver for DidKey {
     fn resolve(&self, did: &str, _opts: Option<Options>) -> did::Result<Resolution> {
-        if !DID_REGEX.is_match(did) {
-            return Err(Error::InvalidDidUrl("invalid did:key URL".to_string()));
-        }
-        // if !did.starts_with("did:key:") {
-        //     return Err(Error::InvalidDid("DID is not did:key".into()));
-        // }
-        // if did.split('#').count() > 1 {
-        //     return Err(Error::InvalidDid("DID contains fragment".into()));
-        // }
-
-        // decode the the DID key
-        let (_, raw) = multibase::decode(&did[8..])
-            .map_err(|e| Error::InvalidDid(format!("issue decoding key: {e}")))?;
-        if raw.len() - 2 != 32 {
-            return Err(Error::InvalidDid("invalid key length".into()));
-        }
-        if raw[0..2] != ED25519_PREFIX {
-            return Err(Error::InvalidDid("unsupported signature".into()));
-        }
-
-        // we only support Ed25519 keys (for now)
-        let key_def = "Ed25519VerificationKey2020";
-        let jwk = Jwk {
-            kty: KeyType::OKP,
-            crv: Curve::Ed25519,
-            x: Base64UrlUnpadded::encode_string(&raw[2..]),
-            ..Jwk::default()
+        // check DID is valid AND extract key
+        let Some(caps) = DID_REGEX.captures(did) else {
+            return Err(Error::InvalidDid("DID is not a valid did:key".to_string()));
         };
-        let key = did.split(':').last().unwrap();
-        let kid = format!("{did}#{key}");
+        let key = &caps["key"];
 
-        let document = Document {
-            context: vec![
-                Kind::Simple("https://www.w3.org/ns/did/v1".into()),
-                Kind::Rich(json!({
-                    "publicKeyJwk": {
-                        "@id": "https://w3id.org/security#publicKeyJwk",
-                        "@type": "@json"
-                    },
-                    key_def: format!("https://w3id.org/security#{key_def}"),
-                })),
-            ],
-            id: did.into(),
-            verification_method: Some(vec![VerificationMethod {
-                id: kid.clone(),
-                type_: key_def.into(),
-                controller: did.into(),
-                public_key_jwk: Some(jwk),
-                ..VerificationMethod::default()
-            }]),
-            authentication: Some(vec![Kind::Simple(kid.clone())]),
-            assertion_method: Some(vec![Kind::Simple(kid)]),
-            ..Document::default()
-        };
+        // per the spec, use the create operation to generate a DID document
+        let create_opts = CreateOptions::default();
+        let document = operations::DidOp
+            .create(did, create_opts)
+            .map_err(|e| Error::InvalidDid(e.to_string()))?;
 
         Ok(Resolution {
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
                 additional: Some(json!({
-                    "pattern": VALID_DID,
+                    "pattern": "^did:key:z[a-km-zA-HJ-NP-Z1-9]+$",
                     "did": {
                         "didString": did,
                         "methodSpecificId": key,
@@ -99,7 +52,7 @@ impl Resolver for DidKey {
                 ..Metadata::default()
             },
             document: Some(document),
-            document_metadata: None,
+            ..Resolution::default()
         })
     }
 
@@ -144,16 +97,18 @@ mod test {
     use serde_json::{json, Value};
 
     use super::*;
+    use crate::document::Document;
 
     #[test]
     fn resolve() {
-        let did = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
-        let resolved = DidKey.resolve(did, None).expect("should resolve");
+        let resolved = DidKey.resolve(DID, None).expect("should resolve");
 
+        // check document is expected
         let document: Document =
-            serde_json::from_value(DOCUMENT.to_owned()).expect("should deserialize");
+            serde_json::from_value(DOCUMENT_MULTI.to_owned()).expect("should deserialize");
         assert_eq!(resolved.document, Some(document));
 
+        // check metadata is expected
         let metadata: Metadata =
             serde_json::from_value(METADATA.to_owned()).expect("should deserialize");
         assert_eq!(resolved.metadata, metadata);
@@ -161,35 +116,25 @@ mod test {
 
     #[test]
     fn dereference() {
-        // let did_url = url::Url::parse(DID_URL).expect("should parse");
         let resolved = DidKey.dereference(DID_URL, None).expect("should resolve");
         println!("did_url: {:?}", resolved);
     }
 
-    static DID_URL: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK?test=aw#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
-    static DOCUMENT: LazyLock<Value> = LazyLock::new(|| {
+    const DID: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
+    const DID_URL: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
+    static DOCUMENT_MULTI: LazyLock<Value> = LazyLock::new(|| {
         json!({
             "@context": [
                 "https://www.w3.org/ns/did/v1",
-                {
-                    "Ed25519VerificationKey2020": "https://w3id.org/security#Ed25519VerificationKey2020",
-                    "publicKeyJwk": {
-                        "@id": "https://w3id.org/security#publicKeyJwk",
-                        "@type": "@json"
-                    }
-                }
+                "https://w3id.org/security/data-integrity/v1"
             ],
             "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
             "verificationMethod": [
                 {
                     "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-                    "type": "Ed25519VerificationKey2020",
+                    "type": "Multikey",
                     "controller": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-                    "publicKeyJwk": {
-                        "kty": "OKP",
-                        "crv": "Ed25519",
-                        "x": "Lm_M42cB3HkUiODQsXRcweM6TByfzEHGO9ND274JcOY"
-                    }
+                    "publicKeyMultibase": "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
                 }
             ],
             "authentication": [
@@ -197,9 +142,48 @@ mod test {
             ],
             "assertionMethod": [
                 "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+            ],
+            "capabilityInvocation": [
+                "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+            ],
+            "capabilityDelegation": [
+                "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
             ]
         })
     });
+    // static DOCUMENT_JWK: LazyLock<Value> = LazyLock::new(|| {
+    //     json!({
+    //         "@context": [
+    //             "https://www.w3.org/ns/did/v1",
+    //             {
+    //                 "Ed25519VerificationKey2020": "https://w3id.org/security#Ed25519VerificationKey2020",
+    //                 "publicKeyJwk": {
+    //                     "@id": "https://w3id.org/security#publicKeyJwk",
+    //                     "@type": "@json"
+    //                 }
+    //             }
+    //         ],
+    //         "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+    //         "verificationMethod": [
+    //             {
+    //                 "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+    //                 "type": "Ed25519VerificationKey2020",
+    //                 "controller": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+    //                 "publicKeyJwk": {
+    //                     "kty": "OKP",
+    //                     "crv": "Ed25519",
+    //                     "x": "Lm_M42cB3HkUiODQsXRcweM6TByfzEHGO9ND274JcOY"
+    //                 }
+    //             }
+    //         ],
+    //         "authentication": [
+    //             "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+    //         ],
+    //         "assertionMethod": [
+    //             "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+    //         ]
+    //     })
+    // });
     static METADATA: LazyLock<Value> = LazyLock::new(|| {
         json!({
           "contentType": "application/did+ld+json",

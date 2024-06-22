@@ -1,4 +1,5 @@
 #![allow(missing_docs)]
+#![feature(let_chains)]
 
 //! # DID Resolver
 //!
@@ -77,12 +78,20 @@ pub trait Resolver {
     /// # Errors
     ///
     /// Returns an error if the DID cannot be resolved.
-    fn resolve_representation(&self, did: &str, opts: Option<Options>) -> did::Result<Vec<u8>> {
-        let resolution = self.resolve(did, opts)?;
+    fn resolve_representation(&self, did: &str, options: Option<Options>) -> did::Result<Vec<u8>> {
+        let resolution = self.resolve(did, options.clone())?;
 
-        // TODO: honour the `accept` property's media type
-        serde_json::to_vec(&resolution)
-            .map_err(|e| Error::Other(anyhow!("issue serializing resolution: {e}")))
+        // if media type is application/ld+json, return resolution metadata
+        if let Some(opts) = options
+            && opts.accept == Some(ContentType::DidLdJson)
+        {
+            return serde_json::to_vec(&resolution)
+                .map_err(|e| Error::Other(anyhow!("issue serializing resolution: {e}")));
+        }
+
+        // if media type is application/did+ld+json, only return DID document
+        serde_json::to_vec(&resolution.document)
+            .map_err(|e| Error::Other(anyhow!("issue serializing DID document: {e}")))
     }
 
     /// Dereferences the provided DID URL into a resource with contents depending on the
@@ -111,9 +120,6 @@ pub trait Resolver {
 ///    "accept": "application/did+ld+json"
 /// }
 /// ```
-///
-/// This property is OPTIONAL for the resolveRepresentation function and MUST NOT be
-/// used with the resolve function.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Options {
@@ -121,6 +127,8 @@ pub struct Options {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub accept: Option<ContentType>,
 
+    // pub public_key_format: Option<String>,
+    //
     /// Additional options.
     #[serde(flatten)]
     pub additional: Option<HashMap<String, Metadata>>,
@@ -162,6 +170,9 @@ pub struct Parameters {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Resolution {
+    #[serde(rename = "@context")]
+    pub context: String,
+
     /// Resolution metadata.
     pub metadata: Metadata,
 
@@ -173,6 +184,10 @@ pub struct Resolution {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub document_metadata: Option<DocumentMetadata>,
 }
+
+// fn default_context() -> String {
+//     "https://w3id.org/did-resolution/v1".to_string()
+// }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -220,6 +235,9 @@ pub enum ContentType {
     #[default]
     #[serde(rename = "application/did+ld+json")]
     DidLdJson,
+
+    #[serde(rename = "application/ld+json")]
+    LdJson,
 }
 
 /// Metadata about the `content_stream`. If `content_stream` is a DID document,
@@ -236,7 +254,7 @@ pub struct ContentMetadata {
 
 /// Simplified JSON Web Key (JWK) key structure.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct Jwk {
+pub struct PublicKeyJwk {
     /// Key identifier.
     /// For example, "_Qq0UL2Fq651Q0Fjd6TvnYE-faHiOpRlPVQcY_-tA4A".
     #[serde(skip_serializing_if = "Option::is_none")]
