@@ -1,8 +1,8 @@
 //! # DID Key Resolver
 //!
-//! See <https://w3c-ccg.github.io/did-method-key/#create>
+//! See <https://w3c-ccg.github.io/did-resolution>
 
-mod operations;
+pub mod operations;
 
 use std::sync::LazyLock;
 
@@ -25,7 +25,7 @@ static URL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 pub struct DidKey;
 
 impl Resolver for DidKey {
-    fn resolve(&self, did: &str, _opts: Option<Options>) -> did::Result<Resolution> {
+    fn resolve(&self, did: &str, _: Option<Options>) -> did::Result<Resolution> {
         // check DID is valid AND extract key
         let Some(caps) = DID_REGEX.captures(did) else {
             return Err(Error::InvalidDid("DID is not a valid did:key".into()));
@@ -33,10 +33,13 @@ impl Resolver for DidKey {
         let key = &caps["key"];
 
         // per the spec, use the create operation to generate a DID document
-        let create_opts = CreateOptions::default();
-        let document = operations::DidOp
-            .create(did, create_opts)
-            .map_err(|e| Error::InvalidDid(e.to_string()))?;
+        let options = CreateOptions {
+            enable_encryption_key_derivation: true,
+            ..CreateOptions::default()
+        };
+
+        let document =
+            operations::DidOp.create(did, options).map_err(|e| Error::InvalidDid(e.to_string()))?;
 
         Ok(Resolution {
             context: "https://w3id.org/did-resolution/v1".into(),
@@ -122,6 +125,7 @@ mod test {
     }
 
     const DID: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
+    // const DID: &str = "did:key:z6LSj72tK8brWgZja8NLRwPigth2T9QRiG1uH9oKZuKjdh9p";
     const DID_URL: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
     static DOCUMENT_MULTI: LazyLock<Value> = LazyLock::new(|| {
         json!({
@@ -149,7 +153,13 @@ mod test {
             ],
             "capabilityDelegation": [
                 "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
-            ]
+            ],
+            "keyAgreement": [{
+                "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6LSj72tK8brWgZja8NLRwPigth2T9QRiG1uH9oKZuKjdh9p",
+                "type": "Multikey",
+                "controller": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
+                "publicKeyMultibase": "z6LSj72tK8brWgZja8NLRwPigth2T9QRiG1uH9oKZuKjdh9p"
+            }]
         })
     });
     // static DOCUMENT_JWK: LazyLock<Value> = LazyLock::new(|| {

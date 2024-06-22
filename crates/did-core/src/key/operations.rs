@@ -7,6 +7,8 @@
 use std::sync::LazyLock;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
+use curve25519_dalek::edwards::CompressedEdwardsY;
+use multibase::Base::Base58Btc;
 use regex::Regex;
 use serde_json::json;
 
@@ -17,12 +19,15 @@ use crate::document::{
 use crate::{Curve, KeyType, PublicKeyJwk};
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
+const CURVE25519_CODEC: [u8; 2] = [0xec, 0x01];
 
 static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new("^did:key:(?<key>z[a-km-zA-HJ-NP-Z1-9]+)$").expect("should compile")
 });
 
-#[allow(clippy::module_name_repetitions)]
+// TODO: key agreement
+// https://w3c-ccg.github.io/did-method-key/#encryption-method-creation-algorithm
+
 pub struct DidOp;
 
 impl Operator for DidOp {
@@ -31,11 +36,10 @@ impl Operator for DidOp {
         let Some(caps) = DID_REGEX.captures(did) else {
             return Err(Error::InvalidDid("DID is not a valid did:key".to_string()));
         };
-        let key = &caps["key"];
-        let kid = format!("{did}#{key}");
+        let multi_key = &caps["key"];
 
         // decode the the DID key
-        let (_, key_bytes) = multibase::decode(key)
+        let (_, key_bytes) = multibase::decode(multi_key)
             .map_err(|e| Error::InvalidDid(format!("issue decoding key: {e}")))?;
         if key_bytes.len() - 2 != 32 {
             return Err(Error::InvalidDid("invalid key length".into()));
@@ -49,7 +53,7 @@ impl Operator for DidOp {
         {
             (
                 Kind::Simple("https://w3id.org/security/data-integrity/v1".into()),
-                PublicKey::Multibase(key.into()),
+                PublicKey::Multibase(multi_key.into()),
             )
         } else {
             let verif_type = &options.public_key_format;
@@ -71,18 +75,37 @@ impl Operator for DidOp {
         };
 
         let key_agreement = if options.enable_encryption_key_derivation {
+            // See <https://w3c-ccg.github.io/did-method-key/#encryption-method-creation-algorithm>
+
+            // derive an X25519 public encryption key from the Ed25519 key
+            let edwards_y = CompressedEdwardsY::from_slice(&key_bytes[2..]).map_err(|e| {
+                Error::InvalidPublicKey(format!("public key is not Edwards Y: {e}"))
+            })?;
+            let Some(edwards_pt) = edwards_y.decompress() else {
+                return Err(Error::InvalidPublicKey(
+                    "Edwards Y cannot be decompressed to point".into(),
+                ));
+            };
+            let x25519_bytes = edwards_pt.to_montgomery().to_bytes();
+
+            // base58B encode the raw key
+            let mut multi_bytes = vec![];
+            multi_bytes.extend_from_slice(&CURVE25519_CODEC);
+            multi_bytes.extend_from_slice(&x25519_bytes);
+            let ek_multibase = multibase::encode(Base58Btc, &multi_bytes);
+
             Some(vec![Kind::Rich(VerificationMethod {
-                id: kid,
+                id: format!("{did}#{ek_multibase}"),
                 type_: options.public_key_format.clone(),
                 controller: did.into(),
-                public_key: public_key.clone(),
+                public_key: PublicKey::Multibase(ek_multibase),
                 ..VerificationMethod::default()
             })])
         } else {
             None
         };
 
-        let kid = format!("{did}#{key}");
+        let kid = format!("{did}#{multi_key}");
 
         Ok(Document {
             context: vec![Kind::Simple(options.default_context), context],
@@ -101,6 +124,18 @@ impl Operator for DidOp {
             key_agreement,
             ..Document::default()
         })
+    }
+
+    fn read(&self, did: &str, options: CreateOptions) -> did::Result<Document> {
+        self.create(did, options)
+    }
+
+    fn update(&self, _did: &str, _: CreateOptions) -> did::Result<Document> {
+        unimplemented!("This DID Method does not support updating the DID Document")
+    }
+
+    fn deactivate(&self, _did: &str, _: CreateOptions) -> did::Result<()> {
+        unimplemented!("This DID Method does not support deactivating the DID Document")
     }
 }
 

@@ -18,6 +18,18 @@ pub trait Operator {
     ///
     /// Returns an error if the DID Document cannot be created.
     fn create(&self, did: &str, options: CreateOptions) -> did::Result<Document>;
+
+    /// Reads a DID document for the given DID method.
+    #[allow(dead_code)]
+    fn read(&self, did: &str, options: CreateOptions) -> did::Result<Document>;
+
+    /// Updates a DID document for the given DID method.
+    #[allow(dead_code)]
+    fn update(&self, did: &str, options: CreateOptions) -> did::Result<Document>;
+
+    /// Deactivates a DID document for the given DID method.
+    #[allow(dead_code)]
+    fn deactivate(&self, did: &str, options: CreateOptions) -> did::Result<()>;
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -182,15 +194,24 @@ pub enum PublicKeyFormat {
 
     /// ED2559 Verification Key, 2020 version
     Ed25519VerificationKey2020,
+
+    /// X25519 Key Agreement Key, 2020 version
+    X25519KeyAgreementKey2020,
+    //
     // /// JsonWebKey2020
     // JsonWebKey2020,
 }
+
+// TODO: set context based on key format:
+// - Ed25519VerificationKey2020	https://w3id.org/security/suites/ed25519-2020/v1
+// - JsonWebKey2020	https://w3id.org/security/suites/jws-2020/v1
 
 impl Display for PublicKeyFormat {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::Multikey => write!(f, "Multikey"),
             Self::Ed25519VerificationKey2020 => write!(f, "Ed25519VerificationKey2020"),
+            Self::X25519KeyAgreementKey2020 => write!(f, "X25519KeyAgreementKey2020"),
         }
     }
 }
