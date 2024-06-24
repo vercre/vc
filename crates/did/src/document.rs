@@ -5,6 +5,7 @@
 use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -148,6 +149,32 @@ pub struct Document {
     pub did_document_metadata: Option<DocumentMetadata>,
 }
 
+/// Services are used to express ways of communicating with the DID subject or
+/// associated entities. They can be any type of service the DID subject wants
+/// to advertise, including decentralized identity management services for further
+/// discovery, authentication, authorization, or interaction.
+///
+/// Service information is often service specific. For example, a reference to an
+/// encrypted messaging service can detail how to initiate the encrypted link before
+/// messaging begins.
+///
+/// Due to privacy concerns, revealing public information through services, such as
+/// social media accounts, personal websites, and email addresses, is discouraged.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct Service {
+    /// A URI unique to the service.
+    pub id: String,
+
+    /// The service type. SHOULD be registered in the DID Specification Registries.
+    #[serde(rename = "type")]
+    pub type_: String,
+
+    /// One or more endpoints for the service.
+    #[allow(clippy::struct_field_names)]
+    pub service_endpoint: Quota<Kind<Value>>,
+}
+
 /// A DID document can express verification methods, such as cryptographic public keys,
 /// which can be used to authenticate or authorize interactions with the DID subject or
 /// associated parties. For example, a cryptographic public key can be used as a
@@ -234,38 +261,53 @@ impl Default for PublicKey {
     }
 }
 
-/// Services are used to express ways of communicating with the DID subject or
-/// associated entities. They can be any type of service the DID subject wants
-/// to advertise, including decentralized identity management services for further
-/// discovery, authentication, authorization, or interaction.
-///
-/// Service information is often service specific. For example, a reference to an
-/// encrypted messaging service can detail how to initiate the encrypted link before
-/// messaging begins.
-///
-/// Due to privacy concerns, revealing public information through services, such as
-/// social media accounts, personal websites, and email addresses, is discouraged.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct Service {
-    /// A URI unique to the service.
-    pub id: String,
-
-    /// The service type. SHOULD be registered in the DID Specification Registries.
-    #[serde(rename = "type")]
-    pub type_: String,
-
-    /// One or more endpoints for the service.
-    #[allow(clippy::struct_field_names)]
-    pub service_endpoint: Quota<Kind<Value>>,
-}
-
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::module_name_repetitions)]
 pub struct DocumentMetadata {
+    /// Timestamp of the Create operation.
+    /// An XMLSCHEMA11-2 (RFC3339) e.g. 2010-01-01T19:23:24Z.
+    created: DateTime<Utc>,
+
+    /// Timestamp of the last Update operation. Omitted if an Update operation has
+    /// never been performed. May be the same value as the `created` property when
+    /// the difference between the two timestamps is less than one second.
+    /// An XMLSCHEMA11-2 (RFC3339) e.g. 2010-01-01T19:23:24Z.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    updated: Option<DateTime<Utc>>,
+
+    /// MUST be set to true if the DID has been deactivated. Optional if the DID
+    /// has not been deactivated.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    deactivated: Option<bool>,
+
+    /// May be set if the document version is not the latest. Indicates the timestamp
+    /// of the next Update operation as an XMLSCHEMA11-2 (RFC3339).
+    next_update: Option<DateTime<Utc>>,
+
+    /// Used to indicate the version of the last Update operation. SHOULD be set.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    version_id: Option<String>,
+
+    /// MAY be set if the document version is not the latest. It indicates the version
+    /// of the next Update operation.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    next_version_id: Option<String>,
+
+    /// Used when a DID method needs to define different forms of a DID that are
+    /// logically equivalent. For example, when a DID takes one form prior to
+    /// registration in a verifiable data registry and another form after such
+    /// registration.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub equivalent_id: Option<Vec<String>>,
+
+    /// Identical to the `equivalent_id` property except that it is a single value
+    /// AND the DID is the canonical ID for the DID subject within the containing
+    /// DID document.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub canonical_id: Option<String>,
+
     pub method: MethodMetadata,
-    pub equivalent_id: Vec<String>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]

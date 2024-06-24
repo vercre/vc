@@ -785,6 +785,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
 
 [[package]]
+name = "crypto"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "curve25519-dalek",
+ "ed25519-dalek",
+ "insta",
+ "multibase",
+ "rand 0.8.5",
+ "regex",
+ "serde",
+ "serde_json",
+ "signature",
+ "thiserror",
+ "url",
+]
+
+[[package]]
 name = "crypto-bigint"
 version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -996,11 +1016,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "did-core"
+name = "did"
 version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
  "base64ct",
+ "chrono",
  "curve25519-dalek",
  "insta",
  "multibase",

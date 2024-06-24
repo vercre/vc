@@ -1,6 +1,6 @@
 ---
-source: crates/did-core/src/key.rs
-assertion_line: 114
+source: crates/did-core/src/key/resolver.rs
+assertion_line: 103
 expression: resolved.metadata
 ---
 {

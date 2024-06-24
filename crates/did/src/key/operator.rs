@@ -12,6 +12,7 @@ use multibase::Base::Base58Btc;
 use regex::Regex;
 use serde_json::json;
 
+use super::DidKey;
 use crate::did::{self, Error};
 use crate::document::{
     CreateOptions, Document, Kind, Operator, PublicKey, PublicKeyFormat, VerificationMethod,
@@ -25,13 +26,11 @@ static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new("^did:key:(?<key>z[a-km-zA-HJ-NP-Z1-9]+)$").expect("should compile")
 });
 
-pub struct DidOp;
-
-impl Operator for DidOp {
+impl Operator for DidKey {
     fn create(&self, did: &str, options: CreateOptions) -> did::Result<Document> {
         // check DID is valid AND extract key
         let Some(caps) = DID_REGEX.captures(did) else {
-            return Err(Error::InvalidDid("DID is not a valid did:key".to_string()));
+            return Err(Error::InvalidDid("DID is not a valid did:key".into()));
         };
         let multi_key = &caps["key"];
 
@@ -72,7 +71,7 @@ impl Operator for DidOp {
         };
 
         // key agreement
-        // See <https://w3c-ccg.github.io/did-method-key/#encryption-method-creation-algorithm>
+        // <https://w3c-ccg.github.io/did-method-key/#encryption-method-creation-algorithm>
         let key_agreement = if options.enable_encryption_key_derivation {
             // derive an X25519 public encryption key from the Ed25519 key
             let edwards_y = CompressedEdwardsY::from_slice(&key_bytes[2..]).map_err(|e| {

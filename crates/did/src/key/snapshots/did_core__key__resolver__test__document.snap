@@ -1,6 +1,6 @@
 ---
-source: crates/did-core/src/key.rs
-assertion_line: 110
+source: crates/did-core/src/key/resolver.rs
+assertion_line: 102
 expression: resolved.document
 ---
 {

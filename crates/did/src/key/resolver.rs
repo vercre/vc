@@ -1,45 +1,37 @@
 //! # DID Key Resolver
 //!
-//! See <https://w3c-ccg.github.io/did-resolution>
-
-pub mod operations;
+//! The `did:key` method is a DID method for static cryptographic keys. At its core,
+//! it is based on expanding a cryptographic public key into a DID Document.
+//!
+//! See:
+//!
+//! - <https://w3c-ccg.github.io/did-method-key>
+//! - <https://w3c-ccg.github.io/did-resolution>
 
 use std::sync::LazyLock;
 
 use regex::Regex;
 use serde_json::json;
 
+use super::DidKey;
 use crate::did::{self, Error};
 use crate::document::{CreateOptions, Operator};
 use crate::{ContentMetadata, ContentType, Metadata, Options, Resolution, Resolver, Resource};
 
-static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new("^did:key:(?<key>z[a-km-zA-HJ-NP-Z1-9]+)$").expect("should compile")
-});
 static URL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new("^did:key:z[a-km-zA-HJ-NP-Z1-9]+(?:&?[^=&]*=[^=&]*)*(#z[a-km-zA-HJ-NP-Z1-9]+)*$")
         .expect("should compile")
 });
 
-#[allow(clippy::module_name_repetitions)]
-pub struct DidKey;
-
 impl Resolver for DidKey {
     fn resolve(&self, did: &str, _: Option<Options>) -> did::Result<Resolution> {
-        // check DID is valid AND extract key
-        let Some(caps) = DID_REGEX.captures(did) else {
-            return Err(Error::InvalidDid("DID is not a valid did:key".into()));
-        };
-        let key = &caps["key"];
-
         // per the spec, use the create operation to generate a DID document
         let options = CreateOptions {
             enable_encryption_key_derivation: true,
             ..CreateOptions::default()
         };
 
-        let document =
-            operations::DidOp.create(did, options).map_err(|e| Error::InvalidDid(e.to_string()))?;
+        let document = Self.create(did, options).map_err(|e| Error::InvalidDid(e.to_string()))?;
 
         Ok(Resolution {
             context: "https://w3id.org/did-resolution/v1".into(),
@@ -49,7 +41,7 @@ impl Resolver for DidKey {
                     "pattern": "^did:key:z[a-km-zA-HJ-NP-Z1-9]+$",
                     "did": {
                         "didString": did,
-                        "methodSpecificId": key,
+                        "methodSpecificId": did[8..],
                         "method": "key"
                     }
                 })),

@@ -1,5 +1,5 @@
 [package]
-name = "did-core"
+name = "did"
 description = "OpenID Data Model"
 license = "MIT OR Apache-2.0"
 publish = false
@@ -17,9 +17,9 @@ version.workspace = true
 [lib]
 # crate-type = ["cdylib", "rlib"]
 
-[features]
-default = []
-secp256k1 = []
+# [features]
+# default = []
+# secp256k1 = []
 
 [lints]
 workspace = true
@@ -27,6 +27,7 @@ workspace = true
 [dependencies]
 anyhow.workspace = true
 base64ct.workspace = true
+chrono.workspace = true
 # ecdsa.workspace = true
 serde.workspace = true
 serde_json.workspace = true
