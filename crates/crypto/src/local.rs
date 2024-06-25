@@ -3,30 +3,24 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
 use rand::rngs::OsRng;
-use signature::Signer;
-
 // use ed25519_dalek::SigningKey;
-// use signature::{Keypair, Signer, Verifier};
+use signature::{Keypair, Signer, Verifier};
+
 use super::Keyring;
 
-pub struct Ed25519Keyring {
+pub struct Ed25519Ring {
     keys: Arc<Mutex<HashMap<String, ed25519_dalek::SigningKey>>>,
 }
 
-// #[derive(Clone)]
-// pub struct MyKeypair {
-//     signing_key: ed25519_dalek::SigningKey,
-// }
+impl Ed25519Ring {
+    fn new() -> Self {
+        Self {
+            keys: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+}
 
-// impl Keypair for MyKeypair {
-//     type VerifyingKey = ed25519_dalek::VerifyingKey;
-
-//     fn verifying_key(&self) -> Self::VerifyingKey {
-//         self.signing_key.verifying_key()
-//     }
-// }
-
-impl Keyring for Ed25519Keyring {
+impl Keyring for Ed25519Ring {
     type VerifyingKey = ed25519_dalek::VerifyingKey;
 
     fn generate(&self, name: &str) -> anyhow::Result<Self::VerifyingKey> {
@@ -58,32 +52,34 @@ impl Keyring for Ed25519Keyring {
         return Ok(signing_key.verifying_key());
     }
 
-    // fn verify(&self, name: &str, data: &[u8], signature: &[u8]) -> anyhow::Result<()> {
-    //     let lock = self.keypairs.lock().map_err(|e| anyhow!("could not lock Keyring: {e}"))?;
-    //     let Some(kp) = lock.get(name) else {
-    //         return Err(anyhow!("key not found"));
-    //     };
+    fn verify(&self, name: &str, data: &[u8], signature: &[u8]) -> anyhow::Result<()> {
+        let sig_bytes: &[u8; 64] = signature.try_into()?;
+        let sig = ed25519_dalek::Signature::from_bytes(sig_bytes);
 
-    //     let sig_bytes: &[u8; 64] = signature.try_into()?;
-    //     let sig = ed25519_dalek::Signature::from_bytes(sig_bytes);
-
-    //     kp.verifying_key().verify(data, &sig).map_err(|_| anyhow!("signature verification failed"))
-    // }
+        let verifying_key = self.verifying_key(name)?;
+        verifying_key.verify(data, &sig).map_err(|_| anyhow!("signature verification failed"))
+    }
 }
 
 #[cfg(test)]
 mod test {
+
     use super::*;
 
     #[test]
     fn keyring() {
-        let keyring = Ed25519Keyring {
-            keys: Arc::new(Mutex::new(HashMap::new())),
-        };
+        let keyring = Ed25519Ring::new();
 
-        let verifying_key1 = keyring.generate("test").unwrap();
-        let verifying_key2 = keyring.verifying_key("test").unwrap();
+        // compare verification keys
+        let key1 = keyring.generate("key-1").unwrap();
+        let key2 = keyring.verifying_key("key-1").unwrap();
+        assert_eq!(key1, key2);
 
-        assert_eq!(verifying_key1, verifying_key2);
+        // sign and verify
+        let sig = keyring.sign("key-1", b"test data").expect("should sign");
+        let sig_bytes: [u8; 64] = sig.try_into().expect("should convert");
+        let sig = ed25519_dalek::Signature::from_bytes(&sig_bytes);
+
+        key1.verify(b"test data", &sig).expect("should verify");
     }
 }

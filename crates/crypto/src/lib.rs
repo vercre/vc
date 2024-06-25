@@ -18,7 +18,7 @@ pub trait Keyring {
 
     fn verifying_key(&self, name: &str) -> anyhow::Result<Self::VerifyingKey>;
 
-    // fn verify(&self, name: &str, data: &[u8], signature: &[u8]) -> anyhow::Result<()>;
+    fn verify(&self, name: &str, data: &[u8], signature: &[u8]) -> anyhow::Result<()>;
 }
 
 // pub enum Algorithm {
