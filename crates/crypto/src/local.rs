@@ -70,3 +70,20 @@ impl Keyring for KeyStore {
     //     kp.verifying_key().verify(data, &sig).map_err(|_| anyhow!("signature verification failed"))
     // }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn keyring() {
+        let keyring = KeyStore {
+            keypairs: Arc::new(Mutex::new(HashMap::new())),
+        };
+
+        let keypair = keyring.generate("test", &Algorithm::Ed25519).unwrap();
+        let keypair2 = keyring.keypair("test").unwrap();
+
+        // assert_eq!(keypair.verifying_key(), keypair2.verifying_key());
+    }
+}
