@@ -868,7 +868,7 @@ pub struct DeferredCredentialResponse {
 }
 
 /// Request to retrieve the Credential Issuer's configuration.
-#[derive(Clone, Debug, Default, Deserialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct MetadataRequest {
     /// The Credential Issuer Identifier for which the configuration is to be
     /// returned.

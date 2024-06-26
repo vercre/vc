@@ -9,6 +9,8 @@ use crate::logic::proof::{Enclave, Entity};
 
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
 
+// TODO: Add impls for CredentialStorer, IssuerClient, VerifierClient, and StateManager
+
 #[derive(Default, Clone, Debug)]
 pub struct Provider(super::Provider);
 

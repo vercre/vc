@@ -11,7 +11,7 @@ use std::fmt::Debug;
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 pub use openid4vc::presentation::{
-    RequestObject, RequestObjectResponse, ResponseRequest, ResponseResponse,
+    RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
 };
 use serde::{Deserialize, Serialize};
 use vercre_exch::{Constraints, PresentationSubmission};
@@ -94,7 +94,8 @@ impl std::str::FromStr for Status {
 
 /// Get and put presentation state information using the supplied provider.
 impl<P> Endpoint<P>
-    where P: StateManager + Debug
+where
+    P: StateManager + Debug,
 {
     async fn get_presentation(&self, id: &str) -> anyhow::Result<Presentation> {
         let current_state = self.provider.get(id).await?;
