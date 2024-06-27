@@ -11,7 +11,7 @@ use std::fmt::Debug;
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 pub use openid4vc::presentation::{
-    RequestObject, RequestObjectResponse, ResponseRequest, ResponseResponse,
+    RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
 };
 use serde::{Deserialize, Serialize};
 use vercre_exch::{Constraints, PresentationSubmission};

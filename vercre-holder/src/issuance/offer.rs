@@ -8,6 +8,7 @@ use std::fmt::Debug;
 
 use anyhow::anyhow;
 use openid4vc::issuance::{CredentialConfiguration, CredentialOffer, MetadataRequest};
+use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
 
@@ -16,13 +17,14 @@ use crate::provider::{IssuerClient, StateManager};
 use crate::Endpoint;
 
 /// `OfferRequest` is the request to the `offer` endpoint to initiate an issuance flow.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions)]
 pub struct OfferRequest {
     /// Wallet client identifier. This is used by the issuance service to issue an access token so
     /// should be unique to the holder's agent. Care should be taken to ensure this is not shared
     /// across holders in the case of headless, multi-tenant agents.
     pub client_id: String,
+    
     /// The credential offer from the issuer.
     pub offer: CredentialOffer,
 }

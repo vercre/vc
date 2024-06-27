@@ -12,14 +12,16 @@ use openid4vc::presentation::{
 };
 use openid4vc::{Client, Server};
 use provider::{
-    Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Jwk, Payload, ServerMetadata,
-    Signer, StateManager, Subject, Verifier,
+    Algorithm, Callback, Claims, ClientMetadata, Jwk, Payload, ServerMetadata, StateManager,
+    Subject,
 };
-use providers::issuance::{Provider as ExampleIssuanceProvider, CREDENTIAL_ISSUER};
+use providers::issuance::Provider as ExampleIssuanceProvider;
 use providers::wallet::Provider as ExampleWalletProvider;
 use vercre_exch::Constraints;
-use vercre_holder::callback::{CredentialStorer, IssuerClient, VerifierClient};
 use vercre_holder::credential::{Credential, Logo};
+use vercre_holder::provider::{
+    CredentialStorer, IssuerClient, IssuerMetadata, Signer, Verifier, VerifierClient,
+};
 
 #[derive(Default, Debug, Clone)]
 pub struct TestProvider {
@@ -46,12 +48,15 @@ impl Callback for TestProvider {
 
 impl IssuerClient for TestProvider {
     async fn get_metadata(
-        &self, _flow_id: &str, _req: &MetadataRequest,
+        &self, _flow_id: &str, req: &MetadataRequest,
     ) -> anyhow::Result<MetadataResponse> {
-        let md = IssuerMetadata::metadata(&self.issuance_provider, CREDENTIAL_ISSUER).await?;
-        Ok(MetadataResponse {
-            credential_issuer: md,
-        })
+        // let md = IssuerMetadata::metadata(&self.issuance_provider, CREDENTIAL_ISSUER).await?;
+        // Ok(MetadataResponse {
+        //     credential_issuer: md,
+        // })
+        let endpoint = vercre_issuer::Endpoint::new(self.issuance_provider.clone());
+        let response = endpoint.metadata(req).await?;
+        Ok(response)
     }
 
     async fn get_token(&self, _flow_id: &str, req: &TokenRequest) -> anyhow::Result<TokenResponse> {
