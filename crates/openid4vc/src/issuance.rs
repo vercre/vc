@@ -36,6 +36,7 @@ pub enum GrantType {
 pub struct CreateOfferRequest {
     /// The URL of the Credential Issuer the Wallet can use obtain offered
     /// Credentials.
+    #[serde(default)]
     pub credential_issuer: String,
 
     /// A list of credentials (as identified by their metadata ids) to include in the
@@ -95,6 +96,7 @@ pub struct CreateOfferResponse {
 pub struct CredentialOffer {
     /// The URL of the Credential Issuer, the Wallet is requested to obtain one
     /// or more Credentials from.
+    #[serde(default)]
     pub credential_issuer: String,
 
     /// Credentials offered to the Wallet.
@@ -310,6 +312,7 @@ pub struct TxCode {
 pub struct AuthorizationRequest {
     /// The URL of the Credential Issuer the Wallet can use obtain offered
     /// Credentials.
+    #[serde(default)]
     pub credential_issuer: String,
 
     /// Authorization Server's response type. Must be "code".
@@ -480,6 +483,7 @@ pub struct AuthorizationResponse {
 pub struct TokenRequest {
     /// The URL of the Credential Issuer the Wallet can use obtain offered
     /// Credentials.
+    #[serde(default)]
     pub credential_issuer: String,
 
     /// OAuth 2.0 Client ID used by the Wallet.
@@ -620,6 +624,7 @@ pub struct TokenAuthorizationDetail {
 pub struct CredentialRequest {
     /// The URL of the Credential Issuer the Wallet can use obtain offered
     /// Credentials.
+    #[serde(default)]
     pub credential_issuer: String,
 
     /// A previously issued Access Token, as extracted from the Authorization
@@ -800,6 +805,7 @@ pub struct CredentialResponse {
 pub struct BatchCredentialRequest {
     /// The URL of the Credential Issuer the Wallet can use obtain offered
     /// Credentials.
+    #[serde(default)]
     pub credential_issuer: String,
 
     /// A previously issued Access Token, as extracted from the Authorization
@@ -839,6 +845,7 @@ pub struct BatchCredentialResponse {
 pub struct DeferredCredentialRequest {
     /// The URL of the Credential Issuer the Wallet can use obtain offered
     /// Credentials.
+    #[serde(default)]
     pub credential_issuer: String,
 
     /// A previously issued Access Token, as extracted from the Authorization
@@ -863,6 +870,7 @@ pub struct DeferredCredentialResponse {
 pub struct MetadataRequest {
     /// The Credential Issuer Identifier for which the configuration is to be
     /// returned.
+    #[serde(default)]
     pub credential_issuer: String,
 
     /// The language(s) set in HTTP Accept-Language Headers. MUST be values defined
@@ -885,6 +893,7 @@ pub struct MetadataResponse {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct RegistrationRequest {
     /// The Credential Issuer for which the client is being registered.
+    #[serde(default)]
     pub credential_issuer: String,
 
     /// A previously issued Access Token, as extracted from the Authorization
@@ -909,6 +918,7 @@ pub struct RegistrationResponse {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Issuer {
     /// The Credential Issuer's identifier.
+    #[serde(default)]
     pub credential_issuer: String,
 
     /// Authorization Server's identifier (metadata `issuer` parameter). If

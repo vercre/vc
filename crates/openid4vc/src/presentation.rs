@@ -335,6 +335,7 @@ impl RequestObject {
 #[serde(default)]
 pub struct RequestObjectRequest {
     /// The ID of the Verifier to retrieve the Authorization Request Object for.
+    #[serde(default)]
     pub client_id: String,
 
     /// The state key used to uniquely identify the previously generated Request
@@ -486,6 +487,7 @@ pub struct ResponseResponse {
 pub struct MetadataRequest {
     /// The Verifier's Client Identifier for which the configuration is to be
     /// returned.
+    #[serde(default)]
     pub client_id: String,
 }
 
