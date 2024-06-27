@@ -24,7 +24,6 @@ pub struct CreateRequestRequest {
     #[allow(rustdoc::bare_urls)]
     /// The Verifier ID. It MUST be a valid URI. For example,
     /// `"https://vercre.io"` or `"did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg"`.
-    #[serde(skip)]
     pub client_id: String,
 
     /// The reason the Verifier is requesting the Verifiable Presentation.
@@ -336,7 +335,6 @@ impl RequestObject {
 #[serde(default)]
 pub struct RequestObjectRequest {
     /// The ID of the Verifier to retrieve the Authorization Request Object for.
-    #[serde(skip)]
     pub client_id: String,
 
     /// The state key used to uniquely identify the previously generated Request
@@ -488,7 +486,6 @@ pub struct ResponseResponse {
 pub struct MetadataRequest {
     /// The Verifier's Client Identifier for which the configuration is to be
     /// returned.
-    #[serde(skip)]
     pub client_id: String,
 }
 
