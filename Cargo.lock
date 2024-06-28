@@ -5724,7 +5724,6 @@ dependencies = [
  "dif-exch",
  "ecdsa",
  "futures",
- "holder-provider",
  "insta",
  "k256",
  "openid4vc",
