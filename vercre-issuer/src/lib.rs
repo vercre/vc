@@ -180,7 +180,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use ::providers::issuance::Provider;
+    use ::issuer_provider::Provider;
     use openid4vc::error::Err;
     use openid4vc::{err, Result};
 

@@ -1,5 +1,5 @@
 [package]
-name = "providers"
+name = "holder-provider"
 description = "Test utilities"
 edition.workspace = true
 authors.workspace = true
@@ -21,3 +21,7 @@ uuid.workspace = true
 vercre-holder.workspace = true
 vercre-issuer.workspace = true
 vercre-verifier.workspace = true
+
+dif-exch.workspace = true
+issuer-provider = { path = "../issuer" }
+verifier-provider = { path = "../verifier" }

@@ -256,12 +256,12 @@ where
 mod tests {
     use std::sync::LazyLock;
 
+    use dif_exch::PresentationDefinition;
     use openid4vc::presentation::RequestObject;
-    use providers::presentation::Provider;
     use serde_json::json;
-    use vercre_exch::PresentationDefinition;
 
     use super::*;
+    use crate::testing::Provider;
 
     const CLIENT_ID: &str = "http://vercre.io";
 

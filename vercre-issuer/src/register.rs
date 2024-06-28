@@ -96,9 +96,9 @@ where
 
 #[cfg(test)]
 mod tests {
+    use holder_provider;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::issuance::{Provider, CREDENTIAL_ISSUER};
-    use providers::wallet;
+    use issuer_provider::{Provider, CREDENTIAL_ISSUER};
     use serde_json::json;
 
     use super::*;
@@ -129,7 +129,7 @@ mod tests {
             .expect("state saved");
 
         let body = json!({
-            "client_id": wallet::CLIENT_ID,
+            "client_id": holder_provider::CLIENT_ID,
             "redirect_uris": [
                 "http://localhost:3000/callback"
             ],

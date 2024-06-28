@@ -3,15 +3,14 @@ mod test_provider;
 use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
-use providers::issuance::{CREDENTIAL_ISSUER, NORMAL_USER};
-use providers::wallet::CLIENT_ID;
-use test_provider::TestProvider;
+use issuer_provider::{CREDENTIAL_ISSUER, NORMAL_USER, CLIENT_ID};
 use vercre_holder::callback::CredentialStorer;
 use vercre_holder::issuance::{OfferRequest, PinRequest, Status};
 use vercre_holder::Endpoint;
 use vercre_issuer::create_offer::CreateOfferRequest;
 
-static PROVIDER: LazyLock<TestProvider> = LazyLock::new(|| TestProvider::new());
+static PROVIDER: LazyLock<test_provider::Provider> =
+    LazyLock::new(|| test_provider::Provider::new());
 
 fn sample_offer_request() -> CreateOfferRequest {
     CreateOfferRequest {

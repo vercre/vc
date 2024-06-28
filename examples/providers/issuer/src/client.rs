@@ -4,9 +4,6 @@ use std::sync::{Arc, Mutex};
 use anyhow::anyhow;
 use uuid::Uuid;
 use vercre_issuer::provider::{Client, GrantType, Result};
-use vercre_verifier::{CredentialFormat, VpFormat};
-
-pub const WALLET_CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
 
 #[derive(Default, Clone, Debug)]
 pub struct Store {
@@ -16,7 +13,7 @@ pub struct Store {
 impl Store {
     pub fn new() -> Self {
         let wallet = Client {
-            client_id: WALLET_CLIENT_ID.into(),
+            client_id: crate::CLIENT_ID.into(),
             client_name: Some("Wallet".into()),
             redirect_uris: Some(vec!["http://localhost:3000/callback".into()]),
             grant_types: Some(vec![GrantType::AuthorizationCode, GrantType::PreAuthorizedCode]),
@@ -26,39 +23,13 @@ impl Store {
             ..Client::default()
         };
 
-        let verifier = Client {
-            client_id: "http://vercre.io".into(),
-            client_name: Some("Verifier".into()),
-            redirect_uris: Some(vec!["http://localhost:3000/callback".into()]),
-            grant_types: None,
-            response_types: Some(vec!["vp_token".into(), "id_token vp_token".into()]),
-            vp_formats: Some(HashMap::from([
-                (
-                    CredentialFormat::JwtVcJson,
-                    VpFormat {
-                        alg: Some(vec!["ES256K".into()]),
-                        proof_type: Some(vec!["JsonWebSignature2020".into()]),
-                    },
-                ),
-                (
-                    CredentialFormat::JwtVcJson,
-                    VpFormat {
-                        alg: Some(vec!["ES256K".into()]),
-                        proof_type: Some(vec!["JsonWebSignature2020".into()]),
-                    },
-                ),
-            ])),
-            ..Client::default()
-        };
-
         // Local verifier client for use when running end to end tests
-        let mut local = verifier.clone();
+        let mut local = wallet.clone();
         local.client_id = "http://localhost:8080".into();
 
         Self {
             clients: Arc::new(Mutex::new(HashMap::from([
                 (wallet.client_id.clone(), wallet),
-                (verifier.client_id.clone(), verifier),
                 (local.client_id.clone(), local),
             ]))),
         }

@@ -5,12 +5,12 @@ use std::io::Cursor;
 
 use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
+use dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use vercre_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 
 use super::Client as ClientMetadata;
 use crate::error::Err;

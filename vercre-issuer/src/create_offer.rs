@@ -247,7 +247,7 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    use issuer_provider::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use serde_json::json;
 
     use super::*;

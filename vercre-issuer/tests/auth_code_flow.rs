@@ -6,8 +6,7 @@ use chrono::Utc;
 use core_utils::jws::{self, Type};
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
-use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
-use providers::wallet;
+use issuer_provider::{CREDENTIAL_ISSUER, NORMAL_USER};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use vercre_issuer::authorize::{AuthorizationRequest, AuthorizationResponse};
@@ -16,7 +15,8 @@ use vercre_issuer::token::{TokenRequest, TokenResponse};
 use vercre_issuer::{Endpoint, ProofClaims};
 use vercre_vc::proof::{self, Payload, Verify};
 
-static PROVIDER: LazyLock<Provider> = LazyLock::new(|| Provider::new());
+static ISSUER_PROVIDER: LazyLock<issuer_provider::Provider> =
+    LazyLock::new(|| issuer_provider::Provider::new());
 
 // Run through entire authorization code flow.
 #[tokio::test]
@@ -30,7 +30,7 @@ async fn auth_code_flow() {
     let token = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
 
     let Payload::Vc(vc) =
-        proof::verify(&token, Verify::Vc, &PROVIDER.to_owned()).await.expect("should decode")
+        proof::verify(&token, Verify::Vc, &ISSUER_PROVIDER.clone()).await.expect("should decode")
     else {
         panic!("should be VC");
     };
@@ -68,7 +68,7 @@ async fn authorize() -> Result<AuthorizationResponse> {
     // create request
     let body = json!({
         "response_type": "code",
-        "client_id": wallet::CLIENT_ID,
+        "client_id": holder_provider::CLIENT_ID,
         "redirect_uri": "http://localhost:3000/callback",
         "state": "1234",
         "code_challenge": Base64UrlUnpadded::encode_string(&verifier_hash),
@@ -81,7 +81,7 @@ async fn authorize() -> Result<AuthorizationResponse> {
     let mut request = serde_json::from_value::<AuthorizationRequest>(body)?;
     request.credential_issuer = CREDENTIAL_ISSUER.to_string();
 
-    let endpoint = Endpoint::new(PROVIDER.to_owned());
+    let endpoint = Endpoint::new(ISSUER_PROVIDER.clone());
     let response = endpoint.authorize(&request).await?;
     Ok(response)
 }
@@ -91,7 +91,7 @@ async fn authorize() -> Result<AuthorizationResponse> {
 async fn get_token(input: AuthorizationResponse) -> Result<TokenResponse> {
     // create TokenRequest to 'send' to the app
     let body = json!({
-        "client_id": wallet::CLIENT_ID,
+        "client_id": holder_provider::CLIENT_ID,
         "grant_type": "authorization_code",
         "code": &input.code,
         "code_verifier": "ABCDEF12345",
@@ -101,7 +101,7 @@ async fn get_token(input: AuthorizationResponse) -> Result<TokenResponse> {
     let mut request = serde_json::from_value::<TokenRequest>(body)?;
     request.credential_issuer = CREDENTIAL_ISSUER.to_string();
 
-    let endpoint = Endpoint::new(PROVIDER.to_owned());
+    let endpoint = Endpoint::new(ISSUER_PROVIDER.clone());
     let response = endpoint.token(&request).await?;
 
     assert_snapshot!("token", &response, {
@@ -116,13 +116,14 @@ async fn get_token(input: AuthorizationResponse) -> Result<TokenResponse> {
 async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     // create CredentialRequest to 'send' to the app
     let claims = ProofClaims {
-        iss: Some(wallet::CLIENT_ID.into()),
+        iss: Some(holder_provider::CLIENT_ID.into()),
         aud: CREDENTIAL_ISSUER.to_string(),
         iat: Utc::now().timestamp(),
         nonce: input.c_nonce,
     };
-    let jwt =
-        jws::encode(Type::Proof, &claims, wallet::Provider::new()).await.expect("should encode");
+    let jwt = jws::encode(Type::Proof, &claims, holder_provider::Provider::new())
+        .await
+        .expect("should encode");
 
     // HACK: get credential identifier
     let Some(auth_dets) = input.authorization_details else {
@@ -148,7 +149,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     request.credential_issuer = CREDENTIAL_ISSUER.to_string();
     request.access_token = input.access_token;
 
-    let endpoint = Endpoint::new(PROVIDER.to_owned());
+    let endpoint = Endpoint::new(ISSUER_PROVIDER.clone());
     let response = endpoint.credential(&request).await?;
     Ok(response)
 }

@@ -45,6 +45,7 @@ use std::fmt::Debug;
 
 use anyhow::anyhow;
 use core_utils::gen;
+use dif_exch::{ClaimFormat, PresentationDefinition};
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{
@@ -54,7 +55,6 @@ use openid4vc::{err, Result};
 use provider::{Callback, ClientMetadata, StateManager};
 use tracing::instrument;
 use uuid::Uuid;
-use vercre_exch::{ClaimFormat, PresentationDefinition};
 use vercre_vc::proof::{Algorithm, Signer};
 
 use super::Endpoint;
@@ -197,10 +197,10 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::presentation::Provider;
     use serde_json::json;
 
     use super::*;
+    use crate::testing::Provider;
 
     #[tokio::test]
     async fn same_device() {

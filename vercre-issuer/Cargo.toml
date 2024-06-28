@@ -43,6 +43,7 @@ vercre-vc.workspace = true
 assert_let_bind.workspace = true
 futures.workspace = true
 insta.workspace = true
-providers.workspace = true
+issuer-provider = { path = "../examples/providers/issuer" }
+holder-provider = { path = "../examples/providers/holder" }
 test-utils.workspace = true
 tokio.workspace = true

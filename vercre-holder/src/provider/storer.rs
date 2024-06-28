@@ -5,7 +5,7 @@
 
 use std::future::Future;
 
-use vercre_exch::Constraints;
+use dif_exch::Constraints;
 
 use crate::credential::Credential;
 
@@ -13,6 +13,8 @@ use crate::credential::Credential;
 /// Credentials.
 #[allow(clippy::module_name_repetitions)]
 pub trait CredentialStorer: Send + Sync {
+    // TODO: should Credential param be owned?
+
     /// Save a `Credential` to the store. Overwrite any existing credential with the same ID. Create
     /// a new credential if one with the same ID does not exist.
     fn save(&self, credential: &Credential) -> impl Future<Output = anyhow::Result<()>> + Send;

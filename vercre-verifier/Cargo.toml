@@ -14,12 +14,6 @@ rust-version.workspace = true
 version.workspace = true
 
 [lib]
-bench = false
-
-[[bench]]
-bench = true
-name = "bench"
-path = "benches/bench.rs"
 
 [lints]
 workspace = true
@@ -29,6 +23,7 @@ anyhow.workspace = true
 chrono.workspace = true
 core-utils.workspace = true
 derive_builder.workspace = true
+dif-exch.workspace = true
 openid4vc.workspace = true
 provider.workspace = true
 serde.workspace = true
@@ -36,13 +31,15 @@ serde_json.workspace = true
 serde_json_path = { version = "0.6.7", default-features = true }
 tracing.workspace = true
 uuid.workspace = true
-vercre-exch.workspace = true
 vercre-vc.workspace = true
 
 [dev-dependencies]
 assert_let_bind.workspace = true
+base64ct.workspace = true
+ecdsa.workspace = true
 futures.workspace = true
+holder-provider = { path = "../examples/providers/holder" }
 insta.workspace = true
-providers.workspace = true
+k256.workspace = true
 test-utils.workspace = true
 tokio.workspace = true

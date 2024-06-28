@@ -6,37 +6,17 @@ use k256::Secp256k1;
 use vercre_issuer::provider::{Jwk, Result};
 
 const SERVER_JWK_D: &str = "0Md3MhPaKEpnKAyKE498EdDFerD5NLeKJ5Rb-vC16Gs";
-const WALLET_JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
-
-#[derive(PartialEq, Eq)]
-pub enum Entity {
-    Issuer,
-    Verifier,
-    Holder,
-}
 
 #[derive(Default, Clone, Debug)]
 pub struct Enclave;
 
 impl Enclave {
-    pub fn try_sign(entity: &Entity, msg: &[u8]) -> Result<Vec<u8>> {
-        let sig_bytes = match entity {
-            Entity::Issuer | Entity::Verifier => {
-                let decoded = Base64UrlUnpadded::decode_vec(SERVER_JWK_D)?;
-                let signing_key: SigningKey<Secp256k1> = SigningKey::from_slice(&decoded)?;
-                let signature: Signature<Secp256k1> = signing_key.sign(msg);
-                signature.to_vec()
-            }
-            Entity::Holder => {
-                let decoded = Base64UrlUnpadded::decode_vec(WALLET_JWK_D)?;
-                let bytes: [u8; 32] = decoded.as_slice().try_into().expect("should convert ");
-                let signing_key = ed25519_dalek::SigningKey::from_bytes(&bytes);
-                let signature: ed25519_dalek::Signature = signing_key.sign(msg);
-                signature.to_vec()
-            }
-        };
+    pub fn try_sign(msg: &[u8]) -> Result<Vec<u8>> {
+        let decoded = Base64UrlUnpadded::decode_vec(SERVER_JWK_D)?;
+        let signing_key: SigningKey<Secp256k1> = SigningKey::from_slice(&decoded)?;
+        let signature: Signature<Secp256k1> = signing_key.sign(msg);
 
-        Ok(sig_bytes)
+        Ok(signature.to_vec())
     }
 
     // TODO: use vercre-did crate to dereference DID URL

@@ -3,6 +3,9 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use chrono::{DateTime, Utc};
+use dif_exch::Constraints;
+use holder_provider::Provider as ExampleWalletProvider;
+use issuer_provider::Provider as ExampleIssuanceProvider;
 use openid4vc::issuance::{
     CredentialDefinition, CredentialRequest, CredentialResponse, Issuer, MetadataRequest,
     MetadataResponse, TokenRequest, TokenResponse,
@@ -15,22 +18,19 @@ use provider::{
     Algorithm, Callback, Claims, ClientMetadata, Jwk, Payload, ServerMetadata, StateManager,
     Subject,
 };
-use providers::issuance::Provider as ExampleIssuanceProvider;
-use providers::wallet::Provider as ExampleWalletProvider;
-use vercre_exch::Constraints;
 use vercre_holder::credential::{Credential, Logo};
 use vercre_holder::provider::{
     CredentialStorer, IssuerClient, IssuerMetadata, Signer, Verifier, VerifierClient,
 };
 
 #[derive(Default, Debug, Clone)]
-pub struct TestProvider {
+pub struct Provider {
     pub issuance_provider: ExampleIssuanceProvider,
     pub wallet_provider: ExampleWalletProvider,
     cred_store: Arc<Mutex<HashMap<String, Credential>>>,
 }
 
-impl TestProvider {
+impl Provider {
     pub fn new() -> Self {
         Self {
             issuance_provider: ExampleIssuanceProvider::new(),
@@ -40,13 +40,13 @@ impl TestProvider {
     }
 }
 
-impl Callback for TestProvider {
+impl Callback for Provider {
     async fn callback(&self, _payload: &Payload) -> anyhow::Result<()> {
         Ok(())
     }
 }
 
-impl IssuerClient for TestProvider {
+impl IssuerClient for Provider {
     async fn get_metadata(
         &self, _flow_id: &str, req: &MetadataRequest,
     ) -> anyhow::Result<MetadataResponse> {
@@ -78,7 +78,7 @@ impl IssuerClient for TestProvider {
     }
 }
 
-impl VerifierClient for TestProvider {
+impl VerifierClient for Provider {
     async fn get_request_object(
         &self, _flow_id: &str, req: &str,
     ) -> anyhow::Result<RequestObjectResponse> {
@@ -104,7 +104,7 @@ impl VerifierClient for TestProvider {
     }
 }
 
-impl StateManager for TestProvider {
+impl StateManager for Provider {
     async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> anyhow::Result<()> {
         StateManager::put(&self.issuance_provider, key, state, dt).await
     }
@@ -118,7 +118,7 @@ impl StateManager for TestProvider {
     }
 }
 
-impl ClientMetadata for TestProvider {
+impl ClientMetadata for Provider {
     async fn metadata(&self, client_id: &str) -> anyhow::Result<Client> {
         ClientMetadata::metadata(&self.issuance_provider, client_id).await
     }
@@ -128,19 +128,19 @@ impl ClientMetadata for TestProvider {
     }
 }
 
-impl IssuerMetadata for TestProvider {
+impl IssuerMetadata for Provider {
     async fn metadata(&self, issuer_id: &str) -> anyhow::Result<Issuer> {
         IssuerMetadata::metadata(&self.issuance_provider, issuer_id).await
     }
 }
 
-impl ServerMetadata for TestProvider {
+impl ServerMetadata for Provider {
     async fn metadata(&self, issuer_id: &str) -> anyhow::Result<Server> {
         ServerMetadata::metadata(&self.issuance_provider, issuer_id).await
     }
 }
 
-impl Subject for TestProvider {
+impl Subject for Provider {
     async fn authorize(
         &self, holder_subject: &str, credential_configuration_id: &str,
     ) -> anyhow::Result<bool> {
@@ -155,7 +155,7 @@ impl Subject for TestProvider {
     }
 }
 
-impl Signer for TestProvider {
+impl Signer for Provider {
     fn algorithm(&self) -> Algorithm {
         Signer::algorithm(&self.wallet_provider)
     }
@@ -169,13 +169,13 @@ impl Signer for TestProvider {
     }
 }
 
-impl Verifier for TestProvider {
+impl Verifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> anyhow::Result<Jwk> {
         Verifier::deref_jwk(&self.wallet_provider, did_url).await
     }
 }
 
-impl CredentialStorer for TestProvider {
+impl CredentialStorer for Provider {
     async fn save(&self, credential: &Credential) -> anyhow::Result<()> {
         let data = credential.clone();
         let key = credential.id.clone();
@@ -212,7 +212,7 @@ impl CredentialStorer for TestProvider {
 
 #[tokio::test]
 async fn test_credential_storer() {
-    let store = TestProvider::new();
+    let store = Provider::new();
 
     let credential = Credential {
         id: "test".to_string(),

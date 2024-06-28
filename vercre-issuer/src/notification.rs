@@ -74,7 +74,7 @@ impl super::Context for Context {
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use providers::issuance::{Provider, CREDENTIAL_ISSUER};
+    use issuer_provider::{Provider, CREDENTIAL_ISSUER};
 
     use super::*;
 

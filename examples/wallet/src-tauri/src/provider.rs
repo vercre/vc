@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use futures::lock::Mutex;
-use providers::wallet::Provider as ExampleWalletProvider;
+use holder_provider::Provider as ExampleWalletProvider;
 use vercre_holder::provider::{Algorithm, Jwk, Signer, Verifier};
 
 pub mod issuer_client;

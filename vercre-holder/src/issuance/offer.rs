@@ -24,7 +24,7 @@ pub struct OfferRequest {
     /// should be unique to the holder's agent. Care should be taken to ensure this is not shared
     /// across holders in the case of headless, multi-tenant agents.
     pub client_id: String,
-    
+
     /// The credential offer from the issuer.
     pub offer: CredentialOffer,
 }

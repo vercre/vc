@@ -5,9 +5,9 @@ use assert_let_bind::assert_let;
 use chrono::Utc;
 use core_utils::jws::{self, Type};
 use futures::future::TryFutureExt;
+use holder_provider;
 use insta::assert_yaml_snapshot as assert_snapshot;
-use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
-use providers::wallet;
+use issuer_provider::{CREDENTIAL_ISSUER, NORMAL_USER};
 use serde_json::json;
 use vercre_issuer::create_offer::{CreateOfferRequest, CreateOfferResponse};
 use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
@@ -15,7 +15,8 @@ use vercre_issuer::token::{TokenRequest, TokenResponse};
 use vercre_issuer::{Endpoint, ProofClaims};
 use vercre_vc::proof::{self, Payload, Verify};
 
-static PROVIDER: LazyLock<Provider> = LazyLock::new(|| Provider::new());
+static ISSUER_PROVIDER: LazyLock<issuer_provider::Provider> =
+    LazyLock::new(|| issuer_provider::Provider::new());
 
 // Run through entire pre-authorized code flow.
 #[tokio::test]
@@ -28,7 +29,7 @@ async fn pre_auth_flow() {
     let vc_val = resp.credential.expect("VC is present");
     let token = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
     let Payload::Vc(vc) =
-        proof::verify(&token, Verify::Vc, &PROVIDER.to_owned()).await.expect("should decode")
+        proof::verify(&token, Verify::Vc, &ISSUER_PROVIDER.clone()).await.expect("should decode")
     else {
         panic!("should be VC");
     };
@@ -54,7 +55,7 @@ async fn get_offer() -> Result<CreateOfferResponse> {
     let mut request = serde_json::from_value::<CreateOfferRequest>(body)?;
     request.credential_issuer = CREDENTIAL_ISSUER.into();
 
-    let endpoint = Endpoint::new(PROVIDER.to_owned());
+    let endpoint = Endpoint::new(ISSUER_PROVIDER.clone());
     let response = endpoint.create_offer(&request).await?;
     Ok(response)
 }
@@ -68,7 +69,7 @@ async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
 
     // create TokenRequest to 'send' to the app
     let body = json!({
-        "client_id": wallet::CLIENT_ID,
+        "client_id": holder_provider::CLIENT_ID,
         "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
         "pre-authorized_code": &pre_authorized_code.pre_authorized_code,
         "user_code": input.user_code.as_ref().expect("user pin should be set"),
@@ -77,7 +78,7 @@ async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
     let mut request = serde_json::from_value::<TokenRequest>(body)?;
     request.credential_issuer = CREDENTIAL_ISSUER.into();
 
-    let endpoint = Endpoint::new(PROVIDER.to_owned());
+    let endpoint = Endpoint::new(ISSUER_PROVIDER.clone());
     let response = endpoint.token(&request).await?;
     Ok(response)
 }
@@ -85,13 +86,14 @@ async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
 // Simulate Wallet request to '/credential' endpoint with access token to get credential.
 async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     let claims = ProofClaims {
-        iss: Some(wallet::CLIENT_ID.into()),
+        iss: Some(holder_provider::CLIENT_ID.into()),
         aud: CREDENTIAL_ISSUER.into(),
         iat: Utc::now().timestamp(),
         nonce: input.c_nonce,
     };
-    let jwt =
-        jws::encode(Type::Proof, &claims, wallet::Provider::new()).await.expect("should encode");
+    let jwt = jws::encode(Type::Proof, &claims, holder_provider::Provider::new())
+        .await
+        .expect("should encode");
 
     let body = json!({
         "format": "jwt_vc_json",
@@ -111,7 +113,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     request.credential_issuer = CREDENTIAL_ISSUER.into();
     request.access_token = input.access_token;
 
-    let endpoint = Endpoint::new(PROVIDER.to_owned());
+    let endpoint = Endpoint::new(ISSUER_PROVIDER.clone());
     let response = endpoint.credential(&request).await?;
     Ok(response)
 }

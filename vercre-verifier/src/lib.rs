@@ -162,22 +162,22 @@ pub mod metadata;
 pub mod request;
 pub mod response;
 mod state;
+#[cfg(test)]
+mod testing;
+
+/// Re-export types.
+pub use openid4vc::Result;
 
 /// Re-export provider traits and types.
 pub mod provider {
-    pub use openid4vc::Client;
+    pub use openid4vc::presentation::VpFormat;
+    pub use openid4vc::{Client, CredentialFormat};
     pub use provider::{
         Algorithm, Callback, ClientMetadata, Jwk, Payload, Result, Signer, StateManager, Verifier,
     };
 }
 use std::fmt::Debug;
 
-//----------------------
-// Re-exports
-//----------------------
-pub use openid4vc::presentation::VpFormat;
-pub use openid4vc::{CredentialFormat, Result};
-//----------------------
 use provider::{Callback, ClientMetadata, StateManager};
 use vercre_vc::proof::Signer;
 
@@ -225,9 +225,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use ::providers::presentation::Provider;
     use openid4vc::error::Err;
     use openid4vc::{err, Result};
+    use testing::Provider;
 
     use super::*;
 

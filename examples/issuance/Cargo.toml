@@ -9,8 +9,8 @@ workspace = true
 [dependencies]
 axum-extra.workspace = true
 axum.workspace = true
+issuer-provider = { path = "../providers/issuer" }
 oauth2 = { version = "4.4.2" }
-providers.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_qs.workspace = true

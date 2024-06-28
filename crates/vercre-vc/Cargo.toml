@@ -25,12 +25,12 @@ anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true
 core-utils.workspace = true
+dif-exch.workspace = true
 provider.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tracing.workspace = true
 uuid.workspace = true
-vercre-exch.workspace = true
 
 [dev-dependencies]
 tracing-subscriber.workspace = true

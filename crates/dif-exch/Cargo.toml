@@ -1,5 +1,5 @@
 [package]
-name = "vercre-exch"
+name = "dif-exch"
 description = "An implementation of DIF Presentation Exchange specification."
 license = "MIT OR Apache-2.0"
 publish = false

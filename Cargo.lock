@@ -1033,6 +1033,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "dif-exch"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_json_path",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1945,6 +1958,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "holder-provider"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "dif-exch",
+ "ecdsa",
+ "ed25519-dalek",
+ "issuer-provider",
+ "k256",
+ "serde_json",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "vercre-holder",
+ "vercre-issuer",
+ "vercre-verifier",
+ "verifier-provider",
+]
+
+[[package]]
 name = "html5ever"
 version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2292,8 +2327,8 @@ version = "0.0.0"
 dependencies = [
  "axum",
  "axum-extra",
+ "issuer-provider",
  "oauth2",
- "providers",
  "serde",
  "serde_json",
  "serde_qs",
@@ -2301,6 +2336,23 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
+ "vercre-issuer",
+]
+
+[[package]]
+name = "issuer-provider"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "ecdsa",
+ "ed25519-dalek",
+ "k256",
+ "serde_json",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
  "vercre-issuer",
 ]
 
@@ -2978,6 +3030,7 @@ version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
  "base64ct",
+ "dif-exch",
  "ecdsa",
  "image",
  "insta",
@@ -2987,7 +3040,6 @@ dependencies = [
  "serde_json_path",
  "serde_qs",
  "thiserror",
- "vercre-exch",
 ]
 
 [[package]]
@@ -3404,7 +3456,6 @@ version = "0.0.0"
 dependencies = [
  "axum",
  "axum-extra",
- "providers",
  "serde",
  "serde_json",
  "tokio",
@@ -3412,6 +3463,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "vercre-verifier",
+ "verifier-provider",
 ]
 
 [[package]]
@@ -3482,25 +3534,6 @@ dependencies = [
  "openid4vc",
  "serde",
  "serde_json",
-]
-
-[[package]]
-name = "providers"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "base64ct",
- "chrono",
- "ecdsa",
- "ed25519-dalek",
- "k256",
- "serde_json",
- "tracing",
- "tracing-subscriber",
- "uuid",
- "vercre-holder",
- "vercre-issuer",
- "vercre-verifier",
 ]
 
 [[package]]
@@ -5598,30 +5631,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
-name = "vercre-exch"
-version = "0.1.0-alpha.4"
-dependencies = [
- "anyhow",
- "chrono",
- "regex",
- "serde",
- "serde_json",
- "serde_json_path",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "vercre-holder"
 version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
  "assert_let_bind",
+ "base64ct",
  "chrono",
  "core-utils",
+ "dif-exch",
+ "ecdsa",
+ "ed25519-dalek",
+ "holder-provider",
  "insta",
+ "issuer-provider",
  "openid4vc",
  "provider",
- "providers",
  "serde",
  "serde_json",
  "serde_qs",
@@ -5629,10 +5654,10 @@ dependencies = [
  "tracing",
  "urlencoding",
  "uuid",
- "vercre-exch",
  "vercre-issuer",
  "vercre-vc",
  "vercre-verifier",
+ "verifier-provider",
 ]
 
 [[package]]
@@ -5646,10 +5671,11 @@ dependencies = [
  "core-utils",
  "derive_builder",
  "futures",
+ "holder-provider",
  "insta",
+ "issuer-provider",
  "openid4vc",
  "provider",
- "providers",
  "serde",
  "serde_json",
  "sha2",
@@ -5667,13 +5693,13 @@ dependencies = [
  "base64ct",
  "chrono",
  "core-utils",
+ "dif-exch",
  "provider",
  "serde",
  "serde_json",
  "tracing",
  "tracing-subscriber",
  "uuid",
- "vercre-exch",
 ]
 
 [[package]]
@@ -5682,14 +5708,18 @@ version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
  "assert_let_bind",
+ "base64ct",
  "chrono",
  "core-utils",
  "derive_builder",
+ "dif-exch",
+ "ecdsa",
  "futures",
+ "holder-provider",
  "insta",
+ "k256",
  "openid4vc",
  "provider",
- "providers",
  "serde",
  "serde_json",
  "serde_json_path",
@@ -5697,8 +5727,24 @@ dependencies = [
  "tokio",
  "tracing",
  "uuid",
- "vercre-exch",
  "vercre-vc",
+]
+
+[[package]]
+name = "verifier-provider"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "ecdsa",
+ "ed25519-dalek",
+ "k256",
+ "serde_json",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "vercre-verifier",
 ]
 
 [[package]]
@@ -5752,9 +5798,9 @@ dependencies = [
  "chrono",
  "ed25519-dalek",
  "futures",
+ "holder-provider",
  "http 1.1.0",
  "log",
- "providers",
  "reqwest 0.12.5",
  "rust-argon2",
  "serde",

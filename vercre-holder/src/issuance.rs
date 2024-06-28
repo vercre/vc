@@ -20,8 +20,6 @@ pub use openid4vc::issuance::{
 pub use pin::PinRequest;
 use serde::{Deserialize, Serialize};
 
-use serde::{Deserialize, Serialize};
-
 use crate::provider::StateManager;
 use crate::Endpoint;
 

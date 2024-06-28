@@ -2,24 +2,24 @@ mod test_provider;
 
 use std::sync::LazyLock;
 
+use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use openid4vc::issuance::CredentialConfiguration;
 use openid4vc::presentation::{CreateRequestRequest, DeviceFlow};
-use providers::presentation::VERIFIER;
-use test_provider::TestProvider;
-use vercre_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
+use test_provider::Provider;
 use vercre_holder::callback::CredentialStorer;
 use vercre_holder::credential::Credential;
 use vercre_holder::presentation::Status;
 use vercre_holder::Endpoint;
 use vercre_vc::model::VerifiableCredential;
 use vercre_vc::proof::{self, Format, Payload};
+use verifier_provider::VERIFIER_ID;
 
-static PROVIDER: LazyLock<TestProvider> = LazyLock::new(|| TestProvider::new());
+static PROVIDER: LazyLock<Provider> = LazyLock::new(|| Provider::new());
 
 fn sample_create_request() -> CreateRequestRequest {
     CreateRequestRequest {
-        client_id: VERIFIER.into(),
+        client_id: VERIFIER_ID.into(),
         device_flow: DeviceFlow::CrossDevice,
         purpose: "To verify employment status".into(),
         input_descriptors: vec![InputDescriptor {
