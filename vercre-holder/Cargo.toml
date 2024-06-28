@@ -40,9 +40,7 @@ base64ct.workspace = true
 ecdsa.workspace = true
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 insta.workspace = true
-issuer-provider = { path = "../examples/providers/issuer" }
-holder-provider = { path = "../examples/providers/holder" }
+test-utils.workspace = true
 tokio.workspace = true
 vercre-issuer.workspace = true
 vercre-verifier.workspace = true
-verifier-provider = { path = "../examples/providers/verifier" }

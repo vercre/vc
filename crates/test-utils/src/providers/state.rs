@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
-use vercre_issuer::provider::Result;
+use provider::Result;
 
 #[derive(Default, Clone, Debug)]
 pub struct Store {

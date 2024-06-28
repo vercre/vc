@@ -5,7 +5,7 @@ use std::ops::Deref;
 use chrono::{DateTime, Utc};
 use test_utils::proof::Enclave;
 use test_utils::providers::Issuance;
-pub use test_utils::providers::{CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER};
+
 use vercre_issuer::provider::{
     Algorithm, Callback, Claims, Client, ClientMetadata, CredentialDefinition, Issuer,
     IssuerMetadata, Jwk, Payload, Result, Server, ServerMetadata, Signer, StateManager, Subject,
@@ -15,15 +15,8 @@ use vercre_issuer::provider::{
 #[derive(Clone, Debug)]
 pub struct Provider(Issuance);
 impl Provider {
-    #[must_use]
     pub fn new() -> Self {
         Self(Issuance::new())
-    }
-}
-
-impl Default for Provider {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

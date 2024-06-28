@@ -1,4 +1,4 @@
-mod test_provider;
+mod providers;
 
 use std::sync::LazyLock;
 
@@ -6,16 +6,18 @@ use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use openid4vc::issuance::CredentialConfiguration;
 use openid4vc::presentation::{CreateRequestRequest, DeviceFlow};
-use test_provider::Provider;
 use vercre_holder::callback::CredentialStorer;
 use vercre_holder::credential::Credential;
 use vercre_holder::presentation::Status;
 use vercre_holder::Endpoint;
 use vercre_vc::model::VerifiableCredential;
 use vercre_vc::proof::{self, Format, Payload};
-use verifier_provider::VERIFIER_ID;
 
-static PROVIDER: LazyLock<Provider> = LazyLock::new(|| Provider::new());
+use crate::providers::{holder, verifier, VERIFIER_ID};
+
+static HOLDER_PROVIDER: LazyLock<holder::Provider> = LazyLock::new(|| holder::Provider::new());
+static VERIFIER_PROVIDER: LazyLock<verifier::Provider> =
+    LazyLock::new(|| verifier::Provider::new());
 
 fn sample_create_request() -> CreateRequestRequest {
     CreateRequestRequest {
@@ -47,8 +49,9 @@ async fn sample_credential() -> Credential {
     let vc = VerifiableCredential::sample();
 
     let payload = Payload::Vc(vc.clone());
-    let jwt =
-        proof::create(Format::JwtVcJson, payload, PROVIDER.clone()).await.expect("should encode");
+    let jwt = proof::create(Format::JwtVcJson, payload, VERIFIER_PROVIDER.clone())
+        .await
+        .expect("should encode");
 
     let config = CredentialConfiguration::sample();
     Credential {
@@ -66,11 +69,13 @@ async fn e2e_presentation() {
     // Add the credential to the holder's store so it can be found and used by the presentation
     // flow.
     let credential = sample_credential().await;
-    CredentialStorer::save(&PROVIDER.clone(), &credential).await.expect("should save credential");
+    CredentialStorer::save(&HOLDER_PROVIDER.clone(), &credential)
+        .await
+        .expect("should save credential");
 
     // Use the presentation service endpoint to create a sample request so we can get a valid
     // presentation request object.
-    let init_request = vercre_verifier::Endpoint::new(PROVIDER.clone())
+    let init_request = vercre_verifier::Endpoint::new(VERIFIER_PROVIDER.clone())
         .create_request(&sample_create_request())
         .await
         .expect("should get request");
@@ -82,7 +87,7 @@ async fn e2e_presentation() {
     // Intiate the presentation flow using a url
     let url = init_request.request_uri.expect("should have request uri");
     let presentation =
-        Endpoint::new(PROVIDER.clone()).request(&url).await.expect("should process request");
+        Endpoint::new(HOLDER_PROVIDER.clone()).request(&url).await.expect("should process request");
     assert_eq!(presentation.status, Status::Requested);
     assert_snapshot!("presentation_requested", presentation, {
         ".id" => "[id]",
@@ -100,7 +105,7 @@ async fn e2e_presentation() {
     assert_eq!(pd.input_descriptors[0].id, "EmployeeID_JWT");
 
     // Authorize the presentation
-    let presentation = Endpoint::new(PROVIDER.clone())
+    let presentation = Endpoint::new(VERIFIER_PROVIDER.clone())
         .authorize(presentation.id.clone())
         .await
         .expect("should authorize presentation");
@@ -115,7 +120,7 @@ async fn e2e_presentation() {
     });
 
     // Process the presentation
-    let response = Endpoint::new(PROVIDER.clone())
+    let response = Endpoint::new(HOLDER_PROVIDER.clone())
         .present(presentation.id.clone())
         .await
         .expect("should process present");

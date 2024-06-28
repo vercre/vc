@@ -24,4 +24,5 @@ vercre-verifier.workspace = true
 
 dif-exch.workspace = true
 issuer-provider = { path = "../issuer" }
+test-utils.workspace = true
 verifier-provider = { path = "../verifier" }

@@ -1970,6 +1970,7 @@ dependencies = [
  "issuer-provider",
  "k256",
  "serde_json",
+ "test-utils",
  "tracing",
  "tracing-subscriber",
  "uuid",
@@ -2350,6 +2351,7 @@ dependencies = [
  "ed25519-dalek",
  "k256",
  "serde_json",
+ "test-utils",
  "tracing",
  "tracing-subscriber",
  "uuid",
@@ -5084,8 +5086,17 @@ dependencies = [
 name = "test-utils"
 version = "0.1.0-alpha.4"
 dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "ecdsa",
+ "k256",
+ "openid4vc",
+ "provider",
+ "serde_json",
  "tracing",
  "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]
@@ -5642,14 +5653,13 @@ dependencies = [
  "dif-exch",
  "ecdsa",
  "ed25519-dalek",
- "holder-provider",
  "insta",
- "issuer-provider",
  "openid4vc",
  "provider",
  "serde",
  "serde_json",
  "serde_qs",
+ "test-utils",
  "tokio",
  "tracing",
  "urlencoding",
@@ -5657,7 +5667,6 @@ dependencies = [
  "vercre-issuer",
  "vercre-vc",
  "vercre-verifier",
- "verifier-provider",
 ]
 
 [[package]]
@@ -5741,6 +5750,7 @@ dependencies = [
  "ed25519-dalek",
  "k256",
  "serde_json",
+ "test-utils",
  "tracing",
  "tracing-subscriber",
  "uuid",

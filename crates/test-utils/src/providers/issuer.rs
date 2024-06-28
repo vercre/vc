@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use anyhow::anyhow;
-use vercre_issuer::provider::{Issuer, Result};
+use openid4vc::issuance::Issuer;
+use provider::Result;
 
 #[derive(Default, Clone, Debug)]
 pub struct Store {

@@ -2,8 +2,12 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
+use openid4vc::issuance::CredentialDefinition;
+use provider::{Claims, Result};
 use serde_json::Value;
-use vercre_issuer::provider::{Claims, CredentialDefinition, Result};
+
+pub const NORMAL_USER: &str = "normal_user";
+pub const PENDING_USER: &str = "pending_user";
 
 #[derive(Default, Clone, Debug)]
 struct Person {
@@ -24,7 +28,7 @@ impl Store {
         // issuer
         let subjects = HashMap::from([
             (
-                crate::NORMAL_USER.into(),
+                NORMAL_USER.into(),
                 Person {
                     given_name: "Normal",
                     family_name: "Person",
@@ -34,7 +38,7 @@ impl Store {
                 },
             ),
             (
-                crate::PENDING_USER.into(),
+                PENDING_USER.into(),
                 Person {
                     given_name: "Pending",
                     family_name: "Person",
@@ -59,7 +63,9 @@ impl Store {
         Ok(true)
     }
 
-    pub fn get_claims(&self, holder_subject: &str, credential: &CredentialDefinition) -> Claims {
+    pub fn get_claims(
+        &self, holder_subject: &str, credential: &CredentialDefinition,
+    ) -> Result<Claims> {
         // get holder subject while allowing mutex to go out of scope and release
         // lock so we can take another lock for insert further down
         let subject =
@@ -87,9 +93,9 @@ impl Store {
         updated.pending = false;
         self.subjects.lock().expect("should lock").insert(holder_subject.to_string(), updated);
 
-        Claims {
+        Ok(Claims {
             claims,
             pending: subject.pending,
-        }
+        })
     }
 }

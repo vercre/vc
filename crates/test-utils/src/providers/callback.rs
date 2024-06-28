@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use vercre_issuer::provider::{Payload, Result};
+use provider::{Payload, Result};
 
 #[derive(Default, Clone, Debug)]
 pub struct Hook {

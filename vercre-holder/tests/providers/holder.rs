@@ -1,5 +1,3 @@
-#![allow(missing_docs)]
-
 use std::collections::HashMap;
 use std::str;
 use std::sync::{Arc, LazyLock, Mutex};
@@ -23,14 +21,14 @@ use vercre_holder::provider::{
     VerifierClient,
 };
 
-pub const CLIENT_ID: &str = "holder";
+use super::{issuer, verifier};
+
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
 const WALLET_JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
 
-static ISSUER_PROVIDER: LazyLock<issuer_provider::Provider> =
-    LazyLock::new(issuer_provider::Provider::new);
-static VERIFIER_PROVIDER: LazyLock<verifier_provider::Provider> =
-    LazyLock::new(verifier_provider::Provider::new);
+static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(|| issuer::Provider::new());
+static VERIFIER_PROVIDER: LazyLock<verifier::Provider> =
+    LazyLock::new(|| verifier::Provider::new());
 
 #[derive(Default, Clone, Debug)]
 pub struct Provider {
