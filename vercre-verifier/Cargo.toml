@@ -38,7 +38,6 @@ assert_let_bind.workspace = true
 base64ct.workspace = true
 ecdsa.workspace = true
 futures.workspace = true
-holder-provider = { path = "../examples/providers/holder" }
 insta.workspace = true
 k256.workspace = true
 test-utils.workspace = true
