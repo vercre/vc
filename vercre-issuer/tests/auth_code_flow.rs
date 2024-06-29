@@ -8,6 +8,7 @@ use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use sha2::{Digest, Sha256};
+use test_utils::holder;
 use test_utils::issuer::{self, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_issuer::authorize::{AuthorizationRequest, AuthorizationResponse};
 use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
@@ -120,8 +121,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
         iat: Utc::now().timestamp(),
         nonce: input.c_nonce,
     };
-    let jwt =
-        jws::encode(Type::Proof, &claims, ISSUER_PROVIDER.clone()).await.expect("should encode");
+    let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
 
     // HACK: get credential identifier
     let Some(auth_dets) = input.authorization_details else {

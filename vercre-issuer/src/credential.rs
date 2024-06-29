@@ -153,6 +153,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::issuance::ProofClaims;
     use serde_json::json;
+    use test_utils::holder;
     use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_vc::proof::{self, Payload, Verify};
 
@@ -196,7 +197,7 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = jws::encode(Type::Proof, &claims, Provider::new()).await.expect("should encode");
+        let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
 
         let body = json!({
             "format": "jwt_vc_json",

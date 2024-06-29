@@ -13,6 +13,7 @@ use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
 use vercre_issuer::token::{TokenRequest, TokenResponse};
 use vercre_issuer::{Endpoint, ProofClaims};
 use vercre_vc::proof::{self, Payload, Verify};
+use test_utils::holder;
 
 static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(|| issuer::Provider::new());
 
@@ -90,7 +91,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
         nonce: input.c_nonce,
     };
     let jwt =
-        jws::encode(Type::Proof, &claims, ISSUER_PROVIDER.clone()).await.expect("should encode");
+        jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
 
     let body = json!({
         "format": "jwt_vc_json",

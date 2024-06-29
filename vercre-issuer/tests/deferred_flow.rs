@@ -7,6 +7,7 @@ use core_utils::jws::{self, Type};
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
+use test_utils::holder;
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, PENDING_USER};
 use vercre_issuer::create_offer::{CreateOfferRequest, CreateOfferResponse};
 use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
@@ -92,8 +93,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
         iat: Utc::now().timestamp(),
         nonce: input.c_nonce,
     };
-    let jwt =
-        jws::encode(Type::Proof, &claims, ISSUER_PROVIDER.clone()).await.expect("should encode");
+    let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
 
     let body = json!({
         "format": "jwt_vc_json",

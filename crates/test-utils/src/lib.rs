@@ -1,3 +1,4 @@
+pub mod holder;
 pub mod issuer;
 pub mod providers;
 pub mod verifier;
