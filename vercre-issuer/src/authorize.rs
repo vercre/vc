@@ -84,7 +84,7 @@ use openid4vc::issuance::{GrantType, Issuer};
 use openid4vc::{err, Result};
 use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use tracing::instrument;
-use vercre_vc::proof::Signer;
+use w3c_vc::proof::Signer;
 
 use super::Endpoint;
 use crate::state::{Auth, Expire, State};

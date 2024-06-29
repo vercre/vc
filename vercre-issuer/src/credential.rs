@@ -53,7 +53,7 @@ use provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject, Verifier,
 };
 use tracing::instrument;
-use vercre_vc::proof::Signer;
+use w3c_vc::proof::Signer;
 
 use super::Endpoint;
 use crate::state::State;
@@ -155,7 +155,7 @@ mod tests {
     use serde_json::json;
     use test_utils::holder;
     use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-    use vercre_vc::proof::{self, Payload, Verify};
+    use w3c_vc::proof::{self, Payload, Verify};
 
     use super::*;
     use crate::state::{Expire, Token};

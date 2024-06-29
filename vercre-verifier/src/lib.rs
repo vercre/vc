@@ -177,7 +177,7 @@ pub mod provider {
 use std::fmt::Debug;
 
 use provider::{Callback, ClientMetadata, StateManager};
-use vercre_vc::proof::Signer;
+use w3c_vc::proof::Signer;
 
 // TODO: remove double borrow for traits (i.e. &self -> self)
 // TODO: reintroduce impl Provider trait + lifetimes for Endpoint

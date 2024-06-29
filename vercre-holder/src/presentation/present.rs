@@ -10,8 +10,8 @@ use dif_exch::{DescriptorMap, FilterValue, PathNested, PresentationSubmission};
 use openid4vc::presentation::{ResponseRequest, ResponseResponse};
 use tracing::instrument;
 use uuid::Uuid;
-use vercre_vc::model::vp::VerifiablePresentation;
-use vercre_vc::proof::{self, Format, Payload};
+use w3c_vc::model::vp::VerifiablePresentation;
+use w3c_vc::proof::{self, Format, Payload};
 
 use super::{Presentation, Status};
 use crate::provider::{Signer, StateManager, Verifier, VerifierClient};
@@ -142,7 +142,7 @@ fn create_vp(
 ) -> anyhow::Result<VerifiablePresentation> {
     // presentation with 2 VCs: one as JSON, one as base64url encoded JWT
     let mut builder = VerifiablePresentation::builder()
-        .add_context(vercre_vc::model::Context::Url(
+        .add_context(w3c_vc::model::Context::Url(
             "https://www.w3.org/2018/credentials/examples/v1".into(),
         ))
         .holder(holder_did);

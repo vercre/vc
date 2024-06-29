@@ -11,8 +11,8 @@ use openid4vc::issuance::{
     Proof, ProofClaims, ProofType, TokenRequest,
 };
 use tracing::instrument;
-use vercre_vc::model::StrObj;
-use vercre_vc::proof::{self, Payload, Verify};
+use w3c_vc::model::StrObj;
+use w3c_vc::proof::{self, Payload, Verify};
 
 use super::{Issuance, Status};
 use crate::credential::Credential;

@@ -11,8 +11,8 @@ use vercre_holder::callback::CredentialStorer;
 use vercre_holder::credential::Credential;
 use vercre_holder::presentation::Status;
 use vercre_holder::Endpoint;
-use vercre_vc::model::VerifiableCredential;
-use vercre_vc::proof::{self, Format, Payload};
+use w3c_vc::model::VerifiableCredential;
+use w3c_vc::proof::{self, Format, Payload};
 
 use crate::providers::{holder, VERIFIER_ID};
 

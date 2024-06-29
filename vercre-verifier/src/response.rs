@@ -30,7 +30,7 @@ use provider::{Callback, ClientMetadata, Signer, StateManager, Verifier};
 use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
-use vercre_vc::proof::{self, Payload, Verify};
+use w3c_vc::proof::{self, Payload, Verify};
 
 use super::Endpoint;
 use crate::state::State;

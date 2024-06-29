@@ -55,7 +55,7 @@ use openid4vc::{err, Result};
 use provider::{Callback, ClientMetadata, StateManager};
 use tracing::instrument;
 use uuid::Uuid;
-use vercre_vc::proof::{Algorithm, Signer};
+use w3c_vc::proof::{Algorithm, Signer};
 
 use super::Endpoint;
 use crate::state::State;

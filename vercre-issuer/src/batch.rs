@@ -27,8 +27,8 @@ use provider::{
     Verifier,
 };
 use tracing::instrument;
-use vercre_vc::model::{self, CredentialSubject, VerifiableCredential};
-use vercre_vc::proof::{self, Format, Payload};
+use w3c_vc::model::{self, CredentialSubject, VerifiableCredential};
+use w3c_vc::proof::{self, Format, Payload};
 
 use super::Endpoint;
 use crate::state::{Deferred, Expire, State};
@@ -168,7 +168,7 @@ where
                 err!(Err::InvalidProof(nonce, expires_in), "Proof JWT nonce claim is invalid");
             }
 
-            // TODO: use `decode` method in vercre-vc
+            // TODO: use `decode` method in w3c-vc
             // Key ID
             let Some(kid) = jwt.header.kid else {
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
@@ -399,7 +399,7 @@ mod tests {
     use serde_json::json;
     use test_utils::holder;
     use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-    use vercre_vc::proof::Verify;
+    use w3c_vc::proof::Verify;
 
     use super::*;
     use crate::state::Token;

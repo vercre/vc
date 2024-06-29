@@ -5572,8 +5572,8 @@ dependencies = [
  "urlencoding",
  "uuid",
  "vercre-issuer",
- "vercre-vc",
  "vercre-verifier",
+ "w3c-vc",
 ]
 
 [[package]]
@@ -5596,24 +5596,7 @@ dependencies = [
  "test-utils",
  "tokio",
  "tracing",
- "vercre-vc",
-]
-
-[[package]]
-name = "vercre-vc"
-version = "0.1.0-alpha.4"
-dependencies = [
- "anyhow",
- "base64ct",
- "chrono",
- "core-utils",
- "dif-exch",
- "provider",
- "serde",
- "serde_json",
- "tracing",
- "tracing-subscriber",
- "uuid",
+ "w3c-vc",
 ]
 
 [[package]]
@@ -5636,7 +5619,7 @@ dependencies = [
  "tokio",
  "tracing",
  "uuid",
- "vercre-vc",
+ "w3c-vc",
 ]
 
 [[package]]
@@ -5669,6 +5652,23 @@ checksum = "d3b17ae1f6c8a2b28506cd96d412eebf83b4a0ff2cbefeeb952f2f9dfa44ba18"
 dependencies = [
  "cc",
  "libc",
+]
+
+[[package]]
+name = "w3c-vc"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "core-utils",
+ "dif-exch",
+ "provider",
+ "serde",
+ "serde_json",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
 ]
 
 [[package]]

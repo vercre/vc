@@ -1,5 +1,5 @@
 [package]
-name = "vercre-vc"
+name = "w3c-vc"
 description = "Primary Verifiable Credential building blocks, including dependencies."
 license = "MIT OR Apache-2.0"
 publish = false

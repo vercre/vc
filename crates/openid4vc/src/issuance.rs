@@ -10,6 +10,7 @@ use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+// use w3c_vc::VerifiableCredential
 use super::{Client, CredentialFormat};
 use crate::error::{self, Err};
 use crate::{err, stringify, Result};
@@ -677,7 +678,7 @@ pub struct CredentialRequest {
     pub credential_response_encryption: Option<CredentialResponseEncryption>,
 }
 
-/// The types of Credential identifiers that can be used when requesting a Credential.
+/// Means used to identifiy a Credential type when requesting a Credential.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum CredentialType {
     /// Identifies the Credential requested. REQUIRED when `credential_identifiers`
@@ -695,7 +696,7 @@ pub enum CredentialType {
 
 impl Default for CredentialType {
     fn default() -> Self {
-        CredentialType::Identifier(String::new())
+        Self::Identifier(String::new())
     }
 }
 
@@ -727,7 +728,7 @@ pub enum ProofType {
 
 impl Default for ProofType {
     fn default() -> Self {
-        ProofType::Jwt(String::new())
+        Self::Jwt(String::new())
     }
 }
 
@@ -807,14 +808,12 @@ pub struct Jwk {
 /// The Credential Response can be Synchronous or Deferred. The Credential
 /// Issuer MAY be able to immediately issue a requested Credential. In other
 /// cases, the Credential Issuer MAY NOT be able to immediately issue a
-/// requested Credential and will instead return an `acceptance_token` to be
+/// requested Credential and will instead return an `transaction_id` to be
 /// used later to retrieve a Credential when it is ready.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-// #[serde(from = "CredentialFormat")]
 pub struct CredentialResponse {
-    /// The issued Credential. MUST be present when `acceptance_token` is not
+    /// The issued Credential. MUST be present when `transaction_id` is not
     /// returned.
-    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential: Option<Value>,
 
@@ -838,6 +837,18 @@ pub struct CredentialResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub c_nonce_expires_in: Option<i64>,
 }
+
+// /// The type of Credential Offer returned in a `CreateOfferResponse`: either an object
+// /// or a URI.
+// #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+// pub enum CredentialValue {
+//     /// A Credential Offer object that can be sent to a Wallet as an HTTP GET request.
+//     Object(VerifiableCredential),
+
+//     /// A URI pointing to the Credential Offer Endpoint where a `CredentialOffer` object
+//     /// can be retrieved.
+//     Jwt(String),
+// }
 
 /// The Batch Credential Endpoint allows a client to send multiple Credential
 /// Request objects to request the issuance of multiple credential at the same

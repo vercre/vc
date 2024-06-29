@@ -24,7 +24,7 @@ use openid4vc::{err, Result};
 use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use sha2::{Digest, Sha256};
 use tracing::instrument;
-use vercre_vc::proof::Signer;
+use w3c_vc::proof::Signer;
 
 use super::Endpoint;
 use crate::state::{Expire, State, Token};

@@ -29,7 +29,7 @@ pub use openid4vc::issuance::{MetadataRequest, MetadataResponse};
 use openid4vc::Result;
 use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use tracing::instrument;
-use vercre_vc::proof::Signer;
+use w3c_vc::proof::Signer;
 
 use super::Endpoint;
 
