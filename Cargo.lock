@@ -1935,24 +1935,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "holder-provider"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "base64ct",
- "chrono",
- "dif-exch",
- "ecdsa",
- "ed25519-dalek",
- "issuer-provider",
- "serde_json",
- "vercre-holder",
- "vercre-issuer",
- "vercre-verifier",
- "verifier-provider",
-]
-
-[[package]]
 name = "html5ever"
 version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2310,15 +2292,6 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
- "vercre-issuer",
-]
-
-[[package]]
-name = "issuer-provider"
-version = "0.0.0"
-dependencies = [
- "chrono",
- "test-utils",
  "vercre-issuer",
 ]
 
@@ -5683,15 +5656,6 @@ dependencies = [
  "tracing",
  "uuid",
  "vercre-vc",
-]
-
-[[package]]
-name = "verifier-provider"
-version = "0.0.0"
-dependencies = [
- "chrono",
- "test-utils",
- "vercre-verifier",
 ]
 
 [[package]]

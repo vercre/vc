@@ -3,7 +3,6 @@ members = [
     "crates/*",
     "examples/issuance",
     "examples/presentation",
-    "examples/providers/*",
     "examples/wallet/src-tauri",
     "vercre-holder",
     "vercre-issuer",

@@ -25,7 +25,6 @@ use vercre_holder::provider::{
     VerifierClient,
 };
 
-pub const CLIENT_ID: &str = "holder";
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
 const WALLET_JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
 
@@ -35,8 +34,6 @@ static VERIFIER_PROVIDER: LazyLock<verifier::Provider> = LazyLock::new(verifier:
 #[derive(Clone, Debug)]
 pub struct Provider {
     app_handle: tauri::AppHandle,
-    // store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
-    // wallet_provider: ExampleWalletProvider,
     state_store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
     cred_store: Arc<Mutex<HashMap<String, Credential>>>,
 }
