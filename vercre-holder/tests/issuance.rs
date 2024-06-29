@@ -13,24 +13,21 @@ use crate::providers::{holder, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
 static HOLDER_PROVIDER: LazyLock<holder::Provider> = LazyLock::new(holder::Provider::new);
 static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
-
-fn sample_offer_request() -> CreateOfferRequest {
-    CreateOfferRequest {
-        credential_issuer: CREDENTIAL_ISSUER.into(),
-        credential_configuration_ids: vec!["EmployeeID_JWT".into()],
-        holder_id: Some(NORMAL_USER.into()),
-        pre_authorize: true,
-        tx_code_required: true,
-        callback_id: Some("1234".into()),
-    }
-}
+static OFFER_REQUEST: LazyLock<CreateOfferRequest> = LazyLock::new(|| CreateOfferRequest {
+    credential_issuer: CREDENTIAL_ISSUER.into(),
+    credential_configuration_ids: vec!["EmployeeID_JWT".into()],
+    holder_id: Some(NORMAL_USER.into()),
+    pre_authorize: true,
+    tx_code_required: true,
+    callback_id: Some("1234".into()),
+});
 
 #[tokio::test]
 async fn e2e_issuance() {
     // Use the issuance service endpoint to create a sample offer so we can get a valid
     // pre-auhorized code.
     let offer = vercre_issuer::Endpoint::new(ISSUER_PROVIDER.clone())
-        .create_offer(&sample_offer_request())
+        .create_offer(&OFFER_REQUEST)
         .await
         .expect("should get offer");
 

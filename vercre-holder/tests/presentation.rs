@@ -17,34 +17,30 @@ use vercre_vc::proof::{self, Format, Payload};
 use crate::providers::{holder, VERIFIER_ID};
 
 static HOLDER_PROVIDER: LazyLock<holder::Provider> = LazyLock::new(holder::Provider::new);
-static VERIFIER_PROVIDER: LazyLock<verifier::Provider> =
-    LazyLock::new(verifier::Provider::new);
-
-fn sample_create_request() -> CreateRequestRequest {
-    CreateRequestRequest {
-        client_id: VERIFIER_ID.into(),
-        device_flow: DeviceFlow::CrossDevice,
-        purpose: "To verify employment status".into(),
-        input_descriptors: vec![InputDescriptor {
-            id: "EmployeeID_JWT".into(),
-            constraints: Constraints {
-                fields: Some(vec![Field {
-                    path: vec!["$.type".into()],
-                    filter: Some(Filter {
-                        type_: "string".into(),
-                        value: FilterValue::Const("EmployeeIDCredential".into()),
-                    }),
-                    ..Default::default()
-                }]),
+static VERIFIER_PROVIDER: LazyLock<verifier::Provider> = LazyLock::new(verifier::Provider::new);
+static CREATE_REQUEST: LazyLock<CreateRequestRequest> = LazyLock::new(|| CreateRequestRequest {
+    client_id: VERIFIER_ID.into(),
+    device_flow: DeviceFlow::CrossDevice,
+    purpose: "To verify employment status".into(),
+    input_descriptors: vec![InputDescriptor {
+        id: "EmployeeID_JWT".into(),
+        constraints: Constraints {
+            fields: Some(vec![Field {
+                path: vec!["$.type".into()],
+                filter: Some(Filter {
+                    type_: "string".into(),
+                    value: FilterValue::Const("EmployeeIDCredential".into()),
+                }),
                 ..Default::default()
-            },
-            name: None,
-            purpose: None,
-            format: None,
-        }],
-        ..Default::default()
-    }
-}
+            }]),
+            ..Default::default()
+        },
+        name: None,
+        purpose: None,
+        format: None,
+    }],
+    ..Default::default()
+});
 
 async fn sample_credential() -> Credential {
     let vc = VerifiableCredential::sample();
@@ -77,7 +73,7 @@ async fn e2e_presentation() {
     // Use the presentation service endpoint to create a sample request so we can get a valid
     // presentation request object.
     let init_request = vercre_verifier::Endpoint::new(VERIFIER_PROVIDER.clone())
-        .create_request(&sample_create_request())
+        .create_request(&CREATE_REQUEST)
         .await
         .expect("should get request");
 
