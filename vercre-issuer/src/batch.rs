@@ -18,7 +18,7 @@ use openid4vc::error::{Ancillary as _, Err};
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialRequest, CredentialResponse,
-    ProofType,
+    CredentialType, ProofType,
 };
 use openid4vc::issuance::{CredentialDefinition, Issuer, ProofClaims};
 use openid4vc::{err, Result};
@@ -110,17 +110,8 @@ where
         // TODO: add support for `credential_identifier`
         // verify each credential request
         for request in &request.credential_requests {
-            if request.format.is_some() && request.credential_identifier.is_some() {
-                return Err(Err::InvalidCredentialRequest)
-                    .hint("format and credential_identifier cannot both be set");
-            };
-            if request.format.is_none() && request.credential_identifier.is_none() {
-                return Err(Err::InvalidCredentialRequest)
-                    .hint("format or credential_identifier must be set");
-            };
-
             // format and type request
-            if let Some(format) = &request.format {
+            if let CredentialType::Format(format) = &request.credential_type {
                 let Some(cred_def) = &request.credential_definition else {
                     err!(Err::InvalidCredentialRequest, "credential definition not set");
                 };
@@ -341,17 +332,18 @@ where
         if let Some(mut cred_def) = request.credential_definition.clone() {
             // add credential subject when not present
             if cred_def.credential_subject.is_none() {
-                let maybe_supported = request.credential_identifier.as_ref().map_or_else(
-                    || {
+                let find_supported = match &request.credential_type {
+                    CredentialType::Identifier(id) => {
+                        self.issuer_meta.credential_configurations_supported.get(id)
+                    }
+                    CredentialType::Format(format) => {
                         self.issuer_meta.credential_configurations_supported.values().find(|v| {
-                            Some(&v.format) == request.format.as_ref()
-                                && v.credential_definition.type_ == cred_def.type_
+                            &v.format == format && v.credential_definition.type_ == cred_def.type_
                         })
-                    },
-                    |id| self.issuer_meta.credential_configurations_supported.get(id),
-                );
+                    }
+                };
 
-                let Some(supported) = maybe_supported else {
+                let Some(supported) = find_supported else {
                     err!(Err::InvalidCredentialRequest, "credential is not supported");
                 };
 
@@ -363,7 +355,7 @@ where
 
             Ok(cred_def)
         } else {
-            let Some(id) = &request.credential_identifier else {
+            let CredentialType::Identifier(id) = &request.credential_type else {
                 err!(Err::InvalidCredentialRequest, "no credential identifier");
             };
             let Some(supported) = self.issuer_meta.credential_configurations_supported.get(id)

@@ -651,23 +651,10 @@ pub struct CredentialRequest {
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub access_token: String,
 
-    /// Identifies the Credential being requested. REQUIRED when
-    /// `credential_identifiers` was returned in the Token Response. MUST NOT be set
-    /// otherwise.
-    ///
-    /// When set, the `format` parameter and any other Credential format specific set
-    /// of parameters MUST NOT be set.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_identifier: Option<String>,
-
-    /// Determines the format of the Credential to be issued, which may determine
-    /// the type and other information related to the Credential to be issued. REQUIRED
-    /// when `credential_identifiers` was not returned from the Token Response. MUST
-    /// NOT be set otherwise.
-    ///
-    /// When set, `credential_identifier` parameter MUST NOT be set.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub format: Option<CredentialFormat>,
+    /// Identifies the Credential requested using either a `credential_identifier` or a
+    /// supported credential `format`.
+    #[serde(flatten)]
+    pub credential_type: CredentialType,
 
     /// Definition of the credential type requested.
     ///
@@ -688,6 +675,28 @@ pub struct CredentialRequest {
     /// present.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_response_encryption: Option<CredentialResponseEncryption>,
+}
+
+/// The types of Credential identifiers that can be used when requesting a Credential.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum CredentialType {
+    /// Identifies the Credential requested. REQUIRED when `credential_identifiers`
+    /// was returned in the Token Response. MUST NOT be used otherwise.
+    #[serde(rename = "credential_identifier")]
+    Identifier(String),
+
+    /// Determines the format of the Credential to be issued, which may determine
+    /// the type and other information related to the Credential to be issued. REQUIRED
+    /// when `credential_identifiers` was not returned from the Token Response. MUST
+    /// NOT be used otherwise.
+    #[serde(rename = "format")]
+    Format(CredentialFormat),
+}
+
+impl Default for CredentialType {
+    fn default() -> Self {
+        CredentialType::Identifier(String::new())
+    }
 }
 
 /// Wallet's proof of possession of the key material the issued Credential is to

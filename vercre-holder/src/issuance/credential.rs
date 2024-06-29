@@ -7,8 +7,8 @@ use std::fmt::Debug;
 use anyhow::bail;
 use core_utils::jws::{self, Type};
 use openid4vc::issuance::{
-    CredentialConfiguration, CredentialRequest, CredentialResponse, GrantType, Proof, ProofClaims,
-    ProofType, TokenRequest,
+    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, GrantType,
+    Proof, ProofClaims, ProofType, TokenRequest,
 };
 use tracing::instrument;
 use vercre_vc::model::StrObj;
@@ -144,11 +144,9 @@ fn credential_request(
     CredentialRequest {
         credential_issuer: issuance.offer.credential_issuer.clone(),
         access_token: issuance.token.access_token.clone(),
-        format: Some(cfg.format.clone()),
-        proof: Some(proof.clone()),
-        // credential_identifier: Some(id.into()),
-        credential_identifier: None,
+        credential_type: CredentialType::Format(cfg.format.clone()),
         credential_definition: Some(cfg.credential_definition.clone()),
+        proof: Some(proof.clone()),
         credential_response_encryption: None,
     }
 }
