@@ -29,7 +29,7 @@ ecdsa.workspace = true
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 futures.workspace = true
 http = "1.1.0"
-log = "0.4.21"
+log = "0.4.22"
 reqwest = { version = "0.12.5", features = ["json"] }
 serde.workspace = true
 serde_json.workspace = true
