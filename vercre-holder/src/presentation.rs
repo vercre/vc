@@ -6,7 +6,8 @@ mod authorize;
 mod present;
 mod request;
 
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
+use std::str::FromStr;
 
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
@@ -63,7 +64,7 @@ pub enum Status {
 }
 
 /// Get a string representation of the `Status`.
-impl std::fmt::Display for Status {
+impl Display for Status {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Inactive => write!(f, "Inactive"),
@@ -75,7 +76,7 @@ impl std::fmt::Display for Status {
 }
 
 /// Parse a `Status` from a string.
-impl std::str::FromStr for Status {
+impl FromStr for Status {
     // TODO: strongly typed error
     type Err = anyhow::Error;
 

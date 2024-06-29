@@ -16,8 +16,10 @@ use vercre_vc::proof::{self, Format, Payload};
 
 use crate::providers::{holder, VERIFIER_ID};
 
-static HOLDER_PROVIDER: LazyLock<holder::Provider> = LazyLock::new(holder::Provider::new);
 static VERIFIER_PROVIDER: LazyLock<verifier::Provider> = LazyLock::new(verifier::Provider::new);
+static HOLDER_PROVIDER: LazyLock<holder::Provider> =
+    LazyLock::new(|| holder::Provider::new(None, Some(VERIFIER_PROVIDER.clone())));
+    
 static CREATE_REQUEST: LazyLock<CreateRequestRequest> = LazyLock::new(|| CreateRequestRequest {
     client_id: VERIFIER_ID.into(),
     device_flow: DeviceFlow::CrossDevice,

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::str;
-use std::sync::{Arc, LazyLock, Mutex};
+use std::sync::{Arc, Mutex};
 
 use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
@@ -25,20 +25,23 @@ use vercre_holder::provider::{
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
 const WALLET_JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
 
-static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
-static VERIFIER_PROVIDER: LazyLock<verifier::Provider> =
-    LazyLock::new(verifier::Provider::new);
+// static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
+// static VERIFIER_PROVIDER: LazyLock<verifier::Provider> = LazyLock::new(verifier::Provider::new);
 
 #[derive(Default, Clone, Debug)]
 pub struct Provider {
+    issuer: Option<issuer::Provider>,
+    verifier: Option<verifier::Provider>,
     state_store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
     cred_store: Arc<Mutex<HashMap<String, Credential>>>,
 }
 
 impl Provider {
     #[must_use]
-    pub fn new() -> Self {
+    pub fn new(issuer: Option<issuer::Provider>, verifier: Option<verifier::Provider>) -> Self {
         Self {
+            issuer,
+            verifier,
             state_store: Arc::new(Mutex::new(HashMap::new())),
             cred_store: Arc::new(Mutex::new(HashMap::new())),
         }
@@ -49,13 +52,13 @@ impl IssuerClient for Provider {
     async fn get_metadata(
         &self, _flow_id: &str, req: &MetadataRequest,
     ) -> anyhow::Result<MetadataResponse> {
-        let endpoint = vercre_issuer::Endpoint::new(ISSUER_PROVIDER.clone());
+        let endpoint = vercre_issuer::Endpoint::new(self.issuer.clone().unwrap());
         let response = endpoint.metadata(req).await?;
         Ok(response)
     }
 
     async fn get_token(&self, _flow_id: &str, req: &TokenRequest) -> anyhow::Result<TokenResponse> {
-        let endpoint = vercre_issuer::Endpoint::new(ISSUER_PROVIDER.clone());
+        let endpoint = vercre_issuer::Endpoint::new(self.issuer.clone().unwrap());
         let response = endpoint.token(req).await?;
         Ok(response)
     }
@@ -63,7 +66,7 @@ impl IssuerClient for Provider {
     async fn get_credential(
         &self, _flow_id: &str, req: &CredentialRequest,
     ) -> anyhow::Result<CredentialResponse> {
-        let endpoint = vercre_issuer::Endpoint::new(ISSUER_PROVIDER.clone());
+        let endpoint = vercre_issuer::Endpoint::new(self.issuer.clone().unwrap());
         let response = endpoint.credential(req).await?;
         Ok(response)
     }
@@ -85,14 +88,14 @@ impl VerifierClient for Provider {
             client_id: parts[2].into(),
             state: parts[0].into(),
         };
-        let endpoint = vercre_verifier::Endpoint::new(VERIFIER_PROVIDER.clone());
+        let endpoint = vercre_verifier::Endpoint::new(self.verifier.clone().unwrap());
         Ok(endpoint.request_object(&request).await?)
     }
 
     async fn present(
         &self, _flow_id: &str, _uri: &str, req: &ResponseRequest,
     ) -> anyhow::Result<ResponseResponse> {
-        let endpoint = vercre_verifier::Endpoint::new(VERIFIER_PROVIDER.clone());
+        let endpoint = vercre_verifier::Endpoint::new(self.verifier.clone().unwrap());
         Ok(endpoint.response(req).await?)
     }
 }

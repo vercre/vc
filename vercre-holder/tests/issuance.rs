@@ -11,8 +11,10 @@ use vercre_issuer::create_offer::CreateOfferRequest;
 
 use crate::providers::{holder, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
-static HOLDER_PROVIDER: LazyLock<holder::Provider> = LazyLock::new(holder::Provider::new);
 static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
+static HOLDER_PROVIDER: LazyLock<holder::Provider> =
+    LazyLock::new(|| holder::Provider::new(Some(ISSUER_PROVIDER.clone()), None));
+
 static OFFER_REQUEST: LazyLock<CreateOfferRequest> = LazyLock::new(|| CreateOfferRequest {
     credential_issuer: CREDENTIAL_ISSUER.into(),
     credential_configuration_ids: vec!["EmployeeID_JWT".into()],
