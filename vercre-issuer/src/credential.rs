@@ -152,9 +152,9 @@ mod tests {
     use core_utils::jws::{self, Type};
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::issuance::ProofClaims;
-    use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
-    use providers::wallet;
     use serde_json::json;
+    use test_utils::holder;
+    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_vc::proof::{self, Payload, Verify};
 
     use super::*;
@@ -192,14 +192,12 @@ mod tests {
 
         // create CredentialRequest to 'send' to the app
         let claims = ProofClaims {
-            iss: Some(wallet::CLIENT_ID.into()),
+            iss: Some(CLIENT_ID.into()),
             aud: CREDENTIAL_ISSUER.into(),
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = jws::encode(Type::Proof, &claims, wallet::Provider::new())
-            .await
-            .expect("should encode");
+        let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
 
         let body = json!({
             "format": "jwt_vc_json",

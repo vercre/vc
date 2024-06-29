@@ -11,6 +11,24 @@ use thiserror::Error;
 
 use crate::Result;
 
+// ----------------------------------------------------------------------------
+// TODO: test simplifying error creation using the following:
+// ----------------------------------------------------------------------------
+// use anyhow::ensure;
+// use thiserror::Error;
+//
+// ensure!(user == 0, "only user 0 is allowed");
+//
+// #[derive(Error, Debug)]
+// enum OpenIdError {
+//     #[error("invalid_request")]
+//     InvalidRequest,
+//     ...
+// }
+// ensure!(depth <= MAX_DEPTH, OpenIdError::InvalidRequest);
+// ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+
 /// Context is used to decorate errors with useful hint information.
 // pub trait Context<T, E>
 pub trait Ancillary<T, E>

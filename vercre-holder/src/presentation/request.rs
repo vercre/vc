@@ -8,10 +8,10 @@ use std::fmt::Debug;
 
 use anyhow::{anyhow, bail};
 use core_utils::jws;
+use dif_exch::Constraints;
 use openid4vc::presentation::{RequestObject, RequestObjectResponse};
 use tracing::instrument;
 use uuid::Uuid;
-use vercre_exch::Constraints;
 
 use super::{Presentation, Status};
 use crate::provider::{CredentialStorer, StateManager, Verifier, VerifierClient};

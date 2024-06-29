@@ -18,7 +18,6 @@ pub use openid4vc::issuance::{
     TxCode,
 };
 pub use pin::PinRequest;
-
 use serde::{Deserialize, Serialize};
 
 use crate::provider::StateManager;

@@ -9,7 +9,9 @@ mod client;
 mod storer;
 
 pub use client::{IssuerClient, VerifierClient};
+pub use dif_exch::Constraints;
 pub use openid4vc::issuance::TxCode;
-pub use provider::{Algorithm, IssuerMetadata, Jwk, Payload, Signer, StateManager, Verifier};
+pub use provider::{
+    Algorithm, IssuerMetadata, Jwk, Payload, Result, Signer, StateManager, Verifier,
+};
 pub use storer::CredentialStorer;
-pub use vercre_exch::Constraints;

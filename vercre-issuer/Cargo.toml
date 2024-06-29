@@ -14,13 +14,12 @@ rust-version.workspace = true
 version.workspace = true
 
 [lib]
-bench = false
 # crate-type = ["cdylib", "rlib"]
 
-[[bench]]
-bench = true
-name = "bench"
-path = "benches/bench.rs"
+# [[bench]]
+# bench = true
+# name = "bench"
+# path = "benches/bench.rs"
 
 [lints]
 workspace = true
@@ -43,6 +42,5 @@ vercre-vc.workspace = true
 assert_let_bind.workspace = true
 futures.workspace = true
 insta.workspace = true
-providers.workspace = true
 test-utils.workspace = true
 tokio.workspace = true

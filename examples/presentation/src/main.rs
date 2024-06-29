@@ -1,10 +1,10 @@
-// mod provider;
-
 //! # Verifiable Credential Provider
 //!
 //! This is a simple Verifiable Credential Provider (VCP) that implements the
 //! [Verifiable Credential HTTP API](
 //! https://identity.foundation/verifiable-credential/spec/#http-api).
+
+mod provider;
 
 use std::sync::Arc;
 
@@ -15,7 +15,6 @@ use axum::routing::{get, post};
 use axum::{Form, Json, Router};
 use axum_extra::headers::Host;
 use axum_extra::TypedHeader;
-use providers::presentation::Provider;
 use serde::Serialize;
 use serde_json::json;
 use tokio::net::TcpListener;
@@ -28,13 +27,14 @@ use vercre_verifier::request::{RequestObjectRequest, RequestObjectResponse};
 use vercre_verifier::response::ResponseRequest;
 use vercre_verifier::Endpoint;
 
+use crate::provider::Provider;
+
 #[tokio::main]
 async fn main() {
     let subscriber = FmtSubscriber::builder().with_max_level(Level::ERROR).finish();
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
     let endpoint = Arc::new(Endpoint::new(Provider::new()));
-    // CORS. Just an example for local development. Set this properly in production.
     let cors = CorsLayer::new().allow_methods(Any).allow_origin(Any).allow_headers(Any);
 
     let router = Router::new()

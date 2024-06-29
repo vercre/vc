@@ -1,0 +1,47 @@
+[package]
+name = "crypto"
+description = "OpenID Data Model"
+license = "MIT OR Apache-2.0"
+publish = false
+readme = "README.md"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+exclude.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[lib]
+# crate-type = ["cdylib", "rlib"]
+
+# [features]
+# default = []
+# secp256k1 = []
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow.workspace = true
+base64ct.workspace = true
+chrono.workspace = true
+# ecdsa.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+# tracing.workspace = true
+
+# bs58 = { version = "0.4", features = ["check"] }
+curve25519-dalek = "4.1.3"
+ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
+multibase = "0.9"
+rand = "0.8.5"
+regex = "1.10.5"
+signature = "2.2.0"
+thiserror = "1.0"
+url = "2.5.2"
+
+[dev-dependencies]
+insta = { version = "1.39.0", features = ["filters", "json", "redactions", "yaml"] }

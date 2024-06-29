@@ -403,10 +403,9 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    // use openid4vc::issuance;
-    use providers::issuance::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
-    use providers::wallet;
     use serde_json::json;
+    use test_utils::holder;
+    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_vc::proof::Verify;
 
     use super::*;
@@ -443,14 +442,12 @@ mod tests {
             .expect("state exists");
 
         let claims = ProofClaims {
-            iss: Some(wallet::CLIENT_ID.into()),
+            iss: Some(CLIENT_ID.into()),
             aud: CREDENTIAL_ISSUER.into(),
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = jws::encode(Type::Proof, &claims, wallet::Provider::new())
-            .await
-            .expect("should encode");
+        let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
 
         let body = json!({
             "credential_requests":[{
@@ -541,12 +538,12 @@ mod tests {
     //     // create BatchCredentialRequest to 'send' to the app
 
     //     let claims = ProofClaims {
-    //         iss: wallet::CLIENT_ID,
+    //         iss: holder_provider::CLIENT_ID,
     //         aud: CREDENTIAL_ISSUER.into(),
     //         iat: Utc::now().timestamp(),
     //         nonce: c_nonce.into(),
     //     };
-    //  let jwt = jose::encode(jose::Payload::Proof, &claims, wallet::Provider::new())
+    //  let jwt = jose::encode(jose::Payload::Proof, &claims, holder_provider::Provider::new())
     //         .await
     //         .expect("should encode");
 

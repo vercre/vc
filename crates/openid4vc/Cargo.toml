@@ -23,6 +23,7 @@ workspace = true
 [dependencies]
 anyhow.workspace = true
 base64ct.workspace = true
+dif-exch.workspace = true
 ecdsa.workspace = true
 image = { version = "0.25.1", default-features = false, features = ["png"] }
 qrcode = { version = "0.14.0", default-features = false, features = ["image"] }
@@ -31,7 +32,6 @@ serde_json.workspace = true
 serde_json_path = "0.6.7"
 serde_qs.workspace = true
 thiserror = "1.0.61"
-vercre-exch.workspace = true
 
 [dev-dependencies]
 insta = { version = "1.39.0", features = ["filters", "redactions", "yaml"] }

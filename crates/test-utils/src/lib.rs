@@ -1,5 +1,11 @@
+pub mod holder;
+pub mod issuer;
+pub mod providers;
+pub mod verifier;
+
 use std::sync::Once;
 
+pub use providers::*;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 

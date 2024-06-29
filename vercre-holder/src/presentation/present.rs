@@ -6,10 +6,10 @@
 use std::fmt::Debug;
 
 use anyhow::{anyhow, bail};
+use dif_exch::{DescriptorMap, FilterValue, PathNested, PresentationSubmission};
 use openid4vc::presentation::{ResponseRequest, ResponseResponse};
 use tracing::instrument;
 use uuid::Uuid;
-use vercre_exch::{DescriptorMap, FilterValue, PathNested, PresentationSubmission};
 use vercre_vc::model::vp::VerifiablePresentation;
 use vercre_vc::proof::{self, Format, Payload};
 

@@ -21,7 +21,7 @@ pub use crate::proof::integrity::Proof;
 /// A Verifiable Presentation is used to combine and present credentials to a
 /// Verifer.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(default)]
+#[serde(rename_all = "camelCase", default)]
 pub struct VerifiablePresentation {
     // LATER: add support for @context objects
     #[allow(rustdoc::bare_urls)]
@@ -48,7 +48,6 @@ pub struct VerifiablePresentation {
     /// The verifiableCredential property MUST be constructed from one or more
     /// verifiable credentials, or of data derived from verifiable
     /// credentials in a cryptographically verifiable format.
-    #[serde(rename = "verifiableCredential")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub verifiable_credential: Option<Vec<Value>>,
 

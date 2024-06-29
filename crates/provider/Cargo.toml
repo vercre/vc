@@ -1,6 +1,6 @@
 [package]
 name = "provider"
-description = "Vercre providers"
+description = "Vercre provider types"
 license = "MIT OR Apache-2.0"
 publish = false
 readme = "README.md"

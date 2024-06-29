@@ -42,9 +42,9 @@ pub mod provider;
 
 use std::fmt::Debug;
 
+pub use dif_exch::Constraints;
 pub use provider as callback;
 use provider::StateManager;
-pub use vercre_exch::Constraints;
 
 /// Endpoint is used to surface the public wallet endpoints to clients.
 #[derive(Debug)]

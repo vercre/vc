@@ -60,7 +60,7 @@ impl<T: Default> Default for OneSet<T> {
 pub enum StrObj<T> {
     /// Field is a string
     String(String),
-    
+
     /// Field is an object
     Object(T),
 }

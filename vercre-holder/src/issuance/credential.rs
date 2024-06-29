@@ -21,13 +21,7 @@ use crate::Endpoint;
 
 impl<P> Endpoint<P>
 where
-    P: CredentialStorer
-        + IssuerClient
-        + Signer
-        + Verifier
-        + StateManager
-        + Clone
-        + Debug,
+    P: CredentialStorer + IssuerClient + Signer + Verifier + StateManager + Clone + Debug,
 {
     /// Progresses the issuance flow by getting an access token then using that to get the
     /// credentials contained in the offer.
@@ -121,7 +115,7 @@ where
                 }
             };
         }
- 
+
         Ok(())
     }
 }

@@ -36,7 +36,7 @@ pub enum GrantType {
 pub struct CreateOfferRequest {
     /// The URL of the Credential Issuer the Wallet can use obtain offered
     /// Credentials.
-    #[serde(default)]
+    #[serde(skip_serializing_if = "String::is_empty", default)]
     pub credential_issuer: String,
 
     /// A list of credentials (as identified by their metadata ids) to include in the
@@ -96,7 +96,7 @@ pub struct CreateOfferResponse {
 pub struct CredentialOffer {
     /// The URL of the Credential Issuer, the Wallet is requested to obtain one
     /// or more Credentials from.
-    #[serde(default)]
+    #[serde(skip_serializing_if = "String::is_empty", default)]
     pub credential_issuer: String,
 
     /// Credentials offered to the Wallet.
@@ -312,7 +312,7 @@ pub struct TxCode {
 pub struct AuthorizationRequest {
     /// The URL of the Credential Issuer the Wallet can use obtain offered
     /// Credentials.
-    #[serde(default)]
+    #[serde(skip_serializing_if = "String::is_empty", default)]
     pub credential_issuer: String,
 
     /// Authorization Server's response type. Must be "code".
@@ -483,7 +483,7 @@ pub struct AuthorizationResponse {
 pub struct TokenRequest {
     /// The URL of the Credential Issuer the Wallet can use obtain offered
     /// Credentials.
-    #[serde(default)]
+    #[serde(skip_serializing_if = "String::is_empty", default)]
     pub credential_issuer: String,
 
     /// OAuth 2.0 Client ID used by the Wallet.
@@ -624,11 +624,12 @@ pub struct TokenAuthorizationDetail {
 pub struct CredentialRequest {
     /// The URL of the Credential Issuer the Wallet can use obtain offered
     /// Credentials.
-    #[serde(default)]
+    #[serde(skip_serializing_if = "String::is_empty", default)]
     pub credential_issuer: String,
 
     /// A previously issued Access Token, as extracted from the Authorization
     /// header of the Credential Request.
+    #[serde(skip_serializing_if = "String::is_empty", default)]
     pub access_token: String,
 
     /// Determines the format of the Credential to be issued, which may determine
@@ -805,11 +806,12 @@ pub struct CredentialResponse {
 pub struct BatchCredentialRequest {
     /// The URL of the Credential Issuer the Wallet can use obtain offered
     /// Credentials.
-    #[serde(default)]
+    #[serde(skip_serializing_if = "String::is_empty", default)]
     pub credential_issuer: String,
 
     /// A previously issued Access Token, as extracted from the Authorization
     /// header of the Batch Credential Request.
+    #[serde(skip_serializing_if = "String::is_empty", default)]
     pub access_token: String,
 
     /// An array of Credential Request objects.
@@ -845,11 +847,12 @@ pub struct BatchCredentialResponse {
 pub struct DeferredCredentialRequest {
     /// The URL of the Credential Issuer the Wallet can use obtain offered
     /// Credentials.
-    #[serde(default)]
+    #[serde(skip_serializing_if = "String::is_empty", default)]
     pub credential_issuer: String,
 
     /// A previously issued Access Token, as extracted from the Authorization
     /// header of the Batch Credential Request.
+    #[serde(skip_serializing_if = "String::is_empty", default)]
     pub access_token: String,
 
     /// Identifies a Deferred Issuance transaction from an earlier Credential Request.
@@ -870,7 +873,7 @@ pub struct DeferredCredentialResponse {
 pub struct MetadataRequest {
     /// The Credential Issuer Identifier for which the configuration is to be
     /// returned.
-    #[serde(default)]
+    #[serde(skip_serializing_if = "String::is_empty", default)]
     pub credential_issuer: String,
 
     /// The language(s) set in HTTP Accept-Language Headers. MUST be values defined
@@ -893,12 +896,13 @@ pub struct MetadataResponse {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct RegistrationRequest {
     /// The Credential Issuer for which the client is being registered.
-    #[serde(default)]
+    #[serde(skip_serializing_if = "String::is_empty", default)]
     pub credential_issuer: String,
 
     /// A previously issued Access Token, as extracted from the Authorization
     /// header of the Credential Request. Used to grant access to register a
     /// client.
+    #[serde(skip_serializing_if = "String::is_empty", default)]
     pub access_token: String,
 
     /// Metadata provided by the client undertaking registration.
@@ -918,7 +922,7 @@ pub struct RegistrationResponse {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Issuer {
     /// The Credential Issuer's identifier.
-    #[serde(default)]
+    #[serde(skip_serializing_if = "String::is_empty", default)]
     pub credential_issuer: String,
 
     /// Authorization Server's identifier (metadata `issuer` parameter). If

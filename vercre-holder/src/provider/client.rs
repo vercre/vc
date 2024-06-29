@@ -34,7 +34,9 @@ pub trait IssuerClient {
 
     /// Get a base64 encoded form of the credential logo. If an error is returned the wallet
     /// library will ignore.
-    fn get_logo(&self, flow_id: &str, logo_url: &str) -> impl Future<Output = anyhow::Result<Logo>> + Send;
+    fn get_logo(
+        &self, flow_id: &str, logo_url: &str,
+    ) -> impl Future<Output = anyhow::Result<Logo>> + Send;
 }
 
 /// This provider allows the wallet to interact with a verifier's services that are compliant with

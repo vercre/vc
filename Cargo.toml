@@ -3,7 +3,6 @@ members = [
     "crates/*",
     "examples/issuance",
     "examples/presentation",
-    "examples/providers",
     "examples/wallet/src-tauri",
     "vercre-holder",
     "vercre-issuer",
@@ -22,7 +21,7 @@ keywords = ["credentials", "decentralized", "identity", "openid", "verifiable"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/vercre/vercre"
-rust-version = "1.76"
+rust-version = "1.80"
 version = "0.1.0-alpha.4"
 
 [workspace.lints.rust]
@@ -51,17 +50,16 @@ insta = { version = "1.39.0", features = ["redactions", "yaml"] }
 k256 = "0.13.3"
 openid4vc = { path = "crates/openid4vc" }
 provider = { path = "crates/provider" }
-providers = { path = "examples/providers" }
 serde = { version = "1.0.203", features = ["derive"] }
-serde_json = { version = "1.0.117", features = ["alloc"] }
+serde_json = { version = "1.0.118", features = ["alloc"] }
 serde_qs = "0.13.0"
 test-utils = { path = "crates/test-utils" }
 tokio = { version = "1.38.0", features = ["macros", "rt-multi-thread"] }
 tower-http = { version = "0.5.2", features = ["cors", "set-header", "trace"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
-uuid = { version = "1.8.0", features = ["fast-rng", "v4"] }
-vercre-exch = { path = "crates/vercre-exch" }
+uuid = { version = "1.9.1", features = ["fast-rng", "v4"] }
+dif-exch = { path = "crates/dif-exch" }
 vercre-holder = { path = "vercre-holder" }
 vercre-issuer = { path = "vercre-issuer" }
 vercre-vc = { path = "crates/vercre-vc" }

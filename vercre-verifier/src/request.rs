@@ -100,8 +100,7 @@ where
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::presentation::RequestObject;
-    use providers::presentation::{Provider, VERIFIER};
-    use providers::wallet;
+    use test_utils::verifier::{Provider, VERIFIER_ID};
 
     use super::*;
 
@@ -115,11 +114,11 @@ mod tests {
 
         let req_obj = RequestObject {
             response_type: "vp_token".into(),
-            client_id: format!("{VERIFIER}/post"),
+            client_id: format!("{VERIFIER_ID}/post"),
             state: Some(state_key.to_string()),
             nonce: nonce.to_string(),
             response_mode: Some("direct_post".into()),
-            response_uri: Some(format!("{VERIFIER}/post")),
+            response_uri: Some(format!("{VERIFIER_ID}/post")),
             presentation_definition: None, // Some(pd.clone()),
             client_id_scheme: Some("redirect_uri".into()),
             client_metadata: None, // Some(self.client_meta.clone()),
@@ -137,7 +136,7 @@ mod tests {
             .expect("state exists");
 
         let request = RequestObjectRequest {
-            client_id: VERIFIER.to_string(),
+            client_id: VERIFIER_ID.to_string(),
             state: state_key.to_string(),
         };
         let response = Endpoint::new(provider.clone())
@@ -147,7 +146,7 @@ mod tests {
 
         let jwt_enc = response.jwt.expect("jwt exists");
         let jwt: jws::Jwt<RequestObject> =
-            jws::decode(&jwt_enc, &wallet::Provider::new()).await.expect("jwt is valid");
+            jws::decode(&jwt_enc, &Provider::new()).await.expect("jwt is valid");
 
         assert_snapshot!("response", jwt);
 
