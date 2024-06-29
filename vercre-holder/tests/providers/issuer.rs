@@ -5,7 +5,6 @@ use std::ops::Deref;
 use chrono::{DateTime, Utc};
 use test_utils::proof::Enclave;
 use test_utils::providers::Issuance;
-
 use vercre_issuer::provider::{
     Algorithm, Callback, Claims, Client, ClientMetadata, CredentialDefinition, Issuer,
     IssuerMetadata, Jwk, Payload, Result, Server, ServerMetadata, Signer, StateManager, Subject,

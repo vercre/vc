@@ -1,3 +1,5 @@
+mod providers;
+
 use std::sync::LazyLock;
 
 use anyhow::Result;
@@ -5,9 +7,7 @@ use assert_let_bind::assert_let;
 use chrono::Utc;
 use core_utils::jws::{self, Type};
 use futures::future::TryFutureExt;
-use holder_provider;
 use insta::assert_yaml_snapshot as assert_snapshot;
-use issuer_provider::{CREDENTIAL_ISSUER, PENDING_USER};
 use serde_json::json;
 use vercre_issuer::create_offer::{CreateOfferRequest, CreateOfferResponse};
 use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
@@ -15,8 +15,9 @@ use vercre_issuer::deferred::{DeferredCredentialRequest, DeferredCredentialRespo
 use vercre_issuer::token::{TokenRequest, TokenResponse};
 use vercre_issuer::{Endpoint, ProofClaims};
 
-static ISSUER_PROVIDER: LazyLock<issuer_provider::Provider> =
-    LazyLock::new(|| issuer_provider::Provider::new());
+use crate::providers::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, PENDING_USER};
+
+static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(|| issuer::Provider::new());
 
 // Run through entire pre-authorized code flow.
 #[tokio::test]
@@ -71,7 +72,7 @@ async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
 
     // create TokenRequest to 'send' to the app
     let body = json!({
-        "client_id": holder_provider::CLIENT_ID,
+        "client_id": CLIENT_ID,
         "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
         "pre-authorized_code": &pre_authorized_code.pre_authorized_code,
         "user_code": input.user_code.unwrap_or_default(),
@@ -89,14 +90,13 @@ async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
 async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     // create CredentialRequest to 'send' to the app
     let claims = ProofClaims {
-        iss: Some(holder_provider::CLIENT_ID.into()),
+        iss: Some(CLIENT_ID.into()),
         aud: CREDENTIAL_ISSUER.into(),
         iat: Utc::now().timestamp(),
         nonce: input.c_nonce,
     };
-    let jwt = jws::encode(Type::Proof, &claims, holder_provider::Provider::new())
-        .await
-        .expect("should encode");
+    let jwt =
+        jws::encode(Type::Proof, &claims, ISSUER_PROVIDER.clone()).await.expect("should encode");
 
     let body = json!({
         "format": "jwt_vc_json",

@@ -410,13 +410,12 @@ where
 #[cfg(test)]
 mod tests {
     use base64ct::{Base64UrlUnpadded, Encoding};
-    use holder_provider;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use issuer_provider::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use serde_json::json;
     use sha2::{Digest, Sha256};
 
     use super::*;
+    use crate::testing::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
     #[tokio::test]
     async fn authzn_details() {
@@ -446,7 +445,7 @@ mod tests {
         // create request
         let body = json!({
             "response_type": "code",
-            "client_id": holder_provider::CLIENT_ID,
+            "client_id": CLIENT_ID,
             "redirect_uri": "http://localhost:3000/callback",
             "state": "1234",
             "code_challenge": Base64UrlUnpadded::encode_string(&verifier_hash),
@@ -487,7 +486,7 @@ mod tests {
         // create request
         let body = json!({
             "response_type": "code",
-            "client_id": holder_provider::CLIENT_ID,
+            "client_id": CLIENT_ID,
             "redirect_uri": "http://localhost:3000/callback",
             "state": "1234",
             "code_challenge": Base64UrlUnpadded::encode_string(&verifier_hash),

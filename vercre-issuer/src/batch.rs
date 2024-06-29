@@ -402,15 +402,13 @@ where
 #[cfg(test)]
 mod tests {
     use assert_let_bind::assert_let;
-    use holder_provider;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    // use openid4vc::issuance;
-    use issuer_provider::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use serde_json::json;
     use vercre_vc::proof::Verify;
 
     use super::*;
     use crate::state::Token;
+    use crate::testing::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
     #[tokio::test]
     async fn authorization_details() {
@@ -443,14 +441,12 @@ mod tests {
             .expect("state exists");
 
         let claims = ProofClaims {
-            iss: Some(holder_provider::CLIENT_ID.into()),
+            iss: Some(CLIENT_ID.into()),
             aud: CREDENTIAL_ISSUER.into(),
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = jws::encode(Type::Proof, &claims, holder_provider::Provider::new())
-            .await
-            .expect("should encode");
+        let jwt = jws::encode(Type::Proof, &claims, Provider::new()).await.expect("should encode");
 
         let body = json!({
             "credential_requests":[{

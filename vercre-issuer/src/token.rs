@@ -206,9 +206,7 @@ fn auth_state_key(request: &TokenRequest) -> Result<String> {
 mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
-    use holder_provider;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use issuer_provider::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use openid4vc::issuance::{
         AuthorizationDetail, CredentialDefinition, TokenAuthorizationDetail,
     };
@@ -217,6 +215,7 @@ mod tests {
 
     use super::*;
     use crate::state::Auth;
+    use crate::testing::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
     #[tokio::test]
     async fn simple_tossken() {
@@ -248,7 +247,7 @@ mod tests {
 
         // create TokenRequest to 'send' to the app
         let body = json!({
-            "client_id": holder_provider::CLIENT_ID,
+            "client_id": CLIENT_ID,
             "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
             "pre-authorized_code": pre_auth_code,
             "user_code": "1234"
@@ -287,7 +286,7 @@ mod tests {
 
         let mut state = State::builder()
             .credential_issuer(CREDENTIAL_ISSUER.to_string())
-            .client_id(holder_provider::CLIENT_ID)
+            .client_id(CLIENT_ID)
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
             .holder_id(Some(NORMAL_USER.to_string()))
@@ -327,7 +326,7 @@ mod tests {
 
         // create TokenRequest to 'send' to the app
         let body = json!({
-            "client_id": holder_provider::CLIENT_ID,
+            "client_id": CLIENT_ID,
             "grant_type": "authorization_code",
             "code": auth_code,
             "code_verifier": verifier,

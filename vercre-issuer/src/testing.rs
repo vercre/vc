@@ -4,10 +4,12 @@ use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
 use test_utils::proof::Enclave;
-pub use test_utils::providers::{
-    Issuance, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER,
-};
-use vercre_issuer::provider::{
+// pub use test_utils::providers::{
+//     Issuance, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER,
+// };
+pub use test_utils::providers::{Issuance, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+
+use crate::provider::{
     Algorithm, Callback, Claims, Client, ClientMetadata, CredentialDefinition, Issuer,
     IssuerMetadata, Jwk, Payload, Result, Server, ServerMetadata, Signer, StateManager, Subject,
     Verifier,

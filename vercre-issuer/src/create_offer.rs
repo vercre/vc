@@ -247,10 +247,10 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use issuer_provider::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use serde_json::json;
 
     use super::*;
+    use crate::testing::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
 
     #[tokio::test]
     async fn pre_authorize() {
