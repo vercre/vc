@@ -5743,8 +5743,10 @@ dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
+ "dif-exch",
+ "ecdsa",
+ "ed25519-dalek",
  "futures",
- "holder-provider",
  "http 1.1.0",
  "log",
  "reqwest 0.12.5",
@@ -5756,10 +5758,13 @@ dependencies = [
  "tauri-plugin-log",
  "tauri-plugin-shell",
  "tauri-plugin-store",
+ "test-utils",
  "tokio",
  "typeshare",
  "urlencoding",
  "vercre-holder",
+ "vercre-issuer",
+ "vercre-verifier",
 ]
 
 [[package]]

@@ -24,6 +24,9 @@ workspace = true
 anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true
+dif-exch.workspace = true
+ecdsa.workspace = true
+ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 futures.workspace = true
 http = "1.1.0"
 log = "0.4.21"
@@ -35,10 +38,12 @@ tauri-plugin-deep-link = "2.0.0-beta.7"
 tauri-plugin-log = "2.0.0-beta.6"
 tauri-plugin-shell = "2.0.0-beta.7"
 tauri-plugin-store = "2.0.0-beta.8"
+test-utils.workspace = true
 typeshare = "1.0.3"
 urlencoding = "2.1.3"
 vercre-holder.workspace = true
-holder-provider = { path = "../../providers/holder" }
+vercre-issuer.workspace = true
+vercre-verifier.workspace = true
 
 [dev-dependencies]
 tokio.workspace = true
