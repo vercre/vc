@@ -25,23 +25,18 @@ impl Keyring for Ed25519Ring {
 
     fn generate(&self, name: &str) -> anyhow::Result<Self::VerifyingKey> {
         let signing_key = ed25519_dalek::SigningKey::generate(&mut OsRng);
-
-        let mut lock = self.keys.lock().map_err(|e| anyhow!("could not lock Keyring: {e}"))?;
-        lock.insert(name.to_string(), signing_key.clone());
-
+        self.keys.lock().unwrap().insert(name.to_string(), signing_key.clone());
         Ok(signing_key.verifying_key())
     }
 
     fn sign(&self, name: &str, data: &[u8]) -> anyhow::Result<Vec<u8>> {
-        let lock = self.keys.lock().map_err(|e| anyhow!("could not lock Keyring: {e}"))?;
-        let signing_key = lock.get(name).ok_or_else(|| anyhow!("key not found"))?;
+        let signing_key = self.keys.lock().unwrap().get(name).unwrap().clone();
         let signature: ed25519_dalek::Signature = signing_key.try_sign(data)?;
         Ok(signature.to_vec())
     }
 
     fn verifying_key(&self, name: &str) -> anyhow::Result<Self::VerifyingKey> {
-        let lock = self.keys.lock().map_err(|e| anyhow!("could not lock Keyring: {e}"))?;
-        let signing_key = lock.get(name).unwrap().clone();
+        let signing_key = self.keys.lock().unwrap().get(name).unwrap().clone();
         Ok(signing_key.verifying_key())
     }
 
