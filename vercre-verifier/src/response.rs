@@ -259,9 +259,9 @@ mod tests {
     use dif_exch::PresentationDefinition;
     use openid4vc::presentation::RequestObject;
     use serde_json::json;
+    use test_utils::verifier::Provider;
 
     use super::*;
-    use test_utils::verifier::Provider;
 
     const CLIENT_ID: &str = "http://vercre.io";
 

@@ -100,9 +100,9 @@ where
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::presentation::RequestObject;
+    use test_utils::verifier::{Provider, VERIFIER_ID};
 
     use super::*;
-    use test_utils::verifier::{Provider, VERIFIER_ID};
 
     #[tokio::test]
     async fn request_jwt() {

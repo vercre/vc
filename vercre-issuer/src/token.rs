@@ -212,10 +212,10 @@ mod tests {
     };
     use openid4vc::CredentialFormat;
     use serde_json::json;
+    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
     use super::*;
     use crate::state::Auth;
-    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
     #[tokio::test]
     async fn simple_tossken() {

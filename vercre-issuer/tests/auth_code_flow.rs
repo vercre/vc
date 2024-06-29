@@ -1,5 +1,3 @@
-mod providers;
-
 use std::sync::LazyLock;
 
 use anyhow::Result;
@@ -10,13 +8,12 @@ use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use sha2::{Digest, Sha256};
+use test_utils::issuer::{self, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_issuer::authorize::{AuthorizationRequest, AuthorizationResponse};
 use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
 use vercre_issuer::token::{TokenRequest, TokenResponse};
 use vercre_issuer::{Endpoint, ProofClaims};
 use vercre_vc::proof::{self, Payload, Verify};
-
-use crate::providers::issuer::{self, CREDENTIAL_ISSUER, NORMAL_USER};
 
 static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(|| issuer::Provider::new());
 

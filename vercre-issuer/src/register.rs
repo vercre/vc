@@ -98,10 +98,10 @@ where
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
+    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER};
 
     use super::*;
     use crate::state::{Expire, Token};
-    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER};
 
     #[tokio::test]
     async fn registration_ok() {

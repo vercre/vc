@@ -153,11 +153,11 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::issuance::ProofClaims;
     use serde_json::json;
+    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_vc::proof::{self, Payload, Verify};
 
     use super::*;
     use crate::state::{Expire, Token};
-    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
     #[tokio::test]
     async fn credential_ok() {

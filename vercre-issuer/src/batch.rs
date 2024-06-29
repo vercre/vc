@@ -404,11 +404,11 @@ mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
+    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_vc::proof::Verify;
 
     use super::*;
     use crate::state::Token;
-    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
     #[tokio::test]
     async fn authorization_details() {

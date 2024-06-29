@@ -93,9 +93,9 @@ where
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use test_utils::issuer::{Provider, CREDENTIAL_ISSUER};
 
     use super::*;
-    use test_utils::issuer::{Provider, CREDENTIAL_ISSUER};
 
     #[tokio::test]
     async fn metadata_ok() {
