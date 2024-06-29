@@ -105,7 +105,7 @@ async fn start(state: State<'_, StateModel>) -> Result<ViewModel, error::AppErro
 async fn reset(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("reset invoked");
     let mut app_state = state.app_state.lock().await;
-    let store = Provider::new(app.clone(), state.state_store.clone());
+    let store = Provider::new(&app, state.state_store.clone());
     app_state.reset(store).await?;
     let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
@@ -133,7 +133,7 @@ async fn delete(
 ) -> Result<(), error::AppError> {
     log::info!("delete invoked");
     let mut app_state = state.app_state.lock().await;
-    let store = Provider::new(app.clone(), state.state_store.clone());
+    let store = Provider::new(&app, state.state_store.clone());
     app_state.delete(&id, store).await?;
     let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
@@ -153,7 +153,7 @@ async fn offer(
 ) -> Result<(), error::AppError> {
     log::info!("offer invoked: {encoded_offer}");
     let mut app_state = state.app_state.lock().await;
-    let provider = Provider::new(app.clone(), state.state_store.clone());
+    let provider = Provider::new(&app, state.state_store.clone());
     app_state.offer(&encoded_offer, provider).await?;
     let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
@@ -168,7 +168,7 @@ async fn offer(
 async fn accept(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("accept invoked");
     let mut app_state = state.app_state.lock().await;
-    let provider = Provider::new(app.clone(), state.state_store.clone());
+    let provider = Provider::new(&app, state.state_store.clone());
     app_state.accept(provider).await?;
     let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
@@ -184,7 +184,7 @@ async fn pin(
 ) -> Result<(), error::AppError> {
     log::info!("pin invoked");
     let mut app_state = state.app_state.lock().await;
-    let provider = Provider::new(app.clone(), state.state_store.clone());
+    let provider = Provider::new(&app, state.state_store.clone());
     app_state.pin(provider, &pin).await?;
     let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
@@ -200,7 +200,7 @@ async fn get_credentials(
 ) -> Result<(), error::AppError> {
     log::info!("get_credentials invoked");
     let mut app_state = state.app_state.lock().await;
-    let provider = Provider::new(app.clone(), state.state_store.clone());
+    let provider = Provider::new(&app, state.state_store.clone());
     app_state.get_credentials(provider.clone()).await?;
     app_state.reset(provider.clone()).await?;
     let view: ViewModel = app_state.clone().into();
@@ -221,7 +221,7 @@ async fn request(
 ) -> Result<(), error::AppError> {
     log::info!("request invoked: {request}");
     let mut app_state = state.app_state.lock().await;
-    let provider = Provider::new(app.clone(), state.state_store.clone());
+    let provider = Provider::new(&app, state.state_store.clone());
     app_state.request(&request, provider).await?;
     let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
@@ -236,7 +236,7 @@ async fn request(
 async fn authorize(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("authorize invoked");
     let mut app_state = state.app_state.lock().await;
-    let provider = Provider::new(app.clone(), state.state_store.clone());
+    let provider = Provider::new(&app, state.state_store.clone());
     app_state.authorize(provider).await?;
     let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
@@ -249,7 +249,7 @@ async fn authorize(state: State<'_, StateModel>, app: AppHandle) -> Result<(), e
 async fn present(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("present invoked");
     let mut app_state = state.app_state.lock().await;
-    let provider = Provider::new(app.clone(), state.state_store.clone());
+    let provider = Provider::new(&app, state.state_store.clone());
     app_state.present(provider.clone()).await?;
     app_state.reset(provider.clone()).await?;
     let view: ViewModel = app_state.clone().into();
@@ -274,7 +274,7 @@ fn deep_link(event: &tauri::Event, app: &AppHandle) {
 
     let state: tauri::State<StateModel> = app.state();
 
-    let provider = Provider::new(app.clone(), state.state_store.clone());
+    let provider = Provider::new(app, state.state_store.clone());
 
     if link.starts_with(OFFER_PREFIX) {
         let offer = link.strip_prefix(OFFER_PREFIX).unwrap_or_default();
@@ -299,7 +299,7 @@ fn deep_link(event: &tauri::Event, app: &AppHandle) {
             async move {
                 log::info!("presentation request deep link: {request}");
                 let mut app_state = state.app_state.lock().await;
-                let provider = Provider::new(app.clone(), state.state_store.clone());
+                let provider = Provider::new(app, state.state_store.clone());
                 if let Err(e) = app_state.request(request, provider).await {
                     log::error!("error processing request: {e}");
                     return;

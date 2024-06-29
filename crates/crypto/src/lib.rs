@@ -1,5 +1,6 @@
 #![allow(missing_docs)]
 #![allow(dead_code)]
+#![allow(clippy::missing_errors_doc)]
 
 //! # Cryptographic Support
 //!

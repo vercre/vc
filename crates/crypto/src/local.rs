@@ -41,7 +41,7 @@ impl Keyring for Ed25519Ring {
 
     fn verifying_key(&self, name: &str) -> anyhow::Result<Self::VerifyingKey> {
         let lock = self.keys.lock().map_err(|e| anyhow!("could not lock Keyring: {e}"))?;
-        let signing_key = lock.get(name).ok_or_else(|| anyhow!("key not found"))?;
+        let signing_key = lock.get(name).unwrap().clone();
         Ok(signing_key.verifying_key())
     }
 

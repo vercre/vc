@@ -41,7 +41,7 @@ pub struct Provider {
 impl Provider {
     #[must_use]
     pub fn new(
-        _app_handle: tauri::AppHandle, state_store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
+        _app_handle: &tauri::AppHandle, state_store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
     ) -> Self {
         Self {
             // app_handle,
