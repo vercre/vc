@@ -16,9 +16,9 @@ use vercre_vc::proof::{self, Format, Payload};
 
 use crate::providers::{holder, VERIFIER_ID};
 
-static HOLDER_PROVIDER: LazyLock<holder::Provider> = LazyLock::new(|| holder::Provider::new());
+static HOLDER_PROVIDER: LazyLock<holder::Provider> = LazyLock::new(holder::Provider::new);
 static VERIFIER_PROVIDER: LazyLock<verifier::Provider> =
-    LazyLock::new(|| verifier::Provider::new());
+    LazyLock::new(verifier::Provider::new);
 
 fn sample_create_request() -> CreateRequestRequest {
     CreateRequestRequest {
@@ -80,7 +80,6 @@ async fn e2e_presentation() {
         .create_request(&sample_create_request())
         .await
         .expect("should get request");
-    println!("{:#?}", init_request);
 
     // TODO: Test initiating a presentation flow using a full request object
     //let req_obj = init_request.request_object.expect("should have request object");
@@ -89,6 +88,7 @@ async fn e2e_presentation() {
     let url = init_request.request_uri.expect("should have request uri");
     let presentation =
         Endpoint::new(HOLDER_PROVIDER.clone()).request(&url).await.expect("should process request");
+
     assert_eq!(presentation.status, Status::Requested);
     assert_snapshot!("presentation_requested", presentation, {
         ".id" => "[id]",
@@ -98,6 +98,7 @@ async fn e2e_presentation() {
         ".request.presentation_definition" => "[presentation_definition]",
         ".credentials[0].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
     });
+
     // Because of the presentation definition ID being unique per call, we redact it in the snapshot
     // above, so do a check of a couple of key fields just to make sure we have data we know will
     // be helpful further in the process.
@@ -110,6 +111,7 @@ async fn e2e_presentation() {
         .authorize(presentation.id.clone())
         .await
         .expect("should authorize presentation");
+
     assert_eq!(presentation.status, Status::Authorized);
     assert_snapshot!("presentation_authorized", presentation, {
         ".id" => "[id]",

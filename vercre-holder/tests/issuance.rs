@@ -11,8 +11,8 @@ use vercre_issuer::create_offer::CreateOfferRequest;
 
 use crate::providers::{holder, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
-static HOLDER_PROVIDER: LazyLock<holder::Provider> = LazyLock::new(|| holder::Provider::new());
-static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(|| issuer::Provider::new());
+static HOLDER_PROVIDER: LazyLock<holder::Provider> = LazyLock::new(holder::Provider::new);
+static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
 
 fn sample_offer_request() -> CreateOfferRequest {
     CreateOfferRequest {

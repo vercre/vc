@@ -16,7 +16,7 @@ use vercre_issuer::token::{TokenRequest, TokenResponse};
 use vercre_issuer::{Endpoint, ProofClaims};
 use vercre_vc::proof::{self, Payload, Verify};
 
-static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(|| issuer::Provider::new());
+static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
 
 // Run through entire authorization code flow.
 #[tokio::test]

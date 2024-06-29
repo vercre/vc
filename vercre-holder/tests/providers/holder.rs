@@ -25,9 +25,9 @@ use vercre_holder::provider::{
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
 const WALLET_JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
 
-static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(|| issuer::Provider::new());
+static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
 static VERIFIER_PROVIDER: LazyLock<verifier::Provider> =
-    LazyLock::new(|| verifier::Provider::new());
+    LazyLock::new(verifier::Provider::new);
 
 #[derive(Default, Clone, Debug)]
 pub struct Provider {

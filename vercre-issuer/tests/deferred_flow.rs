@@ -15,7 +15,7 @@ use vercre_issuer::deferred::{DeferredCredentialRequest, DeferredCredentialRespo
 use vercre_issuer::token::{TokenRequest, TokenResponse};
 use vercre_issuer::{Endpoint, ProofClaims};
 
-static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(|| issuer::Provider::new());
+static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
 
 // Run through entire pre-authorized code flow.
 #[tokio::test]

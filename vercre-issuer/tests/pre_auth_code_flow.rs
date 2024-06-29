@@ -15,7 +15,7 @@ use vercre_issuer::{Endpoint, ProofClaims};
 use vercre_vc::proof::{self, Payload, Verify};
 use test_utils::holder;
 
-static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(|| issuer::Provider::new());
+static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
 
 // Run through entire pre-authorized code flow.
 #[tokio::test]
