@@ -7,7 +7,7 @@ use test_utils::issuer;
 use vercre_holder::callback::CredentialStorer;
 use vercre_holder::issuance::{OfferRequest, PinRequest, Status};
 use vercre_holder::Endpoint;
-use vercre_issuer::create_offer::CreateOfferRequest;
+use vercre_issuer::create_offer::{CreateOfferRequest, CredentialOfferType};
 
 use crate::providers::{holder, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
@@ -28,15 +28,19 @@ static OFFER_REQUEST: LazyLock<CreateOfferRequest> = LazyLock::new(|| CreateOffe
 async fn e2e_issuance() {
     // Use the issuance service endpoint to create a sample offer so we can get a valid
     // pre-auhorized code.
-    let offer = vercre_issuer::Endpoint::new(ISSUER_PROVIDER.clone())
+    let offer_resp = vercre_issuer::Endpoint::new(ISSUER_PROVIDER.clone())
         .create_offer(&OFFER_REQUEST)
         .await
         .expect("should get offer");
 
+    let CredentialOfferType::Object(offer) = offer_resp.credential_offer else {
+        panic!("expected CredentialOfferType::Object");
+    };
+
     // Initiate the pre-authorized code flow
     let offer_req = OfferRequest {
         client_id: CLIENT_ID.into(),
-        offer: offer.credential_offer.expect("should have offer"),
+        offer,
     };
     let issuance = Endpoint::new(HOLDER_PROVIDER.clone())
         .offer(&offer_req)
@@ -67,7 +71,7 @@ async fn e2e_issuance() {
     // Enter PIN
     let pin_req = PinRequest {
         id: issuance.id.clone(),
-        pin: offer.user_code.expect("should have user code"),
+        pin: offer_resp.user_code.expect("should have user code"),
     };
     let issuance =
         Endpoint::new(HOLDER_PROVIDER.clone()).pin(&pin_req).await.expect("should apply pin");

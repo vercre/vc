@@ -18,6 +18,7 @@ use openid4vc::error::{Ancillary as _, Err};
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialRequest, CredentialResponse,
+    ProofType,
 };
 use openid4vc::issuance::{CredentialDefinition, Issuer, ProofClaims};
 use openid4vc::{err, Result};
@@ -149,7 +150,7 @@ where
             };
             // ----------------------------------------------------------------
 
-            let Some(proof_jwt) = &proof.jwt else {
+            let ProofType::Jwt(proof_jwt) = &proof.proof else {
                 let (nonce, expires_in) = self.err_nonce(provider).await?;
                 err!(Err::InvalidProof(nonce, expires_in), "Proof not set");
             };

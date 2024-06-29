@@ -14,8 +14,6 @@ use super::{Client, CredentialFormat};
 use crate::error::{self, Err};
 use crate::{err, stringify, Result};
 
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
 // TODO: find a home for these shared types
 
 /// Grant Types supported by the Authorization Server.
@@ -73,22 +71,43 @@ pub struct CreateOfferRequest {
 /// The response to a Credential Offer request.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CreateOfferResponse {
-    /// A Credential Offer object that can be sent to a Wallet as an HTTP GET
-    /// request.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_offer: Option<CredentialOffer>,
-
-    // LATER: implement credential offer endpoint for vercre-wallet to call back to
-    /// The Credential Offer as an HTTP redirect to the Credential Offer Endpoint
-    /// URL.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_offer_uri: Option<String>,
+    /// A Credential Offer that can be used to initiate issuance with a Wallet.
+    /// The offer can be an object or URL pointing to the Credential Offer Endpoint
+    /// where A `CredentialOffer` object can be retrieved.
+    #[serde(flatten)]
+    pub credential_offer: CredentialOfferType,
 
     /// A user PIN that must be provided by the Wallet in order to complete a
     /// credential request.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub user_code: Option<String>,
 }
+
+/// The type of Credential Offer returned in a `CreateOfferResponse`: either an object
+/// or a URI.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum CredentialOfferType {
+    /// A Credential Offer object that can be sent to a Wallet as an HTTP GET request.
+    #[serde(rename = "credential_offer")]
+    Object(CredentialOffer),
+
+    /// A URI pointing to the Credential Offer Endpoint where a `CredentialOffer` object
+    /// can be retrieved.
+    #[serde(rename = "credential_offer_uri")]
+    Uri(String),
+}
+
+// impl CredentialOfferType {
+//     /// Test whether the Credential Offer is an object.
+//     pub fn is_object(&self) -> bool {
+//         matches!(self, CredentialOfferType::Object(_))
+//     }
+
+//     /// Test whether the Credential Offer is a URI.
+//     pub fn is_uri(&self) -> bool {
+//         matches!(self, CredentialOfferType::Uri(_))
+//     }
+// }
 
 /// A Credential Offer object that can be sent to a Wallet as an HTTP GET
 /// request.
@@ -561,7 +580,7 @@ pub struct TokenResponse {
 
     /// REQUIRED when `authorization_details` parameter is used to request issuance
     /// of a certain Credential type. MUST NOT be used otherwise.
-
+    ///
     /// The Authorization Details `credential_identifiers` parameter may be populated
     /// for use in subsequent Credential Requests.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -632,16 +651,29 @@ pub struct CredentialRequest {
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub access_token: String,
 
-    /// Determines the format of the Credential to be issued, which may determine
-    /// the type and any other information related to the Credential to be issued.
-    /// Credential Format Profiles consisting of the Credential format specific set
-    /// of parameters are defined in Appendix E. When this parameter is used,
-    /// `credential_identifier` parameter MUST NOT be present.
+    /// Identifies the Credential being requested. REQUIRED when
+    /// `credential_identifiers` was returned in the Token Response. MUST NOT be set
+    /// otherwise.
     ///
-    /// REQUIRED when `credential_identifiers` was not returned from the Token
-    /// Response. Otherwise, MUST NOT be used.
+    /// When set, the `format` parameter and any other Credential format specific set
+    /// of parameters MUST NOT be set.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_identifier: Option<String>,
+
+    /// Determines the format of the Credential to be issued, which may determine
+    /// the type and other information related to the Credential to be issued. REQUIRED
+    /// when `credential_identifiers` was not returned from the Token Response. MUST
+    /// NOT be set otherwise.
+    ///
+    /// When set, `credential_identifier` parameter MUST NOT be set.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub format: Option<CredentialFormat>,
+
+    /// Definition of the credential type requested.
+    ///
+    /// REQUIRED when `format` is "`jwt_vc_json`", "`jwt_vc_json`-ld", or "`ldp_vc`".
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_definition: Option<CredentialDefinition>,
 
     /// Wallet's proof of possession of cryptographic key material the issued Credential
     /// will be bound to.
@@ -651,21 +683,6 @@ pub struct CredentialRequest {
     /// the requested Credential.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub proof: Option<Proof>,
-
-    /// Identifies the Credential being requested. When this parameter is used, the
-    /// format parameter and any other Credential format specific set of parameters
-    /// MUST NOT be present.
-    ///
-    /// REQUIRED when a `credential_identifiers` was returned in the Token Response.
-    /// MUST NOT be used otherwise.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_identifier: Option<String>,
-
-    /// The detailed description of the credential type requested.
-    ///
-    /// REQUIRED when `format` is "`jwt_vc_json`", "`jwt_vc_json`-ld", or "`ldp_vc`".
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_definition: Option<CredentialDefinition>,
 
     /// If present, specifies how the Credential Response should be encrypted. If not
     /// present.
@@ -683,12 +700,26 @@ pub struct Proof {
     pub proof_type: String,
 
     /// The JWT containing the Wallet's proof of possession of key material.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub jwt: Option<String>,
+    #[serde(flatten)]
+    pub proof: ProofType,
+}
+
+/// The type of proof the Wallet uses to prove possession of key material.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum ProofType {
+    /// The JWT containing the Wallet's proof of possession of key material.
+    #[serde(rename = "jwt")]
+    Jwt(String),
 
     /// The CWT containing the Wallet's proof of possession of key material.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub cwt: Option<String>,
+    #[serde(rename = "cwt")]
+    Cwt(String),
+}
+
+impl Default for ProofType {
+    fn default() -> Self {
+        ProofType::Jwt(String::new())
+    }
 }
 
 /// Claims containing a Wallet's proof of possession of key material that can be

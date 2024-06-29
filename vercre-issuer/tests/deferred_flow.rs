@@ -9,7 +9,7 @@ use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use test_utils::holder;
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, PENDING_USER};
-use vercre_issuer::create_offer::{CreateOfferRequest, CreateOfferResponse};
+use vercre_issuer::create_offer::{CreateOfferRequest, CreateOfferResponse, CredentialOfferType};
 use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
 use vercre_issuer::deferred::{DeferredCredentialRequest, DeferredCredentialResponse};
 use vercre_issuer::token::{TokenRequest, TokenResponse};
@@ -64,7 +64,8 @@ async fn get_offer() -> Result<CreateOfferResponse> {
 // Simulate Wallet request to '/token' endpoint with pre-authorized code to get
 // access token
 async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
-    assert_let!(Some(offer), &input.credential_offer);
+    assert_let!(CredentialOfferType::Object(offer), &input.credential_offer);
+
     assert_let!(Some(grants), &offer.grants);
     assert_let!(Some(pre_authorized_code), &grants.pre_authorized_code);
 

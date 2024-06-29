@@ -8,7 +8,7 @@ use anyhow::bail;
 use core_utils::jws::{self, Type};
 use openid4vc::issuance::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, GrantType, Proof, ProofClaims,
-    TokenRequest,
+    ProofType, TokenRequest,
 };
 use tracing::instrument;
 use vercre_vc::model::StrObj;
@@ -66,8 +66,7 @@ where
             };
             let proof = Proof {
                 proof_type: "jwt".into(),
-                jwt: Some(jwt),
-                cwt: None,
+                proof: ProofType::Jwt(jwt),
             };
 
             let request = credential_request(&issuance, id, cfg, &proof);

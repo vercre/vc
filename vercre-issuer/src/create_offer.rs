@@ -72,8 +72,8 @@ use core_utils::gen;
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{
-    AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer, Grants,
-    PreAuthorizedCodeGrant, TxCode,
+    AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer,
+    CredentialOfferType, Grants, PreAuthorizedCodeGrant, TxCode,
 };
 use openid4vc::{err, Result};
 use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
@@ -226,8 +226,9 @@ where
         }
 
         // return response
+        // TODO: add support for `credential_offer_uri`
         Ok(CreateOfferResponse {
-            credential_offer: Some(CredentialOffer {
+            credential_offer: CredentialOfferType::Object(CredentialOffer {
                 credential_issuer: request.credential_issuer.clone(),
                 credential_configuration_ids: request.credential_configuration_ids.clone(),
                 grants: Some(Grants {
@@ -236,9 +237,6 @@ where
                 }),
             }),
             user_code,
-
-            // LATER: save offer to state and return uri
-            credential_offer_uri: None,
         })
     }
 }
@@ -279,7 +277,9 @@ mod tests {
         });
 
         // check redacted fields
-        let offer = response.credential_offer.as_ref().expect("has credential_offer");
+        let CredentialOfferType::Object(offer) = response.credential_offer else {
+            panic!("expected CredentialOfferType::Object");
+        };
         assert_let!(Some(grants), &offer.grants);
         assert_let!(Some(pre_auth_code), &grants.pre_authorized_code);
         assert!(grants.pre_authorized_code.is_some());
