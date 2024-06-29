@@ -2300,11 +2300,12 @@ version = "0.0.0"
 dependencies = [
  "axum",
  "axum-extra",
- "issuer-provider",
+ "chrono",
  "oauth2",
  "serde",
  "serde_json",
  "serde_qs",
+ "test-utils",
  "tokio",
  "tower-http",
  "tracing",
@@ -3421,14 +3422,15 @@ version = "0.0.0"
 dependencies = [
  "axum",
  "axum-extra",
+ "chrono",
  "serde",
  "serde_json",
+ "test-utils",
  "tokio",
  "tower-http",
  "tracing",
  "tracing-subscriber",
  "vercre-verifier",
- "verifier-provider",
 ]
 
 [[package]]

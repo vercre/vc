@@ -1,10 +1,10 @@
-// mod provider;
-
 //! # Verifiable Credential Provider
 //!
 //! This is a simple Verifiable Credential Provider (VCP) that implements the
 //! [Verifiable Credential HTTP API](
 //! https://identity.foundation/verifiable-credential/spec/#http-api).
+
+mod provider;
 
 use std::sync::Arc;
 
@@ -26,7 +26,8 @@ use vercre_verifier::create_request::{CreateRequestRequest, CreateRequestRespons
 use vercre_verifier::request::{RequestObjectRequest, RequestObjectResponse};
 use vercre_verifier::response::ResponseRequest;
 use vercre_verifier::Endpoint;
-use verifier_provider::Provider;
+
+use crate::provider::Provider;
 
 #[tokio::main]
 async fn main() {
