@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 use anyhow::anyhow;
 use rand::rngs::OsRng;
 // use ed25519_dalek::SigningKey;
-use signature::{Keypair, Signer, Verifier};
+use signature::{Signer, Verifier}; // Keypair,
 
 use super::Keyring;
 

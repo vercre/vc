@@ -33,7 +33,7 @@ static VERIFIER_PROVIDER: LazyLock<verifier::Provider> = LazyLock::new(verifier:
 
 #[derive(Clone, Debug)]
 pub struct Provider {
-    app_handle: tauri::AppHandle,
+    // app_handle: tauri::AppHandle,
     state_store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
     cred_store: Arc<Mutex<HashMap<String, Credential>>>,
 }
@@ -41,10 +41,10 @@ pub struct Provider {
 impl Provider {
     #[must_use]
     pub fn new(
-        app_handle: tauri::AppHandle, state_store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
+        _app_handle: tauri::AppHandle, state_store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
     ) -> Self {
         Self {
-            app_handle,
+            // app_handle,
             state_store,
             cred_store: Arc::new(Mutex::new(HashMap::new())),
         }

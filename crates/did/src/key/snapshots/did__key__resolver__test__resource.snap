@@ -1,5 +1,5 @@
 ---
-source: crates/did-core/src/key/resolver.rs
+source: crates/did/src/key/resolver.rs
 assertion_line: 110
 expression: resource
 ---
