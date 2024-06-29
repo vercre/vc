@@ -3,12 +3,13 @@ mod providers;
 use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
+use test_utils::issuer;
 use vercre_holder::callback::CredentialStorer;
 use vercre_holder::issuance::{OfferRequest, PinRequest, Status};
 use vercre_holder::Endpoint;
 use vercre_issuer::create_offer::CreateOfferRequest;
 
-use crate::providers::{holder, issuer, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+use crate::providers::{holder, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
 static HOLDER_PROVIDER: LazyLock<holder::Provider> = LazyLock::new(|| holder::Provider::new());
 static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(|| issuer::Provider::new());

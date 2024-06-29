@@ -8,6 +8,7 @@ use chrono::{DateTime, Utc};
 // TODO: remove this import
 use dif_exch::Constraints;
 use ecdsa::signature::Signer as _;
+use test_utils::{issuer, verifier};
 use vercre_holder::credential::{Credential, Logo};
 use vercre_holder::issuance::{
     CredentialRequest, CredentialResponse, MetadataRequest, MetadataResponse, TokenRequest,
@@ -20,8 +21,6 @@ use vercre_holder::provider::{
     Algorithm, CredentialStorer, IssuerClient, Jwk, Result, Signer, StateManager, Verifier,
     VerifierClient,
 };
-
-use super::{issuer, verifier};
 
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
 const WALLET_JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
