@@ -19,7 +19,7 @@ use crate::providers::{holder, VERIFIER_ID};
 static VERIFIER_PROVIDER: LazyLock<verifier::Provider> = LazyLock::new(verifier::Provider::new);
 static HOLDER_PROVIDER: LazyLock<holder::Provider> =
     LazyLock::new(|| holder::Provider::new(None, Some(VERIFIER_PROVIDER.clone())));
-    
+
 static CREATE_REQUEST: LazyLock<CreateRequestRequest> = LazyLock::new(|| CreateRequestRequest {
     client_id: VERIFIER_ID.into(),
     device_flow: DeviceFlow::CrossDevice,
@@ -105,7 +105,7 @@ async fn e2e_presentation() {
     assert_eq!(pd.input_descriptors[0].id, "EmployeeID_JWT");
 
     // Authorize the presentation
-    let presentation = Endpoint::new(VERIFIER_PROVIDER.clone())
+    let presentation = Endpoint::new(HOLDER_PROVIDER.clone())
         .authorize(presentation.id.clone())
         .await
         .expect("should authorize presentation");
