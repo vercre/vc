@@ -413,9 +413,9 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use sha2::{Digest, Sha256};
+    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
     use super::*;
-    use crate::testing::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
     #[tokio::test]
     async fn authzn_details() {

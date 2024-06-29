@@ -67,10 +67,10 @@ where
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use test_utils::verifier::Provider;
 
     // use providers::wallet_provider::holder_provider::CLIENT_ID;
     use super::*;
-    use crate::testing::Provider;
 
     #[tokio::test]
     async fn metadata_ok() {

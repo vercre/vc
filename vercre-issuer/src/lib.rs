@@ -94,8 +94,6 @@ pub mod deferred;
 pub mod metadata;
 pub mod register;
 mod state;
-#[cfg(test)]
-mod testing;
 pub mod token;
 
 /// Re-export provider traits and types.
@@ -184,9 +182,9 @@ where
 mod tests {
     use openid4vc::error::Err;
     use openid4vc::{err, Result};
+    use test_utils::issuer::Provider;
 
     use super::*;
-    use crate::testing::Provider;
 
     #[tokio::test]
     async fn test_ok() {

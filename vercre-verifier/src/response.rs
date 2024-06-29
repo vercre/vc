@@ -261,7 +261,7 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::testing::Provider;
+    use test_utils::verifier::Provider;
 
     const CLIENT_ID: &str = "http://vercre.io";
 

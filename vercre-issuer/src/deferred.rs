@@ -136,7 +136,7 @@ mod tests {
 
     use super::*;
     use crate::state::{Deferred, Expire, Token};
-    use crate::testing::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
     #[tokio::test]
     async fn deferred_ok() {

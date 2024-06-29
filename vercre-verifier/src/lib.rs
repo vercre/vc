@@ -162,8 +162,6 @@ pub mod metadata;
 pub mod request;
 pub mod response;
 mod state;
-#[cfg(test)]
-mod testing;
 
 /// Re-export types.
 pub use openid4vc::Result;
@@ -227,7 +225,7 @@ where
 mod tests {
     use openid4vc::error::Err;
     use openid4vc::{err, Result};
-    use testing::Provider;
+    use test_utils::verifier::Provider;
 
     use super::*;
 

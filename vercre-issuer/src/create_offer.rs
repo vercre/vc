@@ -250,7 +250,7 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::testing::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    use test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
 
     #[tokio::test]
     async fn pre_authorize() {

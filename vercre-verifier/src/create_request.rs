@@ -198,9 +198,9 @@ mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
+    use test_utils::verifier::Provider;
 
     use super::*;
-    use crate::testing::Provider;
 
     #[tokio::test]
     async fn same_device() {

@@ -102,7 +102,7 @@ mod tests {
     use openid4vc::presentation::RequestObject;
 
     use super::*;
-    use crate::testing::{Provider, VERIFIER_ID};
+    use test_utils::verifier::{Provider, VERIFIER_ID};
 
     #[tokio::test]
     async fn request_jwt() {

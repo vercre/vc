@@ -1,4 +1,6 @@
+pub mod issuer;
 pub mod providers;
+pub mod verifier;
 
 use std::sync::Once;
 

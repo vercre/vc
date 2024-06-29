@@ -95,7 +95,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
 
     use super::*;
-    use crate::testing::{Provider, CREDENTIAL_ISSUER};
+    use test_utils::issuer::{Provider, CREDENTIAL_ISSUER};
 
     #[tokio::test]
     async fn metadata_ok() {

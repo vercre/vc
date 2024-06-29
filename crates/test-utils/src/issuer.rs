@@ -3,17 +3,15 @@
 use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
-use test_utils::proof::Enclave;
-// pub use test_utils::providers::{
-//     Issuance, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER,
-// };
-pub use test_utils::providers::{Issuance, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-
-use crate::provider::{
-    Algorithm, Callback, Claims, Client, ClientMetadata, CredentialDefinition, Issuer,
-    IssuerMetadata, Jwk, Payload, Result, Server, ServerMetadata, Signer, StateManager, Subject,
-    Verifier,
+use openid4vc::{Client,Server};
+use openid4vc::issuance::{CredentialDefinition,Issuer};
+use provider::{
+    Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Jwk, Payload, Result,
+     ServerMetadata, Signer, StateManager, Subject, Verifier,
 };
+
+use crate::proof::Enclave;
+pub use crate::providers::{Issuance, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
 #[derive(Clone, Debug)]
 pub struct Provider(Issuance);

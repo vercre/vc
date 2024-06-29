@@ -3,13 +3,13 @@
 use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
-use test_utils::proof::Enclave;
-pub use test_utils::providers::{Presentation, VERIFIER_DID, VERIFIER_ID, VERIFY_KEY_ID};
-
-use crate::provider::{
-    Algorithm, Callback, Client, ClientMetadata, Jwk, Payload, Result, Signer, StateManager,
-    Verifier,
+use openid4vc::Client;
+use provider::{
+    Algorithm, Callback, ClientMetadata, Jwk, Payload, Result, Signer, StateManager, Verifier,
 };
+
+use crate::proof::Enclave;
+pub use crate::providers::{Presentation, VERIFIER_DID, VERIFIER_ID, VERIFY_KEY_ID};
 
 #[derive(Clone, Debug)]
 pub struct Provider(Presentation);
