@@ -106,9 +106,7 @@ where
             GrantType::AuthorizationCode => {
                 // client_id is the same as the one used to obtain the authorization code
                 if Some(&request.client_id) != self.state.client_id.as_ref() {
-                    return Err(
-                        Err::InvalidGrant("client_id differs from authorized one".into())
-                    );
+                    return Err(Err::InvalidGrant("client_id differs from authorized one".into()));
                 }
 
                 // redirect_uri is the same as the one provided in authorization request
@@ -116,7 +114,7 @@ where
                 if request.redirect_uri != auth_state.redirect_uri {
                     return Err(Err::InvalidGrant(
                         "redirect_uri differs from authorized one".into(),
-));
+                    ));
                 }
 
                 // code_verifier
@@ -137,9 +135,7 @@ where
                 if request.client_id.is_empty()
                     && !server_meta.pre_authorized_grant_anonymous_access_supported
                 {
-                    return Err(
-                        Err::InvalidClient("anonymous access is not supported".into())
-                    );
+                    return Err(Err::InvalidClient("anonymous access is not supported".into()));
                 }
                 // user_code
                 if request.user_code != auth_state.user_code {

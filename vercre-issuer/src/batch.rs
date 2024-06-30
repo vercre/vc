@@ -115,7 +115,7 @@ where
                 let Some(cred_def) = &request.credential_definition else {
                     return Err(Err::InvalidCredentialRequest(
                         "credential definition not set".into(),
-));
+                    ));
                 };
 
                 // check request has been authorized:
@@ -131,7 +131,7 @@ where
                 if !authorized {
                     return Err(Err::InvalidCredentialRequest(
                         "Requested credential has not been authorized".into(),
-));
+                    ));
                 }
             };
 
@@ -150,7 +150,7 @@ where
                     hint: "Proof not set".into(),
                     c_nonce,
                     c_nonce_expires_in,
-});
+                });
             };
             let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, provider).await {
                 Ok(jwt) => jwt,
@@ -160,7 +160,7 @@ where
                         hint: format!("issue decoding jwt: {e}"),
                         c_nonce,
                         c_nonce_expires_in,
-});
+                    });
                 }
             };
             // proof type
@@ -170,7 +170,7 @@ where
                     hint: format!("Proof JWT 'typ' is not {}", Type::Proof),
                     c_nonce,
                     c_nonce_expires_in,
-});
+                });
             }
 
             // previously issued c_nonce
@@ -180,7 +180,7 @@ where
                     hint: "Proof JWT nonce claim is invalid".into(),
                     c_nonce,
                     c_nonce_expires_in,
-});
+                });
             }
 
             // TODO: use `decode` method in w3c-vc
@@ -192,7 +192,7 @@ where
                     hint: "Proof JWT 'kid' is missing".into(),
                     c_nonce,
                     c_nonce_expires_in,
-});
+                });
             };
             // HACK: save extracted DID for later use when issuing credential
             let Some(did) = kid.split('#').next() else {
@@ -202,7 +202,7 @@ where
                     hint: "Proof JWT DID is invalid".into(),
                     c_nonce,
                     c_nonce_expires_in,
-});
+                });
             };
             self.holder_did = did.into();
         }
@@ -323,7 +323,7 @@ where
             if claim.mandatory.unwrap_or_default() && !holder_claims.claims.contains_key(name) {
                 return Err(Err::InvalidCredentialRequest(
                     "mandatory claim {name} not populated".into(),
-));
+                ));
             }
         }
 
@@ -373,7 +373,7 @@ where
                 let Some(supported) = find_supported else {
                     return Err(Err::InvalidCredentialRequest(
                         "credential is not supported".into(),
-));
+                    ));
                 };
 
                 // copy credential subject
