@@ -22,13 +22,6 @@ where
     T: Serialize,
     S: Serializer,
 {
-    // ----------------------------------------
-    // let Some(v) = value else {
-    //     return serializer.serialize_none();
-    // };
-    // serializer.serialize_str(&v.to_string())
-    // ----------------------------------------
-
     if let Some(val) = value {
         let string = serde_json::to_string(val)
             .map_err(|e| ser::Error::custom(format!("issue 'stringifying': {e}")))?;
@@ -65,13 +58,6 @@ where
         where
             E: de::Error,
         {
-            // ----------------------------------------
-            // let Ok(res) = T::from_str(value) else {
-            //     return Err(de::Error::custom(format!("Failed to parse {value}")));
-            // };
-            // Ok(Some(res))
-            // ----------------------------------------
-
             let val = serde_json::from_str::<T>(value)
                 .map_err(|e| de::Error::custom(format!("issue 'de-stringifying': {e}")))?;
             Ok(Some(val))
