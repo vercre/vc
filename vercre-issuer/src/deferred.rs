@@ -104,7 +104,7 @@ where
         };
 
         let Some(deferred_state) = state.deferred else {
-            return Err(Err::ServerError(format!("Deferred state not found.")));
+            return Err(Err::ServerError("Deferred state not found.".into()));
         };
 
         // remove deferred state item

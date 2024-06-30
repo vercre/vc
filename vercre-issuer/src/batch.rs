@@ -221,7 +221,7 @@ where
 
         // generate nonce and update state
         let Some(token_state) = &self.state.token else {
-            return Err(Err::ServerError(format!("Invalid token state")));
+            return Err(Err::ServerError("Invalid token state".into()));
         };
 
         // --------------------------------------------------------------------
@@ -230,7 +230,7 @@ where
         //    with proof based on an older c_nonce
         // --------------------------------------------------------------------
         // let Some(provider) = &self.provider else {
-        //     return Err(Err::ServerError(format!("provider not set"))));
+        //     return Err(Err::ServerError("provider not set".into())));
         // };
 
         // let c_nonce = gen::nonce();
@@ -324,7 +324,7 @@ where
 
         // check mandatory claims are populated
         let Some(cred_subj) = cred_def.credential_subject.clone() else {
-            return Err(Err::ServerError(format!("Credential subject not set")));
+            return Err(Err::ServerError("Credential subject not set".into()));
         };
         for (name, claim) in &cred_subj {
             if claim.mandatory.unwrap_or_default() && !holder_claims.claims.contains_key(name) {
@@ -338,7 +338,7 @@ where
 
         // HACK: fix this
         let Some(types) = cred_def.type_ else {
-            return Err(Err::ServerError(format!("Credential type not set")));
+            return Err(Err::ServerError("Credential type not set".into()));
         };
 
         let vc_id = format!("{credential_issuer}/credentials/{}", types[1].clone());

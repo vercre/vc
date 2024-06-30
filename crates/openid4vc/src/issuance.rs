@@ -198,8 +198,8 @@ impl CredentialOffer {
     /// Returns an `Err::ServerError` error if error if the Credential Offer cannot
     /// be serialized.
     pub fn to_querystring(&self) -> Result<String> {
-        Ok(serde_qs::to_string(&self)
-            .map_err(|e| Err::ServerError(format!("issue creating query string: {e}")))?)
+        serde_qs::to_string(&self)
+            .map_err(|e| Err::ServerError(format!("issue creating query string: {e}")))
     }
 }
 

@@ -12,18 +12,28 @@ use std::fmt::Debug;
 use serde::{Deserialize, Serialize, Serializer};
 use thiserror::Error;
 
-// #[derive(Error, Default, Debug, Serialize, Deserialize)]
-// #[error("error: {error}, error_description: {error_description}")]
-// pub struct Oid4VcError {
-//     error: String,
-//     error_description: String,
-//     #[serde(skip_serializing_if = "Option::is_none")]
-//     c_nonce: Option<String>,
-//     #[serde(skip_serializing_if = "Option::is_none")]
-//     c_nonce_expires_in: Option<i64>,
-//     #[serde(skip_serializing_if = "Option::is_none")]
-//     client_state: Option<String>,
-// }
+/// Error response for `OpenID` for Verifiable Credentials.
+#[allow(clippy::module_name_repetitions)]
+#[derive(Deserialize, Serialize)]
+pub struct OidError {
+    /// Error code.
+    pub error: String,
+
+    /// Error description.
+    pub error_description: String,
+
+    /// Optional client-state parameter.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state: Option<String>,
+
+    /// A fresh `c_nonce` to use when retrying Proof submission.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub c_nonce: Option<String>,
+
+    /// The expiry time of the `c_nonce`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub c_nonce_expires_in: Option<i64>,
+}
 
 /// Internal error codes for `OpenID` for Verifiable Credential Issuance
 #[derive(Error, Debug, Deserialize)]
@@ -188,26 +198,14 @@ pub enum Err {
     InvalidPresentationDefinitionReference(String),
 }
 
-#[derive(Deserialize, Serialize)]
-struct OidError {
-    error: String,
-    error_description: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    state: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    c_nonce: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    c_nonce_expires_in: Option<i64>,
-}
-
 impl Serialize for Err {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         use serde::ser::Error as SerdeError;
 
-        let Ok(value) = serde_json::from_str::<OidError>(&self.to_string()) else {
+        let Ok(error) = serde_json::from_str::<OidError>(&self.to_string()) else {
             return Err(SerdeError::custom("issue deserializing Err"));
         };
-        value.serialize(serializer)
+        error.serialize(serializer)
     }
 }
 
@@ -225,28 +223,7 @@ impl Err {
     pub fn to_querystring(self) -> String {
         serde_qs::to_string(&self).unwrap_or_default()
     }
-
-    //     /// Returns the `c_nonce` and `c_nonce_expires_in` values for `Err::InvalidProof` errors.
-    //     #[must_use]
-    //     pub fn c_nonce(&self) -> Option<(String, i64)> {
-    //         if let Self::InvalidProof {
-    //             c_nonce,
-    //             c_nonce_expires_in,
-    //             ..
-    //         } = &self
-    //         {
-    //             return Some((c_nonce.clone(), *c_nonce_expires_in));
-    //         };
-
-    //         None
-    //     }
 }
-
-// impl From<Err> for serde_json::Value {
-//     fn from(err: Err) -> Self {
-//         serde_json::from_str(&err.to_string()).unwrap_or_default()
-//     }
-// }
 
 #[cfg(test)]
 mod test {

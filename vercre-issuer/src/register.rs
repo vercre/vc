@@ -84,7 +84,7 @@ where
         tracing::debug!("Context::process");
 
         let Ok(client_meta) = provider.register(&request.client_metadata).await else {
-            return Err(Err::ServerError(format!("Registration failed")));
+            return Err(Err::ServerError("Registration failed".into()));
         };
 
         Ok(RegistrationResponse {

@@ -1,6 +1,5 @@
 use std::sync::LazyLock;
 
-use anyhow::Result;
 use assert_let_bind::assert_let;
 use chrono::Utc;
 use core_utils::jws::{self, Type};
@@ -41,7 +40,7 @@ async fn pre_auth_flow() {
 
 // Simulate Issuer request to '/create_offer' endpoint to get credential offer to use to
 // make credential offer to Wallet.
-async fn get_offer() -> Result<CreateOfferResponse> {
+async fn get_offer() -> anyhow::Result<CreateOfferResponse> {
     // offer request
     let body = json!({
         "credential_configuration_ids": ["EmployeeID_JWT"],
@@ -61,7 +60,7 @@ async fn get_offer() -> Result<CreateOfferResponse> {
 
 // Simulate Wallet request to '/token' endpoint with pre-authorized code to get
 // access token
-async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
+async fn get_token(input: CreateOfferResponse) -> anyhow::Result<TokenResponse> {
     assert_let!(CredentialOfferType::Object(offer), &input.credential_offer);
     assert_let!(Some(grants), &offer.grants);
     assert_let!(Some(pre_authorized_code), &grants.pre_authorized_code);
@@ -83,7 +82,7 @@ async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
 }
 
 // Simulate Wallet request to '/credential' endpoint with access token to get credential.
-async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
+async fn get_credential(input: TokenResponse) -> anyhow::Result<CredentialResponse> {
     let claims = ProofClaims {
         iss: Some(CLIENT_ID.into()),
         aud: CREDENTIAL_ISSUER.into(),

@@ -1,6 +1,5 @@
 use std::sync::LazyLock;
 
-use anyhow::Result;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
 use core_utils::jws::{self, Type};
@@ -44,7 +43,7 @@ async fn auth_code_flow() {
 
 // Simulate Issuer request to '/create_offer' endpoint to get credential offer to use to
 // make credential offer to Wallet.
-async fn authorize() -> Result<AuthorizationResponse> {
+async fn authorize() -> anyhow::Result<AuthorizationResponse> {
     // authorize request
     let auth_dets = json!([{
         "type": "openid_credential",
@@ -88,7 +87,7 @@ async fn authorize() -> Result<AuthorizationResponse> {
 
 // Simulate Wallet request to '/token' endpoint with pre-authorized code to get
 // access token
-async fn get_token(input: AuthorizationResponse) -> Result<TokenResponse> {
+async fn get_token(input: AuthorizationResponse) -> anyhow::Result<TokenResponse> {
     // create TokenRequest to 'send' to the app
     let body = json!({
         "client_id": issuer::CLIENT_ID,
@@ -113,7 +112,7 @@ async fn get_token(input: AuthorizationResponse) -> Result<TokenResponse> {
 }
 
 // Simulate Wallet request to '/credential' endpoint with access token to get credential.
-async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
+async fn get_credential(input: TokenResponse) -> anyhow::Result<CredentialResponse> {
     // create CredentialRequest to 'send' to the app
     let claims = ProofClaims {
         iss: Some(issuer::CLIENT_ID.into()),

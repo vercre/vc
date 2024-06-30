@@ -85,16 +85,17 @@ where
         self.state.callback_id.clone()
     }
 
+    // TODO:
+    // Validate the integrity, authenticity, and holder binding of each Verifiable
+    // Presentation in the VP Token according to the rules of the respective
+    // Presentation format.
+
     // Verfiy the vp_token and presentation subm
+    #[allow(clippy::too_many_lines)]
     async fn verify(
         &mut self, provider: &Self::Provider, request: &Self::Request,
     ) -> Result<&Self> {
         tracing::debug!("Context::verify");
-
-        // TODO:
-        // Validate the integrity, authenticity, and holder binding of each Verifiable
-        // Presentation in the VP Token according to the rules of the respective
-        // Presentation format.
 
         let saved_req = &self.state.request_object;
 
@@ -102,9 +103,6 @@ where
         let Some(vp_token) = request.vp_token.clone() else {
             return Err(Err::InvalidRequest("client state not found".into()));
         };
-
-        // use serde::de::{self, Deserialize, Deserializer, SeqAccess, Visitor};
-        // use openid4vc::presentation::vp_token as deser;
 
         let mut vp_values = vec![];
 
@@ -145,7 +143,6 @@ where
         let Some(subm) = &request.presentation_submission else {
             return Err(Err::InvalidRequest("no presentation_submission".into()));
         };
-
         let Some(def) = &saved_req.presentation_definition else {
             return Err(Err::InvalidRequest("no presentation_definition".into()));
         };

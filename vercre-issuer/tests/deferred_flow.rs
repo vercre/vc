@@ -1,6 +1,5 @@
 use std::sync::LazyLock;
 
-use anyhow::Result;
 use assert_let_bind::assert_let;
 use chrono::Utc;
 use core_utils::jws::{self, Type};
@@ -43,7 +42,7 @@ async fn deferred_flow() {
 
 // Simulate Issuer request to '/create_offer' endpoint to get credential offer to use to
 // make credential offer to Wallet.
-async fn get_offer() -> Result<CreateOfferResponse> {
+async fn get_offer() -> anyhow::Result<CreateOfferResponse> {
     // offer request
     let body = json!({
         "credential_configuration_ids": ["EmployeeID_JWT"],
@@ -63,7 +62,7 @@ async fn get_offer() -> Result<CreateOfferResponse> {
 
 // Simulate Wallet request to '/token' endpoint with pre-authorized code to get
 // access token
-async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
+async fn get_token(input: CreateOfferResponse) -> anyhow::Result<TokenResponse> {
     assert_let!(CredentialOfferType::Object(offer), &input.credential_offer);
 
     assert_let!(Some(grants), &offer.grants);
@@ -86,7 +85,7 @@ async fn get_token(input: CreateOfferResponse) -> Result<TokenResponse> {
 }
 
 // Simulate Wallet request to '/credential' endpoint with access token to get credential.
-async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
+async fn get_credential(input: TokenResponse) -> anyhow::Result<CredentialResponse> {
     // create CredentialRequest to 'send' to the app
     let claims = ProofClaims {
         iss: Some(CLIENT_ID.into()),
@@ -121,7 +120,7 @@ async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
 
 async fn get_deferred(
     tkn: TokenResponse, cred_resp: CredentialResponse,
-) -> Result<DeferredCredentialResponse> {
+) -> anyhow::Result<DeferredCredentialResponse> {
     let request = DeferredCredentialRequest {
         credential_issuer: CREDENTIAL_ISSUER.into(),
         access_token: tkn.access_token,

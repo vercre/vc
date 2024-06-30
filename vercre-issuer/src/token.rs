@@ -97,7 +97,7 @@ where
             return Err(Err::InvalidRequest("unknown authorization server".into()));
         };
         let Some(auth_state) = &self.state.auth else {
-            return Err(Err::ServerError(format!("Authorization state not set")));
+            return Err(Err::ServerError("Authorization state not set".into()));
         };
 
         // grant_type
@@ -163,7 +163,7 @@ where
 
         // get auth state to return `authorization_details` and `scope`
         let Some(auth_state) = state.auth else {
-            return Err(Err::ServerError(format!("Auth state not set")));
+            return Err(Err::ServerError("Auth state not set".into()));
         };
         state.auth = None;
 

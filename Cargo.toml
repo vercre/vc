@@ -52,7 +52,7 @@ k256 = "0.13.3"
 openid4vc = { path = "crates/openid4vc" }
 provider = { path = "crates/provider" }
 serde = { version = "1.0.203", features = ["derive"] }
-serde_json = { version = "1.0.118", features = ["alloc"] }
+serde_json = { version = "1.0.119", features = ["alloc"] }
 serde_qs = "0.13.0"
 test-utils = { path = "crates/test-utils" }
 tokio = { version = "1.38.0", features = ["macros", "rt-multi-thread"] }
