@@ -51,7 +51,7 @@ use openid4vc::error::Err;
 pub use openid4vc::presentation::{
     CreateRequestRequest, CreateRequestResponse, DeviceFlow, RequestObject,
 };
-use openid4vc::{err, Result};
+use openid4vc::Result;
 use provider::{Callback, ClientMetadata, StateManager};
 use tracing::instrument;
 use uuid::Uuid;
@@ -128,7 +128,7 @@ where
         tracing::debug!("Context::verify");
 
         if request.input_descriptors.is_empty() {
-            err!(Err::InvalidRequest, "no credentials specified");
+            return Err(Err::InvalidRequest("no credentials specified".into()));
         }
         Ok(self)
     }
@@ -155,7 +155,7 @@ where
 
         // get client metadata
         let Ok(client_meta) = ClientMetadata::metadata(provider, &request.client_id).await else {
-            err!(Err::InvalidRequest, "invalid client_id");
+            return Err(Err::InvalidRequest("invalid client_id".into()));
         };
 
         let mut req_obj = RequestObject {

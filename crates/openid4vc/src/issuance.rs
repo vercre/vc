@@ -13,7 +13,7 @@ use serde_json::Value;
 // use w3c_vc::VerifiableCredential
 use super::{Client, CredentialFormat};
 use crate::error::{self, Err};
-use crate::{err, stringify, Result};
+use crate::{stringify, Result};
 
 // TODO: find a home for these shared types
 
@@ -145,11 +145,11 @@ pub struct CredentialOffer {
 }
 
 impl FromStr for CredentialOffer {
-    type Err = error::Error;
+    type Err = error::Err;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let Ok(res) = serde_json::from_str::<Self>(s) else {
-            err!(Err::InvalidRequest, "issue deserializing CredentialOffer");
+            return Err(Err::InvalidRequest("issue deserializing CredentialOffer".into()));
         };
         Ok(res)
     }
@@ -173,13 +173,13 @@ impl CredentialOffer {
     /// be serialized.
     pub fn to_qrcode(&self, endpoint: &str) -> Result<String> {
         let Ok(qs) = self.to_querystring() else {
-            err!("Failed to generate querystring");
+            return Err(Err::ServerError(anyhow!("Failed to generate querystring")));
         };
 
         // generate qr code
         let qr_code = match QrCode::new(format!("{endpoint}{qs}")) {
             Ok(s) => s,
-            Err(e) => err!(Err::ServerError(e.into()), "Failed to create QR code"),
+            Err(e) => return Err(Err::ServerError(anyhow!("Failed to create QR code: {e}")).into()),
         };
 
         // write image to buffer
@@ -187,7 +187,7 @@ impl CredentialOffer {
         let mut buffer: Vec<u8> = Vec::new();
         let mut writer = Cursor::new(&mut buffer);
         if let Err(e) = img_buf.write_to(&mut writer, image::ImageFormat::Png) {
-            err!(Err::ServerError(e.into()), "Failed to create QR code");
+            return Err(Err::ServerError(anyhow!("Failed to create QR code: {e}")));
         }
 
         // base64 encode image

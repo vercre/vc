@@ -20,7 +20,7 @@ use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{AuthorizationDetailType, TokenRequest, TokenResponse};
 use openid4vc::issuance::{GrantType, TokenType};
-use openid4vc::{err, Result};
+use openid4vc::Result;
 use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use sha2::{Digest, Sha256};
 use tracing::instrument;
@@ -52,10 +52,10 @@ where
         // restore state
         // RFC 6749 requires a particular error here
         let Ok(buf) = StateManager::get(&self.provider, &auth_state_key(request)?).await else {
-            err!(Err::InvalidGrant, "the authorization code is invalid");
+            return Err(Err::InvalidGrant("the authorization code is invalid".into()));
         };
         let Ok(state) = State::try_from(buf.as_slice()) else {
-            err!(Err::InvalidGrant, "the authorization code has expired");
+            return Err(Err::InvalidGrant("the authorization code has expired".into()));
         };
 
         let ctx = Context {
@@ -95,10 +95,10 @@ where
 
         let Ok(server_meta) = ServerMetadata::metadata(provider, &request.credential_issuer).await
         else {
-            err!(Err::InvalidRequest, "unknown authorization server");
+            return Err(Err::InvalidRequest("unknown authorization server".into()));
         };
         let Some(auth_state) = &self.state.auth else {
-            err!("Authorization state not set");
+            return Err(Err::ServerError(anyhow!("Authorization state not set")));
         };
 
         // grant_type
@@ -106,18 +106,22 @@ where
             GrantType::AuthorizationCode => {
                 // client_id is the same as the one used to obtain the authorization code
                 if Some(&request.client_id) != self.state.client_id.as_ref() {
-                    err!(Err::InvalidGrant, "client_id differs from authorized one");
+                    return Err(
+                        Err::InvalidGrant("client_id differs from authorized one".into()).into()
+                    );
                 }
 
                 // redirect_uri is the same as the one provided in authorization request
                 // i.e. either 'None' or 'Some(redirect_uri)'
                 if request.redirect_uri != auth_state.redirect_uri {
-                    err!(Err::InvalidGrant, "redirect_uri differs from authorized one");
+                    return Err(Err::InvalidGrant(
+                        "redirect_uri differs from authorized one".into(),
+));
                 }
 
                 // code_verifier
                 let Some(verifier) = &request.code_verifier else {
-                    err!(Err::AccessDenied, "code_verifier is missing");
+                    return Err(Err::AccessDenied("code_verifier is missing".into()));
                 };
 
                 // code_verifier matches code_challenge
@@ -125,7 +129,7 @@ where
                 let challenge = Base64UrlUnpadded::encode_string(&hash);
 
                 if Some(&challenge) != auth_state.code_challenge.as_ref() {
-                    err!(Err::AccessDenied, "code_verifier is invalid");
+                    return Err(Err::AccessDenied("code_verifier is invalid".into()));
                 }
             }
             GrantType::PreAuthorizedCode => {
@@ -133,11 +137,13 @@ where
                 if request.client_id.is_empty()
                     && !server_meta.pre_authorized_grant_anonymous_access_supported
                 {
-                    err!(Err::InvalidClient, "anonymous access is not supported");
+                    return Err(
+                        Err::InvalidClient("anonymous access is not supported".into()).into()
+                    );
                 }
                 // user_code
                 if request.user_code != auth_state.user_code {
-                    err!(Err::InvalidGrant, "invalid user_code provided");
+                    return Err(Err::InvalidGrant("invalid user_code provided".into()));
                 }
             }
         }
@@ -160,7 +166,7 @@ where
 
         // get auth state to return `authorization_details` and `scope`
         let Some(auth_state) = state.auth else {
-            err!("Auth state not set");
+            return Err(Err::ServerError(anyhow!("Auth state not set")));
         };
         state.auth = None;
 
@@ -197,7 +203,7 @@ fn auth_state_key(request: &TokenRequest) -> Result<String> {
         GrantType::PreAuthorizedCode => request.pre_authorized_code.as_ref(),
     };
     let Some(state_key) = state_key else {
-        err!(Err::InvalidRequest, "missing state key");
+        return Err(Err::InvalidRequest("missing state key".into()));
     };
     Ok(state_key.to_string())
 }

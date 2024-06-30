@@ -14,7 +14,7 @@ use serde_json::Value;
 
 use super::Client as ClientMetadata;
 use crate::error::Err;
-use crate::{err, stringify, Result};
+use crate::{stringify, Result};
 
 /// The Request Object Request is created by the Verifier to generate an
 /// Authorization Request Object.
@@ -296,13 +296,13 @@ impl RequestObject {
     /// Returns an `Err::ServerError` error if the Request Object cannot be serialized.
     pub fn to_qrcode(&self, endpoint: &str) -> Result<String> {
         let Ok(qs) = self.to_querystring() else {
-            err!("Failed to generate querystring");
+            return Err(Err::ServerError(anyhow!("Failed to generate querystring")));
         };
 
         // generate qr code
         let qr_code = match QrCode::new(format!("{endpoint}{qs}")) {
             Ok(q) => q,
-            Err(e) => err!(Err::ServerError(e.into()), "Failed to create QR code"),
+            Err(e) => return Err(Err::ServerError(anyhow!("Failed to create QR code: {e}")).into()),
         };
 
         // write image to buffer
@@ -310,7 +310,7 @@ impl RequestObject {
         let mut buffer: Vec<u8> = Vec::new();
         let mut writer = Cursor::new(&mut buffer);
         if let Err(e) = img_buf.write_to(&mut writer, image::ImageFormat::Png) {
-            err!(Err::ServerError(e.into()), "Failed to create QR code");
+            return Err(Err::ServerError(anyhow!("Failed to create QR code: {e}")));
         }
 
         // base64 encode image

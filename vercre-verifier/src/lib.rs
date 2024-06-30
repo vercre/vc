@@ -224,7 +224,7 @@ where
 #[cfg(test)]
 mod tests {
     use openid4vc::error::Err;
-    use openid4vc::{err, Result};
+    use openid4vc::Result;
     use test_utils::verifier::Provider;
 
     use super::*;
@@ -289,7 +289,7 @@ mod tests {
         ) -> Result<Self::Response> {
             match request.return_ok {
                 true => Ok(TestResponse {}),
-                false => err!(Err::InvalidRequest, "invalid request"),
+                false => return Err(Err::InvalidRequest("invalid request".into())),
             }
         }
     }

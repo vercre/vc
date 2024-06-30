@@ -25,7 +25,7 @@ use std::fmt::Debug;
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{ResponseRequest, ResponseResponse};
-use openid4vc::{err, Result};
+use openid4vc::Result;
 use provider::{Callback, ClientMetadata, Signer, StateManager, Verifier};
 use serde_json::Value;
 use serde_json_path::JsonPath;
@@ -52,10 +52,10 @@ where
 
         // get state by client state key
         let Some(state_key) = &request.state else {
-            err!(Err::InvalidRequest, "client state not found");
+            return Err(Err::InvalidRequest("client state not found".into()));
         };
         let Ok(buf) = StateManager::get(&self.provider, state_key).await else {
-            err!(Err::InvalidRequest, "state not found");
+            return Err(Err::InvalidRequest("state not found".into()));
         };
 
         let ctx = Context {
@@ -100,7 +100,7 @@ where
 
         // TODO: no token == error response, we should have already checked for an error
         let Some(vp_token) = request.vp_token.clone() else {
-            err!(Err::InvalidRequest, "client state not found");
+            return Err(Err::InvalidRequest("client state not found".into()));
         };
 
         // use serde::de::{self, Deserialize, Deserializer, SeqAccess, Visitor};
@@ -113,10 +113,10 @@ where
             let value = match vp_val {
                 Value::Object(_) => {
                     let Some(proof) = vp_val["proof"].as_object() else {
-                        err!(Err::InvalidRequest, "proof not found");
+                        return Err(Err::InvalidRequest("proof not found".into()));
                     };
                     if proof["challenge"].as_str() != Some(&saved_req.nonce) {
-                        err!(Err::InvalidRequest, "nonce does not match");
+                        return Err(Err::InvalidRequest("nonce does not match".into()));
                     }
                     vp_val
                 }
@@ -124,16 +124,16 @@ where
                     let Ok(Payload::Vp { vp, nonce, .. }) =
                         proof::verify(&token, Verify::Vp, provider).await
                     else {
-                        err!(Err::InvalidRequest, "invalid vp_token format");
+                        return Err(Err::InvalidRequest("invalid vp_token format".into()));
                     };
 
                     if nonce != saved_req.nonce {
-                        err!(Err::InvalidRequest, "nonce does not match");
+                        return Err(Err::InvalidRequest("nonce does not match".into()));
                     }
                     serde_json::to_value(vp)?
                 }
                 _ => {
-                    err!(Err::InvalidRequest, "invalid vp_token format");
+                    return Err(Err::InvalidRequest("invalid vp_token format".into()));
                 }
             };
 
@@ -141,17 +141,17 @@ where
         }
 
         let Some(subm) = &request.presentation_submission else {
-            err!(Err::InvalidRequest, "no presentation_submission");
+            return Err(Err::InvalidRequest("no presentation_submission".into()));
         };
 
         let Some(def) = &saved_req.presentation_definition else {
-            err!(Err::InvalidRequest, "no presentation_definition");
+            return Err(Err::InvalidRequest("no presentation_definition".into()));
         };
 
         // verify presentation subm matches definition
         // N.B. technically, this is redundant as it is done when looking up state
         if subm.definition_id != def.id {
-            err!(Err::InvalidRequest, "definition_ids do not match");
+            return Err(Err::InvalidRequest("definition_ids do not match".into()));
         }
 
         let input_descs = &def.input_descriptors;
@@ -172,24 +172,29 @@ where
         for input in input_descs {
             // find Input Descriptor Mapping Object
             let Some(mapping) = desc_map.iter().find(|idmo| idmo.id == input.id) else {
-                err!(
-                    Err::InvalidRequest,
+                return Err(Err::InvalidRequest(format!(
                     "input descriptor mapping req_obj not found for {}",
                     input.id
-                );
+                )));
             };
 
             // check VC format matches a requested format
             if let Some(fmt) = input.format.as_ref() {
                 if !fmt.contains_key(&mapping.path_nested.format) {
-                    err!(Err::InvalidRequest, "invalid format {}", mapping.path_nested.format);
+                    return Err(Err::InvalidRequest(format!(
+                        "invalid format {}",
+                        mapping.path_nested.format
+                    )));
                 }
             }
 
             // search VP Token for VC specified by mapping path
             let jpath = JsonPath::parse(&mapping.path_nested.path)?;
             let Ok(vc_node) = jpath.query(&vp_val).exactly_one() else {
-                err!(Err::InvalidRequest, "no match for path_nested {}", mapping.path_nested.path);
+                return Err(Err::InvalidRequest(format!(
+                    "no match for path_nested {}",
+                    mapping.path_nested.path
+                )));
             };
 
             // convert Value (req_obj or base64url string) to VerifiableCredential
@@ -197,22 +202,28 @@ where
                 Value::String(token) => {
                     let Ok(Payload::Vc(vc)) = proof::verify(token, Verify::Vc, provider).await
                     else {
-                        err!(Err::InvalidRequest, "invalid VC format: {}", token);
+                        return Err(
+                            Err::InvalidRequest(format!("invalid VC format: {token}")).into()
+                        );
                     };
                     vc
                 }
                 Value::Object(_) => serde_json::from_value(vc_node.clone())?,
-                _ => err!(Err::InvalidRequest, "unexpected VC format: {}", vc_node),
+                _ => {
+                    return Err(
+                        Err::InvalidRequest(format!("unexpected VC format: {vc_node}")).into()
+                    )
+                }
             };
 
             // verify input constraints have been met
             if !input.constraints.satisfied(&vc)? {
-                err!(Err::InvalidRequest, "input constraints not satisfied");
+                return Err(Err::InvalidRequest("input constraints not satisfied".into()));
             }
 
             // check VC is valid (hasn't expired, been revoked, etc)
             if vc.expiration_date.is_some_and(|exp| exp < chrono::Utc::now()) {
-                err!(Err::InvalidRequest, "credential has expired");
+                return Err(Err::InvalidRequest("credential has expired".into()));
             }
 
             // TODO: look up credential status using status.id
@@ -237,7 +248,7 @@ where
 
         // clear state
         let Some(state_key) = &request.state else {
-            err!(Err::InvalidRequest, "client state not found");
+            return Err(Err::InvalidRequest("client state not found".into()));
         };
         StateManager::purge(provider, state_key).await?;
 

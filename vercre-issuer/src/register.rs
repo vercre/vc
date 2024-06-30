@@ -6,7 +6,7 @@ use anyhow::anyhow;
 use chrono::Utc;
 use openid4vc::error::Err;
 pub use openid4vc::issuance::{RegistrationRequest, RegistrationResponse};
-use openid4vc::{err, Result};
+use openid4vc::Result;
 use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use tracing::instrument;
 use w3c_vc::proof::Signer;
@@ -66,14 +66,14 @@ where
 
         let buf = match StateManager::get(provider, &request.access_token).await {
             Ok(buf) => buf,
-            Err(e) => err!(Err::ServerError(anyhow::anyhow!(e)), "State not found"),
+            Err(e) => return Err(Err::ServerError(anyhow!("State not found: {e}")).into()),
         };
         let state = State::try_from(buf)?;
 
         // token (access or acceptance) expiry
         let expires = state.expires_at.signed_duration_since(Utc::now()).num_seconds();
         if expires < 0 {
-            err!(Err::InvalidRequest, "access Token has expired");
+            return Err(Err::InvalidRequest("access Token has expired".into()));
         }
 
         Ok(self)
@@ -85,7 +85,7 @@ where
         tracing::debug!("Context::process");
 
         let Ok(client_meta) = provider.register(&request.client_metadata).await else {
-            err!("Registration failed");
+            return Err(Err::ServerError(anyhow!("Registration failed")));
         };
 
         Ok(RegistrationResponse {
