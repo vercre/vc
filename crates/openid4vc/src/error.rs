@@ -9,11 +9,24 @@
 use std::fmt::Debug;
 
 // use anyhow::Error;
-// use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 use thiserror::Error;
 
+// #[derive(Error, Default, Debug, Serialize, Deserialize)]
+// #[error("error: {error}, error_description: {error_description}")]
+// pub struct Oid4VcError {
+//     error: String,
+//     error_description: String,
+//     #[serde(skip_serializing_if = "Option::is_none")]
+//     c_nonce: Option<String>,
+//     #[serde(skip_serializing_if = "Option::is_none")]
+//     c_nonce_expires_in: Option<i64>,
+//     #[serde(skip_serializing_if = "Option::is_none")]
+//     client_state: Option<String>,
+// }
+
 /// Internal error codes for `OpenID` for Verifiable Credential Issuance
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Deserialize)]
 pub enum Err {
     /// The request is missing a required parameter, includes an unsupported
     /// parameter value, repeats a parameter, includes multiple credentials,
@@ -77,7 +90,7 @@ pub enum Err {
     /// The authorization server encountered an unexpected condition that
     /// prevented it from fulfilling the request.
     #[error(r#"{{"error": "server_error", "error_description": "{0}"}}"#)]
-    ServerError(#[from] anyhow::Error),
+    ServerError(String),
 
     /// The authorization server is unable to handle the request due to
     /// temporary overloading or maintenance.
@@ -175,11 +188,34 @@ pub enum Err {
     InvalidPresentationDefinitionReference(String),
 }
 
+#[derive(Deserialize, Serialize)]
+struct OidError {
+    error: String,
+    error_description: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    state: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    c_nonce: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    c_nonce_expires_in: Option<i64>,
+}
+
+impl Serialize for Err {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::Error as SerdeError;
+
+        let Ok(value) = serde_json::from_str::<OidError>(&self.to_string()) else {
+            return Err(SerdeError::custom("issue deserializing Err"));
+        };
+        value.serialize(serializer)
+    }
+}
+
 impl Err {
     /// Transfrom error to `OpenID` compatible json format.
     #[must_use]
     pub fn to_json(self) -> serde_json::Value {
-        self.into()
+        serde_json::from_str(&self.to_string()).unwrap_or_default()
     }
 
     /// Transfrom error to `OpenID` compatible query string format.
@@ -187,37 +223,34 @@ impl Err {
     /// string responses.
     #[must_use]
     pub fn to_querystring(self) -> String {
-        let value: serde_json::Value = self.into();
-        serde_qs::to_string(&value).unwrap_or_default()
+        serde_qs::to_string(&self).unwrap_or_default()
     }
 
-    /// Returns the `c_nonce` and `c_nonce_expires_in` values for `Err::InvalidProof` errors.
-    #[must_use]
-    pub fn c_nonce(&self) -> Option<(String, i64)> {
-        if let Self::InvalidProof {
-            c_nonce,
-            c_nonce_expires_in,
-            ..
-        } = &self
-        {
-            return Some((c_nonce.clone(), *c_nonce_expires_in));
-        };
+    //     /// Returns the `c_nonce` and `c_nonce_expires_in` values for `Err::InvalidProof` errors.
+    //     #[must_use]
+    //     pub fn c_nonce(&self) -> Option<(String, i64)> {
+    //         if let Self::InvalidProof {
+    //             c_nonce,
+    //             c_nonce_expires_in,
+    //             ..
+    //         } = &self
+    //         {
+    //             return Some((c_nonce.clone(), *c_nonce_expires_in));
+    //         };
 
-        None
-    }
+    //         None
+    //     }
 }
 
-impl From<Err> for serde_json::Value {
-    fn from(err: Err) -> Self {
-        serde_json::from_str(&err.to_string()).unwrap_or_default()
-    }
-}
+// impl From<Err> for serde_json::Value {
+//     fn from(err: Err) -> Self {
+//         serde_json::from_str(&err.to_string()).unwrap_or_default()
+//     }
+// }
 
 #[cfg(test)]
 mod test {
-    // use std::env;
-
-    use serde_json::json;
+    use serde_json::{json, Value};
 
     use super::*;
 
@@ -225,40 +258,25 @@ mod test {
     #[test]
     fn err_json() {
         let err: Err = Err::InvalidRequest("bad request".into());
-
-        assert_eq!(
-            err.to_json(),
-            json!({"error":"invalid_request", "error_description": "bad request"})
-        );
+        let ser: Value = serde_json::from_str(&err.to_string()).unwrap();
+        assert_eq!(ser, json!({"error":"invalid_request", "error_description": "bad request"}));
     }
 
     // Test that the error details are returned as an http query string.
     #[test]
     fn err_querystring() {
-        let res: crate::Result<()> = Err(Err::InvalidRequest("Invalid request description".into()));
-        let err = res.expect_err("expected error");
-
-        assert_eq!(
-            err.to_querystring(),
-            "error=invalid_request&error_description=Invalid+request+description"
-        );
+        let err: Err = Err::InvalidRequest("Invalid request description".into());
+        let ser = serde_qs::to_string(&err).unwrap();
+        assert_eq!(ser, "error=invalid_request&error_description=Invalid+request+description");
     }
 
-    //     // Test hint and client state are returned in the external response.
-    //     #[test]
-    //     fn err_state() {
-    //         let res: Result<()> = Err(Err::InvalidRequest).state("client-state").hint("Some hint");
-    //         let err = res.expect_err("expected error");
-
-    //         assert_eq!(
-    //             err.to_json(),
-    //             json!({
-    //                 "error": "invalid_request",
-    //                 "error_description": "Some hint",
-    //                 "state": "client-state"
-    //             })
-    //         );
-    //     }
+    // Test that the error details are returned as an http query string.
+    #[test]
+    fn err_serialize() {
+        let err: Err = Err::InvalidRequest("bad request".into());
+        let ser = serde_json::to_value(&err).unwrap();
+        assert_eq!(ser, json!({"error":"invalid_request", "error_description": "bad request"}));
+    }
 
     // Test an InvalidProof error returns c_nonce and c_nonce_expires_in values
     // in the external response.
@@ -268,12 +286,11 @@ mod test {
             hint: "".into(),
             c_nonce: "c_nonce".into(),
             c_nonce_expires_in: 10,
-        }
-        .into();
+        };
+        let ser: Value = serde_json::from_str(&err.to_string()).unwrap();
 
-        assert_eq!(err.c_nonce(), Some(("c_nonce".into(), 10)));
         assert_eq!(
-            err.to_json(),
+            ser,
             json!({
                 "error": "invalid_proof",
                 "error_description": "",

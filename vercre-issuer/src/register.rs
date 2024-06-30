@@ -2,7 +2,6 @@
 
 use std::fmt::Debug;
 
-use anyhow::anyhow;
 use chrono::Utc;
 use openid4vc::error::Err;
 pub use openid4vc::issuance::{RegistrationRequest, RegistrationResponse};
@@ -66,7 +65,7 @@ where
 
         let buf = match StateManager::get(provider, &request.access_token).await {
             Ok(buf) => buf,
-            Err(e) => return Err(Err::ServerError(anyhow!("State not found: {e}"))),
+            Err(e) => return Err(Err::ServerError(format!("State not found: {e}"))),
         };
         let state = State::try_from(buf)?;
 
@@ -85,7 +84,7 @@ where
         tracing::debug!("Context::process");
 
         let Ok(client_meta) = provider.register(&request.client_metadata).await else {
-            return Err(Err::ServerError(anyhow!("Registration failed")));
+            return Err(Err::ServerError(format!("Registration failed")));
         };
 
         Ok(RegistrationResponse {

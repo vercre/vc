@@ -68,15 +68,19 @@ pub trait Endpoint: Debug {
                 status: Status::PresentationRequested,
                 context: String::new(),
             };
-            self.provider().callback(&pl).await?;
-            // self.try_callback(ctx, &e).await?;
+            self.provider()
+                .callback(&pl)
+                .await
+                .map_err(|e| Err::ServerError(format!("callback issue: {e}")))?;
         }
 
         let res = match ctx.verify(self.provider(), request).await {
             Ok(res) => res,
             Err(e) => {
                 tracing::error!(target:"Endpoint::verify", ?e);
-                self.try_callback(ctx, &e).await?;
+                self.try_callback(ctx, &e)
+                    .await
+                    .map_err(|e| Err::ServerError(format!("callback issue: {e}")))?;
                 return Err(e);
             }
         };
@@ -85,7 +89,9 @@ pub trait Endpoint: Debug {
             Ok(res) => Ok(res),
             Err(e) => {
                 tracing::error!(target:"Endpoint::process", ?e);
-                self.try_callback(ctx, &e).await?;
+                self.try_callback(ctx, &e)
+                    .await
+                    .map_err(|e| Err::ServerError(format!("callback issue: {e}")))?;
                 Err(e)
             }
         }

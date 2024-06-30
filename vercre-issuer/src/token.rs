@@ -13,7 +13,6 @@
 
 use std::fmt::Debug;
 
-use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use core_utils::gen;
 use openid4vc::error::Err;
@@ -98,7 +97,7 @@ where
             return Err(Err::InvalidRequest("unknown authorization server".into()));
         };
         let Some(auth_state) = &self.state.auth else {
-            return Err(Err::ServerError(anyhow!("Authorization state not set")));
+            return Err(Err::ServerError(format!("Authorization state not set")));
         };
 
         // grant_type
@@ -155,14 +154,16 @@ where
         tracing::debug!("Context::process");
 
         // prevent auth code reuse
-        StateManager::purge(provider, &auth_state_key(request)?).await?;
+        StateManager::purge(provider, &auth_state_key(request)?)
+            .await
+            .map_err(|e| Err::ServerError(format!("issue purging state: {e}")))?;
 
         // copy existing state for token state
         let mut state = self.state.clone();
 
         // get auth state to return `authorization_details` and `scope`
         let Some(auth_state) = state.auth else {
-            return Err(Err::ServerError(anyhow!("Auth state not set")));
+            return Err(Err::ServerError(format!("Auth state not set")));
         };
         state.auth = None;
 
@@ -174,9 +175,11 @@ where
                 .access_token(token.clone())
                 .c_nonce(c_nonce.clone())
                 .build()
-                .map_err(|e| Err::ServerError(anyhow!(e)))?,
+                .map_err(|e| Err::ServerError(format!("issue building token state: {e}")))?,
         );
-        StateManager::put(provider, &token, state.to_vec(), state.expires_at).await?;
+        StateManager::put(provider, &token, state.to_vec(), state.expires_at)
+            .await
+            .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
 
         Ok(TokenResponse {
             access_token: token,

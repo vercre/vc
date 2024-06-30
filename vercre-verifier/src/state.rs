@@ -1,7 +1,6 @@
 //! State is used by the library to persist request information between steps
 //! in the issuance process.
 
-use anyhow::anyhow;
 use chrono::{DateTime, TimeDelta, Utc};
 use derive_builder::Builder;
 use openid4vc::error::Err;
@@ -62,7 +61,7 @@ impl State {
                 }
                 Ok(res)
             }
-            Err(e) => Err(Err::ServerError(anyhow!("Failed to deserialize state: {e}"))),
+            Err(e) => Err(Err::ServerError(format!("Failed to deserialize state: {e}"))),
         }
     }
 

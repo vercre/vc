@@ -72,7 +72,6 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::vec;
 
-use anyhow::anyhow;
 use chrono::Utc;
 use core_utils::gen;
 use openid4vc::error::Err;
@@ -111,15 +110,18 @@ where
     pub async fn authorize(&self, request: &AuthorizationRequest) -> Result<AuthorizationResponse> {
         // attempt to get callback_id from state, if pre-auth flow
         let callback_id = if let Some(state_key) = &request.issuer_state {
-            let buf = StateManager::get(&self.provider, state_key).await?;
+            let buf = StateManager::get(&self.provider, state_key)
+                .await
+                .map_err(|e| Err::ServerError(format!("state issue: {e}")))?;
             let state = State::try_from(buf.as_slice())?;
             state.callback_id
         } else {
             None
         };
 
-        let issuer_meta =
-            IssuerMetadata::metadata(&self.provider, &request.credential_issuer).await?;
+        let issuer_meta = IssuerMetadata::metadata(&self.provider, &request.credential_issuer)
+            .await
+            .map_err(|e| Err::ServerError(format!("metadata issue: {e}")))?;
 
         let ctx = Context {
             callback_id,
@@ -162,7 +164,9 @@ where
         let Ok(client_meta) = ClientMetadata::metadata(provider, &request.client_id).await else {
             return Err(Err::InvalidClient("invalid client_id".into()));
         };
-        let server_meta = ServerMetadata::metadata(provider, &request.credential_issuer).await?;
+        let server_meta = ServerMetadata::metadata(provider, &request.credential_issuer)
+            .await
+            .map_err(|e| Err::ServerError(format!("metadata issue: {e}")))?;
 
         // 'authorization_code' grant_type allowed (client and server)?
         let client_grant_types = client_meta.grant_types.unwrap_or_default();
@@ -251,7 +255,7 @@ where
         for (cfg_id, auth_det) in &self.auth_dets {
             let auth = Subject::authorize(provider, &request.holder_id, cfg_id)
                 .await
-                .map_err(|e| Err::ServerError(anyhow!("issue authorizing holder: {e}")))?;
+                .map_err(|e| Err::ServerError(format!("issue authorizing holder: {e}")))?;
             if auth {
                 let tkn_auth_det = TokenAuthorizationDetail {
                     authorization_detail: auth_det.clone(),
@@ -273,7 +277,7 @@ where
         for (cfg_id, item) in &self.scope_items {
             let auth = Subject::authorize(provider, &request.holder_id, cfg_id)
                 .await
-                .map_err(|e| Err::ServerError(anyhow!("issue authorizing holder: {e}")))?;
+                .map_err(|e| Err::ServerError(format!("issue authorizing holder: {e}")))?;
             if auth {
                 authzd_scope_items.push(item.clone());
                 authzd_cfg_ids.push(cfg_id.clone());
@@ -313,11 +317,15 @@ where
         state.auth = Some(auth_state);
 
         let code = gen::auth_code();
-        StateManager::put(provider, &code, state.to_vec(), state.expires_at).await?;
+        StateManager::put(provider, &code, state.to_vec(), state.expires_at)
+            .await
+            .map_err(|e| Err::ServerError(format!("state issue: {e}")))?;
 
         // remove offer state
         if let Some(issuer_state) = &request.issuer_state {
-            StateManager::purge(provider, issuer_state).await?;
+            StateManager::purge(provider, issuer_state)
+                .await
+                .map_err(|e| Err::ServerError(format!("state issue: {e}")))?;
         }
 
         Ok(AuthorizationResponse {

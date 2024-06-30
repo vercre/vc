@@ -7,6 +7,7 @@
 
 use std::fmt::Debug;
 
+use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{MetadataRequest, MetadataResponse};
 use openid4vc::Result;
@@ -59,7 +60,9 @@ where
         tracing::debug!("Context::process");
 
         Ok(MetadataResponse {
-            client: ClientMetadata::metadata(provider, &req.client_id).await?,
+            client: ClientMetadata::metadata(provider, &req.client_id)
+                .await
+                .map_err(|e| Err::ServerError(format!("issue getting metadata: {e}")))?,
         })
     }
 }

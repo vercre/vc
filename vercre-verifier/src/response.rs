@@ -22,7 +22,6 @@
 
 use std::fmt::Debug;
 
-use anyhow::anyhow;
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{ResponseRequest, ResponseResponse};
@@ -131,8 +130,9 @@ where
                     if nonce != saved_req.nonce {
                         return Err(Err::InvalidRequest("nonce does not match".into()));
                     }
-                    serde_json::to_value(vp)
-                        .map_err(|e| anyhow!("issue deserializing vp token: {e}"))?
+                    serde_json::to_value(vp).map_err(|e| {
+                        Err::ServerError(format!("issue deserializing vp token: {e}"))
+                    })?
                 }
                 _ => {
                     return Err(Err::InvalidRequest("invalid vp_token format".into()));
@@ -166,7 +166,7 @@ where
         let vp_val: Value = match vp_values.len() {
             1 => vp_values[0].clone(),
             _ => serde_json::to_value(vp_values)
-                .map_err(|e| anyhow!("issue aggregating vp values: {e}"))?,
+                .map_err(|e| Err::ServerError(format!("issue aggregating vp values: {e}")))?,
         };
 
         // Verify request has been fulfilled for each credential requested:
@@ -193,7 +193,7 @@ where
 
             // search VP Token for VC specified by mapping path
             let jpath = JsonPath::parse(&mapping.path_nested.path)
-                .map_err(|e| anyhow!("issue parsing JSON Path: {e}"))?;
+                .map_err(|e| Err::ServerError(format!("issue parsing JSON Path: {e}")))?;
             let Ok(vc_node) = jpath.query(&vp_val).exactly_one() else {
                 return Err(Err::InvalidRequest(format!(
                     "no match for path_nested {}",
@@ -211,12 +211,16 @@ where
                     vc
                 }
                 Value::Object(_) => serde_json::from_value(vc_node.clone())
-                    .map_err(|e| anyhow!("issue deserializing vc: {e}"))?,
+                    .map_err(|e| Err::ServerError(format!("issue deserializing vc: {e}")))?,
                 _ => return Err(Err::InvalidRequest(format!("unexpected VC format: {vc_node}"))),
             };
 
             // verify input constraints have been met
-            if !input.constraints.satisfied(&vc)? {
+            if !input
+                .constraints
+                .satisfied(&vc)
+                .map_err(|e| Err::ServerError(format!("issue matching constraints: {e}")))?
+            {
                 return Err(Err::InvalidRequest("input constraints not satisfied".into()));
             }
 
@@ -249,7 +253,9 @@ where
         let Some(state_key) = &request.state else {
             return Err(Err::InvalidRequest("client state not found".into()));
         };
-        StateManager::purge(provider, state_key).await?;
+        StateManager::purge(provider, state_key)
+            .await
+            .map_err(|e| Err::ServerError(format!("issue purging state: {e}")))?;
 
         // TODO: use callback to advise client of result
         Ok(ResponseResponse {

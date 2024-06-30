@@ -10,7 +10,6 @@
 
 use std::fmt::Debug;
 
-use anyhow::anyhow;
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{DeferredCredentialRequest, DeferredCredentialResponse};
@@ -105,11 +104,13 @@ where
         };
 
         let Some(deferred_state) = state.deferred else {
-            return Err(Err::ServerError(anyhow!("Deferred state not found.")));
+            return Err(Err::ServerError(format!("Deferred state not found.")));
         };
 
         // remove deferred state item
-        StateManager::purge(provider, &request.transaction_id).await?;
+        StateManager::purge(provider, &request.transaction_id)
+            .await
+            .map_err(|e| Err::ServerError(format!("issue purging state: {e}")))?;
 
         // make credential request
         let mut cred_req = deferred_state.credential_request;

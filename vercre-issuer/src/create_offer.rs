@@ -66,7 +66,6 @@
 
 use std::fmt::Debug;
 
-use anyhow::anyhow;
 use chrono::Utc;
 use core_utils::gen;
 use openid4vc::error::Err;
@@ -133,7 +132,9 @@ where
     async fn verify(&mut self, provider: &P, request: &Self::Request) -> Result<&Self> {
         tracing::debug!("Context::verify");
 
-        let issuer_meta = IssuerMetadata::metadata(provider, &request.credential_issuer).await?;
+        let issuer_meta = IssuerMetadata::metadata(provider, &request.credential_issuer)
+            .await
+            .map_err(|e| Err::ServerError(format!("metadata issue: {e}")))?;
 
         // credential_issuer required
         if request.credential_issuer.is_empty() {
@@ -175,7 +176,7 @@ where
             .holder_id(request.holder_id.clone())
             .callback_id(request.callback_id.clone())
             .build()
-            .map_err(|e| Err::ServerError(anyhow!(e)))?;
+            .map_err(|e| Err::ServerError(format!("issue creating state: {e}")))?;
 
         let mut pre_auth_grant = None;
         let mut auth_grant = None;
@@ -211,9 +212,11 @@ where
             let auth_state = Auth::builder()
                 .user_code(user_code.clone())
                 .build()
-                .map_err(|e| Err::ServerError(anyhow!(e)))?;
+                .map_err(|e| Err::ServerError(format!("issue building auth state: {e}")))?;
             state.auth = Some(auth_state);
-            StateManager::put(provider, &pre_auth_code, state.to_vec(), state.expires_at).await?;
+            StateManager::put(provider, &pre_auth_code, state.to_vec(), state.expires_at)
+                .await
+                .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
         } else {
             // ------------------------------------------------
             // Authorization Code Grant
@@ -224,7 +227,9 @@ where
                 issuer_state: Some(issuer_state.clone()),
                 authorization_server: None,
             });
-            StateManager::put(provider, &issuer_state, state.to_vec(), state.expires_at).await?;
+            StateManager::put(provider, &issuer_state, state.to_vec(), state.expires_at)
+                .await
+                .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
         }
 
         // return response

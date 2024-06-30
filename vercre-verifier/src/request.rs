@@ -15,7 +15,6 @@
 
 use std::fmt::Debug;
 
-use anyhow::anyhow;
 use core_utils::jws::{self, Type};
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
@@ -74,12 +73,11 @@ where
         tracing::debug!("Context::process");
 
         // retrieve request object from state
-        let Ok(buf) = StateManager::get(provider, &request.state).await else {
-            return Err(Err::ServerError(anyhow!("State not found")));
-        };
-        let Ok(state) = State::from_slice(&buf) else {
-            return Err(Err::ServerError(anyhow!("State is expired or corrupted")));
-        };
+        let buf = StateManager::get(provider, &request.state)
+            .await
+            .map_err(|e| Err::ServerError(format!("issue fetching state: {e}")))?;
+        let state = State::from_slice(&buf)
+            .map_err(|e| Err::ServerError(format!("issue deserializing state: {e}")))?;
         let req_obj = state.request_object;
 
         // verify client_id (perhaps should use 'verify' method?)
@@ -87,7 +85,9 @@ where
             return Err(Err::InvalidRequest("client ID mismatch".into()));
         }
 
-        let jwt = jws::encode(Type::Request, &req_obj, provider.clone()).await?;
+        let jwt = jws::encode(Type::Request, &req_obj, provider.clone())
+            .await
+            .map_err(|e| Err::ServerError(format!("issue encoding jwt: {e}")))?;
 
         Ok(RequestObjectResponse {
             request_object: None,

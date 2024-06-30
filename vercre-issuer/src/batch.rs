@@ -10,7 +10,6 @@
 
 use std::fmt::Debug;
 
-use anyhow::anyhow;
 use chrono::Utc;
 use core_utils::gen;
 use core_utils::jws::{self, Type};
@@ -65,7 +64,8 @@ where
             callback_id: state.callback_id.clone(),
             state,
             issuer_meta: IssuerMetadata::metadata(&self.provider, &request.credential_issuer)
-                .await?,
+                .await
+                .map_err(|e| Err::ServerError(format!("metadata issue: {e}")))?,
             holder_did: String::new(),
             _p: std::marker::PhantomData,
         };
@@ -221,7 +221,7 @@ where
 
         // generate nonce and update state
         let Some(token_state) = &self.state.token else {
-            return Err(Err::ServerError(anyhow!("Invalid token state")));
+            return Err(Err::ServerError(format!("Invalid token state")));
         };
 
         // --------------------------------------------------------------------
@@ -230,7 +230,7 @@ where
         //    with proof based on an older c_nonce
         // --------------------------------------------------------------------
         // let Some(provider) = &self.provider else {
-        //     return Err(Err::ServerError(anyhow!("provider not set"))));
+        //     return Err(Err::ServerError(format!("provider not set"))));
         // };
 
         // let c_nonce = gen::nonce();
@@ -273,9 +273,11 @@ where
             });
             state.token = None;
 
-            let buf =
-                serde_json::to_vec(&state).map_err(|e| anyhow!("issue serializing state: {e}"))?;
-            StateManager::put(provider, &txn_id, buf, state.expires_at).await?;
+            let buf = serde_json::to_vec(&state)
+                .map_err(|e| Err::ServerError(format!("issue serializing state: {e}")))?;
+            StateManager::put(provider, &txn_id, buf, state.expires_at)
+                .await
+                .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
 
             // only need to return transaction_id
             return Ok(CredentialResponse {
@@ -287,7 +289,9 @@ where
         };
 
         // generate proof for the credential
-        let jwt = proof::create(Format::JwtVcJson, Payload::Vc(vc), provider.clone()).await?;
+        let jwt = proof::create(Format::JwtVcJson, Payload::Vc(vc), provider.clone())
+            .await
+            .map_err(|e| Err::ServerError(format!("issue creating proof: {e}")))?;
 
         Ok(CredentialResponse {
             credential: Some(serde_json::Value::String(jwt)),
@@ -311,14 +315,16 @@ where
         };
 
         // claim values
-        let holder_claims = Subject::claims(provider, holder_id, &cred_def).await?;
+        let holder_claims = Subject::claims(provider, holder_id, &cred_def)
+            .await
+            .map_err(|e| Err::ServerError(format!("issue populating claims: {e}")))?;
         if holder_claims.pending {
             return Ok(None);
         }
 
         // check mandatory claims are populated
         let Some(cred_subj) = cred_def.credential_subject.clone() else {
-            return Err(Err::ServerError(anyhow!("Credential subject not set")));
+            return Err(Err::ServerError(format!("Credential subject not set")));
         };
         for (name, claim) in &cred_subj {
             if claim.mandatory.unwrap_or_default() && !holder_claims.claims.contains_key(name) {
@@ -332,7 +338,7 @@ where
 
         // HACK: fix this
         let Some(types) = cred_def.type_ else {
-            return Err(Err::ServerError(anyhow!("Credential type not set")));
+            return Err(Err::ServerError(format!("Credential type not set")));
         };
 
         let vc_id = format!("{credential_issuer}/credentials/{}", types[1].clone());
@@ -347,8 +353,8 @@ where
                 id: Some(self.holder_did.clone()),
                 claims: holder_claims.claims,
             })
-            // .add_proof(proof)
-            .build()?;
+            .build()
+            .map_err(|e| Err::ServerError(format!("issue building VC: {e}")))?;
 
         Ok(Some(vc))
     }
@@ -409,7 +415,7 @@ where
         // generate nonce and update state
         let mut state = self.state.clone();
         let Some(mut token_state) = state.token else {
-            return Err(Err::ServerError(anyhow!("token state not set")));
+            return Err(Err::ServerError("token state not set".into()));
         };
 
         let c_nonce = gen::nonce();
@@ -418,7 +424,8 @@ where
         state.token = Some(token_state.clone());
 
         StateManager::put(provider, &token_state.access_token, state.to_vec(), state.expires_at)
-            .await?;
+            .await
+            .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
 
         Ok((c_nonce, Expire::Nonce.duration().num_seconds()))
     }

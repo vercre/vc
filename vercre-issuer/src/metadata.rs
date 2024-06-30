@@ -24,6 +24,7 @@
 //! ```
 use std::fmt::Debug;
 
+use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{MetadataRequest, MetadataResponse};
 use openid4vc::Result;
@@ -84,8 +85,9 @@ where
         tracing::debug!("Context::process");
 
         // TODO: add languages to request
-        let credential_issuer =
-            IssuerMetadata::metadata(provider, &request.credential_issuer).await?;
+        let credential_issuer = IssuerMetadata::metadata(provider, &request.credential_issuer)
+            .await
+            .map_err(|e| Err::ServerError(format!("issue getting metadata: {e}")))?;
         Ok(MetadataResponse { credential_issuer })
     }
 }

@@ -43,7 +43,6 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-use anyhow::anyhow;
 use core_utils::gen;
 use dif_exch::{ClaimFormat, PresentationDefinition};
 use openid4vc::error::Err;
@@ -186,8 +185,10 @@ where
         let state = State::builder()
             .request_object(req_obj)
             .build()
-            .map_err(|e| Err::ServerError(anyhow!(e)))?;
-        StateManager::put(provider, &state_key, state.to_vec(), state.expires_at).await?;
+            .map_err(|e| Err::ServerError(format!("issue building state: {e}")))?;
+        StateManager::put(provider, &state_key, state.to_vec(), state.expires_at)
+            .await
+            .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
 
         Ok(response)
     }

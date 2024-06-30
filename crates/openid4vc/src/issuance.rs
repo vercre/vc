@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use std::io::Cursor;
 use std::str::FromStr;
 
-use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
 use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
@@ -172,23 +171,21 @@ impl CredentialOffer {
     /// Returns an `Err::ServerError` error if error if the Credential Offer cannot
     /// be serialized.
     pub fn to_qrcode(&self, endpoint: &str) -> Result<String> {
-        let Ok(qs) = self.to_querystring() else {
-            return Err(Err::ServerError(anyhow!("Failed to generate querystring")));
-        };
+        let qs = self
+            .to_querystring()
+            .map_err(|e| Err::ServerError(format!("Failed to generate querystring: {e}")))?;
 
         // generate qr code
-        let qr_code = match QrCode::new(format!("{endpoint}{qs}")) {
-            Ok(s) => s,
-            Err(e) => return Err(Err::ServerError(anyhow!("Failed to create QR code: {e}"))),
-        };
+        let qr_code = QrCode::new(format!("{endpoint}{qs}"))
+            .map_err(|e| Err::ServerError(format!("Failed to create QR code: {e}")))?;
 
         // write image to buffer
         let img_buf = qr_code.render::<image::Luma<u8>>().build();
         let mut buffer: Vec<u8> = Vec::new();
         let mut writer = Cursor::new(&mut buffer);
-        if let Err(e) = img_buf.write_to(&mut writer, image::ImageFormat::Png) {
-            return Err(Err::ServerError(anyhow!("Failed to create QR code: {e}")));
-        }
+        img_buf
+            .write_to(&mut writer, image::ImageFormat::Png)
+            .map_err(|e| Err::ServerError(format!("Failed to create QR code: {e}")))?;
 
         // base64 encode image
         Ok(format!("data:image/png;base64,{}", Base64::encode_string(buffer.as_slice())))
@@ -201,7 +198,8 @@ impl CredentialOffer {
     /// Returns an `Err::ServerError` error if error if the Credential Offer cannot
     /// be serialized.
     pub fn to_querystring(&self) -> Result<String> {
-        Ok(serde_qs::to_string(&self).map_err(|e| anyhow!("issue creating query string: {e}"))?)
+        Ok(serde_qs::to_string(&self)
+            .map_err(|e| Err::ServerError(format!("issue creating query string: {e}")))?)
     }
 }
 
