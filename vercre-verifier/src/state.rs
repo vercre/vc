@@ -62,9 +62,7 @@ impl State {
                 }
                 Ok(res)
             }
-            Err(e) => {
-                return Err(Err::ServerError(anyhow!("Failed to deserialize state: {e}")).into())
-            }
+            Err(e) => Err(Err::ServerError(anyhow!("Failed to deserialize state: {e}"))),
         }
     }
 

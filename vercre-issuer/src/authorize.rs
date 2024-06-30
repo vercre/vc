@@ -376,9 +376,7 @@ where
             // OR: verify requested `format` and `type` are supported
             if let Some(format) = format_opt {
                 let Some(auth_def) = auth_det.credential_definition.as_ref() else {
-                    return Err(
-                        Err::InvalidRequest("no `credential_definition` specified".into()).into()
-                    );
+                    return Err(Err::InvalidRequest("no `credential_definition` specified".into()));
                 };
 
                 // find matching `CredentialConfiguration`

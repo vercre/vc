@@ -302,7 +302,7 @@ impl RequestObject {
         // generate qr code
         let qr_code = match QrCode::new(format!("{endpoint}{qs}")) {
             Ok(q) => q,
-            Err(e) => return Err(Err::ServerError(anyhow!("Failed to create QR code: {e}")).into()),
+            Err(e) => return Err(Err::ServerError(anyhow!("Failed to create QR code: {e}"))),
         };
 
         // write image to buffer

@@ -101,9 +101,7 @@ where
             return Err(Err::InvalidTransactionId("deferred state not found".into()));
         };
         let Ok(state) = State::try_from(buf) else {
-            return Err(
-                Err::InvalidTransactionId("deferred state is expired or corrupted".into()).into()
-            );
+            return Err(Err::InvalidTransactionId("deferred state is expired or corrupted".into()));
         };
 
         let Some(deferred_state) = state.deferred else {

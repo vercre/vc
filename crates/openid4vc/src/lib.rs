@@ -1,7 +1,3 @@
-// generic member access API on the error trait
-// https://github.com/rust-lang/rust/issues/99301
-#![feature(error_generic_member_access)]
-
 //! # `OpenID4VC` Types
 //!
 //! Types and logic used in the `OpenID4VC` specifications and consumed by

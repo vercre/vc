@@ -107,7 +107,7 @@ where
                 // client_id is the same as the one used to obtain the authorization code
                 if Some(&request.client_id) != self.state.client_id.as_ref() {
                     return Err(
-                        Err::InvalidGrant("client_id differs from authorized one".into()).into()
+                        Err::InvalidGrant("client_id differs from authorized one".into())
                     );
                 }
 
@@ -138,7 +138,7 @@ where
                     && !server_meta.pre_authorized_grant_anonymous_access_supported
                 {
                     return Err(
-                        Err::InvalidClient("anonymous access is not supported".into()).into()
+                        Err::InvalidClient("anonymous access is not supported".into())
                     );
                 }
                 // user_code

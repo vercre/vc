@@ -3,61 +3,10 @@
 //! This module defines errors for `OpenID` for Verifiable Credential Issuance
 //! and Verifiable Presentations.
 
-// use std::backtrace::Backtrace;
 use std::fmt::Debug;
 
 use anyhow::anyhow;
 use thiserror::Error;
-
-// use crate::Result;
-
-// /// Public error type for `OpenID` for Verifiable Credential Issuance and
-// /// Verifiable Presentations.
-// #[derive(Error, Debug)]
-// pub struct Error {
-//     source: Err,
-//     backtrace: Backtrace,
-//     hint: Option<String>,
-//     state: Option<String>,
-// }
-
-// impl Serialize for Err {
-//     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-//         #[derive(Serialize)]
-//         struct Serializer {
-//             error: String,
-//             #[serde(skip_serializing_if = "Option::is_none")]
-//             error_description: Option<String>,
-//             #[serde(skip_serializing_if = "Option::is_none")]
-//             state: Option<String>,
-//             #[serde(skip_serializing_if = "Option::is_none")]
-//             c_nonce: Option<String>,
-//             #[serde(skip_serializing_if = "Option::is_none")]
-//             c_nonce_expires_in: Option<i64>,
-//         }
-
-//         let mut ser = Serializer {
-//             error: self.source.to_string(),
-//             error_description: self.hint.clone(),
-//             state: self.state.clone(),
-//             c_nonce: None,
-//             c_nonce_expires_in: None,
-//         };
-
-//         // add c_nonce if Err::InvalidProof
-//         if let Err::InvalidProof {
-//             c_nonce,
-//             c_nonce_expires_in,
-//             ..
-//         } = &self.source
-//         {
-//             ser.c_nonce = Some(c_nonce.clone());
-//             ser.c_nonce_expires_in = Some(*c_nonce_expires_in);
-//         };
-
-//         ser.serialize(serializer)
-//     }
-// }
 
 /// Internal error codes for `OpenID` for Verifiable Credential Issuance
 #[derive(Error, Debug)]
@@ -173,6 +122,7 @@ pub enum Err {
     /// not bound to a Credential Issuer provided `c_nonce`. The error response contains
     /// new `c_nonce` as well as `c_nonce_expires_in` values to be used by the Wallet
     /// when creating another proof of possession of key material.
+    #[allow(missing_docs)]
     #[error(r#"error_code: invalid_proof, error_description: {hint}, c_nonce: {c_nonce}, c_nonce_expires_in: {c_nonce_expires_in}"#)]
     InvalidProof { hint: String, c_nonce: String, c_nonce_expires_in: i64 },
 
@@ -226,12 +176,14 @@ impl Err {
     // }
 
     /// Returns the error description as provided by hint method.
+    #[must_use]
     pub fn error_description(&self) -> Option<String> {
         // self.0.clone()
         todo!()
     }
 
     /// Returns the `c_nonce` and `c_nonce_expires_in` values for `Err::InvalidProof` errors.
+    #[must_use]
     pub fn c_nonce(&self) -> Option<(String, i64)> {
         // if let Err::InvalidProof {
         //     c_nonce,
@@ -247,6 +199,7 @@ impl Err {
     }
 
     /// Transfrom error to `OpenID` compatible json format.
+    #[must_use]
     pub fn to_json(&self) -> serde_json::Value {
         // serde_json::to_value(self).unwrap_or_default()
         todo!()
@@ -255,6 +208,7 @@ impl Err {
     /// Transfrom error to `OpenID` compatible query string format.
     /// Does not include `c_nonce` as this is not required for in query
     /// string responses.
+    #[must_use]
     pub fn to_querystring(&self) -> String {
         // serde_qs::to_string(&self).unwrap_or_default()
         todo!()
@@ -349,9 +303,9 @@ impl From<std::convert::Infallible> for Err {
 
 #[cfg(test)]
 mod test {
-    use std::env;
+    // use std::env;
 
-    use serde_json::json;
+    // use serde_json::json;
 
     use super::*;
 

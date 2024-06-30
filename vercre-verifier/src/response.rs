@@ -202,18 +202,12 @@ where
                 Value::String(token) => {
                     let Ok(Payload::Vc(vc)) = proof::verify(token, Verify::Vc, provider).await
                     else {
-                        return Err(
-                            Err::InvalidRequest(format!("invalid VC format: {token}")).into()
-                        );
+                        return Err(Err::InvalidRequest(format!("invalid VC format: {token}")));
                     };
                     vc
                 }
                 Value::Object(_) => serde_json::from_value(vc_node.clone())?,
-                _ => {
-                    return Err(
-                        Err::InvalidRequest(format!("unexpected VC format: {vc_node}")).into()
-                    )
-                }
+                _ => return Err(Err::InvalidRequest(format!("unexpected VC format: {vc_node}"))),
             };
 
             // verify input constraints have been met
