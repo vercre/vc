@@ -3,6 +3,9 @@
 //! This module defines errors for `OpenID` for Verifiable Credential Issuance
 //! and Verifiable Presentations.
 
+// TODO: add support for "client-state" in error responses.
+// TODO: use customer serialisation for Err enum.
+
 use std::fmt::Debug;
 
 // use anyhow::Error;
