@@ -14,7 +14,7 @@ use anyhow::anyhow;
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{DeferredCredentialRequest, DeferredCredentialResponse};
-use openid4vc::{err, Result};
+use openid4vc::Result;
 use provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject, Verifier,
 };
@@ -48,10 +48,10 @@ where
         &self, request: &DeferredCredentialRequest,
     ) -> Result<DeferredCredentialResponse> {
         let Ok(buf) = StateManager::get(&self.provider, &request.access_token).await else {
-            err!(Err::AccessDenied, "invalid access token");
+            return Err(Err::AccessDenied("invalid access token".into()));
         };
         let Ok(state) = State::try_from(buf) else {
-            err!(Err::AccessDenied, "invalid state for access token");
+            return Err(Err::AccessDenied("invalid state for access token".into()));
         };
 
         let ctx = Context {
@@ -98,14 +98,14 @@ where
 
         // retrieve deferred credential request from state
         let Ok(buf) = StateManager::get(provider, &request.transaction_id).await else {
-            err!(Err::InvalidTransactionId, "deferred state not found");
+            return Err(Err::InvalidTransactionId("deferred state not found".into()));
         };
         let Ok(state) = State::try_from(buf) else {
-            err!(Err::InvalidTransactionId, "deferred state is expired or corrupted");
+            return Err(Err::InvalidTransactionId("deferred state is expired or corrupted".into()));
         };
 
         let Some(deferred_state) = state.deferred else {
-            err!("Deferred state not found.");
+            return Err(Err::ServerError(anyhow!("Deferred state not found.")));
         };
 
         // remove deferred state item

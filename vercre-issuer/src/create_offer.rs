@@ -75,7 +75,7 @@ pub use openid4vc::issuance::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer,
     CredentialOfferType, Grants, PreAuthorizedCodeGrant, TxCode,
 };
-use openid4vc::{err, Result};
+use openid4vc::Result;
 use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use tracing::instrument;
 use w3c_vc::proof::Signer;
@@ -137,24 +137,26 @@ where
 
         // credential_issuer required
         if request.credential_issuer.is_empty() {
-            err!(Err::InvalidRequest, "no credential_issuer specified");
+            return Err(Err::InvalidRequest("no credential_issuer specified".into()));
         };
 
         // credentials required
         if request.credential_configuration_ids.is_empty() {
-            err!(Err::InvalidRequest, "no credentials requested");
+            return Err(Err::InvalidRequest("no credentials requested".into()));
         };
 
         // requested credential is supported
         for cred_id in &request.credential_configuration_ids {
             if !issuer_meta.credential_configurations_supported.contains_key(cred_id) {
-                err!(Err::UnsupportedCredentialType, "requested credential is unsupported");
+                return Err(Err::UnsupportedCredentialType(
+                    "requested credential is unsupported".into(),
+                ));
             };
         }
 
         // holder_id is required
         if request.holder_id.is_none() {
-            err!(Err::InvalidRequest, "no holder_id specified");
+            return Err(Err::InvalidRequest("no holder_id specified".into()));
         };
 
         Ok(self)

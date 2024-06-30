@@ -81,7 +81,7 @@ pub use openid4vc::issuance::{
     TokenAuthorizationDetail,
 };
 use openid4vc::issuance::{GrantType, Issuer};
-use openid4vc::{err, Result};
+use openid4vc::Result;
 use provider::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use tracing::instrument;
 use w3c_vc::proof::Signer;
@@ -160,28 +160,32 @@ where
         tracing::debug!("Context::verify");
 
         let Ok(client_meta) = ClientMetadata::metadata(provider, &request.client_id).await else {
-            err!(Err::InvalidClient, "invalid client_id");
+            return Err(Err::InvalidClient("invalid client_id".into()));
         };
         let server_meta = ServerMetadata::metadata(provider, &request.credential_issuer).await?;
 
         // 'authorization_code' grant_type allowed (client and server)?
         let client_grant_types = client_meta.grant_types.unwrap_or_default();
         if !client_grant_types.contains(&GrantType::AuthorizationCode) {
-            err!(Err::InvalidRequest, "authorization_code grant not supported for client");
+            return Err(Err::InvalidRequest(
+                "authorization_code grant not supported for client".into(),
+            ));
         }
         let server_grant_types = server_meta.grant_types_supported.unwrap_or_default();
         if !server_grant_types.contains(&GrantType::AuthorizationCode) {
-            err!(Err::InvalidRequest, "authorization_code grant not supported for server");
+            return Err(Err::InvalidRequest(
+                "authorization_code grant not supported for server".into(),
+            ));
         }
 
         // is holder identified (authenticated)?
         if request.holder_id.is_empty() {
-            err!(Err::AuthorizationPending, "missing holder subject");
+            return Err(Err::AuthorizationPending("missing holder subject".into()));
         }
 
         // has a credential been requested?
         if request.authorization_details.is_none() && request.scope.is_none() {
-            err!(Err::InvalidRequest, "no credentials requested");
+            return Err(Err::InvalidRequest("no credentials requested".into()));
         }
 
         // verify authorization_details
@@ -195,31 +199,37 @@ where
 
         // redirect_uri
         let Some(redirect_uri) = &request.redirect_uri else {
-            err!(Err::InvalidRequest, "no redirect_uri specified");
+            return Err(Err::InvalidRequest("no redirect_uri specified".into()));
         };
         let Some(redirect_uris) = client_meta.redirect_uris else {
-            err!(Err::InvalidRequest, "no redirect_uris specified for client");
+            return Err(Err::InvalidRequest("no redirect_uris specified for client".into()));
         };
         if !redirect_uris.contains(redirect_uri) {
-            err!(Err::InvalidRequest, "request redirect_uri is not registered");
+            return Err(Err::InvalidRequest("request redirect_uri is not registered".into()));
         }
 
         // response_type
         if !client_meta.response_types.unwrap_or_default().contains(&request.response_type) {
-            err!(Err::UnsupportedResponseType, "the response_type not supported by client");
+            return Err(Err::UnsupportedResponseType(
+                "the response_type not supported by client".into(),
+            ));
         }
         if !server_meta.response_types_supported.contains(&request.response_type) {
-            err!(Err::UnsupportedResponseType, "response_type not supported by server");
+            return Err(Err::UnsupportedResponseType(
+                "response_type not supported by server".into(),
+            ));
         }
 
         // code_challenge
         // N.B. while optional in the spec, we require it
         let challenge_methods = server_meta.code_challenge_methods_supported.unwrap_or_default();
         if !challenge_methods.contains(&request.code_challenge_method) {
-            err!(Err::InvalidRequest, "unsupported code_challenge_method");
+            return Err(Err::InvalidRequest("unsupported code_challenge_method".into()));
         }
         if request.code_challenge.len() < 43 || request.code_challenge.len() > 128 {
-            err!(Err::InvalidRequest, "code_challenge must be between 43 and 128 characters");
+            return Err(Err::InvalidRequest(
+                "code_challenge must be between 43 and 128 characters".into(),
+            ));
         }
 
         Ok(self)
@@ -277,7 +287,9 @@ where
 
         // error if holder is not authorized for any requested credentials
         if auth_dets.is_none() && scope.is_none() {
-            err!(Err::AccessDenied, "holder is not authorized for requested credentials");
+            return Err(Err::AccessDenied(
+                "holder is not authorized for requested credentials".into(),
+            ));
         }
 
         // save authorization state
@@ -330,7 +342,7 @@ where
         'verify_details: for auth_det in authorization_details {
             // we only support "`openid_credential`" authorization detail requests
             if auth_det.type_ != AuthorizationDetailType::OpenIdCredential {
-                err!(Err::InvalidRequest, "invalid authorization_details type");
+                return Err(Err::InvalidRequest("invalid authorization_details type".into()));
             }
 
             let cfg_id_opt = &auth_det.credential_configuration_id;
@@ -338,19 +350,22 @@ where
 
             // verify that only one of `credential_configuration_id` or `format` is specified
             if cfg_id_opt.is_some() && format_opt.is_some() {
-                err!(
-                    Err::InvalidRequest,
-                    "'credential_configuration_id and format cannot both be set"
-                );
+                return Err(Err::InvalidRequest(
+                    "'credential_configuration_id and format cannot both be set".into(),
+                ));
             }
             if cfg_id_opt.is_none() && format_opt.is_none() {
-                err!(Err::InvalidRequest, "credential_configuration_id or format must be set");
+                return Err(Err::InvalidRequest(
+                    "credential_configuration_id or format must be set".into(),
+                ));
             }
 
             // EITHER: verify requested `credential_configuration_id` is supported
             if let Some(cfg_id) = cfg_id_opt {
                 if !self.issuer_meta.credential_configurations_supported.contains_key(cfg_id) {
-                    err!(Err::InvalidRequest, "unsupported credential_configuration_id");
+                    return Err(Err::InvalidRequest(
+                        "unsupported credential_configuration_id".into(),
+                    ));
                 }
 
                 // save auth_det by `credential_configuration_id` for later use
@@ -361,7 +376,7 @@ where
             // OR: verify requested `format` and `type` are supported
             if let Some(format) = format_opt {
                 let Some(auth_def) = auth_det.credential_definition.as_ref() else {
-                    err!(Err::InvalidRequest, "no `credential_definition` specified")
+                    return Err(Err::InvalidRequest("no `credential_definition` specified".into()));
                 };
 
                 // find matching `CredentialConfiguration`
@@ -376,7 +391,9 @@ where
                 }
 
                 // no matching credential_configuration
-                err!(Err::InvalidRequest, "unsupported credential `format` or `type`");
+                return Err(Err::InvalidRequest(
+                    "unsupported credential `format` or `type`".into(),
+                ));
             }
         }
 
@@ -400,7 +417,7 @@ where
                     continue 'verify_scope;
                 }
             }
-            err!(Err::InvalidRequest, "scope item {item} is unsupported");
+            return Err(Err::InvalidRequest("scope item {item} is unsupported".into()));
         }
 
         Ok(())

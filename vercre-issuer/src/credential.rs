@@ -48,7 +48,7 @@ use std::fmt::Debug;
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{BatchCredentialRequest, CredentialRequest, CredentialResponse};
-use openid4vc::{err, Result};
+use openid4vc::Result;
 use provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject, Verifier,
 };
@@ -80,10 +80,10 @@ where
     #[instrument(level = "debug", skip(self))]
     pub async fn credential(&self, request: &CredentialRequest) -> Result<CredentialResponse> {
         let Ok(buf) = StateManager::get(&self.provider, &request.access_token).await else {
-            err!(Err::AccessDenied, "invalid access token");
+            return Err(Err::AccessDenied("invalid access token".into()));
         };
         let Ok(state) = State::try_from(buf) else {
-            err!(Err::AccessDenied, "invalid state for access token");
+            return Err(Err::AccessDenied("invalid state for access token".into()));
         };
 
         let ctx = Context {

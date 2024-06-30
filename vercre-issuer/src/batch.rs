@@ -14,14 +14,14 @@ use anyhow::anyhow;
 use chrono::Utc;
 use core_utils::gen;
 use core_utils::jws::{self, Type};
-use openid4vc::error::{Ancillary as _, Err};
+use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialRequest, CredentialResponse,
     CredentialType, ProofType,
 };
 use openid4vc::issuance::{CredentialDefinition, Issuer, ProofClaims};
-use openid4vc::{err, Result};
+use openid4vc::Result;
 use provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
     Verifier,
@@ -55,10 +55,10 @@ where
     #[instrument(level = "debug", skip(self))]
     pub async fn batch(&self, request: &BatchCredentialRequest) -> Result<BatchCredentialResponse> {
         let Ok(buf) = StateManager::get(&self.provider, &request.access_token).await else {
-            err!(Err::AccessDenied, "invalid access token");
+            return Err(Err::AccessDenied("invalid access token".into()));
         };
         let Ok(state) = State::try_from(buf) else {
-            err!(Err::AccessDenied, "invalid state for access token");
+            return Err(Err::AccessDenied("invalid state for access token".into()));
         };
 
         let ctx = Context {
@@ -99,12 +99,12 @@ where
         tracing::debug!("Context::verify");
 
         let Some(token_state) = &self.state.token else {
-            err!(Err::AccessDenied, "invalid access token state");
+            return Err(Err::AccessDenied("invalid access token state".into()));
         };
 
         // c_nonce expiry
         if token_state.c_nonce_expired() {
-            err!(Err::AccessDenied, "c_nonce has expired");
+            return Err(Err::AccessDenied("c_nonce has expired".into()));
         }
 
         // TODO: add support for `credential_identifier`
@@ -113,7 +113,9 @@ where
             // format and type request
             if let CredentialType::Format(format) = &request.credential_type {
                 let Some(cred_def) = &request.credential_definition else {
-                    err!(Err::InvalidCredentialRequest, "credential definition not set");
+                    return Err(Err::InvalidCredentialRequest(
+                        "credential definition not set".into(),
+));
                 };
 
                 // check request has been authorized:
@@ -127,8 +129,9 @@ where
                     }
                 }
                 if !authorized {
-                    return Err(Err::InvalidCredentialRequest)
-                        .hint("Requested credential has not been authorized");
+                    return Err(Err::InvalidCredentialRequest(
+                        "Requested credential has not been authorized".into(),
+));
                 }
             };
 
@@ -137,47 +140,69 @@ where
             // is non-empty
             // ----------------------------------------------------------------
             let Some(proof) = &request.proof else {
-                err!(Err::InvalidCredentialRequest, "proof not set");
+                return Err(Err::InvalidCredentialRequest("proof not set".into()));
             };
             // ----------------------------------------------------------------
 
             let ProofType::Jwt(proof_jwt) = &proof.proof else {
-                let (nonce, expires_in) = self.err_nonce(provider).await?;
-                err!(Err::InvalidProof(nonce, expires_in), "Proof not set");
+                let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
+                return Err(Err::InvalidProof {
+                    hint: "Proof not set".into(),
+                    c_nonce,
+                    c_nonce_expires_in,
+});
             };
             let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, provider).await {
                 Ok(jwt) => jwt,
                 Err(e) => {
-                    let (nonce, expires_in) = self.err_nonce(provider).await?;
-                    err!(Err::InvalidProof(nonce, expires_in), "{}", e.to_string());
+                    let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
+                    return Err(Err::InvalidProof {
+                        hint: format!("issue decoding jwt: {e}"),
+                        c_nonce,
+                        c_nonce_expires_in,
+});
                 }
             };
             // proof type
             if jwt.header.typ != Type::Proof {
-                let (nonce, expires_in) = self.err_nonce(provider).await?;
-                err!(
-                    Err::InvalidProof(nonce, expires_in),
-                    "Proof JWT 'typ' is not {}",
-                    Type::Proof
-                );
+                let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
+                return Err(Err::InvalidProof {
+                    hint: format!("Proof JWT 'typ' is not {}", Type::Proof),
+                    c_nonce,
+                    c_nonce_expires_in,
+});
             }
 
             // previously issued c_nonce
             if jwt.claims.nonce.as_ref() != Some(&token_state.c_nonce) {
-                let (nonce, expires_in) = self.err_nonce(provider).await?;
-                err!(Err::InvalidProof(nonce, expires_in), "Proof JWT nonce claim is invalid");
+                let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
+                return Err(Err::InvalidProof {
+                    hint: "Proof JWT nonce claim is invalid".into(),
+                    c_nonce,
+                    c_nonce_expires_in,
+});
             }
 
             // TODO: use `decode` method in w3c-vc
             // Key ID
             let Some(kid) = jwt.header.kid else {
-                let (nonce, expires_in) = self.err_nonce(provider).await?;
-                err!(Err::InvalidProof(nonce, expires_in), "Proof JWT 'kid' is missing");
+                let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
+
+                return Err(Err::InvalidProof {
+                    hint: "Proof JWT 'kid' is missing".into(),
+                    c_nonce,
+                    c_nonce_expires_in,
+});
             };
             // HACK: save extracted DID for later use when issuing credential
             let Some(did) = kid.split('#').next() else {
-                let (nonce, expires_in) = self.err_nonce(provider).await?;
-                err!(Err::InvalidProof(nonce, expires_in), "Proof JWT DID is invalid");
+                let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
+
+                return Err(Err::InvalidProof {
+                    hint: "Proof JWT DID is invalid".into(),
+                    c_nonce,
+                    c_nonce_expires_in,
+});
             };
             self.holder_did = did.into();
         }
@@ -196,7 +221,7 @@ where
 
         // generate nonce and update state
         let Some(token_state) = &self.state.token else {
-            err!("Invalid token state");
+            return Err(Err::ServerError(anyhow!("Invalid token state")));
         };
 
         // --------------------------------------------------------------------
@@ -205,7 +230,7 @@ where
         //    with proof based on an older c_nonce
         // --------------------------------------------------------------------
         // let Some(provider) = &self.provider else {
-        //     err!("provider not set");
+        //     return Err(Err::ServerError(anyhow!("provider not set"))));
         // };
 
         // let c_nonce = gen::nonce();
@@ -281,7 +306,7 @@ where
 
         let cred_def = self.credential_definition(request)?;
         let Some(holder_id) = &self.state.holder_id else {
-            err!(Err::AccessDenied, "holder not found");
+            return Err(Err::AccessDenied("holder not found".into()));
         };
 
         // claim values
@@ -292,11 +317,13 @@ where
 
         // check mandatory claims are populated
         let Some(cred_subj) = cred_def.credential_subject.clone() else {
-            err!("Credential subject not set");
+            return Err(Err::ServerError(anyhow!("Credential subject not set")));
         };
         for (name, claim) in &cred_subj {
             if claim.mandatory.unwrap_or_default() && !holder_claims.claims.contains_key(name) {
-                err!(Err::InvalidCredentialRequest, "mandatory claim {name} not populated");
+                return Err(Err::InvalidCredentialRequest(
+                    "mandatory claim {name} not populated".into(),
+));
             }
         }
 
@@ -304,7 +331,7 @@ where
 
         // HACK: fix this
         let Some(types) = cred_def.type_ else {
-            err!("Credential type not set");
+            return Err(Err::ServerError(anyhow!("Credential type not set")));
         };
 
         let vc_id = format!("{credential_issuer}/credentials/{}", types[1].clone());
@@ -344,7 +371,9 @@ where
                 };
 
                 let Some(supported) = find_supported else {
-                    err!(Err::InvalidCredentialRequest, "credential is not supported");
+                    return Err(Err::InvalidCredentialRequest(
+                        "credential is not supported".into(),
+));
                 };
 
                 // copy credential subject
@@ -356,11 +385,13 @@ where
             Ok(cred_def)
         } else {
             let CredentialType::Identifier(id) = &request.credential_type else {
-                err!(Err::InvalidCredentialRequest, "no credential identifier");
+                return Err(Err::InvalidCredentialRequest("no credential identifier".into()));
             };
             let Some(supported) = self.issuer_meta.credential_configurations_supported.get(id)
             else {
-                err!(Err::InvalidCredentialRequest, "no supported credential for identifier {id}");
+                return Err(Err::InvalidCredentialRequest(format!(
+                    "no supported credential for identifier {id}"
+                )));
             };
 
             Ok(CredentialDefinition {
@@ -377,7 +408,7 @@ where
         // generate nonce and update state
         let mut state = self.state.clone();
         let Some(mut token_state) = state.token else {
-            err!("token state not set");
+            return Err(Err::ServerError(anyhow!("token state not set")));
         };
 
         let c_nonce = gen::nonce();

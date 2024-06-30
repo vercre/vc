@@ -20,7 +20,7 @@ use core_utils::jws::{self, Type};
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{RequestObjectRequest, RequestObjectResponse};
-use openid4vc::{err, Result};
+use openid4vc::Result;
 use provider::{Callback, ClientMetadata, Signer, StateManager};
 use tracing::instrument;
 
@@ -75,16 +75,16 @@ where
 
         // retrieve request object from state
         let Ok(buf) = StateManager::get(provider, &request.state).await else {
-            err!("State not found");
+            return Err(Err::ServerError(anyhow!("State not found")));
         };
         let Ok(state) = State::from_slice(&buf) else {
-            err!("State is expired or corrupted");
+            return Err(Err::ServerError(anyhow!("State is expired or corrupted")));
         };
         let req_obj = state.request_object;
 
         // verify client_id (perhaps should use 'verify' method?)
         if req_obj.client_id != format!("{}/post", request.client_id) {
-            err!(Err::InvalidRequest, "client ID mismatch");
+            return Err(Err::InvalidRequest("client ID mismatch".into()));
         }
 
         let jwt = jws::encode(Type::Request, &req_obj, provider.clone()).await?;

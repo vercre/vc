@@ -1,7 +1,3 @@
-// generic member access API on the error trait
-// https://github.com/rust-lang/rust/issues/99301
-#![feature(error_generic_member_access)]
-
 //! # `OpenID4VC` Types
 //!
 //! Types and logic used in the `OpenID4VC` specifications and consumed by
@@ -28,7 +24,7 @@ use self::presentation::VpFormat;
 
 /// Result type for `OpenID` for Verifiable Credential Issuance and Verifiable
 /// Presentations.
-pub type Result<T, E = error::Error> = std::result::Result<T, E>;
+pub type Result<T, E = error::Err> = std::result::Result<T, E>;
 
 /// OAuth 2 client metadata used for registering clients of the issuance and
 /// vercre-wallet authorization servers.
@@ -189,11 +185,11 @@ impl Display for Client {
 }
 
 impl FromStr for Client {
-    type Err = error::Error;
+    type Err = error::Err;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let Ok(res) = serde_json::from_str(s) else {
-            err!(error::Err::InvalidRequest, "failed to parse Verifier");
+            return Err(error::Err::InvalidRequest("failed to parse Verifier".into()));
         };
         Ok(res)
     }
