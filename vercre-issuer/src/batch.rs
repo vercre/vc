@@ -273,7 +273,8 @@ where
             });
             state.token = None;
 
-            let buf = serde_json::to_vec(&state)?;
+            let buf =
+                serde_json::to_vec(&state).map_err(|e| anyhow!("issue serializing state: {e}"))?;
             StateManager::put(provider, &txn_id, buf, state.expires_at).await?;
 
             // only need to return transaction_id

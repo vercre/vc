@@ -323,7 +323,7 @@ impl RequestObject {
     ///
     /// Returns an `Err::ServerError` error if the Request Object cannot be serialized.
     pub fn to_querystring(&self) -> Result<String> {
-        Ok(serde_qs::to_string(&self)?)
+        Ok(serde_qs::to_string(&self).map_err(|e| anyhow!("issue creating query string: {e}"))?)
     }
 }
 
