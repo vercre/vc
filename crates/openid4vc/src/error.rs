@@ -80,10 +80,16 @@ impl Error {
 
     /// Returns the `c_nonce` and `c_nonce_expires_in` values for `Err::InvalidProof` errors.
     pub fn c_nonce(&self) -> Option<(String, i64)> {
-        let Err::InvalidProof(nonce, expires_in) = &self.source else {
-            return None;
+        if let Err::InvalidProof {
+            c_nonce,
+            c_nonce_expires_in,
+            ..
+        } = &self.source
+        {
+            return Some((c_nonce.clone(), *c_nonce_expires_in));
         };
-        Some((nonce.clone(), *expires_in))
+
+        None
     }
 
     /// Transfrom error to `OpenID` compatible json format.
@@ -134,9 +140,14 @@ impl Serialize for Error {
         };
 
         // add c_nonce if Err::InvalidProof
-        if let Err::InvalidProof(nonce, expires_in) = &self.source {
-            ser.c_nonce = Some(nonce.clone());
-            ser.c_nonce_expires_in = Some(*expires_in);
+        if let Err::InvalidProof {
+            c_nonce,
+            c_nonce_expires_in,
+            ..
+        } = &self.source
+        {
+            ser.c_nonce = Some(c_nonce.clone());
+            ser.c_nonce_expires_in = Some(*c_nonce_expires_in);
         };
 
         ser.serialize(serializer)
@@ -151,7 +162,7 @@ pub enum Err {
     /// utilizes more than one mechanism for authenticating the client, or is
     /// otherwise malformed.
     #[error("invalid_request")]
-    InvalidRequest,
+    InvalidRequest(String),
 
     /// Client authentication failed (e.g., unknown client, no client
     /// authentication included, or unsupported authentication method).
@@ -169,7 +180,7 @@ pub enum Err {
     /// Verifier's pre-registered metadata has been found based on the Client
     /// Identifier, but `client_metadata` parameter is also set.
     #[error("invalid_client")]
-    InvalidClient,
+    InvalidClient(String),
 
     /// The provided authorization grant (e.g., authorization code,
     /// pre-authorized_code) or refresh token is invalid, expired, revoked,
@@ -179,31 +190,31 @@ pub enum Err {
     /// The Authorization Server expects a PIN in the pre-authorized flow but
     /// the client provides the wrong PIN.
     #[error("invalid_grant")]
-    InvalidGrant,
+    InvalidGrant(String),
 
     /// The client is not authorized to request an authorization code using this
     /// method.
     #[error("unauthorized_client")]
-    UnauthorizedClient,
+    UnauthorizedClient(String),
 
     /// The authorization grant type is not supported by the authorization
     /// server.
     #[error("unsupported_grant_type")]
-    UnsupportedGrantType,
+    UnsupportedGrantType(String),
 
     /// The requested scope is invalid, unknown, malformed, or exceeds the scope
     /// granted.
     #[error("invalid_scope")]
-    InvalidScope,
+    InvalidScope(String),
 
     /// The resource owner or authorization server denied the request.
     #[error("access_denied")]
-    AccessDenied,
+    AccessDenied(String),
 
     /// The authorization server does not support obtaining an authorization
     /// code using this method.
     #[error("unsupported_response_type")]
-    UnsupportedResponseType,
+    UnsupportedResponseType(String),
 
     /// The authorization server encountered an unexpected condition that
     /// prevented it from fulfilling the request.
@@ -213,7 +224,7 @@ pub enum Err {
     /// The authorization server is unable to handle the request due to
     /// temporary overloading or maintenance.
     #[error("temporarily_unavailable")]
-    TemporarilyUnavailable,
+    TemporarilyUnavailable(String),
 
     /// ------------------------------
     /// Verifiable Credential Issuance
@@ -229,13 +240,13 @@ pub enum Err {
     /// seconds if none was provided, and respect any increase in the polling interval
     /// required by the "`slow_down`" error.
     #[error("authorization_pending")]
-    AuthorizationPending,
+    AuthorizationPending(String),
 
     /// A variant of `authorization_pending` error code, the authorization request is
     /// still pending and polling should continue, but the interval MUST be increased
     /// by 5 seconds for this and all subsequent requests.
     #[error("slow_down")]
-    SlowDown,
+    SlowDown(String),
 
     /// Credential Endpoint:
 
@@ -243,29 +254,29 @@ pub enum Err {
     /// parameter or parameter value, repeats the same parameter, or is otherwise
     /// malformed.
     #[error("invalid_credential_request")]
-    InvalidCredentialRequest,
+    InvalidCredentialRequest(String),
 
     /// Requested credential type is not supported.
     #[error("unsupported_credential_type")]
-    UnsupportedCredentialType,
+    UnsupportedCredentialType(String),
 
     /// Requested credential format is not supported.
     #[error("unsupported_credential_format")]
-    UnsupportedCredentialFormat,
+    UnsupportedCredentialFormat(String),
 
     /// Credential Request did not contain a proof, or proof was invalid, i.e. it was
     /// not bound to a Credential Issuer provided `c_nonce`. The error response contains
     /// new `c_nonce` as well as `c_nonce_expires_in` values to be used by the Wallet
     /// when creating another proof of possession of key material.
     #[error("invalid_proof")]
-    InvalidProof(String, i64),
+    InvalidProof { hint: String, c_nonce: String, c_nonce_expires_in: i64 },
 
     /// This error occurs when the encryption parameters in the Credential Request are
     /// either invalid or missing. In the latter case, it indicates that the Credential
     /// Issuer requires the Credential Response to be sent encrypted, but the Credential
     /// Request does not contain the necessary encryption parameters.
     #[error("invalid_encryption_parameters")]
-    InvalidEncryptionParameters,
+    InvalidEncryptionParameters(String),
 
     /// Deferred Issuance Endpoint:
 
@@ -275,13 +286,13 @@ pub enum Err {
     /// Endpoint. If interval member is missing or its value is not provided, the Wallet
     /// MUST use 5 as the default value.
     #[error("issuance_pending")]
-    IssuancePending,
+    IssuancePending(String),
 
     /// The Deferred Credential Request contains an invalid `transaction_id`. This error
     /// occurs when the `transaction_id` was not issued by the respective Credential
     /// Issuer or it was already used to obtain the Credential.
     #[error("invalid_transaction_id")]
-    InvalidTransactionId,
+    InvalidTransactionId(String),
 
     /// ------------------------------
     /// Verifiable Presentation
@@ -291,16 +302,16 @@ pub enum Err {
     /// Verifier, such as those included in the `vp_formats` registration
     /// parameter.
     #[error("vp_formats_not_supported")]
-    VpFormatsNotSupported,
+    VpFormatsNotSupported(String),
 
     /// The Presentation Definition URL cannot be reached.
     #[error("invalid_presentation_definition_uri")]
-    InvalidPresentationDefinitionUri,
+    InvalidPresentationDefinitionUri(String),
 
     /// The Presentation Definition URL can be reached, but the specified
     /// `presentation_definition` cannot be found at the URL.
     #[error("invalid_presentation_definition_reference")]
-    InvalidPresentationDefinitionReference,
+    InvalidPresentationDefinitionReference(String),
 }
 
 /// Add hint and state to error Results
