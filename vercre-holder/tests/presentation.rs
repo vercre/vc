@@ -5,7 +5,7 @@ use std::sync::LazyLock;
 use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use openid4vc::issuance::CredentialConfiguration;
-use openid4vc::presentation::{CreateRequestRequest, DeviceFlow};
+use openid4vc::presentation::{CreateRequestRequest, DeviceFlow, PresentationDefinitionType};
 use test_utils::verifier;
 use vercre_holder::callback::CredentialStorer;
 use vercre_holder::credential::Credential;
@@ -100,7 +100,11 @@ async fn e2e_presentation() {
     // Because of the presentation definition ID being unique per call, we redact it in the snapshot
     // above, so do a check of a couple of key fields just to make sure we have data we know will
     // be helpful further in the process.
-    let pd = presentation.request.presentation_definition.clone().expect("should have pd");
+    let PresentationDefinitionType::Object(pd) =
+        presentation.request.presentation_definition.clone()
+    else {
+        panic!("should have presentation definition");
+    };
     assert_eq!(pd.input_descriptors.len(), 1);
     assert_eq!(pd.input_descriptors[0].id, "EmployeeID_JWT");
 

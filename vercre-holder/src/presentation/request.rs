@@ -9,7 +9,7 @@ use std::fmt::Debug;
 use anyhow::{anyhow, bail};
 use core_utils::jws;
 use dif_exch::Constraints;
-use openid4vc::presentation::{RequestObject, RequestObjectResponse};
+use openid4vc::presentation::{PresentationDefinitionType, RequestObject, RequestObjectResponse};
 use tracing::instrument;
 use uuid::Uuid;
 
@@ -118,8 +118,9 @@ async fn parse_request_object_response(
 /// presentation request.
 // TODO: How to handle multiple input descriptors?
 fn build_filter(request: &RequestObject) -> anyhow::Result<Constraints> {
-    let Some(pd) = &request.presentation_definition else {
-        bail!("no presentation definition found");
+    let pd = match &request.presentation_definition {
+        PresentationDefinitionType::Object(pd) => pd,
+        PresentationDefinitionType::Uri(_) => bail!("presentation_definition_uri is unsupported"),
     };
     if pd.input_descriptors.is_empty() {
         bail!("no input descriptors found");

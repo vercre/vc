@@ -18,7 +18,10 @@ use std::fmt::Debug;
 use core_utils::jws::{self, Type};
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
-pub use openid4vc::presentation::{RequestObjectRequest, RequestObjectResponse};
+pub use openid4vc::presentation::{
+    ClientIdScheme, PresentationDefinitionType, RequestObjectRequest, RequestObjectResponse,
+    ResponseType,
+};
 use openid4vc::Result;
 use provider::{Callback, ClientMetadata, Signer, StateManager};
 use tracing::instrument;
@@ -98,8 +101,9 @@ where
 
 #[cfg(test)]
 mod tests {
+    use dif_exch::PresentationDefinition;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use openid4vc::presentation::RequestObject;
+    use openid4vc::presentation::{ClientMetadataType, RequestObject};
     use test_utils::verifier::{Provider, VERIFIER_ID};
 
     use super::*;
@@ -113,21 +117,21 @@ mod tests {
         let nonce = "1234567890";
 
         let req_obj = RequestObject {
-            response_type: "vp_token".into(),
+            response_type: ResponseType::VpToken,
             client_id: format!("{VERIFIER_ID}/post"),
             state: Some(state_key.to_string()),
             nonce: nonce.to_string(),
             response_mode: Some("direct_post".into()),
             response_uri: Some(format!("{VERIFIER_ID}/post")),
-            presentation_definition: None, // Some(pd.clone()),
-            client_id_scheme: Some("redirect_uri".into()),
-            client_metadata: None, // Some(self.client_meta.clone()),
+            presentation_definition: PresentationDefinitionType::Object(
+                PresentationDefinition::default(),
+            ),
+            client_id_scheme: Some(ClientIdScheme::RedirectUri),
+            client_metadata: ClientMetadataType::Object(Default::default()),
 
             // TODO: populate these
             redirect_uri: None,
             scope: None,
-            presentation_definition_uri: None,
-            client_metadata_uri: None,
         };
 
         let state = State::builder().request_object(req_obj).build().expect("should build state");

@@ -24,7 +24,10 @@ use std::fmt::Debug;
 
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
-pub use openid4vc::presentation::{ResponseRequest, ResponseResponse};
+pub use openid4vc::presentation::{
+    ClientIdScheme, ClientMetadataType, PresentationDefinitionType, ResponseRequest,
+    ResponseResponse, ResponseType,
+};
 use openid4vc::Result;
 use provider::{Callback, ClientMetadata, Signer, StateManager, Verifier};
 use serde_json::Value;
@@ -143,8 +146,13 @@ where
         let Some(subm) = &request.presentation_submission else {
             return Err(Err::InvalidRequest("no presentation_submission".into()));
         };
-        let Some(def) = &saved_req.presentation_definition else {
-            return Err(Err::InvalidRequest("no presentation_definition".into()));
+        let def = match &saved_req.presentation_definition {
+            PresentationDefinitionType::Object(def) => def,
+            PresentationDefinitionType::Uri(_) => {
+                return Err(Err::InvalidRequest(
+                    "presentation_definition_uri is unsupported".into(),
+                ));
+            }
         };
 
         // verify presentation subm matches definition
@@ -289,7 +297,7 @@ mod tests {
         let nonce = "ABCDEFG".to_string();
 
         let req_obj = RequestObject {
-            response_type: "vp_token".into(),
+            response_type: ResponseType::VpToken,
             client_id: CLIENT_ID.to_string(),
             redirect_uri: None,
             scope: None,
@@ -297,11 +305,9 @@ mod tests {
             nonce: nonce.clone(),
             response_mode: Some("direct_post.jwt".into()),
             response_uri: Some(format!("{CLIENT_ID}/direct_post.jwt")),
-            presentation_definition: Some(pres_def.clone()),
-            presentation_definition_uri: None,
-            client_id_scheme: Some("did".into()),
-            client_metadata: None,
-            client_metadata_uri: None,
+            presentation_definition: PresentationDefinitionType::Object(pres_def.clone()),
+            client_id_scheme: Some(ClientIdScheme::Did),
+            client_metadata: ClientMetadataType::Object(Default::default()),
         };
 
         // set up state

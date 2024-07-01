@@ -1,6 +1,6 @@
 ---
 source: vercre-verifier/src/request.rs
-assertion_line: 152
+assertion_line: 155
 expression: jwt
 ---
 header:
@@ -14,4 +14,8 @@ claims:
   response_uri: "http://vercre.io/post"
   nonce: "1234567890"
   state: ABCDEF123456
+  presentation_definition:
+    id: ""
+    input_descriptors: []
   client_id_scheme: redirect_uri
+  client_metadata: "{\"client_id\":\"\"}"

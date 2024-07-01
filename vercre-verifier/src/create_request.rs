@@ -46,9 +46,11 @@ use std::fmt::Debug;
 use core_utils::gen;
 use dif_exch::{ClaimFormat, PresentationDefinition};
 use openid4vc::error::Err;
+use openid4vc::presentation::ResponseType;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{
-    CreateRequestRequest, CreateRequestResponse, DeviceFlow, RequestObject,
+    ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
+    PresentationDefinitionType, RequestObject,
 };
 use openid4vc::Result;
 use provider::{Callback, ClientMetadata, StateManager};
@@ -158,12 +160,12 @@ where
         };
 
         let mut req_obj = RequestObject {
-            response_type: "vp_token".into(),
+            response_type: ResponseType::VpToken,
             state: Some(state_key.clone()),
             nonce: gen::nonce(),
-            presentation_definition: Some(pres_def),
-            client_metadata: Some(client_meta),
-            client_id_scheme: Some("redirect_uri".into()),
+            presentation_definition: PresentationDefinitionType::Object(pres_def),
+            client_metadata: ClientMetadataType::Object(client_meta),
+            client_id_scheme: Some(ClientIdScheme::RedirectUri),
             ..Default::default()
         };
 
@@ -237,8 +239,17 @@ mod tests {
         assert_let!(Some(req_obj), &response.request_object);
 
         // check redacted fields are present
-        assert!(req_obj.client_metadata.is_some());
-        assert!(req_obj.presentation_definition.is_some());
+        let md = match req_obj.client_metadata {
+            ClientMetadataType::Object(_) => true,
+            _ => false,
+        };
+        assert!(md);
+
+        let pd = match req_obj.presentation_definition {
+            PresentationDefinitionType::Object(_) => true,
+            _ => false,
+        };
+        assert!(pd);
 
         // compare response with saved state
         let state_key = req_obj.state.as_ref().expect("has state");

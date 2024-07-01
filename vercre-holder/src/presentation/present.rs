@@ -7,7 +7,7 @@ use std::fmt::Debug;
 
 use anyhow::{anyhow, bail};
 use dif_exch::{DescriptorMap, FilterValue, PathNested, PresentationSubmission};
-use openid4vc::presentation::{ResponseRequest, ResponseResponse};
+use openid4vc::presentation::{PresentationDefinitionType, ResponseRequest, ResponseResponse};
 use tracing::instrument;
 use uuid::Uuid;
 use w3c_vc::model::vp::VerifiablePresentation;
@@ -110,9 +110,11 @@ where
 /// Create a presentation submission from the presentation request and matched credentials.
 fn create_submission(presentation: &Presentation) -> anyhow::Result<PresentationSubmission> {
     let request = presentation.request.clone();
-    let Some(pd) = &request.presentation_definition else {
-        bail!("No presentation definition on request in context");
+    let pd = match &request.presentation_definition {
+        PresentationDefinitionType::Object(pd) => pd,
+        PresentationDefinitionType::Uri(_) => bail!("presentation_definition_uri is unsupported"),
     };
+
     let mut desc_map: Vec<DescriptorMap> = vec![];
     for n in 0..pd.input_descriptors.len() {
         let in_desc = &pd.input_descriptors[n];
@@ -147,14 +149,17 @@ fn create_vp(
         ))
         .holder(holder_did);
 
-    if let Some(pd) = &presentation.request.presentation_definition {
-        for input in &pd.input_descriptors {
-            if let Some(fields) = &input.constraints.fields {
-                for field in fields {
-                    if let Some(filter) = &field.filter {
-                        if let FilterValue::Const(val) = &filter.value {
-                            builder = builder.add_type(val.clone());
-                        }
+    let pd = match &presentation.request.presentation_definition {
+        PresentationDefinitionType::Object(pd) => pd,
+        PresentationDefinitionType::Uri(_) => bail!("presentation_definition_uri is unsupported"),
+    };
+
+    for input in &pd.input_descriptors {
+        if let Some(fields) = &input.constraints.fields {
+            for field in fields {
+                if let Some(filter) = &field.filter {
+                    if let FilterValue::Const(val) = &filter.value {
+                        builder = builder.add_type(val.clone());
                     }
                 }
             }

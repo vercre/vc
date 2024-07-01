@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 use std::io::Cursor;
-use std::str::FromStr;
 
 use base64ct::{Base64, Encoding};
 use qrcode::QrCode;
@@ -11,7 +10,7 @@ use serde_json::Value;
 
 // use w3c_vc::VerifiableCredential
 use super::{Client, CredentialFormat};
-use crate::error::{self, Err};
+use crate::error::Err;
 use crate::{stringify, Result};
 
 // TODO: find a home for these shared types
@@ -97,18 +96,6 @@ pub enum CredentialOfferType {
     Uri(String),
 }
 
-// impl CredentialOfferType {
-//     /// Test whether the Credential Offer is an object.
-//     pub fn is_object(&self) -> bool {
-//         matches!(self, CredentialOfferType::Object(_))
-//     }
-
-//     /// Test whether the Credential Offer is a URI.
-//     pub fn is_uri(&self) -> bool {
-//         matches!(self, CredentialOfferType::Uri(_))
-//     }
-// }
-
 /// A Credential Offer object that can be sent to a Wallet as an HTTP GET
 /// request.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
@@ -141,17 +128,6 @@ pub struct CredentialOffer {
     /// multiple grants are present, it's at the Wallet's discretion which one to use.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub grants: Option<Grants>,
-}
-
-impl FromStr for CredentialOffer {
-    type Err = error::Err;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let Ok(res) = serde_json::from_str::<Self>(s) else {
-            return Err(Err::InvalidRequest("issue deserializing CredentialOffer".into()));
-        };
-        Ok(res)
-    }
 }
 
 impl CredentialOffer {
@@ -215,12 +191,11 @@ impl CredentialOffer {
 /// to use.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Grants {
-    /// Authorization Code Grant Type = "`authorization_code`".
+    /// Authorization Code Grant Type.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub authorization_code: Option<AuthorizationCodeGrant>,
 
-    /// Pre-Authorized Code Grant Type =
-    /// "`urn:ietf:params:oauth:grant-type:pre-authorized_code`".
+    /// Pre-Authorized Code Grant Type.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")]
     pub pre_authorized_code: Option<PreAuthorizedCodeGrant>,
@@ -359,7 +334,7 @@ pub struct AuthorizationRequest {
     /// Authorization Details is used to convey the details about the
     /// Credentials the Wallet wants to obtain.
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "stringify")]
+    #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
 
     /// Credential Issuers MAY support requesting authorization to issue a
