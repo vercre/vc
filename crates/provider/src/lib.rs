@@ -7,12 +7,12 @@ mod subject;
 use std::future::{Future, IntoFuture};
 
 use chrono::{DateTime, Utc};
-use openid4vc::issuance::{CredentialDefinition, Issuer};
+use openid4vc::issuance::Issuer;
 use openid4vc::{Client, Server};
 
 pub use self::callback::{Payload, Status};
 pub use self::signature::{Algorithm, Jwk, Signer, Verifier};
-pub use self::subject::Claims;
+pub use self::subject::{Claims, Subject};
 
 /// Result is used for all external errors.
 // pub type Result<T> = anyhow::Result<T>;
@@ -82,20 +82,4 @@ pub trait StateManager: Send + Sync {
 pub trait Callback: Send + Sync {
     /// Callback method to process status updates.
     fn callback(&self, pl: &callback::Payload) -> impl Future<Output = Result<()>> + Send;
-}
-
-/// The Subject trait specifies how the library expects user information to be
-/// provided by implementers.
-pub trait Subject: Send + Sync {
-    /// Authorize issuance of the credential specified by `credential_configuration_id`.
-    /// Returns `true` if the subject (holder) is authorized.
-    fn authorize(
-        &self, holder_subject: &str, credential_configuration_id: &str,
-    ) -> impl Future<Output = Result<bool>> + Send;
-
-    /// Returns a populated `Claims` object for the given subject (holder) and credential
-    /// definition.
-    fn claims(
-        &self, holder_subject: &str, credential: &CredentialDefinition,
-    ) -> impl Future<Output = Result<Claims>> + Send;
 }

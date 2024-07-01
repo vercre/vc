@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
-use openid4vc::issuance::CredentialDefinition;
+use openid4vc::issuance::ClaimDefinition;
 use provider::{Claims, Result};
 use serde_json::Value;
 
@@ -47,9 +47,7 @@ impl Store {
         }
     }
 
-    pub fn authorize(
-        &self, holder_subject: &str, _credential_configuration_id: &str,
-    ) -> Result<bool> {
+    pub fn authorize(&self, holder_subject: &str, _credential_identifier: &str) -> Result<bool> {
         if self.subjects.lock().expect("should lock").get(holder_subject).is_none() {
             return Err(anyhow!("no matching holder_subject"));
         };
@@ -57,7 +55,8 @@ impl Store {
     }
 
     pub fn claims(
-        &self, holder_subject: &str, credential: &CredentialDefinition,
+        &self, holder_subject: &str, _credential_identifier: &str,
+        credential_subject: Option<HashMap<String, ClaimDefinition>>,
     ) -> Result<Claims> {
         // get holder subject while allowing mutex to go out of scope and release
         // lock so we can take another lock for insert further down
@@ -66,7 +65,7 @@ impl Store {
 
         // populate requested claims for subject
         let mut claims = HashMap::new();
-        if let Some(subj) = &credential.credential_subject {
+        if let Some(subj) = &credential_subject {
             for claim_name in subj.keys() {
                 if let Some(v) = subject.get(claim_name) {
                     claims.insert(claim_name.to_string(), v.clone());

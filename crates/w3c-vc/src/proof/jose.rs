@@ -39,7 +39,7 @@ use std::str;
 use chrono::{TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::model::{OneSet, StrObj, VerifiableCredential, VerifiablePresentation};
+use crate::model::{Kind, Quota, VerifiableCredential, VerifiablePresentation};
 
 /// Claims used for Verifiable Credential issuance when format is "`jwt_vc_json`".
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -77,13 +77,13 @@ pub struct VcClaims {
 impl From<VerifiableCredential> for VcClaims {
     fn from(vc: VerifiableCredential) -> Self {
         let subject = match &vc.credential_subject {
-            OneSet::One(sub) => sub,
-            OneSet::Set(subs) => &subs[0],
+            Quota::One(sub) => sub,
+            Quota::Many(subs) => &subs[0],
         };
 
         let issuer_id = match &vc.issuer {
-            StrObj::String(id) => id,
-            StrObj::Object(issuer) => &issuer.id,
+            Kind::Simple(id) => id,
+            Kind::Rich(issuer) => &issuer.id,
         };
 
         Self {

@@ -48,7 +48,7 @@ use std::str::FromStr;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::model::OneSet;
+use crate::model::Quota;
 pub use crate::proof::Algorithm;
 
 /// To be verifiable, a credential must contain at least one proof mechanism,
@@ -103,7 +103,7 @@ pub struct Proof {
     /// MUST be either a string, or a set of strings. SHOULD be used by the
     /// verifier to ensure the proof is used in the correct security domain.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub domain: Option<OneSet<String>>,
+    pub domain: Option<Quota<String>>,
 
     /// Used to mitigate replay attacks. SHOULD be included if a domain is
     /// specified.
@@ -118,7 +118,7 @@ pub struct Proof {
     /// Each value identifies another data integrity proof that MUST verify
     /// before the current proof is processed.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub previous_proof: Option<OneSet<String>>,
+    pub previous_proof: Option<Quota<String>>,
 
     /// Supplied by the proof creator. Can be used to increase privacy by
     /// decreasing linkability that results from deterministically generated

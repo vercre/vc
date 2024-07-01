@@ -13,11 +13,12 @@ use std::fmt::Debug;
 use chrono::Utc;
 use core_utils::gen;
 use core_utils::jws::{self, Type};
+use model::Kind;
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{
-    BatchCredentialRequest, BatchCredentialResponse, CredentialRequest, CredentialResponse,
-    CredentialType, ProofType,
+    BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialRequest,
+    CredentialResponse, CredentialType, ProofType,
 };
 use openid4vc::issuance::{CredentialDefinition, Issuer, ProofClaims};
 use openid4vc::Result;
@@ -112,7 +113,7 @@ where
         for request in &request.credential_requests {
             // format and type request
             if let CredentialType::Format(format) = &request.credential_type {
-                let Some(cred_def) = &request.credential_definition else {
+                let Some(definition) = &request.credential_definition else {
                     return Err(Err::InvalidCredentialRequest(
                         "credential definition not set".into(),
                     ));
@@ -123,7 +124,8 @@ where
                 let mut authorized = false;
 
                 for (k, v) in &self.issuer_meta.credential_configurations_supported {
-                    if (&v.format == format) && (v.credential_definition.type_ == cred_def.type_) {
+                    if (&v.format == format) && (v.credential_definition.type_ == definition.type_)
+                    {
                         authorized = self.state.credential_configuration_ids.contains(k);
                         break;
                     }
@@ -309,23 +311,32 @@ where
     ) -> Result<Option<VerifiableCredential>> {
         tracing::debug!("Context::create_vc");
 
-        let cred_def = self.credential_definition(request)?;
+        // get credential identifier and configuration
+        let (identifier, config) = self.credential_configuration(request)?;
+
+        let definition = credential_definition(request, &config);
         let Some(holder_id) = &self.state.holder_id else {
             return Err(Err::AccessDenied("holder not found".into()));
         };
 
         // claim values
-        let holder_claims = Subject::claims(provider, holder_id, &cred_def)
-            .await
-            .map_err(|e| Err::ServerError(format!("issue populating claims: {e}")))?;
+        let holder_claims = Subject::claims(
+            provider,
+            holder_id,
+            &identifier,
+            definition.credential_subject.clone(),
+        )
+        .await
+        .map_err(|e| Err::ServerError(format!("issue populating claims: {e}")))?;
         if holder_claims.pending {
             return Ok(None);
         }
 
         // check mandatory claims are populated
-        let Some(cred_subj) = cred_def.credential_subject.clone() else {
+        let Some(cred_subj) = definition.credential_subject.clone() else {
             return Err(Err::ServerError("Credential subject not set".into()));
         };
+
         for (name, claim) in &cred_subj {
             if claim.mandatory.unwrap_or_default() && !holder_claims.claims.contains_key(name) {
                 return Err(Err::InvalidCredentialRequest(
@@ -337,14 +348,14 @@ where
         let credential_issuer = &self.issuer_meta.credential_issuer;
 
         // HACK: fix this
-        let Some(types) = cred_def.type_ else {
+        let Some(types) = definition.type_ else {
             return Err(Err::ServerError("Credential type not set".into()));
         };
 
         let vc_id = format!("{credential_issuer}/credentials/{}", types[1].clone());
 
         let vc = VerifiableCredential::builder()
-            .add_context(model::Context::Url(credential_issuer.clone() + "/credentials/v1"))
+            .add_context(Kind::Simple(credential_issuer.clone() + "/credentials/v1"))
             // TODO: generate credential id
             .id(vc_id)
             .add_type(types[1].clone())
@@ -359,53 +370,37 @@ where
         Ok(Some(vc))
     }
 
-    // Get the request's credential definition. If it does not exist, create it.
-    fn credential_definition(&self, request: &CredentialRequest) -> Result<CredentialDefinition> {
-        tracing::debug!("Context::credential_definition");
-
-        if let Some(mut cred_def) = request.credential_definition.clone() {
-            // add credential subject when not present
-            if cred_def.credential_subject.is_none() {
-                let find_supported = match &request.credential_type {
-                    CredentialType::Identifier(id) => {
-                        self.issuer_meta.credential_configurations_supported.get(id)
-                    }
-                    CredentialType::Format(format) => {
-                        self.issuer_meta.credential_configurations_supported.values().find(|v| {
-                            &v.format == format && v.credential_definition.type_ == cred_def.type_
-                        })
-                    }
-                };
-
-                let Some(supported) = find_supported else {
+    fn credential_configuration(
+        &self, request: &CredentialRequest,
+    ) -> Result<(String, CredentialConfiguration)> {
+        match &request.credential_type {
+            CredentialType::Identifier(identifier) => {
+                let Some(config) =
+                    self.issuer_meta.credential_configurations_supported.get(identifier)
+                else {
                     return Err(Err::InvalidCredentialRequest(
                         "credential is not supported".into(),
                     ));
                 };
-
-                // copy credential subject
-                cred_def
-                    .credential_subject
-                    .clone_from(&supported.credential_definition.credential_subject);
-            };
-
-            Ok(cred_def)
-        } else {
-            let CredentialType::Identifier(id) = &request.credential_type else {
-                return Err(Err::InvalidCredentialRequest("no credential identifier".into()));
-            };
-            let Some(supported) = self.issuer_meta.credential_configurations_supported.get(id)
-            else {
-                return Err(Err::InvalidCredentialRequest(format!(
-                    "no supported credential for identifier {id}"
-                )));
-            };
-
-            Ok(CredentialDefinition {
-                context: None,
-                type_: supported.credential_definition.type_.clone(),
-                credential_subject: supported.credential_definition.credential_subject.clone(),
-            })
+                Ok((identifier.clone(), config.clone()))
+            }
+            CredentialType::Format(format) => {
+                let Some(definition) = &request.credential_definition else {
+                    return Err(Err::InvalidCredentialRequest(
+                        "credential definition not set".into(),
+                    ));
+                };
+                let Some(id_config) =
+                    self.issuer_meta.credential_configurations_supported.iter().find(|(_, v)| {
+                        &v.format == format && v.credential_definition.type_ == definition.type_
+                    })
+                else {
+                    return Err(Err::InvalidCredentialRequest(
+                        "credential is not supported".into(),
+                    ));
+                };
+                Ok((id_config.0.clone(), id_config.1.clone()))
+            }
         }
     }
 
@@ -428,6 +423,28 @@ where
             .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
 
         Ok((c_nonce, Expire::Nonce.duration().num_seconds()))
+    }
+}
+// Get the request's credential definition. If it does not exist, create it.
+fn credential_definition(
+    request: &CredentialRequest, config: &CredentialConfiguration,
+) -> CredentialDefinition {
+    tracing::debug!("Context::credential_definition");
+
+    if let Some(mut definition) = request.credential_definition.clone() {
+        // add credential subject when not present
+        if definition.credential_subject.is_none() {
+            definition
+                .credential_subject
+                .clone_from(&config.credential_definition.credential_subject);
+        };
+        definition
+    } else {
+        CredentialDefinition {
+            context: None,
+            type_: config.credential_definition.type_.clone(),
+            credential_subject: config.credential_definition.credential_subject.clone(),
+        }
     }
 }
 

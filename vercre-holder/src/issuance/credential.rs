@@ -11,7 +11,7 @@ use openid4vc::issuance::{
     Proof, ProofClaims, ProofType, TokenRequest,
 };
 use tracing::instrument;
-use w3c_vc::model::StrObj;
+use w3c_vc::model::Kind;
 use w3c_vc::proof::{self, Payload, Verify};
 
 use super::{Issuance, Status};
@@ -167,8 +167,8 @@ async fn credential(
     };
 
     let issuer_id = match &vc.issuer {
-        StrObj::String(id) => id,
-        StrObj::Object(issuer) => &issuer.id,
+        Kind::Simple(id) => id,
+        Kind::Rich(issuer) => &issuer.id,
     };
 
     Ok(Credential {

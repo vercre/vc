@@ -18,7 +18,6 @@ pub mod vc;
 pub mod vp;
 
 use ::serde::{Deserialize, Serialize};
-use serde_json::Value;
 pub use vc::*;
 pub use vp::*;
 
@@ -29,26 +28,32 @@ pub use vp::*;
 /// [JSON-LD Context](https://www.w3.org/TR/json-ld11/#the-context).
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum Context {
+pub enum Kind<T> {
     /// Context URL
-    Url(String),
+    Simple(String),
 
     /// Context object
-    Object(Value),
+    Rich(T),
 }
 
-/// `OneSet` allows serde to serialize/deserialize a single object or a set of objects.
+impl<T: Default> Default for Kind<T> {
+    fn default() -> Self {
+        Self::Simple(String::new())
+    }
+}
+
+/// `Quota` allows serde to serialize/deserialize a single object or a set of objects.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum OneSet<T> {
+pub enum Quota<T> {
     /// Single object
     One(T),
 
     /// Set of objects
-    Set(Vec<T>),
+    Many(Vec<T>),
 }
 
-impl<T: Default> Default for OneSet<T> {
+impl<T: Default> Default for Quota<T> {
     fn default() -> Self {
         Self::One(T::default())
     }

@@ -130,8 +130,8 @@ impl From<&Credential> for CredentialDetail {
         let mut claims = HashMap::new();
 
         let subjects = match &vc.credential_subject {
-            credential::OneSet::One(sub) => vec![sub.clone()],
-            credential::OneSet::Set(subs) => subs.clone(),
+            credential::Quota::One(sub) => vec![sub.clone()],
+            credential::Quota::Many(subs) => subs.clone(),
         };
 
         for subject in subjects {

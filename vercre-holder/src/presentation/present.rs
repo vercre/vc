@@ -11,6 +11,7 @@ use openid4vc::presentation::{PresentationDefinitionType, ResponseRequest, Respo
 use tracing::instrument;
 use uuid::Uuid;
 use w3c_vc::model::vp::VerifiablePresentation;
+use w3c_vc::model::Kind;
 use w3c_vc::proof::{self, Format, Payload};
 
 use super::{Presentation, Status};
@@ -144,9 +145,7 @@ fn create_vp(
 ) -> anyhow::Result<VerifiablePresentation> {
     // presentation with 2 VCs: one as JSON, one as base64url encoded JWT
     let mut builder = VerifiablePresentation::builder()
-        .add_context(w3c_vc::model::Context::Url(
-            "https://www.w3.org/2018/credentials/examples/v1".into(),
-        ))
+        .add_context(Kind::Simple("https://www.w3.org/2018/credentials/examples/v1".into()))
         .holder(holder_did);
 
     let pd = match &presentation.request.presentation_definition {

@@ -14,6 +14,7 @@ use crate::error::Err;
 use crate::{stringify, Result};
 
 // TODO: find a home for these shared types
+// TODO: move sample data to test-utils
 
 /// Grant Types supported by the Authorization Server.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
@@ -1088,29 +1089,23 @@ pub struct Display {
 #[serde(default)]
 pub struct CredentialConfiguration {
     /// Identifies the format of the credential, e.g. "`jwt_vc_json`" or "`ldp_vc`".
-    /// Each object will contain further elements defining the type and
-    /// claims the credential MAY contain, as well as information on how to
-    /// display the credential.
+    /// Each object will contain further elements defining the type and claims the
+    /// credential MAY contain, as well as information on how to display the credential.
     ///
-    /// See [Credential Format Profiles] in the `OpenID4VCI` specification.
+    /// See OpenID4VCI [Credential Format Profiles] for mopre detail.
     ///
     /// [Credential Format Profiles]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles
     pub format: CredentialFormat,
 
-    /// Identifies the scope value that this Credential Issuer supports for this
-    /// particular credential. The value can be the same accross multiple
-    /// `credential_configurations_supported` objects. The Authorization Server MUST be able to
-    /// uniquely identify the Credential Issuer based on the scope value. The Wallet
-    /// can use this value in the Authorization Request Scope values in this
-    /// Credential Issuer metadata MAY duplicate those in the `scopes_supported`
-    /// parameter of the Authorization Server.
+    /// The `scope` value that this Credential Issuer supports for this credential. The
+    /// value can be the same accross multiple `credential_configurations_supported` 
+    /// objects. The Authorization Server MUST be able to uniquely identify the 
+    /// Credential Issuer based on the scope value. The Wallet can use this value in
+    /// the Authorization Request Scope values in this Credential Issuer metadata MAY
+    /// duplicate those in the `scopes_supported` parameter of the Authorization Server.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scope: Option<String>,
 
-    // /// Identifies this CredentialConfiguration object. MUST be unique across all
-    // /// `credential_configurations_supported` entries in the Credential Issuer's Metadata.
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub id: Option<String>,
     /// Identifies how the Credential should be bound to the identifier of the
     /// End-User who possesses the Credential. Is case sensitive.
     ///

@@ -17,7 +17,7 @@ use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::model::{Context, OneSet, StrObj};
+use crate::model::{Kind, Quota};
 use crate::proof::integrity::Proof;
 
 /// `VerifiableCredential` represents a naive implementation of the W3C Verifiable
@@ -33,7 +33,7 @@ pub struct VerifiableCredential {
     /// Subsequent items may be composed of any combination of URLs and/or objects,
     /// each processable as a [JSON-LD Context](https://www.w3.org/TR/json-ld11/#the-context).
     #[serde(rename = "@context")]
-    pub context: Vec<Context>,
+    pub context: Vec<Kind<Value>>,
 
     #[allow(rustdoc::bare_urls)]
     /// The credential's URI. It is RECOMMENDED that if dereferenced, the URI
@@ -53,19 +53,19 @@ pub struct VerifiableCredential {
     /// A URI or object with an id property. It is RECOMMENDED that the
     /// URI/object id, dereferences to machine-readable information about
     /// the issuer that can be used to verify credential information.
-    pub issuer: StrObj<Issuer>,
+    pub issuer: Kind<Issuer>,
 
     /// An XMLSCHEMA11-2 (RFC3339) date-time the credential becomes valid.
     /// e.g. 2010-01-01T19:23:24Z.
     pub issuance_date: DateTime<Utc>,
 
     /// A set of objects containing claims about credential subjects(s).
-    pub credential_subject: OneSet<CredentialSubject>,
+    pub credential_subject: Quota<CredentialSubject>,
 
     /// One or more cryptographic proofs that can be used to detect tampering
     /// and verify authorship of a credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub proof: Option<OneSet<Proof>>,
+    pub proof: Option<Quota<Proof>>,
 
     /// An XMLSCHEMA11-2 (RFC3339) date-time the credential ceases to be valid.
     /// e.g. 2010-06-30T19:23:24Z
@@ -81,7 +81,7 @@ pub struct VerifiableCredential {
     /// credential. Consists of one or more schemas that can be used to
     /// check credential data conformance.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_schema: Option<OneSet<CredentialSchema>>,
+    pub credential_schema: Option<Quota<CredentialSchema>>,
 
     /// `RefreshService` can be used to provide a link to the issuer's refresh
     /// service so Holder's can refresh (manually or automatically) an
@@ -128,14 +128,14 @@ impl VerifiableCredential {
 
         Self {
             context: vec![
-                Context::Url("https://www.w3.org/2018/credentials/v1".into()),
-                Context::Url("https://www.w3.org/2018/credentials/examples/v1".into()),
+                Kind::Simple("https://www.w3.org/2018/credentials/v1".into()),
+                Kind::Simple("https://www.w3.org/2018/credentials/examples/v1".into()),
             ],
             type_: vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()],
-            issuer: StrObj::String("https://example.com/issuers/14".into()),
+            issuer: Kind::Simple("https://example.com/issuers/14".into()),
             id: "https://example.com/credentials/3732".into(),
             issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
-            credential_subject: OneSet::One(CredentialSubject {
+            credential_subject: Quota::One(CredentialSubject {
                 id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
                 claims: HashMap::from([("employeeId".into(), serde_json::json!("1234567890"))]),
             }),
@@ -395,7 +395,7 @@ impl VcBuilder {
         let mut builder: Self = Self::default();
 
         // set some sensibile defaults
-        builder.vc.context.push(Context::Url("https://www.w3.org/2018/credentials/v1".into()));
+        builder.vc.context.push(Kind::Simple("https://www.w3.org/2018/credentials/v1".into()));
         builder.vc.type_.push("VerifiableCredential".into());
         builder.vc.issuance_date = chrono::Utc::now(); //.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
 
@@ -404,7 +404,7 @@ impl VcBuilder {
 
     /// Sets the `@context` property
     #[must_use]
-    pub fn add_context(mut self, context: Context) -> Self {
+    pub fn add_context(mut self, context: Kind<Value>) -> Self {
         self.vc.context.push(context);
         self
     }
@@ -426,7 +426,7 @@ impl VcBuilder {
     /// Sets the `issuer` property
     #[must_use]
     pub fn issuer(mut self, issuer: impl Into<String>) -> Self {
-        self.vc.issuer = StrObj::String(issuer.into());
+        self.vc.issuer = Kind::Simple(issuer.into());
         self
     }
 
@@ -434,16 +434,16 @@ impl VcBuilder {
     #[must_use]
     pub fn add_subject(mut self, subj: CredentialSubject) -> Self {
         let one_set = match self.vc.credential_subject {
-            OneSet::One(one) => {
+            Quota::One(one) => {
                 if one == CredentialSubject::default() {
-                    OneSet::One(subj)
+                    Quota::One(subj)
                 } else {
-                    OneSet::Set(vec![one, subj])
+                    Quota::Many(vec![one, subj])
                 }
             }
-            OneSet::Set(mut set) => {
+            Quota::Many(mut set) => {
                 set.push(subj);
-                OneSet::Set(set)
+                Quota::Many(set)
             }
         };
 
@@ -455,11 +455,11 @@ impl VcBuilder {
     #[must_use]
     pub fn add_proof(mut self, proof: Proof) -> Self {
         let one_set = match self.vc.proof {
-            None => OneSet::One(proof),
-            Some(OneSet::One(one)) => OneSet::Set(vec![one, proof]),
-            Some(OneSet::Set(mut set)) => {
+            None => Quota::One(proof),
+            Some(Quota::One(one)) => Quota::Many(vec![one, proof]),
+            Some(Quota::Many(mut set)) => {
                 set.push(proof);
-                OneSet::Set(set)
+                Quota::Many(set)
             }
         };
 
@@ -485,13 +485,13 @@ impl VcBuilder {
             bail!("no type set");
         }
 
-        if let StrObj::String(id) = &self.vc.issuer {
+        if let Kind::Simple(id) = &self.vc.issuer {
             if id.is_empty() {
                 bail!("no issuer.id set");
             }
         }
 
-        if let OneSet::One(subj) = &self.vc.credential_subject {
+        if let Quota::One(subj) = &self.vc.credential_subject {
             if *subj == CredentialSubject::default() {
                 bail!("no credential_subject set");
             }
@@ -586,7 +586,7 @@ mod tests {
         init_tracer();
 
         let mut vc = VerifiableCredential::sample();
-        vc.credential_schema = Some(OneSet::Set(vec![
+        vc.credential_schema = Some(Quota::Many(vec![
             CredentialSchema { ..Default::default() },
             CredentialSchema { ..Default::default() },
         ]));
@@ -629,15 +629,15 @@ mod tests {
         assert_eq!(vc_de.issuer, vc.issuer);
 
         let mut issuer = match &vc.issuer {
-            StrObj::Object(issuer) => issuer.clone(),
-            StrObj::String(id) => Issuer {
+            Kind::Rich(issuer) => issuer.clone(),
+            Kind::Simple(id) => Issuer {
                 id: id.clone(),
                 ..Issuer::default()
             },
         };
         issuer.extra =
             Some(HashMap::from([("name".into(), Value::String("Example University".into()))]));
-        vc.issuer = StrObj::Object(issuer);
+        vc.issuer = Kind::Rich(issuer);
 
         // serialize
         let vc_json = serde_json::to_value(&vc).expect("should serialize to json");
