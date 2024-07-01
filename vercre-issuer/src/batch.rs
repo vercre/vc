@@ -424,21 +424,19 @@ fn credential_definition(
 ) -> CredentialDefinition {
     tracing::debug!("Context::credential_definition");
 
-    if let Some(mut definition) = request.credential_definition.clone() {
-        // add credential subject when not present
-        if definition.credential_subject.is_none() {
-            definition
-                .credential_subject
-                .clone_from(&config.credential_definition.credential_subject);
-        };
-        definition
-    } else {
-        CredentialDefinition {
+    let mut definition =
+        request.credential_definition.clone().unwrap_or_else(|| CredentialDefinition {
             context: None,
             type_: config.credential_definition.type_.clone(),
             credential_subject: config.credential_definition.credential_subject.clone(),
-        }
-    }
+        });
+
+    // add credential subject when not present
+    if definition.credential_subject.is_none() {
+        definition.credential_subject.clone_from(&config.credential_definition.credential_subject);
+    };
+
+    definition
 }
 
 #[cfg(test)]
