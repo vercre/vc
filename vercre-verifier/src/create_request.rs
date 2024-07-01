@@ -53,7 +53,7 @@ pub use openid4vc::presentation::{
     PresentationDefinitionType, RequestObject,
 };
 use openid4vc::Result;
-use provider::{Callback, ClientMetadata, StateManager};
+use endpoint::{Callback, ClientMetadata, StateManager};
 use tracing::instrument;
 use uuid::Uuid;
 use w3c_vc::proof::{Algorithm, Signer};
@@ -103,7 +103,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        core_utils::Endpoint::handle_request(self, request, ctx).await
+        endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -113,7 +113,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> core_utils::Context for Context<P>
+impl<P> endpoint::Context for Context<P>
 where
     P: ClientMetadata + StateManager + Clone + Debug,
 {

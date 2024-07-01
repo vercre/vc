@@ -3,8 +3,9 @@
 use std::fmt::Debug;
 
 use openid4vc::error::Err;
-use provider::{Callback, Payload, Status};
 use tracing::instrument;
+
+use crate::{Callback, Payload, Status};
 
 // LATER: investigate `async_fn_in_trait` warning
 
@@ -100,7 +101,7 @@ pub trait Endpoint: Debug {
     /// Try to send a callback to the client. If the callback fails, log the error.
     #[allow(async_fn_in_trait)]
     #[instrument(level = "debug", skip(self))]
-    async fn try_callback<R, C, U>(&self, ctx: C, e: &Err) -> provider::Result<()>
+    async fn try_callback<R, C, U>(&self, ctx: C, e: &Err) -> crate::Result<()>
     where
         C: Context<Request = R, Response = U>,
         R: Default + Clone + Send + Sync + Debug,

@@ -49,7 +49,7 @@ use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{BatchCredentialRequest, CredentialRequest, CredentialResponse};
 use openid4vc::Result;
-use provider::{
+use endpoint::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject, Verifier,
 };
 use tracing::instrument;
@@ -91,7 +91,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        core_utils::Endpoint::handle_request(self, request, ctx).await
+        endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -101,7 +101,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> core_utils::Context for Context<P>
+impl<P> endpoint::Context for Context<P>
 where
     P: ClientMetadata
         + IssuerMetadata

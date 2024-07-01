@@ -31,7 +31,7 @@ pub mod integrity;
 mod jose;
 
 use core_utils::jws;
-pub use provider::{Algorithm, Signer, Verifier};
+pub use endpoint::{Algorithm, Signer, Verifier};
 use serde::{Deserialize, Serialize};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};

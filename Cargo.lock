@@ -712,11 +712,10 @@ dependencies = [
  "base64ct",
  "ecdsa",
  "ed25519-dalek",
+ "endpoint",
  "fastrand",
  "insta",
  "k256",
- "openid4vc",
- "provider",
  "serde",
  "serde_json",
  "tracing",
@@ -1241,6 +1240,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b45de904aa0b010bce2ab45264d0631681847fa7b6f2eaa7dab7619943bc4f59"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "endpoint"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "openid4vc",
+ "serde",
+ "serde_json",
+ "tracing",
 ]
 
 [[package]]
@@ -3444,17 +3455,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "provider"
-version = "0.1.0-alpha.4"
-dependencies = [
- "anyhow",
- "chrono",
- "openid4vc",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "ptr_meta"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4995,9 +4995,9 @@ dependencies = [
  "chrono",
  "ecdsa",
  "ed25519-dalek",
+ "endpoint",
  "k256",
  "openid4vc",
- "provider",
  "serde_json",
  "tracing",
  "tracing-subscriber",
@@ -5557,9 +5557,9 @@ dependencies = [
  "dif-exch",
  "ecdsa",
  "ed25519-dalek",
+ "endpoint",
  "insta",
  "openid4vc",
- "provider",
  "serde",
  "serde_json",
  "serde_qs",
@@ -5583,10 +5583,10 @@ dependencies = [
  "chrono",
  "core-utils",
  "derive_builder",
+ "endpoint",
  "futures",
  "insta",
  "openid4vc",
- "provider",
  "serde",
  "serde_json",
  "sha2",
@@ -5605,9 +5605,9 @@ dependencies = [
  "core-utils",
  "derive_builder",
  "dif-exch",
+ "endpoint",
  "insta",
  "openid4vc",
- "provider",
  "serde",
  "serde_json",
  "serde_json_path",
@@ -5659,7 +5659,7 @@ dependencies = [
  "chrono",
  "core-utils",
  "dif-exch",
- "provider",
+ "endpoint",
  "serde",
  "serde_json",
  "tracing",

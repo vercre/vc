@@ -170,7 +170,7 @@ pub use openid4vc::Result;
 pub mod provider {
     pub use openid4vc::presentation::VpFormat;
     pub use openid4vc::{Client, CredentialFormat};
-    pub use provider::{
+    pub use endpoint::{
         Algorithm, Callback, ClientMetadata, Jwk, Payload, Result, Signer, StateManager, Verifier,
     };
 }
@@ -210,7 +210,7 @@ where
     }
 }
 
-impl<P> core_utils::Endpoint for Endpoint<P>
+impl<P> endpoint::Endpoint for Endpoint<P>
 where
     P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
 {
@@ -263,7 +263,7 @@ mod tests {
             let ctx = Context {
                 _p: std::marker::PhantomData,
             };
-            core_utils::Endpoint::handle_request(self, request, ctx).await
+            endpoint::Endpoint::handle_request(self, request, ctx).await
         }
     }
 
@@ -272,7 +272,7 @@ mod tests {
         _p: std::marker::PhantomData<P>,
     }
 
-    impl<P> core_utils::Context for Context<P>
+    impl<P> endpoint::Context for Context<P>
     where
         P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
     {

@@ -22,6 +22,7 @@
 
 use std::fmt::Debug;
 
+use endpoint::{Callback, ClientMetadata, Signer, StateManager, Verifier};
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{
@@ -29,7 +30,6 @@ pub use openid4vc::presentation::{
     ResponseResponse, ResponseType,
 };
 use openid4vc::Result;
-use provider::{Callback, ClientMetadata, Signer, StateManager, Verifier};
 use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
@@ -66,7 +66,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        core_utils::Endpoint::handle_request(self, request, ctx).await
+        endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -76,7 +76,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> core_utils::Context for Context<P>
+impl<P> endpoint::Context for Context<P>
 where
     P: ClientMetadata + StateManager + Signer + Verifier + Callback + Clone + Debug,
 {

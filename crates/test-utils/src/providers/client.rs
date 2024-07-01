@@ -5,7 +5,7 @@ use anyhow::anyhow;
 use openid4vc::issuance::GrantType;
 use openid4vc::presentation::VpFormat;
 use openid4vc::{Client, CredentialFormat};
-use provider::Result;
+use endpoint::Result;
 use uuid::Uuid;
 
 pub const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";

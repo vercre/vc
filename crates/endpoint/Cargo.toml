@@ -1,5 +1,5 @@
 [package]
-name = "provider"
+name = "endpoint"
 description = "Vercre provider types"
 license = "MIT OR Apache-2.0"
 publish = false
@@ -26,3 +26,4 @@ chrono.workspace = true
 openid4vc.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+tracing.workspace = true

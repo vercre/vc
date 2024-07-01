@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::anyhow;
 use openid4vc::Server;
-use provider::Result;
+use endpoint::Result;
 
 #[derive(Default, Clone, Debug)]
 pub struct Store {

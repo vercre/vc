@@ -100,7 +100,7 @@ pub mod token;
 pub mod provider {
     pub use openid4vc::issuance::{ClaimDefinition, GrantType, Issuer};
     pub use openid4vc::{Client, Server};
-    pub use provider::{
+    pub use endpoint::{
         Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Jwk, Payload, Result,
         ServerMetadata, Signer, StateManager, Subject, Verifier,
     };
@@ -159,7 +159,7 @@ where
     }
 }
 
-impl<P> core_utils::Endpoint for Endpoint<P>
+impl<P> endpoint::Endpoint for Endpoint<P>
 where
     P: ClientMetadata
         + IssuerMetadata
@@ -227,7 +227,7 @@ mod tests {
             let ctx = Context {
                 _p: std::marker::PhantomData,
             };
-            core_utils::Endpoint::handle_request(self, request, ctx).await
+            endpoint::Endpoint::handle_request(self, request, ctx).await
         }
     }
 
@@ -236,7 +236,7 @@ mod tests {
         _p: std::marker::PhantomData<P>,
     }
 
-    impl<P> core_utils::Context for Context<P>
+    impl<P> endpoint::Context for Context<P>
     where
         P: ClientMetadata
             + IssuerMetadata

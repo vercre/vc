@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
 use openid4vc::issuance::ClaimDefinition;
-use provider::{Claims, Result};
+use endpoint::{Claims, Result};
 use serde_json::Value;
 
 pub const NORMAL_USER: &str = "normal_user";

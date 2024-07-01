@@ -4,7 +4,7 @@ use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
 use openid4vc::Client;
-use provider::{
+use endpoint::{
     Algorithm, Callback, ClientMetadata, Jwk, Payload, Result, Signer, StateManager, Verifier,
 };
 

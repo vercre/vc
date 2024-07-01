@@ -13,6 +13,10 @@ use std::fmt::Debug;
 use chrono::Utc;
 use core_utils::gen;
 use core_utils::jws::{self, Type};
+use endpoint::{
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
+    Verifier,
+};
 use model::Kind;
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
@@ -22,10 +26,6 @@ pub use openid4vc::issuance::{
 };
 use openid4vc::issuance::{CredentialDefinition, Issuer, ProofClaims};
 use openid4vc::Result;
-use provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
-    Verifier,
-};
 use tracing::instrument;
 use w3c_vc::model::{self, CredentialSubject, VerifiableCredential};
 use w3c_vc::proof::{self, Format, Payload};
@@ -71,7 +71,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        core_utils::Endpoint::handle_request(self, request, ctx).await
+        endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -84,7 +84,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> core_utils::Context for Context<P>
+impl<P> endpoint::Context for Context<P>
 where
     P: IssuerMetadata + Subject + StateManager + Signer + Verifier + Clone + Debug,
 {

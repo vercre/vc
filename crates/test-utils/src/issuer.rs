@@ -6,7 +6,7 @@ use std::ops::Deref;
 use chrono::{DateTime, Utc};
 use openid4vc::issuance::{ClaimDefinition, Issuer};
 use openid4vc::{Client, Server};
-use provider::{
+use endpoint::{
     Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Jwk, Payload, Result,
     ServerMetadata, Signer, StateManager, Subject, Verifier,
 };

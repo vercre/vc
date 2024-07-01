@@ -38,7 +38,7 @@ use std::fmt::{Debug, Display};
 use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ecdsa::signature::Verifier as _;
-use provider::{Algorithm, Jwk, Signer, Verifier};
+use endpoint::{Algorithm, Jwk, Signer, Verifier};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 

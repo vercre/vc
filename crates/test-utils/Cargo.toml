@@ -27,5 +27,5 @@ tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 tracing.workspace = true
 uuid.workspace = true
 
+endpoint.workspace = true
 openid4vc.workspace = true
-provider.workspace = true

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use provider::{Payload, Result};
+use endpoint::{Payload, Result};
 
 #[derive(Default, Clone, Debug)]
 pub struct Hook {
