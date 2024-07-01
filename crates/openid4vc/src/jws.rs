@@ -38,9 +38,10 @@ use std::fmt::{Debug, Display};
 use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ecdsa::signature::Verifier as _;
-use endpoint::{Algorithm, Jwk, Signer, Verifier};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+
+use crate::endpoint::{Algorithm, Jwk, Signer, Verifier};
 
 /// The JWT `typ` claim.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]

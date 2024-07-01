@@ -1098,8 +1098,8 @@ pub struct CredentialConfiguration {
     pub format: CredentialFormat,
 
     /// The `scope` value that this Credential Issuer supports for this credential. The
-    /// value can be the same accross multiple `credential_configurations_supported` 
-    /// objects. The Authorization Server MUST be able to uniquely identify the 
+    /// value can be the same accross multiple `credential_configurations_supported`
+    /// objects. The Authorization Server MUST be able to uniquely identify the
     /// Credential Issuer based on the scope value. The Wallet can use this value in
     /// the Authorization Request Scope values in this Credential Issuer metadata MAY
     /// duplicate those in the `scopes_supported` parameter of the Authorization Server.

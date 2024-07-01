@@ -2,10 +2,10 @@
 
 use std::fmt::Debug;
 
-use openid4vc::error::Err;
 use tracing::instrument;
 
-use crate::{Callback, Payload, Status};
+use crate::endpoint::{Callback, Payload, Status};
+use crate::error::Err;
 
 // LATER: investigate `async_fn_in_trait` warning
 
@@ -30,14 +30,14 @@ pub trait Context: Send + Sync + Debug {
 
     /// Verify the request.
     #[allow(clippy::unused_async)]
-    async fn verify(&mut self, _: &Self::Provider, _: &Self::Request) -> openid4vc::Result<&Self> {
+    async fn verify(&mut self, _: &Self::Provider, _: &Self::Request) -> crate::Result<&Self> {
         Ok(self)
     }
 
     /// Process the request.
     async fn process(
         &self, provider: &Self::Provider, request: &Self::Request,
-    ) -> openid4vc::Result<Self::Response>;
+    ) -> crate::Result<Self::Response>;
 }
 
 // TODO: replace async fn in trait with async trait
@@ -58,7 +58,7 @@ pub trait Endpoint: Debug {
     /// calls `Endpoint::handle_request` to handle shared functionality.
     #[allow(async_fn_in_trait)]
     #[instrument(level = "debug", skip(self))]
-    async fn handle_request<R, C, U>(&self, request: &R, mut ctx: C) -> openid4vc::Result<U>
+    async fn handle_request<R, C, U>(&self, request: &R, mut ctx: C) -> crate::Result<U>
     where
         C: Context<Request = R, Response = U, Provider = Self::Provider>,
         R: Default + Clone + Debug + Send + Sync,
@@ -101,7 +101,7 @@ pub trait Endpoint: Debug {
     /// Try to send a callback to the client. If the callback fails, log the error.
     #[allow(async_fn_in_trait)]
     #[instrument(level = "debug", skip(self))]
-    async fn try_callback<R, C, U>(&self, ctx: C, e: &Err) -> crate::Result<()>
+    async fn try_callback<R, C, U>(&self, ctx: C, e: &Err) -> super::Result<()>
     where
         C: Context<Request = R, Response = U>,
         R: Default + Clone + Send + Sync + Debug,

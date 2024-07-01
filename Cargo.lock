@@ -708,17 +708,9 @@ dependencies = [
 name = "core-utils"
 version = "0.1.0-alpha.4"
 dependencies = [
- "anyhow",
  "base64ct",
- "ecdsa",
- "ed25519-dalek",
- "endpoint",
  "fastrand",
  "insta",
- "k256",
- "serde",
- "serde_json",
- "tracing",
 ]
 
 [[package]]
@@ -1240,18 +1232,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b45de904aa0b010bce2ab45264d0631681847fa7b6f2eaa7dab7619943bc4f59"
 dependencies = [
  "cfg-if",
-]
-
-[[package]]
-name = "endpoint"
-version = "0.1.0-alpha.4"
-dependencies = [
- "anyhow",
- "chrono",
- "openid4vc",
- "serde",
- "serde_json",
- "tracing",
 ]
 
 [[package]]
@@ -2953,15 +2933,21 @@ dependencies = [
 name = "openid4vc"
 version = "0.1.0-alpha.4"
 dependencies = [
+ "anyhow",
  "base64ct",
+ "chrono",
  "dif-exch",
+ "ecdsa",
+ "ed25519-dalek",
  "image",
  "insta",
+ "k256",
  "qrcode",
  "serde",
  "serde_json",
  "serde_qs",
  "thiserror",
+ "tracing",
 ]
 
 [[package]]
@@ -4988,7 +4974,6 @@ dependencies = [
  "chrono",
  "ecdsa",
  "ed25519-dalek",
- "endpoint",
  "k256",
  "openid4vc",
  "serde_json",
@@ -5546,11 +5531,9 @@ dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
- "core-utils",
  "dif-exch",
  "ecdsa",
  "ed25519-dalek",
- "endpoint",
  "insta",
  "openid4vc",
  "serde",
@@ -5576,7 +5559,6 @@ dependencies = [
  "chrono",
  "core-utils",
  "derive_builder",
- "endpoint",
  "futures",
  "insta",
  "openid4vc",
@@ -5598,7 +5580,6 @@ dependencies = [
  "core-utils",
  "derive_builder",
  "dif-exch",
- "endpoint",
  "insta",
  "openid4vc",
  "serde",
@@ -5650,9 +5631,8 @@ dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
- "core-utils",
  "dif-exch",
- "endpoint",
+ "openid4vc",
  "serde",
  "serde_json",
  "tracing",

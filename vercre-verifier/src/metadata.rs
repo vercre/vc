@@ -7,11 +7,11 @@
 
 use std::fmt::Debug;
 
+use openid4vc::endpoint::{Callback, ClientMetadata, StateManager};
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{MetadataRequest, MetadataResponse};
 use openid4vc::Result;
-use endpoint::{Callback, ClientMetadata, StateManager};
 use tracing::instrument;
 use w3c_vc::proof::Signer;
 
@@ -34,7 +34,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        endpoint::Endpoint::handle_request(self, request, ctx).await
+        openid4vc::endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -43,7 +43,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> endpoint::Context for Context<P>
+impl<P> openid4vc::endpoint::Context for Context<P>
 where
     P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
 {

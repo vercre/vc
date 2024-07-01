@@ -3,10 +3,10 @@
 use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
-use openid4vc::Client;
-use endpoint::{
+use openid4vc::endpoint::{
     Algorithm, Callback, ClientMetadata, Jwk, Payload, Result, Signer, StateManager, Verifier,
 };
+use openid4vc::Client;
 
 use crate::proof::Enclave;
 pub use crate::providers::{Presentation, VERIFIER_DID, VERIFIER_ID, VERIFY_KEY_ID};

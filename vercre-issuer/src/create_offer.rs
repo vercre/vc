@@ -68,7 +68,9 @@ use std::fmt::Debug;
 
 use chrono::Utc;
 use core_utils::gen;
-use endpoint::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
+use openid4vc::endpoint::{
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
+};
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{
@@ -107,7 +109,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        endpoint::Endpoint::handle_request(self, request, ctx).await
+        openid4vc::endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -117,7 +119,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> endpoint::Context for Context<P>
+impl<P> openid4vc::endpoint::Context for Context<P>
 where
     P: IssuerMetadata + StateManager + Debug,
 {

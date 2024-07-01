@@ -15,12 +15,14 @@ use std::fmt::Debug;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
 use core_utils::gen;
+use openid4vc::endpoint::{
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
+};
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{AuthorizationDetailType, TokenRequest, TokenResponse};
 use openid4vc::issuance::{GrantType, TokenType};
 use openid4vc::Result;
-use endpoint::{Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use sha2::{Digest, Sha256};
 use tracing::instrument;
 use w3c_vc::proof::Signer;
@@ -63,7 +65,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        endpoint::Endpoint::handle_request(self, request, ctx).await
+        openid4vc::endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -74,7 +76,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> endpoint::Context for Context<P>
+impl<P> openid4vc::endpoint::Context for Context<P>
 where
     P: ClientMetadata + IssuerMetadata + ServerMetadata + Subject + StateManager + Signer + Debug,
 {

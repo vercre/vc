@@ -1,20 +1,21 @@
 //! # `OpenID` Core
 
 mod callback;
+#[allow(clippy::module_inception)]
+pub mod endpoint;
 mod signature;
 mod subject;
-pub mod endpoint;
 
 use std::future::{Future, IntoFuture};
 
 use chrono::{DateTime, Utc};
-use openid4vc::issuance::Issuer;
-use openid4vc::{Client, Server};
 
-pub use self::endpoint::{Context, Endpoint};
 pub use self::callback::{Payload, Status};
+pub use self::endpoint::{Context, Endpoint};
 pub use self::signature::{Algorithm, Jwk, Signer, Verifier};
 pub use self::subject::{Claims, Subject};
+use crate::issuance::Issuer;
+use crate::{Client, Server};
 
 /// Result is used for all external errors.
 // pub type Result<T> = anyhow::Result<T>;

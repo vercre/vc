@@ -23,7 +23,6 @@ chrono.workspace = true
 core-utils.workspace = true
 derive_builder.workspace = true
 dif-exch.workspace = true
-endpoint.workspace = true
 openid4vc.workspace = true
 serde.workspace = true
 serde_json.workspace = true

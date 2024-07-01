@@ -2,9 +2,9 @@ use std::sync::LazyLock;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
-use core_utils::jws::{self, Type};
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
+use openid4vc::jws::{self, Type};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use test_utils::holder;

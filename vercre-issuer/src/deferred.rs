@@ -10,13 +10,13 @@
 
 use std::fmt::Debug;
 
+use openid4vc::endpoint::{
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject, Verifier,
+};
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{DeferredCredentialRequest, DeferredCredentialResponse};
 use openid4vc::Result;
-use endpoint::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject, Verifier,
-};
 use tracing::instrument;
 use w3c_vc::proof::Signer;
 
@@ -58,7 +58,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        endpoint::Endpoint::handle_request(self, request, ctx).await
+        openid4vc::endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -68,7 +68,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> endpoint::Context for Context<P>
+impl<P> openid4vc::endpoint::Context for Context<P>
 where
     P: ClientMetadata
         + IssuerMetadata
@@ -129,9 +129,9 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
-    use core_utils::jws::{self, Type};
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::issuance::{CredentialRequest, ProofClaims};
+    use openid4vc::jws::{self, Type};
     use serde_json::json;
     use test_utils::holder;
     use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};

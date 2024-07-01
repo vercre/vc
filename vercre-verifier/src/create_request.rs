@@ -45,6 +45,7 @@ use std::fmt::Debug;
 
 use core_utils::gen;
 use dif_exch::{ClaimFormat, PresentationDefinition};
+use openid4vc::endpoint::{Callback, ClientMetadata, StateManager};
 use openid4vc::error::Err;
 use openid4vc::presentation::ResponseType;
 #[allow(clippy::module_name_repetitions)]
@@ -53,7 +54,6 @@ pub use openid4vc::presentation::{
     PresentationDefinitionType, RequestObject,
 };
 use openid4vc::Result;
-use endpoint::{Callback, ClientMetadata, StateManager};
 use tracing::instrument;
 use uuid::Uuid;
 use w3c_vc::proof::{Algorithm, Signer};
@@ -103,7 +103,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        endpoint::Endpoint::handle_request(self, request, ctx).await
+        openid4vc::endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -113,7 +113,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> endpoint::Context for Context<P>
+impl<P> openid4vc::endpoint::Context for Context<P>
 where
     P: ClientMetadata + StateManager + Clone + Debug,
 {

@@ -98,12 +98,12 @@ pub mod token;
 
 /// Re-export provider traits and types.
 pub mod provider {
-    pub use openid4vc::issuance::{ClaimDefinition, GrantType, Issuer};
-    pub use openid4vc::{Client, Server};
-    pub use endpoint::{
+    pub use openid4vc::endpoint::{
         Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Jwk, Payload, Result,
         ServerMetadata, Signer, StateManager, Subject, Verifier,
     };
+    pub use openid4vc::issuance::{ClaimDefinition, GrantType, Issuer};
+    pub use openid4vc::{Client, Server};
 }
 
 use std::fmt::Debug;
@@ -159,7 +159,7 @@ where
     }
 }
 
-impl<P> endpoint::Endpoint for Endpoint<P>
+impl<P> openid4vc::endpoint::Endpoint for Endpoint<P>
 where
     P: ClientMetadata
         + IssuerMetadata
@@ -227,7 +227,7 @@ mod tests {
             let ctx = Context {
                 _p: std::marker::PhantomData,
             };
-            endpoint::Endpoint::handle_request(self, request, ctx).await
+            openid4vc::endpoint::Endpoint::handle_request(self, request, ctx).await
         }
     }
 
@@ -236,7 +236,7 @@ mod tests {
         _p: std::marker::PhantomData<P>,
     }
 
-    impl<P> endpoint::Context for Context<P>
+    impl<P> openid4vc::endpoint::Context for Context<P>
     where
         P: ClientMetadata
             + IssuerMetadata

@@ -30,8 +30,8 @@ mod controller;
 pub mod integrity;
 mod jose;
 
-use core_utils::jws;
-pub use endpoint::{Algorithm, Signer, Verifier};
+pub use openid4vc::endpoint::{Algorithm, Signer, Verifier};
+use openid4vc::jws;
 use serde::{Deserialize, Serialize};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
@@ -104,7 +104,7 @@ pub async fn create(
             let mut claims = jose::VpClaims::from(vp);
             claims.aud.clone_from(&client_id);
             claims.nonce.clone_from(&nonce);
-            core_utils::jws::encode(jws::Type::Presentation, &claims, signer).await?
+            openid4vc::jws::encode(jws::Type::Presentation, &claims, signer).await?
         }
     };
 

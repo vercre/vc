@@ -1,6 +1,6 @@
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ecdsa::signature::Signer as _;
-use endpoint::{Algorithm, Result, Signer};
+use openid4vc::endpoint::{Algorithm, Result, Signer};
 
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
 const WALLET_JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";

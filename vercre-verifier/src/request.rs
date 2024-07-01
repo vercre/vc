@@ -15,8 +15,9 @@
 
 use std::fmt::Debug;
 
-use core_utils::jws::{self, Type};
+use openid4vc::endpoint::{Callback, ClientMetadata, Signer, StateManager};
 use openid4vc::error::Err;
+use openid4vc::jws::{self, Type};
 use openid4vc::presentation::RequestObjectType;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{
@@ -24,7 +25,6 @@ pub use openid4vc::presentation::{
     ResponseType,
 };
 use openid4vc::Result;
-use endpoint::{Callback, ClientMetadata, Signer, StateManager};
 use tracing::instrument;
 
 use super::Endpoint;
@@ -49,7 +49,7 @@ where
         let ctx = Context {
             _p: std::marker::PhantomData,
         };
-        endpoint::Endpoint::handle_request(self, request, ctx).await
+        openid4vc::endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -58,7 +58,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> endpoint::Context for Context<P>
+impl<P> openid4vc::endpoint::Context for Context<P>
 where
     P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
 {

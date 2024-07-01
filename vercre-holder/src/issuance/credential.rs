@@ -5,11 +5,11 @@
 use std::fmt::Debug;
 
 use anyhow::bail;
-use core_utils::jws::{self, Type};
 use openid4vc::issuance::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, GrantType,
     Proof, ProofClaims, ProofType, TokenRequest,
 };
+use openid4vc::jws::{self, Type};
 use tracing::instrument;
 use w3c_vc::model::Kind;
 use w3c_vc::proof::{self, Payload, Verify};

@@ -7,8 +7,8 @@
 use std::fmt::Debug;
 
 use anyhow::{anyhow, bail};
-use core_utils::jws;
 use dif_exch::Constraints;
+use openid4vc::jws;
 use openid4vc::presentation::{
     PresentationDefinitionType, RequestObject, RequestObjectResponse, RequestObjectType,
 };

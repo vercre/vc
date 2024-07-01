@@ -7,8 +7,10 @@
 //! directly by the end users. Any public types are re-exported through the respective
 //! top-level `vercre-xxx` crates.
 
+pub mod endpoint;
 pub mod error;
 pub mod issuance;
+pub mod jws;
 pub mod presentation;
 mod stringify;
 

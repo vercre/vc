@@ -46,7 +46,6 @@ core-utils = { path = "crates/core-utils" }
 derive_builder = "0.20.0"
 dif-exch = { path = "crates/dif-exch" }
 ecdsa = "0.16.9"
-endpoint = { path = "crates/endpoint" }
 futures = "0.3.30"
 insta = { version = "1.39.0", features = ["redactions", "yaml"] }
 k256 = "0.13.3"

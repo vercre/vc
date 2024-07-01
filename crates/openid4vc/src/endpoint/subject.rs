@@ -4,9 +4,10 @@
 use std::collections::HashMap;
 use std::future::Future;
 
-use openid4vc::issuance::ClaimDefinition;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
+use crate::issuance::ClaimDefinition;
 
 /// The user information returned by the Subject trait.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -26,12 +27,12 @@ pub trait Subject: Send + Sync {
     /// Returns `true` if the subject (holder) is authorized.
     fn authorize(
         &self, holder_subject: &str, credential_identifier: &str,
-    ) -> impl Future<Output = crate::Result<bool>> + Send;
+    ) -> impl Future<Output = super::Result<bool>> + Send;
 
     /// Returns a populated `Claims` object for the given subject (holder) and credential
     /// definition.
     fn claims(
         &self, holder_subject: &str, credential_identifier: &str,
         credential_subject: Option<HashMap<String, ClaimDefinition>>,
-    ) -> impl Future<Output = crate::Result<Claims>> + Send;
+    ) -> impl Future<Output = super::Result<Claims>> + Send;
 }
