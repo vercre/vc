@@ -147,7 +147,7 @@ where
             let ProofType::Jwt(proof_jwt) = &proof.proof else {
                 let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
                 return Err(Err::InvalidProof {
-                    hint: "Proof not set".into(),
+                    hint: "Proof not JWT".into(),
                     c_nonce,
                     c_nonce_expires_in,
                 });
@@ -157,7 +157,7 @@ where
                 Err(e) => {
                     let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
                     return Err(Err::InvalidProof {
-                        hint: format!("issue decoding jwt: {e}"),
+                        hint: format!("issue decoding JWT: {e}"),
                         c_nonce,
                         c_nonce_expires_in,
                     });

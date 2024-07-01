@@ -67,7 +67,7 @@ impl Subject for Provider {
     async fn claims(
         &self, holder_subject: &str, credential: &CredentialDefinition,
     ) -> Result<Claims> {
-        self.subject.get_claims(holder_subject, credential)
+        self.subject.claims(holder_subject, credential)
     }
 }
 

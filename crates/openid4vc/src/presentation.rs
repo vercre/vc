@@ -439,7 +439,7 @@ impl Serialize for RequestObjectResponse {
                 map.serialize_entry("request_object", &self.request_object)?;
                 map.end()
             }
-            RequestObjectType::Jwt(jwt) => return jwt.serialize(serializer),
+            RequestObjectType::Jwt(jwt) => jwt.serialize(serializer),
         }
     }
 }
@@ -477,11 +477,11 @@ impl<'de> Deserialize<'de> for RequestObjectResponse {
                 while let Some(key) = map.next_key::<String>()? {
                     match key.as_str() {
                         "request_object" => {
-                            resp.request_object = RequestObjectType::Object(map.next_value()?)
+                            resp.request_object = RequestObjectType::Object(map.next_value()?);
                         }
                         "jwt" => resp.request_object = RequestObjectType::Jwt(map.next_value()?),
                         _ => {
-                            return Err(de::Error::unknown_field(&key, &["request_object", "jwt"]))
+                            return Err(de::Error::unknown_field(&key, &["request_object", "jwt"]));
                         }
                     }
                 }

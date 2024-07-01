@@ -9,18 +9,11 @@ use serde_json::Value;
 pub const NORMAL_USER: &str = "normal_user";
 pub const PENDING_USER: &str = "pending_user";
 
-#[derive(Default, Clone, Debug)]
-struct Person {
-    given_name: &'static str,
-    family_name: &'static str,
-    email: &'static str,
-    proficiency: &'static str,
-    pending: bool,
-}
+type ClaimSet = HashMap<String, Value>;
 
 #[derive(Default, Clone, Debug)]
 pub struct Store {
-    subjects: Arc<Mutex<HashMap<String, Person>>>,
+    subjects: Arc<Mutex<HashMap<String, ClaimSet>>>,
 }
 
 impl Store {
@@ -29,23 +22,23 @@ impl Store {
         let subjects = HashMap::from([
             (
                 NORMAL_USER.into(),
-                Person {
-                    given_name: "Normal",
-                    family_name: "Person",
-                    email: "normal.user@example.com",
-                    proficiency: "3",
-                    pending: false,
-                },
+                HashMap::from([
+                    ("givenName".to_string(), Value::from("Normal")),
+                    ("familyName".to_string(), Value::from("Person")),
+                    ("email".to_string(), Value::from("normal.user@example.com")),
+                    ("proficiency".to_string(), Value::from("3")),
+                    ("pending".to_string(), Value::from(false)),
+                ]),
             ),
             (
                 PENDING_USER.into(),
-                Person {
-                    given_name: "Pending",
-                    family_name: "Person",
-                    email: "pending.user@example.com",
-                    proficiency: "1",
-                    pending: true,
-                },
+                HashMap::from([
+                    ("givenName".to_string(), Value::from("Pending")),
+                    ("familyName".to_string(), Value::from("Person")),
+                    ("email".to_string(), Value::from("pending.user@example.com")),
+                    ("proficiency".to_string(), Value::from("1")),
+                    ("pending".to_string(), Value::from(true)),
+                ]),
             ),
         ]);
 
@@ -63,7 +56,7 @@ impl Store {
         Ok(true)
     }
 
-    pub fn get_claims(
+    pub fn claims(
         &self, holder_subject: &str, credential: &CredentialDefinition,
     ) -> Result<Claims> {
         // get holder subject while allowing mutex to go out of scope and release
@@ -73,29 +66,21 @@ impl Store {
 
         // populate requested claims for subject
         let mut claims = HashMap::new();
-
         if let Some(subj) = &credential.credential_subject {
-            for k in subj.keys() {
-                let v = match k.as_str() {
-                    "givenName" => subject.given_name,
-                    "familyName" => subject.family_name,
-                    "email" => subject.email,
-                    "proficiency" => subject.proficiency,
-                    _ => continue,
-                };
-
-                claims.insert(k.to_string(), Value::from(v));
+            for claim_name in subj.keys() {
+                if let Some(v) = subject.get(claim_name) {
+                    claims.insert(claim_name.to_string(), v.clone());
+                }
             }
         };
 
         // update subject's pending state to make Deferred Issuance work
         let mut updated = subject.clone();
-        updated.pending = false;
+        updated.insert("pending".to_string(), Value::from(false));
         self.subjects.lock().expect("should lock").insert(holder_subject.to_string(), updated);
 
-        Ok(Claims {
-            claims,
-            pending: subject.pending,
-        })
+        // return populated claims
+        let pending = subject.get("pending").unwrap().as_bool().unwrap();
+        Ok(Claims { claims, pending })
     }
 }

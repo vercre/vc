@@ -1236,7 +1236,7 @@ impl CredentialConfiguration {
                         "email".into(),
                         ClaimDefinition {
                             mandatory: Some(true),
-                            value_type: Some(ValueType::String),
+                            value_type: ValueType::String,
                             display: Some(vec![Display {
                                 name: "Email".into(),
                                 locale: Some("en-NZ".into()),
@@ -1248,7 +1248,7 @@ impl CredentialConfiguration {
                         "familyName".into(),
                         ClaimDefinition {
                             mandatory: Some(true),
-                            value_type: Some(ValueType::String),
+                            value_type: ValueType::String,
                             display: Some(vec![Display {
                                 name: "Family name".into(),
                                 locale: Some("en-NZ".into()),
@@ -1260,7 +1260,7 @@ impl CredentialConfiguration {
                         "givenName".into(),
                         ClaimDefinition {
                             mandatory: Some(true),
-                            value_type: Some(ValueType::String),
+                            value_type: ValueType::String,
                             display: Some(vec![Display {
                                 name: "Given name".into(),
                                 locale: Some("en-NZ".into()),
@@ -1319,7 +1319,7 @@ impl CredentialConfiguration {
                         "proficiency".into(),
                         ClaimDefinition {
                             mandatory: Some(true),
-                            value_type: Some(ValueType::Number),
+                            value_type: ValueType::Number,
                             display: Some(vec![Display {
                                 name: "Proficiency".into(),
                                 locale: Some("en-NZ".into()),
@@ -1331,7 +1331,7 @@ impl CredentialConfiguration {
                         "familyName".into(),
                         ClaimDefinition {
                             mandatory: Some(true),
-                            value_type: Some(ValueType::String),
+                            value_type: ValueType::String,
                             display: Some(vec![Display {
                                 name: "Family name".into(),
                                 locale: Some("en-NZ".into()),
@@ -1343,7 +1343,7 @@ impl CredentialConfiguration {
                         "givenName".into(),
                         ClaimDefinition {
                             mandatory: Some(true),
-                            value_type: Some(ValueType::String),
+                            value_type: ValueType::String,
                             display: Some(vec![Display {
                                 name: "Given name".into(),
                                 locale: Some("en-NZ".into()),
@@ -1475,6 +1475,7 @@ pub struct ClaimDefinition {
     /// Credential if the wallet did not request the inclusion of the claim, and/or if
     /// the Credential Issuer chose to not include the claim. If the mandatory parameter
     /// is omitted, the default value is false. Defaults to false.
+    //  #[serde(skip_serializing_if = "std::ops::Not::not")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mandatory: Option<bool>,
 
@@ -1483,8 +1484,7 @@ pub struct ClaimDefinition {
     /// [IANA media type registry] for a complete list of media types.
     ///
     /// [IANA media type registry]: (https://www.iana.org/assignments/media-types/media-types.xhtml#image)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub value_type: Option<ValueType>,
+    pub value_type: ValueType,
 
     /// Language-based display properties of the field.
     #[serde(skip_serializing_if = "Option::is_none")]
