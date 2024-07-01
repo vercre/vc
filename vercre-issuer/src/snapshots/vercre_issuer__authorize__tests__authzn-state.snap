@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/authorize.rs
-assertion_line: 475
+assertion_line: 499
 expression: state
 ---
 expires_at: "[expires_at]"
@@ -20,3 +20,4 @@ auth:
         type:
           - VerifiableCredential
           - EmployeeIDCredential
+        credentialSubject: {}

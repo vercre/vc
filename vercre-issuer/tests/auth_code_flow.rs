@@ -57,7 +57,11 @@ async fn authorize() -> anyhow::Result<AuthorizationResponse> {
                 "VerifiableCredential",
                 "EmployeeIDCredential"
             ],
-            "credential_subject": {}
+            "credentialSubject": {
+                "givenName": {},
+                "familyName": {},
+                "email": {}
+            }
         }
     }])
     .to_string();
@@ -105,7 +109,9 @@ async fn get_token(input: AuthorizationResponse) -> anyhow::Result<TokenResponse
 
     assert_snapshot!("token", &response, {
         ".access_token" => "[access_token]",
-        ".c_nonce" => "[c_nonce]"
+        ".c_nonce" => "[c_nonce]",
+        ".authorization_details[].credential_definition.credentialSubject" => insta::sorted_redaction()
+
     });
 
     Ok(response)

@@ -462,7 +462,7 @@ mod tests {
                     "VerifiableCredential",
                     "EmployeeIDCredential"
                 ],
-                "credential_subject": {}
+                "credentialSubject": {}
             }
         }])
         .to_string();

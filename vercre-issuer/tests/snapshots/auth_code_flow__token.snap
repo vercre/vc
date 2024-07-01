@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/tests/auth_code_flow.rs
-assertion_line: 107
+assertion_line: 110
 expression: "&response"
 ---
 access_token: "[access_token]"
@@ -15,3 +15,10 @@ authorization_details:
       type:
         - VerifiableCredential
         - EmployeeIDCredential
+      credentialSubject:
+        email:
+          value_type: string
+        familyName:
+          value_type: string
+        givenName:
+          value_type: string
