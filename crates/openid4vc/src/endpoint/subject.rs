@@ -7,8 +7,6 @@ use std::future::Future;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::issuance::ClaimDefinition;
-
 /// The user information returned by the Subject trait.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Claims {
@@ -33,6 +31,5 @@ pub trait Subject: Send + Sync {
     /// definition.
     fn claims(
         &self, holder_subject: &str, credential_identifier: &str,
-        credential_subject: Option<HashMap<String, ClaimDefinition>>,
     ) -> impl Future<Output = super::Result<Claims>> + Send;
 }

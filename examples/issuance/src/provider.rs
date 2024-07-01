@@ -1,14 +1,13 @@
 #![allow(missing_docs)]
 
-use std::collections::HashMap;
 use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
 use test_utils::providers::proof::Enclave;
 use test_utils::providers::Issuance;
 use vercre_issuer::provider::{
-    Algorithm, Callback, ClaimDefinition, Claims, Client, ClientMetadata, Issuer, IssuerMetadata,
-    Jwk, Payload, Result, Server, ServerMetadata, Signer, StateManager, Subject, Verifier,
+    Algorithm, Callback, Claims, Client, ClientMetadata, Issuer, IssuerMetadata, Jwk, Payload,
+    Result, Server, ServerMetadata, Signer, StateManager, Subject, Verifier,
 };
 
 #[derive(Clone, Debug)]
@@ -62,11 +61,8 @@ impl Subject for Provider {
         self.subject.authorize(holder_subject, credential_identifier)
     }
 
-    async fn claims(
-        &self, holder_subject: &str, credential_identifier: &str,
-        credential_subject: Option<HashMap<String, ClaimDefinition>>,
-    ) -> Result<Claims> {
-        self.subject.claims(holder_subject, credential_identifier, credential_subject)
+    async fn claims(&self, holder_subject: &str, credential_identifier: &str) -> Result<Claims> {
+        self.subject.claims(holder_subject, credential_identifier)
     }
 }
 

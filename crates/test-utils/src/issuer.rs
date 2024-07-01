@@ -1,6 +1,5 @@
 #![allow(missing_docs)]
 
-use std::collections::HashMap;
 use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
@@ -8,7 +7,7 @@ use openid4vc::endpoint::{
     Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Jwk, Payload, Result,
     ServerMetadata, Signer, StateManager, Subject, Verifier,
 };
-use openid4vc::issuance::{ClaimDefinition, Issuer};
+use openid4vc::issuance::Issuer;
 use openid4vc::{Client, Server};
 
 use crate::proof::Enclave;
@@ -65,11 +64,8 @@ impl Subject for Provider {
         self.subject.authorize(holder_subject, credential_identifier)
     }
 
-    async fn claims(
-        &self, holder_subject: &str, credential_identifier: &str,
-        credential_subject: Option<HashMap<String, ClaimDefinition>>,
-    ) -> Result<Claims> {
-        self.subject.claims(holder_subject, credential_identifier, credential_subject)
+    async fn claims(&self, holder_subject: &str, credential_identifier: &str) -> Result<Claims> {
+        self.subject.claims(holder_subject, credential_identifier)
     }
 }
 

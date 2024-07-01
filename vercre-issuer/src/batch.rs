@@ -313,35 +313,28 @@ where
 
         // get credential identifier and configuration
         let (identifier, config) = self.credential_configuration(request)?;
-
         let definition = credential_definition(request, &config);
         let Some(holder_id) = &self.state.holder_id else {
             return Err(Err::AccessDenied("holder not found".into()));
         };
 
-        // claim values
-        let holder_claims = Subject::claims(
-            provider,
-            holder_id,
-            &identifier,
-            definition.credential_subject.clone(),
-        )
-        .await
-        .map_err(|e| Err::ServerError(format!("issue populating claims: {e}")))?;
+        // get ALL claims for holder/credential
+        let mut holder_claims = Subject::claims(provider, holder_id, &identifier)
+            .await
+            .map_err(|e| Err::ServerError(format!("issue populating claims: {e}")))?;
+
+        // defer issuance if claims are pending (approval?),
         if holder_claims.pending {
             return Ok(None);
         }
 
-        // check mandatory claims are populated
-        let Some(cred_subj) = definition.credential_subject.clone() else {
-            return Err(Err::ServerError("Credential subject not set".into()));
-        };
-
-        for (name, claim) in &cred_subj {
-            if claim.mandatory.unwrap_or_default() && !holder_claims.claims.contains_key(name) {
-                return Err(Err::InvalidCredentialRequest(
-                    "mandatory claim {name} not populated".into(),
-                ));
+        // retain ONLY requested (and mandatory) claims
+        let def_cred_subj = &definition.credential_subject.unwrap_or_default();
+        if let Some(req_cred_def) = &request.credential_definition {
+            if let Some(req_cred_subj) = &req_cred_def.credential_subject {
+                holder_claims.claims.retain(|key, _| {
+                    req_cred_subj.get(key).is_some() || def_cred_subj.get(key).is_some()
+                });
             }
         }
 
