@@ -17,6 +17,7 @@ use std::fmt::Debug;
 
 use core_utils::jws::{self, Type};
 use openid4vc::error::Err;
+use openid4vc::presentation::RequestObjectType;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{
     ClientIdScheme, PresentationDefinitionType, RequestObjectRequest, RequestObjectResponse,
@@ -93,8 +94,7 @@ where
             .map_err(|e| Err::ServerError(format!("issue encoding jwt: {e}")))?;
 
         Ok(RequestObjectResponse {
-            request_object: None,
-            jwt: Some(jwt),
+            request_object: RequestObjectType::Jwt(jwt),
         })
     }
 }
@@ -148,7 +148,10 @@ mod tests {
             .await
             .expect("response is valid");
 
-        let jwt_enc = response.jwt.expect("jwt exists");
+        let RequestObjectType::Jwt(jwt_enc) = &response.request_object else {
+            panic!("no JWT found in response");
+        };
+
         let jwt: jws::Jwt<RequestObject> =
             jws::decode(&jwt_enc, &Provider::new()).await.expect("jwt is valid");
 

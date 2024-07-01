@@ -9,7 +9,9 @@ use std::fmt::Debug;
 use anyhow::{anyhow, bail};
 use core_utils::jws;
 use dif_exch::Constraints;
-use openid4vc::presentation::{PresentationDefinitionType, RequestObject, RequestObjectResponse};
+use openid4vc::presentation::{
+    PresentationDefinitionType, RequestObject, RequestObjectResponse, RequestObjectType,
+};
 use tracing::instrument;
 use uuid::Uuid;
 
@@ -99,11 +101,7 @@ fn parse_presentation_definition(request: &str) -> anyhow::Result<RequestObject>
 async fn parse_request_object_response(
     res: &RequestObjectResponse, verifier: &impl Verifier,
 ) -> anyhow::Result<RequestObject> {
-    if res.request_object.is_some() {
-        return Ok(res.request_object.clone().unwrap());
-    }
-
-    let Some(token) = &res.jwt else {
+    let RequestObjectType::Jwt(token) = &res.request_object else {
         bail!("no serialized JWT found in response");
     };
     let jwt: jws::Jwt<RequestObject> = match jws::decode(token, verifier).await {
