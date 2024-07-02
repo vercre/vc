@@ -184,7 +184,7 @@ mod tests {
             .credential_issuer(CREDENTIAL_ISSUER.into())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
-            .holder_id(Some(NORMAL_USER.into()))
+            .subject_id(Some(NORMAL_USER.into()))
             .build()
             .expect("should build state");
 

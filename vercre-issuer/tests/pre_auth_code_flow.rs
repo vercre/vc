@@ -46,7 +46,7 @@ async fn get_offer() -> anyhow::Result<CreateOfferResponse> {
     // offer request
     let body = json!({
         "credential_configuration_ids": ["EmployeeID_JWT"],
-        "holder_id": NORMAL_USER,
+        "subject_id": NORMAL_USER,
         "pre-authorize": true,
         "tx_code_required": true,
         "callback_id": "1234"

@@ -79,7 +79,7 @@ async fn authorize() -> anyhow::Result<AuthorizationResponse> {
         "code_challenge": Base64UrlUnpadded::encode_string(&verifier_hash),
         "code_challenge_method": "S256",
         "authorization_details": auth_dets,
-        "holder_id": NORMAL_USER,
+        "subject_id": NORMAL_USER,
         "wallet_issuer": CREDENTIAL_ISSUER,
         "callback_id": "1234"
     });

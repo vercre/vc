@@ -29,7 +29,7 @@ initiated by sending a Credential Offer to the wallet.
 # get pre-authorized credential offer from issuance service
 RESP=$(curl --json '{
         "credential_configuration_ids": ["EmployeeID_JWT"],
-        "holder_id": "normal_user",
+        "subject_id": "normal_user",
         "pre-authorize": true,
         "tx_code_required": true,
         "callback_id": "1234"
@@ -99,7 +99,7 @@ For issuance, run the issuance example service as above then
 # get pre-authorized credential offer from issuance service
 RESP=$(curl --json '{
         "credential_configuration_ids": ["EmployeeID_JWT"],
-        "holder_id": "normal_user",
+        "subject_id": "normal_user",
         "pre-authorize": true,
         "tx_code_required": true,
         "callback_id": "1234"

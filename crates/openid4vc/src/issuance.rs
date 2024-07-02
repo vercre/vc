@@ -62,7 +62,7 @@ pub struct CreateOfferRequest {
     /// Identifies the (previously authenticated) Holder in order that Issuer can
     /// authorize credential issuance.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub holder_id: Option<String>,
+    pub subject_id: Option<String>,
 
     /// An ID that the client application wants to be included in callback
     /// payloads. If no ID is provided, callbacks will not be made.
@@ -360,7 +360,7 @@ pub struct AuthorizationRequest {
     /// Credential Issuer in order that credentialSubject claims can be
     /// populated.
     // TODO: align this with spec
-    pub holder_id: String,
+    pub subject_id: String,
 
     /// The Wallet's `OpenID` Connect issuer URL. The Credential Issuer can use
     /// the discovery process as defined in [SIOPv2] to determine the Wallet's
@@ -1555,7 +1555,7 @@ mod tests {
             }]),
             scope: None,
             resource: None,
-            holder_id: "1234".into(),
+            subject_id: "1234".into(),
             wallet_issuer: Some("1234".into()),
             user_hint: None,
             issuer_state: None,

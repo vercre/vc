@@ -224,7 +224,7 @@ mod tests {
     fn base_vp() -> anyhow::Result<VerifiablePresentation> {
         let mut subj = CredentialSubject::default();
         subj.id = Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into());
-        subj.claims.insert("employeeID".into(), json!("1234567890"));
+        subj.claims = json!({"employeeID": "1234567890"});
 
         let vc = VerifiableCredential::builder()
             .add_context(Kind::Simple("https://www.w3.org/2018/credentials/examples/v1".into()))

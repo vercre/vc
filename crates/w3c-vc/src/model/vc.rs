@@ -125,6 +125,7 @@ impl VerifiableCredential {
     #[must_use]
     pub fn sample() -> Self {
         use chrono::TimeZone;
+        use serde_json::json;
 
         Self {
             context: vec![
@@ -137,7 +138,7 @@ impl VerifiableCredential {
             issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
             credential_subject: Quota::One(CredentialSubject {
                 id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
-                claims: HashMap::from([("employeeId".into(), serde_json::json!("1234567890"))]),
+                claims: json!({"employeeId": "1234567890"}),
             }),
             expiration_date: Some(Utc.with_ymd_and_hms(2033, 12, 20, 23, 21, 55).unwrap()),
 
@@ -225,7 +226,7 @@ pub struct CredentialSubject {
 
     /// Claims about the subject.
     #[serde(flatten)]
-    pub claims: HashMap<String, Value>,
+    pub claims: Value,
 }
 
 // Unused, but required by 'flexvec' deserializer FromStr trait

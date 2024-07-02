@@ -1,7 +1,6 @@
 //! User defines traits the library requires to be implemented for dynamically
 //! provided user information.
 
-use std::collections::HashMap;
 use std::future::Future;
 
 use serde::{Deserialize, Serialize};
@@ -11,7 +10,7 @@ use serde_json::Value;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Claims {
     /// The credential subject populated for the user.
-    pub claims: HashMap<String, Value>,
+    pub claims: Value,
 
     /// Specifies whether user information required for the credential subject
     /// is pending.

@@ -47,7 +47,7 @@ pub struct State {
     /// The subject of the credential Holder.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default)]
-    pub holder_id: Option<String>,
+    pub subject_id: Option<String>,
 
     /// The callback ID for the current request.
     #[serde(skip_serializing_if = "Option::is_none")]

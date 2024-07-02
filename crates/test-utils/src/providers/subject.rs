@@ -3,16 +3,14 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
 use openid4vc::endpoint::{Claims, Result};
-use serde_json::Value;
+use serde_json::{json, Value};
 
 pub const NORMAL_USER: &str = "normal_user";
 pub const PENDING_USER: &str = "pending_user";
 
-type ClaimSet = HashMap<String, Value>;
-
 #[derive(Default, Clone, Debug)]
 struct Credential {
-    claims: ClaimSet,
+    claims: Value,
     pending: bool,
 }
 
@@ -29,12 +27,12 @@ impl Store {
                 HashMap::from([(
                     "EmployeeID_JWT".into(),
                     Credential {
-                        claims: HashMap::from([
-                            ("givenName".to_string(), Value::from("Normal")),
-                            ("familyName".to_string(), Value::from("Person")),
-                            ("email".to_string(), Value::from("normal.user@example.com")),
-                            ("proficiency".to_string(), Value::from("3")),
-                        ]),
+                        claims: json!({
+                            "givenName": "Normal",
+                            "familyName": "Person",
+                            "email": "normal.user@example.com",
+                            "proficiency": "3"
+                        }),
                         pending: false,
                     },
                 )]),
@@ -44,12 +42,12 @@ impl Store {
                 HashMap::from([(
                     "EmployeeID_JWT".into(),
                     Credential {
-                        claims: HashMap::from([
-                            ("givenName".to_string(), Value::from("Pending")),
-                            ("familyName".to_string(), Value::from("Person")),
-                            ("email".to_string(), Value::from("pending.user@example.com")),
-                            ("proficiency".to_string(), Value::from("1")),
-                        ]),
+                        claims: json!({
+                            "givenName": "Pending",
+                            "familyName": "Person",
+                            "email": "pending.user@example.com",
+                            "proficiency": "1"
+                        }),
                         pending: true,
                     },
                 )]),

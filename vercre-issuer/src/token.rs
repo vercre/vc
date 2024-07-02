@@ -237,7 +237,7 @@ mod tests {
             .credential_issuer(CREDENTIAL_ISSUER.to_string())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
-            .holder_id(Some(NORMAL_USER.to_string()))
+            .subject_id(Some(NORMAL_USER.to_string()))
             .build()
             .expect("should build state");
 
@@ -296,7 +296,7 @@ mod tests {
             .client_id(CLIENT_ID)
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
-            .holder_id(Some(NORMAL_USER.to_string()))
+            .subject_id(Some(NORMAL_USER.to_string()))
             .build()
             .expect("should build state");
 

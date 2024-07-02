@@ -185,7 +185,7 @@ where
         }
 
         // is holder identified (authenticated)?
-        if request.holder_id.is_empty() {
+        if request.subject_id.is_empty() {
             return Err(Err::AuthorizationPending("missing holder subject".into()));
         }
 
@@ -255,7 +255,7 @@ where
 
         // check which requested `authorization_detail` entries the holder is authorized for
         for (cfg_id, auth_det) in &self.auth_dets {
-            let auth = Subject::authorize(provider, &request.holder_id, cfg_id)
+            let auth = Subject::authorize(provider, &request.subject_id, cfg_id)
                 .await
                 .map_err(|e| Err::ServerError(format!("issue authorizing holder: {e}")))?;
             if auth {
@@ -277,7 +277,7 @@ where
 
         // check which requested `scope` items the holder is authorized for
         for (cfg_id, item) in &self.scope_items {
-            let auth = Subject::authorize(provider, &request.holder_id, cfg_id)
+            let auth = Subject::authorize(provider, &request.subject_id, cfg_id)
                 .await
                 .map_err(|e| Err::ServerError(format!("issue authorizing holder: {e}")))?;
             if auth {
@@ -304,7 +304,7 @@ where
             credential_issuer: request.credential_issuer.clone(),
             client_id: Some(request.client_id.clone()),
             credential_configuration_ids: authzd_cfg_ids,
-            holder_id: Some(request.holder_id.clone()),
+            subject_id: Some(request.subject_id.clone()),
             ..State::default()
         };
 
@@ -478,7 +478,7 @@ mod tests {
             "code_challenge": Base64UrlUnpadded::encode_string(&verifier_hash),
             "code_challenge_method": "S256",
             "authorization_details": auth_dets,
-            "holder_id": NORMAL_USER,
+            "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER,
             "callback_id": "1234"
         });
@@ -519,7 +519,7 @@ mod tests {
             "code_challenge": Base64UrlUnpadded::encode_string(&verifier_hash),
             "code_challenge_method": "S256",
             "scope": "EmployeeIDCredential",
-            "holder_id": NORMAL_USER,
+            "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER,
             "callback_id": "1234"
         });

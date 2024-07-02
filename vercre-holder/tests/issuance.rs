@@ -18,7 +18,7 @@ static HOLDER_PROVIDER: LazyLock<holder::Provider> =
 static OFFER_REQUEST: LazyLock<CreateOfferRequest> = LazyLock::new(|| CreateOfferRequest {
     credential_issuer: CREDENTIAL_ISSUER.into(),
     credential_configuration_ids: vec!["EmployeeID_JWT".into()],
-    holder_id: Some(NORMAL_USER.into()),
+    subject_id: Some(NORMAL_USER.into()),
     pre_authorize: true,
     tx_code_required: true,
     callback_id: Some("1234".into()),

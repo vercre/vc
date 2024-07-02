@@ -157,9 +157,9 @@ where
             };
         }
 
-        // holder_id is required
-        if request.holder_id.is_none() {
-            return Err(Err::InvalidRequest("no holder_id specified".into()));
+        // subject_id is required
+        if request.subject_id.is_none() {
+            return Err(Err::InvalidRequest("no subject_id specified".into()));
         };
 
         Ok(self)
@@ -175,7 +175,7 @@ where
             .credential_issuer(request.credential_issuer.clone())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(request.credential_configuration_ids.clone())
-            .holder_id(request.holder_id.clone())
+            .subject_id(request.subject_id.clone())
             .callback_id(request.callback_id.clone())
             .build()
             .map_err(|e| Err::ServerError(format!("issue creating state: {e}")))?;
@@ -268,7 +268,7 @@ mod tests {
         // create offer to 'send' to the app
         let body = json!({
             "credential_configuration_ids": ["EmployeeID_JWT"],
-            "holder_id": NORMAL_USER,
+            "subject_id": NORMAL_USER,
             "pre-authorize": true,
             "tx_code_required": true,
             "callback_id": "1234"

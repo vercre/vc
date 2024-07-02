@@ -107,14 +107,14 @@ async fn authorize(
     State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
     Form(mut req): Form<AuthorizationRequest>,
 ) -> impl IntoResponse {
-    // return error if no holder_id
-    if req.holder_id.is_empty() {
-        return (StatusCode::UNAUTHORIZED, Json(json!({"error": "no holder_id"}))).into_response();
+    // return error if no subject_id
+    if req.subject_id.is_empty() {
+        return (StatusCode::UNAUTHORIZED, Json(json!({"error": "no subject_id"}))).into_response();
     }
 
-    // show login form if holder_id is unauthorized
+    // show login form if subject_id is unauthorized
     // (subject is authorized if they can be found in the 'authorized' HashMap)
-    if AUTHORIZED.read().await.get(&req.holder_id).is_none() {
+    if AUTHORIZED.read().await.get(&req.subject_id).is_none() {
         // save request
         let csrf = CsrfToken::new_random();
         let token = csrf.secret();

@@ -25,6 +25,7 @@ pub use openid4vc::issuance::{
 use openid4vc::issuance::{CredentialDefinition, Issuer, ProofClaims};
 use openid4vc::jws::{self, Type};
 use openid4vc::Result;
+use serde_json::Value;
 use tracing::instrument;
 use w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use w3c_vc::proof::{self, Format, Payload};
@@ -314,17 +315,17 @@ where
         let (identifier, config) = self.credential_configuration(request)?;
         let definition = credential_definition(request, &config);
 
-        let Some(holder_id) = &self.state.holder_id else {
+        let Some(subject_id) = &self.state.subject_id else {
             return Err(Err::AccessDenied("holder not found".into()));
         };
 
         // get ALL claims for holder/credential
-        let mut holder_claims = Subject::claims(provider, holder_id, &identifier)
+        let mut claims_resp = Subject::claims(provider, subject_id, &identifier)
             .await
             .map_err(|e| Err::ServerError(format!("issue populating claims: {e}")))?;
 
         // defer issuance if claims are pending (approval?),
-        if holder_claims.pending {
+        if claims_resp.pending {
             return Ok(None);
         }
 
@@ -332,9 +333,15 @@ where
         let def_cred_subj = &definition.credential_subject.unwrap_or_default();
         if let Some(req_cred_def) = &request.credential_definition {
             if let Some(req_cred_subj) = &req_cred_def.credential_subject {
-                holder_claims.claims.retain(|key, _| {
+                let Value::Object(mut claims) = claims_resp.claims else {
+                    return Err(Err::ServerError("credential claims not a map".into()));
+                };
+
+                // retain only requested claims
+                claims.retain(|key, _| {
                     req_cred_subj.get(key).is_some() || def_cred_subj.get(key).is_some()
                 });
+                claims_resp.claims = Value::Object(claims);
             }
         }
 
@@ -355,7 +362,7 @@ where
             .issuer(credential_issuer.clone())
             .add_subject(CredentialSubject {
                 id: Some(self.holder_did.clone()),
-                claims: holder_claims.claims,
+                claims: claims_resp.claims,
             })
             .build()
             .map_err(|e| Err::ServerError(format!("issue building VC: {e}")))?;
@@ -465,7 +472,7 @@ mod tests {
             .credential_issuer(CREDENTIAL_ISSUER.into())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
             .credential_configuration_ids(credentials)
-            .holder_id(Some(NORMAL_USER.into()))
+            .subject_id(Some(NORMAL_USER.into()))
             .build()
             .expect("should build state");
 
@@ -560,7 +567,7 @@ mod tests {
     //     let mut state = State::builder()
     //         .credential_issuer(CREDENTIAL_ISSUER.into())
     //         .expires_at(Utc::now() + Expire::AuthCode.duration())
-    //         .holder_id(Some(NORMAL_USER.into()))
+    //         .subject_id(Some(NORMAL_USER.into()))
     //         .build()
     //         .expect("should build state");
 
