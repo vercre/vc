@@ -108,3 +108,12 @@ install_crate = "cargo-release"
 command = "cargo"
 args = ["${0}", "--execute"]
 install_crate = "cargo-release"
+
+# -----------------------------------------------------------------------------
+# Type generation for Tauri wallet example
+# -----------------------------------------------------------------------------
+
+[tasks.typegen]
+command = "typeshare"
+args = ["./examples/wallet/src-tauri", "--lang=typescript", "--output-file=./examples/wallet/src/types/generated.ts"]
+install_crate = "typeshare-cli"
