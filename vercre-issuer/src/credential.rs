@@ -149,6 +149,7 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
+    use core_utils::Kind;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::issuance::ProofClaims;
     use openid4vc::jws::{self, Type};
@@ -227,8 +228,9 @@ mod tests {
         });
 
         // verify credential
-        let vc_val = response.credential.expect("VC is present");
-        let token = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
+        let Kind::Simple(token) = response.credential.expect("VC is present") else {
+            panic!("VC is not base64 encoded string");
+        };
         let Payload::Vc(vc) =
             proof::verify(&token, Verify::Vc, &provider).await.expect("should decode")
         else {

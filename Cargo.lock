@@ -2953,6 +2953,7 @@ dependencies = [
  "serde_qs",
  "thiserror",
  "tracing",
+ "w3c-vc",
 ]
 
 [[package]]

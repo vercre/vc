@@ -295,7 +295,7 @@ where
             .map_err(|e| Err::ServerError(format!("issue creating proof: {e}")))?;
 
         Ok(CredentialResponse {
-            credential: Some(serde_json::Value::String(jwt)),
+            credential: Some(Kind::Simple(jwt)),
 
             // TODO: add `c_nonce` and `c_nonce_expires_in` to CredentialResponse
             ..CredentialResponse::default()
@@ -523,8 +523,9 @@ mod tests {
         assert!(response.credential_responses.len() == 1);
         let credential = response.credential_responses[0].credential.clone();
 
-        let vc_val = credential.expect("VC is present");
-        let token = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
+        let Kind::Simple(token) = credential.expect("VC is present") else {
+            panic!("VC is not base64 encoded string");
+        };
         let Payload::Vc(vc) =
             proof::verify(&token, Verify::Vc, &provider).await.expect("should decode")
         else {

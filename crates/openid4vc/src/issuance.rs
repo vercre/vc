@@ -4,9 +4,10 @@ use std::collections::HashMap;
 use std::io::Cursor;
 
 use base64ct::{Base64, Encoding};
+use core_utils::Kind;
 use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+pub use w3c_vc::model::VerifiableCredential;
 
 // use w3c_vc::VerifiableCredential
 use super::{Client, CredentialFormat};
@@ -789,7 +790,7 @@ pub struct CredentialResponse {
     /// The issued Credential. MUST be present when `transaction_id` is not
     /// returned.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential: Option<Value>,
+    pub credential: Option<Kind<VerifiableCredential>>,
 
     /// Identifies a Deferred Issuance transaction. This property is set if the
     /// Credential Issuer was unable to immediately issue the credential. The value

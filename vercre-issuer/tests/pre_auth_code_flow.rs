@@ -2,6 +2,7 @@ use std::sync::LazyLock;
 
 use assert_let_bind::assert_let;
 use chrono::Utc;
+use core_utils::Kind;
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use openid4vc::jws::{self, Type};
@@ -24,8 +25,9 @@ async fn pre_auth_flow() {
     // go through the pre-auth code flow
     let resp = get_offer().and_then(get_token).and_then(get_credential).await.expect("Ok");
 
-    let vc_val = resp.credential.expect("VC is present");
-    let token = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
+    let Kind::Simple(token) = resp.credential.expect("VC is present") else {
+        panic!("VC is not base64 encoded string");
+    };
     let Payload::Vc(vc) =
         proof::verify(&token, Verify::Vc, &ISSUER_PROVIDER.clone()).await.expect("should decode")
     else {

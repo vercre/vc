@@ -159,7 +159,7 @@ async fn credential(
     let Some(value) = res.credential.as_ref() else {
         bail!("no credential in response");
     };
-    let Some(token) = value.as_str() else {
+    let Kind::Simple(token) = value else {
         bail!("credential is not a string");
     };
     let Ok(Payload::Vc(vc)) = proof::verify(token, Verify::Vc, verifier).await else {

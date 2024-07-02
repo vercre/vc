@@ -33,6 +33,7 @@ serde_json.workspace = true
 serde_qs.workspace = true
 thiserror = "1.0.61"
 tracing.workspace = true
+w3c-vc.workspace = true
 
 [dev-dependencies]
 insta = { version = "1.39.0", features = ["filters", "redactions", "yaml"] }
