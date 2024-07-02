@@ -35,4 +35,3 @@ serde_json.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
-insta = { version = "1.39.0", features = ["filters", "redactions", "yaml"] }

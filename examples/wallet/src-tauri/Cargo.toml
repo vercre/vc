@@ -46,7 +46,6 @@ vercre-issuer.workspace = true
 vercre-verifier.workspace = true
 
 [dev-dependencies]
-tokio.workspace = true
 
 [build-dependencies]
 tauri-build = { version = "2.0.0-beta.17", features = [] }
