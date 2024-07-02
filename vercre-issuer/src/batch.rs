@@ -25,7 +25,6 @@ pub use openid4vc::issuance::{
 use openid4vc::issuance::{CredentialDefinition, Issuer, ProofClaims};
 use openid4vc::jws::{self, Type};
 use openid4vc::Result;
-use serde_json::Value;
 use tracing::instrument;
 use w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use w3c_vc::proof::{self, Format, Payload};
@@ -333,15 +332,11 @@ where
         let def_cred_subj = &definition.credential_subject.unwrap_or_default();
         if let Some(req_cred_def) = &request.credential_definition {
             if let Some(req_cred_subj) = &req_cred_def.credential_subject {
-                let Value::Object(mut claims) = claims_resp.claims else {
-                    return Err(Err::ServerError("credential claims not a map".into()));
-                };
-
-                // retain only requested claims
+                let mut claims = claims_resp.claims;
                 claims.retain(|key, _| {
                     req_cred_subj.get(key).is_some() || def_cred_subj.get(key).is_some()
                 });
-                claims_resp.claims = Value::Object(claims);
+                claims_resp.claims = claims;
             }
         }
 

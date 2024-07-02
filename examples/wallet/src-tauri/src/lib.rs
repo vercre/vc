@@ -123,7 +123,7 @@ async fn select(
     let Some(credential) = app_state.credential.iter().find(|c| c.id == id) else {
         return Ok(None);
     };
-    Ok(Some(credential.try_into()?))
+    Ok(Some(credential.into()))
 }
 
 /// The `delete` command deletes a credential from storage and updates the view model.

@@ -79,7 +79,7 @@ impl Store {
         self.subjects.lock().expect("should lock").insert(holder_subject.to_string(), subject);
 
         Ok(Claims {
-            claims: credential.claims,
+            claims: credential.claims.as_object().unwrap().clone(),
             pending,
         })
     }

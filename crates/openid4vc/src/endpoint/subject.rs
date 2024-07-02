@@ -4,13 +4,13 @@
 use std::future::Future;
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{Map, Value};
 
 /// The user information returned by the Subject trait.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Claims {
     /// The credential subject populated for the user.
-    pub claims: Value,
+    pub claims: Map<String, Value>,
 
     /// Specifies whether user information required for the credential subject
     /// is pending.

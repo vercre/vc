@@ -7,6 +7,7 @@
 //! [Verifiable Credentials Data Model v1.1]: (https://www.w3.org/TR/vc-data-model)
 //! [implementation guidelines]: (https://model.github.io/vc-imp-guide)
 
+use std::clone::Clone;
 use std::collections::HashMap;
 use std::convert::Infallible;
 use std::str::FromStr;
@@ -16,7 +17,7 @@ use chrono::{DateTime, Utc};
 use core_utils::{Kind, Quota};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{Map, Value};
 
 use crate::proof::integrity::Proof;
 
@@ -138,7 +139,9 @@ impl VerifiableCredential {
             issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
             credential_subject: Quota::One(CredentialSubject {
                 id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
-                claims: json!({"employeeId": "1234567890"}),
+                claims: json!({"employeeId": "1234567890"})
+                    .as_object()
+                    .map_or_else(Map::default, Clone::clone),
             }),
             expiration_date: Some(Utc.with_ymd_and_hms(2033, 12, 20, 23, 21, 55).unwrap()),
 
@@ -226,16 +229,7 @@ pub struct CredentialSubject {
 
     /// Claims about the subject.
     #[serde(flatten)]
-    pub claims: Value,
-}
-
-// Unused, but required by 'flexvec' deserializer FromStr trait
-impl FromStr for CredentialSubject {
-    type Err = Infallible;
-
-    fn from_str(_: &str) -> anyhow::Result<Self, Self::Err> {
-        unimplemented!("CredentialSubject::from_str")
-    }
+    pub claims: Map<String, Value>,
 }
 
 /// `CredentialStatus` can be used for the discovery of information about the
@@ -266,15 +260,6 @@ pub struct CredentialSchema {
     /// status of the credential. e.g. "`JsonSchemaValidator2018`"
     #[serde(rename = "type")]
     pub type_: String,
-}
-
-// Unused, but required by 'option_flexvec' deserializer FromStr trait
-impl FromStr for CredentialSchema {
-    type Err = Infallible;
-
-    fn from_str(_: &str) -> anyhow::Result<Self, Self::Err> {
-        unimplemented!("CredentialSchema::from_str")
-    }
 }
 
 /// `RefreshService` can be used to provide a link to the issuer's refresh service

@@ -2,9 +2,7 @@
 
 use std::collections::HashMap;
 
-use anyhow::bail;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use typeshare::typeshare;
 use vercre_holder::credential::{self, Credential};
 use vercre_holder::issuance::CredentialConfiguration;
@@ -123,10 +121,8 @@ impl From<&CredentialConfiguration> for CredentialDisplay {
     }
 }
 
-impl TryFrom<&Credential> for CredentialDetail {
-    type Error = anyhow::Error;
-
-    fn try_from(credential: &Credential) -> Result<Self, Self::Error> {
+impl From<&Credential> for CredentialDetail {
+    fn from(credential: &Credential) -> Self {
         let displays = credential.metadata.display.clone().unwrap_or_default();
         // TODO: locale
         let display = displays[0].clone();
@@ -139,21 +135,19 @@ impl TryFrom<&Credential> for CredentialDetail {
         };
 
         for subject in subjects {
-            let Value::Object(claims_map) = subject.claims else {
-                bail!("credential claims not a map");
-            };
+            let claims_map = subject.claims;
             for (key, value) in claims_map {
                 let val = serde_json::to_string(&value).unwrap_or_default();
                 claims.insert(key.clone(), val);
             }
         }
 
-        Ok(Self {
+        Self {
             display: credential.into(),
             issuance_date: vc.issuance_date.to_rfc2822(),
             expiration_date: vc.expiration_date.map(|d| d.to_rfc2822()),
             description: display.description,
             claims,
-        })
+        }
     }
 }
