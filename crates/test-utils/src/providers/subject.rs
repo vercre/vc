@@ -3,14 +3,14 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
 use openid4vc::endpoint::{Claims, Result};
-use serde_json::{json, Value};
+use serde_json::{json, Map, Value};
 
 pub const NORMAL_USER: &str = "normal_user";
 pub const PENDING_USER: &str = "pending_user";
 
 #[derive(Default, Clone, Debug)]
 struct Credential {
-    claims: Value,
+    claims: Map<String, Value>,
     pending: bool,
 }
 
@@ -32,7 +32,9 @@ impl Store {
                             "familyName": "Person",
                             "email": "normal.user@example.com",
                             "proficiency": "3"
-                        }),
+                        })
+                        .as_object()
+                        .map_or_else(Map::default, Clone::clone),
                         pending: false,
                     },
                 )]),
@@ -47,7 +49,9 @@ impl Store {
                             "familyName": "Person",
                             "email": "pending.user@example.com",
                             "proficiency": "1"
-                        }),
+                        })
+                        .as_object()
+                        .map_or_else(Map::default, Clone::clone),
                         pending: true,
                     },
                 )]),
@@ -79,7 +83,7 @@ impl Store {
         self.subjects.lock().expect("should lock").insert(holder_subject.to_string(), subject);
 
         Ok(Claims {
-            claims: credential.claims.as_object().unwrap().clone(),
+            claims: credential.claims,
             pending,
         })
     }
