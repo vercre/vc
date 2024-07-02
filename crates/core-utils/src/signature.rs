@@ -24,7 +24,7 @@ pub trait Signer: Send + Sync {
     }
 
     /// `TrySign` is the fallible version of Sign.
-    fn try_sign(&self, msg: &[u8]) -> impl Future<Output = super::Result<Vec<u8>>> + Send;
+    fn try_sign(&self, msg: &[u8]) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
 }
 
 /// Verifier is used by implementers to provide verification functionality for
@@ -35,7 +35,7 @@ pub trait Verifier: Send + Sync {
     /// # Errors
     ///
     /// Returns an error if the DID URL cannot be dereferenced to a JWK
-    fn deref_jwk(&self, did_url: &str) -> impl Future<Output = super::Result<Jwk>> + Send;
+    fn deref_jwk(&self, did_url: &str) -> impl Future<Output = anyhow::Result<Jwk>> + Send;
 }
 
 /// Algorithm is used to specify the signing algorithm used by the signer.

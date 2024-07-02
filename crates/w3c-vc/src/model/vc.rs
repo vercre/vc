@@ -13,11 +13,11 @@ use std::str::FromStr;
 
 use anyhow::bail;
 use chrono::{DateTime, Utc};
+use core_utils::{Kind, Quota};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::model::{Kind, Quota};
 use crate::proof::integrity::Proof;
 
 /// `VerifiableCredential` represents a naive implementation of the W3C Verifiable

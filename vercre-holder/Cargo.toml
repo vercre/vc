@@ -22,6 +22,7 @@ workspace = true
 [dependencies]
 anyhow.workspace = true
 chrono.workspace = true
+core-utils.workspace = true
 dif-exch.workspace = true
 openid4vc.workspace = true
 serde.workspace = true

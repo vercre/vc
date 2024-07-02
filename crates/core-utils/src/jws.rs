@@ -41,7 +41,7 @@ use ecdsa::signature::Verifier as _;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
-use crate::endpoint::{Algorithm, Jwk, Signer, Verifier};
+use crate::signature::{Algorithm, Jwk, Signer, Verifier};
 
 /// The JWT `typ` claim.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]

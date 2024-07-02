@@ -3,16 +3,15 @@
 mod callback;
 #[allow(clippy::module_inception)]
 pub mod endpoint;
-mod signature;
 mod subject;
 
 use std::future::{Future, IntoFuture};
 
 use chrono::{DateTime, Utc};
+pub use core_utils::signature::{Algorithm, Jwk, Signer, Verifier};
 
 pub use self::callback::{Payload, Status};
 pub use self::endpoint::{Context, Endpoint};
-pub use self::signature::{Algorithm, Jwk, Signer, Verifier};
 pub use self::subject::{Claims, Subject};
 use crate::issuance::Issuer;
 use crate::{Client, Server};

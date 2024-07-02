@@ -37,9 +37,10 @@ use std::fmt::Debug;
 use std::str;
 
 use chrono::{TimeDelta, Utc};
+use core_utils::{Kind, Quota};
 use serde::{Deserialize, Serialize};
 
-use crate::model::{Kind, Quota, VerifiableCredential, VerifiablePresentation};
+use crate::model::{VerifiableCredential, VerifiablePresentation};
 
 /// Claims used for Verifiable Credential issuance when format is "`jwt_vc_json`".
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]

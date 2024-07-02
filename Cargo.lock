@@ -708,10 +708,16 @@ dependencies = [
 name = "core-utils"
 version = "0.1.0-alpha.4"
 dependencies = [
+ "anyhow",
  "base64ct",
+ "ecdsa",
+ "ed25519-dalek",
  "fastrand",
  "insta",
+ "k256",
  "serde",
+ "serde_json",
+ "tracing",
 ]
 
 [[package]]
@@ -2939,11 +2945,8 @@ dependencies = [
  "chrono",
  "core-utils",
  "dif-exch",
- "ecdsa",
- "ed25519-dalek",
  "image",
  "insta",
- "k256",
  "qrcode",
  "serde",
  "serde_json",
@@ -5533,6 +5536,7 @@ dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
+ "core-utils",
  "dif-exch",
  "ecdsa",
  "ed25519-dalek",
@@ -5633,8 +5637,8 @@ dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
+ "core-utils",
  "dif-exch",
- "openid4vc",
  "serde",
  "serde_json",
  "tracing",

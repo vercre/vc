@@ -26,10 +26,7 @@ base64ct.workspace = true
 chrono.workspace = true
 core-utils.workspace = true
 dif-exch.workspace = true
-ecdsa.workspace = true
-ed25519-dalek = "2.1.1"
 image = { version = "0.25.1", default-features = false, features = ["png"] }
-k256.workspace = true
 qrcode = { version = "0.14.0", default-features = false, features = ["image"] }
 serde.workspace = true
 serde_json.workspace = true

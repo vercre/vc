@@ -11,11 +11,11 @@ use std::str::FromStr;
 
 use anyhow::bail;
 use base64ct::{Base64UrlUnpadded, Encoding};
+use core_utils::{Kind, Quota};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::model::{Kind, Quota};
 pub use crate::proof::integrity::Proof;
 
 /// A Verifiable Presentation is used to combine and present credentials to a

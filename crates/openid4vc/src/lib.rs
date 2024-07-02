@@ -10,7 +10,6 @@
 pub mod endpoint;
 pub mod error;
 pub mod issuance;
-pub mod jws;
 pub mod presentation;
 mod stringify;
 
@@ -18,11 +17,11 @@ use std::collections::HashMap;
 use std::fmt::{self, Display};
 use std::str::FromStr;
 
+pub use core_utils::jws;
 use serde::{Deserialize, Serialize};
 
 use self::issuance::GrantType;
 use self::presentation::VpFormat;
-// use crate::{err, error};
 
 /// Result type for `OpenID` for Verifiable Credential Issuance and Verifiable
 /// Presentations.

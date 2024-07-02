@@ -5,9 +5,9 @@
 
 use std::ops::Deref;
 
+pub use core_utils::Quota;
 use openid4vc::issuance::CredentialConfiguration;
 use serde::{Deserialize, Serialize};
-pub use w3c_vc::model::Quota;
 use w3c_vc::model::VerifiableCredential;
 
 /// The Credential model contains information about a credential owned by the

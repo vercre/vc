@@ -17,61 +17,7 @@
 pub mod vc;
 pub mod vp;
 
-use ::serde::{Deserialize, Serialize};
 pub use vc::*;
 pub use vp::*;
 
 // TODO: move this to crate where it can be shared with DID impls.
-
-/// Wrap the @context property to support serialization/deserialization of an ordered
-/// set composed of any combination of URLs and/or objects, each processable as a
-/// [JSON-LD Context](https://www.w3.org/TR/json-ld11/#the-context).
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum Kind<T> {
-    /// Context URL
-    Simple(String),
-
-    /// Context object
-    Rich(T),
-}
-
-impl<T: Default> Default for Kind<T> {
-    fn default() -> Self {
-        Self::Simple(String::new())
-    }
-}
-
-/// `Quota` allows serde to serialize/deserialize a single object or a set of objects.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum Quota<T> {
-    /// Single object
-    One(T),
-
-    /// Set of objects
-    Many(Vec<T>),
-}
-
-impl<T: Default> Default for Quota<T> {
-    fn default() -> Self {
-        Self::One(T::default())
-    }
-}
-
-/// `StrObj` allows serde to serialize/deserialize a string or an object.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum StrObj<T> {
-    /// Field is a string
-    String(String),
-
-    /// Field is an object
-    Object(T),
-}
-
-impl<T: Default> Default for StrObj<T> {
-    fn default() -> Self {
-        Self::String(String::new())
-    }
-}

@@ -11,8 +11,7 @@
 use std::fmt::Debug;
 
 use chrono::Utc;
-use core_utils::gen;
-use model::Kind;
+use core_utils::{gen, Kind};
 use openid4vc::endpoint::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
     Verifier,
@@ -27,7 +26,7 @@ use openid4vc::issuance::{CredentialDefinition, Issuer, ProofClaims};
 use openid4vc::jws::{self, Type};
 use openid4vc::Result;
 use tracing::instrument;
-use w3c_vc::model::{self, CredentialSubject, VerifiableCredential};
+use w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use w3c_vc::proof::{self, Format, Payload};
 
 use super::Endpoint;
@@ -314,7 +313,7 @@ where
         // get credential identifier and configuration
         let (identifier, config) = self.credential_configuration(request)?;
         let definition = credential_definition(request, &config);
-        
+
         let Some(holder_id) = &self.state.holder_id else {
             return Err(Err::AccessDenied("holder not found".into()));
         };

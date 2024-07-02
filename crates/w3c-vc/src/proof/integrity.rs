@@ -46,9 +46,9 @@ use std::convert::Infallible;
 use std::str::FromStr;
 
 use chrono::{DateTime, Utc};
+use core_utils::Quota;
 use serde::{Deserialize, Serialize};
 
-use crate::model::Quota;
 pub use crate::proof::Algorithm;
 
 /// To be verifiable, a credential must contain at least one proof mechanism,
