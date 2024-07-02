@@ -711,6 +711,7 @@ dependencies = [
  "base64ct",
  "fastrand",
  "insta",
+ "serde",
 ]
 
 [[package]]
@@ -2936,6 +2937,7 @@ dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
+ "core-utils",
  "dif-exch",
  "ecdsa",
  "ed25519-dalek",

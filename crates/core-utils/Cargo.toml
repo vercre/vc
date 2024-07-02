@@ -26,6 +26,7 @@ workspace = true
 [dependencies]
 base64ct.workspace = true
 fastrand = "2.1.0"
+serde.workspace = true
 
 [dev-dependencies]
 insta = { version = "1.39.0", features = ["filters", "redactions", "yaml"] }

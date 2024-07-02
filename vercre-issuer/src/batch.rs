@@ -314,6 +314,7 @@ where
         // get credential identifier and configuration
         let (identifier, config) = self.credential_configuration(request)?;
         let definition = credential_definition(request, &config);
+        
         let Some(holder_id) = &self.state.holder_id else {
             return Err(Err::AccessDenied("holder not found".into()));
         };
