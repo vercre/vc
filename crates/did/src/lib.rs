@@ -12,6 +12,7 @@ mod did;
 mod document;
 mod error;
 mod key;
+// mod web;
 
 use std::collections::HashMap;
 

@@ -26,22 +26,14 @@ workspace = true
 
 [dependencies]
 anyhow.workspace = true
-base64ct.workspace = true
-chrono.workspace = true
-# ecdsa.workspace = true
-serde.workspace = true
-serde_json.workspace = true
-# tracing.workspace = true
-
-# bs58 = { version = "0.4", features = ["check"] }
-curve25519-dalek = "4.1.3"
-ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
-multibase = "0.9"
-rand = "0.8.5"
-regex = "1.10.5"
-signature = "2.2.0"
-thiserror = "1.0"
-url = "2.5.2"
 
 [dev-dependencies]
-insta = { version = "1.39.0", features = ["filters", "json", "redactions", "yaml"] }
+ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
+rand = "0.8.5"
+signature = "2.2.0"
+x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
+
+# ecdsa.workspace = true
+# tracing.workspace = true
+# bs58 = { version = "0.4", features = ["check"] }
+# curve25519-dalek = "4.1.3"
