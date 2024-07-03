@@ -19,14 +19,6 @@ pub trait Signer {
     fn verifying_key(&self) -> anyhow::Result<Self::VerifyingKey>;
 }
 
-pub trait Encryptor {
-    type PublicKey;
-
-    fn encrypt(&self, data: &[u8]) -> anyhow::Result<Vec<u8>>;
-
-    fn public_key(&self) -> anyhow::Result<Self::PublicKey>;
-}
-
 pub trait Verifier {
     type VerifyingKey;
 
@@ -35,10 +27,20 @@ pub trait Verifier {
     ) -> anyhow::Result<()>;
 }
 
+pub trait Encryptor {
+    type PublicKey;
+
+    fn encrypt(
+        &self, msg: &[u8], nonce: &[u8; 24], public_key: &Self::PublicKey,
+    ) -> anyhow::Result<Vec<u8>>;
+
+    fn public_key(&self) -> Self::PublicKey;
+}
+
 pub trait Decryptor {
     type PublicKey;
 
-    fn decrypt(&self, encrypted: &[u8], public_key: &Self::PublicKey) -> anyhow::Result<Vec<u8>>;
+    fn decrypt(&self, encrypted: &[u8], nonce: &[u8; 24]) -> anyhow::Result<Vec<u8>>;
 }
 
 #[cfg(test)]
@@ -107,23 +109,21 @@ mod test {
     impl Encryptor for Curve25519 {
         type PublicKey = x25519_dalek::PublicKey;
 
-        fn encrypt(&self, _data: &[u8]) -> anyhow::Result<Vec<u8>> {
+        fn encrypt(
+            &self, msg: &[u8], nonce: &[u8; 24], public_key: &Self::PublicKey,
+        ) -> anyhow::Result<Vec<u8>> {
             todo!()
         }
 
-        fn public_key(&self) -> anyhow::Result<Self::PublicKey> {
+        fn public_key(&self) -> Self::PublicKey {
             todo!()
-            // let encoded = bincode::serialize(&public_key).unwrap();
-            // let decoded: PublicKey = bincode::deserialize(&encoded).unwrap();
         }
     }
 
     impl Decryptor for Curve25519 {
         type PublicKey = x25519_dalek::PublicKey;
 
-        fn decrypt(
-            &self, _encrypted: &[u8], _public_key: &Self::PublicKey,
-        ) -> anyhow::Result<Vec<u8>> {
+        fn decrypt(&self, _ciphertext: &[u8], _nonce: &[u8; 24]) -> anyhow::Result<Vec<u8>> {
             // let secret_key = EphemeralSecret::random_from_rng(&mut OsRng);
             // let shared_secret = secret_key.diffie_hellman(&public_key);
             todo!()

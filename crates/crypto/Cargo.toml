@@ -28,6 +28,7 @@ workspace = true
 anyhow.workspace = true
 
 [dev-dependencies]
+dryoc = { version = "0.5.3", features = ["nightly", "simd_backend"] }
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 rand = "0.8.5"
 signature = "2.2.0"
