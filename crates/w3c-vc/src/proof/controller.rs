@@ -1,5 +1,6 @@
 //! # Controller Document
 
+use core_utils::jose::jwk::Jwk;
 use serde::{Deserialize, Serialize};
 
 /// A controller document contains a set of verification methods that specify
@@ -84,34 +85,4 @@ pub enum MethodType {
     /// Verification method type of [Multibase](https://www.ietf.org/archive/id/draft-multiformats-multibase-08.html)
     /// Multikey.
     Multikey,
-}
-
-/// Simplified JSON Web Key (JWK) key structure.
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct Jwk {
-    /// Key identifier.
-    /// For example, "_Qq0UL2Fq651Q0Fjd6TvnYE-faHiOpRlPVQcY_-tA4A".
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub kid: Option<String>,
-
-    /// Key type. For example, "EC" for elliptic curve or "OKP" for octet
-    /// key pair (Edwards curve).
-    pub kty: String,
-
-    /// Cryptographic curve type. For example, "ES256K" for secp256k1 and
-    /// "X25519" for ed25519.
-    pub crv: String,
-
-    /// X coordinate.
-    pub x: String,
-
-    /// Y coordinate. Not required for `EdDSA` verification keys.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub y: Option<String>,
-
-    /// Use of the key. For example, "sig" for signing or "enc" for
-    /// encryption.
-    #[serde(rename = "use")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub use_: Option<String>,
 }
