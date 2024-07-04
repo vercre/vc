@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
 
 use chrono::{DateTime, Utc};
+use core_utils::{Kind, Quota};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -316,40 +317,4 @@ pub struct MethodMetadata {
     pub published: bool,
     pub recovery_commitment: String,
     pub update_commitment: String,
-}
-
-/// Determines how Serde will serialize/deserialize the field: as a single entity
-/// or a set of entities.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum Quota<T> {
-    /// Value is a singleton.
-    One(T),
-
-    /// Value is a set.
-    Many(Vec<T>),
-}
-
-impl<T: Default> Default for Quota<T> {
-    fn default() -> Self {
-        Self::One(T::default())
-    }
-}
-
-/// Determines how Serde will serialize/deserialize the field: as a string or the
-/// type specified by `T`.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum Kind<T> {
-    /// Value is a string
-    Simple(String),
-
-    /// Value is an object
-    Rich(T),
-}
-
-impl<T: Default> Default for Kind<T> {
-    fn default() -> Self {
-        Self::Simple(String::new())
-    }
 }

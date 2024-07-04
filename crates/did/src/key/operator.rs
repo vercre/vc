@@ -7,6 +7,7 @@
 use std::sync::LazyLock;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
+use core_utils::Kind;
 use curve25519_dalek::edwards::CompressedEdwardsY;
 use multibase::Base::Base58Btc;
 use regex::Regex;
@@ -15,7 +16,7 @@ use serde_json::json;
 use super::DidKey;
 use crate::did::{self, Error};
 use crate::document::{
-    CreateOptions, Document, Kind, Operator, PublicKey, PublicKeyFormat, VerificationMethod,
+    CreateOptions, Document, Operator, PublicKey, PublicKeyFormat, VerificationMethod,
 };
 use crate::{Curve, KeyType, PublicKeyJwk};
 

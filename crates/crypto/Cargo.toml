@@ -28,9 +28,13 @@ workspace = true
 anyhow.workspace = true
 
 [dev-dependencies]
+biscuit = "0.7.0"
 dryoc = { version = "0.5.3", features = ["nightly", "simd_backend"] }
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
+num-bigint = "0.4.6"
 rand = "0.8.5"
+serde.workspace = true
+serde_json.workspace = true
 signature = "2.2.0"
 x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
 
