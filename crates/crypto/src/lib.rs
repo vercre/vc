@@ -42,27 +42,3 @@ pub trait Decryptor {
     fn decrypt(&self, encrypted: &[u8]) -> anyhow::Result<Vec<u8>>;
 }
 
-// https://www.iana.org/assignments/jose/jose.xhtml#web-signature-encryption-algorithms
-// https://www.rfc-editor.org/rfc/rfc7518.html (JSON Web Algorithms (JWA))
-
-// "alg_values_supported" : [
-// 	"ECDH-ES" // <- Diffie-Hellman Ephemeral Static key agreement using Concat KDF
-// ],
-// "enc_values_supported" : [
-// 	"A128GCM" // <- 128-bit AES-GCM
-// ],
-
-// https://www.rfc-editor.org/rfc/rfc7518#appendix-C:
-
-// {
-// 	"alg":"ECDH-ES",
-// 	"enc":"A128GCM",
-// 	"apu":"QWxpY2U",
-// 	"apv":"Qm9i",
-// 	"epk": {
-// 		"kty":"EC",
-//         "crv":"P-256",
-//         "x":"gI0GAILBdu7T53akrFmMyGcsF3n5dO7MmwNBHKW5SV0",
-//         "y":"SLW_xSffzlPWrHEVI30DHM_4egVwt3NQqeUD7nMFpps"
-// 	}
-// }

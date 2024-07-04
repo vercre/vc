@@ -5,7 +5,7 @@
 #![feature(error_generic_member_access)]
 
 pub mod gen;
-pub mod jws;
+pub mod jose;
 pub mod signature;
 
 use serde::{Deserialize, Serialize};

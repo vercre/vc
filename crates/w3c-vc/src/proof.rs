@@ -30,7 +30,7 @@ mod controller;
 pub mod integrity;
 mod jose;
 
-use core_utils::jws;
+use core_utils::jose::jws;
 pub use core_utils::signature::{Algorithm, Signer, Verifier};
 use serde::{Deserialize, Serialize};
 

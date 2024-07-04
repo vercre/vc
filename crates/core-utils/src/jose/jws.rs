@@ -1,6 +1,6 @@
-//! # JOSE Proofs
+//! # JSON Object Signing and Encryption (JOSE) Proofs
 //!
-//! JSON Object Signing and Encryption ([JOSE]) proofs are a form of enveloping proofs
+//! [JOSE] proofs are a form of enveloping proofs
 //! of Credentials based on JWT [RFC7519], JWS [RFC7515], and JWK [RFC7517].
 //!
 //! The Securing Verifiable Credentials using JOSE and COSE [VC-JOSE-COSE]
@@ -28,47 +28,21 @@
 //! ```
 //!
 //! [JOSE]: https://datatracker.ietf.org/wg/jose/about
-//! [RFC7519]: https://www.rfc-editor.org/rfc/rfc7519
+//! [RFC7515]: https://www.rfc-editor.org/rfc/rfc7515
 //! [RFC7517]: https://www.rfc-editor.org/rfc/rfc7517
+//! [RFC7519]: https://www.rfc-editor.org/rfc/rfc7519
 //! [VC-JOSE-COSE]: https://w3c.github.io/vc-jose-cose
 //! [OpenID4VP]: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
-
-use std::fmt::{Debug, Display};
 
 use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ecdsa::signature::Verifier as _;
 use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
-use crate::signature::{Algorithm, Jwk, Signer, Verifier};
-
-/// The JWT `typ` claim.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub enum Type {
-    /// JWT `typ` for Verifiable Credential.
-    #[default]
-    #[serde(rename = "jwt")]
-    Credential,
-
-    /// JWT `typ` for Verifiable Presentation.
-    #[serde(rename = "jwt")]
-    Presentation,
-
-    /// JWT `typ` for Authorization Request Object.
-    #[serde(rename = "oauth-authz-req+jwt")]
-    Request,
-
-    /// JWT `typ` for Wallet's Proof of possession of key material.
-    #[serde(rename = "openid4vci-proof+jwt")]
-    Proof,
-}
-
-impl Display for Type {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self:?}")
-    }
-}
+use crate::jose::jwk::Jwk;
+pub use crate::jose::jwt::{Header, Jwt, Type};
+use crate::signature::{Algorithm, Signer, Verifier};
 
 /// Encode the provided header and claims and sign, returning a JWT in compact JWS form.
 ///
@@ -188,55 +162,4 @@ fn verify_eddsa(jwk: &Jwk, msg: &str, sig_bytes: &[u8]) -> anyhow::Result<()> {
     verifying_key
         .verify(msg.as_bytes(), &signature)
         .map_err(|e| anyhow!("unable to verify signature: {e}"))
-}
-
-/// Represents a JWT as used for proof and credential presentation.
-#[derive(Clone, Debug, Default, Serialize, PartialEq, Eq)]
-pub struct Jwt<T> {
-    /// The JWT header.
-    pub header: Header,
-
-    /// The JWT claims.
-    pub claims: T,
-}
-
-/// Represents the JWT header.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Header {
-    /// Digital signature algorithm identifier as per IANA "JSON Web Signature
-    /// and Encryption Algorithms" registry.
-    pub alg: Algorithm,
-
-    /// Used to declare the media type [IANA.MediaTypes](http://www.iana.org/assignments/media-types)
-    /// of the JWS.
-    pub typ: Type,
-
-    /// Contains the key ID. If the Credential is bound to a DID, the kid refers to a
-    /// DID URL which identifies a particular key in the DID Document that the
-    /// Credential should bound to. Alternatively, may refer to  a key inside a JWKS.
-    ///
-    /// MUST NOT be set if `jwk` property is set.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub kid: Option<String>,
-
-    /// Contains the key material the new Credential shall be bound to.
-    ///
-    /// MUST NOT be set if `kid` is set.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub jwk: Option<Jwk>,
-
-    /// Contains a certificate (or certificate chain) corresponding to the key used to
-    /// sign the JWT. This element MAY be used to convey a key attestation. In such a
-    /// case, the actual key certificate will contain attributes related to the key
-    /// properties.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub x5c: Option<String>,
-
-    /// Contains an OpenID.Federation Trust Chain. This element MAY be used to convey
-    /// key attestation, metadata, metadata policies, federation Trust Marks and any
-    /// other information related to a specific federation, if available in the chain.
-    ///
-    /// When used for signature verification, `kid` MUST be set.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub trust_chain: Option<String>,
 }
