@@ -60,12 +60,12 @@
 //     "tag":"<authentication tag contents>"
 // }
 
+use core_utils::Quota;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 // use crate::jose::jwa::Algorithm;
 use crate::jose::jwk::Jwk;
-use crate::Quota;
 
 /// Encrypt the plaintext and return the JWE.
 #[allow(dead_code)]
@@ -84,7 +84,7 @@ pub fn decrypt() -> anyhow::Result<String> {
 /// this case, the members of the JOSE Header are the union of the members of the JWE
 /// Protected Header, JWE Shared Unprotected Header, and JWE Per-Recipient Unprotected
 /// Header values that are present.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Jwe {
     /// JWE protected header, as a base64Url encoded string.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -120,7 +120,7 @@ pub struct Jwe {
 /// Contains information specific to a single recipient.
 /// MUST be present with exactly one array element per recipient, even if some
 /// or all of the array element values are the empty JSON object "{}".
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Recipient {
     /// JWE Per-Recipient Unprotected Header.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -143,11 +143,11 @@ pub struct Header {
     /// Tag. MUST be an AEAD algorithm.
     pub enc: Encoding,
 
-    /// Key agreement PartyUInfo value, used to generate the shared key.
+    /// Key agreement `PartyUInfo` value, used to generate the shared key.
     /// Contains producer information as a base64url string.
     pub apu: String,
 
-    /// Key agreement PartyVInfo value, used to generate the shared key.
+    /// Key agreement `PartyVInfo` value, used to generate the shared key.
     /// Contains producer information as a base64url string.
     pub apv: String,
 

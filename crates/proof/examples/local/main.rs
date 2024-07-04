@@ -3,9 +3,9 @@
 use std::sync::LazyLock;
 
 use anyhow::anyhow;
-use crypto::{Decryptor, Encryptor, Keyring, Signer, Verifier};
 use dryoc::dryocbox::*;
 use ed25519_dalek::{SigningKey, VerifyingKey};
+use proof::{Decryptor, Encryptor, Keyring, Signer, Verifier};
 use rand::rngs::OsRng;
 use signature::{Signer as _, Verifier as _};
 use x25519_dalek::StaticSecret;

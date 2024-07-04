@@ -9,13 +9,10 @@
 
 use std::clone::Clone;
 use std::collections::HashMap;
-use std::convert::Infallible;
-use std::str::FromStr;
 
 use anyhow::bail;
 use chrono::{DateTime, Utc};
 use core_utils::{Kind, Quota};
-use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
@@ -156,16 +153,8 @@ impl dif_exch::Claims for VerifiableCredential {
     }
 }
 
-// impl TryFrom<VerifiableCredential> for Value {
-//     type Error = anyhow::Error;
-
-//     fn try_from(vc: VerifiableCredential) -> anyhow::Result<Self> {
-//         serde_json::to_value(vc).map_err(Into::into)
-//     }
-// }
-
 /// Issuer identifies the issuer of the credential.
-#[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(default)]
 pub struct Issuer {
     /// The issuer URI. If dereferenced, it should result in a machine-readable
@@ -177,43 +166,6 @@ pub struct Issuer {
     #[serde(flatten)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub extra: Option<HashMap<String, Value>>,
-}
-
-/// Derserialize Issuer from string or object. If a string, then it is the issuer's
-/// id, else deserialize as object.
-impl FromStr for Issuer {
-    type Err = Infallible;
-
-    fn from_str(s: &str) -> anyhow::Result<Self, Self::Err> {
-        Ok(Self {
-            id: s.to_string(),
-            extra: None,
-        })
-    }
-}
-
-/// Serialize `Issuer` to string or object. If only the `id` field is set,
-/// serialize to string, otherwise serialize to object.
-impl Serialize for Issuer {
-    fn serialize<S>(&self, serializer: S) -> anyhow::Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        if let Some(extra) = &self.extra {
-            // serialize the entire object, flattening any 'extra' fields.
-            tracing::debug!("serializing issuer to object: {:?}", &self);
-            let mut map = serializer.serialize_map(None)?;
-            map.serialize_entry("id", &self.id)?;
-            for (k, v) in extra {
-                map.serialize_entry(&k, &v)?;
-            }
-            map.end()
-        } else {
-            // serialize to string when no extra fields are present
-            tracing::debug!("serializing issuer to string: {}", &self.id);
-            serializer.serialize_str(&self.id)
-        }
-    }
 }
 
 /// `CredentialSubject` holds claims about the subject(s) referenced by the credential.

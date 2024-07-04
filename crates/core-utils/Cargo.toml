@@ -24,14 +24,8 @@ wasm = ["fastrand/js"]
 workspace = true
 
 [dependencies]
-anyhow.workspace = true
 base64ct.workspace = true
-ecdsa.workspace = true
-ed25519-dalek = "2.1.1"
 fastrand = "2.1.0"
-k256.workspace = true
 serde.workspace = true
-serde_json.workspace = true
-tracing.workspace = true
 
 [dev-dependencies]

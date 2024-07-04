@@ -6,6 +6,9 @@
 //!
 //! This module provides cryptographic support.
 
+pub mod jose;
+pub mod signature;
+
 // use signature::Keypair;
 
 /// A `Keyring` contains a set of related keys
@@ -41,4 +44,3 @@ pub trait Decryptor {
 
     fn decrypt(&self, encrypted: &[u8]) -> anyhow::Result<Vec<u8>>;
 }
-

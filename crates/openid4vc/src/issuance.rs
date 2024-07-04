@@ -4,8 +4,8 @@ use std::collections::HashMap;
 use std::io::Cursor;
 
 use base64ct::{Base64, Encoding};
-use core_utils::jose::jwk::Jwk;
 use core_utils::Kind;
+use proof::jose::jwk::Jwk;
 use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 pub use w3c_vc::model::VerifiableCredential;

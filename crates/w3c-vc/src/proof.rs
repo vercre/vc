@@ -30,8 +30,8 @@ mod controller;
 pub mod integrity;
 mod jose;
 
-use core_utils::jose::jws;
-pub use core_utils::signature::{Algorithm, Signer, Verifier};
+use proof::jose::jws;
+pub use proof::signature::{Algorithm, Signer, Verifier};
 use serde::{Deserialize, Serialize};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};

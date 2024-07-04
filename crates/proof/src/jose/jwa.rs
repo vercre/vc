@@ -1,6 +1,6 @@
 //! # JSON Web Algorithms (JWA)
 //!
-//! JWA [RFC7518] defines a set of cryptographic algorithms for use with 
+//! JWA [RFC7518] defines a set of cryptographic algorithms for use with
 //! JWS ([RFC7515]), JWE ([RFC7516]), and JWK ([RFC7517]).
 //!
 //! See associated [IANA] registries for more information
