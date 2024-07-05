@@ -12,7 +12,7 @@ use std::fmt::{Debug, Display};
 
 use serde::{Deserialize, Serialize};
 
-use crate::jose::jwk::Jwk;
+use crate::jose::jwk::PublicKeyJwk;
 use crate::signature::Algorithm;
 
 /// Represents a JWT as used for proof and credential presentation.
@@ -48,7 +48,7 @@ pub struct Header {
     ///
     /// MUST NOT be set if `kid` is set.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub jwk: Option<Jwk>,
+    pub jwk: Option<PublicKeyJwk>,
 
     /// Contains a certificate (or certificate chain) corresponding to the key used to
     /// sign the JWT. This element MAY be used to convey a key attestation. In such a

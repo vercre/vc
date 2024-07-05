@@ -65,7 +65,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 // use crate::jose::jwa::Algorithm;
-use crate::jose::jwk::Jwk;
+use crate::jose::jwk::PublicKeyJwk;
 
 /// Encrypt the plaintext and return the JWE.
 #[allow(dead_code)]
@@ -153,7 +153,7 @@ pub struct Header {
 
     /// The ephemeral public key created by the originator for use in key agreement
     /// algorithms.
-    pub epk: Jwk,
+    pub epk: PublicKeyJwk,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]

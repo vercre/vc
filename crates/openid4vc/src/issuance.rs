@@ -5,7 +5,7 @@ use std::io::Cursor;
 
 use base64ct::{Base64, Encoding};
 use core_utils::Kind;
-use proof::jose::jwk::Jwk;
+use proof::jose::jwk::PublicKeyJwk;
 use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 pub use w3c_vc::model::VerifiableCredential;
@@ -736,7 +736,7 @@ pub struct ProofClaims {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredentialResponseEncryption {
     /// The public key used for encrypting the Credential Response.
-    pub jwk: Jwk,
+    pub jwk: PublicKeyJwk,
 
     /// JWE [RFC7516] alg algorithm [RFC7518] for encrypting Credential Response.
     ///

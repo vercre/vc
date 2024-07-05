@@ -8,7 +8,7 @@ mod subject;
 use std::future::{Future, IntoFuture};
 
 use chrono::{DateTime, Utc};
-pub use proof::jose::jwk::Jwk;
+pub use proof::jose::jwk::PublicKeyJwk;
 pub use proof::signature::{Algorithm, Signer, Verifier};
 
 pub use self::callback::{Payload, Status};

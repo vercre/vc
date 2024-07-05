@@ -4,7 +4,7 @@ use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
 use openid4vc::endpoint::{
-    Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Jwk, Payload, Result,
+    Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, PublicKeyJwk, Payload, Result,
     ServerMetadata, Signer, StateManager, Subject, Verifier,
 };
 use openid4vc::issuance::Issuer;
@@ -99,7 +99,7 @@ impl Signer for Provider {
 }
 
 impl Verifier for Provider {
-    async fn deref_jwk(&self, did_url: &str) -> Result<Jwk> {
+    async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
         Enclave::deref_jwk(did_url)
     }
 }

@@ -5,7 +5,7 @@
 use std::future::{Future, IntoFuture};
 
 pub use crate::jose::jwa::Algorithm;
-use crate::jose::jwk::Jwk;
+use crate::jose::jwk::PublicKeyJwk;
 
 /// Signer is used by implementers to provide signing functionality for
 /// Verifiable Credential issuance and Verifiable Presentation submissions.
@@ -35,5 +35,5 @@ pub trait Verifier: Send + Sync {
     /// # Errors
     ///
     /// Returns an error if the DID URL cannot be dereferenced to a JWK
-    fn deref_jwk(&self, did_url: &str) -> impl Future<Output = anyhow::Result<Jwk>> + Send;
+    fn deref_jwk(&self, did_url: &str) -> impl Future<Output = anyhow::Result<PublicKeyJwk>> + Send;
 }

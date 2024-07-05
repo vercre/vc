@@ -1,6 +1,6 @@
 //! # Controller Document
 
-use proof::jose::jwk::Jwk;
+use proof::jose::jwk::PublicKeyJwk;
 use serde::{Deserialize, Serialize};
 
 /// A controller document contains a set of verification methods that specify
@@ -62,7 +62,7 @@ pub struct VerificationMethod {
     /// }
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub public_key_jwk: Option<Jwk>,
+    pub public_key_jwk: Option<PublicKeyJwk>,
 
     /// A Multibase-encoded public key. MUST NOT be set if `public-key-jwk` is set.
     ///

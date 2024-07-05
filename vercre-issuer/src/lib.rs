@@ -99,7 +99,7 @@ pub mod token;
 /// Re-export provider traits and types.
 pub mod provider {
     pub use openid4vc::endpoint::{
-        Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Jwk, Payload, Result,
+        Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, PublicKeyJwk, Payload, Result,
         ServerMetadata, Signer, StateManager, Subject, Verifier,
     };
     pub use openid4vc::issuance::{ClaimDefinition, GrantType, Issuer};

@@ -41,15 +41,15 @@ impl Signer for Provider {
 #[must_use]
 pub fn holder_did() -> String {
     let jwk = serde_json::json!({
-        "crv": "X25519",
+        "crv": "Ed25519",
         "kty": "OKP",
-        "use": "enc",
+        "use": "sig",
         "x": JWK_X,
     });
     let jwk_str = jwk.to_string();
     let jwk_b64 = Base64UrlUnpadded::encode_string(jwk_str.as_bytes());
 
-    println!("did:jwk:{jwk_b64}");
+    // println!("did:jwk:{jwk_b64}");
 
     format!("did:jwk:{jwk_b64}")
 }

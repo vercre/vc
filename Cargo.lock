@@ -1011,6 +1011,7 @@ dependencies = [
  "curve25519-dalek",
  "insta",
  "multibase",
+ "proof",
  "regex",
  "serde",
  "serde_json",

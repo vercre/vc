@@ -6,7 +6,7 @@ use chrono::{DateTime, Utc};
 use test_utils::providers::proof::Enclave;
 pub use test_utils::providers::{Presentation, VERIFIER_DID, VERIFY_KEY_ID};
 use vercre_verifier::provider::{
-    Algorithm, Callback, Client, ClientMetadata, Jwk, Payload, Result, Signer, StateManager,
+    Algorithm, Callback, Client, ClientMetadata, PublicKeyJwk, Payload, Result, Signer, StateManager,
     Verifier,
 };
 
@@ -77,7 +77,7 @@ impl Signer for Provider {
 }
 
 impl Verifier for Provider {
-    async fn deref_jwk(&self, did_url: &str) -> Result<Jwk> {
+    async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
         Enclave::deref_jwk(did_url)
     }
 }

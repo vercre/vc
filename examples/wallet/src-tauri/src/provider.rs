@@ -21,7 +21,7 @@ use vercre_holder::presentation::{
     RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
 };
 use vercre_holder::provider::{
-    Algorithm, CredentialStorer, IssuerClient, Jwk, Result, Signer, StateManager, Verifier,
+    Algorithm, CredentialStorer, IssuerClient, PublicKeyJwk, Result, Signer, StateManager, Verifier,
     VerifierClient,
 };
 
@@ -174,7 +174,7 @@ impl Signer for Provider {
 }
 
 impl Verifier for Provider {
-    async fn deref_jwk(&self, did_url: &str) -> anyhow::Result<Jwk> {
+    async fn deref_jwk(&self, did_url: &str) -> anyhow::Result<PublicKeyJwk> {
         let did = did_url.split('#').next().ok_or_else(|| anyhow!("Unable to parse DID"))?;
 
         // if have long-form DID then try to extract key from metadata
@@ -184,7 +184,7 @@ impl Verifier for Provider {
         if did.starts_with("did:jwk:") {
             let decoded = Base64UrlUnpadded::decode_vec(did_parts[2])
                 .map_err(|e| anyhow!("Unable to decode DID: {e}"))?;
-            return serde_json::from_slice::<Jwk>(&decoded).map_err(anyhow::Error::from);
+            return serde_json::from_slice::<PublicKeyJwk>(&decoded).map_err(anyhow::Error::from);
         }
 
         // HACK: for now, assume DID is long-form with delta operation containing public key
@@ -223,8 +223,8 @@ impl Verifier for Provider {
 pub fn holder_did() -> String {
     let jwk = serde_json::json!({
         "kty": "OKP",
-        "crv": "X25519",
-        "use": "enc",
+        "crv": "Ed25519",
+        "use": "sig",
         "x": JWK_X,
     });
     let jwk_str = jwk.to_string();

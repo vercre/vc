@@ -7,10 +7,11 @@ use std::fmt::{self, Display, Formatter};
 
 use chrono::{DateTime, Utc};
 use core_utils::{Kind, Quota};
+use proof::jose::jwk::PublicKeyJwk;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{did, PublicKeyJwk};
+use crate::did;
 
 /// DID resolution functions required to be implemented by conforming DID resolvers.
 pub trait Operator {

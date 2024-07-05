@@ -16,4 +16,4 @@ credentialSubject:
   email: normal.user@example.com
   familyName: Person
   givenName: Normal
-  id: "did:jwk:eyJjcnYiOiJYMjU1MTkiLCJrdHkiOiJPS1AiLCJ1c2UiOiJlbmMiLCJ4IjoiM0xnOXl2aUFtVERDdVZPeUxYSTNscTlTMnBIbTczeXIzd3dBa2p3Q0FodyJ9"
+  id: "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwidXNlIjoic2lnIiwieCI6IjNMZzl5dmlBbVREQ3VWT3lMWEkzbHE5UzJwSG03M3lyM3d3QWtqd0NBaHcifQ"
