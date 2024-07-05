@@ -32,55 +32,6 @@ fn main() {
     // let plaintext = keyring.decrypt(&ciphertext).expect("should decrypt");
 
     // assert_eq!(b"test data", plaintext.as_slice());
-
-    with_biscuit();
-}
-
-fn with_biscuit() {
-    use std::str;
-
-    use biscuit::jwa::{ContentEncryptionAlgorithm, EncryptionOptions, KeyManagementAlgorithm};
-    use biscuit::jwk::JWK;
-    use biscuit::{jwe, Empty};
-
-    let payload = "The true sign of intelligence is not knowledge but imagination.";
-
-    let secret_key = StaticSecret::random_from_rng(&mut OsRng);
-    let key: JWK<Empty> = JWK::new_octet_key(secret_key.as_bytes(), Default::default());
-
-    let jwe = jwe::Compact::new_decrypted(
-        From::from(jwe::RegisteredHeader {
-            cek_algorithm: KeyManagementAlgorithm::ECDH_ES,
-            enc_algorithm: ContentEncryptionAlgorithm::A256GCM,
-            ..Default::default()
-        }),
-        payload.as_bytes().to_vec(),
-    );
-
-    // we need a nonce for AES GCM encryption
-    let nonce = num_bigint::BigUint::from_bytes_le(&vec![0; 96 / 8]);
-    let mut nonce_bytes = nonce.to_bytes_le();
-    nonce_bytes.resize(96 / 8, 0);
-    // nonce = nonce + 1u8;
-
-    // encrypt
-    let options = EncryptionOptions::AES_GCM { nonce: nonce_bytes };
-    let encrypted_jwe = match jwe.encrypt(&key, &options) {
-        Ok(jwe) => jwe,
-        Err(e) => panic!("error encrypting: {}", e),
-    };
-
-    let serialized = serde_json::to_string(&encrypted_jwe).unwrap();
-    println!("serialized: {}", serialized);
-
-    // decrypt
-    let decrypted_jwe = encrypted_jwe
-        .decrypt(&key, KeyManagementAlgorithm::A256GCMKW, ContentEncryptionAlgorithm::A256GCM)
-        .unwrap();
-
-    let decrypted_payload: &Vec<u8> = decrypted_jwe.payload().unwrap();
-    let decrypted_str = str::from_utf8(&*decrypted_payload).unwrap();
-    assert_eq!(decrypted_str, payload);
 }
 
 pub struct Curve25519 {

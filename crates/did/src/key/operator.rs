@@ -10,6 +10,7 @@ use base64ct::{Base64UrlUnpadded, Encoding};
 use core_utils::Kind;
 use curve25519_dalek::edwards::CompressedEdwardsY;
 use multibase::Base::Base58Btc;
+use proof::jose::jwk::{Curve, KeyType, PublicKeyJwk};
 use regex::Regex;
 use serde_json::json;
 
@@ -18,7 +19,6 @@ use crate::did::{self, Error};
 use crate::document::{
     CreateOptions, Document, Operator, PublicKey, PublicKeyFormat, VerificationMethod,
 };
-use proof::jose::jwk::{Curve, KeyType, PublicKeyJwk};
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
 const X25519_CODEC: [u8; 2] = [0xec, 0x01];
@@ -63,7 +63,7 @@ impl Operator for DidKey {
                     verif_type.to_string(): format!("https://w3id.org/security#{verif_type}"),
                 })),
                 PublicKey::Jwk(PublicKeyJwk {
-                    kty: KeyType::OKP,
+                    kty: KeyType::Okp,
                     crv: Curve::Ed25519,
                     x: Base64UrlUnpadded::encode_string(&key_bytes[2..]),
                     ..PublicKeyJwk::default()

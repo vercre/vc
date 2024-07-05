@@ -36,11 +36,9 @@ where
     };
 
     // payload
-    let header_raw = serde_json::to_vec(&header)?;
-    let header_enc = Base64UrlUnpadded::encode_string(&header_raw);
-    let claims_raw = serde_json::to_vec(claims)?;
-    let claims_enc = Base64UrlUnpadded::encode_string(&claims_raw);
-    let payload = format!("{header_enc}.{claims_enc}");
+    let header = Base64UrlUnpadded::encode_string(&serde_json::to_vec(&header)?);
+    let claims = Base64UrlUnpadded::encode_string(&serde_json::to_vec(claims)?);
+    let payload = format!("{header}.{claims}");
 
     // sign
     let sig = signer.try_sign(payload.as_bytes()).await?;

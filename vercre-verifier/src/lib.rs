@@ -169,7 +169,8 @@ pub use openid4vc::Result;
 /// Re-export provider traits and types.
 pub mod provider {
     pub use openid4vc::endpoint::{
-        Algorithm, Callback, ClientMetadata, PublicKeyJwk, Payload, Result, Signer, StateManager, Verifier,
+        Algorithm, Callback, ClientMetadata, Payload, PublicKeyJwk, Result, Signer, StateManager,
+        Verifier,
     };
     pub use openid4vc::presentation::VpFormat;
     pub use openid4vc::{Client, CredentialFormat};

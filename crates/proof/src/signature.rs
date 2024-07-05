@@ -35,5 +35,6 @@ pub trait Verifier: Send + Sync {
     /// # Errors
     ///
     /// Returns an error if the DID URL cannot be dereferenced to a JWK
-    fn deref_jwk(&self, did_url: &str) -> impl Future<Output = anyhow::Result<PublicKeyJwk>> + Send;
+    fn deref_jwk(&self, did_url: &str)
+        -> impl Future<Output = anyhow::Result<PublicKeyJwk>> + Send;
 }

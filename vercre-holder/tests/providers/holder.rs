@@ -18,8 +18,8 @@ use vercre_holder::presentation::{
     RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
 };
 use vercre_holder::provider::{
-    Algorithm, CredentialStorer, IssuerClient, PublicKeyJwk, Result, Signer, StateManager, Verifier,
-    VerifierClient,
+    Algorithm, CredentialStorer, IssuerClient, PublicKeyJwk, Result, Signer, StateManager,
+    Verifier, VerifierClient,
 };
 
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";

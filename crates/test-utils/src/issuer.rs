@@ -4,7 +4,7 @@ use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
 use openid4vc::endpoint::{
-    Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, PublicKeyJwk, Payload, Result,
+    Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Payload, PublicKeyJwk, Result,
     ServerMetadata, Signer, StateManager, Subject, Verifier,
 };
 use openid4vc::issuance::Issuer;

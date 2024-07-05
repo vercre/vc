@@ -255,4 +255,3 @@ pub struct ContentMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     document_metadata: Option<DocumentMetadata>,
 }
-

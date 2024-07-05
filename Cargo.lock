@@ -3502,6 +3502,7 @@ dependencies = [
  "k256",
  "num-bigint",
  "rand 0.8.5",
+ "ring",
  "serde",
  "serde_json",
  "signature",
