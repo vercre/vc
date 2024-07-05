@@ -79,7 +79,7 @@ pub fn encrypt<T: Serialize>(payload: T, recipient_key: &[u8; 32]) -> anyhow::Re
 
     // 9. Generate a random JWE Initialization Vector (nonce) of the correct size
     //    for the content encryption algorithm (A128GCM).
-    let mut iv: Vec<u8> = vec![0; aead::AES_128_GCM.nonce_len()];
+    let mut iv: [u8; aead::NONCE_LEN] = [0; aead::NONCE_LEN];
     OsRng.fill_bytes(&mut iv);
 
     // 12. Create the JSON Header object -> JWE Protected Header.
@@ -89,7 +89,7 @@ pub fn encrypt<T: Serialize>(payload: T, recipient_key: &[u8; 32]) -> anyhow::Re
         apu: Base64UrlUnpadded::encode_string(b"Alice"),
         apv: Base64UrlUnpadded::encode_string(b"Bob"),
         epk,
-        iv: iv.clone(),
+        iv: iv.to_vec(),
         tag: vec![0; TAG_LENGTH],
     };
     let header_bytes = serde_json::to_vec(&header)?;
@@ -117,13 +117,12 @@ pub fn encrypt<T: Serialize>(payload: T, recipient_key: &[u8; 32]) -> anyhow::Re
 }
 
 fn encrypt_cek(cek: &[u8], shared_secret: &[u8]) -> anyhow::Result<Vec<u8>> {
-    let mut nonce: Vec<u8> = vec![0; aead::AES_128_GCM.nonce_len()];
+    let mut nonce: [u8; aead::NONCE_LEN] = [0; aead::NONCE_LEN];
     OsRng.fill_bytes(&mut nonce);
 
-    let aead_nonce =
-        aead::Nonce::try_assume_unique_for_key(&nonce).map_err(|e| anyhow!("nonce issue: {e}"))?;
+    let aead_nonce = aead::Nonce::assume_unique_for_key(nonce);
     let aead_aad = aead::Aad::from(&[]);
-    let mut in_out: Vec<u8> = cek.to_vec();
+    let mut in_out = cek.to_vec();
 
     let encryption_key = aead::UnboundKey::new(&aead::CHACHA20_POLY1305, shared_secret)
         .map_err(|e| anyhow!("key issue: {e}"))?;
@@ -131,7 +130,7 @@ fn encrypt_cek(cek: &[u8], shared_secret: &[u8]) -> anyhow::Result<Vec<u8>> {
 
     let _ = sealing_key
         .seal_in_place_separate_tag(aead_nonce, aead_aad, &mut in_out)
-        .map_err(|e| anyhow!("tag issue: {e}"))?;
+        .map_err(|e| anyhow!("issue encrypting CEK: {e}"))?;
 
     Ok(in_out)
 }
@@ -153,19 +152,6 @@ fn encrypt_content(
         .map_err(|e| anyhow!("tag issue: {e}"))?;
 
     Ok((in_out, tag.as_ref().to_vec()))
-}
-/// The result returned from an encryption operation
-// TODO: Might have to turn this into an enum
-#[derive(Clone, Debug, Eq, PartialEq, Default)]
-pub struct EncryptionResult {
-    /// The initialization vector, or nonce used in the encryption
-    pub nonce: Vec<u8>,
-    /// The encrypted payload
-    pub encrypted: Vec<u8>,
-    /// The authentication tag
-    pub tag: Vec<u8>,
-    /// Additional authenticated data that is integrity protected but not encrypted
-    pub additional_data: Vec<u8>,
 }
 
 /// Decrypt the JWE and return the plaintext.
