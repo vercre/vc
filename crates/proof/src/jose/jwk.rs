@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 
 /// Simplified JSON Web Key (JWK) key structure.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, Eq, PartialEq)]
+#[allow(clippy::module_name_repetitions)]
 pub struct PublicKeyJwk {
     /// Key identifier.
     /// For example, "_Qq0UL2Fq651Q0Fjd6TvnYE-faHiOpRlPVQcY_-tA4A".
