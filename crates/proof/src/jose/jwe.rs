@@ -10,7 +10,7 @@
 //! ## Note
 //!
 //! If the JWT is only a JWE, iss, exp and aud MUST be omitted in the JWT Claims
-//! Set of the JWE, and the processing rules as per JARM Section 2.4 related to
+//! of the JWE, and the processing rules as per JARM Section 2.4 related to
 //! these claims do not apply. [OpenID4VP] JWT - JWE
 //!
 //! [RFC7516]: https://www.rfc-editor.org/rfc/rfc7516
@@ -21,7 +21,6 @@
 // https://www.iana.org/assignments/jose/jose.xhtml#web-signature-encryption-algorithms
 
 // https://www.rfc-editor.org/rfc/rfc7518#appendix-C:
-
 // {
 // 	"alg":"ECDH-ES",
 // 	"enc":"A128GCM",

@@ -1,16 +1,14 @@
 #![allow(missing_docs)]
 
-use std::sync::LazyLock;
+// use std::sync::LazyLock;
 
 use anyhow::anyhow;
-use dryoc::dryocbox::*;
 use ed25519_dalek::{SigningKey, VerifyingKey};
-use proof::{Decryptor, Encryptor, Keyring, Signer, Verifier};
+use proof::{Keyring, Signer, Verifier};
 use rand::rngs::OsRng;
 use signature::{Signer as _, Verifier as _};
-use x25519_dalek::StaticSecret;
 
-static KEYPAIR: LazyLock<KeyPair> = LazyLock::new(|| KeyPair::gen());
+// static KEYPAIR: LazyLock<KeyPair> = LazyLock::new(|| KeyPair::gen());
 
 fn main() {
     // let keyring = Curve25519::new();
@@ -36,7 +34,6 @@ fn main() {
 
 pub struct Curve25519 {
     signing_key: SigningKey,
-    secret_key: StaticSecret,
 }
 
 impl Curve25519 {
@@ -44,19 +41,14 @@ impl Curve25519 {
     fn new() -> Self {
         Self {
             signing_key: SigningKey::generate(&mut OsRng),
-            secret_key: StaticSecret::random_from_rng(&mut OsRng),
         }
     }
 
     #[allow(dead_code)]
-    fn from_bytes(signing_key_bytes: [u8; 32], secret_key_bytes: [u8; 32]) -> anyhow::Result<Self> {
+    fn from_bytes(signing_key_bytes: [u8; 32]) -> anyhow::Result<Self> {
         let signing_key = SigningKey::from(signing_key_bytes);
-        let secret_key = StaticSecret::from(secret_key_bytes);
 
-        Ok(Self {
-            signing_key,
-            secret_key,
-        })
+        Ok(Self { signing_key })
     }
 }
 
@@ -84,60 +76,5 @@ impl Verifier for Curve25519 {
         let sig_bytes: &[u8; 64] = signature.try_into()?;
         let sig = ed25519_dalek::Signature::from_bytes(sig_bytes);
         verifying_key.verify(data, &sig).map_err(|_| anyhow!("signature verification failed"))
-    }
-}
-
-impl Encryptor for Curve25519 {
-    type PublicKey = x25519_dalek::PublicKey;
-
-    // fn encrypt(
-    //     &self, msg: &[u8], nonce: &[u8; 24], public_key: &Self::PublicKey,
-    // ) -> anyhow::Result<Vec<u8>> {
-    //     let mut db_nonce = StackByteArray::new();
-    //     db_nonce.copy_from_slice(nonce.as_slice());
-
-    //     let mut db_public_key = StackByteArray::new();
-    //     db_public_key.copy_from_slice(&public_key.to_bytes());
-
-    //     let mut db_secret_key = StackByteArray::new(); // ByteArray
-    //     db_secret_key.copy_from_slice(&self.secret_key.to_bytes());
-
-    //     let dryocbox = DryocBox::encrypt_to_vecbox(msg, &db_nonce, &db_public_key, &db_secret_key)?;
-    //     Ok(dryocbox.to_vec())
-    // }
-
-    fn encrypt(&self, msg: &[u8], public_key: &Self::PublicKey) -> anyhow::Result<Vec<u8>> {
-        let mut recipient_public_key = StackByteArray::new();
-        recipient_public_key.copy_from_slice(&public_key.to_bytes());
-        let dryocbox = DryocBox::seal_to_vecbox(msg, &recipient_public_key)?;
-        Ok(dryocbox.to_vec())
-    }
-
-    fn public_key(&self) -> Self::PublicKey {
-        x25519_dalek::PublicKey::from(&self.secret_key)
-    }
-}
-
-impl Decryptor for Curve25519 {
-    type PublicKey = x25519_dalek::PublicKey;
-
-    // fn decrypt(&self, ciphertext: &[u8], nonce: &[u8; 24]) -> anyhow::Result<Vec<u8>> {
-    //     let dryocbox = DryocBox::from_bytes(ciphertext)?;
-
-    //     let mut db_nonce = StackByteArray::new();
-    //     db_nonce.copy_from_slice(nonce.as_slice());
-
-    //     let mut db_public_key = StackByteArray::new();
-    //     db_public_key.copy_from_slice(&self.public_key().to_bytes());
-
-    //     Ok(dryocbox.decrypt_to_vec(&db_nonce, &db_public_key, &KEYPAIR.secret_key)?)
-
-    //     // simple alternative to above
-    //     Ok(dryocbox.unseal_to_vec(&KEYPAIR)?)
-    // }
-
-    fn decrypt(&self, ciphertext: &[u8]) -> anyhow::Result<Vec<u8>> {
-        let dryocbox = DryocBox::from_sealed_bytes(ciphertext)?;
-        Ok(dryocbox.unseal_to_vec(&KEYPAIR)?)
     }
 }
