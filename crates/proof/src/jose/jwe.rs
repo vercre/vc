@@ -43,21 +43,16 @@
 use std::fmt::{self, Display};
 use std::str::FromStr;
 
-use aes_gcm::aead::generic_array::typenum::U24;
 use aes_gcm::aead::KeyInit; // heapless,
 use aes_gcm::{AeadInPlace, Aes128Gcm, Key, Nonce};
 use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded as Base64, Encoding};
-// use core_utils::Quota;
 use crypto_box::aead::{Aead, AeadCore, OsRng};
 use crypto_box::{ChaChaBox, PublicKey, SecretKey, Tag};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::jose::jwk::{Curve, KeyType, PublicKeyJwk};
-
-const CEK_LENGTH: usize = 16;
-const TAG_LENGTH: usize = 16;
 
 /// Encrypt the plaintext and return the JWE.
 ///
@@ -69,15 +64,13 @@ pub fn encrypt<T: Serialize>(plaintext: T, recipient_key: &[u8; 32]) -> anyhow::
 
     // 2. Generate a CEK — Content Encryption Mode — to encrypt payload
     let cek = Aes128Gcm::generate_key(&mut OsRng);
-    let nonce: Nonce<U24> = Nonce::default();
-    // ChaChaBox::generate_nonce(&mut OsRng);
 
     // 3. Use Key Agreement Algorithm (ECDH) to compute a shared secret to wrap the CEK.
     // 4. Encrypt the CEK and set as the JWE Encrypted Key.
     let ephemeral_secret = SecretKey::generate(&mut OsRng);
     let cek_box = ChaChaBox::new(&PublicKey::from(*recipient_key), &ephemeral_secret);
     let encrypted_cek = cek_box
-        .encrypt(&nonce, cek.as_slice())
+        .encrypt(&Nonce::default(), cek.as_slice())
         .map_err(|e| anyhow!("issue encrypting CEK: {e}"))?;
 
     // 9. Generate a random JWE Initialization Vector (nonce) of the correct size
@@ -96,15 +89,12 @@ pub fn encrypt<T: Serialize>(plaintext: T, recipient_key: &[u8; 32]) -> anyhow::
             x: Base64::encode_string(&ephemeral_secret.public_key().to_bytes()),
             ..PublicKeyJwk::default()
         },
-        iv: iv.to_vec(),
-        // tag: vec![0; TAG_LENGTH],
-        ..Header::default()
     };
-    let header_bytes = serde_json::to_vec(&header)?;
+    let protected = Base64::encode_string(&serde_json::to_vec(&header)?);
 
     // 14. Set the Additional Authenticated Data (AAD) encryption parameter to
     //     Encoded Protected Header (step 13)
-    let aad = Base64::encode_string(&header_bytes);
+    let aad = &protected;
 
     // 15. Encrypt plaintext using the CEK, the JWE Initialization Vector, and the
     //     Additional Authenticated Data using the content encryption algorithm to
@@ -116,10 +106,9 @@ pub fn encrypt<T: Serialize>(plaintext: T, recipient_key: &[u8; 32]) -> anyhow::
         .map_err(|e| anyhow!("issue encrypting: {e}"))?;
 
     let jwe = Jwe {
-        protected: aad.clone(),
+        protected,
         encrypted_key: Base64::encode_string(&encrypted_cek),
         iv: Base64::encode_string(&iv),
-        aad,
         ciphertext: Base64::encode_string(&buffer),
         tag: Base64::encode_string(&tag),
         ..Jwe::default()
@@ -137,44 +126,38 @@ pub fn decrypt(compact_jwe: &str, secret_key: &[u8; 32]) -> anyhow::Result<Vec<u
     // deserialise compact jwe
     let jwe = Jwe::from_str(compact_jwe)?;
 
-    // get the header, encrypted key, iv, aad, ciphertext, and tag
-    let header_bytes = Base64::decode_vec(&jwe.protected)
-        .map_err(|e| anyhow!("unable to base64 decode protected header: {e}"))?;
-    let header: Header = serde_json::from_slice(&header_bytes)
+    // decode header, encrypted key, iv, ciphertext, and tag
+    let protected = Base64::decode_vec(&jwe.protected)
+        .map_err(|e| anyhow!("issue decoding `protected` header: {e}"))?;
+    let header: Header = serde_json::from_slice(&protected)
         .map_err(|e| anyhow!("issue deserializing header: {e}"))?;
+    let encrypted_cek = Base64::decode_vec(&jwe.encrypted_key)
+        .map_err(|e| anyhow!("issue decoding `encrypted_key`: {e}"))?;
+    let iv = Base64::decode_vec(&jwe.iv).map_err(|e| anyhow!("issue decoding `iv`: {e}"))?;
+    let ciphertext = Base64::decode_vec(&jwe.ciphertext)
+        .map_err(|e| anyhow!("issue decoding `ciphertext`: {e}"))?;
+    let tag = Base64::decode_vec(&jwe.tag).map_err(|e| anyhow!("issue decoding `tag`: {e}"))?;
 
+    // sender's public key
     let sender_key = Base64::decode_vec(&header.epk.x)
-        .map_err(|e| anyhow!("issue deserializing sender public key `x`: {e}"))?;
+        .map_err(|e| anyhow!("issue decoding sender public key `x`: {e}"))?;
     let sender_key: &[u8; crypto_box::KEY_SIZE] = sender_key.as_slice().try_into()?;
 
-    let encrypted_cek = Base64::decode_vec(&jwe.encrypted_key)
-        .map_err(|e| anyhow!("issue deserializing encrypted_key: {e}"))?;
-    let iv = Base64::decode_vec(&jwe.iv).map_err(|e| anyhow!("issue deserializing iv: {e}"))?;
-    // let aad = Base64::decode_vec(&jwe.aad).map_err(|e| anyhow!("issue deserializing aad: {e}"))?;
-    let ciphertext = Base64::decode_vec(&jwe.ciphertext)
-        .map_err(|e| anyhow!("issue deserializing ciphertext: {e}"))?;
-    let tag = Base64::decode_vec(&jwe.tag).map_err(|e| anyhow!("issue deserializing tag: {e}"))?;
-
-    // Decrypt the CEK
-    let nonce: Nonce<U24> = Nonce::default();
+    // Decrypt CEK
     let recipient_secret = SecretKey::from(*secret_key);
     let cek_box = ChaChaBox::new(&PublicKey::from(*sender_key), &recipient_secret);
     let cek = cek_box
-        .decrypt(&nonce, encrypted_cek.as_slice())
+        .decrypt(&Nonce::default(), encrypted_cek.as_slice())
         .map_err(|e| anyhow!("issue decrypting CEK: {}", e.to_string()))?;
 
-    // Decrypt the content
+    // Decrypt content
     let mut buffer = ciphertext;
-
-    let aad = Base64::encode_string(&header_bytes);
+    let aad = &jwe.protected.as_bytes();
+    let nonce = Nonce::from_slice(&iv);
+    let tag = Tag::from_slice(&tag);
 
     Aes128Gcm::new(Key::<Aes128Gcm>::from_slice(&cek))
-        .decrypt_in_place_detached(
-            Nonce::from_slice(&iv),
-            aad.as_bytes(),
-            &mut buffer,
-            Tag::from_slice(&tag),
-        )
+        .decrypt_in_place_detached(nonce, aad, &mut buffer, tag)
         .map_err(|e| anyhow!("issue decrypting: {e}"))?;
 
     Ok(buffer)
@@ -203,12 +186,11 @@ pub struct Header {
     /// The ephemeral public key created by the originator for use in key agreement
     /// algorithms.
     pub epk: PublicKeyJwk,
+    // /// Initialization vector, or nonce, used in the encryption
+    // pub iv: Vec<u8>,
 
-    /// Initialization vector, or nonce, used in the encryption
-    pub iv: Vec<u8>,
-
-    /// The authentication tag resulting from the encryption
-    pub tag: Vec<u8>,
+    // /// The authentication tag resulting from the encryption
+    // pub tag: Vec<u8>,
 }
 
 /// In JWE JSON serialization, one or more of the JWE Protected Header, JWE Shared
@@ -228,17 +210,15 @@ pub struct Jwe {
     /// Encrypted key, as a base64Url encoded string.
     encrypted_key: String,
 
-    /// JWE initialization vector, as a base64Url encoded string.
+    /// JWE initialization vector (nonce), as a base64Url encoded string.
     iv: String,
-
-    /// JWE AAD, as a base64Url encoded string.
-    aad: String,
 
     /// JWE Ciphertext, as a base64Url encoded string.
     ciphertext: String,
 
-    /// Authentication tag, as a base64Url encoded string.
+    /// Authentication tag resulting from the encryption, as a base64Url encoded string.
     tag: String,
+    //
     // /// Recipients array contains information specific to a single
     // /// recipient.
     // recipients: Quota<Recipient>,
