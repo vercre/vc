@@ -12,7 +12,7 @@ pub mod signature;
 // use signature::Keypair;
 
 /// A `Keyring` contains a set of related keys
-pub trait Keyring: Signer {}
+pub trait Keyring: Signer + Encryptor {}
 
 pub trait Signer {
     type VerifyingKey;
@@ -28,4 +28,19 @@ pub trait Verifier {
     fn verify(
         &self, data: &[u8], signature: &[u8], verifying_key: &Self::VerifyingKey,
     ) -> anyhow::Result<()>;
+}
+
+pub trait Encryptor {
+    type PublicKey;
+
+    // ECDH-ES, RSA
+    fn encrypt(&self, msg: &[u8], public_key: &Self::PublicKey) -> anyhow::Result<Vec<u8>>;
+
+    fn public_key(&self) -> Self::PublicKey;
+}
+
+pub trait Decryptor {
+    type PublicKey;
+
+    fn decrypt(&self, encrypted: &[u8]) -> anyhow::Result<Vec<u8>>;
 }
