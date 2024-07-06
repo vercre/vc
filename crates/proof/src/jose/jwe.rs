@@ -1,11 +1,13 @@
 //! # JSON Web Encryption (JWE)
 //!
 //! JWE ([RFC7516]) specifies how encrypted content can be represented using JSON.
-//!
 //! See JWA ([RFC7518]) for more on the cyptographic algorithms and identifiers
 //! used.
 //!
-//! CFRG Elliptic Curve Diffie-Hellman (ECDH) and Signatures in JOSE ([ECDH])
+//! See also:
+//!
+//! - https://www.iana.org/assignments/jose/jose.xhtml#web-signature-encryption-algorithms
+//! - CFRG Elliptic Curve Diffie-Hellman (ECDH) and Signatures in JOSE ([ECDH])
 //!
 //! ## Note
 //!
@@ -18,29 +20,34 @@
 //! [IANA]: https://www.iana.org/assignments/jose/jose.xhtml
 //! [ECDH]: https://tools.ietf.org/html/rfc8037
 
-// https://www.iana.org/assignments/jose/jose.xhtml#web-signature-encryption-algorithms
-
-// https://www.rfc-editor.org/rfc/rfc7518#appendix-C:
-// {
-// 	"alg":"ECDH-ES",
-// 	"enc":"A128GCM",
-// 	"apu":"QWxpY2U",
-// 	"apv":"Qm9i",
-// 	"epk": {
-// 		"kty":"EC",
-//         "crv":"P-256",
-//         "x":"gI0GAILBdu7T53akrFmMyGcsF3n5dO7MmwNBHKW5SV0",
-//         "y":"SLW_xSffzlPWrHEVI30DHM_4egVwt3NQqeUD7nMFpps"
-// 	}
-// }
+//! # Example
+//!
+//! Reference JSON for ECDH/A128GCM from specification
+//! (https://www.rfc-editor.org/rfc/rfc7518#appendix-C):
+//!
+//!```json
+//! {
+//! 	"alg":"ECDH-ES",
+//! 	"enc":"A128GCM",
+//! 	"apu":"QWxpY2U",
+//! 	"apv":"Qm9i",
+//! 	"epk": {
+//! 		"kty":"EC",
+//!         "crv":"P-256",
+//!         "x":"gI0GAILBdu7T53akrFmMyGcsF3n5dO7MmwNBHKW5SV0",
+//!         "y":"SLW_xSffzlPWrHEVI30DHM_4egVwt3NQqeUD7nMFpps"
+//! 	}
+//! }
+//! ```
 
 use std::fmt::{self, Display};
+use std::str::FromStr;
 
-use aes_gcm::aead::KeyInit;
-use aes_gcm::{AeadInPlace, Aes128Gcm};
+use aes_gcm::aead::KeyInit; // heapless,
+use aes_gcm::{AeadInPlace, Aes128Gcm, Key, Nonce};
 use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded as Base64, Encoding};
-use core_utils::Quota;
+// use core_utils::Quota;
 use crypto_box::aead::{Aead, AeadCore, OsRng};
 use crypto_box::{ChaChaBox, PublicKey, SecretKey};
 use serde::{Deserialize, Serialize};
@@ -52,7 +59,8 @@ const CEK_LENGTH: usize = 16;
 const TAG_LENGTH: usize = 16;
 
 /// Encrypt the plaintext and return the JWE.
-#[allow(dead_code)]
+///
+/// N.B. We currently only support ECDH-ES key agreement and A128GCM content encryption.
 pub fn encrypt<T: Serialize>(plaintext: T, recipient_key: &[u8; 32]) -> anyhow::Result<String> {
     // 1. Key Management Mode determines the Content Encryption Key (CEK)
     //     - alg: "ECDH-ES" (Diffie-Hellman Ephemeral Static key agreement using Concat KDF)
@@ -63,9 +71,8 @@ pub fn encrypt<T: Serialize>(plaintext: T, recipient_key: &[u8; 32]) -> anyhow::
 
     // 3. Use Key Agreement Algorithm (ECDH) to compute a shared secret to wrap the CEK.
     // 4. Encrypt the CEK and set as the JWE Encrypted Key.
-    let sender_secret = SecretKey::generate(&mut OsRng);
-    let cek_box = ChaChaBox::new(&PublicKey::from(*recipient_key), &sender_secret);
-
+    let ephemeral_secret = SecretKey::generate(&mut OsRng);
+    let cek_box = ChaChaBox::new(&PublicKey::from(*recipient_key), &ephemeral_secret);
     let encrypted_cek = cek_box
         .encrypt(&ChaChaBox::generate_nonce(&mut OsRng), cek.as_slice())
         .map_err(|e| anyhow!("issue encrypting CEK: {e}"))?;
@@ -83,7 +90,7 @@ pub fn encrypt<T: Serialize>(plaintext: T, recipient_key: &[u8; 32]) -> anyhow::
         epk: PublicKeyJwk {
             kty: KeyType::Okp,
             crv: Curve::Ed25519,
-            x: Base64::encode_string(&sender_secret.public_key().to_bytes()),
+            x: Base64::encode_string(&ephemeral_secret.public_key().to_bytes()),
             ..PublicKeyJwk::default()
         },
         iv: iv.to_vec(),
@@ -99,18 +106,18 @@ pub fn encrypt<T: Serialize>(plaintext: T, recipient_key: &[u8; 32]) -> anyhow::
     //     Additional Authenticated Data using the content encryption algorithm to
     //     create the JWE Ciphertext value and the JWE Authentication Tag (which is
     //     the Authentication Tag output from the encryption operation).
-    let mut in_out = serde_json::to_vec(&plaintext)?;
+    let mut buffer = serde_json::to_vec(&plaintext)?;
     let tag = Aes128Gcm::new(&cek)
-        .encrypt_in_place_detached(&iv, aad, &mut in_out)
+        .encrypt_in_place_detached(&iv, aad, &mut buffer)
         .map_err(|e| anyhow!("issue encrypting: {e}"))?;
 
     let jwe = Jwe {
-        protected: Some(Base64::encode_string(&serde_json::to_vec(&header_bytes)?)),
+        protected: Base64::encode_string(&header_bytes),
         encrypted_key: Base64::encode_string(&encrypted_cek),
-        iv: Some(Base64::encode_string(&iv)),
-        aad: Some(Base64::encode_string(aad)),
-        ciphertext: Base64::encode_string(&in_out),
-        tag: Some(Base64::encode_string(&tag)),
+        iv: Base64::encode_string(&iv),
+        aad: Base64::encode_string(aad),
+        ciphertext: Base64::encode_string(&buffer),
+        tag: Base64::encode_string(&tag),
         ..Jwe::default()
     };
 
@@ -118,10 +125,45 @@ pub fn encrypt<T: Serialize>(plaintext: T, recipient_key: &[u8; 32]) -> anyhow::
     Ok(jwe.to_string())
 }
 
+// use aes_gcm::aead::heapless::Vec;
+// use aes_gcm::AesGcm;
+
 /// Decrypt the JWE and return the plaintext.
-#[allow(dead_code)]
-pub fn decrypt() -> anyhow::Result<String> {
-    todo!()
+pub fn decrypt(compact_jwe: &str) -> anyhow::Result<Vec<u8>> {
+    // deserialise compact jwe
+    let jwe = Jwe::from_str(compact_jwe)?;
+
+    // get the header, encrypted key, iv, aad, ciphertext, and tag
+    let header_bytes = Base64::decode_vec(&jwe.protected)
+        .map_err(|e| anyhow!("unable to base64 decode protected header: {e}"))?;
+    let header: Header = serde_json::from_slice(&header_bytes)
+        .map_err(|e| anyhow!("issue deserializing header: {e}"))?;
+
+    let sender_key = Base64::decode_vec(&header.epk.x)
+        .map_err(|e| anyhow!("issue deserializing sender public key `x`: {e}"))?;
+    let sender_key: &[u8; crypto_box::KEY_SIZE] = sender_key.as_slice().try_into()?;
+
+    let encrypted_cek = Base64::decode_vec(&jwe.encrypted_key)
+        .map_err(|e| anyhow!("issue deserializing encrypted_key: {e}"))?;
+    let iv = Base64::decode_vec(&jwe.iv).map_err(|e| anyhow!("issue deserializing iv: {e}"))?;
+    let aad = Base64::decode_vec(&jwe.aad).map_err(|e| anyhow!("issue deserializing aad: {e}"))?;
+    let ciphertext = Base64::decode_vec(&jwe.ciphertext)
+        .map_err(|e| anyhow!("issue deserializing ciphertext: {e}"))?;
+
+    // Decrypt the CEK
+    let ephemeral_secret = SecretKey::generate(&mut OsRng);
+    let cek_box = ChaChaBox::new(&PublicKey::from(*sender_key), &ephemeral_secret);
+    let cek = cek_box
+        .decrypt(&ChaChaBox::generate_nonce(&mut OsRng), encrypted_cek.as_slice())
+        .map_err(|e| anyhow!("issue decrypting CEK: {}", e.to_string()))?;
+
+    // Decrypt the content
+    let mut buffer = ciphertext;
+    Aes128Gcm::new(&Key::<Aes128Gcm>::from_slice(&cek))
+        .decrypt_in_place(&Nonce::from_slice(&iv), &aad, &mut buffer)
+        .map_err(|e| anyhow!("issue decrypting: {e}"))?;
+
+    Ok(buffer)
 }
 
 /// Represents the JWE header.
@@ -163,8 +205,7 @@ pub struct Header {
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Jwe {
     /// JWE protected header, as a base64Url encoded string.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    protected: Option<String>,
+    protected: String,
 
     /// Shared unprotected header as a JSON object.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -174,23 +215,19 @@ pub struct Jwe {
     encrypted_key: String,
 
     /// JWE initialization vector, as a base64Url encoded string.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    iv: Option<String>,
+    iv: String,
 
     /// JWE AAD, as a base64Url encoded string.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    aad: Option<String>,
+    aad: String,
 
     /// JWE Ciphertext, as a base64Url encoded string.
     ciphertext: String,
 
     /// Authentication tag, as a base64Url encoded string.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    tag: Option<String>,
-
-    /// Recipients array contains information specific to a single
-    /// recipient.
-    recipients: Quota<Recipient>,
+    tag: String,
+    // /// Recipients array contains information specific to a single
+    // /// recipient.
+    // recipients: Quota<Recipient>,
 }
 
 /// Compact Serialization
@@ -201,13 +238,33 @@ pub struct Jwe {
 ///     + base64(JWE Authentication Tag)
 impl Display for Jwe {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let header = self.protected.as_ref().map_or("", String::as_str);
-        let cek = &self.encrypted_key;
-        let iv = self.iv.as_ref().map_or("", String::as_str);
+        let protected = &self.protected;
+        let encrypted_key = &self.encrypted_key;
+        let iv = &self.iv;
         let ciphertext = &self.ciphertext;
-        let tag = self.tag.as_ref().map_or("", String::as_str);
+        let tag = &self.tag;
 
-        write!(f, "{header}.{cek}.{iv}.{ciphertext}.{tag}")
+        write!(f, "{protected}.{encrypted_key}.{iv}.{ciphertext}.{tag}")
+    }
+}
+
+impl FromStr for Jwe {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parts: Vec<&str> = s.split('.').collect();
+        if parts.len() != 5 {
+            return Err(anyhow!("invalid JWE"));
+        }
+
+        Ok(Jwe {
+            protected: parts[0].to_string(),
+            encrypted_key: parts[1].to_string(),
+            iv: parts[2].to_string(),
+            ciphertext: parts[3].to_string(),
+            tag: parts[4].to_string(),
+            ..Jwe::default()
+        })
     }
 }
 
@@ -241,19 +298,18 @@ pub enum EncryptionAlgorithm {
 
 #[cfg(test)]
 mod test {
-    // use x25519_dalek::StaticSecret;
     use x25519_dalek::{EphemeralSecret, PublicKey};
 
     use super::*;
 
     #[test]
     fn test_encrypt() {
-        // let secret_key = StaticSecret::random_from_rng(&mut OsRng);
-
         let recipient_secret = EphemeralSecret::random_from_rng(&mut OsRng);
         let recipient_public = PublicKey::from(&recipient_secret);
 
-        let res = encrypt("test", &recipient_public.to_bytes());
-        println!("{:?}", res);
+        let jwe = encrypt("test", &recipient_public.to_bytes()).expect("should encrypt");
+        let plain = decrypt(&jwe).expect("should decrypt");
+
+        println!("{}", String::from_utf8(plain).expect("should convert to string"));
     }
 }
