@@ -31,7 +31,7 @@ pub trait Verifier {
 }
 
 pub trait Encryptor {
-    type PublicKey;
+    // type PublicKey;
 
     // ECDH-ES, RSA
     fn encrypt(&self, plaintext: &[u8], recipient_public_key: &[u8]) -> anyhow::Result<Vec<u8>>;
@@ -40,7 +40,7 @@ pub trait Encryptor {
 }
 
 pub trait Decryptor {
-    type PublicKey;
+    // type PublicKey;
 
     fn decrypt(&self, ciphertext: &[u8], sender_public_key: &[u8]) -> anyhow::Result<Vec<u8>>;
 }

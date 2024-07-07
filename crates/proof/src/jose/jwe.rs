@@ -49,6 +49,7 @@ use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded as Base64, Encoding};
 use crypto_box::aead::{AeadCore, OsRng};
 use crypto_box::Tag;
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -89,23 +90,24 @@ pub fn encrypt<T: Serialize>(
             ..PublicKeyJwk::default()
         },
     };
-    let protected = Base64::encode_string(&serde_json::to_vec(&header)?);
 
     // 14. Set the Additional Authenticated Data (AAD) encryption parameter to
     //     Encoded Protected Header (step 13)
-    let aad = &protected;
+    let aad = &Base64::encode_string(&serde_json::to_vec(&header)?);
 
     // 15. Encrypt plaintext using the CEK, the JWE Initialization Vector, and the
     //     Additional Authenticated Data using the content encryption algorithm to
     //     create the JWE Ciphertext value and the JWE Authentication Tag (which is
     //     the Authentication Tag output from the encryption operation).
     let mut buffer = serde_json::to_vec(&plaintext)?;
+    // let mut buffer = bincode::serialize(&plaintext)?;
+
     let tag = Aes128Gcm::new(&cek)
         .encrypt_in_place_detached(&iv, aad.as_bytes(), &mut buffer)
         .map_err(|e| anyhow!("issue encrypting: {e}"))?;
 
     let jwe = Jwe {
-        protected,
+        protected: header,
         encrypted_key: Base64::encode_string(&encrypted_cek),
         iv: Base64::encode_string(&iv),
         ciphertext: Base64::encode_string(&buffer),
@@ -121,15 +123,21 @@ pub fn encrypt<T: Serialize>(
 // use aes_gcm::AesGcm;
 
 /// Decrypt the JWE and return the plaintext.
-pub fn decrypt(compact_jwe: &str, decryptor: &impl Decryptor) -> anyhow::Result<Vec<u8>> {
-    // deserialise compact jwe
+pub fn decrypt<T: DeserializeOwned>(
+    compact_jwe: &str, decryptor: &impl Decryptor,
+) -> anyhow::Result<T> {
+    // 1. Parse the JWE to extract the serialized values of it's components.
+    // 3. Verify the JWE Protected Header.
+    // 4. If using JWE Compact Serialization, let JOSE Header = JWE Protected Header.
     let jwe = Jwe::from_str(compact_jwe)?;
 
-    // Decode Compact JWE () header, encrypted key, iv, ciphertext, and tag)
-    let protected = Base64::decode_vec(&jwe.protected)
-        .map_err(|e| anyhow!("issue decoding `protected` header: {e}"))?;
-    let header: Header = serde_json::from_slice(&protected)
-        .map_err(|e| anyhow!("issue deserializing header: {e}"))?;
+    // 2. Base64url decode the JWE Protected Header, JWE Encrypted Key,
+    //    JWE Initialization Vector, JWE Ciphertext, JWE Authentication Tag, and
+    //    JWE AAD,
+    // let protected = Base64::decode_vec(&jwe.protected)
+    //     .map_err(|e| anyhow!("issue decoding `protected` header: {e}"))?;
+    // let header: Header = serde_json::from_slice(&protected)
+    //     .map_err(|e| anyhow!("issue deserializing header: {e}"))?;
     let encrypted_cek = Base64::decode_vec(&jwe.encrypted_key)
         .map_err(|e| anyhow!("issue decoding `encrypted_key`: {e}"))?;
     let iv = Base64::decode_vec(&jwe.iv).map_err(|e| anyhow!("issue decoding `iv`: {e}"))?;
@@ -137,24 +145,70 @@ pub fn decrypt(compact_jwe: &str, decryptor: &impl Decryptor) -> anyhow::Result<
         .map_err(|e| anyhow!("issue decoding `ciphertext`: {e}"))?;
     let tag = Base64::decode_vec(&jwe.tag).map_err(|e| anyhow!("issue decoding `tag`: {e}"))?;
 
-    // Decrypt CEK
-    let sender_key = Base64::decode_vec(&header.epk.x)
+    // 6. Determine the Key Management Mode specified by "alg"
+
+    // 9. When Key Wrapping, Key Encryption, or Key Agreement with Key Wrapping are
+    //    employed, decrypt the JWE Encrypted Key to produce the CEK.
+    let sender_key = Base64::decode_vec(&jwe.protected.epk.x)
         .map_err(|e| anyhow!("issue decoding sender public key `x`: {e}"))?;
     let sender_key: &[u8; crypto_box::KEY_SIZE] = sender_key.as_slice().try_into()?;
 
     let cek = decryptor.decrypt(&encrypted_cek, sender_key)?;
 
-    // Decrypt content
+    // 12. Record whether the CEK could be successfully determined for this recipient.
+    // 14. Compute the Encoded Protected Header value base64(JWE Protected Header).
+    let protected = serde_json::to_vec(&jwe.protected)?;
+
+    // 15. Let the Additional Authenticated Data (JWE AAD) = Encoded Protected Header.
+    let aad = Base64::encode_string(&protected);
+
+    // 16. Decrypt the JWE Ciphertext using the CEK, the JWE Initialization Vector,
+    //     the Additional Authenticated Data value, and the JWE Authentication Tag.
     let mut buffer = ciphertext;
-    let aad = &jwe.protected.as_bytes();
     let nonce = Nonce::from_slice(&iv);
     let tag = Tag::from_slice(&tag);
 
     Aes128Gcm::new(Key::<Aes128Gcm>::from_slice(&cek))
-        .decrypt_in_place_detached(nonce, aad, &mut buffer, tag)
+        .decrypt_in_place_detached(nonce, aad.as_bytes(), &mut buffer, tag)
         .map_err(|e| anyhow!("issue decrypting: {e}"))?;
 
-    Ok(buffer)
+    Ok(serde_json::from_slice(&buffer)?)
+    // Ok(bincode::deserialize(&buffer)?)
+}
+
+/// In JWE JSON serialization, one or more of the JWE Protected Header, JWE Shared
+/// Unprotected Header, and JWE Per-Recipient Unprotected Header MUST be present. In
+/// this case, the members of the JOSE Header are the union of the members of the JWE
+/// Protected Header, JWE Shared Unprotected Header, and JWE Per-Recipient Unprotected
+/// Header values that are present.
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct Jwe {
+    /// JWE protected header.
+    protected: Header,
+
+    /// Shared unprotected header as a JSON object.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    unprotected: Option<Value>,
+
+    /// Encrypted key, as a base64Url encoded string.
+    encrypted_key: String,
+
+    /// AAD value, base64url encoded. Not used for JWE Compact Serialization.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    aad: Option<String>,
+
+    /// Initialization vector (nonce), as a base64Url encoded string.
+    iv: String,
+
+    /// Ciphertext, as a base64Url encoded string.
+    ciphertext: String,
+
+    /// Authentication tag resulting from the encryption, as a base64Url encoded string.
+    tag: String,
+    //
+    // /// Recipients array contains information specific to a single
+    // /// recipient.
+    // recipients: Quota<Recipient>,
 }
 
 /// Represents the JWE header.
@@ -180,42 +234,6 @@ pub struct Header {
     /// The ephemeral public key created by the originator for use in key agreement
     /// algorithms.
     pub epk: PublicKeyJwk,
-    // /// Initialization vector, or nonce, used in the encryption
-    // pub iv: Vec<u8>,
-
-    // /// The authentication tag resulting from the encryption
-    // pub tag: Vec<u8>,
-}
-
-/// In JWE JSON serialization, one or more of the JWE Protected Header, JWE Shared
-/// Unprotected Header, and JWE Per-Recipient Unprotected Header MUST be present. In
-/// this case, the members of the JOSE Header are the union of the members of the JWE
-/// Protected Header, JWE Shared Unprotected Header, and JWE Per-Recipient Unprotected
-/// Header values that are present.
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Jwe {
-    /// JWE protected header, as a base64Url encoded string.
-    protected: String,
-
-    /// Shared unprotected header as a JSON object.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    unprotected: Option<Value>,
-
-    /// Encrypted key, as a base64Url encoded string.
-    encrypted_key: String,
-
-    /// JWE initialization vector (nonce), as a base64Url encoded string.
-    iv: String,
-
-    /// JWE Ciphertext, as a base64Url encoded string.
-    ciphertext: String,
-
-    /// Authentication tag resulting from the encryption, as a base64Url encoded string.
-    tag: String,
-    //
-    // /// Recipients array contains information specific to a single
-    // /// recipient.
-    // recipients: Quota<Recipient>,
 }
 
 /// Compact Serialization
@@ -226,7 +244,11 @@ pub struct Jwe {
 ///     + base64(JWE Authentication Tag)
 impl Display for Jwe {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let protected = &self.protected;
+        let protected = match serde_json::to_vec(&self.protected) {
+            Ok(header) => Base64::encode_string(&header),
+            Err(_) => return Err(fmt::Error),
+        };
+
         let encrypted_key = &self.encrypted_key;
         let iv = &self.iv;
         let ciphertext = &self.ciphertext;
@@ -245,8 +267,13 @@ impl FromStr for Jwe {
             return Err(anyhow!("invalid JWE"));
         }
 
+        let protected = Base64::decode_vec(parts[0])
+            .map_err(|e| anyhow!("issue decoding `protected` header: {e}"))?;
+        let protected: Header = serde_json::from_slice(&protected)
+            .map_err(|e| anyhow!("issue deserializing `protected` header: {e}"))?;
+
         Ok(Self {
-            protected: parts[0].to_string(),
+            protected,
             encrypted_key: parts[1].to_string(),
             iv: parts[2].to_string(),
             ciphertext: parts[3].to_string(),
@@ -292,6 +319,22 @@ mod test {
 
     use super::*;
 
+    #[test]
+    fn round_trip() {
+        let key_store = KeyStore::new();
+        let recipient_public = PublicKey::from(&key_store.recipient_secret);
+
+        // round trip: encrypt and then decrypt
+        let plaintext = "The true sign of intelligence is not knowledge but imagination.";
+
+        let compact_jwe =
+            encrypt(plaintext, &recipient_public.to_bytes(), &key_store).expect("should encrypt");
+        let decrypted: String = decrypt(&compact_jwe, &key_store).expect("should decrypt");
+
+        assert_eq!(plaintext, decrypted);
+    }
+
+    // Basic key store for testing
     struct KeyStore {
         sender_secret: SecretKey,
         recipient_secret: SecretKey,
@@ -307,17 +350,15 @@ mod test {
     }
 
     impl Encryptor for KeyStore {
-        type PublicKey = [u8; 32];
-
         fn encrypt(
             &self, plaintext: &[u8], recipient_public_key: &[u8],
         ) -> anyhow::Result<Vec<u8>> {
             let pk: &[u8; 32] = recipient_public_key.try_into()?;
 
-            let cek_box = ChaChaBox::new(&PublicKey::from(*pk), &self.sender_secret);
-            let ciphertext = cek_box
+            let chachabox = ChaChaBox::new(&PublicKey::from(*pk), &self.sender_secret);
+            let ciphertext = chachabox
                 .encrypt(&Nonce::default(), plaintext)
-                .map_err(|e| anyhow!("issue encrypting CEK: {e}"))?;
+                .map_err(|e| anyhow!("issue encrypting: {e}"))?;
 
             Ok(ciphertext)
         }
@@ -328,30 +369,15 @@ mod test {
     }
 
     impl Decryptor for KeyStore {
-        type PublicKey = [u8; 32];
-
         fn decrypt(&self, ciphertext: &[u8], sender_public_key: &[u8]) -> anyhow::Result<Vec<u8>> {
             let pk: &[u8; 32] = sender_public_key.try_into()?;
 
-            let cek_box = ChaChaBox::new(&PublicKey::from(*pk), &self.recipient_secret);
-            let plaintext = cek_box
+            let chachabox = ChaChaBox::new(&PublicKey::from(*pk), &self.recipient_secret);
+            let plaintext = chachabox
                 .decrypt(&Nonce::default(), ciphertext)
-                .map_err(|e| anyhow!("issue decrypting CEK: {}", e.to_string()))?;
+                .map_err(|e| anyhow!("issue decrypting: {}", e.to_string()))?;
 
             Ok(plaintext)
         }
-    }
-
-    #[test]
-    fn round_trip() {
-        let key_store = KeyStore::new();
-        let recipient_public = PublicKey::from(&key_store.recipient_secret);
-
-        // round trip: encrypt and then decrypt
-        let compact_jwe =
-            encrypt("test", &recipient_public.to_bytes(), &key_store).expect("should encrypt");
-        let plaintext = decrypt(&compact_jwe, &key_store).expect("should decrypt");
-
-        println!("{}", String::from_utf8(plaintext).expect("should convert to string"));
     }
 }

@@ -28,6 +28,7 @@ workspace = true
 aes-gcm = "0.10.3"
 anyhow.workspace = true
 base64ct.workspace = true
+# bincode = "1.3.3"
 core-utils.workspace = true
 crypto_box = { version = "0.9.1", features = ["chacha20", "heapless"] }
 ecdsa.workspace = true
@@ -41,4 +42,3 @@ x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
 
 [dev-dependencies]
 signature = "2.2.0"
-

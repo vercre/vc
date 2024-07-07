@@ -80,7 +80,7 @@ impl Verifier for Curve25519 {
 }
 
 impl Encryptor for Curve25519 {
-    type PublicKey = x25519_dalek::PublicKey;
+    // type PublicKey = x25519_dalek::PublicKey;
 
     fn encrypt(&self, _plaintext: &[u8], _recipient_public_key: &[u8]) -> anyhow::Result<Vec<u8>> {
         todo!()
@@ -93,7 +93,7 @@ impl Encryptor for Curve25519 {
 }
 
 impl Decryptor for Curve25519 {
-    type PublicKey = x25519_dalek::PublicKey;
+    // type PublicKey = x25519_dalek::PublicKey;
 
     fn decrypt(&self, _ciphertext: &[u8], _sender_public_key: &[u8]) -> anyhow::Result<Vec<u8>> {
         todo!()
