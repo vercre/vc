@@ -58,7 +58,8 @@ use crate::{Decryptor, Encryptor};
 
 /// Encrypt the plaintext and return the JWE.
 ///
-/// N.B. We currently only support ECDH-ES key agreement and A128GCM content encryption.
+/// N.B. We currently only support ECDH-ES key agreement and A128GCM
+/// content encryption.
 pub fn encrypt<T: Serialize>(
     plaintext: T, recipient_key: &[u8; 32], encryptor: &impl Encryptor,
 ) -> anyhow::Result<String> {
@@ -77,7 +78,7 @@ pub fn encrypt<T: Serialize>(
     //    for the content encryption algorithm (A128GCM).
     let iv = Aes128Gcm::generate_nonce(&mut OsRng);
 
-    // // 12. Create the JSON Header object (JWE Protected Header).
+    // 12. Create the JSON Header object (JWE Protected Header).
     let header = Header {
         alg: CekAlgorithm::EcdhEs,
         enc: EncryptionAlgorithm::A128Gcm,
@@ -100,7 +101,6 @@ pub fn encrypt<T: Serialize>(
     //     create the JWE Ciphertext value and the JWE Authentication Tag (which is
     //     the Authentication Tag output from the encryption operation).
     let mut buffer = serde_json::to_vec(&plaintext)?;
-    // let mut buffer = bincode::serialize(&plaintext)?;
 
     let tag = Aes128Gcm::new(&cek)
         .encrypt_in_place_detached(&iv, aad.as_bytes(), &mut buffer)
@@ -134,10 +134,6 @@ pub fn decrypt<T: DeserializeOwned>(
     // 2. Base64url decode the JWE Protected Header, JWE Encrypted Key,
     //    JWE Initialization Vector, JWE Ciphertext, JWE Authentication Tag, and
     //    JWE AAD,
-    // let protected = Base64::decode_vec(&jwe.protected)
-    //     .map_err(|e| anyhow!("issue decoding `protected` header: {e}"))?;
-    // let header: Header = serde_json::from_slice(&protected)
-    //     .map_err(|e| anyhow!("issue deserializing header: {e}"))?;
     let encrypted_cek = Base64::decode_vec(&jwe.encrypted_key)
         .map_err(|e| anyhow!("issue decoding `encrypted_key`: {e}"))?;
     let iv = Base64::decode_vec(&jwe.iv).map_err(|e| anyhow!("issue decoding `iv`: {e}"))?;
@@ -146,9 +142,11 @@ pub fn decrypt<T: DeserializeOwned>(
     let tag = Base64::decode_vec(&jwe.tag).map_err(|e| anyhow!("issue decoding `tag`: {e}"))?;
 
     // 6. Determine the Key Management Mode specified by "alg"
+    // N.B. not necessary as only ECDH-ES is supported
 
     // 9. When Key Wrapping, Key Encryption, or Key Agreement with Key Wrapping are
     //    employed, decrypt the JWE Encrypted Key to produce the CEK.
+    // TODO: check kty and crv (at present we assume Ed25519)
     let sender_key = Base64::decode_vec(&jwe.protected.epk.x)
         .map_err(|e| anyhow!("issue decoding sender public key `x`: {e}"))?;
     let sender_key: &[u8; crypto_box::KEY_SIZE] = sender_key.as_slice().try_into()?;
@@ -157,10 +155,8 @@ pub fn decrypt<T: DeserializeOwned>(
 
     // 12. Record whether the CEK could be successfully determined for this recipient.
     // 14. Compute the Encoded Protected Header value base64(JWE Protected Header).
-    let protected = serde_json::to_vec(&jwe.protected)?;
-
     // 15. Let the Additional Authenticated Data (JWE AAD) = Encoded Protected Header.
-    let aad = Base64::encode_string(&protected);
+    let aad = jwe.protected.to_string();
 
     // 16. Decrypt the JWE Ciphertext using the CEK, the JWE Initialization Vector,
     //     the Additional Authenticated Data value, and the JWE Authentication Tag.
@@ -173,7 +169,6 @@ pub fn decrypt<T: DeserializeOwned>(
         .map_err(|e| anyhow!("issue decrypting: {e}"))?;
 
     Ok(serde_json::from_slice(&buffer)?)
-    // Ok(bincode::deserialize(&buffer)?)
 }
 
 /// In JWE JSON serialization, one or more of the JWE Protected Header, JWE Shared
@@ -211,6 +206,44 @@ pub struct Jwe {
     // recipients: Quota<Recipient>,
 }
 
+/// Compact Serialization
+///     base64(JWE Protected Header) + '.'
+///     + base64(JWE Encrypted Key) + '.'
+///     + base64(JWE Initialization Vector) + '.'
+///     + base64(JWE Ciphertext) + '.'
+///     + base64(JWE Authentication Tag)
+impl Display for Jwe {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let protected = &self.protected.to_string();
+        let encrypted_key = &self.encrypted_key;
+        let iv = &self.iv;
+        let ciphertext = &self.ciphertext;
+        let tag = &self.tag;
+
+        write!(f, "{protected}.{encrypted_key}.{iv}.{ciphertext}.{tag}")
+    }
+}
+
+impl FromStr for Jwe {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parts: Vec<&str> = s.split('.').collect();
+        if parts.len() != 5 {
+            return Err(anyhow!("invalid JWE"));
+        }
+
+        Ok(Self {
+            protected: Header::from_str(parts[0])?,
+            encrypted_key: parts[1].to_string(),
+            iv: parts[2].to_string(),
+            ciphertext: parts[3].to_string(),
+            tag: parts[4].to_string(),
+            ..Self::default()
+        })
+    }
+}
+
 /// Represents the JWE header.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Header {
@@ -236,50 +269,20 @@ pub struct Header {
     pub epk: PublicKeyJwk,
 }
 
-/// Compact Serialization
-///     base64(JWE Protected Header) + '.'
-///     + base64(JWE Encrypted Key) + '.'
-///     + base64(JWE Initialization Vector) + '.'
-///     + base64(JWE Ciphertext) + '.'
-///     + base64(JWE Authentication Tag)
-impl Display for Jwe {
+/// Serialize Header to base64 encoded string
+impl Display for Header {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let protected = match serde_json::to_vec(&self.protected) {
-            Ok(header) => Base64::encode_string(&header),
-            Err(_) => return Err(fmt::Error),
-        };
-
-        let encrypted_key = &self.encrypted_key;
-        let iv = &self.iv;
-        let ciphertext = &self.ciphertext;
-        let tag = &self.tag;
-
-        write!(f, "{protected}.{encrypted_key}.{iv}.{ciphertext}.{tag}")
+        let bytes = serde_json::to_vec(&self).map_err(|_| fmt::Error)?;
+        write!(f, "{}", Base64::encode_string(&bytes))
     }
 }
 
-impl FromStr for Jwe {
+impl FromStr for Header {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let parts: Vec<&str> = s.split('.').collect();
-        if parts.len() != 5 {
-            return Err(anyhow!("invalid JWE"));
-        }
-
-        let protected = Base64::decode_vec(parts[0])
-            .map_err(|e| anyhow!("issue decoding `protected` header: {e}"))?;
-        let protected: Header = serde_json::from_slice(&protected)
-            .map_err(|e| anyhow!("issue deserializing `protected` header: {e}"))?;
-
-        Ok(Self {
-            protected,
-            encrypted_key: parts[1].to_string(),
-            iv: parts[2].to_string(),
-            ciphertext: parts[3].to_string(),
-            tag: parts[4].to_string(),
-            ..Self::default()
-        })
+        let bytes = Base64::decode_vec(s).map_err(|e| anyhow!("issue decoding header: {e}"))?;
+        serde_json::from_slice(&bytes).map_err(|e| anyhow!("issue deserializing header: {e}"))
     }
 }
 
