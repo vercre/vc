@@ -5,10 +5,10 @@ expression: resolved.metadata
 ---
 {
   "contentType": "application/did+ld+json",
-  "pattern": "^did:key:z[a-km-zA-HJ-NP-Z1-9]+$",
   "did": {
     "didString": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-    "methodSpecificId": "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-    "method": "key"
-  }
+    "method": "key",
+    "methodSpecificId": "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+  },
+  "pattern": "^did:key:z[a-km-zA-HJ-NP-Z1-9]+$"
 }
