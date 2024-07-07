@@ -34,13 +34,13 @@ pub trait Encryptor {
     type PublicKey;
 
     // ECDH-ES, RSA
-    fn encrypt(&self, msg: &[u8], public_key: &Self::PublicKey) -> anyhow::Result<Vec<u8>>;
+    fn encrypt(&self, plaintext: &[u8], recipient_public_key: &[u8]) -> anyhow::Result<Vec<u8>>;
 
-    fn public_key(&self) -> Self::PublicKey;
+    fn public_key(&self) -> Vec<u8>;
 }
 
 pub trait Decryptor {
     type PublicKey;
 
-    fn decrypt(&self, encrypted: &[u8]) -> anyhow::Result<Vec<u8>>;
+    fn decrypt(&self, ciphertext: &[u8], sender_public_key: &[u8]) -> anyhow::Result<Vec<u8>>;
 }

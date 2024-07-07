@@ -47,17 +47,20 @@ use aes_gcm::aead::KeyInit; // heapless,
 use aes_gcm::{AeadInPlace, Aes128Gcm, Key, Nonce};
 use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded as Base64, Encoding};
-use crypto_box::aead::{Aead, AeadCore, OsRng};
-use crypto_box::{ChaChaBox, PublicKey, SecretKey, Tag};
+use crypto_box::aead::{AeadCore, OsRng};
+use crypto_box::Tag;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::jose::jwk::{Curve, KeyType, PublicKeyJwk};
+use crate::{Decryptor, Encryptor};
 
 /// Encrypt the plaintext and return the JWE.
 ///
 /// N.B. We currently only support ECDH-ES key agreement and A128GCM content encryption.
-pub fn encrypt<T: Serialize>(plaintext: T, recipient_key: &[u8; 32]) -> anyhow::Result<String> {
+pub fn encrypt<T: Serialize>(
+    plaintext: T, recipient_key: &[u8; 32], encryptor: &impl Encryptor,
+) -> anyhow::Result<String> {
     // 1. Key Management Mode determines the Content Encryption Key (CEK)
     //     - alg: "ECDH-ES" (Diffie-Hellman Ephemeral Static key agreement using Concat KDF)
     //     - enc: "A128GCM" (128-bit AES-GCM)
@@ -67,11 +70,7 @@ pub fn encrypt<T: Serialize>(plaintext: T, recipient_key: &[u8; 32]) -> anyhow::
 
     // 3. Use Key Agreement Algorithm (ECDH) to compute a shared secret to wrap the CEK.
     // 4. Encrypt the CEK and set as the JWE Encrypted Key.
-    let ephemeral_secret = SecretKey::generate(&mut OsRng);
-    let cek_box = ChaChaBox::new(&PublicKey::from(*recipient_key), &ephemeral_secret);
-    let encrypted_cek = cek_box
-        .encrypt(&Nonce::default(), cek.as_slice())
-        .map_err(|e| anyhow!("issue encrypting CEK: {e}"))?;
+    let encrypted_cek = encryptor.encrypt(&cek, recipient_key)?;
 
     // 9. Generate a random JWE Initialization Vector (nonce) of the correct size
     //    for the content encryption algorithm (A128GCM).
@@ -86,7 +85,7 @@ pub fn encrypt<T: Serialize>(plaintext: T, recipient_key: &[u8; 32]) -> anyhow::
         epk: PublicKeyJwk {
             kty: KeyType::Okp,
             crv: Curve::Ed25519,
-            x: Base64::encode_string(&ephemeral_secret.public_key().to_bytes()),
+            x: Base64::encode_string(&encryptor.public_key()),
             ..PublicKeyJwk::default()
         },
     };
@@ -122,11 +121,11 @@ pub fn encrypt<T: Serialize>(plaintext: T, recipient_key: &[u8; 32]) -> anyhow::
 // use aes_gcm::AesGcm;
 
 /// Decrypt the JWE and return the plaintext.
-pub fn decrypt(compact_jwe: &str, secret_key: &[u8; 32]) -> anyhow::Result<Vec<u8>> {
+pub fn decrypt(compact_jwe: &str, decryptor: &impl Decryptor) -> anyhow::Result<Vec<u8>> {
     // deserialise compact jwe
     let jwe = Jwe::from_str(compact_jwe)?;
 
-    // decode header, encrypted key, iv, ciphertext, and tag
+    // Decode Compact JWE () header, encrypted key, iv, ciphertext, and tag)
     let protected = Base64::decode_vec(&jwe.protected)
         .map_err(|e| anyhow!("issue decoding `protected` header: {e}"))?;
     let header: Header = serde_json::from_slice(&protected)
@@ -138,17 +137,12 @@ pub fn decrypt(compact_jwe: &str, secret_key: &[u8; 32]) -> anyhow::Result<Vec<u
         .map_err(|e| anyhow!("issue decoding `ciphertext`: {e}"))?;
     let tag = Base64::decode_vec(&jwe.tag).map_err(|e| anyhow!("issue decoding `tag`: {e}"))?;
 
-    // sender's public key
+    // Decrypt CEK
     let sender_key = Base64::decode_vec(&header.epk.x)
         .map_err(|e| anyhow!("issue decoding sender public key `x`: {e}"))?;
     let sender_key: &[u8; crypto_box::KEY_SIZE] = sender_key.as_slice().try_into()?;
 
-    // Decrypt CEK
-    let recipient_secret = SecretKey::from(*secret_key);
-    let cek_box = ChaChaBox::new(&PublicKey::from(*sender_key), &recipient_secret);
-    let cek = cek_box
-        .decrypt(&Nonce::default(), encrypted_cek.as_slice())
-        .map_err(|e| anyhow!("issue decrypting CEK: {}", e.to_string()))?;
+    let cek = decryptor.decrypt(&encrypted_cek, sender_key)?;
 
     // Decrypt content
     let mut buffer = ciphertext;
@@ -292,18 +286,72 @@ pub enum EncryptionAlgorithm {
 
 #[cfg(test)]
 mod test {
-    use x25519_dalek::{PublicKey, StaticSecret};
+    // use x25519_dalek::{PublicKey, StaticSecret};
+    use crypto_box::aead::{Aead, OsRng};
+    use crypto_box::{ChaChaBox, PublicKey, SecretKey};
 
     use super::*;
 
+    struct KeyStore {
+        sender_secret: SecretKey,
+        recipient_secret: SecretKey,
+    }
+
+    impl KeyStore {
+        fn new() -> Self {
+            Self {
+                sender_secret: SecretKey::generate(&mut OsRng),
+                recipient_secret: SecretKey::generate(&mut OsRng),
+            }
+        }
+    }
+
+    impl Encryptor for KeyStore {
+        type PublicKey = [u8; 32];
+
+        fn encrypt(
+            &self, plaintext: &[u8], recipient_public_key: &[u8],
+        ) -> anyhow::Result<Vec<u8>> {
+            let pk: &[u8; 32] = recipient_public_key.try_into()?;
+
+            let cek_box = ChaChaBox::new(&PublicKey::from(*pk), &self.sender_secret);
+            let ciphertext = cek_box
+                .encrypt(&Nonce::default(), plaintext)
+                .map_err(|e| anyhow!("issue encrypting CEK: {e}"))?;
+
+            Ok(ciphertext)
+        }
+
+        fn public_key(&self) -> Vec<u8> {
+            self.sender_secret.public_key().as_bytes().to_vec()
+        }
+    }
+
+    impl Decryptor for KeyStore {
+        type PublicKey = [u8; 32];
+
+        fn decrypt(&self, ciphertext: &[u8], sender_public_key: &[u8]) -> anyhow::Result<Vec<u8>> {
+            let pk: &[u8; 32] = sender_public_key.try_into()?;
+
+            let cek_box = ChaChaBox::new(&PublicKey::from(*pk), &self.recipient_secret);
+            let plaintext = cek_box
+                .decrypt(&Nonce::default(), ciphertext)
+                .map_err(|e| anyhow!("issue decrypting CEK: {}", e.to_string()))?;
+
+            Ok(plaintext)
+        }
+    }
+
     #[test]
-    fn test_encrypt() {
-        let recipient_secret = StaticSecret::random_from_rng(&mut OsRng);
-        let recipient_public = PublicKey::from(&recipient_secret);
+    fn round_trip() {
+        let key_store = KeyStore::new();
+        let recipient_public = PublicKey::from(&key_store.recipient_secret);
 
-        let jwe = encrypt("test", &recipient_public.to_bytes()).expect("should encrypt");
-        let plain = decrypt(&jwe, &recipient_secret.to_bytes()).expect("should decrypt");
+        // round trip: encrypt and then decrypt
+        let compact_jwe =
+            encrypt("test", &recipient_public.to_bytes(), &key_store).expect("should encrypt");
+        let plaintext = decrypt(&compact_jwe, &key_store).expect("should decrypt");
 
-        println!("{}", String::from_utf8(plain).expect("should convert to string"));
+        println!("{}", String::from_utf8(plaintext).expect("should convert to string"));
     }
 }

@@ -4,7 +4,7 @@
 
 use anyhow::anyhow;
 use ed25519_dalek::{SigningKey, VerifyingKey};
-use proof::{Keyring, Signer, Verifier};
+use proof::{Decryptor, Encryptor, Keyring, Signer, Verifier};
 use rand::rngs::OsRng;
 use signature::{Signer as _, Verifier as _};
 
@@ -76,5 +76,26 @@ impl Verifier for Curve25519 {
         let sig_bytes: &[u8; 64] = signature.try_into()?;
         let sig = ed25519_dalek::Signature::from_bytes(sig_bytes);
         verifying_key.verify(data, &sig).map_err(|_| anyhow!("signature verification failed"))
+    }
+}
+
+impl Encryptor for Curve25519 {
+    type PublicKey = x25519_dalek::PublicKey;
+
+    fn encrypt(&self, _plaintext: &[u8], _recipient_public_key: &[u8]) -> anyhow::Result<Vec<u8>> {
+        todo!()
+    }
+
+    fn public_key(&self) -> Vec<u8> {
+        // x25519_dalek::PublicKey::from(&self.secret_key)
+        todo!()
+    }
+}
+
+impl Decryptor for Curve25519 {
+    type PublicKey = x25519_dalek::PublicKey;
+
+    fn decrypt(&self, _ciphertext: &[u8], _sender_public_key: &[u8]) -> anyhow::Result<Vec<u8>> {
+        todo!()
     }
 }
