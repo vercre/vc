@@ -45,6 +45,8 @@ use std::fmt::Debug;
 
 use core_utils::gen;
 use dif_exch::{ClaimFormat, PresentationDefinition};
+// re-export for use in constructing a CreateRequestRequest
+pub use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use openid4vc::endpoint::{Callback, ClientMetadata, StateManager};
 use openid4vc::error::Err;
 use openid4vc::presentation::ResponseType;
