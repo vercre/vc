@@ -133,3 +133,23 @@ fn verify_eddsa(jwk: &PublicKeyJwk, msg: &str, sig_bytes: &[u8]) -> anyhow::Resu
         .verify(msg.as_bytes(), &signature)
         .map_err(|e| anyhow!("unable to verify signature: {e}"))
 }
+
+// /// In the JWS JSON Serialization, one or both of the JWS Protected Header and
+// /// JWS Unprotected Header MUST be present.  In this case, the members of the
+// /// JOSE Header are the union of the members of the JWS Protected Header and
+// /// the JWS Unprotected Header values that are present.
+// #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+// pub struct Jwe {
+//     /// JWE protected header.
+//     protected: Header,
+
+//     /// Shared unprotected header as a JSON object.
+//     #[serde(skip_serializing_if = "Option::is_none")]
+//     unprotected: Option<Value>,
+
+//     /// Encrypted key, as a base64Url encoded string.
+//     payload: String,
+
+//     /// AAD value, base64url encoded. Not used for JWE Compact Serialization.
+//     signature: String,
+// }
