@@ -89,20 +89,18 @@ where
             presentation_submission: Some(submission),
             state: presentation.request.state.clone(),
         };
-        let Some(mut res_uri) = presentation.request.response_uri.clone() else {
-            let e = anyhow!("no response uri found");
-            tracing::error!(target: "Endpoint::present", ?e);
-            return Err(e);
-        };
-        res_uri = res_uri.trim_end_matches('/').to_string();
-
-        let response = match self.provider.present(&presentation.id, &res_uri, &res_req).await {
-            Ok(response) => response,
-            Err(e) => {
-                tracing::error!(target: "Endpoint::present", ?e);
-                return Err(e);
-            }
-        };
+        let res_uri = presentation
+            .request
+            .response_uri
+            .map(|uri| uri.trim_end_matches('/').to_string());
+        let response =
+            match self.provider.present(&presentation.id, res_uri.as_deref(), &res_req).await {
+                Ok(response) => response,
+                Err(e) => {
+                    tracing::error!(target: "Endpoint::present", ?e);
+                    return Err(e);
+                }
+            };
 
         Ok(response)
     }

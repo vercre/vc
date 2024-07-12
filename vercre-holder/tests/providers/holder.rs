@@ -93,7 +93,7 @@ impl VerifierClient for Provider {
     }
 
     async fn present(
-        &self, _flow_id: &str, _uri: &str, req: &ResponseRequest,
+        &self, _flow_id: &str, _uri: Option<&str>, req: &ResponseRequest,
     ) -> anyhow::Result<ResponseResponse> {
         let endpoint = vercre_verifier::Endpoint::new(self.verifier.clone().unwrap());
         Ok(endpoint.response(req).await?)

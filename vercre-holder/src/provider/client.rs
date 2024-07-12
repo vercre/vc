@@ -51,6 +51,6 @@ pub trait VerifierClient {
 
     /// Send the presentation to the verifier.
     fn present(
-        &self, flow_id: &str, uri: &str, presentation: &ResponseRequest,
+        &self, flow_id: &str, uri: Option<&str>, presentation: &ResponseRequest,
     ) -> impl Future<Output = anyhow::Result<ResponseResponse>> + Send;
 }
