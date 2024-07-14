@@ -50,7 +50,7 @@ use openid4vc::endpoint::{
 };
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
-pub use openid4vc::issuance::{BatchCredentialRequest, CredentialRequest, CredentialResponse};
+pub use openid4vc::issuance::{BatchCredentialRequest, ProofClaims,CredentialRequest, CredentialResponse};
 use openid4vc::Result;
 use tracing::instrument;
 use w3c_vc::proof::Signer;

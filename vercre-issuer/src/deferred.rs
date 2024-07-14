@@ -15,7 +15,7 @@ use openid4vc::endpoint::{
 };
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
-pub use openid4vc::issuance::{DeferredCredentialRequest, DeferredCredentialResponse};
+pub use openid4vc::issuance::{DeferredCredentialRequest,ProofClaims, DeferredCredentialResponse};
 use openid4vc::Result;
 use tracing::instrument;
 use w3c_vc::proof::Signer;

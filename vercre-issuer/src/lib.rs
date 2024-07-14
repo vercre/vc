@@ -108,12 +108,10 @@ pub mod provider {
 
 use std::fmt::Debug;
 
-pub use openid4vc::issuance::{GrantType, ProofClaims};
 pub use openid4vc::Result;
 use provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
 };
-//----------------------
 
 /// Endpoint is used to surface the public Verifiable Presentation endpoints to
 /// clients.

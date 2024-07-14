@@ -20,9 +20,9 @@ use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialRequest,
-    CredentialResponse, CredentialType, ProofType,
+    CredentialResponse, CredentialType, ProofClaims, ProofType,
 };
-use openid4vc::issuance::{CredentialDefinition, Issuer, ProofClaims};
+use openid4vc::issuance::{CredentialDefinition, Issuer};
 use openid4vc::jws::{self, Type};
 use openid4vc::Result;
 use tracing::instrument;

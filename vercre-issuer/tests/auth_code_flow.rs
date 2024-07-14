@@ -11,9 +11,9 @@ use sha2::{Digest, Sha256};
 use test_utils::holder;
 use test_utils::issuer::{self, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_issuer::authorize::{AuthorizationRequest, AuthorizationResponse};
-use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
+use vercre_issuer::credential::{CredentialRequest, CredentialResponse, ProofClaims};
 use vercre_issuer::token::{TokenRequest, TokenResponse};
-use vercre_issuer::{Endpoint, ProofClaims};
+use vercre_issuer::Endpoint;
 use w3c_vc::proof::{self, Payload, Verify};
 
 static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
