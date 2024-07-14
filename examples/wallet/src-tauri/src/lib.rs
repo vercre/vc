@@ -15,7 +15,7 @@ use std::sync::Arc;
 use app::AppState;
 use futures::lock::Mutex;
 use provider::Provider;
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Emitter, Listener, Manager, State};
 use tauri_plugin_log::{Target, TargetKind};
 use view::credential::CredentialDetail;
 use view::ViewModel;
