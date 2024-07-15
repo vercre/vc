@@ -10,7 +10,6 @@ use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 use w3c_vc::model::VerifiableCredential;
 
-// use w3c_vc::VerifiableCredential
 use super::{Client, CredentialFormat};
 use crate::error::Err;
 use crate::{stringify, Result};
