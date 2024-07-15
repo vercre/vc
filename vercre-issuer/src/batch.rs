@@ -12,15 +12,14 @@ use std::fmt::Debug;
 
 use chrono::Utc;
 use core_utils::{gen, Kind};
-use openid4vc::endpoint::{
+use openid::endpoint::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
-use openid4vc::error::Err;
-use openid4vc::issuance::{
+use openid::issuance::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
     CredentialRequest, CredentialResponse, CredentialType, Issuer, ProofClaims, ProofType,
 };
-use openid4vc::Result;
+use openid::{Err, Result};
 use proof::jose::jws::{self, Type};
 use proof::signature::{Signer, Verifier};
 use tracing::instrument;
@@ -68,7 +67,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        openid4vc::endpoint::Endpoint::handle_request(self, request, ctx).await
+        openid::endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -81,7 +80,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> openid4vc::endpoint::Context for Context<P>
+impl<P> openid::endpoint::Context for Context<P>
 where
     P: IssuerMetadata + Subject + StateManager + Signer + Verifier + Clone + Debug,
 {

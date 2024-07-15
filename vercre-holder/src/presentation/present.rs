@@ -8,7 +8,7 @@ use std::fmt::Debug;
 use anyhow::{anyhow, bail};
 use core_utils::Kind;
 use dif_exch::{DescriptorMap, FilterValue, PathNested, PresentationSubmission};
-use openid4vc::presentation::{PresentationDefinitionType, ResponseRequest, ResponseResponse};
+use openid::presentation::{PresentationDefinitionType, ResponseRequest, ResponseResponse};
 use tracing::instrument;
 use uuid::Uuid;
 use w3c_vc::model::vp::VerifiablePresentation;

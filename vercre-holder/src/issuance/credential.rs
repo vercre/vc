@@ -6,7 +6,7 @@ use std::fmt::Debug;
 
 use anyhow::bail;
 use core_utils::Kind;
-use openid4vc::issuance::{
+use openid::issuance::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, GrantType,
     Proof, ProofClaims, ProofType, TokenRequest,
 };

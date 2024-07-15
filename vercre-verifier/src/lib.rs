@@ -164,20 +164,20 @@ pub mod response;
 mod state;
 
 /// Re-export types.
-pub use openid4vc::Result;
+pub use openid::Result;
 
 /// Re-export provider traits and types.
 pub mod provider {
-    pub use openid4vc::endpoint::{Callback, ClientMetadata, Payload, Result, StateManager};
-    pub use openid4vc::presentation::VpFormat;
-    pub use openid4vc::{Client, CredentialFormat};
+    pub use openid::endpoint::{Callback, ClientMetadata, Payload, Result, StateManager};
+    pub use openid::presentation::VpFormat;
+    pub use openid::{Client, CredentialFormat};
     pub use proof::jose::jwk::PublicKeyJwk;
     pub use proof::signature::{Algorithm, Signer, Verifier};
 }
 use std::fmt::Debug;
 
 pub use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
-pub use openid4vc::presentation::{
+pub use openid::presentation::{
     ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
     MetadataRequest, MetadataResponse, PresentationDefinitionType, RequestObject,
     RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse, ResponseType,
@@ -216,7 +216,7 @@ where
     }
 }
 
-impl<P> openid4vc::endpoint::Endpoint for Endpoint<P>
+impl<P> openid::endpoint::Endpoint for Endpoint<P>
 where
     P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
 {
@@ -229,8 +229,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use openid4vc::error::Err;
-    use openid4vc::Result;
+    use openid::{Err, Result};
     use test_utils::verifier::Provider;
 
     use super::*;
@@ -269,7 +268,7 @@ mod tests {
             let ctx = Context {
                 _p: std::marker::PhantomData,
             };
-            openid4vc::endpoint::Endpoint::handle_request(self, request, ctx).await
+            openid::endpoint::Endpoint::handle_request(self, request, ctx).await
         }
     }
 
@@ -278,7 +277,7 @@ mod tests {
         _p: std::marker::PhantomData<P>,
     }
 
-    impl<P> openid4vc::endpoint::Context for Context<P>
+    impl<P> openid::endpoint::Context for Context<P>
     where
         P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
     {

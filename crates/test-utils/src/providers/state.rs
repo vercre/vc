@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
-use openid4vc::endpoint::Result;
+use openid::endpoint::Result;
 
 #[derive(Default, Clone, Debug)]
 pub struct Store {

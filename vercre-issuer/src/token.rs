@@ -15,12 +15,11 @@ use std::fmt::Debug;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
 use core_utils::gen;
-use openid4vc::endpoint::{
+use openid::endpoint::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
-use openid4vc::error::Err;
-use openid4vc::issuance::{GrantType, TokenRequest, TokenResponse, TokenType};
-use openid4vc::Result;
+use openid::issuance::{GrantType, TokenRequest, TokenResponse, TokenType};
+use openid::{Err, Result};
 use proof::signature::Signer;
 use sha2::{Digest, Sha256};
 use tracing::instrument;
@@ -63,7 +62,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        openid4vc::endpoint::Endpoint::handle_request(self, request, ctx).await
+        openid::endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -74,7 +73,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> openid4vc::endpoint::Context for Context<P>
+impl<P> openid::endpoint::Context for Context<P>
 where
     P: ClientMetadata + IssuerMetadata + ServerMetadata + Subject + StateManager + Signer + Debug,
 {
@@ -212,11 +211,11 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use openid4vc::issuance::{
+    use openid::issuance::{
         AuthorizationDetail, AuthorizationDetailType, CredentialDefinition,
         TokenAuthorizationDetail,
     };
-    use openid4vc::CredentialFormat;
+    use openid::CredentialFormat;
     use serde_json::json;
     use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 

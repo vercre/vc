@@ -45,13 +45,12 @@ use std::fmt::Debug;
 
 use core_utils::gen;
 use dif_exch::{ClaimFormat, PresentationDefinition};
-use openid4vc::endpoint::{Callback, ClientMetadata, StateManager};
-use openid4vc::error::Err;
-use openid4vc::presentation::{
+use openid::endpoint::{Callback, ClientMetadata, StateManager};
+use openid::presentation::{
     ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
     PresentationDefinitionType, RequestObject, ResponseType,
 };
-use openid4vc::Result;
+use openid::{Err, Result};
 use proof::signature::{Algorithm, Signer};
 use tracing::instrument;
 use uuid::Uuid;
@@ -101,7 +100,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        openid4vc::endpoint::Endpoint::handle_request(self, request, ctx).await
+        openid::endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -111,7 +110,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> openid4vc::endpoint::Context for Context<P>
+impl<P> openid::endpoint::Context for Context<P>
 where
     P: ClientMetadata + StateManager + Clone + Debug,
 {

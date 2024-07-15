@@ -8,7 +8,7 @@
 //! top-level `vercre-xxx` crates.
 
 pub mod endpoint;
-pub mod error;
+mod error;
 pub mod issuance;
 pub mod presentation;
 mod stringify;
@@ -19,12 +19,13 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
+pub use self::error::Err;
 use self::issuance::GrantType;
 use self::presentation::VpFormat;
 
 /// Result type for `OpenID` for Verifiable Credential Issuance and Verifiable
 /// Presentations.
-pub type Result<T, E = error::Err> = std::result::Result<T, E>;
+pub type Result<T, E = Err> = std::result::Result<T, E>;
 
 /// OAuth 2 client metadata used for registering clients of the issuance and
 /// vercre-wallet authorization servers.

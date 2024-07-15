@@ -3,12 +3,12 @@
 use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
-use openid4vc::endpoint::{
+use openid::endpoint::{
     Callback, Claims, ClientMetadata, IssuerMetadata, Payload, Result, ServerMetadata,
     StateManager, Subject,
 };
-use openid4vc::issuance::Issuer;
-use openid4vc::{Client, Server};
+use openid::issuance::Issuer;
+use openid::{Client, Server};
 use proof::jose::jwk::PublicKeyJwk;
 use proof::signature::{Algorithm, Signer, Verifier};
 

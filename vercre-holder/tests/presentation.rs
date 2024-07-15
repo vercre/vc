@@ -4,8 +4,8 @@ use std::sync::LazyLock;
 
 use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use insta::assert_yaml_snapshot as assert_snapshot;
-use openid4vc::issuance::CredentialConfiguration;
-use openid4vc::presentation::{CreateRequestRequest, DeviceFlow, PresentationDefinitionType};
+use openid::issuance::CredentialConfiguration;
+use openid::presentation::{CreateRequestRequest, DeviceFlow, PresentationDefinitionType};
 use test_utils::{verifier, VERIFIER_ID};
 use vercre_holder::callback::CredentialStorer;
 use vercre_holder::credential::Credential;

@@ -3,8 +3,8 @@
 use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
-use openid4vc::endpoint::{Callback, ClientMetadata, Payload, Result, StateManager};
-use openid4vc::Client;
+use openid::endpoint::{Callback, ClientMetadata, Payload, Result, StateManager};
+use openid::Client;
 use proof::jose::jwk::PublicKeyJwk;
 use proof::signature::{Algorithm, Signer, Verifier};
 

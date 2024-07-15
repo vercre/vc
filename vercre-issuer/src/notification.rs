@@ -21,9 +21,9 @@
 //! Credential Issuer will receive a notification within a certain time period or at
 //! all.
 
-use tracing::instrument;
-use openid4vc::issuance::{MetadataRequest, MetadataResponse};
 use core_utils::{Callback, Client, Issuer, Result, Server, Signer, StateManager, Subject};
+use openid::issuance::{MetadataRequest, MetadataResponse};
+use tracing::instrument;
 
 use super::Endpoint;
 

@@ -23,10 +23,9 @@
 use std::fmt::Debug;
 
 use core_utils::Kind;
-use openid4vc::endpoint::{Callback, ClientMetadata, StateManager};
-use openid4vc::error::Err;
-use openid4vc::presentation::{PresentationDefinitionType, ResponseRequest, ResponseResponse};
-use openid4vc::Result;
+use openid::endpoint::{Callback, ClientMetadata, StateManager};
+use openid::presentation::{PresentationDefinitionType, ResponseRequest, ResponseResponse};
+use openid::{Err, Result};
 use proof::signature::{Signer, Verifier};
 use serde_json::Value;
 use serde_json_path::JsonPath;
@@ -65,7 +64,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        openid4vc::endpoint::Endpoint::handle_request(self, request, ctx).await
+        openid::endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -75,7 +74,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> openid4vc::endpoint::Context for Context<P>
+impl<P> openid::endpoint::Context for Context<P>
 where
     P: ClientMetadata + StateManager + Signer + Verifier + Callback + Clone + Debug,
 {
@@ -264,7 +263,7 @@ mod tests {
     use std::sync::LazyLock;
 
     use dif_exch::PresentationDefinition;
-    use openid4vc::presentation::{
+    use openid::presentation::{
         ClientIdScheme, ClientMetadataType, RequestObject, ResponseRequest, ResponseType,
     };
     use serde_json::json;

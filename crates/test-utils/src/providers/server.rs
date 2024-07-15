@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use anyhow::anyhow;
-use openid4vc::endpoint::Result;
-use openid4vc::Server;
+use openid::endpoint::Result;
+use openid::Server;
 
 #[derive(Default, Clone, Debug)]
 pub struct Store {

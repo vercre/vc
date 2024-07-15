@@ -7,10 +7,9 @@
 
 use std::fmt::Debug;
 
-use openid4vc::endpoint::{Callback, ClientMetadata, StateManager};
-use openid4vc::error::Err;
-use openid4vc::presentation::{MetadataRequest, MetadataResponse};
-use openid4vc::Result;
+use openid::endpoint::{Callback, ClientMetadata, StateManager};
+use openid::presentation::{MetadataRequest, MetadataResponse};
+use openid::{Err, Result};
 use proof::signature::Signer;
 use tracing::instrument;
 
@@ -33,7 +32,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        openid4vc::endpoint::Endpoint::handle_request(self, request, ctx).await
+        openid::endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -42,7 +41,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> openid4vc::endpoint::Context for Context<P>
+impl<P> openid::endpoint::Context for Context<P>
 where
     P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
 {

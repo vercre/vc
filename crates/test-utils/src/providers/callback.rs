@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use openid4vc::endpoint::{Payload, Result};
+use openid::endpoint::{Payload, Result};
 
 #[derive(Default, Clone, Debug)]
 pub struct Hook {

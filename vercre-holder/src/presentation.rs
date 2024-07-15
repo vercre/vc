@@ -12,7 +12,7 @@ use std::str::FromStr;
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use dif_exch::{Constraints, PresentationSubmission};
-use openid4vc::presentation::RequestObject;
+use openid::presentation::RequestObject;
 use serde::{Deserialize, Serialize};
 
 use crate::credential::Credential;

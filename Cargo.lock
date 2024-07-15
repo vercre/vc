@@ -3060,7 +3060,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "openid4vc"
+name = "openid"
 version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
@@ -5170,7 +5170,7 @@ dependencies = [
  "ecdsa",
  "ed25519-dalek",
  "k256",
- "openid4vc",
+ "openid",
  "proof",
  "serde_json",
  "tracing",
@@ -5748,7 +5748,7 @@ dependencies = [
  "ecdsa",
  "ed25519-dalek",
  "insta",
- "openid4vc",
+ "openid",
  "proof",
  "serde",
  "serde_json",
@@ -5775,7 +5775,7 @@ dependencies = [
  "derive_builder",
  "futures",
  "insta",
- "openid4vc",
+ "openid",
  "proof",
  "serde",
  "serde_json",
@@ -5796,7 +5796,7 @@ dependencies = [
  "derive_builder",
  "dif-exch",
  "insta",
- "openid4vc",
+ "openid",
  "proof",
  "serde",
  "serde_json",

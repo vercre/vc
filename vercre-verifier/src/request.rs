@@ -15,10 +15,9 @@
 
 use std::fmt::Debug;
 
-use openid4vc::endpoint::{Callback, ClientMetadata, StateManager};
-use openid4vc::error::Err;
-use openid4vc::presentation::{RequestObjectRequest, RequestObjectResponse, RequestObjectType};
-use openid4vc::Result;
+use openid::endpoint::{Callback, ClientMetadata, StateManager};
+use openid::presentation::{RequestObjectRequest, RequestObjectResponse, RequestObjectType};
+use openid::{Err, Result};
 use proof::jose::jws::{self, Type};
 use proof::signature::Signer;
 use tracing::instrument;
@@ -45,7 +44,7 @@ where
         let ctx = Context {
             _p: std::marker::PhantomData,
         };
-        openid4vc::endpoint::Endpoint::handle_request(self, request, ctx).await
+        openid::endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -54,7 +53,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> openid4vc::endpoint::Context for Context<P>
+impl<P> openid::endpoint::Context for Context<P>
 where
     P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
 {
@@ -99,7 +98,7 @@ where
 mod tests {
     use dif_exch::PresentationDefinition;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use openid4vc::presentation::{
+    use openid::presentation::{
         ClientIdScheme, ClientMetadataType, PresentationDefinitionType, RequestObject, ResponseType,
     };
     use test_utils::verifier::{Provider, VERIFIER_ID};

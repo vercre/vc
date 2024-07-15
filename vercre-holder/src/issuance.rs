@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 use chrono::{DateTime, Utc};
-use openid4vc::issuance::{CredentialConfiguration, CredentialOffer, TokenResponse};
+use openid::issuance::{CredentialConfiguration, CredentialOffer, TokenResponse};
 use serde::{Deserialize, Serialize};
 
 use crate::provider::StateManager;

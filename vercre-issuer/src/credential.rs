@@ -45,12 +45,11 @@
 
 use std::fmt::Debug;
 
-use openid4vc::endpoint::{
+use openid::endpoint::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
-use openid4vc::error::Err;
-use openid4vc::issuance::{BatchCredentialRequest, CredentialRequest, CredentialResponse};
-use openid4vc::Result;
+use openid::issuance::{BatchCredentialRequest, CredentialRequest, CredentialResponse};
+use openid::{Err, Result};
 use proof::signature::{Signer, Verifier};
 use tracing::instrument;
 
@@ -90,7 +89,7 @@ where
             _p: std::marker::PhantomData,
         };
 
-        openid4vc::endpoint::Endpoint::handle_request(self, request, ctx).await
+        openid::endpoint::Endpoint::handle_request(self, request, ctx).await
     }
 }
 
@@ -100,7 +99,7 @@ struct Context<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> openid4vc::endpoint::Context for Context<P>
+impl<P> openid::endpoint::Context for Context<P>
 where
     P: ClientMetadata
         + IssuerMetadata
@@ -149,7 +148,7 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use openid4vc::issuance::ProofClaims;
+    use openid::issuance::ProofClaims;
     use proof::jose::jws::{self, Type};
     use serde_json::json;
     use test_utils::holder;

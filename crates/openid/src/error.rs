@@ -12,30 +12,7 @@ use std::fmt::Debug;
 use serde::{Deserialize, Serialize, Serializer};
 use thiserror::Error;
 
-/// Error response for `OpenID` for Verifiable Credentials.
-#[allow(clippy::module_name_repetitions)]
-#[derive(Deserialize, Serialize)]
-pub struct OidError {
-    /// Error code.
-    pub error: String,
-
-    /// Error description.
-    pub error_description: String,
-
-    /// Optional client-state parameter.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub state: Option<String>,
-
-    /// A fresh `c_nonce` to use when retrying Proof submission.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub c_nonce: Option<String>,
-
-    /// The expiry time of the `c_nonce`.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub c_nonce_expires_in: Option<i64>,
-}
-
-/// Internal error codes for `OpenID` for Verifiable Credential Issuance
+/// `OpenID` error codes for  for Verifiable Credential Issuance and Presentation.
 #[derive(Error, Debug, Deserialize)]
 pub enum Err {
     /// The request is missing a required parameter, includes an unsupported
@@ -196,6 +173,29 @@ pub enum Err {
         r#"{{"error": "invalid_presentation_definition_reference", "error_description": "{0}"}}"#
     )]
     InvalidPresentationDefinitionReference(String),
+}
+
+/// Error response for `OpenID` for Verifiable Credentials.
+#[allow(clippy::module_name_repetitions)]
+#[derive(Deserialize, Serialize)]
+pub struct OidError {
+    /// Error code.
+    pub error: String,
+
+    /// Error description.
+    pub error_description: String,
+
+    /// Optional client-state parameter.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state: Option<String>,
+
+    /// A fresh `c_nonce` to use when retrying Proof submission.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub c_nonce: Option<String>,
+
+    /// The expiry time of the `c_nonce`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub c_nonce_expires_in: Option<i64>,
 }
 
 impl Serialize for Err {

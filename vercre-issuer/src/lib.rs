@@ -98,19 +98,19 @@ pub mod token;
 
 /// Re-export provider traits and types.
 pub mod provider {
-    pub use openid4vc::endpoint::{
+    pub use openid::endpoint::{
         Callback, Claims, ClientMetadata, IssuerMetadata, Payload, Result, ServerMetadata,
         StateManager, Subject,
     };
-    pub use openid4vc::issuance::{ClaimDefinition, GrantType, Issuer};
-    pub use openid4vc::{Client, Server};
+    pub use openid::issuance::{ClaimDefinition, GrantType, Issuer};
+    pub use openid::{Client, Server};
     pub use proof::jose::jwk::PublicKeyJwk;
     pub use proof::signature::{Algorithm, Signer, Verifier};
 }
 
 use std::fmt::Debug;
 
-pub use openid4vc::issuance::{
+pub use openid::issuance::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     AuthorizationResponse, BatchCredentialRequest, BatchCredentialResponse, CreateOfferRequest,
     CreateOfferResponse, CredentialConfiguration, CredentialOffer, CredentialOfferType,
@@ -119,7 +119,7 @@ pub use openid4vc::issuance::{
     ProofClaims, ProofType, RegistrationRequest, RegistrationResponse, TokenAuthorizationDetail,
     TokenRequest, TokenResponse, TxCode,
 };
-pub use openid4vc::Result;
+pub use openid::Result;
 use provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
 };
@@ -168,7 +168,7 @@ where
     }
 }
 
-impl<P> openid4vc::endpoint::Endpoint for Endpoint<P>
+impl<P> openid::endpoint::Endpoint for Endpoint<P>
 where
     P: ClientMetadata
         + IssuerMetadata
@@ -189,8 +189,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use openid4vc::error::Err;
-    use openid4vc::Result;
+    use openid::{Err, Result};
     use test_utils::issuer::Provider;
 
     use super::*;
@@ -236,7 +235,7 @@ mod tests {
             let ctx = Context {
                 _p: std::marker::PhantomData,
             };
-            openid4vc::endpoint::Endpoint::handle_request(self, request, ctx).await
+            openid::endpoint::Endpoint::handle_request(self, request, ctx).await
         }
     }
 
@@ -245,7 +244,7 @@ mod tests {
         _p: std::marker::PhantomData<P>,
     }
 
-    impl<P> openid4vc::endpoint::Context for Context<P>
+    impl<P> openid::endpoint::Context for Context<P>
     where
         P: ClientMetadata
             + IssuerMetadata

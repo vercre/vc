@@ -4,11 +4,11 @@
 //! uses these traits to interact with the issuer and verifier services.
 use std::future::Future;
 
-use openid4vc::issuance::{
+use openid::issuance::{
     CredentialRequest, CredentialResponse, MetadataRequest, MetadataResponse, TokenRequest,
     TokenResponse,
 };
-use openid4vc::presentation::{RequestObjectResponse, ResponseRequest, ResponseResponse};
+use openid::presentation::{RequestObjectResponse, ResponseRequest, ResponseResponse};
 
 use crate::credential::Logo;
 
