@@ -55,7 +55,9 @@ pub use openid4vc::presentation::{
 pub use provider as callback;
 use provider::StateManager;
 
-pub use crate::issuance::{Issuance, OfferRequest, PinRequest, Status};
+pub use crate::issuance::offer::OfferRequest;
+pub use crate::issuance::pin::PinRequest;
+pub use crate::issuance::{Issuance, Status};
 
 /// Endpoint is used to surface the public wallet endpoints to clients.
 #[derive(Debug)]

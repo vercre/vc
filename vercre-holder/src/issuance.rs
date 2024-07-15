@@ -4,16 +4,14 @@
 
 mod accept;
 mod credential;
-mod offer;
-mod pin;
+pub(crate) mod offer;
+pub(crate) mod pin;
 
 use std::collections::HashMap;
 use std::fmt::Debug;
 
 use chrono::{DateTime, Utc};
-pub use offer::OfferRequest;
 use openid4vc::issuance::{CredentialConfiguration, CredentialOffer, TokenResponse};
-pub use pin::PinRequest;
 use serde::{Deserialize, Serialize};
 
 use crate::provider::StateManager;
