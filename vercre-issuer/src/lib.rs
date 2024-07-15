@@ -110,6 +110,9 @@ pub mod provider {
 
 use std::fmt::Debug;
 
+use openid::endpoint::{
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
+};
 pub use openid::issuance::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     AuthorizationResponse, BatchCredentialRequest, BatchCredentialResponse, CreateOfferRequest,
@@ -120,9 +123,7 @@ pub use openid::issuance::{
     TokenRequest, TokenResponse, TxCode,
 };
 pub use openid::Result;
-use provider::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
-};
+use proof::signature::Signer;
 
 /// Endpoint is used to surface the public Verifiable Presentation endpoints to
 /// clients.
@@ -143,8 +144,8 @@ where
 }
 
 /// Endpoint is used to provide a thread-safe way of handling endpoint requests.
-/// Each request passes through a number of steps with request state required to
-/// be maintained between steps.
+/// Each request passes through a number of steps with request state maintained
+/// between steps.
 ///
 /// The Endpoint also provides common top-level tracing, error handling, and client
 /// callback functionality for all endpoints. The act of setting a request causes

@@ -177,13 +177,13 @@ pub mod provider {
 use std::fmt::Debug;
 
 pub use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
+use openid::endpoint::{Callback, ClientMetadata, StateManager};
 pub use openid::presentation::{
     ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
     MetadataRequest, MetadataResponse, PresentationDefinitionType, RequestObject,
     RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse, ResponseType,
 };
 use proof::signature::Signer;
-use provider::{Callback, ClientMetadata, StateManager};
 
 // TODO: remove double borrow for traits (i.e. &self -> self)
 // TODO: reintroduce impl Provider trait + lifetimes for Endpoint
