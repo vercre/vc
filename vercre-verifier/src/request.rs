@@ -15,9 +15,8 @@
 
 use std::fmt::Debug;
 
-use openid4vc::endpoint::{Callback, ClientMetadata, Signer, StateManager};
+use openid4vc::endpoint::{Callback, ClientMetadata, StateManager};
 use openid4vc::error::Err;
-use openid4vc::jws::{self, Type};
 use openid4vc::presentation::RequestObjectType;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{
@@ -25,6 +24,8 @@ pub use openid4vc::presentation::{
     ResponseType,
 };
 use openid4vc::Result;
+use proof::jose::jws::{self, Type};
+use proof::signature::Signer;
 use tracing::instrument;
 
 use super::Endpoint;

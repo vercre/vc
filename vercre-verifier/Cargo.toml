@@ -24,6 +24,7 @@ core-utils.workspace = true
 derive_builder.workspace = true
 dif-exch.workspace = true
 openid4vc.workspace = true
+proof.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_json_path = { version = "0.6.7", default-features = true }

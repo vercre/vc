@@ -8,10 +8,10 @@ use std::fmt::Debug;
 
 use anyhow::{anyhow, bail};
 use dif_exch::Constraints;
-use openid4vc::jws;
 use openid4vc::presentation::{
     PresentationDefinitionType, RequestObject, RequestObjectResponse, RequestObjectType,
 };
+use proof::jose::jws;
 use tracing::instrument;
 use uuid::Uuid;
 

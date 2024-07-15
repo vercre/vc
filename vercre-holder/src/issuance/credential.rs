@@ -10,9 +10,9 @@ use openid4vc::issuance::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, GrantType,
     Proof, ProofClaims, ProofType, TokenRequest,
 };
-use openid4vc::jws::{self, Type};
+use proof::jose::jws::{self, Type};
 use tracing::instrument;
-use w3c_vc::proof::{self, Payload, Verify};
+use w3c_vc::proof::{Payload, Verify};
 
 use super::{Issuance, Status};
 use crate::credential::Credential;
@@ -159,7 +159,7 @@ async fn credential(
     let Some(value) = res.credential.as_ref() else {
         bail!("no credential in response");
     };
-    let Ok(Payload::Vc(vc)) = proof::verify(Verify::Vc(value), verifier).await else {
+    let Ok(Payload::Vc(vc)) = w3c_vc::proof::verify(Verify::Vc(value), verifier).await else {
         bail!("could not parse credential");
     };
 

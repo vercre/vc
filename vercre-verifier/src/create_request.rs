@@ -56,9 +56,9 @@ pub use openid4vc::presentation::{
     PresentationDefinitionType, RequestObject,
 };
 use openid4vc::Result;
+use proof::signature::{Algorithm, Signer};
 use tracing::instrument;
 use uuid::Uuid;
-use w3c_vc::proof::{Algorithm, Signer};
 
 use super::Endpoint;
 use crate::state::State;

@@ -168,17 +168,16 @@ pub use openid4vc::Result;
 
 /// Re-export provider traits and types.
 pub mod provider {
-    pub use openid4vc::endpoint::{
-        Algorithm, Callback, ClientMetadata, Payload, PublicKeyJwk, Result, Signer, StateManager,
-        Verifier,
-    };
+    pub use openid4vc::endpoint::{Callback, ClientMetadata, Payload, Result, StateManager};
     pub use openid4vc::presentation::VpFormat;
     pub use openid4vc::{Client, CredentialFormat};
+    pub use proof::jose::jwk::PublicKeyJwk;
+    pub use proof::signature::{Algorithm, Signer, Verifier};
 }
 use std::fmt::Debug;
 
+use proof::signature::Signer;
 use provider::{Callback, ClientMetadata, StateManager};
-use w3c_vc::proof::Signer;
 
 // TODO: remove double borrow for traits (i.e. &self -> self)
 // TODO: reintroduce impl Provider trait + lifetimes for Endpoint

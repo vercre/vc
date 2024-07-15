@@ -9,8 +9,8 @@ use openid4vc::endpoint::{
 use openid4vc::error::Err;
 pub use openid4vc::issuance::{RegistrationRequest, RegistrationResponse};
 use openid4vc::Result;
+use proof::signature::Signer;
 use tracing::instrument;
-use w3c_vc::proof::Signer;
 
 use super::Endpoint;
 use crate::state::State;

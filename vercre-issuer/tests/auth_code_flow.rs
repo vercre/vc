@@ -4,7 +4,7 @@ use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
-use openid4vc::jws::{self, Type};
+use proof::jose::jws::{self, Type};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use test_utils::holder;
@@ -13,7 +13,7 @@ use vercre_issuer::authorize::{AuthorizationRequest, AuthorizationResponse};
 use vercre_issuer::credential::{CredentialRequest, CredentialResponse, ProofClaims};
 use vercre_issuer::token::{TokenRequest, TokenResponse};
 use vercre_issuer::Endpoint;
-use w3c_vc::proof::{self, Payload, Verify};
+use w3c_vc::proof::{Payload, Verify};
 
 static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
 
@@ -28,8 +28,9 @@ async fn auth_code_flow() {
     let Some(vc_kind) = &resp.credential else {
         panic!("VC is not present");
     };
-    let Payload::Vc(vc) =
-        proof::verify(Verify::Vc(vc_kind), &ISSUER_PROVIDER.clone()).await.expect("should decode")
+    let Payload::Vc(vc) = w3c_vc::proof::verify(Verify::Vc(vc_kind), &ISSUER_PROVIDER.clone())
+        .await
+        .expect("should decode")
     else {
         panic!("should be VC");
     };

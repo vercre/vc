@@ -49,8 +49,6 @@ use chrono::{DateTime, Utc};
 use core_utils::Quota;
 use serde::{Deserialize, Serialize};
 
-pub use crate::proof::Algorithm;
-
 /// To be verifiable, a credential must contain at least one proof mechanism,
 /// and details necessary to evaluate that proof. A proof may be external — an
 /// enveloping proof — or internal — an embedded proof.

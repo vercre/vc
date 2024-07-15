@@ -84,8 +84,8 @@ pub use openid4vc::issuance::{
 };
 use openid4vc::issuance::{GrantType, Issuer};
 use openid4vc::Result;
+use proof::signature::Signer;
 use tracing::instrument;
-use w3c_vc::proof::Signer;
 
 use super::Endpoint;
 use crate::state::{Auth, Expire, State};

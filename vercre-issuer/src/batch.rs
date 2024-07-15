@@ -13,8 +13,7 @@ use std::fmt::Debug;
 use chrono::Utc;
 use core_utils::{gen, Kind};
 use openid4vc::endpoint::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,
-    Verifier,
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
@@ -23,11 +22,12 @@ pub use openid4vc::issuance::{
     CredentialResponse, CredentialType, ProofClaims, ProofType,
 };
 use openid4vc::issuance::{CredentialDefinition, Issuer};
-use openid4vc::jws::{self, Type};
 use openid4vc::Result;
+use proof::jose::jws::{self, Type};
+use proof::signature::{Signer, Verifier};
 use tracing::instrument;
 use w3c_vc::model::{CredentialSubject, VerifiableCredential};
-use w3c_vc::proof::{self, Format, Payload};
+use w3c_vc::proof::{Format, Payload};
 
 use super::Endpoint;
 use crate::state::{Deferred, Expire, State};
@@ -290,7 +290,7 @@ where
         };
 
         // generate proof for the credential
-        let jwt = proof::create(Format::JwtVcJson, Payload::Vc(vc), provider.clone())
+        let jwt = w3c_vc::proof::create(Format::JwtVcJson, Payload::Vc(vc), provider.clone())
             .await
             .map_err(|e| Err::ServerError(format!("issue creating proof: {e}")))?;
 
@@ -527,7 +527,7 @@ mod tests {
             panic!("credential is missing");
         };
         let Payload::Vc(vc) =
-            proof::verify(Verify::Vc(vc_kind), &provider).await.expect("should decode")
+            w3c_vc::proof::verify(Verify::Vc(vc_kind), &provider).await.expect("should decode")
         else {
             panic!("should be VC");
         };

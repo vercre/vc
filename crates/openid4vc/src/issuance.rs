@@ -8,7 +8,7 @@ use core_utils::Kind;
 use proof::jose::jwk::PublicKeyJwk;
 use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
-pub use w3c_vc::model::VerifiableCredential;
+use w3c_vc::model::VerifiableCredential;
 
 // use w3c_vc::VerifiableCredential
 use super::{Client, CredentialFormat};

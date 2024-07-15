@@ -4,11 +4,13 @@ use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
 use openid4vc::endpoint::{
-    Algorithm, Callback, Claims, ClientMetadata, IssuerMetadata, Payload, PublicKeyJwk, Result,
-    ServerMetadata, Signer, StateManager, Subject, Verifier,
+    Callback, Claims, ClientMetadata, IssuerMetadata, Payload, Result, ServerMetadata,
+    StateManager, Subject,
 };
 use openid4vc::issuance::Issuer;
 use openid4vc::{Client, Server};
+use proof::jose::jwk::PublicKeyJwk;
+use proof::signature::{Algorithm, Signer, Verifier};
 
 use crate::proof::Enclave;
 pub use crate::providers::{Issuance, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER};

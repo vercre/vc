@@ -17,7 +17,6 @@ use std::collections::HashMap;
 use std::fmt::{self, Display};
 use std::str::FromStr;
 
-pub use proof::jose::jws;
 use serde::{Deserialize, Serialize};
 
 use self::issuance::GrantType;

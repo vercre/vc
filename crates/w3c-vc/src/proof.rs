@@ -33,7 +33,7 @@ mod jose;
 use anyhow::bail;
 use core_utils::{Kind, Quota};
 use proof::jose::jws;
-pub use proof::signature::{Algorithm, Signer, Verifier};
+use proof::signature::{Signer, Verifier};
 use serde::{Deserialize, Serialize};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
@@ -161,9 +161,8 @@ pub async fn verify(proof: Verify<'_>, verifier: &impl Verifier) -> anyhow::Resu
                 }
                 Kind::Object(vp) => {
                     // TODO: Implement embedded proof verification
-                    let proof = match &vp.proof {
-                        Some(Quota::One(proof)) => proof,
-                        _ => bail!("invalid VerifiablePresentation proof"),
+                    let Some(Quota::One(proof)) = &vp.proof else {
+                        bail!("invalid VerifiablePresentation proof")
                     };
                     let challenge = proof.challenge.clone().unwrap_or_default();
 

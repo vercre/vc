@@ -16,6 +16,7 @@ version.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+proof.workspace = true
 anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true

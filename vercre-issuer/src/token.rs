@@ -23,9 +23,9 @@ use openid4vc::error::Err;
 pub use openid4vc::issuance::{AuthorizationDetailType, TokenRequest, TokenResponse};
 use openid4vc::issuance::{GrantType, TokenType};
 use openid4vc::Result;
+use proof::signature::Signer;
 use sha2::{Digest, Sha256};
 use tracing::instrument;
-use w3c_vc::proof::Signer;
 
 use super::Endpoint;
 use crate::state::{Expire, State, Token};

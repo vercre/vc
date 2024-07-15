@@ -11,14 +11,14 @@
 use std::fmt::Debug;
 
 use openid4vc::endpoint::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject, Verifier,
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::issuance::{DeferredCredentialRequest, DeferredCredentialResponse, ProofClaims};
 use openid4vc::Result;
+use proof::signature::{Signer, Verifier};
 use tracing::instrument;
-use w3c_vc::proof::Signer;
 
 use super::Endpoint;
 use crate::state::State;
@@ -131,11 +131,11 @@ mod tests {
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::issuance::{CredentialRequest, ProofClaims};
-    use openid4vc::jws::{self, Type};
+    use proof::jose::jws::{self, Type};
     use serde_json::json;
     use test_utils::holder;
     use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-    use w3c_vc::proof::{self, Payload, Verify};
+    use w3c_vc::proof::{Payload, Verify};
 
     use super::*;
     use crate::state::{Deferred, Expire, Token};
@@ -231,7 +231,7 @@ mod tests {
             panic!("VC is not base64 encoded string");
         };
         let Payload::Vc(vc) =
-            proof::verify(Verify::Vc(vc_kind), &provider).await.expect("should decode")
+            w3c_vc::proof::verify(Verify::Vc(vc_kind), &provider).await.expect("should decode")
         else {
             panic!("should be VC");
         };

@@ -23,7 +23,7 @@
 use std::fmt::Debug;
 
 use core_utils::Kind;
-use openid4vc::endpoint::{Callback, ClientMetadata, Signer, StateManager, Verifier};
+use openid4vc::endpoint::{Callback, ClientMetadata, StateManager};
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
 pub use openid4vc::presentation::{
@@ -31,11 +31,12 @@ pub use openid4vc::presentation::{
     ResponseResponse, ResponseType,
 };
 use openid4vc::Result;
+use proof::signature::{Signer, Verifier};
 use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
 use w3c_vc::model::VerifiableCredential;
-use w3c_vc::proof::{self, Payload, Verify};
+use w3c_vc::proof::{Payload, Verify};
 
 use super::Endpoint;
 use crate::state::State;
@@ -113,7 +114,7 @@ where
 
         // check nonce matches
         for vp_val in &vp_token {
-            let (vp, nonce) = match proof::verify(Verify::Vp(vp_val), provider).await {
+            let (vp, nonce) = match w3c_vc::proof::verify(Verify::Vp(vp_val), provider).await {
                 Ok(Payload::Vp { vp, nonce, .. }) => (vp, nonce),
                 Ok(_) => return Err(Err::InvalidRequest("proof payload is invalid".into())),
                 Err(e) => return Err(Err::ServerError(format!("issue verifying VP proof: {e}"))),
@@ -202,7 +203,7 @@ where
                 _ => return Err(Err::InvalidRequest(format!("unexpected VC format: {vc_node}"))),
             };
 
-            let Payload::Vc(vc) = proof::verify(Verify::Vc(&vc_kind), provider)
+            let Payload::Vc(vc) = w3c_vc::proof::verify(Verify::Vc(&vc_kind), provider)
                 .await
                 .map_err(|e| Err::InvalidRequest(format!("invalid VC proof: {e}")))?
             else {
