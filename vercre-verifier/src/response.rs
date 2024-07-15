@@ -22,6 +22,7 @@
 
 use std::fmt::Debug;
 
+use core_utils::Kind;
 use openid4vc::endpoint::{Callback, ClientMetadata, Signer, StateManager, Verifier};
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
@@ -33,6 +34,7 @@ use openid4vc::Result;
 use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
+use w3c_vc::model::VerifiableCredential;
 use w3c_vc::proof::{self, Payload, Verify};
 
 use super::Endpoint;
@@ -107,40 +109,23 @@ where
             return Err(Err::InvalidRequest("client state not found".into()));
         };
 
-        let mut vp_values = vec![];
+        let mut vps = vec![];
 
         // check nonce matches
-        for vp_val in vp_token {
-            let value = match vp_val {
-                Value::Object(_) => {
-                    let Some(proof) = vp_val["proof"].as_object() else {
-                        return Err(Err::InvalidRequest("proof not found".into()));
-                    };
-                    if proof["challenge"].as_str() != Some(&saved_req.nonce) {
-                        return Err(Err::InvalidRequest("nonce does not match".into()));
-                    }
-                    vp_val
-                }
-                Value::String(token) => {
-                    let Ok(Payload::Vp { vp, nonce, .. }) =
-                        proof::verify(&token, Verify::Vp, provider).await
-                    else {
-                        return Err(Err::InvalidRequest("invalid vp_token format".into()));
-                    };
-
-                    if nonce != saved_req.nonce {
-                        return Err(Err::InvalidRequest("nonce does not match".into()));
-                    }
-                    serde_json::to_value(vp).map_err(|e| {
-                        Err::ServerError(format!("issue deserializing vp token: {e}"))
-                    })?
-                }
-                _ => {
-                    return Err(Err::InvalidRequest("invalid vp_token format".into()));
-                }
+        for vp_val in &vp_token {
+            let (vp, nonce) = match proof::verify(Verify::Vp(vp_val), provider).await {
+                Ok(Payload::Vp { vp, nonce, .. }) => (vp, nonce),
+                Ok(_) => return Err(Err::InvalidRequest("proof payload is invalid".into())),
+                Err(e) => return Err(Err::ServerError(format!("issue verifying VP proof: {e}"))),
             };
 
-            vp_values.push(value);
+            // else {
+            //     return Err(Err::InvalidRequest("invalid vp_token".into()));
+            // };
+            if nonce != saved_req.nonce {
+                return Err(Err::InvalidRequest("nonce does not match".into()));
+            }
+            vps.push(vp);
         }
 
         let Some(subm) = &request.presentation_submission else {
@@ -168,9 +153,10 @@ where
         // N.B. because of Mapping path syntax, we need to convert single entry
         // Vec to an req_obj
 
-        let vp_val: Value = match vp_values.len() {
-            1 => vp_values[0].clone(),
-            _ => serde_json::to_value(vp_values)
+        let vp_val: Value = match vps.len() {
+            1 => serde_json::to_value(vps[0].clone())
+                .map_err(|e| Err::ServerError(format!("issue converting VP to Value: {e}")))?,
+            _ => serde_json::to_value(vps)
                 .map_err(|e| Err::ServerError(format!("issue aggregating vp values: {e}")))?,
         };
 
@@ -206,18 +192,21 @@ where
                 )));
             };
 
-            // convert Value (req_obj or base64url string) to VerifiableCredential
-            let vc = match vc_node {
-                Value::String(token) => {
-                    let Ok(Payload::Vc(vc)) = proof::verify(token, Verify::Vc, provider).await
-                    else {
-                        return Err(Err::InvalidRequest(format!("invalid VC format: {token}")));
-                    };
-                    vc
+            let vc_kind: Kind<VerifiableCredential> = match vc_node {
+                Value::String(token) => Kind::String(token.to_string()),
+                Value::Object(_) => {
+                    let vc: VerifiableCredential = serde_json::from_value(vc_node.clone())
+                        .map_err(|e| Err::ServerError(format!("issue deserializing vc: {e}")))?;
+                    Kind::Object(vc)
                 }
-                Value::Object(_) => serde_json::from_value(vc_node.clone())
-                    .map_err(|e| Err::ServerError(format!("issue deserializing vc: {e}")))?,
                 _ => return Err(Err::InvalidRequest(format!("unexpected VC format: {vc_node}"))),
+            };
+
+            let Payload::Vc(vc) = proof::verify(Verify::Vc(&vc_kind), provider)
+                .await
+                .map_err(|e| Err::InvalidRequest(format!("invalid VC proof: {e}")))?
+            else {
+                return Err(Err::InvalidRequest("proof payload is invalid".into()));
             };
 
             // verify input constraints have been met

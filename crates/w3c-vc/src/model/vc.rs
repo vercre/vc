@@ -127,11 +127,11 @@ impl VerifiableCredential {
 
         Self {
             context: vec![
-                Kind::Simple("https://www.w3.org/2018/credentials/v1".into()),
-                Kind::Simple("https://www.w3.org/2018/credentials/examples/v1".into()),
+                Kind::String("https://www.w3.org/2018/credentials/v1".into()),
+                Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()),
             ],
             type_: vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()],
-            issuer: Kind::Simple("https://example.com/issuers/14".into()),
+            issuer: Kind::String("https://example.com/issuers/14".into()),
             id: "https://example.com/credentials/3732".into(),
             issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
             credential_subject: Quota::One(CredentialSubject {
@@ -333,7 +333,7 @@ impl VcBuilder {
         let mut builder: Self = Self::default();
 
         // set some sensibile defaults
-        builder.vc.context.push(Kind::Simple("https://www.w3.org/2018/credentials/v1".into()));
+        builder.vc.context.push(Kind::String("https://www.w3.org/2018/credentials/v1".into()));
         builder.vc.type_.push("VerifiableCredential".into());
         builder.vc.issuance_date = chrono::Utc::now(); //.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
 
@@ -364,7 +364,7 @@ impl VcBuilder {
     /// Sets the `issuer` property
     #[must_use]
     pub fn issuer(mut self, issuer: impl Into<String>) -> Self {
-        self.vc.issuer = Kind::Simple(issuer.into());
+        self.vc.issuer = Kind::String(issuer.into());
         self
     }
 
@@ -423,7 +423,7 @@ impl VcBuilder {
             bail!("no type set");
         }
 
-        if let Kind::Simple(id) = &self.vc.issuer {
+        if let Kind::String(id) = &self.vc.issuer {
             if id.is_empty() {
                 bail!("no issuer.id set");
             }
@@ -567,15 +567,15 @@ mod tests {
         assert_eq!(vc_de.issuer, vc.issuer);
 
         let mut issuer = match &vc.issuer {
-            Kind::Rich(issuer) => issuer.clone(),
-            Kind::Simple(id) => Issuer {
+            Kind::Object(issuer) => issuer.clone(),
+            Kind::String(id) => Issuer {
                 id: id.clone(),
                 ..Issuer::default()
             },
         };
         issuer.extra =
             Some(HashMap::from([("name".into(), Value::String("Example University".into()))]));
-        vc.issuer = Kind::Rich(issuer);
+        vc.issuer = Kind::Object(issuer);
 
         // serialize
         let vc_json = serde_json::to_value(&vc).expect("should serialize to json");

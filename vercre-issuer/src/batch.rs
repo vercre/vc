@@ -295,7 +295,7 @@ where
             .map_err(|e| Err::ServerError(format!("issue creating proof: {e}")))?;
 
         Ok(CredentialResponse {
-            credential: Some(Kind::Simple(jwt)),
+            credential: Some(Kind::String(jwt)),
 
             // TODO: add `c_nonce` and `c_nonce_expires_in` to CredentialResponse
             ..CredentialResponse::default()
@@ -350,7 +350,7 @@ where
         let vc_id = format!("{credential_issuer}/credentials/{}", types[1].clone());
 
         let vc = VerifiableCredential::builder()
-            .add_context(Kind::Simple(credential_issuer.clone() + "/credentials/v1"))
+            .add_context(Kind::String(credential_issuer.clone() + "/credentials/v1"))
             // TODO: generate credential id
             .id(vc_id)
             .add_type(types[1].clone())
@@ -523,13 +523,11 @@ mod tests {
 
         // verify credential
         assert!(response.credential_responses.len() == 1);
-        let credential = response.credential_responses[0].credential.clone();
-
-        let Kind::Simple(token) = credential.expect("VC is present") else {
-            panic!("VC is not base64 encoded string");
+        let Some(vc_kind) = &response.credential_responses[0].credential else {
+            panic!("credential is missing");
         };
         let Payload::Vc(vc) =
-            proof::verify(&token, Verify::Vc, &provider).await.expect("should decode")
+            proof::verify(Verify::Vc(vc_kind), &provider).await.expect("should decode")
         else {
             panic!("should be VC");
         };

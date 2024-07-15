@@ -159,16 +159,18 @@ async fn credential(
     let Some(value) = res.credential.as_ref() else {
         bail!("no credential in response");
     };
-    let Kind::Simple(token) = value else {
-        bail!("credential is not a string");
-    };
-    let Ok(Payload::Vc(vc)) = proof::verify(token, Verify::Vc, verifier).await else {
+    let Ok(Payload::Vc(vc)) = proof::verify(Verify::Vc(value), verifier).await else {
         bail!("could not parse credential");
     };
 
     let issuer_id = match &vc.issuer {
-        Kind::Simple(id) => id,
-        Kind::Rich(issuer) => &issuer.id,
+        Kind::String(id) => id,
+        Kind::Object(issuer) => &issuer.id,
+    };
+
+    // TODO: add support embedded proof
+    let Kind::String(token) = value else {
+        bail!("credential is not a JWT");
     };
 
     Ok(Credential {

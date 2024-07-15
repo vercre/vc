@@ -75,24 +75,14 @@ where
             }
         };
 
-        let vp_token = match serde_json::to_value(&jwt) {
-            Ok(vp_token) => vp_token,
-            Err(e) => {
-                tracing::error!(target: "Endpoint::present", ?e);
-                return Err(e.into());
-            }
-        };
-
         // Assemble the presentation response to the verifier and ask the wallet client to send it.
         let res_req = ResponseRequest {
-            vp_token: Some(vec![vp_token]),
+            vp_token: Some(vec![Kind::String(jwt)]),
             presentation_submission: Some(submission),
             state: presentation.request.state.clone(),
         };
-        let res_uri = presentation
-            .request
-            .response_uri
-            .map(|uri| uri.trim_end_matches('/').to_string());
+        let res_uri =
+            presentation.request.response_uri.map(|uri| uri.trim_end_matches('/').to_string());
         let response =
             match self.provider.present(&presentation.id, res_uri.as_deref(), &res_req).await {
                 Ok(response) => response,
@@ -143,7 +133,7 @@ fn create_vp(
 ) -> anyhow::Result<VerifiablePresentation> {
     // presentation with 2 VCs: one as JSON, one as base64url encoded JWT
     let mut builder = VerifiablePresentation::builder()
-        .add_context(Kind::Simple("https://www.w3.org/2018/credentials/examples/v1".into()))
+        .add_context(Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()))
         .holder(holder_did);
 
     let pd = match &presentation.request.presentation_definition {

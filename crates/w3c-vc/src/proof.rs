@@ -30,6 +30,8 @@ mod controller;
 pub mod integrity;
 mod jose;
 
+use anyhow::bail;
+use core_utils::{Kind, Quota};
 use proof::jose::jws;
 pub use proof::signature::{Algorithm, Signer, Verifier};
 use serde::{Deserialize, Serialize};
@@ -123,12 +125,14 @@ pub async fn create(
 }
 
 /// Data type to verify.
-pub enum Verify {
-    /// A Verifiable Credential proof encoded as a JWT.
-    Vc,
+pub enum Verify<'a> {
+    /// A Verifiable Credential proof either encoded as a JWT or with an
+    /// embedded a Data Integrity Proof.
+    Vc(&'a Kind<VerifiableCredential>),
 
-    /// A Verifiable Presentation proof encoded as a JWT.
-    Vp,
+    /// A Verifiable Presentation proof either encoded as a JWT or with an
+    /// embedded a Data Integrity Proof.
+    Vp(&'a Kind<VerifiablePresentation>),
 }
 
 /// Verify a proof.
@@ -136,21 +140,40 @@ pub enum Verify {
 /// # Errors
 /// TODO: Add errors
 #[allow(clippy::unused_async)]
-pub async fn verify(
-    token: &str, payload: Verify, verifier: &impl Verifier,
-) -> anyhow::Result<Payload> {
-    match payload {
-        Verify::Vc => {
+pub async fn verify(proof: Verify<'_>, verifier: &impl Verifier) -> anyhow::Result<Payload> {
+    match proof {
+        Verify::Vc(value) => {
+            let Kind::String(token) = value else {
+                bail!("VerifiableCredential is not a JWT");
+            };
             let jwt = jws::decode::<jose::VcClaims>(token, verifier).await?;
             Ok(Payload::Vc(jwt.claims.vc))
         }
-        Verify::Vp => {
-            let jwt = jws::decode::<jose::VpClaims>(token, verifier).await?;
-            Ok(Payload::Vp {
-                vp: jwt.claims.vp,
-                client_id: jwt.claims.aud,
-                nonce: jwt.claims.nonce,
-            })
+        Verify::Vp(value) => {
+            match value {
+                Kind::String(token) => {
+                    let jwt = jws::decode::<jose::VpClaims>(token, verifier).await?;
+                    Ok(Payload::Vp {
+                        vp: jwt.claims.vp,
+                        client_id: jwt.claims.aud,
+                        nonce: jwt.claims.nonce,
+                    })
+                }
+                Kind::Object(vp) => {
+                    // TODO: Implement embedded proof verification
+                    let proof = match &vp.proof {
+                        Some(Quota::One(proof)) => proof,
+                        _ => bail!("invalid VerifiablePresentation proof"),
+                    };
+                    let challenge = proof.challenge.clone().unwrap_or_default();
+
+                    Ok(Payload::Vp {
+                        vp: vp.clone(),
+                        nonce: challenge,
+                        client_id: String::new(),
+                    })
+                }
+            }
         }
     }
 }

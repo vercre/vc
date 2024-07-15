@@ -41,10 +41,10 @@
 //! ```
 
 // TODO: investigate PartyUInfo and PartyVInfo more thoroughly
-// The ephemeral public key for the Agreement is stored alongside the wrapped per-file key. 
+// The ephemeral public key for the Agreement is stored alongside the wrapped per-file key.
 // The KDF is Concatenation Key Derivation Function (Approved Alternative 1) as described in
 // 5.8.1 of NIST SP 800-56A. AlgorithmID is omitted. PartyUInfo and PartyVInfo are the ephemeral
-// and static public keys, respectively. SHA256 is used as the hashing function. 
+// and static public keys, respectively. SHA256 is used as the hashing function.
 
 use std::fmt::{self, Display};
 use std::str::FromStr;

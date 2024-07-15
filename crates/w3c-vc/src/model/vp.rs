@@ -103,7 +103,7 @@ impl VpBuilder {
 
         // sensibile defaults
         builder.vp.id = Some(format!("urn:uuid:{}", Uuid::new_v4()));
-        builder.vp.context.push(Kind::Simple("https://www.w3.org/2018/credentials/v1".into()));
+        builder.vp.context.push(Kind::String("https://www.w3.org/2018/credentials/v1".into()));
         builder.vp.type_.push("VerifiablePresentation".into());
         builder
     }
@@ -227,7 +227,7 @@ mod tests {
         subj.claims = json!({"employeeID": "1234567890"}).as_object().unwrap().clone();
 
         let vc = VerifiableCredential::builder()
-            .add_context(Kind::Simple("https://www.w3.org/2018/credentials/examples/v1".into()))
+            .add_context(Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()))
             .id("https://example.com/credentials/3732")
             .add_type("EmployeeIDCredential")
             .issuer("https://example.com/issuers/14")
@@ -235,7 +235,7 @@ mod tests {
             .build()?;
 
         VerifiablePresentation::builder()
-            .add_context(Kind::Simple("https://www.w3.org/2018/credentials/examples/v1".into()))
+            .add_context(Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()))
             .add_type("EmployeeIDCredential")
             .add_credential(serde_json::to_value(vc)?)
             .build()

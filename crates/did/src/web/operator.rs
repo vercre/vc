@@ -48,13 +48,13 @@ impl Operator for DidKey {
             || options.public_key_format == PublicKeyFormat::Ed25519VerificationKey2020
         {
             (
-                Kind::Simple("https://w3id.org/security/data-integrity/v1".into()),
+                Kind::String("https://w3id.org/security/data-integrity/v1".into()),
                 PublicKey::Multibase(multi_key.into()),
             )
         } else {
             let verif_type = &options.public_key_format;
             (
-                Kind::Rich(json!({
+                Kind::Object(json!({
                     "publicKeyJwk": {
                         "@id": "https://w3id.org/security#publicKeyJwk",
                         "@type": "@json"
@@ -90,7 +90,7 @@ impl Operator for DidKey {
             multi_bytes.extend_from_slice(&x25519_bytes);
             let ek_multibase = multibase::encode(Base58Btc, &multi_bytes);
 
-            Some(vec![Kind::Rich(VerificationMethod {
+            Some(vec![Kind::Object(VerificationMethod {
                 id: format!("{did}#{ek_multibase}"),
                 type_: options.public_key_format.clone(),
                 controller: did.into(),
@@ -104,7 +104,7 @@ impl Operator for DidKey {
         let kid = format!("{did}#{multi_key}");
 
         Ok(Document {
-            context: vec![Kind::Simple(options.default_context), context],
+            context: vec![Kind::String(options.default_context), context],
             id: did.into(),
             verification_method: Some(vec![VerificationMethod {
                 id: kid.clone(),
@@ -113,10 +113,10 @@ impl Operator for DidKey {
                 public_key,
                 ..VerificationMethod::default()
             }]),
-            authentication: Some(vec![Kind::Simple(kid.clone())]),
-            assertion_method: Some(vec![Kind::Simple(kid.clone())]),
-            capability_invocation: Some(vec![Kind::Simple(kid.clone())]),
-            capability_delegation: Some(vec![Kind::Simple(kid)]),
+            authentication: Some(vec![Kind::String(kid.clone())]),
+            assertion_method: Some(vec![Kind::String(kid.clone())]),
+            capability_invocation: Some(vec![Kind::String(kid.clone())]),
+            capability_delegation: Some(vec![Kind::String(kid)]),
             key_agreement,
             ..Document::default()
         })

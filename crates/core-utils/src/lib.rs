@@ -14,16 +14,16 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Kind<T> {
-    /// Simple value
-    Simple(String),
+    /// Simple string value
+    String(String),
 
-    /// Complex value
-    Rich(T),
+    /// Complex object value
+    Object(T),
 }
 
 impl<T: Default> Default for Kind<T> {
     fn default() -> Self {
-        Self::Simple(String::new())
+        Self::String(String::new())
     }
 }
 

@@ -50,7 +50,9 @@ use openid4vc::endpoint::{
 };
 use openid4vc::error::Err;
 #[allow(clippy::module_name_repetitions)]
-pub use openid4vc::issuance::{BatchCredentialRequest, ProofClaims,CredentialRequest, CredentialResponse};
+pub use openid4vc::issuance::{
+    BatchCredentialRequest, CredentialRequest, CredentialResponse, ProofClaims,
+};
 use openid4vc::Result;
 use tracing::instrument;
 use w3c_vc::proof::Signer;
@@ -149,7 +151,6 @@ where
 mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
-    use core_utils::Kind;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::issuance::ProofClaims;
     use openid4vc::jws::{self, Type};
@@ -228,11 +229,11 @@ mod tests {
         });
 
         // verify credential
-        let Kind::Simple(token) = response.credential.expect("VC is present") else {
+        let Some(vc_kind) = &response.credential else {
             panic!("VC is not base64 encoded string");
         };
         let Payload::Vc(vc) =
-            proof::verify(&token, Verify::Vc, &provider).await.expect("should decode")
+            proof::verify(Verify::Vc(vc_kind), &provider).await.expect("should decode")
         else {
             panic!("should be VC");
         };

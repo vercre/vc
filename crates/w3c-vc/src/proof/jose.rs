@@ -83,8 +83,8 @@ impl From<VerifiableCredential> for VcClaims {
         };
 
         let issuer_id = match &vc.issuer {
-            Kind::Simple(id) => id,
-            Kind::Rich(issuer) => &issuer.id,
+            Kind::String(id) => id,
+            Kind::Object(issuer) => &issuer.id,
         };
 
         Self {

@@ -4,12 +4,13 @@ use std::fmt;
 use std::io::Cursor;
 
 use base64ct::{Base64, Encoding};
+use core_utils::Kind;
 use dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use w3c_vc::model::VerifiablePresentation;
 
 use super::Client as ClientMetadata;
 use crate::error::Err;
@@ -509,7 +510,7 @@ pub struct ResponseRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     // #[serde(deserialize_with = "vp_token::deserialize")]
     #[serde(with = "stringify::option")]
-    pub vp_token: Option<Vec<Value>>,
+    pub vp_token: Option<Vec<Kind<VerifiablePresentation>>>,
 
     /// The `presentation_submission` element as defined in [DIF.PresentationExchange].
     /// It contains mappings between the requested Verifiable Credentials and where to
