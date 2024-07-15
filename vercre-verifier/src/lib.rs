@@ -176,6 +176,12 @@ pub mod provider {
 }
 use std::fmt::Debug;
 
+pub use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
+pub use openid4vc::presentation::{
+    ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
+    MetadataRequest, MetadataResponse, PresentationDefinitionType, RequestObject,
+    RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse, ResponseType,
+};
 use proof::signature::Signer;
 use provider::{Callback, ClientMetadata, StateManager};
 

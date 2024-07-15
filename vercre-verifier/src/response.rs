@@ -25,11 +25,7 @@ use std::fmt::Debug;
 use core_utils::Kind;
 use openid4vc::endpoint::{Callback, ClientMetadata, StateManager};
 use openid4vc::error::Err;
-#[allow(clippy::module_name_repetitions)]
-pub use openid4vc::presentation::{
-    ClientIdScheme, ClientMetadataType, PresentationDefinitionType, ResponseRequest,
-    ResponseResponse, ResponseType,
-};
+use openid4vc::presentation::{PresentationDefinitionType, ResponseRequest, ResponseResponse};
 use openid4vc::Result;
 use proof::signature::{Signer, Verifier};
 use serde_json::Value;
@@ -268,7 +264,9 @@ mod tests {
     use std::sync::LazyLock;
 
     use dif_exch::PresentationDefinition;
-    use openid4vc::presentation::RequestObject;
+    use openid4vc::presentation::{
+        ClientIdScheme, ClientMetadataType, RequestObject, ResponseRequest, ResponseType,
+    };
     use serde_json::json;
     use test_utils::verifier::Provider;
 

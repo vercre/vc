@@ -72,8 +72,7 @@ use openid4vc::endpoint::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
 use openid4vc::error::Err;
-#[allow(clippy::module_name_repetitions)]
-pub use openid4vc::issuance::{
+use openid4vc::issuance::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer,
     CredentialOfferType, Grants, PreAuthorizedCodeGrant, TxCode,
 };

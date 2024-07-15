@@ -42,9 +42,20 @@ pub mod provider;
 
 use std::fmt::Debug;
 
+pub use core_utils::Quota;
 pub use dif_exch::Constraints;
+pub use openid4vc::issuance::{
+    CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse, GrantType,
+    Issuer, MetadataRequest, MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
+    TxCode,
+};
+pub use openid4vc::presentation::{
+    RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
+};
 pub use provider as callback;
 use provider::StateManager;
+
+pub use crate::issuance::{Issuance, OfferRequest, PinRequest, Status};
 
 /// Endpoint is used to surface the public wallet endpoints to clients.
 #[derive(Debug)]

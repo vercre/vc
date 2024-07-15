@@ -110,6 +110,15 @@ pub mod provider {
 
 use std::fmt::Debug;
 
+pub use openid4vc::issuance::{
+    AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
+    AuthorizationResponse, BatchCredentialRequest, BatchCredentialResponse, CreateOfferRequest,
+    CreateOfferResponse, CredentialConfiguration, CredentialOffer, CredentialOfferType,
+    CredentialRequest, CredentialResponse, CredentialType, DeferredCredentialRequest,
+    DeferredCredentialResponse, Grants, MetadataRequest, MetadataResponse, PreAuthorizedCodeGrant,
+    ProofClaims, ProofType, RegistrationRequest, RegistrationResponse, TokenAuthorizationDetail,
+    TokenRequest, TokenResponse, TxCode,
+};
 pub use openid4vc::Result;
 use provider::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, Signer, StateManager, Subject,

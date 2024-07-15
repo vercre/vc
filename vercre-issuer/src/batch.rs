@@ -16,12 +16,10 @@ use openid4vc::endpoint::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
 use openid4vc::error::Err;
-#[allow(clippy::module_name_repetitions)]
-pub use openid4vc::issuance::{
-    BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialRequest,
-    CredentialResponse, CredentialType, ProofClaims, ProofType,
+use openid4vc::issuance::{
+    BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
+    CredentialRequest, CredentialResponse, CredentialType, Issuer, ProofClaims, ProofType,
 };
-use openid4vc::issuance::{CredentialDefinition, Issuer};
 use openid4vc::Result;
 use proof::jose::jws::{self, Type};
 use proof::signature::{Signer, Verifier};

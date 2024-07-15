@@ -9,8 +9,7 @@ use std::fmt::Debug;
 
 use openid4vc::endpoint::{Callback, ClientMetadata, StateManager};
 use openid4vc::error::Err;
-#[allow(clippy::module_name_repetitions)]
-pub use openid4vc::presentation::{MetadataRequest, MetadataResponse};
+use openid4vc::presentation::{MetadataRequest, MetadataResponse};
 use openid4vc::Result;
 use proof::signature::Signer;
 use tracing::instrument;

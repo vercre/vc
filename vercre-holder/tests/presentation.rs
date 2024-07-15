@@ -6,7 +6,7 @@ use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use openid4vc::issuance::CredentialConfiguration;
 use openid4vc::presentation::{CreateRequestRequest, DeviceFlow, PresentationDefinitionType};
-use test_utils::verifier;
+use test_utils::{verifier, VERIFIER_ID};
 use vercre_holder::callback::CredentialStorer;
 use vercre_holder::credential::Credential;
 use vercre_holder::presentation::Status;
@@ -14,7 +14,7 @@ use vercre_holder::Endpoint;
 use w3c_vc::model::VerifiableCredential;
 use w3c_vc::proof::{self, Format, Payload};
 
-use crate::providers::{holder, VERIFIER_ID};
+use crate::providers::holder;
 
 static VERIFIER_PROVIDER: LazyLock<verifier::Provider> = LazyLock::new(verifier::Provider::new);
 static HOLDER_PROVIDER: LazyLock<holder::Provider> =

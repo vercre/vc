@@ -24,14 +24,12 @@ use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
-use vercre_issuer::authorize::AuthorizationRequest;
-use vercre_issuer::batch::{BatchCredentialRequest, BatchCredentialResponse};
-use vercre_issuer::create_offer::{CreateOfferRequest, CreateOfferResponse};
-use vercre_issuer::credential::{CredentialRequest, CredentialResponse};
-use vercre_issuer::deferred::{DeferredCredentialRequest, DeferredCredentialResponse};
-use vercre_issuer::metadata::{MetadataRequest, MetadataResponse};
-use vercre_issuer::token::{TokenRequest, TokenResponse};
-use vercre_issuer::Endpoint;
+use vercre_issuer::{
+    AuthorizationRequest, BatchCredentialRequest, BatchCredentialResponse, CreateOfferRequest,
+    CreateOfferResponse, CredentialRequest, CredentialResponse, DeferredCredentialRequest,
+    DeferredCredentialResponse, Endpoint, MetadataRequest, MetadataResponse, TokenRequest,
+    TokenResponse,
+};
 
 use crate::provider::Provider;
 

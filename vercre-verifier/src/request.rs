@@ -17,12 +17,7 @@ use std::fmt::Debug;
 
 use openid4vc::endpoint::{Callback, ClientMetadata, StateManager};
 use openid4vc::error::Err;
-use openid4vc::presentation::RequestObjectType;
-#[allow(clippy::module_name_repetitions)]
-pub use openid4vc::presentation::{
-    ClientIdScheme, PresentationDefinitionType, RequestObjectRequest, RequestObjectResponse,
-    ResponseType,
-};
+use openid4vc::presentation::{RequestObjectRequest, RequestObjectResponse, RequestObjectType};
 use openid4vc::Result;
 use proof::jose::jws::{self, Type};
 use proof::signature::Signer;
@@ -104,7 +99,9 @@ where
 mod tests {
     use dif_exch::PresentationDefinition;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use openid4vc::presentation::{ClientMetadataType, RequestObject};
+    use openid4vc::presentation::{
+        ClientIdScheme, ClientMetadataType, PresentationDefinitionType, RequestObject, ResponseType,
+    };
     use test_utils::verifier::{Provider, VERIFIER_ID};
 
     use super::*;

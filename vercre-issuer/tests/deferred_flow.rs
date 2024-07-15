@@ -8,11 +8,11 @@ use proof::jose::jws::{self, Type};
 use serde_json::json;
 use test_utils::holder;
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, PENDING_USER};
-use vercre_issuer::create_offer::{CreateOfferRequest, CreateOfferResponse, CredentialOfferType};
-use vercre_issuer::credential::{CredentialRequest, CredentialResponse, ProofClaims};
-use vercre_issuer::deferred::{DeferredCredentialRequest, DeferredCredentialResponse};
-use vercre_issuer::token::{TokenRequest, TokenResponse};
-use vercre_issuer::Endpoint;
+use vercre_issuer::{
+    CreateOfferRequest, CreateOfferResponse, CredentialOfferType, CredentialRequest,
+    CredentialResponse, DeferredCredentialRequest, DeferredCredentialResponse, Endpoint,
+    ProofClaims, TokenRequest, TokenResponse,
+};
 
 static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
 

@@ -12,11 +12,7 @@ use std::fmt::Debug;
 
 use chrono::{DateTime, Utc};
 pub use offer::OfferRequest;
-pub use openid4vc::issuance::{
-    CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse, GrantType,
-    Issuer, MetadataRequest, MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
-    TxCode,
-};
+use openid4vc::issuance::{CredentialConfiguration, CredentialOffer, TokenResponse};
 pub use pin::PinRequest;
 use serde::{Deserialize, Serialize};
 

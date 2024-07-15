@@ -7,7 +7,7 @@ use openid4vc::endpoint::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
 use openid4vc::error::Err;
-pub use openid4vc::issuance::{RegistrationRequest, RegistrationResponse};
+use openid4vc::issuance::{RegistrationRequest, RegistrationResponse};
 use openid4vc::Result;
 use proof::signature::Signer;
 use tracing::instrument;

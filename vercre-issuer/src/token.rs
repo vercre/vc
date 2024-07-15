@@ -19,9 +19,7 @@ use openid4vc::endpoint::{
     Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
 };
 use openid4vc::error::Err;
-#[allow(clippy::module_name_repetitions)]
-pub use openid4vc::issuance::{AuthorizationDetailType, TokenRequest, TokenResponse};
-use openid4vc::issuance::{GrantType, TokenType};
+use openid4vc::issuance::{GrantType, TokenRequest, TokenResponse, TokenType};
 use openid4vc::Result;
 use proof::signature::Signer;
 use sha2::{Digest, Sha256};
@@ -215,7 +213,8 @@ mod tests {
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid4vc::issuance::{
-        AuthorizationDetail, CredentialDefinition, TokenAuthorizationDetail,
+        AuthorizationDetail, AuthorizationDetailType, CredentialDefinition,
+        TokenAuthorizationDetail,
     };
     use openid4vc::CredentialFormat;
     use serde_json::json;

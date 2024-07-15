@@ -22,10 +22,10 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
-use vercre_verifier::create_request::{CreateRequestRequest, CreateRequestResponse};
-use vercre_verifier::request::{RequestObjectRequest, RequestObjectResponse};
-use vercre_verifier::response::ResponseRequest;
-use vercre_verifier::Endpoint;
+use vercre_verifier::{
+    CreateRequestRequest, CreateRequestResponse, Endpoint, RequestObjectRequest,
+    RequestObjectResponse, ResponseRequest,
+};
 
 use crate::provider::Provider;
 

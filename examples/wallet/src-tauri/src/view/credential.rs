@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 use vercre_holder::credential::{self, Credential};
-use vercre_holder::issuance::CredentialConfiguration;
+use vercre_holder::{CredentialConfiguration, Quota};
 
 /// View model for the credential sub-app
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -130,8 +130,8 @@ impl From<&Credential> for CredentialDetail {
         let mut claims = HashMap::new();
 
         let subjects = match &vc.credential_subject {
-            credential::Quota::One(sub) => vec![sub.clone()],
-            credential::Quota::Many(subs) => subs.clone(),
+            Quota::One(sub) => vec![sub.clone()],
+            Quota::Many(subs) => subs.clone(),
         };
 
         for subject in subjects {

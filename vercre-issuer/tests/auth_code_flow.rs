@@ -9,10 +9,10 @@ use serde_json::json;
 use sha2::{Digest, Sha256};
 use test_utils::holder;
 use test_utils::issuer::{self, CREDENTIAL_ISSUER, NORMAL_USER};
-use vercre_issuer::authorize::{AuthorizationRequest, AuthorizationResponse};
-use vercre_issuer::credential::{CredentialRequest, CredentialResponse, ProofClaims};
-use vercre_issuer::token::{TokenRequest, TokenResponse};
-use vercre_issuer::Endpoint;
+use vercre_issuer::{
+    AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse, Endpoint,
+    ProofClaims, TokenRequest, TokenResponse,
+};
 use w3c_vc::proof::{Payload, Verify};
 
 static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);

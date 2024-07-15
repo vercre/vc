@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use vercre_holder::issuance::{Issuance, Status, TxCode};
+use vercre_holder::{Issuance, Status, TxCode};
 
 use crate::view::credential::CredentialDisplay;
 
