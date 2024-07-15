@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
 
-pub use crate::proof::integrity::Proof;
+use crate::proof::integrity::Proof;
 
 /// A Verifiable Presentation is used to combine and present credentials to a
 /// Verifer.
