@@ -157,10 +157,10 @@
 //! [OpenID4VP]: (https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
 //! [JWT VC Presentation Profile]: (https://identity.foundation/jwt-vc-presentation-profile)
 
-pub mod create_request;
-pub mod metadata;
-pub mod request;
-pub mod response;
+mod create_request;
+mod metadata;
+mod request;
+mod response;
 mod state;
 
 /// Re-export types.

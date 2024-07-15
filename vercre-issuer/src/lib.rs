@@ -86,15 +86,15 @@
 //! [OpenID Connect]: (https://openid.net/specs/openid-connect-core-1_0.html)
 //! [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
 
-pub mod authorize;
-pub mod batch;
-pub mod create_offer;
-pub mod credential;
-pub mod deferred;
-pub mod metadata;
-pub mod register;
+mod authorize;
+mod batch;
+mod create_offer;
+mod credential;
+mod deferred;
+mod metadata;
+mod register;
 mod state;
-pub mod token;
+mod token;
 
 /// Re-export provider traits and types.
 pub mod provider {
@@ -107,7 +107,6 @@ pub mod provider {
     pub use proof::jose::jwk::PublicKeyJwk;
     pub use proof::signature::{Algorithm, Signer, Verifier};
 }
-
 use std::fmt::Debug;
 
 use openid::endpoint::{
