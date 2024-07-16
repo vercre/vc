@@ -1,8 +1,8 @@
 use std::fmt::Debug;
 
-use openid::{Err, Result};
+use openid::Result;
 
-use crate::builder::handler::{Context, Handler};
+use crate::builder::handler::wrapper;
 use crate::builder::BuilderEndpoint;
 use crate::{IssuerProvider, TestRequest, TestResponse};
 
@@ -12,36 +12,35 @@ where
 {
     /// Mock a request to the endpoint.
     pub async fn make_request(&mut self, request: &TestRequest) -> Result<TestResponse> {
-        let ctx = RequestContext {
-            _p: std::marker::PhantomData,
-        };
-        Handler::handle_request(self, request, ctx).await
+        wrapper(request, process).await
     }
 }
 
-#[derive(Debug)]
-struct RequestContext<P> {
-    _p: std::marker::PhantomData<P>,
+async fn process(request: &TestRequest) -> Result<TestResponse> {
+    println!("in process: {request:?}");
+    Ok(TestResponse {})
 }
 
-impl<P> Context for RequestContext<P>
-where
-    P: IssuerProvider + Debug,
-{
-    type Provider = P;
-    type Request = TestRequest;
-    type Response = TestResponse;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::provider::TestProvider;
 
-    fn callback_id(&self) -> Option<String> {
-        Some("callback_id".into())
+    #[tokio::test]
+    async fn builder_ok() {
+        let request = TestRequest { return_ok: true };
+        let response =
+            BuilderEndpoint::with_provider(TestProvider::new()).make_request(&request).await;
+
+        assert!(response.is_ok());
     }
 
-    async fn process(
-        &self, _provider: &Self::Provider, request: &Self::Request,
-    ) -> Result<Self::Response> {
-        match request.return_ok {
-            true => Ok(TestResponse {}),
-            false => return Err(Err::InvalidRequest("invalid request".into()).into()),
-        }
+    #[tokio::test]
+    async fn current_err() {
+        let request = TestRequest { return_ok: false };
+        let response =
+            BuilderEndpoint::with_provider(TestProvider::new()).make_request(&request).await;
+
+        assert!(response.is_err());
     }
 }

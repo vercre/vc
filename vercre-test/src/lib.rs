@@ -1,6 +1,7 @@
 //! # [OpenID for Verifiable Credential Issuance]
 
 mod builder;
+mod current;
 mod provider;
 mod simple;
 
@@ -30,22 +31,22 @@ mod tests {
     use provider::TestProvider;
 
     use super::*;
-    use crate::builder::BuilderEndpoint;
+    use crate::current::CurrentEndpoint;
 
     #[tokio::test]
-    async fn builder_ok() {
+    async fn current_ok() {
         let request = TestRequest { return_ok: true };
         let response =
-            BuilderEndpoint::with_provider(TestProvider::new()).make_request(&request).await;
+            CurrentEndpoint::with_provider(TestProvider::new()).make_request(&request).await;
 
         assert!(response.is_ok());
     }
 
     #[tokio::test]
-    async fn builder_err() {
+    async fn current_err() {
         let request = TestRequest { return_ok: false };
         let response =
-            BuilderEndpoint::with_provider(TestProvider::new()).make_request(&request).await;
+            CurrentEndpoint::with_provider(TestProvider::new()).make_request(&request).await;
 
         assert!(response.is_err());
     }

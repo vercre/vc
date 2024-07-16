@@ -3,21 +3,22 @@
 mod endpoint;
 mod handler;
 
-// use handler::Handler;
+
+
+use handler::Handler;
 
 use crate::IssuerProvider;
 
 /// Endpoint is used to surface the public Verifiable Presentation endpoints to
 /// clients.
-pub struct BuilderEndpoint<P>
+pub struct CurrentEndpoint<P>
 where
     P: IssuerProvider,
 {
-    #[allow(dead_code)]
     provider: P,
 }
 
-impl<P> BuilderEndpoint<P>
+impl<P> CurrentEndpoint<P>
 where
     P: IssuerProvider,
 {
@@ -27,13 +28,13 @@ where
     }
 }
 
-// impl<P> Handler for BuilderEndpoint<P>
-// where
-//     P: IssuerProvider ,
-// {
-//     type Provider = P;
+impl<P> Handler for CurrentEndpoint<P>
+where
+    P: IssuerProvider ,
+{
+    type Provider = P;
 
-//     fn provider(&self) -> &P {
-//         &self.provider
-//     }
-// }
+    fn provider(&self) -> &P {
+        &self.provider
+    }
+}
