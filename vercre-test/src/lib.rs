@@ -1,13 +1,10 @@
 //! # [OpenID for Verifiable Credential Issuance]
 
 mod builder;
-mod current;
 mod provider;
 mod simple;
 
-use openid::endpoint::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
+use openid::endpoint::{ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject};
 use proof::signature::Signer;
 
 /// Test request.
@@ -22,32 +19,6 @@ pub struct TestResponse {}
 
 /// Issuer Provider trait.
 pub trait IssuerProvider:
-    ClientMetadata + IssuerMetadata + ServerMetadata + Subject + StateManager + Signer + Callback
+    ClientMetadata + IssuerMetadata + ServerMetadata + Subject + StateManager + Signer + Clone
 {
-}
-
-#[cfg(test)]
-mod tests {
-    use provider::TestProvider;
-
-    use super::*;
-    use crate::current::CurrentEndpoint;
-
-    #[tokio::test]
-    async fn current_ok() {
-        let request = TestRequest { return_ok: true };
-        let response =
-            CurrentEndpoint::with_provider(TestProvider::new()).make_request(&request).await;
-
-        assert!(response.is_ok());
-    }
-
-    #[tokio::test]
-    async fn current_err() {
-        let request = TestRequest { return_ok: false };
-        let response =
-            CurrentEndpoint::with_provider(TestProvider::new()).make_request(&request).await;
-
-        assert!(response.is_err());
-    }
 }

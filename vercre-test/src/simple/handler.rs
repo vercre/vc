@@ -39,7 +39,7 @@ where
 
 pub async fn shell<P, R, U, E, F>(provider: P, request: &R, handler: F) -> Result<U, E>
 where
-    // P: IssuerProvider,
+    P: IssuerProvider,
     R: Request + Sync,
     F: for<'a> Handler<'a, P, R, U, E>,
 {

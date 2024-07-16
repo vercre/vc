@@ -9,7 +9,13 @@ impl Request for TestRequest {}
 pub async fn make_request(
     provider: impl IssuerProvider, request: &TestRequest,
 ) -> Result<TestResponse> {
+    shell(provider.clone(), request, verify).await?;
     shell(provider, request, process).await
+}
+
+async fn verify(_provider: impl IssuerProvider, request: &TestRequest) -> Result<TestResponse> {
+    println!("in process: {request:?}");
+    Ok(TestResponse {})
 }
 
 async fn process(_provider: impl IssuerProvider, request: &TestRequest) -> Result<TestResponse> {
