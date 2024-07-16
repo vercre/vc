@@ -5,6 +5,10 @@ use openid::Result;
 // use openid::endpoint::{Callback, Payload, Status};
 // use openid::Err;
 
+pub trait Request {
+    fn callback_id(&self) -> Option<String>;
+}
+
 pub trait Handler<'a, R, U> {
     type Response: Future<Output = Result<U>>;
 
@@ -23,9 +27,11 @@ where
     }
 }
 
-pub async fn wrapper<R, U, F>(request: &R, f: F) -> Result<U>
+pub async fn wrapper<R, U, F>(request: &R, handler: F) -> Result<U>
 where
+    R: Request,
     F: for<'r> Handler<'r, R, U>,
 {
-    f.handle(request).await
+    println!("in wrapper: {}", request.callback_id().unwrap());
+    handler.handle(request).await
 }

@@ -2,9 +2,15 @@ use std::fmt::Debug;
 
 use openid::Result;
 
-use crate::builder::handler::wrapper;
+use crate::builder::handler::{wrapper, Request};
 use crate::builder::BuilderEndpoint;
 use crate::{IssuerProvider, TestRequest, TestResponse};
+
+impl Request for TestRequest {
+    fn callback_id(&self) -> Option<String> {
+        Some("callback_id".into())
+    }
+}
 
 impl<P> BuilderEndpoint<P>
 where
