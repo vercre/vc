@@ -11,6 +11,7 @@ use crate::IssuerProvider;
 
 /// Endpoint is used to surface the public Verifiable Presentation endpoints to
 /// clients.
+#[allow(clippy::module_name_repetitions)]
 pub struct CurrentEndpoint<P>
 where
     P: IssuerProvider,
@@ -23,7 +24,7 @@ where
     P: IssuerProvider,
 {
     #[allow(dead_code)]
-    pub fn with_provider(provider: P) -> Self {
+    pub const fn with_provider(provider: P) -> Self {
         Self { provider }
     }
 }

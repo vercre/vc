@@ -17,7 +17,7 @@ where
     P: IssuerProvider + Debug,
 {
     /// Mock a request to the endpoint.
-    pub async fn make_request(&mut self, request: &TestRequest) -> Result<TestResponse> {
+    pub async fn make_request(&self, request: &TestRequest) -> Result<TestResponse> {
         wrapper(request, process).await
     }
 }

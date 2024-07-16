@@ -14,6 +14,7 @@ use test_utils::providers::Issuance;
 
 use crate::IssuerProvider;
 
+#[allow(clippy::module_name_repetitions)]
 #[derive(Clone, Debug)]
 pub struct TestProvider(Issuance);
 impl TestProvider {

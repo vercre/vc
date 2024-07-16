@@ -11,7 +11,7 @@ where
     P: IssuerProvider + Debug,
 {
     /// Mock a request to the endpoint.
-    pub async fn make_request(&mut self, request: &TestRequest) -> Result<TestResponse> {
+    pub async fn make_request(&self, request: &TestRequest) -> Result<TestResponse> {
         let ctx = RequestContext {
             _p: std::marker::PhantomData,
         };
@@ -39,9 +39,10 @@ where
     async fn process(
         &self, _provider: &Self::Provider, request: &Self::Request,
     ) -> Result<Self::Response> {
-        match request.return_ok {
-            true => Ok(TestResponse {}),
-            false => return Err(Err::InvalidRequest("invalid request".into()).into()),
+        if request.return_ok {
+            Ok(TestResponse {})
+        } else {
+            Err(Err::InvalidRequest("invalid request".into()))
         }
     }
 }

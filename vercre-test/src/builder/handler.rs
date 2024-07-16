@@ -9,27 +9,23 @@ pub trait Request {
     fn callback_id(&self) -> Option<String>;
 }
 
-pub trait Handler<'a, R, U> {
-    type Response: Future<Output = Result<U>>;
-
-    fn handle(self, request: &'a R) -> Self::Response;
+pub trait Handler<'a, R, U>: Send {
+    fn handle(self, request: &'a R) -> impl Future<Output = Result<U>> + Send;
 }
 
 impl<'a, R: 'a, U, F, Fut> Handler<'a, R, U> for F
 where
-    F: FnOnce(&'a R) -> Fut,
-    Fut: Future<Output = Result<U>> + 'a,
+    F: FnOnce(&'a R) -> Fut + Send,
+    Fut: Future<Output = Result<U>> + Send + Sync,
 {
-    type Response = Fut;
-
-    fn handle(self, s: &'a R) -> Self::Response {
+    fn handle(self, s: &'a R) -> impl Future<Output = Result<U>> + Send {
         self(s)
     }
 }
 
 pub async fn wrapper<R, U, F>(request: &R, handler: F) -> Result<U>
 where
-    R: Request,
+    R: Request + Sync,
     F: for<'r> Handler<'r, R, U>,
 {
     println!("in wrapper: {}", request.callback_id().unwrap());
