@@ -2,19 +2,9 @@
 
 use std::fmt::Debug;
 
-use openid::endpoint::{
-    Callback, ClientMetadata, IssuerMetadata, Payload, ServerMetadata, StateManager, Status,
-    Subject,
-};
+use openid::endpoint::{Callback, Payload, Status};
 use openid::Err;
 use tracing::instrument;
-use proof::signature::Signer;
-
-/// Issuer Provider trait.
-pub trait IssuerProvider:
-    ClientMetadata + IssuerMetadata + ServerMetadata + Subject + StateManager + Signer + Callback
-{
-}
 
 /// Result is used for all external errors.
 type Result<T, E = anyhow::Error> = std::result::Result<T, E>;

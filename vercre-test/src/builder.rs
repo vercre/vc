@@ -1,52 +1,64 @@
+//! # [OpenID for Verifiable Credential Issuance]
+
+mod endpoint;
+mod handler;
+
 use std::fmt::Debug;
 
-use openid::{Err, Result};
+use handler::Handler;
 
-use crate::handler::{self, Handler, IssuerProvider};
+use crate::IssuerProvider;
 
-#[derive(Clone, Debug, Default)]
-pub struct TestRequest {
-    pub return_ok: bool,
+/// Endpoint is used to surface the public Verifiable Presentation endpoints to
+/// clients.
+#[derive(Debug)]
+pub struct Endpoint<P>
+where
+    P: IssuerProvider,
+{
+    provider: P,
 }
 
-pub struct TestResponse {}
-
-impl<P> super::Endpoint<P>
+impl<P> Endpoint<P>
 where
-    P: IssuerProvider + Debug,
+    P: IssuerProvider,
 {
-    /// Mock a request to the endpoint.
-    pub async fn mock_request(&mut self, request: &TestRequest) -> Result<TestResponse> {
-        let ctx = RequestContext {
-            _p: std::marker::PhantomData,
-        };
-        Handler::handle_request(self, request, ctx).await
+    #[allow(dead_code)]
+    pub fn with_provider(provider: P) -> Self {
+        Self { provider }
     }
 }
 
-#[derive(Debug)]
-struct RequestContext<P> {
-    _p: std::marker::PhantomData<P>,
-}
-
-impl<P> handler::Context for RequestContext<P>
+impl<P> Handler for Endpoint<P>
 where
     P: IssuerProvider + Debug,
 {
     type Provider = P;
-    type Request = TestRequest;
-    type Response = TestResponse;
 
-    fn callback_id(&self) -> Option<String> {
-        Some("callback_id".into())
+    fn provider(&self) -> &P {
+        &self.provider
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::provider::TestProvider;
+    use crate::TestRequest;
+
+    #[tokio::test]
+    async fn test_ok() {
+        let request = TestRequest { return_ok: true };
+        let response = Endpoint::with_provider(TestProvider::new()).mock_request(&request).await;
+
+        assert!(response.is_ok());
     }
 
-    async fn process(
-        &self, _provider: &Self::Provider, request: &Self::Request,
-    ) -> Result<Self::Response> {
-        match request.return_ok {
-            true => Ok(TestResponse {}),
-            false => return Err(Err::InvalidRequest("invalid request".into()).into()),
-        }
+    #[tokio::test]
+    async fn test_err() {
+        let request = TestRequest { return_ok: false };
+        let response = Endpoint::with_provider(TestProvider::new()).mock_request(&request).await;
+
+        assert!(response.is_err());
     }
 }

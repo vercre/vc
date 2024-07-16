@@ -1,48 +1,32 @@
 //! # [OpenID for Verifiable Credential Issuance]
 
 mod builder;
-mod handler;
 mod provider;
-// mod simple;
+mod simple;
 
-use std::fmt::Debug;
+use openid::endpoint::{
+    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
+};
+use proof::signature::Signer;
 
-use handler::{Handler, IssuerProvider};
-
-/// Endpoint is used to surface the public Verifiable Presentation endpoints to
-/// clients.
-#[derive(Debug)]
-pub struct Endpoint<P>
-where
-    P: IssuerProvider,
-{
-    provider: P,
+/// Test request.
+#[derive(Clone, Debug, Default)]
+pub struct TestRequest {
+    /// Return OK.
+    pub return_ok: bool,
 }
 
-impl<P> Endpoint<P>
-where
-    P: IssuerProvider,
-{
-    #[allow(dead_code)]
-    fn with_provider(provider: P) -> Self {
-        Self { provider }
-    }
-}
+/// Test response.
+pub struct TestResponse {}
 
-impl<P> Handler for Endpoint<P>
-where
-    P: IssuerProvider + Debug,
+/// Issuer Provider trait.
+pub trait IssuerProvider:
+    ClientMetadata + IssuerMetadata + ServerMetadata + Subject + StateManager + Signer + Callback
 {
-    type Provider = P;
-
-    fn provider(&self) -> &P {
-        &self.provider
-    }
 }
 
 #[cfg(test)]
 mod tests {
-    use builder::TestRequest;
     use provider::TestProvider;
 
     use super::*;
@@ -50,7 +34,8 @@ mod tests {
     #[tokio::test]
     async fn test_ok() {
         let request = TestRequest { return_ok: true };
-        let response = Endpoint::with_provider(TestProvider::new()).mock_request(&request).await;
+        let response =
+            builder::Endpoint::with_provider(TestProvider::new()).mock_request(&request).await;
 
         assert!(response.is_ok());
     }
@@ -58,7 +43,8 @@ mod tests {
     #[tokio::test]
     async fn test_err() {
         let request = TestRequest { return_ok: false };
-        let response = Endpoint::with_provider(TestProvider::new()).mock_request(&request).await;
+        let response =
+            builder::Endpoint::with_provider(TestProvider::new()).mock_request(&request).await;
 
         assert!(response.is_err());
     }
