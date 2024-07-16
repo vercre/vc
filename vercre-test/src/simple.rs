@@ -1,4 +1,4 @@
-//! # [OpenID for Verifiable Credential Issuance]
+//! # Simple module
 
 mod endpoint;
 mod handler;
@@ -12,14 +12,14 @@ use crate::IssuerProvider;
 /// Endpoint is used to surface the public Verifiable Presentation endpoints to
 /// clients.
 #[derive(Debug)]
-pub struct Endpoint<P>
+pub struct SimpleEndpoint<P>
 where
     P: IssuerProvider,
 {
     provider: P,
 }
 
-impl<P> Endpoint<P>
+impl<P> SimpleEndpoint<P>
 where
     P: IssuerProvider,
 {
@@ -29,7 +29,7 @@ where
     }
 }
 
-impl<P> Handler for Endpoint<P>
+impl<P> Handler for SimpleEndpoint<P>
 where
     P: IssuerProvider + Debug,
 {
@@ -37,28 +37,5 @@ where
 
     fn provider(&self) -> &P {
         &self.provider
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::provider::TestProvider;
-    use crate::TestRequest;
-
-    #[tokio::test]
-    async fn test_ok() {
-        let request = TestRequest { return_ok: true };
-        let response = Endpoint::with_provider(TestProvider::new()).mock_request(&request).await;
-
-        assert!(response.is_ok());
-    }
-
-    #[tokio::test]
-    async fn test_err() {
-        let request = TestRequest { return_ok: false };
-        let response = Endpoint::with_provider(TestProvider::new()).mock_request(&request).await;
-
-        assert!(response.is_err());
     }
 }

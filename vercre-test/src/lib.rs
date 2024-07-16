@@ -30,21 +30,22 @@ mod tests {
     use provider::TestProvider;
 
     use super::*;
+    use crate::builder::BuilderEndpoint;
 
     #[tokio::test]
-    async fn test_ok() {
+    async fn builder_ok() {
         let request = TestRequest { return_ok: true };
         let response =
-            builder::Endpoint::with_provider(TestProvider::new()).mock_request(&request).await;
+            BuilderEndpoint::with_provider(TestProvider::new()).make_request(&request).await;
 
         assert!(response.is_ok());
     }
 
     #[tokio::test]
-    async fn test_err() {
+    async fn builder_err() {
         let request = TestRequest { return_ok: false };
         let response =
-            builder::Endpoint::with_provider(TestProvider::new()).mock_request(&request).await;
+            BuilderEndpoint::with_provider(TestProvider::new()).make_request(&request).await;
 
         assert!(response.is_err());
     }

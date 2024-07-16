@@ -2,15 +2,16 @@ use std::fmt::Debug;
 
 use openid::{Err, Result};
 
-use crate::builder::handler::{self, Handler};
+use crate::builder::handler::{Context, Handler};
+use crate::builder::BuilderEndpoint;
 use crate::{IssuerProvider, TestRequest, TestResponse};
 
-impl<P> super::Endpoint<P>
+impl<P> BuilderEndpoint<P>
 where
     P: IssuerProvider + Debug,
 {
     /// Mock a request to the endpoint.
-    pub async fn mock_request(&mut self, request: &TestRequest) -> Result<TestResponse> {
+    pub async fn make_request(&mut self, request: &TestRequest) -> Result<TestResponse> {
         let ctx = RequestContext {
             _p: std::marker::PhantomData,
         };
@@ -23,7 +24,7 @@ struct RequestContext<P> {
     _p: std::marker::PhantomData<P>,
 }
 
-impl<P> handler::Context for RequestContext<P>
+impl<P> Context for RequestContext<P>
 where
     P: IssuerProvider + Debug,
 {
