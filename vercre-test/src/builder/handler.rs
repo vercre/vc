@@ -26,7 +26,7 @@ where
 pub async fn wrapper<R, U, F>(request: &R, handler: F) -> Result<U>
 where
     R: Request + Sync,
-    F: for<'r> Handler<'r, R, U>,
+    F: for<'a> Handler<'a, R, U>,
 {
     println!("in wrapper: {}", request.callback_id().unwrap());
     handler.handle(request).await

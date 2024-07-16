@@ -1,48 +1,40 @@
-use std::fmt::Debug;
+use openid::Result;
 
-use openid::{Err, Result};
-
-use crate::simple::handler::{Context, Handler};
-use crate::simple::SimpleEndpoint;
+use crate::simple::handler::{shell, Request};
 use crate::{IssuerProvider, TestRequest, TestResponse};
 
-impl<P> SimpleEndpoint<P>
-where
-    P: IssuerProvider + Debug,
-{
-    /// Mock a request to the endpoint.
-    pub async fn make_request(&self, request: &TestRequest) -> Result<TestResponse> {
-        let ctx = RequestContext {
-            _p: std::marker::PhantomData,
-        };
-        Handler::handle_request(self, request, ctx).await
-    }
+impl Request for TestRequest {}
+
+#[allow(dead_code)]
+pub async fn make_request(
+    provider: impl IssuerProvider, request: &TestRequest,
+) -> Result<TestResponse> {
+    shell(provider, request, process).await
 }
 
-#[derive(Debug)]
-struct RequestContext<P> {
-    _p: std::marker::PhantomData<P>,
+async fn process(_provider: impl IssuerProvider, request: &TestRequest) -> Result<TestResponse> {
+    println!("in process: {request:?}");
+    Ok(TestResponse {})
 }
 
-impl<P> Context for RequestContext<P>
-where
-    P: IssuerProvider + Debug,
-{
-    type Provider = P;
-    type Request = TestRequest;
-    type Response = TestResponse;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::provider::TestProvider;
 
-    fn callback_id(&self) -> Option<String> {
-        Some("callback_id".into())
+    #[tokio::test]
+    async fn simple_ok() {
+        let request = TestRequest { return_ok: true };
+        let response = make_request(TestProvider::new(), &request).await;
+
+        assert!(response.is_ok());
     }
 
-    async fn process(
-        &self, _provider: &Self::Provider, request: &Self::Request,
-    ) -> Result<Self::Response> {
-        if request.return_ok {
-            Ok(TestResponse {})
-        } else {
-            Err(Err::InvalidRequest("invalid request".into()))
-        }
+    #[tokio::test]
+    async fn simple_err() {
+        let request = TestRequest { return_ok: false };
+        let response = make_request(TestProvider::new(), &request).await;
+
+        assert!(response.is_err());
     }
 }
