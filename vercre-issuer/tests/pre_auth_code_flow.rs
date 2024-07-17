@@ -10,7 +10,7 @@ use test_utils::holder;
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_issuer::{
     CreateOfferRequest, CreateOfferResponse, CredentialOfferType, CredentialRequest,
-    CredentialResponse, Endpoint, ProofClaims, TokenRequest, TokenResponse,
+    CredentialResponse, ProofClaims, TokenRequest, TokenResponse,
 };
 use w3c_vc::proof::{Payload, Verify};
 
@@ -42,7 +42,7 @@ async fn pre_auth_flow() {
 
 // Simulate Issuer request to '/create_offer' endpoint to get credential offer to use to
 // make credential offer to Wallet.
-async fn get_offer() -> anyhow::Result<CreateOfferResponse> {
+async fn get_offer() -> openid::Result<CreateOfferResponse> {
     // offer request
     let body = json!({
         "credential_configuration_ids": ["EmployeeID_JWT"],
@@ -52,17 +52,16 @@ async fn get_offer() -> anyhow::Result<CreateOfferResponse> {
         "callback_id": "1234"
     });
 
-    let mut request = serde_json::from_value::<CreateOfferRequest>(body)?;
+    let mut request =
+        serde_json::from_value::<CreateOfferRequest>(body).expect("should deserialize");
     request.credential_issuer = CREDENTIAL_ISSUER.into();
 
-    let endpoint = Endpoint::new(ISSUER_PROVIDER.clone());
-    let response = endpoint.create_offer(&request).await?;
-    Ok(response)
+    vercre_issuer::create_offer(ISSUER_PROVIDER.clone(), &request).await
 }
 
 // Simulate Wallet request to '/token' endpoint with pre-authorized code to get
 // access token
-async fn get_token(input: CreateOfferResponse) -> anyhow::Result<TokenResponse> {
+async fn get_token(input: CreateOfferResponse) -> openid::Result<TokenResponse> {
     assert_let!(CredentialOfferType::Object(offer), &input.credential_offer);
     assert_let!(Some(grants), &offer.grants);
     assert_let!(Some(pre_authorized_code), &grants.pre_authorized_code);
@@ -75,16 +74,14 @@ async fn get_token(input: CreateOfferResponse) -> anyhow::Result<TokenResponse> 
         "user_code": input.user_code.as_ref().expect("user pin should be set"),
     });
 
-    let mut request = serde_json::from_value::<TokenRequest>(body)?;
+    let mut request = serde_json::from_value::<TokenRequest>(body).expect("should deserialize");
     request.credential_issuer = CREDENTIAL_ISSUER.into();
 
-    let endpoint = Endpoint::new(ISSUER_PROVIDER.clone());
-    let response = endpoint.token(&request).await?;
-    Ok(response)
+    vercre_issuer::token(ISSUER_PROVIDER.clone(), &request).await
 }
 
 // Simulate Wallet request to '/credential' endpoint with access token to get credential.
-async fn get_credential(input: TokenResponse) -> anyhow::Result<CredentialResponse> {
+async fn get_credential(input: TokenResponse) -> openid::Result<CredentialResponse> {
     let claims = ProofClaims {
         iss: Some(CLIENT_ID.into()),
         aud: CREDENTIAL_ISSUER.into(),
@@ -107,11 +104,10 @@ async fn get_credential(input: TokenResponse) -> anyhow::Result<CredentialRespon
         }
     });
 
-    let mut request = serde_json::from_value::<CredentialRequest>(body)?;
+    let mut request =
+        serde_json::from_value::<CredentialRequest>(body).expect("should deserialize");
     request.credential_issuer = CREDENTIAL_ISSUER.into();
     request.access_token = input.access_token;
 
-    let endpoint = Endpoint::new(ISSUER_PROVIDER.clone());
-    let response = endpoint.credential(&request).await?;
-    Ok(response)
+    vercre_issuer::credential(ISSUER_PROVIDER.clone(), &request).await
 }

@@ -7,7 +7,6 @@ members = [
     "vercre-holder",
     "vercre-issuer",
     "vercre-verifier",
-    "vercre-test"
 ]
 exclude = ["vercre-holder/examples/*"]
 resolver = "2"
@@ -44,7 +43,6 @@ axum-extra = { version = "0.9.3", features = ["typed-header"] }
 base64ct = { version = "1.6.0", features = ["std"] }
 chrono = { version = "0.4.38", features = ["serde"] }
 core-utils = { path = "crates/core-utils" }
-proof = { path = "crates/proof" }
 derive_builder = "0.20.0"
 dif-exch = { path = "crates/dif-exch" }
 ecdsa = "0.16.9"
@@ -52,6 +50,7 @@ futures = "0.3.30"
 insta = { version = "1.39.0", features = ["redactions", "yaml"] }
 k256 = "0.13.3"
 openid = { path = "crates/openid" }
+proof = { path = "crates/proof" }
 serde = { version = "1.0.204", features = ["derive"] }
 serde_json = { version = "1.0.120", features = ["alloc"] }
 serde_qs = "0.13.0"

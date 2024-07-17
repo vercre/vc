@@ -7,10 +7,10 @@ use std::fmt::Debug;
 use std::future::{Future, IntoFuture};
 
 use chrono::{DateTime, Utc};
+use proof::signature::{Signer, Verifier};
 use tracing::instrument;
 
 pub use self::callback::{Payload, Status};
-// pub use self::endpoint::{Context, Endpoint};
 pub use self::subject::{Claims, Subject};
 use crate::error::Err;
 use crate::issuance::Issuer;
@@ -19,6 +19,53 @@ use crate::{Client, Server};
 /// Result is used for all external errors.
 // pub type Result<T> = anyhow::Result<T>;
 pub type Result<T, E = anyhow::Error> = std::result::Result<T, E>;
+
+/// Issuer Provider trait.
+pub trait IssuerProvider:
+    ClientMetadata
+    + IssuerMetadata
+    + ServerMetadata
+    + Subject
+    + StateManager
+    + Signer
+    + Verifier
+    + Clone
+{
+}
+
+/// Request is implemented by all request types.
+pub trait Request {
+    /// The key used to access state data.
+    fn state_key(&self) -> Option<String> {
+        None
+    }
+}
+
+/// Handler is implemented by all request handlers.
+pub trait Handler<'a, C, P, R, U, E>: Send
+where
+    R: Request + Sync,
+{
+    /// Handle the request.
+    fn handle(
+        self, context: C, provider: P, request: &'a R,
+    ) -> impl Future<Output = Result<U, E>> + Send;
+}
+
+// Blanket implementation for all functions that take a provider and a request and return a
+// future that resolves to a result.
+impl<'a, C, P, R, U, F, Fut, E> Handler<'a, C, P, R, U, E> for F
+where
+    R: 'a + Request + Sync,
+    F: FnOnce(C, P, &'a R) -> Fut + Send,
+    Fut: Future<Output = Result<U, E>> + Send,
+{
+    fn handle(
+        self, context: C, provider: P, request: &'a R,
+    ) -> impl Future<Output = Result<U, E>> + Send {
+        self(context, provider, request)
+    }
+}
 
 /// The Endpoint trait is implemented by issuance and presentation endpoints in order
 /// to provide a common basis for request handling.

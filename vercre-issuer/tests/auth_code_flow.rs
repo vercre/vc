@@ -10,7 +10,7 @@ use sha2::{Digest, Sha256};
 use test_utils::holder;
 use test_utils::issuer::{self, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_issuer::{
-    AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse, Endpoint,
+    AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse,
     ProofClaims, TokenRequest, TokenResponse,
 };
 use w3c_vc::proof::{Payload, Verify};
@@ -44,7 +44,7 @@ async fn auth_code_flow() {
 
 // Simulate Issuer request to '/create_offer' endpoint to get credential offer to use to
 // make credential offer to Wallet.
-async fn authorize() -> anyhow::Result<AuthorizationResponse> {
+async fn authorize() -> openid::Result<AuthorizationResponse> {
     // authorize request
     let auth_dets = json!([{
         "type": "openid_credential",
@@ -82,17 +82,16 @@ async fn authorize() -> anyhow::Result<AuthorizationResponse> {
         "wallet_issuer": CREDENTIAL_ISSUER,
         "callback_id": "1234"
     });
-    let mut request = serde_json::from_value::<AuthorizationRequest>(body)?;
+    let mut request =
+        serde_json::from_value::<AuthorizationRequest>(body).expect("should deserialize");
     request.credential_issuer = CREDENTIAL_ISSUER.to_string();
 
-    let endpoint = Endpoint::new(ISSUER_PROVIDER.clone());
-    let response = endpoint.authorize(&request).await?;
-    Ok(response)
+    vercre_issuer::authorize(ISSUER_PROVIDER.clone(), &request).await
 }
 
 // Simulate Wallet request to '/token' endpoint with pre-authorized code to get
 // access token
-async fn get_token(input: AuthorizationResponse) -> anyhow::Result<TokenResponse> {
+async fn get_token(input: AuthorizationResponse) -> openid::Result<TokenResponse> {
     // create TokenRequest to 'send' to the app
     let body = json!({
         "client_id": issuer::CLIENT_ID,
@@ -102,11 +101,11 @@ async fn get_token(input: AuthorizationResponse) -> anyhow::Result<TokenResponse
         "redirect_uri": "http://localhost:3000/callback",
     });
 
-    let mut request = serde_json::from_value::<TokenRequest>(body)?;
+    let mut request = serde_json::from_value::<TokenRequest>(body).expect("should deserialize");
     request.credential_issuer = CREDENTIAL_ISSUER.to_string();
 
-    let endpoint = Endpoint::new(ISSUER_PROVIDER.clone());
-    let response = endpoint.token(&request).await?;
+    let response =
+        vercre_issuer::token(ISSUER_PROVIDER.clone(), &request).await.expect("should get token");
 
     assert_snapshot!("token", &response, {
         ".access_token" => "[access_token]",
@@ -119,7 +118,7 @@ async fn get_token(input: AuthorizationResponse) -> anyhow::Result<TokenResponse
 }
 
 // Simulate Wallet request to '/credential' endpoint with access token to get credential.
-async fn get_credential(input: TokenResponse) -> anyhow::Result<CredentialResponse> {
+async fn get_credential(input: TokenResponse) -> openid::Result<CredentialResponse> {
     // create CredentialRequest to 'send' to the app
     let claims = ProofClaims {
         iss: Some(issuer::CLIENT_ID.into()),
@@ -149,11 +148,10 @@ async fn get_credential(input: TokenResponse) -> anyhow::Result<CredentialRespon
         }
     });
 
-    let mut request = serde_json::from_value::<CredentialRequest>(body)?;
+    let mut request =
+        serde_json::from_value::<CredentialRequest>(body).expect("should deserialize");
     request.credential_issuer = CREDENTIAL_ISSUER.to_string();
     request.access_token = input.access_token;
 
-    let endpoint = Endpoint::new(ISSUER_PROVIDER.clone());
-    let response = endpoint.credential(&request).await?;
-    Ok(response)
+    vercre_issuer::credential(ISSUER_PROVIDER.clone(), &request).await
 }

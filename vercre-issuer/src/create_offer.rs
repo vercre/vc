@@ -68,184 +68,156 @@ use std::fmt::Debug;
 
 use chrono::Utc;
 use core_utils::gen;
-use openid::endpoint::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
+use openid::endpoint::{IssuerMetadata, IssuerProvider, StateManager};
 use openid::issuance::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer,
     CredentialOfferType, Grants, PreAuthorizedCodeGrant, TxCode,
 };
 use openid::{Err, Result};
-use proof::signature::Signer;
 use tracing::instrument;
 
-use super::Endpoint;
+// use crate::shell;
 use crate::state::{Auth, Expire, State};
 
-impl<P> Endpoint<P>
-where
-    P: ClientMetadata
-        + IssuerMetadata
-        + ServerMetadata
-        + Subject
-        + StateManager
-        + Signer
-        + Callback
-        + Clone
-        + Debug,
-{
-    /// Invoke request handler generates and returns a Credential Offer.
-    ///
-    /// # Errors
-    ///
-    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
-    /// not available.
-    #[instrument(level = "debug", skip(self))]
-    pub async fn create_offer(&self, request: &CreateOfferRequest) -> Result<CreateOfferResponse> {
-        let ctx = Context {
-            callback_id: request.callback_id.clone(),
-            _p: std::marker::PhantomData,
-        };
+/// Invoke request handler generates and returns a Credential Offer.
+///
+/// # Errors
+///
+/// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+/// not available.
+#[instrument(level = "debug", skip(provider))]
+pub async fn create_offer(
+    provider: impl IssuerProvider, request: &CreateOfferRequest,
+) -> Result<CreateOfferResponse> {
+    let mut ctx = Context {};
 
-        openid::endpoint::Endpoint::handle_request(self, request, ctx).await
-    }
+    // shell(&mut ctx, provider.clone(), request, verify).await?;
+    // shell(&mut ctx, provider, request, process).await
+    verify(&mut ctx, provider.clone(), request).await?;
+    process(&mut ctx, provider, request).await
 }
 
 #[derive(Debug)]
-struct Context<P> {
-    callback_id: Option<String>,
-    _p: std::marker::PhantomData<P>,
+struct Context {}
+
+async fn verify(
+    _: &mut Context, provider: impl IssuerProvider, request: &CreateOfferRequest,
+) -> Result<()> {
+    tracing::debug!("Context::verify");
+
+    let issuer_meta = IssuerMetadata::metadata(&provider, &request.credential_issuer)
+        .await
+        .map_err(|e| Err::ServerError(format!("metadata issue: {e}")))?;
+
+    // credential_issuer required
+    if request.credential_issuer.is_empty() {
+        return Err(Err::InvalidRequest("no credential_issuer specified".into()));
+    };
+
+    // credentials required
+    if request.credential_configuration_ids.is_empty() {
+        return Err(Err::InvalidRequest("no credentials requested".into()));
+    };
+
+    // requested credential is supported
+    for cred_id in &request.credential_configuration_ids {
+        if !issuer_meta.credential_configurations_supported.contains_key(cred_id) {
+            return Err(Err::UnsupportedCredentialType(
+                "requested credential is unsupported".into(),
+            ));
+        };
+    }
+
+    // subject_id is required
+    if request.subject_id.is_none() {
+        return Err(Err::InvalidRequest("no subject_id specified".into()));
+    };
+
+    Ok(())
 }
 
-impl<P> openid::endpoint::Context for Context<P>
-where
-    P: IssuerMetadata + StateManager + Debug,
-{
-    type Provider = P;
-    type Request = CreateOfferRequest;
-    type Response = CreateOfferResponse;
+// Process the request.
+async fn process(
+    _: &mut Context, provider: impl IssuerProvider, request: &CreateOfferRequest,
+) -> Result<CreateOfferResponse> {
+    tracing::debug!("Context::process");
 
-    fn callback_id(&self) -> Option<String> {
-        self.callback_id.clone()
-    }
+    let mut state = State::builder()
+        .credential_issuer(request.credential_issuer.clone())
+        .expires_at(Utc::now() + Expire::AuthCode.duration())
+        .credential_configuration_ids(request.credential_configuration_ids.clone())
+        .subject_id(request.subject_id.clone())
+        .callback_id(request.callback_id.clone())
+        .build()
+        .map_err(|e| Err::ServerError(format!("issue creating state: {e}")))?;
 
-    async fn verify(&mut self, provider: &P, request: &Self::Request) -> Result<&Self> {
-        tracing::debug!("Context::verify");
+    let mut pre_auth_grant = None;
+    let mut auth_grant = None;
+    let mut user_code = None;
 
-        let issuer_meta = IssuerMetadata::metadata(provider, &request.credential_issuer)
-            .await
-            .map_err(|e| Err::ServerError(format!("metadata issue: {e}")))?;
+    if request.pre_authorize {
+        // ------------------------------------------------
+        // Pre-authorized Code Grant
+        // ------------------------------------------------
+        let pre_auth_code = gen::auth_code();
 
-        // credential_issuer required
-        if request.credential_issuer.is_empty() {
-            return Err(Err::InvalidRequest("no credential_issuer specified".into()));
-        };
-
-        // credentials required
-        if request.credential_configuration_ids.is_empty() {
-            return Err(Err::InvalidRequest("no credentials requested".into()));
-        };
-
-        // requested credential is supported
-        for cred_id in &request.credential_configuration_ids {
-            if !issuer_meta.credential_configurations_supported.contains_key(cred_id) {
-                return Err(Err::UnsupportedCredentialType(
-                    "requested credential is unsupported".into(),
-                ));
-            };
-        }
-
-        // subject_id is required
-        if request.subject_id.is_none() {
-            return Err(Err::InvalidRequest("no subject_id specified".into()));
-        };
-
-        Ok(self)
-    }
-
-    // Process the request.
-    async fn process(
-        &self, provider: &Self::Provider, request: &Self::Request,
-    ) -> Result<Self::Response> {
-        tracing::debug!("Context::process");
-
-        let mut state = State::builder()
-            .credential_issuer(request.credential_issuer.clone())
-            .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credential_configuration_ids(request.credential_configuration_ids.clone())
-            .subject_id(request.subject_id.clone())
-            .callback_id(request.callback_id.clone())
-            .build()
-            .map_err(|e| Err::ServerError(format!("issue creating state: {e}")))?;
-
-        let mut pre_auth_grant = None;
-        let mut auth_grant = None;
-        let mut user_code = None;
-
-        if request.pre_authorize {
-            // ------------------------------------------------
-            // Pre-authorized Code Grant
-            // ------------------------------------------------
-            let pre_auth_code = gen::auth_code();
-
-            let tx_code = if request.tx_code_required {
-                Some(TxCode {
-                    input_mode: Some("numeric".into()),
-                    length: Some(6),
-                    description: Some("Please provide the one-time code received".into()),
-                })
-            } else {
-                None
-            };
-
-            pre_auth_grant = Some(PreAuthorizedCodeGrant {
-                pre_authorized_code: pre_auth_code.clone(),
-                tx_code,
-                ..Default::default()
-            });
-
-            if request.tx_code_required {
-                user_code = Some(gen::user_code());
-            }
-
-            // save state by pre-auth_code
-            let auth_state = Auth::builder()
-                .user_code(user_code.clone())
-                .build()
-                .map_err(|e| Err::ServerError(format!("issue building auth state: {e}")))?;
-            state.auth = Some(auth_state);
-            StateManager::put(provider, &pre_auth_code, state.to_vec(), state.expires_at)
-                .await
-                .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
+        let tx_code = if request.tx_code_required {
+            Some(TxCode {
+                input_mode: Some("numeric".into()),
+                length: Some(6),
+                description: Some("Please provide the one-time code received".into()),
+            })
         } else {
-            // ------------------------------------------------
-            // Authorization Code Grant
-            // ------------------------------------------------
-            let issuer_state = gen::state_key();
+            None
+        };
 
-            auth_grant = Some(AuthorizationCodeGrant {
-                issuer_state: Some(issuer_state.clone()),
-                authorization_server: None,
-            });
-            StateManager::put(provider, &issuer_state, state.to_vec(), state.expires_at)
-                .await
-                .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
+        pre_auth_grant = Some(PreAuthorizedCodeGrant {
+            pre_authorized_code: pre_auth_code.clone(),
+            tx_code,
+            ..Default::default()
+        });
+
+        if request.tx_code_required {
+            user_code = Some(gen::user_code());
         }
 
-        // return response
-        // TODO: add support for `credential_offer_uri`
-        Ok(CreateOfferResponse {
-            credential_offer: CredentialOfferType::Object(CredentialOffer {
-                credential_issuer: request.credential_issuer.clone(),
-                credential_configuration_ids: request.credential_configuration_ids.clone(),
-                grants: Some(Grants {
-                    authorization_code: auth_grant,
-                    pre_authorized_code: pre_auth_grant,
-                }),
-            }),
-            user_code,
-        })
+        // save state by pre-auth_code
+        let auth_state = Auth::builder()
+            .user_code(user_code.clone())
+            .build()
+            .map_err(|e| Err::ServerError(format!("issue building auth state: {e}")))?;
+        state.auth = Some(auth_state);
+        StateManager::put(&provider, &pre_auth_code, state.to_vec(), state.expires_at)
+            .await
+            .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
+    } else {
+        // ------------------------------------------------
+        // Authorization Code Grant
+        // ------------------------------------------------
+        let issuer_state = gen::state_key();
+
+        auth_grant = Some(AuthorizationCodeGrant {
+            issuer_state: Some(issuer_state.clone()),
+            authorization_server: None,
+        });
+        StateManager::put(&provider, &issuer_state, state.to_vec(), state.expires_at)
+            .await
+            .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
     }
+
+    // return response
+    // TODO: add support for `credential_offer_uri`
+    Ok(CreateOfferResponse {
+        credential_offer: CredentialOfferType::Object(CredentialOffer {
+            credential_issuer: request.credential_issuer.clone(),
+            credential_configuration_ids: request.credential_configuration_ids.clone(),
+            grants: Some(Grants {
+                authorization_code: auth_grant,
+                pre_authorized_code: pre_auth_grant,
+            }),
+        }),
+        user_code,
+    })
 }
 
 #[cfg(test)]
@@ -275,8 +247,7 @@ mod tests {
         let mut request =
             serde_json::from_value::<CreateOfferRequest>(body).expect("request should deserialize");
         request.credential_issuer = CREDENTIAL_ISSUER.to_string();
-        let response =
-            Endpoint::new(provider.clone()).create_offer(&request).await.expect("response is ok");
+        let response = create_offer(provider.clone(), &request).await.expect("response is ok");
         assert_snapshot!("create_offer", &response, {
             ".credential_offer.grants.authorization_code.issuer_state" => "[state]",
             ".credential_offer.grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",

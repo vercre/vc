@@ -49,22 +49,19 @@ impl IssuerClient for Provider {
     async fn get_metadata(
         &self, _flow_id: &str, req: &MetadataRequest,
     ) -> anyhow::Result<MetadataResponse> {
-        let endpoint = vercre_issuer::Endpoint::new(self.issuer.clone().unwrap());
-        let response = endpoint.metadata(req).await?;
+        let response = vercre_issuer::metadata(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 
     async fn get_token(&self, _flow_id: &str, req: &TokenRequest) -> anyhow::Result<TokenResponse> {
-        let endpoint = vercre_issuer::Endpoint::new(self.issuer.clone().unwrap());
-        let response = endpoint.token(req).await?;
+        let response = vercre_issuer::token(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 
     async fn get_credential(
         &self, _flow_id: &str, req: &CredentialRequest,
     ) -> anyhow::Result<CredentialResponse> {
-        let endpoint = vercre_issuer::Endpoint::new(self.issuer.clone().unwrap());
-        let response = endpoint.credential(req).await?;
+        let response = vercre_issuer::credential(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 

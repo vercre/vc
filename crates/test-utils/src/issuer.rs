@@ -4,8 +4,8 @@ use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
 use openid::endpoint::{
-    Callback, Claims, ClientMetadata, IssuerMetadata, Payload, Result, ServerMetadata,
-    StateManager, Subject,
+    Callback, Claims, ClientMetadata, IssuerMetadata, IssuerProvider, Payload, Result,
+    ServerMetadata, StateManager, Subject,
 };
 use openid::issuance::Issuer;
 use openid::{Client, Server};
@@ -37,6 +37,8 @@ impl Deref for Provider {
         &self.0
     }
 }
+
+impl IssuerProvider for Provider {}
 
 impl ClientMetadata for Provider {
     async fn metadata(&self, client_id: &str) -> Result<Client> {

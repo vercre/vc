@@ -5787,29 +5787,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "vercre-test"
-version = "0.1.0-alpha.4"
-dependencies = [
- "anyhow",
- "assert_let_bind",
- "base64ct",
- "chrono",
- "core-utils",
- "derive_builder",
- "futures",
- "insta",
- "openid",
- "proof",
- "serde",
- "serde_json",
- "sha2",
- "test-utils",
- "tokio",
- "tracing",
- "w3c-vc",
-]
-
-[[package]]
 name = "vercre-verifier"
 version = "0.1.0-alpha.4"
 dependencies = [

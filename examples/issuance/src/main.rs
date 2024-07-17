@@ -4,7 +4,7 @@
 mod provider;
 
 use std::collections::HashMap;
-use std::sync::{Arc, LazyLock};
+use std::sync::LazyLock; //Arc,
 
 use axum::extract::State;
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
@@ -27,8 +27,7 @@ use tracing_subscriber::FmtSubscriber;
 use vercre_issuer::{
     AuthorizationRequest, BatchCredentialRequest, BatchCredentialResponse, CreateOfferRequest,
     CreateOfferResponse, CredentialRequest, CredentialResponse, DeferredCredentialRequest,
-    DeferredCredentialResponse, Endpoint, MetadataRequest, MetadataResponse, TokenRequest,
-    TokenResponse,
+    DeferredCredentialResponse, MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,
 };
 
 use crate::provider::Provider;
@@ -41,7 +40,7 @@ async fn main() {
     let subscriber = FmtSubscriber::builder().with_max_level(Level::ERROR).finish();
     tracing::subscriber::set_global_default(subscriber).expect("set subscriber");
 
-    let endpoint = Arc::new(Endpoint::new(Provider::new()));
+    let provider = Provider::new();
     let cors = CorsLayer::new().allow_methods(Any).allow_origin(Any).allow_headers(Any);
 
     let router = Router::new()
@@ -59,7 +58,7 @@ async fn main() {
             header::CACHE_CONTROL,
             HeaderValue::from_static("no-cache, no-store"),
         ))
-        .with_state(endpoint);
+        .with_state(provider);
 
     let listener = TcpListener::bind("0.0.0.0:8080").await.expect("should bind");
     tracing::info!("listening on {}", listener.local_addr().expect("should have addr"));
@@ -69,19 +68,18 @@ async fn main() {
 // Credential Offer endpoint
 #[axum::debug_handler]
 async fn create_offer(
-    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
     Json(mut req): Json<CreateOfferRequest>,
 ) -> AxResult<CreateOfferResponse> {
     req.credential_issuer = format!("http://{host}");
-    endpoint.create_offer(&req).await.into()
+    vercre_issuer::create_offer(provider, &req).await.into()
 }
 
 // Metadata endpoint
 // TODO: override default  Cache-Control header to allow caching
 #[axum::debug_handler]
 async fn metadata(
-    headers: HeaderMap, State(endpoint): State<Arc<Endpoint<Provider>>>,
-    TypedHeader(host): TypedHeader<Host>,
+    headers: HeaderMap, State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
 ) -> AxResult<MetadataResponse> {
     let req = MetadataRequest {
         credential_issuer: format!("http://{host}"),
@@ -90,7 +88,7 @@ async fn metadata(
             .and_then(|v| v.to_str().ok())
             .map(ToString::to_string),
     };
-    endpoint.metadata(&req).await.into()
+    vercre_issuer::metadata(provider.clone(), &req).await.into()
 }
 
 /// Authorize endpoint
@@ -101,7 +99,7 @@ async fn metadata(
 /// URI using the "application/x-www-form-urlencoded" format.
 #[axum::debug_handler]
 async fn authorize(
-    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
     Form(mut req): Form<AuthorizationRequest>,
 ) -> impl IntoResponse {
     // return error if no subject_id
@@ -140,7 +138,7 @@ async fn authorize(
             .into_response();
     };
 
-    match endpoint.authorize(&req).await {
+    match vercre_issuer::authorize(provider.clone(), &req).await {
         Ok(v) => (StatusCode::FOUND, Redirect::to(&format!("{redirect_uri}?code={}", v.code)))
             .into_response(),
         Err(e) => {
@@ -199,46 +197,46 @@ async fn login(
 /// [RFC2616]: (https://www.rfc-editor.org/rfc/rfc2616)
 #[axum::debug_handler]
 async fn token(
-    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
     Form(mut req): Form<TokenRequest>,
 ) -> AxResult<TokenResponse> {
     req.credential_issuer = format!("http://{host}");
-    endpoint.token(&req).await.into()
+    vercre_issuer::token(provider.clone(), &req).await.into()
 }
 
 // Credential endpoint
 #[axum::debug_handler]
 async fn credential(
-    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>, Json(mut req): Json<CredentialRequest>,
 ) -> AxResult<CredentialResponse> {
     req.credential_issuer = format!("http://{host}");
     req.access_token = auth.token().to_string();
-    endpoint.credential(&req).await.into()
+    vercre_issuer::credential(provider.clone(), &req).await.into()
 }
 
 // Deferred endpoint
 #[axum::debug_handler]
 async fn deferred_credential(
-    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(mut req): Json<DeferredCredentialRequest>,
 ) -> AxResult<DeferredCredentialResponse> {
     req.credential_issuer = format!("http://{host}");
     req.access_token = auth.0.token().to_string();
-    endpoint.deferred(&req).await.into()
+    vercre_issuer::deferred(provider.clone(), &req).await.into()
 }
 
 // Batch endpoint
 #[axum::debug_handler]
 async fn batch_credential(
-    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(mut req): Json<BatchCredentialRequest>,
 ) -> AxResult<BatchCredentialResponse> {
     req.credential_issuer = format!("http://{host}");
     req.access_token = auth.0.token().to_string();
-    endpoint.batch(&req).await.into()
+    vercre_issuer::batch(provider.clone(), &req).await.into()
 }
 
 // ----------------------------------------------------------------------------

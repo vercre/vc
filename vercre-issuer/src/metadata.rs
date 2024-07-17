@@ -24,72 +24,42 @@
 //! ```
 use std::fmt::Debug;
 
-use openid::endpoint::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
+use openid::endpoint::{IssuerMetadata, IssuerProvider};
 use openid::issuance::{MetadataRequest, MetadataResponse};
 use openid::{Err, Result};
-use proof::signature::Signer;
 use tracing::instrument;
 
-use super::Endpoint;
+// use crate::shell;
 
-impl<P> Endpoint<P>
-where
-    P: ClientMetadata
-        + IssuerMetadata
-        + ServerMetadata
-        + Subject
-        + StateManager
-        + Signer
-        + Callback
-        + Clone
-        + Debug,
-{
-    /// Metadata request handler.
-    ///
-    /// # Errors
-    ///
-    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
-    /// not available.
-    #[instrument(level = "debug", skip(self))]
-    pub async fn metadata(&self, request: &MetadataRequest) -> Result<MetadataResponse> {
-        let ctx = Context {
-            _p: std::marker::PhantomData,
-        };
-        openid::endpoint::Endpoint::handle_request(self, request, ctx).await
-    }
+/// Metadata request handler.
+///
+/// # Errors
+///
+/// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+/// not available.
+#[instrument(level = "debug", skip(provider))]
+pub async fn metadata(
+    provider: impl IssuerProvider, request: &MetadataRequest,
+) -> Result<MetadataResponse> {
+    let mut ctx = Context {};
+    // shell(&mut ctx, provider, request, process).await
+    process(&mut ctx, provider, request).await
 }
 
 #[derive(Debug)]
-struct Context<P> {
-    _p: std::marker::PhantomData<P>,
-}
+struct Context {}
 
-impl<P> openid::endpoint::Context for Context<P>
-where
-    P: IssuerMetadata + Debug,
-{
-    type Provider = P;
-    type Request = MetadataRequest;
-    type Response = MetadataResponse;
+async fn process(
+    _: &mut Context, provider: impl IssuerProvider, request: &MetadataRequest,
+) -> Result<MetadataResponse> {
+    tracing::debug!("Context::process");
 
-    // TODO: get callback_id from state
-    fn callback_id(&self) -> Option<String> {
-        None
-    }
-
-    async fn process(
-        &self, provider: &Self::Provider, request: &Self::Request,
-    ) -> Result<Self::Response> {
-        tracing::debug!("Context::process");
-
-        // TODO: add languages to request
-        let credential_issuer = IssuerMetadata::metadata(provider, &request.credential_issuer)
+    // TODO: add languages to request
+    let credential_issuer =
+        IssuerMetadata::metadata(&provider, &request.credential_issuer)
             .await
             .map_err(|e| Err::ServerError(format!("issue getting metadata: {e}")))?;
-        Ok(MetadataResponse { credential_issuer })
-    }
+    Ok(MetadataResponse { credential_issuer })
 }
 
 #[cfg(test)]
@@ -109,7 +79,7 @@ mod tests {
             credential_issuer: CREDENTIAL_ISSUER.to_string(),
             languages: None,
         };
-        let response = Endpoint::new(provider).metadata(&request).await.expect("response is ok");
+        let response = metadata(provider, &request).await.expect("response is ok");
         assert_snapshot!("response", response, {
             ".credential_configurations_supported" => insta::sorted_redaction(),
             ".credential_configurations_supported.*.credential_definition.credentialSubject" => insta::sorted_redaction()
