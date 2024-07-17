@@ -1,6 +1,5 @@
 //! # `OpenID` Core
 
-mod callback;
 mod subject;
 
 use std::fmt::Debug;
@@ -8,11 +7,8 @@ use std::future::{Future, IntoFuture};
 
 use chrono::{DateTime, Utc};
 use proof::signature::{Signer, Verifier};
-use tracing::instrument;
 
-pub use self::callback::{Payload, Status};
 pub use self::subject::{Claims, Subject};
-use crate::error::Err;
 use crate::issuance::Issuer;
 use crate::{Client, Server};
 
@@ -32,6 +28,9 @@ pub trait IssuerProvider:
     + Clone
 {
 }
+
+/// Issuer Provider trait.
+pub trait VerifierProvider: ClientMetadata + StateManager + Signer + Verifier + Clone {}
 
 /// Request is implemented by all request types.
 pub trait Request {
@@ -64,84 +63,6 @@ where
         self, context: C, provider: P, request: &'a R,
     ) -> impl Future<Output = Result<U, E>> + Send {
         self(context, provider, request)
-    }
-}
-
-/// The Endpoint trait is implemented by issuance and presentation endpoints in order
-/// to provide a common basis for request handling.
-pub trait Endpoint: Debug {
-    /// The provider type to use with the endpoint.
-    type Provider: Callback;
-
-    /// Access to the endpoint's provider.
-    fn provider(&self) -> &Self::Provider;
-
-    /// Wrap the processing of individual requests for shared handling of callbacks,
-    /// errors, etc..
-    ///
-    /// Each endpoint implements a request-specific `Endpoint::call` method which then
-    /// calls `Endpoint::handle_request` to handle shared functionality.
-    #[allow(async_fn_in_trait)]
-    #[instrument(level = "debug", skip(self))]
-    async fn handle_request<R, C, U>(&self, request: &R, mut ctx: C) -> crate::Result<U>
-    where
-        C: Context<Request = R, Response = U, Provider = Self::Provider>,
-        R: Default + Clone + Debug + Send + Sync,
-    {
-        if let Some(callback_id) = ctx.callback_id() {
-            let pl = Payload {
-                id: callback_id.clone(),
-                status: Status::PresentationRequested,
-                context: String::new(),
-            };
-            self.provider()
-                .callback(&pl)
-                .await
-                .map_err(|e| Err::ServerError(format!("callback issue: {e}")))?;
-        }
-
-        let res = match ctx.verify(self.provider(), request).await {
-            Ok(res) => res,
-            Err(e) => {
-                tracing::error!(target:"Endpoint::verify", ?e);
-                self.try_callback(ctx, &e)
-                    .await
-                    .map_err(|e| Err::ServerError(format!("callback issue: {e}")))?;
-                return Err(e);
-            }
-        };
-
-        match res.process(self.provider(), request).await {
-            Ok(res) => Ok(res),
-            Err(e) => {
-                tracing::error!(target:"Endpoint::process", ?e);
-                self.try_callback(ctx, &e)
-                    .await
-                    .map_err(|e| Err::ServerError(format!("callback issue: {e}")))?;
-                Err(e)
-            }
-        }
-    }
-
-    /// Try to send a callback to the client. If the callback fails, log the error.
-    #[allow(async_fn_in_trait)]
-    #[instrument(level = "debug", skip(self))]
-    async fn try_callback<R, C, U>(&self, ctx: C, e: &Err) -> Result<()>
-    where
-        C: Context<Request = R, Response = U>,
-        R: Default + Clone + Send + Sync + Debug,
-    {
-        if let Some(callback_id) = ctx.callback_id() {
-            tracing::debug!("Endpoint::try_callback");
-
-            let pl = Payload {
-                id: callback_id.clone(),
-                status: Status::Error,
-                context: format!("{e}"),
-            };
-            return self.provider().callback(&pl).await;
-        }
-        Ok(())
     }
 }
 
@@ -234,11 +155,4 @@ pub trait StateManager: Send + Sync {
         };
         v.into_future()
     }
-}
-
-/// Callback describes behaviours required for notifying a client application of
-/// issuance or presentation flow status.
-pub trait Callback: Send + Sync {
-    /// Callback method to process status updates.
-    fn callback(&self, pl: &callback::Payload) -> impl Future<Output = Result<()>> + Send;
 }

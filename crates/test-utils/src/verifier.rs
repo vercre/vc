@@ -3,7 +3,7 @@
 use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
-use openid::endpoint::{Callback, ClientMetadata, Payload, Result, StateManager};
+use openid::endpoint::{ClientMetadata, Result, StateManager, VerifierProvider};
 use openid::Client;
 use proof::jose::jwk::PublicKeyJwk;
 use proof::signature::{Algorithm, Signer, Verifier};
@@ -33,6 +33,8 @@ impl Deref for Provider {
         &self.0
     }
 }
+
+impl VerifierProvider for Provider {}
 
 impl ClientMetadata for Provider {
     async fn metadata(&self, client_id: &str) -> Result<Client> {
@@ -80,11 +82,5 @@ impl Signer for Provider {
 impl Verifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
         Enclave::deref_jwk(did_url)
-    }
-}
-
-impl Callback for Provider {
-    async fn callback(&self, pl: &Payload) -> Result<()> {
-        self.callback.callback(pl)
     }
 }

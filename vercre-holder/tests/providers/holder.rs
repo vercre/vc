@@ -82,15 +82,13 @@ impl VerifierClient for Provider {
             client_id: parts[2].into(),
             state: parts[0].into(),
         };
-        let endpoint = vercre_verifier::Endpoint::new(self.verifier.clone().unwrap());
-        Ok(endpoint.request_object(&request).await?)
+        Ok(vercre_verifier::request_object(self.verifier.clone().unwrap(), &request).await?)
     }
 
     async fn present(
         &self, _flow_id: &str, _uri: Option<&str>, req: &ResponseRequest,
     ) -> anyhow::Result<ResponseResponse> {
-        let endpoint = vercre_verifier::Endpoint::new(self.verifier.clone().unwrap());
-        Ok(endpoint.response(req).await?)
+        Ok(vercre_verifier::response(self.verifier.clone().unwrap(), req).await?)
     }
 }
 

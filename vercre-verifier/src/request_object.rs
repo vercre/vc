@@ -15,83 +15,57 @@
 
 use std::fmt::Debug;
 
-use openid::endpoint::{Callback, ClientMetadata, StateManager};
+use openid::endpoint::{StateManager, VerifierProvider};
 use openid::presentation::{RequestObjectRequest, RequestObjectResponse, RequestObjectType};
 use openid::{Err, Result};
 use proof::jose::jws::{self, Type};
-use proof::signature::Signer;
 use tracing::instrument;
 
-use super::Endpoint;
 use crate::state::State;
 
-/// Request Object request handler.
-impl<P> Endpoint<P>
-where
-    P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
-{
-    /// Endpoint for the Wallet to request the Verifier's Request Object when engaged
-    /// in a cross-device flow.
-    ///
-    /// # Errors
-    ///
-    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
-    /// not available.
-    #[instrument(level = "debug", skip(self))]
-    pub async fn request_object(
-        &self, request: &RequestObjectRequest,
-    ) -> Result<RequestObjectResponse> {
-        let ctx = Context {
-            _p: std::marker::PhantomData,
-        };
-        openid::endpoint::Endpoint::handle_request(self, request, ctx).await
-    }
+/// Endpoint for the Wallet to request the Verifier's Request Object when engaged
+/// in a cross-device flow.
+///
+/// # Errors
+///
+/// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+/// not available.
+#[instrument(level = "debug", skip(provider))]
+pub async fn request_object(
+    provider: impl VerifierProvider, request: &RequestObjectRequest,
+) -> Result<RequestObjectResponse> {
+    let ctx = Context {};
+    process(&ctx, provider, request).await
 }
 
 #[derive(Debug)]
-struct Context<P> {
-    _p: std::marker::PhantomData<P>,
-}
+struct Context {}
 
-impl<P> openid::endpoint::Context for Context<P>
-where
-    P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
-{
-    type Provider = P;
-    type Request = RequestObjectRequest;
-    type Response = RequestObjectResponse;
+async fn process(
+    _: &Context, provider: impl VerifierProvider, request: &RequestObjectRequest,
+) -> Result<RequestObjectResponse> {
+    tracing::debug!("Context::process");
 
-    // TODO: return callback_id
-    fn callback_id(&self) -> Option<String> {
-        None
+    // retrieve request object from state
+    let buf = StateManager::get(&provider, &request.state)
+        .await
+        .map_err(|e| Err::ServerError(format!("issue fetching state: {e}")))?;
+    let state = State::from_slice(&buf)
+        .map_err(|e| Err::ServerError(format!("issue deserializing state: {e}")))?;
+    let req_obj = state.request_object;
+
+    // verify client_id (perhaps should use 'verify' method?)
+    if req_obj.client_id != format!("{}/post", request.client_id) {
+        return Err(Err::InvalidRequest("client ID mismatch".into()));
     }
 
-    async fn process(
-        &self, provider: &Self::Provider, request: &Self::Request,
-    ) -> Result<Self::Response> {
-        tracing::debug!("Context::process");
+    let jwt = jws::encode(Type::Request, &req_obj, provider.clone())
+        .await
+        .map_err(|e| Err::ServerError(format!("issue encoding jwt: {e}")))?;
 
-        // retrieve request object from state
-        let buf = StateManager::get(provider, &request.state)
-            .await
-            .map_err(|e| Err::ServerError(format!("issue fetching state: {e}")))?;
-        let state = State::from_slice(&buf)
-            .map_err(|e| Err::ServerError(format!("issue deserializing state: {e}")))?;
-        let req_obj = state.request_object;
-
-        // verify client_id (perhaps should use 'verify' method?)
-        if req_obj.client_id != format!("{}/post", request.client_id) {
-            return Err(Err::InvalidRequest("client ID mismatch".into()));
-        }
-
-        let jwt = jws::encode(Type::Request, &req_obj, provider.clone())
-            .await
-            .map_err(|e| Err::ServerError(format!("issue encoding jwt: {e}")))?;
-
-        Ok(RequestObjectResponse {
-            request_object: RequestObjectType::Jwt(jwt),
-        })
-    }
+    Ok(RequestObjectResponse {
+        request_object: RequestObjectType::Jwt(jwt),
+    })
 }
 
 #[cfg(test)]
@@ -140,10 +114,7 @@ mod tests {
             client_id: VERIFIER_ID.to_string(),
             state: state_key.to_string(),
         };
-        let response = Endpoint::new(provider.clone())
-            .request_object(&request)
-            .await
-            .expect("response is valid");
+        let response = request_object(provider.clone(), &request).await.expect("response is valid");
 
         let RequestObjectType::Jwt(jwt_enc) = &response.request_object else {
             panic!("no JWT found in response");

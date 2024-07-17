@@ -45,17 +45,16 @@ use std::fmt::Debug;
 
 use core_utils::gen;
 use dif_exch::{ClaimFormat, PresentationDefinition};
-use openid::endpoint::{Callback, ClientMetadata, StateManager};
+use openid::endpoint::{ClientMetadata, StateManager, VerifierProvider};
 use openid::presentation::{
     ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
     PresentationDefinitionType, RequestObject, ResponseType,
 };
 use openid::{Err, Result};
-use proof::signature::{Algorithm, Signer};
+use proof::signature::Algorithm;
 use tracing::instrument;
 use uuid::Uuid;
 
-use super::Endpoint;
 use crate::state::State;
 
 // TODO: request supported Client Identifier schemes from the Wallet
@@ -80,117 +79,95 @@ use crate::state::State;
 //   ]
 // }
 
-/// `CreateRequest` Request handler.
-impl<P> Endpoint<P>
-where
-    P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
-{
-    /// Initiate an Authorization Request flow.
-    ///
-    /// # Errors
-    ///
-    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
-    /// not available.
-    #[instrument(level = "debug", skip(self))]
-    pub async fn create_request(
-        &self, request: &CreateRequestRequest,
-    ) -> Result<CreateRequestResponse> {
-        let ctx = Context {
-            callback_id: request.callback_id.clone(),
-            _p: std::marker::PhantomData,
-        };
-
-        openid::endpoint::Endpoint::handle_request(self, request, ctx).await
-    }
+/// Initiate an Authorization Request flow.
+///
+/// # Errors
+///
+/// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+/// not available.
+#[instrument(level = "debug", skip(provider))]
+pub async fn create_request(
+    provider: impl VerifierProvider, request: &CreateRequestRequest,
+) -> Result<CreateRequestResponse> {
+    let ctx = Context {};
+    verify(&ctx, provider.clone(), request).await?;
+    process(&ctx, provider, request).await
 }
 
 #[derive(Debug)]
-struct Context<P> {
-    callback_id: Option<String>,
-    _p: std::marker::PhantomData<P>,
+struct Context {}
+
+#[allow(clippy::unused_async)]
+async fn verify(
+    _: &Context, _: impl VerifierProvider, request: &CreateRequestRequest,
+) -> Result<()> {
+    tracing::debug!("Context::verify");
+
+    if request.input_descriptors.is_empty() {
+        return Err(Err::InvalidRequest("no credentials specified".into()));
+    }
+    Ok(())
 }
 
-impl<P> openid::endpoint::Context for Context<P>
-where
-    P: ClientMetadata + StateManager + Clone + Debug,
-{
-    type Provider = P;
-    type Request = CreateRequestRequest;
-    type Response = CreateRequestResponse;
+async fn process(
+    _: &Context, provider: impl VerifierProvider, request: &CreateRequestRequest,
+) -> Result<CreateRequestResponse> {
+    tracing::debug!("Context::process");
 
-    fn callback_id(&self) -> Option<String> {
-        self.callback_id.clone()
+    // TODO: build dynamically...
+    let fmt = ClaimFormat {
+        alg: Some(vec![Algorithm::EdDSA.to_string()]),
+        proof_type: None,
+    };
+
+    let pres_def = PresentationDefinition {
+        id: Uuid::new_v4().to_string(),
+        purpose: Some(request.purpose.clone()),
+        input_descriptors: request.input_descriptors.clone(),
+        format: Some(HashMap::from([("jwt_vc".into(), fmt)])),
+        name: None,
+    };
+    let state_key = gen::state_key();
+
+    // get client metadata
+    let Ok(client_meta) = ClientMetadata::metadata(&provider, &request.client_id).await else {
+        return Err(Err::InvalidRequest("invalid client_id".into()));
+    };
+
+    let mut req_obj = RequestObject {
+        response_type: ResponseType::VpToken,
+        state: Some(state_key.clone()),
+        nonce: gen::nonce(),
+        presentation_definition: PresentationDefinitionType::Object(pres_def),
+        client_metadata: ClientMetadataType::Object(client_meta),
+        client_id_scheme: Some(ClientIdScheme::RedirectUri),
+        ..Default::default()
+    };
+
+    let mut response = CreateRequestResponse::default();
+
+    // Response Mode "direct_post" is RECOMMENDED for cross-device flows.
+    // TODO: replace hard-coded endpoints with Provider-set values
+    if request.device_flow == DeviceFlow::CrossDevice {
+        req_obj.response_mode = Some("direct_post".into());
+        req_obj.client_id = format!("{}/post", request.client_id);
+        req_obj.response_uri = Some(format!("{}/post", request.client_id));
+        response.request_uri = Some(format!("{}/request/{state_key}", request.client_id));
+    } else {
+        req_obj.client_id = format!("{}/callback", request.client_id);
+        response.request_object = Some(req_obj.clone());
     }
 
-    async fn verify(&mut self, _: &Self::Provider, request: &Self::Request) -> Result<&Self> {
-        tracing::debug!("Context::verify");
+    // save request object in state
+    let state = State::builder()
+        .request_object(req_obj)
+        .build()
+        .map_err(|e| Err::ServerError(format!("issue building state: {e}")))?;
+    StateManager::put(&provider, &state_key, state.to_vec(), state.expires_at)
+        .await
+        .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
 
-        if request.input_descriptors.is_empty() {
-            return Err(Err::InvalidRequest("no credentials specified".into()));
-        }
-        Ok(self)
-    }
-
-    async fn process(
-        &self, provider: &Self::Provider, request: &Self::Request,
-    ) -> Result<Self::Response> {
-        tracing::debug!("Context::process");
-
-        // TODO: build dynamically...
-        let fmt = ClaimFormat {
-            alg: Some(vec![Algorithm::EdDSA.to_string()]),
-            proof_type: None,
-        };
-
-        let pres_def = PresentationDefinition {
-            id: Uuid::new_v4().to_string(),
-            purpose: Some(request.purpose.clone()),
-            input_descriptors: request.input_descriptors.clone(),
-            format: Some(HashMap::from([("jwt_vc".into(), fmt)])),
-            name: None,
-        };
-        let state_key = gen::state_key();
-
-        // get client metadata
-        let Ok(client_meta) = ClientMetadata::metadata(provider, &request.client_id).await else {
-            return Err(Err::InvalidRequest("invalid client_id".into()));
-        };
-
-        let mut req_obj = RequestObject {
-            response_type: ResponseType::VpToken,
-            state: Some(state_key.clone()),
-            nonce: gen::nonce(),
-            presentation_definition: PresentationDefinitionType::Object(pres_def),
-            client_metadata: ClientMetadataType::Object(client_meta),
-            client_id_scheme: Some(ClientIdScheme::RedirectUri),
-            ..Default::default()
-        };
-
-        let mut response = CreateRequestResponse::default();
-
-        // Response Mode "direct_post" is RECOMMENDED for cross-device flows.
-        // TODO: replace hard-coded endpoints with Provider-set values
-        if request.device_flow == DeviceFlow::CrossDevice {
-            req_obj.response_mode = Some("direct_post".into());
-            req_obj.client_id = format!("{}/post", request.client_id);
-            req_obj.response_uri = Some(format!("{}/post", request.client_id));
-            response.request_uri = Some(format!("{}/request/{state_key}", request.client_id));
-        } else {
-            req_obj.client_id = format!("{}/callback", request.client_id);
-            response.request_object = Some(req_obj.clone());
-        }
-
-        // save request object in state
-        let state = State::builder()
-            .request_object(req_obj)
-            .build()
-            .map_err(|e| Err::ServerError(format!("issue building state: {e}")))?;
-        StateManager::put(provider, &state_key, state.to_vec(), state.expires_at)
-            .await
-            .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
-
-        Ok(response)
-    }
+    Ok(response)
 }
 
 #[cfg(test)]
@@ -229,8 +206,7 @@ mod tests {
             serde_json::from_value::<CreateRequestRequest>(body).expect("should deserialize");
         request.client_id = "http://vercre.io".into();
 
-        let response =
-            Endpoint::new(provider.clone()).create_request(&request).await.expect("response is ok");
+        let response = create_request(provider.clone(), &request).await.expect("response is ok");
 
         assert_eq!(response.request_uri, None);
         assert_let!(Some(req_obj), &response.request_object);
@@ -289,8 +265,7 @@ mod tests {
             serde_json::from_value::<CreateRequestRequest>(body).expect("should deserialize");
         request.client_id = "http://vercre.io".into();
 
-        let response =
-            Endpoint::new(provider.clone()).create_request(&request).await.expect("response is ok");
+        let response = create_request(provider.clone(), &request).await.expect("response is ok");
 
         assert!(response.request_object.is_none());
         assert_let!(Some(req_uri), response.request_uri);

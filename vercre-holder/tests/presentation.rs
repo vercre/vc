@@ -101,8 +101,7 @@ async fn e2e_presentation_uri() {
     // Use the presentation service endpoint to create a sample request so we can get a valid
     // presentation request object.
     let request_request = setup_create_request();
-    let init_request = vercre_verifier::Endpoint::new(VERIFIER_PROVIDER.clone())
-        .create_request(&request_request)
+    let init_request = vercre_verifier::create_request(VERIFIER_PROVIDER.clone(), &request_request)
         .await
         .expect("should get request");
 
@@ -169,8 +168,7 @@ async fn e2e_presentation_obj() {
     // presentation request object.
     let mut request_request = setup_create_request();
     request_request.device_flow = DeviceFlow::SameDevice;
-    let init_request = vercre_verifier::Endpoint::new(VERIFIER_PROVIDER.clone())
-        .create_request(&request_request)
+    let init_request = vercre_verifier::create_request(VERIFIER_PROVIDER.clone(), &request_request)
         .await
         .expect("should get request");
 

@@ -10,7 +10,7 @@ mod storer;
 
 pub use client::{IssuerClient, VerifierClient};
 pub use dif_exch::Constraints;
-pub use openid::endpoint::{IssuerMetadata, Payload, Result, StateManager};
+pub use openid::endpoint::{IssuerMetadata, Result, StateManager};
 pub use openid::issuance::TxCode;
 pub use proof::jose::jwk::PublicKeyJwk;
 pub use proof::signature::{Algorithm, Signer, Verifier};

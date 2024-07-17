@@ -1,4 +1,3 @@
-pub mod callback;
 pub mod client;
 pub mod issuer;
 pub mod proof;
@@ -21,7 +20,6 @@ pub struct Issuance {
     pub server: server::Store,
     pub subject: subject::Store,
     pub state: state::Store,
-    pub callback: callback::Hook,
 }
 
 impl Issuance {
@@ -33,7 +31,6 @@ impl Issuance {
             server: server::Store::new(),
             subject: subject::Store::new(),
             state: state::Store::new(),
-            callback: callback::Hook::new(),
         }
     }
 }
@@ -42,7 +39,6 @@ impl Issuance {
 pub struct Presentation {
     pub client: client::Store,
     pub state: state::Store,
-    pub callback: callback::Hook,
 }
 
 impl Presentation {
@@ -51,7 +47,6 @@ impl Presentation {
         Self {
             client: client::Store::new(),
             state: state::Store::new(),
-            callback: callback::Hook::new(),
         }
     }
 }

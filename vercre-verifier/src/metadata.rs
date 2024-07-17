@@ -7,62 +7,38 @@
 
 use std::fmt::Debug;
 
-use openid::endpoint::{Callback, ClientMetadata, StateManager};
+use openid::endpoint::{ClientMetadata, VerifierProvider};
 use openid::presentation::{MetadataRequest, MetadataResponse};
 use openid::{Err, Result};
-use proof::signature::Signer;
 use tracing::instrument;
 
-use super::Endpoint;
-
-/// Metadata request handler.
-impl<P> Endpoint<P>
-where
-    P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
-{
-    /// Endpoint for Wallets to request Verifier (Client) metadata.
-    ///
-    /// # Errors
-    ///
-    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
-    /// not available.
-    #[instrument(level = "debug", skip(self))]
-    pub async fn metadata(&self, request: &MetadataRequest) -> Result<MetadataResponse> {
-        let ctx = Context {
-            _p: std::marker::PhantomData,
-        };
-
-        openid::endpoint::Endpoint::handle_request(self, request, ctx).await
-    }
+/// Endpoint for Wallets to request Verifier (Client) metadata.
+///
+/// # Errors
+///
+/// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+/// not available.
+#[instrument(level = "debug", skip(provider))]
+pub async fn metadata(
+    provider: impl VerifierProvider, request: &MetadataRequest,
+) -> Result<MetadataResponse> {
+    let ctx = Context {};
+    process(&ctx, provider, request).await
 }
 
 #[derive(Debug)]
-struct Context<P> {
-    _p: std::marker::PhantomData<P>,
-}
+struct Context {}
 
-impl<P> openid::endpoint::Context for Context<P>
-where
-    P: ClientMetadata + StateManager + Signer + Callback + Clone + Debug,
-{
-    type Provider = P;
-    type Request = MetadataRequest;
-    type Response = MetadataResponse;
+async fn process(
+    _: &Context, provider: impl VerifierProvider, req: &MetadataRequest,
+) -> Result<MetadataResponse> {
+    tracing::debug!("Context::process");
 
-    // TODO: return callback_id
-    fn callback_id(&self) -> Option<String> {
-        None
-    }
-
-    async fn process(&self, provider: &P, req: &Self::Request) -> Result<Self::Response> {
-        tracing::debug!("Context::process");
-
-        Ok(MetadataResponse {
-            client: ClientMetadata::metadata(provider, &req.client_id)
-                .await
-                .map_err(|e| Err::ServerError(format!("issue getting metadata: {e}")))?,
-        })
-    }
+    Ok(MetadataResponse {
+        client: ClientMetadata::metadata(&provider, &req.client_id)
+            .await
+            .map_err(|e| Err::ServerError(format!("issue getting metadata: {e}")))?,
+    })
 }
 
 #[cfg(test)]
@@ -81,7 +57,7 @@ mod tests {
         let request = MetadataRequest {
             client_id: "http://vercre.io".into(),
         };
-        let response = Endpoint::new(provider).metadata(&request).await.expect("response is ok");
+        let response = metadata(provider, &request).await.expect("response is ok");
         assert_snapshot!("response", response, {
             ".vp_formats" => insta::sorted_redaction()
         });

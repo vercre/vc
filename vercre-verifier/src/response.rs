@@ -23,239 +23,217 @@
 use std::fmt::Debug;
 
 use core_utils::Kind;
-use openid::endpoint::{Callback, ClientMetadata, StateManager};
+use openid::endpoint::{StateManager, VerifierProvider};
 use openid::presentation::{PresentationDefinitionType, ResponseRequest, ResponseResponse};
 use openid::{Err, Result};
-use proof::signature::{Signer, Verifier};
 use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
 use w3c_vc::model::VerifiableCredential;
 use w3c_vc::proof::{Payload, Verify};
 
-use super::Endpoint;
 use crate::state::State;
 
-/// Authorization Response request handler.
-impl<P> Endpoint<P>
-where
-    P: ClientMetadata + StateManager + Signer + Verifier + Callback + Clone + Debug,
-{
-    /// Endpoint for the Wallet to respond Verifier's Authorization Request.
-    ///
-    /// # Errors
-    ///
-    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
-    /// not available.
-    #[instrument(level = "debug", skip(self))]
-    pub async fn response(&self, request: &ResponseRequest) -> Result<ResponseResponse> {
-        // TODO: handle case where Wallet returns error instead of subm
+/// Endpoint for the Wallet to respond Verifier's Authorization Request.
+///
+/// # Errors
+///
+/// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+/// not available.
+#[instrument(level = "debug", skip(provider))]
+pub async fn response(
+    provider: impl VerifierProvider, request: &ResponseRequest,
+) -> Result<ResponseResponse> {
+    // TODO: handle case where Wallet returns error instead of subm
 
-        // get state by client state key
-        let Some(state_key) = &request.state else {
-            return Err(Err::InvalidRequest("client state not found".into()));
-        };
-        let Ok(buf) = StateManager::get(&self.provider, state_key).await else {
-            return Err(Err::InvalidRequest("state not found".into()));
-        };
+    // get state by client state key
+    let Some(state_key) = &request.state else {
+        return Err(Err::InvalidRequest("client state not found".into()));
+    };
+    let Ok(buf) = StateManager::get(&provider, state_key).await else {
+        return Err(Err::InvalidRequest("state not found".into()));
+    };
 
-        let ctx = Context {
-            state: State::try_from(buf)?,
-            _p: std::marker::PhantomData,
-        };
+    let ctx = Context {
+        state: State::try_from(buf)?,
+    };
 
-        openid::endpoint::Endpoint::handle_request(self, request, ctx).await
-    }
+    verify(&ctx, provider.clone(), request).await?;
+    process(&ctx, provider, request).await
 }
 
 #[derive(Debug)]
-struct Context<P> {
+struct Context {
     state: State,
-    _p: std::marker::PhantomData<P>,
 }
 
-impl<P> openid::endpoint::Context for Context<P>
-where
-    P: ClientMetadata + StateManager + Signer + Verifier + Callback + Clone + Debug,
-{
-    type Provider = P;
-    type Request = ResponseRequest;
-    type Response = ResponseResponse;
+// TODO:
+// Validate the integrity, authenticity, and holder binding of each Verifiable
+// Presentation in the VP Token according to the rules of the respective
+// Presentation format.
 
-    fn callback_id(&self) -> Option<String> {
-        self.state.callback_id.clone()
+// Verfiy the vp_token and presentation subm
+#[allow(clippy::too_many_lines)]
+async fn verify(
+    context: &Context, provider: impl VerifierProvider, request: &ResponseRequest,
+) -> Result<()> {
+    tracing::debug!("Context::verify");
+
+    let saved_req = &context.state.request_object;
+
+    // TODO: no token == error response, we should have already checked for an error
+    let Some(vp_token) = request.vp_token.clone() else {
+        return Err(Err::InvalidRequest("client state not found".into()));
+    };
+
+    let mut vps = vec![];
+
+    // check nonce matches
+    for vp_val in &vp_token {
+        let (vp, nonce) = match w3c_vc::proof::verify(Verify::Vp(vp_val), &provider).await {
+            Ok(Payload::Vp { vp, nonce, .. }) => (vp, nonce),
+            Ok(_) => return Err(Err::InvalidRequest("proof payload is invalid".into())),
+            Err(e) => return Err(Err::ServerError(format!("issue verifying VP proof: {e}"))),
+        };
+
+        // else {
+        //     return Err(Err::InvalidRequest("invalid vp_token".into()));
+        // };
+        if nonce != saved_req.nonce {
+            return Err(Err::InvalidRequest("nonce does not match".into()));
+        }
+        vps.push(vp);
+    }
+
+    let Some(subm) = &request.presentation_submission else {
+        return Err(Err::InvalidRequest("no presentation_submission".into()));
+    };
+    let def = match &saved_req.presentation_definition {
+        PresentationDefinitionType::Object(def) => def,
+        PresentationDefinitionType::Uri(_) => {
+            return Err(Err::InvalidRequest("presentation_definition_uri is unsupported".into()));
+        }
+    };
+
+    // verify presentation subm matches definition
+    // N.B. technically, this is redundant as it is done when looking up state
+    if subm.definition_id != def.id {
+        return Err(Err::InvalidRequest("definition_ids do not match".into()));
+    }
+
+    let input_descs = &def.input_descriptors;
+    let desc_map = &subm.descriptor_map;
+
+    // convert VP Token to JSON Value for JSONPath querying
+    // N.B. because of Mapping path syntax, we need to convert single entry
+    // Vec to an req_obj
+
+    let vp_val: Value = match vps.len() {
+        1 => serde_json::to_value(vps[0].clone())
+            .map_err(|e| Err::ServerError(format!("issue converting VP to Value: {e}")))?,
+        _ => serde_json::to_value(vps)
+            .map_err(|e| Err::ServerError(format!("issue aggregating vp values: {e}")))?,
+    };
+
+    // Verify request has been fulfilled for each credential requested:
+    //  - use the Input Descriptor Mapping Object(s) in the Submission to identify
+    //    the matching VC in the VP Token, and verify the VC.
+    for input in input_descs {
+        // find Input Descriptor Mapping Object
+        let Some(mapping) = desc_map.iter().find(|idmo| idmo.id == input.id) else {
+            return Err(Err::InvalidRequest(format!(
+                "input descriptor mapping req_obj not found for {}",
+                input.id
+            )));
+        };
+
+        // check VC format matches a requested format
+        if let Some(fmt) = input.format.as_ref() {
+            if !fmt.contains_key(&mapping.path_nested.format) {
+                return Err(Err::InvalidRequest(format!(
+                    "invalid format {}",
+                    mapping.path_nested.format
+                )));
+            }
+        }
+
+        // search VP Token for VC specified by mapping path
+        let jpath = JsonPath::parse(&mapping.path_nested.path)
+            .map_err(|e| Err::ServerError(format!("issue parsing JSON Path: {e}")))?;
+        let Ok(vc_node) = jpath.query(&vp_val).exactly_one() else {
+            return Err(Err::InvalidRequest(format!(
+                "no match for path_nested {}",
+                mapping.path_nested.path
+            )));
+        };
+
+        let vc_kind: Kind<VerifiableCredential> = match vc_node {
+            Value::String(token) => Kind::String(token.to_string()),
+            Value::Object(_) => {
+                let vc: VerifiableCredential = serde_json::from_value(vc_node.clone())
+                    .map_err(|e| Err::ServerError(format!("issue deserializing vc: {e}")))?;
+                Kind::Object(vc)
+            }
+            _ => return Err(Err::InvalidRequest(format!("unexpected VC format: {vc_node}"))),
+        };
+
+        let Payload::Vc(vc) = w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider)
+            .await
+            .map_err(|e| Err::InvalidRequest(format!("invalid VC proof: {e}")))?
+        else {
+            return Err(Err::InvalidRequest("proof payload is invalid".into()));
+        };
+
+        // verify input constraints have been met
+        if !input
+            .constraints
+            .satisfied(&vc)
+            .map_err(|e| Err::ServerError(format!("issue matching constraints: {e}")))?
+        {
+            return Err(Err::InvalidRequest("input constraints not satisfied".into()));
+        }
+
+        // check VC is valid (hasn't expired, been revoked, etc)
+        if vc.expiration_date.is_some_and(|exp| exp < chrono::Utc::now()) {
+            return Err(Err::InvalidRequest("credential has expired".into()));
+        }
+
+        // TODO: look up credential status using status.id
+        // if let Some(_status) = &vc.credential_status {
+        //     // TODO: look up credential status using status.id
+        // }
     }
 
     // TODO:
-    // Validate the integrity, authenticity, and holder binding of each Verifiable
-    // Presentation in the VP Token according to the rules of the respective
-    // Presentation format.
+    // Perform the checks required by the Verifier's policy based on the set of
+    // trust requirements such as trust frameworks it belongs to (i.e.,
+    // revocation checks), if applicable.
 
-    // Verfiy the vp_token and presentation subm
-    #[allow(clippy::too_many_lines)]
-    async fn verify(
-        &mut self, provider: &Self::Provider, request: &Self::Request,
-    ) -> Result<&Self> {
-        tracing::debug!("Context::verify");
+    Ok(())
+}
 
-        let saved_req = &self.state.request_object;
+// Process the authorization request
+async fn process(
+    _: &Context, provider: impl VerifierProvider, request: &ResponseRequest,
+) -> Result<ResponseResponse> {
+    tracing::debug!("Context::process");
 
-        // TODO: no token == error response, we should have already checked for an error
-        let Some(vp_token) = request.vp_token.clone() else {
-            return Err(Err::InvalidRequest("client state not found".into()));
-        };
+    // clear state
+    let Some(state_key) = &request.state else {
+        return Err(Err::InvalidRequest("client state not found".into()));
+    };
+    StateManager::purge(&provider, state_key)
+        .await
+        .map_err(|e| Err::ServerError(format!("issue purging state: {e}")))?;
 
-        let mut vps = vec![];
-
-        // check nonce matches
-        for vp_val in &vp_token {
-            let (vp, nonce) = match w3c_vc::proof::verify(Verify::Vp(vp_val), provider).await {
-                Ok(Payload::Vp { vp, nonce, .. }) => (vp, nonce),
-                Ok(_) => return Err(Err::InvalidRequest("proof payload is invalid".into())),
-                Err(e) => return Err(Err::ServerError(format!("issue verifying VP proof: {e}"))),
-            };
-
-            // else {
-            //     return Err(Err::InvalidRequest("invalid vp_token".into()));
-            // };
-            if nonce != saved_req.nonce {
-                return Err(Err::InvalidRequest("nonce does not match".into()));
-            }
-            vps.push(vp);
-        }
-
-        let Some(subm) = &request.presentation_submission else {
-            return Err(Err::InvalidRequest("no presentation_submission".into()));
-        };
-        let def = match &saved_req.presentation_definition {
-            PresentationDefinitionType::Object(def) => def,
-            PresentationDefinitionType::Uri(_) => {
-                return Err(Err::InvalidRequest(
-                    "presentation_definition_uri is unsupported".into(),
-                ));
-            }
-        };
-
-        // verify presentation subm matches definition
-        // N.B. technically, this is redundant as it is done when looking up state
-        if subm.definition_id != def.id {
-            return Err(Err::InvalidRequest("definition_ids do not match".into()));
-        }
-
-        let input_descs = &def.input_descriptors;
-        let desc_map = &subm.descriptor_map;
-
-        // convert VP Token to JSON Value for JSONPath querying
-        // N.B. because of Mapping path syntax, we need to convert single entry
-        // Vec to an req_obj
-
-        let vp_val: Value = match vps.len() {
-            1 => serde_json::to_value(vps[0].clone())
-                .map_err(|e| Err::ServerError(format!("issue converting VP to Value: {e}")))?,
-            _ => serde_json::to_value(vps)
-                .map_err(|e| Err::ServerError(format!("issue aggregating vp values: {e}")))?,
-        };
-
-        // Verify request has been fulfilled for each credential requested:
-        //  - use the Input Descriptor Mapping Object(s) in the Submission to identify
-        //    the matching VC in the VP Token, and verify the VC.
-        for input in input_descs {
-            // find Input Descriptor Mapping Object
-            let Some(mapping) = desc_map.iter().find(|idmo| idmo.id == input.id) else {
-                return Err(Err::InvalidRequest(format!(
-                    "input descriptor mapping req_obj not found for {}",
-                    input.id
-                )));
-            };
-
-            // check VC format matches a requested format
-            if let Some(fmt) = input.format.as_ref() {
-                if !fmt.contains_key(&mapping.path_nested.format) {
-                    return Err(Err::InvalidRequest(format!(
-                        "invalid format {}",
-                        mapping.path_nested.format
-                    )));
-                }
-            }
-
-            // search VP Token for VC specified by mapping path
-            let jpath = JsonPath::parse(&mapping.path_nested.path)
-                .map_err(|e| Err::ServerError(format!("issue parsing JSON Path: {e}")))?;
-            let Ok(vc_node) = jpath.query(&vp_val).exactly_one() else {
-                return Err(Err::InvalidRequest(format!(
-                    "no match for path_nested {}",
-                    mapping.path_nested.path
-                )));
-            };
-
-            let vc_kind: Kind<VerifiableCredential> = match vc_node {
-                Value::String(token) => Kind::String(token.to_string()),
-                Value::Object(_) => {
-                    let vc: VerifiableCredential = serde_json::from_value(vc_node.clone())
-                        .map_err(|e| Err::ServerError(format!("issue deserializing vc: {e}")))?;
-                    Kind::Object(vc)
-                }
-                _ => return Err(Err::InvalidRequest(format!("unexpected VC format: {vc_node}"))),
-            };
-
-            let Payload::Vc(vc) = w3c_vc::proof::verify(Verify::Vc(&vc_kind), provider)
-                .await
-                .map_err(|e| Err::InvalidRequest(format!("invalid VC proof: {e}")))?
-            else {
-                return Err(Err::InvalidRequest("proof payload is invalid".into()));
-            };
-
-            // verify input constraints have been met
-            if !input
-                .constraints
-                .satisfied(&vc)
-                .map_err(|e| Err::ServerError(format!("issue matching constraints: {e}")))?
-            {
-                return Err(Err::InvalidRequest("input constraints not satisfied".into()));
-            }
-
-            // check VC is valid (hasn't expired, been revoked, etc)
-            if vc.expiration_date.is_some_and(|exp| exp < chrono::Utc::now()) {
-                return Err(Err::InvalidRequest("credential has expired".into()));
-            }
-
-            // TODO: look up credential status using status.id
-            // if let Some(_status) = &vc.credential_status {
-            //     // TODO: look up credential status using status.id
-            // }
-        }
-
-        // TODO:
-        // Perform the checks required by the Verifier's policy based on the set of
-        // trust requirements such as trust frameworks it belongs to (i.e.,
-        // revocation checks), if applicable.
-
-        Ok(self)
-    }
-
-    // Process the authorization request
-    async fn process(
-        &self, provider: &Self::Provider, request: &Self::Request,
-    ) -> Result<Self::Response> {
-        tracing::debug!("Context::process");
-
-        // clear state
-        let Some(state_key) = &request.state else {
-            return Err(Err::InvalidRequest("client state not found".into()));
-        };
-        StateManager::purge(provider, state_key)
-            .await
-            .map_err(|e| Err::ServerError(format!("issue purging state: {e}")))?;
-
-        // TODO: use callback to advise client of result
-        Ok(ResponseResponse {
-            // TODO: add response to state using `response_code` so Wallet can fetch full response
-            // TODO: align redirct_uri to spec
-            // redirect_uri: Some(format!("http://localhost:3000/cb#response_code={}", "1234")),
-            redirect_uri: Some("http://localhost:3000/cb".into()),
-            response_code: None,
-        })
-    }
+    // TODO: use callback to advise client of result
+    Ok(ResponseResponse {
+        // TODO: add response to state using `response_code` so Wallet can fetch full response
+        // TODO: align redirct_uri to spec
+        // redirect_uri: Some(format!("http://localhost:3000/cb#response_code={}", "1234")),
+        redirect_uri: Some("http://localhost:3000/cb".into()),
+        response_code: None,
+    })
 }
 
 #[cfg(test)]
@@ -319,7 +297,7 @@ mod tests {
         });
 
         let request = serde_json::from_value::<ResponseRequest>(body).expect("should deserialize");
-        let response = Endpoint::new(provider).response(&request).await.expect("response is ok");
+        let response = response(provider, &request).await.expect("response is ok");
 
         let redirect = response.redirect_uri.as_ref().expect("has redirect_uri");
         assert_eq!(redirect, "http://localhost:3000/cb");
