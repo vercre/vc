@@ -3,7 +3,7 @@
 use std::fmt::Debug;
 
 use chrono::Utc;
-use openid::endpoint::{IssuerProvider, StateManager};
+use openid::issuer::{Provider, StateManager};
 use openid::issuer::{RegistrationRequest, RegistrationResponse};
 use openid::{Error,Result};
 use tracing::instrument;
@@ -19,7 +19,7 @@ use crate::state::State;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn register(
-    provider: impl IssuerProvider, request: &RegistrationRequest,
+    provider: impl Provider, request: &RegistrationRequest,
 ) -> Result<RegistrationResponse> {
     let mut ctx = Context {};
     // shell(&mut ctx, provider.clone(), request, verify).await?;
@@ -32,7 +32,7 @@ pub async fn register(
 struct Context {}
 
 async fn verify(
-    _: &mut Context, provider: impl IssuerProvider, request: &RegistrationRequest,
+    _: &mut Context, provider: impl Provider, request: &RegistrationRequest,
 ) -> Result<()> {
     tracing::debug!("Context::verify");
 
@@ -52,7 +52,7 @@ async fn verify(
 }
 
 async fn process(
-    _: &mut Context, provider: impl IssuerProvider, request: &RegistrationRequest,
+    _: &mut Context, provider: impl Provider, request: &RegistrationRequest,
 ) -> Result<RegistrationResponse> {
     tracing::debug!("Context::process");
 

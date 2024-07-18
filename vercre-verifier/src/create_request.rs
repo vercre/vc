@@ -44,7 +44,7 @@ use std::collections::HashMap;
 
 use core_utils::gen;
 use dif_exch::{ClaimFormat, PresentationDefinition};
-use openid::endpoint::{StateManager, VerifierMetadata, VerifierProvider};
+use openid::verifier::{StateManager, VerifierMetadata,Provider};
 use openid::verifier::{
     ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
     PresentationDefinitionType, RequestObject, ResponseType,
@@ -86,7 +86,7 @@ use crate::state::State;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn create_request(
-    provider: impl VerifierProvider, request: &CreateRequestRequest,
+    provider: impl Provider, request: &CreateRequestRequest,
 ) -> Result<CreateRequestResponse> {
     verify(request).await?;
     process(provider, request).await
@@ -103,7 +103,7 @@ async fn verify(request: &CreateRequestRequest) -> Result<()> {
 }
 
 async fn process(
-    provider: impl VerifierProvider, request: &CreateRequestRequest,
+    provider: impl Provider, request: &CreateRequestRequest,
 ) -> Result<CreateRequestResponse> {
     tracing::debug!("Context::process");
 

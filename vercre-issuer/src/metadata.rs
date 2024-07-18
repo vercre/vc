@@ -24,8 +24,7 @@
 //! ```
 use std::fmt::Debug;
 
-use openid::endpoint::{IssuerMetadata, IssuerProvider};
-use openid::issuer::{MetadataRequest, MetadataResponse};
+use openid::issuer::{IssuerMetadata, MetadataRequest, MetadataResponse, Provider};
 use openid::{Error, Result};
 use tracing::instrument;
 
@@ -39,7 +38,7 @@ use tracing::instrument;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn metadata(
-    provider: impl IssuerProvider, request: &MetadataRequest,
+    provider: impl Provider, request: &MetadataRequest,
 ) -> Result<MetadataResponse> {
     let mut ctx = Context {};
     // shell(&mut ctx, provider, request, process).await
@@ -50,7 +49,7 @@ pub async fn metadata(
 struct Context {}
 
 async fn process(
-    _: &mut Context, provider: impl IssuerProvider, request: &MetadataRequest,
+    _: &mut Context, provider: impl Provider, request: &MetadataRequest,
 ) -> Result<MetadataResponse> {
     tracing::debug!("Context::process");
 

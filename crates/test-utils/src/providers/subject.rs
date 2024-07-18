@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
-use openid::endpoint::{Claims, Result};
+use openid::issuer::{Claims, Result};
 use serde_json::{json, Map, Value};
 
 pub const NORMAL_USER: &str = "normal_user";

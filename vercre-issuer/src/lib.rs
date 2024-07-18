@@ -98,12 +98,12 @@ mod token;
 
 /// Re-export provider traits and types.
 pub mod provider {
-    #[allow(clippy::module_name_repetitions)]
-    pub use openid::endpoint::{
-        Claims, ClientMetadata, IssuerMetadata, IssuerProvider, Result, ServerMetadata,
-        StateManager, Subject,
-    };
     pub use openid::issuer::{ClaimDefinition, GrantType, Issuer};
+    #[allow(clippy::module_name_repetitions)]
+    pub use openid::issuer::{
+        Claims, ClientMetadata, IssuerMetadata, Provider, Result, ServerMetadata, StateManager,
+        Subject,
+    };
     pub use openid::{Client, Server};
     pub use proof::jose::jwk::PublicKeyJwk;
     pub use proof::signature::{Algorithm, Signer, Verifier};

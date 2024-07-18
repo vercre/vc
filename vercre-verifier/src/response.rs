@@ -21,7 +21,7 @@
 //! Token is provided in the Token Response.
 
 use core_utils::Kind;
-use openid::endpoint::{StateManager, VerifierProvider};
+use openid::verifier::{StateManager, Provider};
 use openid::verifier::{PresentationDefinitionType, ResponseRequest, ResponseResponse};
 use openid::{Error,Result};
 use serde_json::Value;
@@ -40,7 +40,7 @@ use crate::state::State;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn response(
-    provider: impl VerifierProvider, request: &ResponseRequest,
+    provider: impl Provider, request: &ResponseRequest,
 ) -> Result<ResponseResponse> {
     // TODO: handle case where Wallet returns error instead of subm
 
@@ -55,7 +55,7 @@ pub async fn response(
 
 // Verfiy the vp_token and presentation subm
 #[allow(clippy::too_many_lines)]
-async fn verify(provider: impl VerifierProvider, request: &ResponseRequest) -> Result<()> {
+async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()> {
     tracing::debug!("Context::verify");
 
     // get state by client state key
@@ -201,7 +201,7 @@ async fn verify(provider: impl VerifierProvider, request: &ResponseRequest) -> R
 
 // Process the authorization request
 async fn process(
-    provider: impl VerifierProvider, request: &ResponseRequest,
+    provider: impl Provider, request: &ResponseRequest,
 ) -> Result<ResponseResponse> {
     tracing::debug!("Context::process");
 

@@ -12,10 +12,10 @@ use std::fmt::Debug;
 
 use chrono::Utc;
 use core_utils::{gen, Kind};
-use openid::endpoint::{IssuerMetadata, IssuerProvider, StateManager, Subject};
 use openid::issuer::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
-    CredentialRequest, CredentialResponse, CredentialType, Issuer, ProofClaims, ProofType,
+    CredentialRequest, CredentialResponse, CredentialType, Issuer, IssuerMetadata, ProofClaims,
+    ProofType, Provider, StateManager, Subject,
 };
 use openid::{Error, Result};
 use proof::jose::jws::{self, Type};
@@ -34,7 +34,7 @@ use crate::state::{Deferred, Expire, State};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn batch(
-    provider: impl IssuerProvider, request: &BatchCredentialRequest,
+    provider: impl Provider, request: &BatchCredentialRequest,
 ) -> Result<BatchCredentialResponse> {
     let Ok(buf) = StateManager::get(&provider, &request.access_token).await else {
         return Err(Error::AccessDenied("invalid access token".into()));
@@ -65,7 +65,7 @@ struct Context {
 }
 
 async fn verify(
-    context: &mut Context, provider: impl IssuerProvider, request: &BatchCredentialRequest,
+    context: &mut Context, provider: impl Provider, request: &BatchCredentialRequest,
 ) -> Result<()> {
     tracing::debug!("Context::verify");
 
@@ -84,7 +84,9 @@ async fn verify(
         // format and type request
         if let CredentialType::Format(format) = &request.credential_type {
             let Some(definition) = &request.credential_definition else {
-                return Err(Error::InvalidCredentialRequest("credential definition not set".into()));
+                return Err(Error::InvalidCredentialRequest(
+                    "credential definition not set".into(),
+                ));
             };
 
             // check request has been authorized:
@@ -180,7 +182,7 @@ async fn verify(
 }
 
 async fn process(
-    context: &Context, provider: impl IssuerProvider, request: &BatchCredentialRequest,
+    context: &Context, provider: impl Provider, request: &BatchCredentialRequest,
 ) -> Result<BatchCredentialResponse> {
     tracing::debug!("Context::process");
 
@@ -220,7 +222,7 @@ async fn process(
 
 // Processes the Credential Request to generate a Credential Response.
 async fn create_response(
-    context: &Context, provider: impl IssuerProvider, request: &CredentialRequest,
+    context: &Context, provider: impl Provider, request: &CredentialRequest,
 ) -> Result<CredentialResponse> {
     tracing::debug!("Context::create_response");
 
@@ -271,7 +273,7 @@ async fn create_response(
 // Request. May return `None` if the credential is not ready to be issued because the request
 // for Subject is pending.
 async fn create_vc(
-    context: &Context, provider: impl IssuerProvider, request: &CredentialRequest,
+    context: &Context, provider: impl Provider, request: &CredentialRequest,
 ) -> Result<Option<VerifiableCredential>> {
     tracing::debug!("Context::create_vc");
 
@@ -344,7 +346,9 @@ fn credential_configuration(
         }
         CredentialType::Format(format) => {
             let Some(definition) = &request.credential_definition else {
-                return Err(Error::InvalidCredentialRequest("credential definition not set".into()));
+                return Err(Error::InvalidCredentialRequest(
+                    "credential definition not set".into(),
+                ));
             };
             let Some(id_config) =
                 context.issuer_meta.credential_configurations_supported.iter().find(|(_, v)| {
@@ -360,7 +364,7 @@ fn credential_configuration(
 
 /// Creates, stores, and returns new `c_nonce` and `c_nonce_expires`_in values
 /// for use in `Error::InvalidProof` errors, as per specification.
-async fn err_nonce(context: &Context, provider: impl IssuerProvider) -> Result<(String, i64)> {
+async fn err_nonce(context: &Context, provider: impl Provider) -> Result<(String, i64)> {
     // generate nonce and update state
     let mut state = context.state.clone();
     let Some(mut token_state) = state.token else {

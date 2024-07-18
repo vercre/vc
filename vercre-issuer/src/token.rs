@@ -15,9 +15,10 @@ use std::fmt::Debug;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
 use core_utils::gen;
-use openid::endpoint::{IssuerProvider, ServerMetadata, StateManager};
-use openid::issuer::{GrantType, TokenRequest, TokenResponse, TokenType};
-use openid::{Error,Result};
+use openid::issuer::{
+    GrantType, Provider, ServerMetadata, StateManager, TokenRequest, TokenResponse, TokenType,
+};
+use openid::{Error, Result};
 use sha2::{Digest, Sha256};
 use tracing::instrument;
 
@@ -31,7 +32,7 @@ use crate::state::{Expire, State, Token};
 /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
 /// not available.
 #[instrument(level = "debug", skip(provider))]
-pub async fn token(provider: impl IssuerProvider, request: &TokenRequest) -> Result<TokenResponse> {
+pub async fn token(provider: impl Provider, request: &TokenRequest) -> Result<TokenResponse> {
     // restore state
     // RFC 6749 requires a particular error here
     let Ok(buf) = StateManager::get(&provider, &auth_state_key(request)?).await else {
@@ -54,9 +55,7 @@ struct Context {
 }
 
 // Verify the token request.
-async fn verify(
-    context: &Context, provider: impl IssuerProvider, request: &TokenRequest,
-) -> Result<()> {
+async fn verify(context: &Context, provider: impl Provider, request: &TokenRequest) -> Result<()> {
     tracing::debug!("Context::verify");
 
     let Ok(server_meta) = ServerMetadata::metadata(&provider, &request.credential_issuer).await
@@ -114,7 +113,7 @@ async fn verify(
 /// Exchange auth code (authorization or pre-authorized) for access token,
 /// updating state along the way.
 async fn process(
-    context: &Context, provider: impl IssuerProvider, request: &TokenRequest,
+    context: &Context, provider: impl Provider, request: &TokenRequest,
 ) -> Result<TokenResponse> {
     tracing::debug!("Context::process");
 

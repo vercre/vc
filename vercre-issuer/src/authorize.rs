@@ -74,12 +74,10 @@ use std::vec;
 
 use chrono::Utc;
 use core_utils::gen;
-use openid::endpoint::{
-    ClientMetadata, IssuerMetadata, IssuerProvider, ServerMetadata, StateManager, Subject,
-};
 use openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    GrantType, Issuer, TokenAuthorizationDetail,
+    ClientMetadata, GrantType, Issuer, IssuerMetadata, Provider, ServerMetadata, StateManager,
+    Subject, TokenAuthorizationDetail,
 };
 use openid::{Error, Result};
 use tracing::instrument;
@@ -95,7 +93,7 @@ use crate::state::{Auth, Expire, State};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn authorize(
-    provider: impl IssuerProvider, request: &AuthorizationRequest,
+    provider: impl Provider, request: &AuthorizationRequest,
 ) -> Result<AuthorizationResponse> {
     let issuer_meta = IssuerMetadata::metadata(&provider, &request.credential_issuer)
         .await
@@ -121,7 +119,7 @@ struct Context {
 }
 
 async fn verify(
-    context: &mut Context, provider: impl IssuerProvider, request: &AuthorizationRequest,
+    context: &mut Context, provider: impl Provider, request: &AuthorizationRequest,
 ) -> Result<()> {
     tracing::debug!("Context::verify");
 
@@ -206,7 +204,7 @@ async fn verify(
 //   authorized for
 // - save related auth_dets/scope items in state
 async fn process(
-    context: &Context, provider: impl IssuerProvider, request: &AuthorizationRequest,
+    context: &Context, provider: impl Provider, request: &AuthorizationRequest,
 ) -> Result<AuthorizationResponse> {
     tracing::debug!("Context::process");
 

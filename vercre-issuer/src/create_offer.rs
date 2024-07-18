@@ -68,7 +68,7 @@ use std::fmt::Debug;
 
 use chrono::Utc;
 use core_utils::gen;
-use openid::endpoint::{IssuerMetadata, IssuerProvider, StateManager};
+use openid::issuer::{IssuerMetadata, Provider, StateManager};
 use openid::issuer::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer,
     CredentialOfferType, Grants, PreAuthorizedCodeGrant, TxCode,
@@ -87,7 +87,7 @@ use crate::state::{Auth, Expire, State};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn create_offer(
-    provider: impl IssuerProvider, request: &CreateOfferRequest,
+    provider: impl Provider, request: &CreateOfferRequest,
 ) -> Result<CreateOfferResponse> {
     let mut ctx = Context {};
 
@@ -101,7 +101,7 @@ pub async fn create_offer(
 struct Context {}
 
 async fn verify(
-    _: &mut Context, provider: impl IssuerProvider, request: &CreateOfferRequest,
+    _: &mut Context, provider: impl Provider, request: &CreateOfferRequest,
 ) -> Result<()> {
     tracing::debug!("Context::verify");
 
@@ -138,7 +138,7 @@ async fn verify(
 
 // Process the request.
 async fn process(
-    _: &mut Context, provider: impl IssuerProvider, request: &CreateOfferRequest,
+    _: &mut Context, provider: impl Provider, request: &CreateOfferRequest,
 ) -> Result<CreateOfferResponse> {
     tracing::debug!("Context::process");
 

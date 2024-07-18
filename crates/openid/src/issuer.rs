@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 use std::io::Cursor;
 
+use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
 use core_utils::Kind;
 use proof::jose::jwk::PublicKeyJwk;
@@ -12,8 +13,7 @@ use w3c_vc::model::VerifiableCredential;
 
 use super::{Client, CredentialFormat};
 use crate::endpoint::Request;
-use crate::error::Error;
-use crate::{stringify, Result};
+use crate::stringify;
 
 // TODO: find a home for these shared types
 // TODO: move sample data to test-utils
@@ -151,14 +151,13 @@ impl CredentialOffer {
     ///
     /// Returns an `Error::ServerError` error if error if the Credential Offer cannot
     /// be serialized.
-    pub fn to_qrcode(&self, endpoint: &str) -> Result<String> {
-        let qs = self
-            .to_querystring()
-            .map_err(|e| Error::ServerError(format!("Failed to generate querystring: {e}")))?;
+    pub fn to_qrcode(&self, endpoint: &str) -> anyhow::Result<String> {
+        let qs =
+            self.to_querystring().map_err(|e| anyhow!("Failed to generate querystring: {e}"))?;
 
         // generate qr code
         let qr_code = QrCode::new(format!("{endpoint}{qs}"))
-            .map_err(|e| Error::ServerError(format!("Failed to create QR code: {e}")))?;
+            .map_err(|e| anyhow!("Failed to create QR code: {e}"))?;
 
         // write image to buffer
         let img_buf = qr_code.render::<image::Luma<u8>>().build();
@@ -166,7 +165,7 @@ impl CredentialOffer {
         let mut writer = Cursor::new(&mut buffer);
         img_buf
             .write_to(&mut writer, image::ImageFormat::Png)
-            .map_err(|e| Error::ServerError(format!("Failed to create QR code: {e}")))?;
+            .map_err(|e| anyhow!("Failed to create QR code: {e}"))?;
 
         // base64 encode image
         Ok(format!("data:image/png;base64,{}", Base64::encode_string(buffer.as_slice())))
@@ -178,9 +177,8 @@ impl CredentialOffer {
     ///
     /// Returns an `Error::ServerError` error if error if the Credential Offer cannot
     /// be serialized.
-    pub fn to_querystring(&self) -> Result<String> {
-        serde_qs::to_string(&self)
-            .map_err(|e| Error::ServerError(format!("issue creating query string: {e}")))
+    pub fn to_querystring(&self) -> anyhow::Result<String> {
+        serde_qs::to_string(&self).map_err(|e| anyhow!("issue creating query string: {e}"))
     }
 }
 
@@ -1495,6 +1493,81 @@ pub enum ValueType {
     ///
     ///[IANA media type registry]: (https://www.iana.org/assignments/media-types/media-types.xhtml#image)
     Image,
+}
+
+use std::fmt::Debug;
+use std::future::Future;
+
+use proof::signature::{Signer, Verifier};
+use serde_json::{Map, Value};
+
+pub use crate::endpoint::{self, Result, StateManager};
+use crate::Server;
+
+/// Issuer Provider trait.
+pub trait Provider:
+    ClientMetadata
+    + IssuerMetadata
+    + ServerMetadata
+    + Subject
+    + StateManager
+    + Signer
+    + Verifier
+    + Clone
+{
+}
+
+/// The `ClientMetadata` trait is used by implementers to provide `Client` metadata
+/// to the library.
+pub trait ClientMetadata: Send + Sync {
+    /// Returns client metadata for the specified client.
+    fn metadata(&self, client_id: &str) -> impl Future<Output = endpoint::Result<Client>> + Send;
+
+    /// Used by OAuth 2.0 clients to dynamically register with the authorization
+    /// server.
+    fn register(&self, client: &Client) -> impl Future<Output = endpoint::Result<Client>> + Send;
+}
+
+/// The `IssuerMetadata` trait is used by implementers to provide Credential Issuer
+/// metadata.
+#[allow(clippy::module_name_repetitions)]
+pub trait IssuerMetadata: Send + Sync {
+    /// Returns the Credential Issuer's metadata.
+    fn metadata(&self, issuer_id: &str) -> impl Future<Output = endpoint::Result<Issuer>> + Send;
+}
+
+/// The `ServerMetadata` trait is used by implementers to provide Authorization Server
+/// metadata.
+pub trait ServerMetadata: Send + Sync {
+    /// Returns the Authorization Server's metadata.
+    fn metadata(&self, server_id: &str) -> impl Future<Output = endpoint::Result<Server>> + Send;
+}
+
+/// The Subject trait specifies how the library expects user information to be
+/// provided by implementers.
+pub trait Subject: Send + Sync {
+    /// Authorize issuance of the credential specified by `credential_configuration_id`.
+    /// Returns `true` if the subject (holder) is authorized.
+    fn authorize(
+        &self, holder_subject: &str, credential_identifier: &str,
+    ) -> impl Future<Output = endpoint::Result<bool>> + Send;
+
+    /// Returns a populated `Claims` object for the given subject (holder) and
+    /// credential definition.
+    fn claims(
+        &self, holder_subject: &str, credential_identifier: &str,
+    ) -> impl Future<Output = endpoint::Result<Claims>> + Send;
+}
+
+/// The user information returned by the Subject trait.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Claims {
+    /// The credential subject populated for the user.
+    pub claims: Map<String, Value>,
+
+    /// Specifies whether user information required for the credential subject
+    /// is pending.
+    pub pending: bool,
 }
 
 #[cfg(test)]

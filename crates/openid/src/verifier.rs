@@ -3,6 +3,7 @@
 use std::fmt;
 use std::io::Cursor;
 
+use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
 use core_utils::Kind;
 use dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
@@ -13,8 +14,7 @@ use serde::{Deserialize, Serialize};
 use w3c_vc::model::VerifiablePresentation;
 
 use super::Client as ClientMetadata;
-use crate::error::Error;
-use crate::{stringify, Result};
+use crate::stringify;
 
 /// The Request Object Request is created by the Verifier to generate an
 /// Authorization Request Object.
@@ -352,13 +352,12 @@ impl RequestObject {
     ///
     /// Returns an `Error::ServerError` error if the Request Object cannot be serialized.
     pub fn to_qrcode(&self, endpoint: &str) -> Result<String> {
-        let qs = self
-            .to_querystring()
-            .map_err(|e| Error::ServerError(format!("Failed to generate querystring: {e}")))?;
+        let qs =
+            self.to_querystring().map_err(|e| anyhow!("Failed to generate querystring: {e}"))?;
 
         // generate qr code
         let qr_code = QrCode::new(format!("{endpoint}{qs}"))
-            .map_err(|e| Error::ServerError(format!("Failed to create QR code: {e}")))?;
+            .map_err(|e| anyhow!("Failed to create QR code: {e}"))?;
 
         // write image to buffer
         let img_buf = qr_code.render::<image::Luma<u8>>().build();
@@ -366,7 +365,7 @@ impl RequestObject {
         let mut writer = Cursor::new(&mut buffer);
         img_buf
             .write_to(&mut writer, image::ImageFormat::Png)
-            .map_err(|e| Error::ServerError(format!("Failed to create QR code: {e}")))?;
+            .map_err(|e| anyhow!("Failed to create QR code: {e}"))?;
 
         // base64 encode image
         Ok(format!("data:image/png;base64,{}", Base64::encode_string(buffer.as_slice())))
@@ -378,8 +377,7 @@ impl RequestObject {
     ///
     /// Returns an `Error::ServerError` error if the Request Object cannot be serialized.
     pub fn to_querystring(&self) -> Result<String> {
-        serde_qs::to_string(&self)
-            .map_err(|e| Error::ServerError(format!("issue creating query string: {e}")))
+        serde_qs::to_string(&self).map_err(|e| anyhow!("issue creating query string: {e}"))
     }
 }
 
@@ -587,4 +585,37 @@ pub struct VpFormat {
     /// Proof types supported by the format.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub proof_type: Option<Vec<String>>,
+}
+
+use std::fmt::Debug;
+use std::future::Future;
+
+use proof::signature::{Signer, Verifier};
+
+pub use crate::endpoint::{self, Result, StateManager};
+use crate::{Client, Server};
+
+/// Issuer Provider trait.
+pub trait Provider:
+    VerifierMetadata + WalletMetadata + StateManager + Signer + Verifier + Clone
+{
+}
+
+/// The `VerifierMetadata` trait is used by implementers to provide `Verifier` (client)
+/// metadata to the library.
+#[allow(clippy::module_name_repetitions)]
+pub trait VerifierMetadata: Send + Sync {
+    /// Returns client metadata for the specified client.
+    fn metadata(&self, verifier_id: &str) -> impl Future<Output = Result<Client>> + Send;
+
+    /// Used by OAuth 2.0 clients to dynamically register with the authorization
+    /// server.
+    fn register(&self, verifier: &Client) -> impl Future<Output = Result<Client>> + Send;
+}
+
+/// The `WalletMetadata` trait is used by implementers to provide Wallet
+/// (Authorization Server) metadata.
+pub trait WalletMetadata: Send + Sync {
+    /// Returns the Authorization Server's metadata.
+    fn metadata(&self, wallet_id: &str) -> impl Future<Output = Result<Server>> + Send;
 }

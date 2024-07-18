@@ -5,7 +5,7 @@
 //! As the Verifier is a client to the Wallet's Authorization Server, this endpoint
 //! returns Client metadata as defined in [RFC7591](https://www.rfc-editor.org/rfc/rfc7591).
 
-use openid::endpoint::{VerifierMetadata, VerifierProvider};
+use openid::verifier::{VerifierMetadata, Provider};
 use openid::verifier::{MetadataRequest, MetadataResponse};
 use openid::{Error,Result};
 use tracing::instrument;
@@ -18,13 +18,13 @@ use tracing::instrument;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn metadata(
-    provider: impl VerifierProvider, request: &MetadataRequest,
+    provider: impl Provider, request: &MetadataRequest,
 ) -> Result<MetadataResponse> {
     process(provider, request).await
 }
 
 async fn process(
-    provider: impl VerifierProvider, req: &MetadataRequest,
+    provider: impl Provider, req: &MetadataRequest,
 ) -> Result<MetadataResponse> {
     tracing::debug!("Context::process");
 

@@ -3,11 +3,10 @@
 use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
-use openid::endpoint::{
-    Claims, ClientMetadata, IssuerMetadata, IssuerProvider, Result, ServerMetadata, StateManager,
+use openid::issuer::{
+    self, Claims, ClientMetadata, Issuer, IssuerMetadata, Result, ServerMetadata, StateManager,
     Subject,
 };
-use openid::issuer::Issuer;
 use openid::{Client, Server};
 use proof::jose::jwk::PublicKeyJwk;
 use proof::signature::{Algorithm, Signer, Verifier};
@@ -38,7 +37,7 @@ impl Deref for Provider {
     }
 }
 
-impl IssuerProvider for Provider {}
+impl issuer::Provider for Provider {}
 
 impl ClientMetadata for Provider {
     async fn metadata(&self, client_id: &str) -> Result<Client> {

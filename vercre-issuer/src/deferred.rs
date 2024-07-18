@@ -10,7 +10,7 @@
 
 use std::fmt::Debug;
 
-use openid::endpoint::{IssuerProvider, StateManager};
+use openid::issuer::{Provider, StateManager};
 use openid::issuer::{DeferredCredentialRequest, DeferredCredentialResponse};
 use openid::{Error, Result};
 use tracing::instrument;
@@ -27,7 +27,7 @@ use crate::state::State;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn deferred(
-    provider: impl IssuerProvider, request: &DeferredCredentialRequest,
+    provider: impl Provider, request: &DeferredCredentialRequest,
 ) -> Result<DeferredCredentialResponse> {
     let mut ctx = Context {};
     // shell(&mut ctx, provider, request, process).await
@@ -38,7 +38,7 @@ pub async fn deferred(
 struct Context {}
 
 async fn process(
-    _: &mut Context, provider: impl IssuerProvider, request: &DeferredCredentialRequest,
+    _: &mut Context, provider: impl Provider, request: &DeferredCredentialRequest,
 ) -> Result<DeferredCredentialResponse> {
     tracing::debug!("Context::process");
 

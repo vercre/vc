@@ -1,38 +1,14 @@
 //! # `OpenID` Core
 
-use std::fmt::Debug;
 use std::future::{Future, IntoFuture};
 
 use chrono::{DateTime, Utc};
-use proof::signature::{Signer, Verifier};
-use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
-
-use crate::issuer::Issuer;
-use crate::{Client, Server};
 
 /// Result is used for all external errors.
 // pub type Result<T> = anyhow::Result<T>;
 pub type Result<T, E = anyhow::Error> = std::result::Result<T, E>;
 
-/// Issuer Provider trait.
-pub trait IssuerProvider:
-    ClientMetadata
-    + IssuerMetadata
-    + ServerMetadata
-    + Subject
-    + StateManager
-    + Signer
-    + Verifier
-    + Clone
-{
-}
 
-/// Issuer Provider trait.
-pub trait VerifierProvider:
-    VerifierMetadata + WalletMetadata + StateManager + Signer + Verifier + Clone
-{
-}
 
 /// Request is implemented by all request types.
 pub trait Request {
@@ -66,47 +42,6 @@ where
     ) -> impl Future<Output = Result<U, E>> + Send {
         self(context, provider, request)
     }
-}
-
-/// The `ClientMetadata` trait is used by implementers to provide `Client` metadata to the
-/// library.
-pub trait ClientMetadata: Send + Sync {
-    /// Returns client metadata for the specified client.
-    fn metadata(&self, client_id: &str) -> impl Future<Output = Result<Client>> + Send;
-
-    /// Used by OAuth 2.0 clients to dynamically register with the authorization
-    /// server.
-    fn register(&self, client: &Client) -> impl Future<Output = Result<Client>> + Send;
-}
-
-/// The `IssuerMetadata` trait is used by implementers to provide Credential Issuer metadata.
-pub trait IssuerMetadata: Send + Sync {
-    /// Returns the Credential Issuer's metadata.
-    fn metadata(&self, issuer_id: &str) -> impl Future<Output = Result<Issuer>> + Send;
-}
-
-/// The `ServerMetadata` trait is used by implementers to provide Authorization Server metadata.
-pub trait ServerMetadata: Send + Sync {
-    /// Returns the Authorization Server's metadata.
-    fn metadata(&self, server_id: &str) -> impl Future<Output = Result<Server>> + Send;
-}
-
-/// The `VerifierMetadata` trait is used by implementers to provide `Verifier` (client)
-/// metadata to the library.
-pub trait VerifierMetadata: Send + Sync {
-    /// Returns client metadata for the specified client.
-    fn metadata(&self, verifier_id: &str) -> impl Future<Output = Result<Client>> + Send;
-
-    /// Used by OAuth 2.0 clients to dynamically register with the authorization
-    /// server.
-    fn register(&self, verifier: &Client) -> impl Future<Output = Result<Client>> + Send;
-}
-
-/// The `WalletMetadata` trait is used by implementers to provide Wallet
-/// (Authorization Server) metadata.
-pub trait WalletMetadata: Send + Sync {
-    /// Returns the Authorization Server's metadata.
-    fn metadata(&self, wallet_id: &str) -> impl Future<Output = Result<Server>> + Send;
 }
 
 /// `StateManager` is used to store and manage server state.
@@ -143,31 +78,4 @@ pub trait StateManager: Send + Sync {
         };
         v.into_future()
     }
-}
-
-/// The user information returned by the Subject trait.
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Claims {
-    /// The credential subject populated for the user.
-    pub claims: Map<String, Value>,
-
-    /// Specifies whether user information required for the credential subject
-    /// is pending.
-    pub pending: bool,
-}
-
-/// The Subject trait specifies how the library expects user information to be
-/// provided by implementers.
-pub trait Subject: Send + Sync {
-    /// Authorize issuance of the credential specified by `credential_configuration_id`.
-    /// Returns `true` if the subject (holder) is authorized.
-    fn authorize(
-        &self, holder_subject: &str, credential_identifier: &str,
-    ) -> impl Future<Output = Result<bool>> + Send;
-
-    /// Returns a populated `Claims` object for the given subject (holder) and credential
-    /// definition.
-    fn claims(
-        &self, holder_subject: &str, credential_identifier: &str,
-    ) -> impl Future<Output = Result<Claims>> + Send;
 }
