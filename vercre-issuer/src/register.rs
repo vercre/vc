@@ -4,7 +4,7 @@ use std::fmt::Debug;
 
 use chrono::Utc;
 use openid::endpoint::{IssuerProvider, StateManager};
-use openid::issuance::{RegistrationRequest, RegistrationResponse};
+use openid::issuer::{RegistrationRequest, RegistrationResponse};
 use openid::{Error,Result};
 use tracing::instrument;
 

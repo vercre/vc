@@ -170,7 +170,7 @@ pub use openid::Result;
 pub mod provider {
     #[allow(clippy::module_name_repetitions)]
     pub use openid::endpoint::{ClientMetadata, Result, StateManager, VerifierProvider};
-    pub use openid::presentation::VpFormat;
+    pub use openid::verifier::VpFormat;
     pub use openid::{Client, CredentialFormat};
     pub use proof::jose::jwk::PublicKeyJwk;
     pub use proof::signature::{Algorithm, Signer, Verifier};
@@ -178,7 +178,7 @@ pub mod provider {
 pub use create_request::create_request;
 pub use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 pub use metadata::metadata;
-pub use openid::presentation::{
+pub use openid::verifier::{
     ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
     MetadataRequest, MetadataResponse, PresentationDefinitionType, RequestObject,
     RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse, ResponseType,

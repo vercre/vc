@@ -4,7 +4,7 @@
 
 use anyhow::bail;
 use core_utils::Kind;
-use openid::issuance::{
+use openid::issuer::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, GrantType,
     Proof, ProofClaims, ProofType, TokenRequest,
 };

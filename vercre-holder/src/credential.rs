@@ -5,7 +5,7 @@
 
 use std::ops::Deref;
 
-use openid::issuance::CredentialConfiguration;
+use openid::issuer::CredentialConfiguration;
 use serde::{Deserialize, Serialize};
 use w3c_vc::model::VerifiableCredential;
 

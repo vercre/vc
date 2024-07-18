@@ -6,7 +6,7 @@
 //! returns Client metadata as defined in [RFC7591](https://www.rfc-editor.org/rfc/rfc7591).
 
 use openid::endpoint::{ClientMetadata, VerifierProvider};
-use openid::presentation::{MetadataRequest, MetadataResponse};
+use openid::verifier::{MetadataRequest, MetadataResponse};
 use openid::{Error,Result};
 use tracing::instrument;
 

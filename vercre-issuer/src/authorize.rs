@@ -77,7 +77,7 @@ use core_utils::gen;
 use openid::endpoint::{
     ClientMetadata, IssuerMetadata, IssuerProvider, ServerMetadata, StateManager, Subject,
 };
-use openid::issuance::{
+use openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
     GrantType, Issuer, TokenAuthorizationDetail,
 };

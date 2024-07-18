@@ -3,7 +3,7 @@
 
 use chrono::{DateTime, TimeDelta, Utc};
 use derive_builder::Builder;
-use openid::presentation::RequestObject;
+use openid::verifier::RequestObject;
 use openid::{Error, Result};
 use serde::{Deserialize, Serialize};
 

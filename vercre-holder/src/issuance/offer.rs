@@ -7,7 +7,7 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
-use openid::issuance::{CredentialConfiguration, CredentialOffer, MetadataRequest};
+use openid::issuer::{CredentialConfiguration, CredentialOffer, MetadataRequest};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;

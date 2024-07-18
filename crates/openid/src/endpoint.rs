@@ -9,7 +9,7 @@ use chrono::{DateTime, Utc};
 use proof::signature::{Signer, Verifier};
 
 pub use self::subject::{Claims, Subject};
-use crate::issuance::Issuer;
+use crate::issuer::Issuer;
 use crate::{Client, Server};
 
 /// Result is used for all external errors.

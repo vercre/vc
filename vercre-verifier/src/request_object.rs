@@ -14,7 +14,7 @@
 //! [JWT VC Presentation Profile]: (https://identity.foundation/jwt-vc-presentation-profile)
 
 use openid::endpoint::{StateManager, VerifierProvider};
-use openid::presentation::{RequestObjectRequest, RequestObjectResponse, RequestObjectType};
+use openid::verifier::{RequestObjectRequest, RequestObjectResponse, RequestObjectType};
 use openid::{Error,Result};
 use proof::jose::jws::{self, Type};
 use tracing::instrument;
@@ -66,7 +66,7 @@ async fn process(
 mod tests {
     use dif_exch::PresentationDefinition;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use openid::presentation::{
+    use openid::verifier::{
         ClientIdScheme, ClientMetadataType, PresentationDefinitionType, RequestObject, ResponseType,
     };
     use test_utils::verifier::{Provider, VERIFIER_ID};

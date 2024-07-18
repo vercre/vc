@@ -69,7 +69,7 @@ use std::fmt::Debug;
 use chrono::Utc;
 use core_utils::gen;
 use openid::endpoint::{IssuerMetadata, IssuerProvider, StateManager};
-use openid::issuance::{
+use openid::issuer::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer,
     CredentialOfferType, Grants, PreAuthorizedCodeGrant, TxCode,
 };

@@ -45,7 +45,7 @@ use std::collections::HashMap;
 use core_utils::gen;
 use dif_exch::{ClaimFormat, PresentationDefinition};
 use openid::endpoint::{ClientMetadata, StateManager, VerifierProvider};
-use openid::presentation::{
+use openid::verifier::{
     ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
     PresentationDefinitionType, RequestObject, ResponseType,
 };

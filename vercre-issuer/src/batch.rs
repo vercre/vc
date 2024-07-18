@@ -13,7 +13,7 @@ use std::fmt::Debug;
 use chrono::Utc;
 use core_utils::{gen, Kind};
 use openid::endpoint::{IssuerMetadata, IssuerProvider, StateManager, Subject};
-use openid::issuance::{
+use openid::issuer::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
     CredentialRequest, CredentialResponse, CredentialType, Issuer, ProofClaims, ProofType,
 };

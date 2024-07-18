@@ -3,8 +3,8 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
 use openid::endpoint::Result;
-use openid::issuance::GrantType;
-use openid::presentation::VpFormat;
+use openid::issuer::GrantType;
+use openid::verifier::VpFormat;
 use openid::{Client, CredentialFormat};
 use uuid::Uuid;
 

@@ -16,7 +16,7 @@ use std::fmt::Debug;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use core_utils::gen;
 use openid::endpoint::{IssuerProvider, ServerMetadata, StateManager};
-use openid::issuance::{GrantType, TokenRequest, TokenResponse, TokenType};
+use openid::issuer::{GrantType, TokenRequest, TokenResponse, TokenType};
 use openid::{Error,Result};
 use sha2::{Digest, Sha256};
 use tracing::instrument;
@@ -176,7 +176,7 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use openid::issuance::{
+    use openid::issuer::{
         AuthorizationDetail, AuthorizationDetailType, CredentialDefinition,
         TokenAuthorizationDetail,
     };

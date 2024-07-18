@@ -6,7 +6,7 @@
 
 use anyhow::{anyhow, bail};
 use dif_exch::Constraints;
-use openid::presentation::{
+use openid::verifier::{
     PresentationDefinitionType, RequestObject, RequestObjectResponse, RequestObjectType,
 };
 use proof::jose::jws;

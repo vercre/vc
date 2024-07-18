@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::anyhow;
 use openid::endpoint::Result;
-use openid::issuance::Issuer;
+use openid::issuer::Issuer;
 
 #[derive(Default, Clone, Debug)]
 pub struct Store {

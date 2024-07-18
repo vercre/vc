@@ -7,7 +7,7 @@ use openid::endpoint::{
     Claims, ClientMetadata, IssuerMetadata, IssuerProvider, Result, ServerMetadata, StateManager,
     Subject,
 };
-use openid::issuance::Issuer;
+use openid::issuer::Issuer;
 use openid::{Client, Server};
 use proof::jose::jwk::PublicKeyJwk;
 use proof::signature::{Algorithm, Signer, Verifier};

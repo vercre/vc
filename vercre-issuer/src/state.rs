@@ -3,7 +3,7 @@
 
 use chrono::{DateTime, TimeDelta, Utc};
 use derive_builder::Builder;
-use openid::issuance::{CredentialRequest, TokenAuthorizationDetail};
+use openid::issuer::{CredentialRequest, TokenAuthorizationDetail};
 use openid::{Error, Result};
 use serde::{Deserialize, Serialize};
 

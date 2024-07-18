@@ -22,7 +22,7 @@
 
 use core_utils::Kind;
 use openid::endpoint::{StateManager, VerifierProvider};
-use openid::presentation::{PresentationDefinitionType, ResponseRequest, ResponseResponse};
+use openid::verifier::{PresentationDefinitionType, ResponseRequest, ResponseResponse};
 use openid::{Error,Result};
 use serde_json::Value;
 use serde_json_path::JsonPath;
@@ -228,7 +228,7 @@ mod tests {
     use std::sync::LazyLock;
 
     use dif_exch::PresentationDefinition;
-    use openid::presentation::{
+    use openid::verifier::{
         ClientIdScheme, ClientMetadataType, RequestObject, ResponseRequest, ResponseType,
     };
     use serde_json::json;

@@ -46,7 +46,7 @@
 use std::fmt::Debug;
 
 use openid::endpoint::IssuerProvider;
-use openid::issuance::{BatchCredentialRequest, CredentialRequest, CredentialResponse};
+use openid::issuer::{BatchCredentialRequest, CredentialRequest, CredentialResponse};
 use openid::Result;
 use tracing::instrument;
 
@@ -98,7 +98,7 @@ mod tests {
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid::endpoint::StateManager;
-    use openid::issuance::ProofClaims;
+    use openid::issuer::ProofClaims;
     use proof::jose::jws::{self, Type};
     use serde_json::json;
     use test_utils::holder;

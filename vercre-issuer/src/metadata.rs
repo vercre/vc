@@ -25,7 +25,7 @@
 use std::fmt::Debug;
 
 use openid::endpoint::{IssuerMetadata, IssuerProvider};
-use openid::issuance::{MetadataRequest, MetadataResponse};
+use openid::issuer::{MetadataRequest, MetadataResponse};
 use openid::{Error, Result};
 use tracing::instrument;
 

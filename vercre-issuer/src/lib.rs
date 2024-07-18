@@ -103,7 +103,7 @@ pub mod provider {
         Claims, ClientMetadata, IssuerMetadata, IssuerProvider, Result, ServerMetadata,
         StateManager, Subject,
     };
-    pub use openid::issuance::{ClaimDefinition, GrantType, Issuer};
+    pub use openid::issuer::{ClaimDefinition, GrantType, Issuer};
     pub use openid::{Client, Server};
     pub use proof::jose::jwk::PublicKeyJwk;
     pub use proof::signature::{Algorithm, Signer, Verifier};
@@ -115,7 +115,7 @@ pub use create_offer::create_offer;
 pub use credential::credential;
 pub use deferred::deferred;
 pub use metadata::metadata;
-pub use openid::issuance::{
+pub use openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     AuthorizationResponse, BatchCredentialRequest, BatchCredentialResponse, CreateOfferRequest,
     CreateOfferResponse, CredentialConfiguration, CredentialOffer, CredentialOfferType,

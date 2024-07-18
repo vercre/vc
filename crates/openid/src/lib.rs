@@ -9,8 +9,8 @@
 
 pub mod endpoint;
 mod error;
-pub mod issuance;
-pub mod presentation;
+pub mod issuer;
+pub mod verifier;
 mod stringify;
 
 use std::collections::HashMap;
@@ -20,8 +20,8 @@ use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 
 pub use self::error::Error;
-use self::issuance::GrantType;
-use self::presentation::VpFormat;
+use self::issuer::GrantType;
+use self::verifier::VpFormat;
 
 /// Result type for `OpenID` for Verifiable Credential Issuance and Verifiable
 /// Presentations.

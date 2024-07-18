@@ -46,12 +46,12 @@ pub use issuance::accept::accept;
 pub use issuance::credential::get_credentials;
 pub use issuance::offer::offer;
 pub use issuance::pin::pin;
-pub use openid::issuance::{
+pub use openid::issuer::{
     CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse, GrantType,
     Issuer, MetadataRequest, MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
     TxCode,
 };
-pub use openid::presentation::{
+pub use openid::verifier::{
     RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
 };
 pub use presentation::authorize::authorize;
