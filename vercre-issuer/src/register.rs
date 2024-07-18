@@ -3,9 +3,8 @@
 use std::fmt::Debug;
 
 use chrono::Utc;
-use openid::issuer::{Provider, StateManager};
-use openid::issuer::{RegistrationRequest, RegistrationResponse};
-use openid::{Error,Result};
+use openid::issuer::{Provider, RegistrationRequest, RegistrationResponse, StateManager};
+use openid::{Error, Result};
 use tracing::instrument;
 
 // use crate::shell;

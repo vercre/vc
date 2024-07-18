@@ -13,9 +13,10 @@
 //!
 //! [JWT VC Presentation Profile]: (https://identity.foundation/jwt-vc-presentation-profile)
 
-use openid::verifier::{StateManager, Provider};
-use openid::verifier::{RequestObjectRequest, RequestObjectResponse, RequestObjectType};
-use openid::{Error,Result};
+use openid::verifier::{
+    Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, StateManager,
+};
+use openid::{Error, Result};
 use proof::jose::jws::{self, Type};
 use tracing::instrument;
 

@@ -8,8 +8,6 @@ use chrono::{DateTime, Utc};
 // pub type Result<T> = anyhow::Result<T>;
 pub type Result<T, E = anyhow::Error> = std::result::Result<T, E>;
 
-
-
 /// Request is implemented by all request types.
 pub trait Request {
     /// The key used to access state data.

@@ -21,9 +21,10 @@
 //! Token is provided in the Token Response.
 
 use core_utils::Kind;
-use openid::verifier::{StateManager, Provider};
-use openid::verifier::{PresentationDefinitionType, ResponseRequest, ResponseResponse};
-use openid::{Error,Result};
+use openid::verifier::{
+    PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, StateManager,
+};
+use openid::{Error, Result};
 use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
@@ -200,9 +201,7 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
 }
 
 // Process the authorization request
-async fn process(
-    provider: impl Provider, request: &ResponseRequest,
-) -> Result<ResponseResponse> {
+async fn process(provider: impl Provider, request: &ResponseRequest) -> Result<ResponseResponse> {
     tracing::debug!("Context::process");
 
     // clear state

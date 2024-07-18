@@ -10,8 +10,8 @@
 pub mod endpoint;
 mod error;
 pub mod issuer;
-pub mod verifier;
 mod stringify;
+pub mod verifier;
 
 use std::collections::HashMap;
 use std::fmt::{self, Display};

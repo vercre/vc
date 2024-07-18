@@ -5,9 +5,9 @@ use std::ops::Deref;
 use chrono::{DateTime, Utc};
 use test_utils::providers::proof::Enclave;
 pub use test_utils::providers::{Presentation, VERIFIER_DID, VERIFY_KEY_ID};
-use vercre_verifier::provider::{self,
-    Algorithm, Client, PublicKeyJwk, Result, Server, Signer, StateManager, Verifier,
-    VerifierMetadata,  WalletMetadata,
+use vercre_verifier::provider::{
+    self, Algorithm, Client, PublicKeyJwk, Result, Server, Signer, StateManager, Verifier,
+    VerifierMetadata, WalletMetadata,
 };
 
 #[derive(Clone, Debug)]

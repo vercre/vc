@@ -68,10 +68,10 @@ use std::fmt::Debug;
 
 use chrono::Utc;
 use core_utils::gen;
-use openid::issuer::{IssuerMetadata, Provider, StateManager};
 use openid::issuer::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer,
-    CredentialOfferType, Grants, PreAuthorizedCodeGrant, TxCode,
+    CredentialOfferType, Grants, IssuerMetadata, PreAuthorizedCodeGrant, Provider, StateManager,
+    TxCode,
 };
 use openid::{Error, Result};
 use tracing::instrument;

@@ -10,8 +10,9 @@
 
 use std::fmt::Debug;
 
-use openid::issuer::{Provider, StateManager};
-use openid::issuer::{DeferredCredentialRequest, DeferredCredentialResponse};
+use openid::issuer::{
+    DeferredCredentialRequest, DeferredCredentialResponse, Provider, StateManager,
+};
 use openid::{Error, Result};
 use tracing::instrument;
 

@@ -44,10 +44,10 @@ use std::collections::HashMap;
 
 use core_utils::gen;
 use dif_exch::{ClaimFormat, PresentationDefinition};
-use openid::verifier::{StateManager, VerifierMetadata,Provider};
 use openid::verifier::{
     ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
-    PresentationDefinitionType, RequestObject, ResponseType,
+    PresentationDefinitionType, Provider, RequestObject, ResponseType, StateManager,
+    VerifierMetadata,
 };
 use openid::{Error, Result};
 use proof::signature::Algorithm;

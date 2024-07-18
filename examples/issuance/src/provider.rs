@@ -6,8 +6,8 @@ use chrono::{DateTime, Utc};
 use test_utils::providers::proof::Enclave;
 use test_utils::providers::Issuance;
 use vercre_issuer::provider::{
-    self, Algorithm, Claims, Client, ClientMetadata, Issuer, IssuerMetadata,
-    PublicKeyJwk, Result, Server, ServerMetadata, Signer, StateManager, Subject, Verifier,
+    self, Algorithm, Claims, Client, ClientMetadata, Issuer, IssuerMetadata, PublicKeyJwk, Result,
+    Server, ServerMetadata, Signer, StateManager, Subject, Verifier,
 };
 
 #[derive(Clone, Debug)]

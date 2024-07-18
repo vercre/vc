@@ -170,9 +170,7 @@ pub use openid::Result;
 pub mod provider {
     pub use openid::verifier::VpFormat;
     #[allow(clippy::module_name_repetitions)]
-    pub use openid::verifier::{
-        Result, StateManager, VerifierMetadata, Provider, WalletMetadata,
-    };
+    pub use openid::verifier::{Provider, Result, StateManager, VerifierMetadata, WalletMetadata};
     pub use openid::{Client, CredentialFormat, Server};
     pub use proof::jose::jwk::PublicKeyJwk;
     pub use proof::signature::{Algorithm, Signer, Verifier};

@@ -145,7 +145,7 @@ impl State {
 }
 
 impl TryFrom<&[u8]> for State {
-    type Error =openid::Error;
+    type Error = openid::Error;
 
     fn try_from(value: &[u8]) -> Result<Self> {
         match serde_json::from_slice::<Self>(value) {
@@ -161,7 +161,7 @@ impl TryFrom<&[u8]> for State {
 }
 
 impl TryFrom<Vec<u8>> for State {
-    type Error =openid::Error;
+    type Error = openid::Error;
 
     fn try_from(value: Vec<u8>) -> Result<Self> {
         Self::try_from(value.as_slice())
