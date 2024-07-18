@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use w3c_vc::model::VerifiableCredential;
 
 use super::{Client, CredentialFormat};
+use crate::endpoint::Request;
 use crate::error::Err;
 use crate::{stringify, Result};
 
@@ -68,6 +69,8 @@ pub struct CreateOfferRequest {
     /// payloads. If no ID is provided, callbacks will not be made.
     pub callback_id: Option<String>,
 }
+
+impl Request for CreateOfferRequest {}
 
 /// The response to a Credential Offer request.
 #[derive(Debug, Deserialize, Serialize)]
@@ -383,6 +386,8 @@ pub struct AuthorizationRequest {
     pub issuer_state: Option<String>,
 }
 
+impl Request for AuthorizationRequest {}
+
 /// Authorization details type.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub enum AuthorizationDetailType {
@@ -530,6 +535,8 @@ pub struct TokenRequest {
     pub user_code: Option<String>,
 }
 
+impl Request for TokenRequest {}
+
 /// Token Response as defined in [RFC6749].
 ///
 /// [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
@@ -652,6 +659,8 @@ pub struct CredentialRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_response_encryption: Option<CredentialResponseEncryption>,
 }
+
+impl Request for CredentialRequest {}
 
 /// Means used to identifiy a Credential type when requesting a Credential.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -814,6 +823,8 @@ pub struct BatchCredentialRequest {
     pub credential_requests: Vec<CredentialRequest>,
 }
 
+impl Request for BatchCredentialRequest {}
+
 /// The Batch Credential Response is a JSON object that contains an array of
 /// Credential Response objects.
 #[derive(Debug, Deserialize, Serialize)]
@@ -855,6 +866,8 @@ pub struct DeferredCredentialRequest {
     pub transaction_id: String,
 }
 
+impl Request for DeferredCredentialRequest {}
+
 /// The Deferred Credential Response uses the same format and credential
 /// parameters defined for a Credential Response.
 #[derive(Debug, Deserialize, Serialize)]
@@ -879,6 +892,8 @@ pub struct MetadataRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub languages: Option<String>,
 }
+
+impl Request for MetadataRequest {}
 
 /// Response containing the Credential Issuer's configuration.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
@@ -905,6 +920,8 @@ pub struct RegistrationRequest {
     #[serde(flatten)]
     pub client_metadata: Client,
 }
+
+impl Request for RegistrationRequest {}
 
 /// The registration response for a successful request.
 #[derive(Debug, Deserialize, Serialize)]

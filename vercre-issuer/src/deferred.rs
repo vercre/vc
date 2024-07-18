@@ -10,117 +10,65 @@
 
 use std::fmt::Debug;
 
-use openid::endpoint::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
+use openid::endpoint::{IssuerProvider, StateManager};
 use openid::issuance::{DeferredCredentialRequest, DeferredCredentialResponse};
 use openid::{Err, Result};
-use proof::signature::{Signer, Verifier};
 use tracing::instrument;
 
-use super::Endpoint;
+use crate::credential::credential;
+// use crate::shell;
 use crate::state::State;
 
-impl<P> Endpoint<P>
-where
-    P: ClientMetadata
-        + IssuerMetadata
-        + ServerMetadata
-        + Subject
-        + StateManager
-        + Signer
-        + Verifier
-        + Callback
-        + Clone
-        + Debug,
-{
-    /// Deferred credential request handler.
-    ///
-    /// # Errors
-    ///
-    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
-    /// not available.
-    #[instrument(level = "debug", skip(self))]
-    pub async fn deferred(
-        &self, request: &DeferredCredentialRequest,
-    ) -> Result<DeferredCredentialResponse> {
-        let Ok(buf) = StateManager::get(&self.provider, &request.access_token).await else {
-            return Err(Err::AccessDenied("invalid access token".into()));
-        };
-        let Ok(state) = State::try_from(buf) else {
-            return Err(Err::AccessDenied("invalid state for access token".into()));
-        };
-
-        let ctx = Context {
-            callback_id: state.callback_id.clone(),
-            _p: std::marker::PhantomData,
-        };
-
-        openid::endpoint::Endpoint::handle_request(self, request, ctx).await
-    }
+/// Deferred credential request handler.
+///
+/// # Errors
+///
+/// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+/// not available.
+#[instrument(level = "debug", skip(provider))]
+pub async fn deferred(
+    provider: impl IssuerProvider, request: &DeferredCredentialRequest,
+) -> Result<DeferredCredentialResponse> {
+    let mut ctx = Context {};
+    // shell(&mut ctx, provider, request, process).await
+    process(&mut ctx, provider, request).await
 }
 
 #[derive(Debug)]
-struct Context<P> {
-    callback_id: Option<String>,
-    _p: std::marker::PhantomData<P>,
-}
+struct Context {}
 
-impl<P> openid::endpoint::Context for Context<P>
-where
-    P: ClientMetadata
-        + IssuerMetadata
-        + ServerMetadata
-        + Subject
-        + StateManager
-        + Signer
-        + Verifier
-        + Callback
-        + Clone
-        + Debug,
-{
-    type Provider = P;
-    type Request = DeferredCredentialRequest;
-    type Response = DeferredCredentialResponse;
+async fn process(
+    _: &mut Context, provider: impl IssuerProvider, request: &DeferredCredentialRequest,
+) -> Result<DeferredCredentialResponse> {
+    tracing::debug!("Context::process");
 
-    // TODO: get callback_id from state
-    fn callback_id(&self) -> Option<String> {
-        self.callback_id.clone()
-    }
+    // retrieve deferred credential request from state
+    let Ok(buf) = StateManager::get(&provider, &request.transaction_id).await else {
+        return Err(Err::InvalidTransactionId("deferred state not found".into()));
+    };
+    let Ok(state) = State::try_from(buf) else {
+        return Err(Err::InvalidTransactionId("deferred state is expired or corrupted".into()));
+    };
 
-    async fn process(
-        &self, provider: &Self::Provider, request: &Self::Request,
-    ) -> Result<Self::Response> {
-        tracing::debug!("Context::process");
+    let Some(deferred_state) = state.deferred else {
+        return Err(Err::ServerError("Deferred state not found.".into()));
+    };
 
-        // retrieve deferred credential request from state
-        let Ok(buf) = StateManager::get(provider, &request.transaction_id).await else {
-            return Err(Err::InvalidTransactionId("deferred state not found".into()));
-        };
-        let Ok(state) = State::try_from(buf) else {
-            return Err(Err::InvalidTransactionId("deferred state is expired or corrupted".into()));
-        };
+    // remove deferred state item
+    StateManager::purge(&provider, &request.transaction_id)
+        .await
+        .map_err(|e| Err::ServerError(format!("issue purging state: {e}")))?;
 
-        let Some(deferred_state) = state.deferred else {
-            return Err(Err::ServerError("Deferred state not found.".into()));
-        };
+    // make credential request
+    let mut cred_req = deferred_state.credential_request;
+    cred_req.credential_issuer.clone_from(&request.credential_issuer);
+    cred_req.access_token.clone_from(&request.access_token);
 
-        // remove deferred state item
-        StateManager::purge(provider, &request.transaction_id)
-            .await
-            .map_err(|e| Err::ServerError(format!("issue purging state: {e}")))?;
+    let response = credential(provider.clone(), &cred_req).await?;
 
-        // make credential request
-        let mut cred_req = deferred_state.credential_request;
-        cred_req.credential_issuer.clone_from(&request.credential_issuer);
-        cred_req.access_token.clone_from(&request.access_token);
-
-        let response = Endpoint::new(provider.clone()).credential(&cred_req).await?;
-
-        Ok(DeferredCredentialResponse {
-            credential_response: response,
-        })
-    }
+    Ok(DeferredCredentialResponse {
+        credential_response: response,
+    })
 }
 
 #[cfg(test)]
@@ -213,8 +161,7 @@ mod tests {
             transaction_id: transaction_id.into(),
         };
 
-        let response =
-            Endpoint::new(provider.clone()).deferred(&request).await.expect("response is valid");
+        let response = deferred(provider.clone(), &request).await.expect("response is valid");
         assert_snapshot!("response", &response, {
             ".credential" => "[credential]",
             ".c_nonce" => "[c_nonce]",

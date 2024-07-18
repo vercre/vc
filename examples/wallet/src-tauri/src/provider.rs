@@ -12,14 +12,14 @@ use dif_exch::Constraints;
 use ecdsa::signature::Signer as _;
 use futures::lock::Mutex;
 use test_utils::{issuer, verifier};
-use vercre_holder::credential::{Credential, Logo};
 use vercre_holder::provider::{
-    Algorithm, CredentialStorer, IssuerClient, PublicKeyJwk, Result, Signer, StateManager,
-    Verifier, VerifierClient,
+    Algorithm, CredentialStorer, HolderProvider, IssuerClient, PublicKeyJwk, Result, Signer,
+    StateManager, Verifier, VerifierClient,
 };
 use vercre_holder::{
-    CredentialRequest, CredentialResponse, MetadataRequest, MetadataResponse, RequestObjectRequest,
-    RequestObjectResponse, ResponseRequest, ResponseResponse, TokenRequest, TokenResponse,
+    Credential, CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse,
+    RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse, TokenRequest,
+    TokenResponse,
 };
 
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
@@ -48,26 +48,25 @@ impl Provider {
     }
 }
 
+impl HolderProvider for Provider {}
+
 impl IssuerClient for Provider {
     async fn get_metadata(
         &self, _flow_id: &str, req: &MetadataRequest,
     ) -> anyhow::Result<MetadataResponse> {
-        let endpoint = vercre_issuer::Endpoint::new(ISSUER_PROVIDER.clone());
-        let response = endpoint.metadata(req).await?;
+        let response = vercre_issuer::metadata(ISSUER_PROVIDER.clone(), req).await?;
         Ok(response)
     }
 
     async fn get_token(&self, _flow_id: &str, req: &TokenRequest) -> anyhow::Result<TokenResponse> {
-        let endpoint = vercre_issuer::Endpoint::new(ISSUER_PROVIDER.clone());
-        let response = endpoint.token(req).await?;
+        let response = vercre_issuer::token(ISSUER_PROVIDER.clone(), req).await?;
         Ok(response)
     }
 
     async fn get_credential(
         &self, _flow_id: &str, req: &CredentialRequest,
     ) -> anyhow::Result<CredentialResponse> {
-        let endpoint = vercre_issuer::Endpoint::new(ISSUER_PROVIDER.clone());
-        let response = endpoint.credential(req).await?;
+        let response = vercre_issuer::credential(ISSUER_PROVIDER.clone(), req).await?;
         Ok(response)
     }
 
@@ -88,15 +87,13 @@ impl VerifierClient for Provider {
             client_id: parts[2].into(),
             state: parts[0].into(),
         };
-        let endpoint = vercre_verifier::Endpoint::new(VERIFIER_PROVIDER.clone());
-        Ok(endpoint.request_object(&request).await?)
+        Ok(vercre_verifier::request_object(VERIFIER_PROVIDER.clone(), &request).await?)
     }
 
     async fn present(
         &self, _flow_id: &str, _uri: Option<&str>, req: &ResponseRequest,
     ) -> anyhow::Result<ResponseResponse> {
-        let endpoint = vercre_verifier::Endpoint::new(VERIFIER_PROVIDER.clone());
-        Ok(endpoint.response(req).await?)
+        Ok(vercre_verifier::response(VERIFIER_PROVIDER.clone(), req).await?)
     }
 }
 

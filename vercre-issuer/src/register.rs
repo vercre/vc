@@ -3,95 +3,66 @@
 use std::fmt::Debug;
 
 use chrono::Utc;
-use openid::endpoint::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
+use openid::endpoint::{IssuerProvider, StateManager};
 use openid::issuance::{RegistrationRequest, RegistrationResponse};
 use openid::{Err, Result};
-use proof::signature::Signer;
 use tracing::instrument;
 
-use super::Endpoint;
+// use crate::shell;
 use crate::state::State;
 
-impl<P> Endpoint<P>
-where
-    P: ClientMetadata
-        + IssuerMetadata
-        + ServerMetadata
-        + Subject
-        + StateManager
-        + Signer
-        + Callback
-        + Clone
-        + Debug,
-{
-    /// Registration request handler.
-    ///
-    /// # Errors
-    ///
-    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
-    /// not available.
-    #[instrument(level = "debug", skip(self))]
-    pub async fn register(&self, request: &RegistrationRequest) -> Result<RegistrationResponse> {
-        let ctx = Context {
-            _p: std::marker::PhantomData,
-        };
-        openid::endpoint::Endpoint::handle_request(self, request, ctx).await
-    }
+/// Registration request handler.
+///
+/// # Errors
+///
+/// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+/// not available.
+#[instrument(level = "debug", skip(provider))]
+pub async fn register(
+    provider: impl IssuerProvider, request: &RegistrationRequest,
+) -> Result<RegistrationResponse> {
+    let mut ctx = Context {};
+    // shell(&mut ctx, provider.clone(), request, verify).await?;
+    // shell(&mut ctx, provider, request, process).await
+    verify(&mut ctx, provider.clone(), request).await?;
+    process(&mut ctx, provider, request).await
 }
 
 #[derive(Debug)]
-struct Context<P> {
-    _p: std::marker::PhantomData<P>,
+struct Context {}
+
+async fn verify(
+    _: &mut Context, provider: impl IssuerProvider, request: &RegistrationRequest,
+) -> Result<()> {
+    tracing::debug!("Context::verify");
+
+    let buf = match StateManager::get(&provider, &request.access_token).await {
+        Ok(buf) => buf,
+        Err(e) => return Err(Err::ServerError(format!("State not found: {e}"))),
+    };
+    let state = State::try_from(buf)?;
+
+    // token (access or acceptance) expiry
+    let expires = state.expires_at.signed_duration_since(Utc::now()).num_seconds();
+    if expires < 0 {
+        return Err(Err::InvalidRequest("access Token has expired".into()));
+    }
+
+    Ok(())
 }
 
-impl<P> openid::endpoint::Context for Context<P>
-where
-    P: ClientMetadata + StateManager + Debug,
-{
-    type Provider = P;
-    type Request = RegistrationRequest;
-    type Response = RegistrationResponse;
+async fn process(
+    _: &mut Context, provider: impl IssuerProvider, request: &RegistrationRequest,
+) -> Result<RegistrationResponse> {
+    tracing::debug!("Context::process");
 
-    // TODO: get callback_id from state
-    fn callback_id(&self) -> Option<String> {
-        None
-    }
+    let Ok(client_meta) = provider.register(&request.client_metadata).await else {
+        return Err(Err::ServerError("Registration failed".into()));
+    };
 
-    async fn verify(
-        &mut self, provider: &Self::Provider, request: &Self::Request,
-    ) -> Result<&Self> {
-        tracing::debug!("Context::verify");
-
-        let buf = match StateManager::get(provider, &request.access_token).await {
-            Ok(buf) => buf,
-            Err(e) => return Err(Err::ServerError(format!("State not found: {e}"))),
-        };
-        let state = State::try_from(buf)?;
-
-        // token (access or acceptance) expiry
-        let expires = state.expires_at.signed_duration_since(Utc::now()).num_seconds();
-        if expires < 0 {
-            return Err(Err::InvalidRequest("access Token has expired".into()));
-        }
-
-        Ok(self)
-    }
-
-    async fn process(
-        &self, provider: &Self::Provider, request: &Self::Request,
-    ) -> Result<Self::Response> {
-        tracing::debug!("Context::process");
-
-        let Ok(client_meta) = provider.register(&request.client_metadata).await else {
-            return Err(Err::ServerError("Registration failed".into()));
-        };
-
-        Ok(RegistrationResponse {
-            client_metadata: client_meta,
-        })
-    }
+    Ok(RegistrationResponse {
+        client_metadata: client_meta,
+    })
 }
 
 #[cfg(test)]
@@ -148,7 +119,7 @@ mod tests {
         request.credential_issuer = CREDENTIAL_ISSUER.to_string();
         request.access_token = access_token.to_string();
 
-        let response = Endpoint::new(provider).register(&request).await.expect("response is ok");
+        let response = register(provider, &request).await.expect("response is ok");
         assert_snapshot!("response", response, {
             ".client_id" => "[client_id]",
         });

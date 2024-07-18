@@ -1,6 +1,6 @@
 use anyhow::anyhow;
-use vercre_holder::issuance::Issuance;
-use vercre_holder::presentation::Presentation;
+use vercre_holder::Issuance;
+use vercre_holder::Presentation;
 use vercre_holder::provider::CredentialStorer;
 
 use crate::app::{AppState, SubApp};

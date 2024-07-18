@@ -4,8 +4,8 @@ use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
 use openid::endpoint::{
-    Callback, Claims, ClientMetadata, IssuerMetadata, Payload, Result, ServerMetadata,
-    StateManager, Subject,
+    Claims, ClientMetadata, IssuerMetadata, IssuerProvider, Result, ServerMetadata, StateManager,
+    Subject,
 };
 use openid::issuance::Issuer;
 use openid::{Client, Server};
@@ -37,6 +37,8 @@ impl Deref for Provider {
         &self.0
     }
 }
+
+impl IssuerProvider for Provider {}
 
 impl ClientMetadata for Provider {
     async fn metadata(&self, client_id: &str) -> Result<Client> {
@@ -103,11 +105,5 @@ impl Signer for Provider {
 impl Verifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
         Enclave::deref_jwk(did_url)
-    }
-}
-
-impl Callback for Provider {
-    async fn callback(&self, pl: &Payload) -> Result<()> {
-        self.callback.callback(pl)
     }
 }

@@ -45,102 +45,51 @@
 
 use std::fmt::Debug;
 
-use openid::endpoint::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
+use openid::endpoint::IssuerProvider;
 use openid::issuance::{BatchCredentialRequest, CredentialRequest, CredentialResponse};
-use openid::{Err, Result};
-use proof::signature::{Signer, Verifier};
+use openid::Result;
 use tracing::instrument;
 
-use super::Endpoint;
-use crate::state::State;
+use crate::batch::batch;
+// use crate::shell;
 
-impl<P> Endpoint<P>
-where
-    P: ClientMetadata
-        + IssuerMetadata
-        + ServerMetadata
-        + Subject
-        + StateManager
-        + Signer
-        + Verifier
-        + Callback
-        + Clone
-        + Debug,
-{
-    /// Credential request handler.
-    ///
-    /// # Errors
-    ///
-    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
-    /// not available.
-    #[instrument(level = "debug", skip(self))]
-    pub async fn credential(&self, request: &CredentialRequest) -> Result<CredentialResponse> {
-        let Ok(buf) = StateManager::get(&self.provider, &request.access_token).await else {
-            return Err(Err::AccessDenied("invalid access token".into()));
-        };
-        let Ok(state) = State::try_from(buf) else {
-            return Err(Err::AccessDenied("invalid state for access token".into()));
-        };
-
-        let ctx = Context {
-            callback_id: state.callback_id.clone(),
-            _p: std::marker::PhantomData,
-        };
-
-        openid::endpoint::Endpoint::handle_request(self, request, ctx).await
-    }
+/// Credential request handler.
+///
+/// # Errors
+///
+/// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+/// not available.
+#[instrument(level = "debug", skip(provider))]
+pub async fn credential(
+    provider: impl IssuerProvider, request: &CredentialRequest,
+) -> Result<CredentialResponse> {
+    let mut ctx = Context {};
+    // shell(&mut ctx, provider, request, process).await
+    process(&mut ctx, provider, request).await
 }
 
 #[derive(Debug)]
-struct Context<P> {
-    callback_id: Option<String>,
-    _p: std::marker::PhantomData<P>,
-}
+struct Context {}
 
-impl<P> openid::endpoint::Context for Context<P>
-where
-    P: ClientMetadata
-        + IssuerMetadata
-        + ServerMetadata
-        + Subject
-        + StateManager
-        + Signer
-        + Verifier
-        + Callback
-        + Clone
-        + Debug,
-{
-    type Provider = P;
-    type Request = CredentialRequest;
-    type Response = CredentialResponse;
+async fn process(
+    _: &mut Context, provider: impl IssuerProvider, request: &CredentialRequest,
+) -> Result<CredentialResponse> {
+    tracing::debug!("Context::process");
 
-    // TODO: get callback_id from state
-    fn callback_id(&self) -> Option<String> {
-        self.callback_id.clone()
-    }
+    let request = BatchCredentialRequest {
+        credential_issuer: request.credential_issuer.clone(),
+        access_token: request.access_token.clone(),
+        credential_requests: vec![request.clone()],
+    };
+    let batch = batch(provider.clone(), &request).await.expect("msg");
 
-    async fn process(
-        &self, provider: &Self::Provider, request: &Self::Request,
-    ) -> Result<Self::Response> {
-        tracing::debug!("Context::process");
+    // set c_nonce and c_nonce_expires_at - batch endpoint sets them in the
+    // top-level response, not each credential response
+    let mut response = batch.credential_responses[0].clone();
+    response.c_nonce = batch.c_nonce;
+    response.c_nonce_expires_in = batch.c_nonce_expires_in;
 
-        let request = BatchCredentialRequest {
-            credential_issuer: request.credential_issuer.clone(),
-            access_token: request.access_token.clone(),
-            credential_requests: vec![request.clone()],
-        };
-        let batch = Endpoint::new(provider.clone()).batch(&request).await?;
-
-        // set c_nonce and c_nonce_expires_at - batch endpoint sets them in the
-        // top-level response, not each credential response
-        let mut response = batch.credential_responses[0].clone();
-        response.c_nonce = batch.c_nonce;
-        response.c_nonce_expires_in = batch.c_nonce_expires_in;
-
-        Ok(response)
-    }
+    Ok(response)
 }
 
 #[cfg(test)]
@@ -148,6 +97,7 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use openid::endpoint::StateManager;
     use openid::issuance::ProofClaims;
     use proof::jose::jws::{self, Type};
     use serde_json::json;
@@ -156,7 +106,7 @@ mod tests {
     use w3c_vc::proof::{Payload, Verify};
 
     use super::*;
-    use crate::state::{Expire, Token};
+    use crate::state::{Expire, State, Token};
 
     #[tokio::test]
     async fn credential_ok() {
@@ -216,8 +166,7 @@ mod tests {
         request.credential_issuer = CREDENTIAL_ISSUER.into();
         request.access_token = access_token.into();
 
-        let response =
-            Endpoint::new(provider.clone()).credential(&request).await.expect("response is valid");
+        let response = credential(provider.clone(), &request).await.expect("response is valid");
         assert_snapshot!("response", &response, {
             ".credential" => "[credential]",
             ".c_nonce" => "[c_nonce]",

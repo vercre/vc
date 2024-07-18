@@ -98,8 +98,9 @@ mod token;
 
 /// Re-export provider traits and types.
 pub mod provider {
+    #[allow(clippy::module_name_repetitions)]
     pub use openid::endpoint::{
-        Callback, Claims, ClientMetadata, IssuerMetadata, Payload, Result, ServerMetadata,
+        Claims, ClientMetadata, IssuerMetadata, IssuerProvider, Result, ServerMetadata,
         StateManager, Subject,
     };
     pub use openid::issuance::{ClaimDefinition, GrantType, Issuer};
@@ -107,11 +108,14 @@ pub mod provider {
     pub use proof::jose::jwk::PublicKeyJwk;
     pub use proof::signature::{Algorithm, Signer, Verifier};
 }
-use std::fmt::Debug;
 
-use openid::endpoint::{
-    Callback, ClientMetadata, IssuerMetadata, ServerMetadata, StateManager, Subject,
-};
+pub use authorize::authorize;
+pub use batch::batch;
+pub use create_offer::create_offer;
+pub use credential::credential;
+pub use deferred::deferred;
+pub use metadata::metadata;
+
 pub use openid::issuance::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     AuthorizationResponse, BatchCredentialRequest, BatchCredentialResponse, CreateOfferRequest,
@@ -122,155 +126,17 @@ pub use openid::issuance::{
     TokenRequest, TokenResponse, TxCode,
 };
 pub use openid::Result;
-use proof::signature::Signer;
+pub use register::register;
+pub use token::token;
 
-/// Endpoint is used to surface the public Verifiable Presentation endpoints to
-/// clients.
-#[derive(Debug)]
-pub struct Endpoint<P>
-where
-    P: ClientMetadata
-        + IssuerMetadata
-        + ServerMetadata
-        + Subject
-        + StateManager
-        + Signer
-        + Callback
-        + Clone
-        + Debug,
-{
-    provider: P,
-}
-
-/// Endpoint is used to provide a thread-safe way of handling endpoint requests.
-/// Each request passes through a number of steps with request state maintained
-/// between steps.
-///
-/// The Endpoint also provides common top-level tracing, error handling, and client
-/// callback functionality for all endpoints. The act of setting a request causes
-/// the Endpoint to select the endpoint implementation of `Endpoint::call` specific
-/// to the request.
-impl<P> Endpoint<P>
-where
-    P: ClientMetadata
-        + IssuerMetadata
-        + ServerMetadata
-        + Subject
-        + StateManager
-        + Signer
-        + Callback
-        + Clone
-        + Debug,
-{
-    /// Create a new endpoint instance.
-    pub const fn new(provider: P) -> Self {
-        Self { provider }
-    }
-}
-
-impl<P> openid::endpoint::Endpoint for Endpoint<P>
-where
-    P: ClientMetadata
-        + IssuerMetadata
-        + ServerMetadata
-        + Subject
-        + StateManager
-        + Signer
-        + Callback
-        + Clone
-        + Debug,
-{
-    type Provider = P;
-
-    fn provider(&self) -> &P {
-        &self.provider
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use openid::{Err, Result};
-    use test_utils::issuer::Provider;
-
-    use super::*;
-
-    #[tokio::test]
-    async fn test_ok() {
-        let request = TestRequest { return_ok: true };
-        let response = Endpoint::new(Provider::new()).test(&request).await;
-
-        assert!(response.is_ok());
-    }
-
-    #[tokio::test]
-    async fn test_err() {
-        let request = TestRequest { return_ok: false };
-        let response = Endpoint::new(Provider::new()).test(&request).await;
-
-        assert!(response.is_err());
-    }
-
-    struct TestResponse {}
-    // ------------------------------------------------------------------------
-    // Mock Endpoint
-    // ------------------------------------------------------------------------
-    #[derive(Clone, Debug, Default)]
-    struct TestRequest {
-        return_ok: bool,
-    }
-
-    impl<P> Endpoint<P>
-    where
-        P: ClientMetadata
-            + IssuerMetadata
-            + ServerMetadata
-            + Subject
-            + StateManager
-            + Signer
-            + Callback
-            + Clone
-            + Debug,
-    {
-        async fn test(&mut self, request: &TestRequest) -> Result<TestResponse> {
-            let ctx = Context {
-                _p: std::marker::PhantomData,
-            };
-            openid::endpoint::Endpoint::handle_request(self, request, ctx).await
-        }
-    }
-
-    #[derive(Debug)]
-    struct Context<P> {
-        _p: std::marker::PhantomData<P>,
-    }
-
-    impl<P> openid::endpoint::Context for Context<P>
-    where
-        P: ClientMetadata
-            + IssuerMetadata
-            + ServerMetadata
-            + Subject
-            + StateManager
-            + Signer
-            + Callback
-            + Clone
-            + Debug,
-    {
-        type Provider = P;
-        type Request = TestRequest;
-        type Response = TestResponse;
-
-        fn callback_id(&self) -> Option<String> {
-            Some("callback_id".into())
-        }
-
-        async fn process(
-            &self, _provider: &Self::Provider, request: &Self::Request,
-        ) -> Result<Self::Response> {
-            match request.return_ok {
-                true => Ok(TestResponse {}),
-                false => return Err(Err::InvalidRequest("invalid request".into()).into()),
-            }
-        }
-    }
-}
+// async fn shell<'a, C, P, R, U, E, F>(
+//     context: C, provider: P, request: &'a R, handler: F,
+// ) -> Result<U, E>
+// where
+//     P: Provider,
+//     R: Request + Sync,
+//     F: Handler<'a, C, P, R, U, E>,
+// {
+//     println!("in wrapper: {:?}", request.state_key());
+//     handler.handle(context, provider, request).await
+// }

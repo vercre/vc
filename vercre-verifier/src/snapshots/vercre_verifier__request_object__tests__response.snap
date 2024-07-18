@@ -1,6 +1,6 @@
 ---
-source: vercre-verifier/src/request.rs
-assertion_line: 155
+source: vercre-verifier/src/request_object.rs
+assertion_line: 126
 expression: jwt
 ---
 header:

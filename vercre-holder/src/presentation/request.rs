@@ -4,8 +4,6 @@
 //! request details or all of the details as a `PresentationRequest` struct serialized to a URL
 //! query parameter.
 
-use std::fmt::Debug;
-
 use anyhow::{anyhow, bail};
 use dif_exch::Constraints;
 use openid::presentation::{
@@ -16,79 +14,77 @@ use tracing::instrument;
 use uuid::Uuid;
 
 use super::{Presentation, Status};
-use crate::provider::{CredentialStorer, StateManager, Verifier, VerifierClient};
-use crate::Endpoint;
+use crate::provider::{CredentialStorer, HolderProvider, Verifier, VerifierClient};
 
-impl<P> Endpoint<P>
-where
-    P: CredentialStorer + StateManager + Verifier + VerifierClient + Debug,
-{
-    /// Initiates the presentation flow triggered by a new presentation request where the form of
-    /// the request is a URI to retrieve the request details or a `PresentationRequest` struct as a
-    /// URL query parameter.
-    #[instrument(level = "debug", skip(self))]
-    pub async fn request(&self, request: &String) -> anyhow::Result<Presentation> {
-        let Ok(request_str) = urlencoding::decode(request) else {
-            let e = anyhow!("unable to decode request url string");
-            tracing::error!(target: "Endpoint::request", ?e);
-            return Err(e);
-        };
+/// Initiates the presentation flow triggered by a new presentation request where the form of
+/// the request is a URI to retrieve the request details or a `PresentationRequest` struct as a
+/// URL query parameter.
+#[instrument(level = "debug", skip(provider))]
+pub async fn request(
+    provider: impl HolderProvider, request: &String,
+) -> anyhow::Result<Presentation> {
+    let Ok(request_str) = urlencoding::decode(request) else {
+        let e = anyhow!("unable to decode request url string");
+        tracing::error!(target: "Endpoint::request", ?e);
+        return Err(e);
+    };
 
-        // Initiate a new presentation flow
-        let mut presentation = Presentation {
-            id: Uuid::new_v4().to_string(),
-            status: Status::Requested,
-            ..Default::default()
-        };
+    // Initiate a new presentation flow
+    let mut presentation = Presentation {
+        id: Uuid::new_v4().to_string(),
+        status: Status::Requested,
+        ..Default::default()
+    };
 
-        // Parse or get-then-parse the presentation request
-        let req_obj = if request.contains("&presentation_definition") {
-            match parse_presentation_definition(request) {
-                Ok(req_obj) => req_obj,
-                Err(e) => {
-                    tracing::error!(target: "Endpoint::request", ?e);
-                    return Err(e);
-                }
-            }
-        } else {
-            let req_obj_response =
-                match self.provider.get_request_object(&presentation.id, &request_str).await {
-                    Ok(req_obj_response) => req_obj_response,
-                    Err(e) => {
-                        tracing::error!(target: "Endpoint::request", ?e);
-                        return Err(e);
-                    }
-                };
-            match parse_request_object_response(&req_obj_response, &self.provider).await {
-                Ok(req_obj) => req_obj,
-                Err(e) => {
-                    tracing::error!(target: "Endpoint::request", ?e);
-                    return Err(e);
-                }
-            }
-        };
-        presentation.request.clone_from(&req_obj);
-
-        // Get the credentials from the holder's credential store that match the verifier's request.
-        let filter = match build_filter(&req_obj) {
-            Ok(filter) => filter,
+    // Parse or get-then-parse the presentation request
+    let req_obj = if request.contains("&presentation_definition") {
+        match parse_presentation_definition(request) {
+            Ok(req_obj) => req_obj,
             Err(e) => {
                 tracing::error!(target: "Endpoint::request", ?e);
                 return Err(e);
             }
-        };
-        presentation.filter.clone_from(&filter);
-        let credentials = self.provider.find(Some(filter)).await?;
-        presentation.credentials.clone_from(&credentials);
+        }
+    } else {
+        let req_obj_response =
+            match VerifierClient::get_request_object(&provider, &presentation.id, &request_str)
+                .await
+            {
+                Ok(req_obj_response) => req_obj_response,
+                Err(e) => {
+                    tracing::error!(target: "Endpoint::request", ?e);
+                    return Err(e);
+                }
+            };
+        match parse_request_object_response(&req_obj_response, &provider).await {
+            Ok(req_obj) => req_obj,
+            Err(e) => {
+                tracing::error!(target: "Endpoint::request", ?e);
+                return Err(e);
+            }
+        }
+    };
+    presentation.request.clone_from(&req_obj);
 
-        // Stash the presentation flow for subsequent steps
-        if let Err(e) = self.put_presentation(&presentation).await {
+    // Get the credentials from the holder's credential store that match the verifier's request.
+    let filter = match build_filter(&req_obj) {
+        Ok(filter) => filter,
+        Err(e) => {
             tracing::error!(target: "Endpoint::request", ?e);
             return Err(e);
         }
+    };
+    presentation.filter.clone_from(&filter);
+    let credentials = CredentialStorer::find(&provider, Some(filter)).await?;
+    presentation.credentials.clone_from(&credentials);
 
-        Ok(presentation)
+    // Stash the presentation flow for subsequent steps
+    if let Err(e) = super::put_presentation(provider, &presentation).await {
+        tracing::error!(target: "Endpoint::request", ?e);
+        return Err(e);
     }
+
+    Ok(presentation)
 }
 
 /// Extract a presentation request from a query string parameter.

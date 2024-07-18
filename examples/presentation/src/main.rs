@@ -6,8 +6,6 @@
 
 mod provider;
 
-use std::sync::Arc;
-
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -23,8 +21,8 @@ use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 use vercre_verifier::{
-    CreateRequestRequest, CreateRequestResponse, Endpoint, RequestObjectRequest,
-    RequestObjectResponse, ResponseRequest,
+    CreateRequestRequest, CreateRequestResponse, RequestObjectRequest, RequestObjectResponse,
+    ResponseRequest,
 };
 
 use crate::provider::Provider;
@@ -34,7 +32,6 @@ async fn main() {
     let subscriber = FmtSubscriber::builder().with_max_level(Level::ERROR).finish();
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
-    let endpoint = Arc::new(Endpoint::new(Provider::new()));
     let cors = CorsLayer::new().allow_methods(Any).allow_origin(Any).allow_headers(Any);
 
     let router = Router::new()
@@ -44,7 +41,7 @@ async fn main() {
         .route("/post", post(response))
         .layer(TraceLayer::new_for_http())
         .layer(cors)
-        .with_state(endpoint);
+        .with_state(Provider::new());
 
     let listener = TcpListener::bind("0.0.0.0:8080").await.expect("should bind");
     tracing::info!("listening on {}", listener.local_addr().expect("local_addr should be set"));
@@ -54,32 +51,32 @@ async fn main() {
 // Generate Authorization Request endpoint
 #[axum::debug_handler]
 async fn create_request(
-    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
     Json(mut request): Json<CreateRequestRequest>,
 ) -> AxResult<CreateRequestResponse> {
     request.client_id = format!("http://{host}");
-    endpoint.create_request(&request).await.into()
+    vercre_verifier::create_request(provider, &request).await.into()
 }
 
 // Retrieve Authorization Request Object endpoint
 #[axum::debug_handler]
 async fn request_object(
-    State(endpoint): State<Arc<Endpoint<Provider>>>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
     Path(client_state): Path<String>,
 ) -> AxResult<RequestObjectResponse> {
     let request = RequestObjectRequest {
         client_id: format!("http://{host}"),
         state: client_state,
     };
-    endpoint.request_object(&request).await.into()
+    vercre_verifier::request_object(provider, &request).await.into()
 }
 
 // Wallet Authorization response endpoint
 #[axum::debug_handler]
 async fn response(
-    State(endpoint): State<Arc<Endpoint<Provider>>>, Form(request): Form<ResponseRequest>,
+    State(provider): State<Provider>, Form(request): Form<ResponseRequest>,
 ) -> impl IntoResponse {
-    let response = endpoint.response(&request).await;
+    let response = vercre_verifier::response(provider, &request).await;
     AxResult(response)
 }
 

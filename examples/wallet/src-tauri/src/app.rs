@@ -9,9 +9,7 @@ mod presentation;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use vercre_holder::credential::Credential;
-use vercre_holder::issuance::Issuance;
-use vercre_holder::presentation::Presentation;
+use vercre_holder::{Credential, Issuance, Presentation};
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]

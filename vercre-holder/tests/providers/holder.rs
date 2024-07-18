@@ -9,10 +9,9 @@ use chrono::{DateTime, Utc};
 use dif_exch::Constraints;
 use ecdsa::signature::Signer as _;
 use test_utils::{issuer, verifier};
-use vercre_holder::credential::{Credential, Logo};
+use vercre_holder::{Credential, Logo};
 use vercre_holder::provider::{
-    Algorithm, CredentialStorer, IssuerClient, PublicKeyJwk, Result, Signer, StateManager,
-    Verifier, VerifierClient,
+    Algorithm, CredentialStorer, HolderProvider, IssuerClient, PublicKeyJwk, Result, Signer, StateManager, Verifier, VerifierClient
 };
 use vercre_holder::{
     CredentialRequest, CredentialResponse, MetadataRequest, MetadataResponse, RequestObjectRequest,
@@ -45,26 +44,25 @@ impl Provider {
     }
 }
 
+impl HolderProvider for Provider {}
+
 impl IssuerClient for Provider {
     async fn get_metadata(
         &self, _flow_id: &str, req: &MetadataRequest,
     ) -> anyhow::Result<MetadataResponse> {
-        let endpoint = vercre_issuer::Endpoint::new(self.issuer.clone().unwrap());
-        let response = endpoint.metadata(req).await?;
+        let response = vercre_issuer::metadata(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 
     async fn get_token(&self, _flow_id: &str, req: &TokenRequest) -> anyhow::Result<TokenResponse> {
-        let endpoint = vercre_issuer::Endpoint::new(self.issuer.clone().unwrap());
-        let response = endpoint.token(req).await?;
+        let response = vercre_issuer::token(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 
     async fn get_credential(
         &self, _flow_id: &str, req: &CredentialRequest,
     ) -> anyhow::Result<CredentialResponse> {
-        let endpoint = vercre_issuer::Endpoint::new(self.issuer.clone().unwrap());
-        let response = endpoint.credential(req).await?;
+        let response = vercre_issuer::credential(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 
@@ -85,15 +83,13 @@ impl VerifierClient for Provider {
             client_id: parts[2].into(),
             state: parts[0].into(),
         };
-        let endpoint = vercre_verifier::Endpoint::new(self.verifier.clone().unwrap());
-        Ok(endpoint.request_object(&request).await?)
+        Ok(vercre_verifier::request_object(self.verifier.clone().unwrap(), &request).await?)
     }
 
     async fn present(
         &self, _flow_id: &str, _uri: Option<&str>, req: &ResponseRequest,
     ) -> anyhow::Result<ResponseResponse> {
-        let endpoint = vercre_verifier::Endpoint::new(self.verifier.clone().unwrap());
-        Ok(endpoint.response(req).await?)
+        Ok(vercre_verifier::response(self.verifier.clone().unwrap(), req).await?)
     }
 }
 

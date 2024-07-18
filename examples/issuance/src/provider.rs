@@ -6,7 +6,7 @@ use chrono::{DateTime, Utc};
 use test_utils::providers::proof::Enclave;
 use test_utils::providers::Issuance;
 use vercre_issuer::provider::{
-    Algorithm, Callback, Claims, Client, ClientMetadata, Issuer, IssuerMetadata, Payload,
+    Algorithm, Claims, Client, ClientMetadata, Issuer, IssuerMetadata, IssuerProvider,
     PublicKeyJwk, Result, Server, ServerMetadata, Signer, StateManager, Subject, Verifier,
 };
 
@@ -32,6 +32,8 @@ impl Deref for Provider {
         &self.0
     }
 }
+
+impl IssuerProvider for Provider {}
 
 impl ClientMetadata for Provider {
     async fn metadata(&self, client_id: &str) -> Result<Client> {
@@ -98,11 +100,5 @@ impl Signer for Provider {
 impl Verifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
         Enclave::deref_jwk(did_url)
-    }
-}
-
-impl Callback for Provider {
-    async fn callback(&self, pl: &Payload) -> Result<()> {
-        self.callback.callback(pl)
     }
 }

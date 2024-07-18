@@ -4,9 +4,9 @@ use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
 use test_utils::{issuer, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-use vercre_holder::callback::CredentialStorer;
-use vercre_holder::issuance::Status;
-use vercre_holder::{Endpoint, OfferRequest, PinRequest};
+use vercre_holder::Status;
+use vercre_holder::provider::CredentialStorer;
+use vercre_holder::{OfferRequest, PinRequest};
 use vercre_issuer::{CreateOfferRequest, CredentialOfferType};
 
 use crate::providers::holder;
@@ -28,8 +28,7 @@ static OFFER_REQUEST: LazyLock<CreateOfferRequest> = LazyLock::new(|| CreateOffe
 async fn e2e_issuance() {
     // Use the issuance service endpoint to create a sample offer so we can get a valid
     // pre-auhorized code.
-    let offer_resp = vercre_issuer::Endpoint::new(ISSUER_PROVIDER.clone())
-        .create_offer(&OFFER_REQUEST)
+    let offer_resp = vercre_issuer::create_offer(ISSUER_PROVIDER.clone(), &OFFER_REQUEST)
         .await
         .expect("should get offer");
 
@@ -42,8 +41,8 @@ async fn e2e_issuance() {
         client_id: CLIENT_ID.into(),
         offer,
     };
-    let issuance = Endpoint::new(HOLDER_PROVIDER.clone())
-        .offer(&offer_req)
+    let issuance = 
+        vercre_holder::offer(HOLDER_PROVIDER.clone(),&offer_req)
         .await
         .expect("should process offer");
 
@@ -55,8 +54,7 @@ async fn e2e_issuance() {
     });
 
     // Accept offer
-    let issuance = Endpoint::new(HOLDER_PROVIDER.clone())
-        .accept(issuance.id.clone())
+    let issuance = vercre_holder::accept(HOLDER_PROVIDER.clone(),issuance.id.clone())
         .await
         .expect("should accept offer");
 
@@ -74,7 +72,7 @@ async fn e2e_issuance() {
         pin: offer_resp.user_code.expect("should have user code"),
     };
     let issuance =
-        Endpoint::new(HOLDER_PROVIDER.clone()).pin(&pin_req).await.expect("should apply pin");
+        vercre_holder::pin(HOLDER_PROVIDER.clone(),&pin_req).await.expect("should apply pin");
 
     assert_eq!(issuance.status, Status::Accepted);
     assert_eq!(issuance.pin, Some(pin_req.pin.clone()));
@@ -87,8 +85,7 @@ async fn e2e_issuance() {
     });
 
     // Get (and store) credentials
-    Endpoint::new(HOLDER_PROVIDER.clone())
-        .get_credentials(issuance.id.clone())
+    vercre_holder::get_credentials(HOLDER_PROVIDER.clone(),issuance.id.clone())
         .await
         .expect("should get credentials");
 
