@@ -12,14 +12,14 @@ use dif_exch::Constraints;
 use ecdsa::signature::Signer as _;
 use futures::lock::Mutex;
 use test_utils::{issuer, verifier};
-use vercre_holder::credential::{Credential, Logo};
 use vercre_holder::provider::{
-    Algorithm, CredentialStorer, IssuerClient, PublicKeyJwk, Result, Signer, StateManager,
-    Verifier, VerifierClient,
+    Algorithm, CredentialStorer, HolderProvider, IssuerClient, PublicKeyJwk, Result, Signer,
+    StateManager, Verifier, VerifierClient,
 };
 use vercre_holder::{
-    CredentialRequest, CredentialResponse, MetadataRequest, MetadataResponse, RequestObjectRequest,
-    RequestObjectResponse, ResponseRequest, ResponseResponse, TokenRequest, TokenResponse,
+    Credential, CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse,
+    RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse, TokenRequest,
+    TokenResponse,
 };
 
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
@@ -47,6 +47,8 @@ impl Provider {
         }
     }
 }
+
+impl HolderProvider for Provider {}
 
 impl IssuerClient for Provider {
     async fn get_metadata(

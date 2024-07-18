@@ -2,10 +2,10 @@
 //!
 //! The Issuance endpoints implement the vercre-holder's credential issuance flow.
 
-mod accept;
-mod credential;
-pub(crate) mod offer;
-pub(crate) mod pin;
+pub mod accept;
+pub mod credential;
+pub mod offer;
+pub mod pin;
 
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -14,8 +14,7 @@ use chrono::{DateTime, Utc};
 use openid::issuance::{CredentialConfiguration, CredentialOffer, TokenResponse};
 use serde::{Deserialize, Serialize};
 
-use crate::provider::StateManager;
-use crate::Endpoint;
+use crate::provider::{HolderProvider, StateManager};
 
 /// `Issuance` represents app state across the steps of the issuance flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -71,20 +70,18 @@ pub enum Status {
 }
 
 /// Get and put issuance state information using the supplied provider.
-impl<P> Endpoint<P>
-where
-    P: StateManager + Debug,
-{
-    async fn get_issuance(&self, id: &str) -> anyhow::Result<Issuance> {
-        let current_state = self.provider.get(id).await?;
-        let issuance = serde_json::from_slice::<Issuance>(&current_state)?;
-        Ok(issuance)
-    }
+async fn get_issuance(provider: impl HolderProvider, id: &str) -> anyhow::Result<Issuance> {
+    let current_state = StateManager::get(&provider, id).await?;
+    let issuance = serde_json::from_slice::<Issuance>(&current_state)?;
+    Ok(issuance)
+}
 
-    async fn put_issuance(&self, issuance: &Issuance) -> anyhow::Result<()> {
-        self.provider
-            .put(&issuance.id, serde_json::to_vec(&issuance)?, DateTime::<Utc>::MAX_UTC)
-            .await?;
-        Ok(())
-    }
+async fn put_issuance(provider: impl HolderProvider, issuance: &Issuance) -> anyhow::Result<()> {
+    StateManager::put(
+        &provider,
+        &issuance.id,
+        serde_json::to_vec(&issuance)?,
+        DateTime::<Utc>::MAX_UTC,
+    )
+    .await
 }

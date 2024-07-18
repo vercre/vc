@@ -3,8 +3,6 @@
 //! The `present` endpoint creates a presentation submission, signs it, and sends it to the
 //! verifier.
 
-use std::fmt::Debug;
-
 use anyhow::{anyhow, bail};
 use core_utils::Kind;
 use dif_exch::{DescriptorMap, FilterValue, PathNested, PresentationSubmission};
@@ -15,85 +13,83 @@ use w3c_vc::model::vp::VerifiablePresentation;
 use w3c_vc::proof::{self, Format, Payload};
 
 use super::{Presentation, Status};
-use crate::provider::{Signer, StateManager, Verifier, VerifierClient};
-use crate::Endpoint;
+use crate::provider::{HolderProvider, Signer, VerifierClient};
 
-impl<P> Endpoint<P>
-where
-    P: Signer + StateManager + Verifier + VerifierClient + Clone + Debug,
-{
-    /// Creates a presentation submission, signs it and sends it to the verifier. The `request`
-    /// parameter is the presentation flow ID of an authorized presentation request created in
-    /// prior steps.
-    #[instrument(level = "debug", skip(self))]
-    pub async fn present(&self, request: String) -> anyhow::Result<ResponseResponse> {
-        tracing::debug!("Endpoint::present");
+/// Creates a presentation submission, signs it and sends it to the verifier. The `request`
+/// parameter is the presentation flow ID of an authorized presentation request created in
+/// prior steps.
+#[instrument(level = "debug", skip(provider))]
+pub async fn present(
+    provider: impl HolderProvider, request: String,
+) -> anyhow::Result<ResponseResponse> {
+    tracing::debug!("Endpoint::present");
 
-        let Ok(mut presentation) = self.get_presentation(&request).await else {
-            let e = anyhow!("unable to retrieve presentation state");
-            tracing::error!(target: "Endpoint::present", ?e);
-            return Err(e);
-        };
-        if presentation.status != Status::Authorized {
-            let e = anyhow!("Invalid presentation state");
+    let Ok(mut presentation) = super::get_presentation(provider.clone(), &request).await else {
+        let e = anyhow!("unable to retrieve presentation state");
+        tracing::error!(target: "Endpoint::present", ?e);
+        return Err(e);
+    };
+    if presentation.status != Status::Authorized {
+        let e = anyhow!("Invalid presentation state");
+        tracing::error!(target: "Endpoint::present", ?e);
+        return Err(e);
+    }
+
+    // Construct a presentation submission.
+    let submission = match create_submission(&presentation) {
+        Ok(submission) => submission,
+        Err(e) => {
             tracing::error!(target: "Endpoint::present", ?e);
             return Err(e);
         }
+    };
+    presentation.submission.clone_from(&submission);
 
-        // Construct a presentation submission.
-        let submission = match create_submission(&presentation) {
-            Ok(submission) => submission,
+    // create vp
+    let kid = Signer::verification_method(&provider);
+    let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
+
+    let vp = match create_vp(&presentation, holder_did) {
+        Ok(vp) => vp,
+        Err(e) => {
+            tracing::error!(target: "Endpoint::present", ?e);
+            return Err(e);
+        }
+    };
+
+    let payload = Payload::Vp {
+        vp,
+        client_id: presentation.request.client_id.clone(),
+        nonce: presentation.request.nonce.clone(),
+    };
+    let jwt = match proof::create(Format::JwtVcJson, payload, provider.clone()).await {
+        Ok(jwt) => jwt,
+        Err(e) => {
+            tracing::error!(target: "Endpoint::present", ?e);
+            return Err(e);
+        }
+    };
+
+    // Assemble the presentation response to the verifier and ask the wallet client to send it.
+    let res_req = ResponseRequest {
+        vp_token: Some(vec![Kind::String(jwt)]),
+        presentation_submission: Some(submission),
+        state: presentation.request.state.clone(),
+    };
+    let res_uri =
+        presentation.request.response_uri.map(|uri| uri.trim_end_matches('/').to_string());
+    let response =
+        match VerifierClient::present(&provider, &presentation.id, res_uri.as_deref(), &res_req)
+            .await
+        {
+            Ok(response) => response,
             Err(e) => {
                 tracing::error!(target: "Endpoint::present", ?e);
                 return Err(e);
             }
         };
-        presentation.submission.clone_from(&submission);
 
-        // create vp
-        let kid = &self.provider.verification_method();
-        let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
-
-        let vp = match create_vp(&presentation, holder_did) {
-            Ok(vp) => vp,
-            Err(e) => {
-                tracing::error!(target: "Endpoint::present", ?e);
-                return Err(e);
-            }
-        };
-
-        let payload = Payload::Vp {
-            vp,
-            client_id: presentation.request.client_id.clone(),
-            nonce: presentation.request.nonce.clone(),
-        };
-        let jwt = match proof::create(Format::JwtVcJson, payload, self.provider.clone()).await {
-            Ok(jwt) => jwt,
-            Err(e) => {
-                tracing::error!(target: "Endpoint::present", ?e);
-                return Err(e);
-            }
-        };
-
-        // Assemble the presentation response to the verifier and ask the wallet client to send it.
-        let res_req = ResponseRequest {
-            vp_token: Some(vec![Kind::String(jwt)]),
-            presentation_submission: Some(submission),
-            state: presentation.request.state.clone(),
-        };
-        let res_uri =
-            presentation.request.response_uri.map(|uri| uri.trim_end_matches('/').to_string());
-        let response =
-            match self.provider.present(&presentation.id, res_uri.as_deref(), &res_req).await {
-                Ok(response) => response,
-                Err(e) => {
-                    tracing::error!(target: "Endpoint::present", ?e);
-                    return Err(e);
-                }
-            };
-
-        Ok(response)
-    }
+    Ok(response)
 }
 
 /// Create a presentation submission from the presentation request and matched credentials.

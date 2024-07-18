@@ -1,6 +1,6 @@
 //! Application state implementation for issuance operations.
 
-use vercre_holder::{CredentialOffer, Endpoint, OfferRequest, PinRequest};
+use vercre_holder::{CredentialOffer, OfferRequest, PinRequest};
 
 use super::{AppState, SubApp};
 use crate::provider::Provider;
@@ -15,7 +15,7 @@ impl AppState {
             client_id: CLIENT_ID.into(),
             offer,
         };
-        let issuance = Endpoint::new(provider).offer(&request).await?;
+        let issuance = vercre_holder::offer(provider, &request).await?;
         self.issuance = issuance;
         self.sub_app = SubApp::Issuance;
         Ok(())
@@ -23,7 +23,7 @@ impl AppState {
 
     /// Accept a credential issuance offer.
     pub async fn accept(&mut self, provider: Provider) -> anyhow::Result<()> {
-        let issuance = Endpoint::new(provider).accept(self.issuance.id.clone()).await?;
+        let issuance = vercre_holder::accept(provider, self.issuance.id.clone()).await?;
         self.issuance = issuance;
         Ok(())
     }
@@ -34,14 +34,14 @@ impl AppState {
             id: self.issuance.id.clone(),
             pin: pin.into(),
         };
-        let issuance = Endpoint::new(provider).pin(&request).await?;
+        let issuance = vercre_holder::pin(provider, &request).await?;
         self.issuance = issuance;
         Ok(())
     }
 
     /// Get the credentials for the accepted issuance offer.
     pub async fn get_credentials(&mut self, provider: Provider) -> anyhow::Result<()> {
-        Endpoint::new(provider).get_credentials(self.issuance.id.clone()).await?;
+        vercre_holder::get_credentials(provider,self.issuance.id.clone()).await?;
         self.sub_app = SubApp::Credential;
         Ok(())
     }

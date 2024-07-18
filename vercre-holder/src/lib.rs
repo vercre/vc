@@ -36,14 +36,16 @@
 //        - add Registration endpoint
 
 pub mod credential;
-pub mod issuance;
+mod issuance;
 pub mod presentation;
 pub mod provider;
 
-use std::fmt::Debug;
-
 pub use core_utils::Quota;
 pub use dif_exch::Constraints;
+pub use issuance::accept::accept;
+pub use issuance::credential::get_credentials;
+pub use issuance::offer::offer;
+pub use issuance::pin::pin;
 pub use openid::issuance::{
     CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse, GrantType,
     Issuer, MetadataRequest, MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
@@ -52,29 +54,13 @@ pub use openid::issuance::{
 pub use openid::presentation::{
     RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
 };
-pub use provider as callback;
-use provider::StateManager;
+pub use presentation::authorize::authorize;
+pub use presentation::present::present;
+pub use presentation::request::request;
 
+// pub use issuance::Issuance;
+pub use crate::credential::{Credential, Logo};
 pub use crate::issuance::offer::OfferRequest;
 pub use crate::issuance::pin::PinRequest;
 pub use crate::issuance::{Issuance, Status};
-
-/// Endpoint is used to surface the public wallet endpoints to clients.
-#[derive(Debug)]
-pub struct Endpoint<P>
-where
-    P: StateManager + Debug,
-{
-    provider: P,
-}
-
-/// Endpoint is used to provide a thread-safe way of handling requests.
-impl<P> Endpoint<P>
-where
-    P: StateManager + Debug,
-{
-    /// Create a new `Endpoint` with the provided `Provider`.
-    pub fn new(provider: P) -> Self {
-        Self { provider }
-    }
-}
+pub use crate::presentation::Presentation;

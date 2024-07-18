@@ -15,3 +15,11 @@ pub use openid::issuance::TxCode;
 pub use proof::jose::jwk::PublicKeyJwk;
 pub use proof::signature::{Algorithm, Signer, Verifier};
 pub use storer::CredentialStorer;
+
+/// A trait that combines all the provider traits required to be implemented
+/// by holder clients.
+#[allow(clippy::module_name_repetitions)]
+pub trait HolderProvider:
+    IssuerClient + VerifierClient + CredentialStorer + StateManager + Signer + Verifier + Clone
+{
+}

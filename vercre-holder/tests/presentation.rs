@@ -7,10 +7,9 @@ use insta::assert_yaml_snapshot as assert_snapshot;
 use openid::issuance::CredentialConfiguration;
 use openid::presentation::{CreateRequestRequest, DeviceFlow, PresentationDefinitionType};
 use test_utils::{verifier, VERIFIER_ID};
-use vercre_holder::callback::CredentialStorer;
+use vercre_holder::provider::CredentialStorer;
 use vercre_holder::credential::Credential;
 use vercre_holder::presentation::Status;
-use vercre_holder::Endpoint;
 use w3c_vc::model::VerifiableCredential;
 use w3c_vc::proof::{self, Format, Payload};
 
@@ -108,7 +107,7 @@ async fn e2e_presentation_uri() {
     // Intiate the presentation flow using a url
     let url = init_request.request_uri.expect("should have request uri");
     let presentation =
-        Endpoint::new(HOLDER_PROVIDER.clone()).request(&url).await.expect("should process request");
+        vercre_holder::request(HOLDER_PROVIDER.clone(),&url).await.expect("should process request");
 
     assert_eq!(presentation.status, Status::Requested);
     assert_snapshot!("presentation_requested", presentation, {
@@ -132,8 +131,7 @@ async fn e2e_presentation_uri() {
     assert_eq!(pd.input_descriptors[0].id, "EmployeeID_JWT");
 
     // Authorize the presentation
-    let presentation = Endpoint::new(HOLDER_PROVIDER.clone())
-        .authorize(presentation.id.clone())
+    let presentation = vercre_holder::authorize(HOLDER_PROVIDER.clone(),presentation.id.clone())
         .await
         .expect("should authorize presentation");
 
@@ -148,8 +146,7 @@ async fn e2e_presentation_uri() {
     });
 
     // Process the presentation
-    let response = Endpoint::new(HOLDER_PROVIDER.clone())
-        .present(presentation.id.clone())
+    let response = vercre_holder::present(HOLDER_PROVIDER.clone(),presentation.id.clone())
         .await
         .expect("should process present");
     assert_snapshot!("response_response", response);
@@ -176,7 +173,7 @@ async fn e2e_presentation_obj() {
     let obj = init_request.request_object.expect("should have request object");
     let qs = serde_qs::to_string(&obj).expect("should serialize");
     let presentation =
-        Endpoint::new(HOLDER_PROVIDER.clone()).request(&qs).await.expect("should process request");
+        vercre_holder::request(HOLDER_PROVIDER.clone(),&qs).await.expect("should process request");
 
     assert_eq!(presentation.status, Status::Requested);
     assert_snapshot!("presentation_requested2", presentation, {
@@ -200,8 +197,7 @@ async fn e2e_presentation_obj() {
     assert_eq!(pd.input_descriptors[0].id, "EmployeeID_JWT");
 
     // Authorize the presentation
-    let presentation = Endpoint::new(HOLDER_PROVIDER.clone())
-        .authorize(presentation.id.clone())
+    let presentation = vercre_holder::authorize(HOLDER_PROVIDER.clone(),presentation.id.clone())
         .await
         .expect("should authorize presentation");
 
@@ -216,8 +212,7 @@ async fn e2e_presentation_obj() {
     });
 
     // Process the presentation
-    let response = Endpoint::new(HOLDER_PROVIDER.clone())
-        .present(presentation.id.clone())
+    let response = vercre_holder::present(HOLDER_PROVIDER.clone(),presentation.id.clone())
         .await
         .expect("should process present");
     assert_snapshot!("response_response2", response);

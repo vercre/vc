@@ -9,10 +9,9 @@ use chrono::{DateTime, Utc};
 use dif_exch::Constraints;
 use ecdsa::signature::Signer as _;
 use test_utils::{issuer, verifier};
-use vercre_holder::credential::{Credential, Logo};
+use vercre_holder::{Credential, Logo};
 use vercre_holder::provider::{
-    Algorithm, CredentialStorer, IssuerClient, PublicKeyJwk, Result, Signer, StateManager,
-    Verifier, VerifierClient,
+    Algorithm, CredentialStorer, HolderProvider, IssuerClient, PublicKeyJwk, Result, Signer, StateManager, Verifier, VerifierClient
 };
 use vercre_holder::{
     CredentialRequest, CredentialResponse, MetadataRequest, MetadataResponse, RequestObjectRequest,
@@ -44,6 +43,8 @@ impl Provider {
         }
     }
 }
+
+impl HolderProvider for Provider {}
 
 impl IssuerClient for Provider {
     async fn get_metadata(

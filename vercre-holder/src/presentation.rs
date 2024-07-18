@@ -2,9 +2,9 @@
 //!
 //! The Presentation endpoints implement the vercre-holder's credential presentation flow.
 
-mod authorize;
-mod present;
-mod request;
+pub(crate) mod authorize;
+pub(crate) mod present;
+pub(crate) mod request;
 
 use std::fmt::{Debug, Display};
 use std::str::FromStr;
@@ -12,12 +12,12 @@ use std::str::FromStr;
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use dif_exch::{Constraints, PresentationSubmission};
+use crate::provider::HolderProvider;
 use openid::presentation::RequestObject;
 use serde::{Deserialize, Serialize};
 
 use crate::credential::Credential;
 use crate::provider::StateManager;
-use crate::Endpoint;
 
 /// `Presentation` maintains app state across steps of the presentation flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -92,20 +92,23 @@ impl FromStr for Status {
 }
 
 /// Get and put presentation state information using the supplied provider.
-impl<P> Endpoint<P>
-where
-    P: StateManager + Debug,
-{
-    async fn get_presentation(&self, id: &str) -> anyhow::Result<Presentation> {
-        let current_state = self.provider.get(id).await?;
-        let presentation = serde_json::from_slice::<Presentation>(&current_state)?;
-        Ok(presentation)
-    }
+async fn get_presentation(
+    provider: impl HolderProvider, id: &str,
+) -> anyhow::Result<Presentation> {
+    let current_state = StateManager::get(&provider, id).await?;
+    let presentation = serde_json::from_slice::<Presentation>(&current_state)?;
+    Ok(presentation)
+}
 
-    async fn put_presentation(&self, presentation: &Presentation) -> anyhow::Result<()> {
-        self.provider
-            .put(&presentation.id, serde_json::to_vec(&presentation)?, DateTime::<Utc>::MAX_UTC)
-            .await?;
-        Ok(())
-    }
+async fn put_presentation(
+    provider: impl HolderProvider, presentation: &Presentation,
+) -> anyhow::Result<()> {
+    StateManager::put(
+        &provider,
+        &presentation.id,
+        serde_json::to_vec(&presentation)?,
+        DateTime::<Utc>::MAX_UTC,
+    )
+    .await?;
+    Ok(())
 }
