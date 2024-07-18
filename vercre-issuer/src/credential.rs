@@ -43,8 +43,6 @@
 // ! }
 //! ```
 
-use std::fmt::Debug;
-
 use openid::issuer::{BatchCredentialRequest, CredentialRequest, CredentialResponse, Provider};
 use openid::Result;
 use tracing::instrument;
@@ -62,16 +60,12 @@ use crate::batch::batch;
 pub async fn credential(
     provider: impl Provider, request: &CredentialRequest,
 ) -> Result<CredentialResponse> {
-    let mut ctx = Context {};
     // shell(&mut ctx, provider, request, process).await
-    process(&mut ctx, provider, request).await
+    process(provider, request).await
 }
 
-#[derive(Debug)]
-struct Context {}
-
 async fn process(
-    _: &mut Context, provider: impl Provider, request: &CredentialRequest,
+    provider: impl Provider, request: &CredentialRequest,
 ) -> Result<CredentialResponse> {
     tracing::debug!("Context::process");
 

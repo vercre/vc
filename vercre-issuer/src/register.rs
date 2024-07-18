@@ -1,7 +1,5 @@
 //! # Dynamic Client Registration Endpoint
 
-use std::fmt::Debug;
-
 use chrono::Utc;
 use openid::issuer::{Provider, RegistrationRequest, RegistrationResponse, StateManager};
 use openid::{Error, Result};
@@ -20,19 +18,13 @@ use crate::state::State;
 pub async fn register(
     provider: impl Provider, request: &RegistrationRequest,
 ) -> Result<RegistrationResponse> {
-    let mut ctx = Context {};
     // shell(&mut ctx, provider.clone(), request, verify).await?;
     // shell(&mut ctx, provider, request, process).await
-    verify(&mut ctx, provider.clone(), request).await?;
-    process(&mut ctx, provider, request).await
+    verify(provider.clone(), request).await?;
+    process(provider, request).await
 }
 
-#[derive(Debug)]
-struct Context {}
-
-async fn verify(
-    _: &mut Context, provider: impl Provider, request: &RegistrationRequest,
-) -> Result<()> {
+async fn verify(provider: impl Provider, request: &RegistrationRequest) -> Result<()> {
     tracing::debug!("Context::verify");
 
     let buf = match StateManager::get(&provider, &request.access_token).await {
@@ -51,7 +43,7 @@ async fn verify(
 }
 
 async fn process(
-    _: &mut Context, provider: impl Provider, request: &RegistrationRequest,
+    provider: impl Provider, request: &RegistrationRequest,
 ) -> Result<RegistrationResponse> {
     tracing::debug!("Context::process");
 

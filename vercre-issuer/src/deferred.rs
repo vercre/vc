@@ -8,8 +8,6 @@
 //! the issuance of the Credential previously requested at the Credential Endpoint or
 //! the Batch Credential Endpoint.
 
-use std::fmt::Debug;
-
 use openid::issuer::{
     DeferredCredentialRequest, DeferredCredentialResponse, Provider, StateManager,
 };
@@ -30,16 +28,12 @@ use crate::state::State;
 pub async fn deferred(
     provider: impl Provider, request: &DeferredCredentialRequest,
 ) -> Result<DeferredCredentialResponse> {
-    let mut ctx = Context {};
     // shell(&mut ctx, provider, request, process).await
-    process(&mut ctx, provider, request).await
+    process(provider, request).await
 }
 
-#[derive(Debug)]
-struct Context {}
-
 async fn process(
-    _: &mut Context, provider: impl Provider, request: &DeferredCredentialRequest,
+    provider: impl Provider, request: &DeferredCredentialRequest,
 ) -> Result<DeferredCredentialResponse> {
     tracing::debug!("Context::process");
 

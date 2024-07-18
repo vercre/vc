@@ -22,7 +22,6 @@
 //!     Host: server.example.com
 //!     Accept-Language: fr-ch, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5
 //! ```
-use std::fmt::Debug;
 
 use openid::issuer::{IssuerMetadata, MetadataRequest, MetadataResponse, Provider};
 use openid::{Error, Result};
@@ -40,17 +39,11 @@ use tracing::instrument;
 pub async fn metadata(
     provider: impl Provider, request: &MetadataRequest,
 ) -> Result<MetadataResponse> {
-    let mut ctx = Context {};
     // shell(&mut ctx, provider, request, process).await
-    process(&mut ctx, provider, request).await
+    process(provider, request).await
 }
 
-#[derive(Debug)]
-struct Context {}
-
-async fn process(
-    _: &mut Context, provider: impl Provider, request: &MetadataRequest,
-) -> Result<MetadataResponse> {
+async fn process(provider: impl Provider, request: &MetadataRequest) -> Result<MetadataResponse> {
     tracing::debug!("Context::process");
 
     // TODO: add languages to request

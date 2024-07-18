@@ -64,8 +64,6 @@
 //!
 //! See <https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-offer-endpoint>
 
-use std::fmt::Debug;
-
 use chrono::Utc;
 use core_utils::gen;
 use openid::issuer::{
@@ -89,20 +87,13 @@ use crate::state::{Auth, Expire, State};
 pub async fn create_offer(
     provider: impl Provider, request: &CreateOfferRequest,
 ) -> Result<CreateOfferResponse> {
-    let mut ctx = Context {};
-
     // shell(&mut ctx, provider.clone(), request, verify).await?;
     // shell(&mut ctx, provider, request, process).await
-    verify(&mut ctx, provider.clone(), request).await?;
-    process(&mut ctx, provider, request).await
+    verify(provider.clone(), request).await?;
+    process(provider, request).await
 }
 
-#[derive(Debug)]
-struct Context {}
-
-async fn verify(
-    _: &mut Context, provider: impl Provider, request: &CreateOfferRequest,
-) -> Result<()> {
+async fn verify(provider: impl Provider, request: &CreateOfferRequest) -> Result<()> {
     tracing::debug!("Context::verify");
 
     let issuer_meta = IssuerMetadata::metadata(&provider, &request.credential_issuer)
@@ -138,7 +129,7 @@ async fn verify(
 
 // Process the request.
 async fn process(
-    _: &mut Context, provider: impl Provider, request: &CreateOfferRequest,
+    provider: impl Provider, request: &CreateOfferRequest,
 ) -> Result<CreateOfferResponse> {
     tracing::debug!("Context::process");
 
