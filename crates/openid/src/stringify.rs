@@ -14,7 +14,7 @@ use serde::ser::{self, Serialize, Serializer};
 ///
 /// # Errors
 ///
-/// This function will return an `Err::ServerError` error if the string cannot
+/// This function will return an `Error::ServerError` error if the string cannot
 /// be serialized into the target type.
 pub fn serialize<T, S>(value: &T, serializer: S) -> std::result::Result<S::Ok, S::Error>
 where
@@ -30,7 +30,7 @@ where
 ///
 /// # Errors
 ///
-/// This function will return an `Err::ServerError` error if the string cannot
+/// This function will return an `Error::ServerError` error if the string cannot
 /// be deserialized into the target type.
 pub fn deserialize<'de, T, D>(deserializer: D) -> Result<T, D::Error>
 where
@@ -82,7 +82,7 @@ pub mod option {
     ///
     /// # Errors
     ///
-    /// This function will return an `Err::ServerError` error if the string cannot
+    /// This function will return an `Error::ServerError` error if the string cannot
     /// be serialized into the target type.
     pub fn serialize<T, S>(value: &Option<T>, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
@@ -103,7 +103,7 @@ pub mod option {
     ///
     /// # Errors
     ///
-    /// This function will return an `Err::ServerError` error if the string cannot
+    /// This function will return an `Error::ServerError` error if the string cannot
     /// be deserialized into the target type.
     pub fn deserialize<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
     where

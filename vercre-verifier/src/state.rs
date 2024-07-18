@@ -4,7 +4,7 @@
 use chrono::{DateTime, TimeDelta, Utc};
 use derive_builder::Builder;
 use openid::presentation::RequestObject;
-use openid::{Err, Result};
+use openid::{Error, Result};
 use serde::{Deserialize, Serialize};
 
 pub enum Expire {
@@ -56,11 +56,11 @@ impl State {
         match serde_json::from_slice::<Self>(value) {
             Ok(res) => {
                 if res.expired() {
-                    return Err(Err::InvalidRequest("state has expired".into()));
+                    return Err(Error::InvalidRequest("state has expired".into()));
                 }
                 Ok(res)
             }
-            Err(e) => Err(Err::ServerError(format!("Failed to deserialize state: {e}"))),
+            Err(e) => Err(Error::ServerError(format!("Failed to deserialize state: {e}"))),
         }
     }
 
@@ -71,7 +71,7 @@ impl State {
 }
 
 impl TryFrom<&[u8]> for State {
-    type Error = openid::Err;
+    type Error = openid::Error;
 
     fn try_from(value: &[u8]) -> Result<Self> {
         Self::from_slice(value)
@@ -79,7 +79,7 @@ impl TryFrom<&[u8]> for State {
 }
 
 impl TryFrom<Vec<u8>> for State {
-    type Error = openid::Err;
+    type Error = openid::Error;
 
     fn try_from(value: Vec<u8>) -> Result<Self> {
         Self::try_from(value.as_slice())

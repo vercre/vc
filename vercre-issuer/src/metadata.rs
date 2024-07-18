@@ -26,7 +26,7 @@ use std::fmt::Debug;
 
 use openid::endpoint::{IssuerMetadata, IssuerProvider};
 use openid::issuance::{MetadataRequest, MetadataResponse};
-use openid::{Err, Result};
+use openid::{Error, Result};
 use tracing::instrument;
 
 // use crate::shell;
@@ -58,7 +58,7 @@ async fn process(
     let credential_issuer =
         IssuerMetadata::metadata(&provider, &request.credential_issuer)
             .await
-            .map_err(|e| Err::ServerError(format!("issue getting metadata: {e}")))?;
+            .map_err(|e| Error::ServerError(format!("issue getting metadata: {e}")))?;
     Ok(MetadataResponse { credential_issuer })
 }
 

@@ -49,7 +49,7 @@ use openid::presentation::{
     ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
     PresentationDefinitionType, RequestObject, ResponseType,
 };
-use openid::{Err, Result};
+use openid::{Error,Result};
 use proof::signature::Algorithm;
 use tracing::instrument;
 use uuid::Uuid;
@@ -97,7 +97,7 @@ async fn verify(request: &CreateRequestRequest) -> Result<()> {
     tracing::debug!("Context::verify");
 
     if request.input_descriptors.is_empty() {
-        return Err(Err::InvalidRequest("no credentials specified".into()));
+        return Err(Error::InvalidRequest("no credentials specified".into()));
     }
     Ok(())
 }
@@ -124,7 +124,7 @@ async fn process(
 
     // get client metadata
     let Ok(client_meta) = ClientMetadata::metadata(&provider, &request.client_id).await else {
-        return Err(Err::InvalidRequest("invalid client_id".into()));
+        return Err(Error::InvalidRequest("invalid client_id".into()));
     };
 
     let mut req_obj = RequestObject {
@@ -155,10 +155,10 @@ async fn process(
     let state = State::builder()
         .request_object(req_obj)
         .build()
-        .map_err(|e| Err::ServerError(format!("issue building state: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("issue building state: {e}")))?;
     StateManager::put(&provider, &state_key, state.to_vec(), state.expires_at)
         .await
-        .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
     Ok(response)
 }

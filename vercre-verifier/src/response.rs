@@ -23,7 +23,7 @@
 use core_utils::Kind;
 use openid::endpoint::{StateManager, VerifierProvider};
 use openid::presentation::{PresentationDefinitionType, ResponseRequest, ResponseResponse};
-use openid::{Err, Result};
+use openid::{Error,Result};
 use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
@@ -60,17 +60,17 @@ async fn verify(provider: impl VerifierProvider, request: &ResponseRequest) -> R
 
     // get state by client state key
     let Some(state_key) = &request.state else {
-        return Err(Err::InvalidRequest("client state not found".into()));
+        return Err(Error::InvalidRequest("client state not found".into()));
     };
     let Ok(buf) = StateManager::get(&provider, state_key).await else {
-        return Err(Err::InvalidRequest("state not found".into()));
+        return Err(Error::InvalidRequest("state not found".into()));
     };
     let state = State::try_from(buf)?;
     let saved_req = &state.request_object;
 
     // TODO: no token == error response, we should have already checked for an error
     let Some(vp_token) = request.vp_token.clone() else {
-        return Err(Err::InvalidRequest("client state not found".into()));
+        return Err(Error::InvalidRequest("client state not found".into()));
     };
 
     let mut vps = vec![];
@@ -79,33 +79,33 @@ async fn verify(provider: impl VerifierProvider, request: &ResponseRequest) -> R
     for vp_val in &vp_token {
         let (vp, nonce) = match w3c_vc::proof::verify(Verify::Vp(vp_val), &provider).await {
             Ok(Payload::Vp { vp, nonce, .. }) => (vp, nonce),
-            Ok(_) => return Err(Err::InvalidRequest("proof payload is invalid".into())),
-            Err(e) => return Err(Err::ServerError(format!("issue verifying VP proof: {e}"))),
+            Ok(_) => return Err(Error::InvalidRequest("proof payload is invalid".into())),
+            Err(e) => return Err(Error::ServerError(format!("issue verifying VP proof: {e}"))),
         };
 
         // else {
-        //     return Err(Err::InvalidRequest("invalid vp_token".into()));
+        //     return Err(Error::InvalidRequest("invalid vp_token".into()));
         // };
         if nonce != saved_req.nonce {
-            return Err(Err::InvalidRequest("nonce does not match".into()));
+            return Err(Error::InvalidRequest("nonce does not match".into()));
         }
         vps.push(vp);
     }
 
     let Some(subm) = &request.presentation_submission else {
-        return Err(Err::InvalidRequest("no presentation_submission".into()));
+        return Err(Error::InvalidRequest("no presentation_submission".into()));
     };
     let def = match &saved_req.presentation_definition {
         PresentationDefinitionType::Object(def) => def,
         PresentationDefinitionType::Uri(_) => {
-            return Err(Err::InvalidRequest("presentation_definition_uri is unsupported".into()));
+            return Err(Error::InvalidRequest("presentation_definition_uri is unsupported".into()));
         }
     };
 
     // verify presentation subm matches definition
     // N.B. technically, this is redundant as it is done when looking up state
     if subm.definition_id != def.id {
-        return Err(Err::InvalidRequest("definition_ids do not match".into()));
+        return Err(Error::InvalidRequest("definition_ids do not match".into()));
     }
 
     let input_descs = &def.input_descriptors;
@@ -117,9 +117,9 @@ async fn verify(provider: impl VerifierProvider, request: &ResponseRequest) -> R
 
     let vp_val: Value = match vps.len() {
         1 => serde_json::to_value(vps[0].clone())
-            .map_err(|e| Err::ServerError(format!("issue converting VP to Value: {e}")))?,
+            .map_err(|e| Error::ServerError(format!("issue converting VP to Value: {e}")))?,
         _ => serde_json::to_value(vps)
-            .map_err(|e| Err::ServerError(format!("issue aggregating vp values: {e}")))?,
+            .map_err(|e| Error::ServerError(format!("issue aggregating vp values: {e}")))?,
     };
 
     // Verify request has been fulfilled for each credential requested:
@@ -128,7 +128,7 @@ async fn verify(provider: impl VerifierProvider, request: &ResponseRequest) -> R
     for input in input_descs {
         // find Input Descriptor Mapping Object
         let Some(mapping) = desc_map.iter().find(|idmo| idmo.id == input.id) else {
-            return Err(Err::InvalidRequest(format!(
+            return Err(Error::InvalidRequest(format!(
                 "input descriptor mapping req_obj not found for {}",
                 input.id
             )));
@@ -137,7 +137,7 @@ async fn verify(provider: impl VerifierProvider, request: &ResponseRequest) -> R
         // check VC format matches a requested format
         if let Some(fmt) = input.format.as_ref() {
             if !fmt.contains_key(&mapping.path_nested.format) {
-                return Err(Err::InvalidRequest(format!(
+                return Err(Error::InvalidRequest(format!(
                     "invalid format {}",
                     mapping.path_nested.format
                 )));
@@ -146,9 +146,9 @@ async fn verify(provider: impl VerifierProvider, request: &ResponseRequest) -> R
 
         // search VP Token for VC specified by mapping path
         let jpath = JsonPath::parse(&mapping.path_nested.path)
-            .map_err(|e| Err::ServerError(format!("issue parsing JSON Path: {e}")))?;
+            .map_err(|e| Error::ServerError(format!("issue parsing JSON Path: {e}")))?;
         let Ok(vc_node) = jpath.query(&vp_val).exactly_one() else {
-            return Err(Err::InvalidRequest(format!(
+            return Err(Error::InvalidRequest(format!(
                 "no match for path_nested {}",
                 mapping.path_nested.path
             )));
@@ -158,31 +158,31 @@ async fn verify(provider: impl VerifierProvider, request: &ResponseRequest) -> R
             Value::String(token) => Kind::String(token.to_string()),
             Value::Object(_) => {
                 let vc: VerifiableCredential = serde_json::from_value(vc_node.clone())
-                    .map_err(|e| Err::ServerError(format!("issue deserializing vc: {e}")))?;
+                    .map_err(|e| Error::ServerError(format!("issue deserializing vc: {e}")))?;
                 Kind::Object(vc)
             }
-            _ => return Err(Err::InvalidRequest(format!("unexpected VC format: {vc_node}"))),
+            _ => return Err(Error::InvalidRequest(format!("unexpected VC format: {vc_node}"))),
         };
 
         let Payload::Vc(vc) = w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider)
             .await
-            .map_err(|e| Err::InvalidRequest(format!("invalid VC proof: {e}")))?
+            .map_err(|e| Error::InvalidRequest(format!("invalid VC proof: {e}")))?
         else {
-            return Err(Err::InvalidRequest("proof payload is invalid".into()));
+            return Err(Error::InvalidRequest("proof payload is invalid".into()));
         };
 
         // verify input constraints have been met
         if !input
             .constraints
             .satisfied(&vc)
-            .map_err(|e| Err::ServerError(format!("issue matching constraints: {e}")))?
+            .map_err(|e| Error::ServerError(format!("issue matching constraints: {e}")))?
         {
-            return Err(Err::InvalidRequest("input constraints not satisfied".into()));
+            return Err(Error::InvalidRequest("input constraints not satisfied".into()));
         }
 
         // check VC is valid (hasn't expired, been revoked, etc)
         if vc.expiration_date.is_some_and(|exp| exp < chrono::Utc::now()) {
-            return Err(Err::InvalidRequest("credential has expired".into()));
+            return Err(Error::InvalidRequest("credential has expired".into()));
         }
 
         // TODO: look up credential status using status.id
@@ -207,11 +207,11 @@ async fn process(
 
     // clear state
     let Some(state_key) = &request.state else {
-        return Err(Err::InvalidRequest("client state not found".into()));
+        return Err(Error::InvalidRequest("client state not found".into()));
     };
     StateManager::purge(&provider, state_key)
         .await
-        .map_err(|e| Err::ServerError(format!("issue purging state: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
 
     // TODO: use callback to advise client of result
     Ok(ResponseResponse {

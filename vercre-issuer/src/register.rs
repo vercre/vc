@@ -5,7 +5,7 @@ use std::fmt::Debug;
 use chrono::Utc;
 use openid::endpoint::{IssuerProvider, StateManager};
 use openid::issuance::{RegistrationRequest, RegistrationResponse};
-use openid::{Err, Result};
+use openid::{Error,Result};
 use tracing::instrument;
 
 // use crate::shell;
@@ -38,14 +38,14 @@ async fn verify(
 
     let buf = match StateManager::get(&provider, &request.access_token).await {
         Ok(buf) => buf,
-        Err(e) => return Err(Err::ServerError(format!("State not found: {e}"))),
+        Err(e) => return Err(Error::ServerError(format!("State not found: {e}"))),
     };
     let state = State::try_from(buf)?;
 
     // token (access or acceptance) expiry
     let expires = state.expires_at.signed_duration_since(Utc::now()).num_seconds();
     if expires < 0 {
-        return Err(Err::InvalidRequest("access Token has expired".into()));
+        return Err(Error::InvalidRequest("access Token has expired".into()));
     }
 
     Ok(())
@@ -57,7 +57,7 @@ async fn process(
     tracing::debug!("Context::process");
 
     let Ok(client_meta) = provider.register(&request.client_metadata).await else {
-        return Err(Err::ServerError("Registration failed".into()));
+        return Err(Error::ServerError("Registration failed".into()));
     };
 
     Ok(RegistrationResponse {

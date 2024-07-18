@@ -12,7 +12,7 @@ use std::fmt::Debug;
 
 use openid::endpoint::{IssuerProvider, StateManager};
 use openid::issuance::{DeferredCredentialRequest, DeferredCredentialResponse};
-use openid::{Err, Result};
+use openid::{Error, Result};
 use tracing::instrument;
 
 use crate::credential::credential;
@@ -44,20 +44,20 @@ async fn process(
 
     // retrieve deferred credential request from state
     let Ok(buf) = StateManager::get(&provider, &request.transaction_id).await else {
-        return Err(Err::InvalidTransactionId("deferred state not found".into()));
+        return Err(Error::InvalidTransactionId("deferred state not found".into()));
     };
     let Ok(state) = State::try_from(buf) else {
-        return Err(Err::InvalidTransactionId("deferred state is expired or corrupted".into()));
+        return Err(Error::InvalidTransactionId("deferred state is expired or corrupted".into()));
     };
 
     let Some(deferred_state) = state.deferred else {
-        return Err(Err::ServerError("Deferred state not found.".into()));
+        return Err(Error::ServerError("Deferred state not found.".into()));
     };
 
     // remove deferred state item
     StateManager::purge(&provider, &request.transaction_id)
         .await
-        .map_err(|e| Err::ServerError(format!("issue purging state: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
 
     // make credential request
     let mut cred_req = deferred_state.credential_request;

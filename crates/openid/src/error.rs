@@ -14,7 +14,7 @@ use thiserror::Error;
 
 /// `OpenID` error codes for  for Verifiable Credential Issuance and Presentation.
 #[derive(Error, Debug, Deserialize)]
-pub enum Err {
+pub enum Error {
     /// The request is missing a required parameter, includes an unsupported
     /// parameter value, repeats a parameter, includes multiple credentials,
     /// utilizes more than one mechanism for authenticating the client, or is
@@ -198,7 +198,7 @@ pub struct OidError {
     pub c_nonce_expires_in: Option<i64>,
 }
 
-impl Serialize for Err {
+impl Serialize for Error {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         use serde::ser::Error as SerdeError;
 
@@ -209,7 +209,7 @@ impl Serialize for Err {
     }
 }
 
-impl Err {
+impl Error {
     /// Transfrom error to `OpenID` compatible json format.
     #[must_use]
     pub fn to_json(self) -> serde_json::Value {
@@ -234,7 +234,7 @@ mod test {
     // Test that error details are retuned as json.
     #[test]
     fn err_json() {
-        let err: Err = Err::InvalidRequest("bad request".into());
+        let err = Error::InvalidRequest("bad request".into());
         let ser: Value = serde_json::from_str(&err.to_string()).unwrap();
         assert_eq!(ser, json!({"error":"invalid_request", "error_description": "bad request"}));
     }
@@ -242,7 +242,7 @@ mod test {
     // Test that the error details are returned as an http query string.
     #[test]
     fn err_querystring() {
-        let err: Err = Err::InvalidRequest("Invalid request description".into());
+        let err = Error::InvalidRequest("Invalid request description".into());
         let ser = serde_qs::to_string(&err).unwrap();
         assert_eq!(ser, "error=invalid_request&error_description=Invalid+request+description");
     }
@@ -250,7 +250,7 @@ mod test {
     // Test that the error details are returned as an http query string.
     #[test]
     fn err_serialize() {
-        let err: Err = Err::InvalidRequest("bad request".into());
+        let err = Error::InvalidRequest("bad request".into());
         let ser = serde_json::to_value(&err).unwrap();
         assert_eq!(ser, json!({"error":"invalid_request", "error_description": "bad request"}));
     }
@@ -259,7 +259,7 @@ mod test {
     // in the external response.
     #[test]
     fn proof_err() {
-        let err: Err = Err::InvalidProof {
+        let err = Error::InvalidProof {
             hint: "".into(),
             c_nonce: "c_nonce".into(),
             c_nonce_expires_in: 10,

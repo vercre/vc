@@ -108,7 +108,7 @@ impl VerifiableCredential {
     ///
     /// # Errors
     ///
-    /// Fails with `Err::ServerError` if any of the VC's mandatory fields are not set.
+    /// Fails with `Error::ServerError` if any of the VC's mandatory fields are not set.
     pub fn new() -> anyhow::Result<Self> {
         Self::builder().try_into()
     }
@@ -409,7 +409,7 @@ impl VcBuilder {
     ///
     /// # Errors
     ///
-    /// Fails with `Err::ServerError` if any of the VC's mandatory fields are not set.
+    /// Fails with `Error::ServerError` if any of the VC's mandatory fields are not set.
     pub fn build(self) -> anyhow::Result<VerifiableCredential> {
         tracing::debug!("VcBuilder::build");
 

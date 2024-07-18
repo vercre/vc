@@ -15,7 +15,7 @@
 
 use openid::endpoint::{StateManager, VerifierProvider};
 use openid::presentation::{RequestObjectRequest, RequestObjectResponse, RequestObjectType};
-use openid::{Err, Result};
+use openid::{Error,Result};
 use proof::jose::jws::{self, Type};
 use tracing::instrument;
 
@@ -43,19 +43,19 @@ async fn process(
     // retrieve request object from state
     let buf = StateManager::get(&provider, &request.state)
         .await
-        .map_err(|e| Err::ServerError(format!("issue fetching state: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("issue fetching state: {e}")))?;
     let state = State::from_slice(&buf)
-        .map_err(|e| Err::ServerError(format!("issue deserializing state: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("issue deserializing state: {e}")))?;
     let req_obj = state.request_object;
 
     // verify client_id (perhaps should use 'verify' method?)
     if req_obj.client_id != format!("{}/post", request.client_id) {
-        return Err(Err::InvalidRequest("client ID mismatch".into()));
+        return Err(Error::InvalidRequest("client ID mismatch".into()));
     }
 
     let jwt = jws::encode(Type::Request, &req_obj, provider.clone())
         .await
-        .map_err(|e| Err::ServerError(format!("issue encoding jwt: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("issue encoding jwt: {e}")))?;
 
     Ok(RequestObjectResponse {
         request_object: RequestObjectType::Jwt(jwt),

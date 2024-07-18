@@ -81,7 +81,7 @@ use openid::issuance::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
     GrantType, Issuer, TokenAuthorizationDetail,
 };
-use openid::{Err, Result};
+use openid::{Error, Result};
 use tracing::instrument;
 
 // use crate::shell;
@@ -99,7 +99,7 @@ pub async fn authorize(
 ) -> Result<AuthorizationResponse> {
     let issuer_meta = IssuerMetadata::metadata(&provider, &request.credential_issuer)
         .await
-        .map_err(|e| Err::ServerError(format!("metadata issue: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
 
     let mut ctx = Context {
         issuer_meta,
@@ -125,35 +125,35 @@ async fn verify(
 ) -> Result<()> {
     tracing::debug!("Context::verify");
 
-    let Ok(client_meta) = ClientMetadata::metadata(&provider, &request.client_id).await else {
-        return Err(Err::InvalidClient("invalid client_id".into()));
+    let Ok(client_config) = ClientMetadata::metadata(&provider, &request.client_id).await else {
+        return Err(Error::InvalidClient("invalid client_id".into()));
     };
-    let server_meta = ServerMetadata::metadata(&provider, &request.credential_issuer)
+    let server_config = ServerMetadata::metadata(&provider, &request.credential_issuer)
         .await
-        .map_err(|e| Err::ServerError(format!("metadata issue: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
 
     // 'authorization_code' grant_type allowed (client and server)?
-    let client_grant_types = client_meta.grant_types.unwrap_or_default();
+    let client_grant_types = client_config.grant_types.unwrap_or_default();
     if !client_grant_types.contains(&GrantType::AuthorizationCode) {
-        return Err(Err::InvalidRequest(
+        return Err(Error::InvalidRequest(
             "authorization_code grant not supported for client".into(),
         ));
     }
-    let server_grant_types = server_meta.grant_types_supported.unwrap_or_default();
+    let server_grant_types = server_config.grant_types_supported.unwrap_or_default();
     if !server_grant_types.contains(&GrantType::AuthorizationCode) {
-        return Err(Err::InvalidRequest(
+        return Err(Error::InvalidRequest(
             "authorization_code grant not supported for server".into(),
         ));
     }
 
     // is holder identified (authenticated)?
     if request.subject_id.is_empty() {
-        return Err(Err::AuthorizationPending("missing holder subject".into()));
+        return Err(Error::AuthorizationPending("missing holder subject".into()));
     }
 
     // has a credential been requested?
     if request.authorization_details.is_none() && request.scope.is_none() {
-        return Err(Err::InvalidRequest("no credentials requested".into()));
+        return Err(Error::InvalidRequest("no credentials requested".into()));
     }
 
     // verify authorization_details
@@ -167,33 +167,33 @@ async fn verify(
 
     // redirect_uri
     let Some(redirect_uri) = &request.redirect_uri else {
-        return Err(Err::InvalidRequest("no redirect_uri specified".into()));
+        return Err(Error::InvalidRequest("no redirect_uri specified".into()));
     };
-    let Some(redirect_uris) = client_meta.redirect_uris else {
-        return Err(Err::InvalidRequest("no redirect_uris specified for client".into()));
+    let Some(redirect_uris) = client_config.redirect_uris else {
+        return Err(Error::InvalidRequest("no redirect_uris specified for client".into()));
     };
     if !redirect_uris.contains(redirect_uri) {
-        return Err(Err::InvalidRequest("request redirect_uri is not registered".into()));
+        return Err(Error::InvalidRequest("request redirect_uri is not registered".into()));
     }
 
     // response_type
-    if !client_meta.response_types.unwrap_or_default().contains(&request.response_type) {
-        return Err(Err::UnsupportedResponseType(
+    if !client_config.response_types.unwrap_or_default().contains(&request.response_type) {
+        return Err(Error::UnsupportedResponseType(
             "the response_type not supported by client".into(),
         ));
     }
-    if !server_meta.response_types_supported.contains(&request.response_type) {
-        return Err(Err::UnsupportedResponseType("response_type not supported by server".into()));
+    if !server_config.response_types_supported.contains(&request.response_type) {
+        return Err(Error::UnsupportedResponseType("response_type not supported by server".into()));
     }
 
     // code_challenge
     // N.B. while optional in the spec, we require it
-    let challenge_methods = server_meta.code_challenge_methods_supported.unwrap_or_default();
+    let challenge_methods = server_config.code_challenge_methods_supported.unwrap_or_default();
     if !challenge_methods.contains(&request.code_challenge_method) {
-        return Err(Err::InvalidRequest("unsupported code_challenge_method".into()));
+        return Err(Error::InvalidRequest("unsupported code_challenge_method".into()));
     }
     if request.code_challenge.len() < 43 || request.code_challenge.len() > 128 {
-        return Err(Err::InvalidRequest(
+        return Err(Error::InvalidRequest(
             "code_challenge must be between 43 and 128 characters".into(),
         ));
     }
@@ -217,7 +217,7 @@ async fn process(
     for (cfg_id, auth_det) in &context.auth_dets {
         let auth = Subject::authorize(&provider, &request.subject_id, cfg_id)
             .await
-            .map_err(|e| Err::ServerError(format!("issue authorizing holder: {e}")))?;
+            .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
         if auth {
             let tkn_auth_det = TokenAuthorizationDetail {
                 authorization_detail: auth_det.clone(),
@@ -239,7 +239,7 @@ async fn process(
     for (cfg_id, item) in &context.scope_items {
         let auth = Subject::authorize(&provider, &request.subject_id, cfg_id)
             .await
-            .map_err(|e| Err::ServerError(format!("issue authorizing holder: {e}")))?;
+            .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
         if auth {
             authzd_scope_items.push(item.clone());
             authzd_cfg_ids.push(cfg_id.clone());
@@ -253,7 +253,9 @@ async fn process(
 
     // error if holder is not authorized for any requested credentials
     if auth_dets.is_none() && scope.is_none() {
-        return Err(Err::AccessDenied("holder is not authorized for requested credentials".into()));
+        return Err(Error::AccessDenied(
+            "holder is not authorized for requested credentials".into(),
+        ));
     }
 
     // save authorization state
@@ -279,13 +281,13 @@ async fn process(
     let code = gen::auth_code();
     StateManager::put(&provider, &code, state.to_vec(), state.expires_at)
         .await
-        .map_err(|e| Err::ServerError(format!("state issue: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("state issue: {e}")))?;
 
     // remove offer state
     if let Some(issuer_state) = &request.issuer_state {
         StateManager::purge(&provider, issuer_state)
             .await
-            .map_err(|e| Err::ServerError(format!("state issue: {e}")))?;
+            .map_err(|e| Error::ServerError(format!("state issue: {e}")))?;
     }
 
     Ok(AuthorizationResponse {
@@ -305,7 +307,7 @@ fn verify_authorization_details(
     'verify_details: for auth_det in authorization_details {
         // we only support "`openid_credential`" authorization detail requests
         if auth_det.type_ != AuthorizationDetailType::OpenIdCredential {
-            return Err(Err::InvalidRequest("invalid authorization_details type".into()));
+            return Err(Error::InvalidRequest("invalid authorization_details type".into()));
         }
 
         let cfg_id_opt = &auth_det.credential_configuration_id;
@@ -313,12 +315,12 @@ fn verify_authorization_details(
 
         // verify that only one of `credential_configuration_id` or `format` is specified
         if cfg_id_opt.is_some() && format_opt.is_some() {
-            return Err(Err::InvalidRequest(
+            return Err(Error::InvalidRequest(
                 "'credential_configuration_id and format cannot both be set".into(),
             ));
         }
         if cfg_id_opt.is_none() && format_opt.is_none() {
-            return Err(Err::InvalidRequest(
+            return Err(Error::InvalidRequest(
                 "credential_configuration_id or format must be set".into(),
             ));
         }
@@ -326,7 +328,9 @@ fn verify_authorization_details(
         // EITHER: verify requested `credential_configuration_id` is supported
         if let Some(cfg_id) = cfg_id_opt {
             if !context.issuer_meta.credential_configurations_supported.contains_key(cfg_id) {
-                return Err(Err::InvalidRequest("unsupported credential_configuration_id".into()));
+                return Err(Error::InvalidRequest(
+                    "unsupported credential_configuration_id".into(),
+                ));
             }
 
             // save auth_det by `credential_configuration_id` for later use
@@ -337,7 +341,7 @@ fn verify_authorization_details(
         // OR: verify requested `format` and `type` are supported
         if let Some(format) = format_opt {
             let Some(auth_def) = auth_det.credential_definition.as_ref() else {
-                return Err(Err::InvalidRequest("no `credential_definition` specified".into()));
+                return Err(Error::InvalidRequest("no `credential_definition` specified".into()));
             };
 
             // find matching `CredentialConfiguration`
@@ -352,7 +356,7 @@ fn verify_authorization_details(
             }
 
             // no matching credential_configuration
-            return Err(Err::InvalidRequest("unsupported credential `format` or `type`".into()));
+            return Err(Error::InvalidRequest("unsupported credential `format` or `type`".into()));
         }
     }
 
@@ -376,7 +380,7 @@ fn verify_scope(context: &mut Context, scope: &str) -> Result<()> {
                 continue 'verify_scope;
             }
         }
-        return Err(Err::InvalidRequest("scope item {item} is unsupported".into()));
+        return Err(Error::InvalidRequest("scope item {item} is unsupported".into()));
     }
 
     Ok(())

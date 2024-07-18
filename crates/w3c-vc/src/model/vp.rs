@@ -66,7 +66,7 @@ impl VerifiablePresentation {
     ///
     /// # Errors
     ///
-    /// Fails with `Err::ServerError` if any of the VP's mandatory fields
+    /// Fails with `Error::ServerError` if any of the VP's mandatory fields
     /// are not set.
     pub fn new() -> anyhow::Result<Self> {
         Self::builder().try_into()

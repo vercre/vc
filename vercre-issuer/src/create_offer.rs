@@ -73,7 +73,7 @@ use openid::issuance::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer,
     CredentialOfferType, Grants, PreAuthorizedCodeGrant, TxCode,
 };
-use openid::{Err, Result};
+use openid::{Error, Result};
 use tracing::instrument;
 
 // use crate::shell;
@@ -107,22 +107,22 @@ async fn verify(
 
     let issuer_meta = IssuerMetadata::metadata(&provider, &request.credential_issuer)
         .await
-        .map_err(|e| Err::ServerError(format!("metadata issue: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
 
     // credential_issuer required
     if request.credential_issuer.is_empty() {
-        return Err(Err::InvalidRequest("no credential_issuer specified".into()));
+        return Err(Error::InvalidRequest("no credential_issuer specified".into()));
     };
 
     // credentials required
     if request.credential_configuration_ids.is_empty() {
-        return Err(Err::InvalidRequest("no credentials requested".into()));
+        return Err(Error::InvalidRequest("no credentials requested".into()));
     };
 
     // requested credential is supported
     for cred_id in &request.credential_configuration_ids {
         if !issuer_meta.credential_configurations_supported.contains_key(cred_id) {
-            return Err(Err::UnsupportedCredentialType(
+            return Err(Error::UnsupportedCredentialType(
                 "requested credential is unsupported".into(),
             ));
         };
@@ -130,7 +130,7 @@ async fn verify(
 
     // subject_id is required
     if request.subject_id.is_none() {
-        return Err(Err::InvalidRequest("no subject_id specified".into()));
+        return Err(Error::InvalidRequest("no subject_id specified".into()));
     };
 
     Ok(())
@@ -149,7 +149,7 @@ async fn process(
         .subject_id(request.subject_id.clone())
         .callback_id(request.callback_id.clone())
         .build()
-        .map_err(|e| Err::ServerError(format!("issue creating state: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("issue creating state: {e}")))?;
 
     let mut pre_auth_grant = None;
     let mut auth_grant = None;
@@ -185,11 +185,11 @@ async fn process(
         let auth_state = Auth::builder()
             .user_code(user_code.clone())
             .build()
-            .map_err(|e| Err::ServerError(format!("issue building auth state: {e}")))?;
+            .map_err(|e| Error::ServerError(format!("issue building auth state: {e}")))?;
         state.auth = Some(auth_state);
         StateManager::put(&provider, &pre_auth_code, state.to_vec(), state.expires_at)
             .await
-            .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
+            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
     } else {
         // ------------------------------------------------
         // Authorization Code Grant
@@ -202,7 +202,7 @@ async fn process(
         });
         StateManager::put(&provider, &issuer_state, state.to_vec(), state.expires_at)
             .await
-            .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
+            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
     }
 
     // return response

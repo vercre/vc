@@ -12,7 +12,7 @@ use w3c_vc::model::VerifiableCredential;
 
 use super::{Client, CredentialFormat};
 use crate::endpoint::Request;
-use crate::error::Err;
+use crate::error::Error;
 use crate::{stringify, Result};
 
 // TODO: find a home for these shared types
@@ -149,16 +149,16 @@ impl CredentialOffer {
     ///
     /// # Errors
     ///
-    /// Returns an `Err::ServerError` error if error if the Credential Offer cannot
+    /// Returns an `Error::ServerError` error if error if the Credential Offer cannot
     /// be serialized.
     pub fn to_qrcode(&self, endpoint: &str) -> Result<String> {
         let qs = self
             .to_querystring()
-            .map_err(|e| Err::ServerError(format!("Failed to generate querystring: {e}")))?;
+            .map_err(|e| Error::ServerError(format!("Failed to generate querystring: {e}")))?;
 
         // generate qr code
         let qr_code = QrCode::new(format!("{endpoint}{qs}"))
-            .map_err(|e| Err::ServerError(format!("Failed to create QR code: {e}")))?;
+            .map_err(|e| Error::ServerError(format!("Failed to create QR code: {e}")))?;
 
         // write image to buffer
         let img_buf = qr_code.render::<image::Luma<u8>>().build();
@@ -166,7 +166,7 @@ impl CredentialOffer {
         let mut writer = Cursor::new(&mut buffer);
         img_buf
             .write_to(&mut writer, image::ImageFormat::Png)
-            .map_err(|e| Err::ServerError(format!("Failed to create QR code: {e}")))?;
+            .map_err(|e| Error::ServerError(format!("Failed to create QR code: {e}")))?;
 
         // base64 encode image
         Ok(format!("data:image/png;base64,{}", Base64::encode_string(buffer.as_slice())))
@@ -176,11 +176,11 @@ impl CredentialOffer {
     ///
     /// # Errors
     ///
-    /// Returns an `Err::ServerError` error if error if the Credential Offer cannot
+    /// Returns an `Error::ServerError` error if error if the Credential Offer cannot
     /// be serialized.
     pub fn to_querystring(&self) -> Result<String> {
         serde_qs::to_string(&self)
-            .map_err(|e| Err::ServerError(format!("issue creating query string: {e}")))
+            .map_err(|e| Error::ServerError(format!("issue creating query string: {e}")))
     }
 }
 

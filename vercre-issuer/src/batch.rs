@@ -17,7 +17,7 @@ use openid::issuance::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
     CredentialRequest, CredentialResponse, CredentialType, Issuer, ProofClaims, ProofType,
 };
-use openid::{Err, Result};
+use openid::{Error, Result};
 use proof::jose::jws::{self, Type};
 use tracing::instrument;
 use w3c_vc::model::{CredentialSubject, VerifiableCredential};
@@ -37,17 +37,17 @@ pub async fn batch(
     provider: impl IssuerProvider, request: &BatchCredentialRequest,
 ) -> Result<BatchCredentialResponse> {
     let Ok(buf) = StateManager::get(&provider, &request.access_token).await else {
-        return Err(Err::AccessDenied("invalid access token".into()));
+        return Err(Error::AccessDenied("invalid access token".into()));
     };
     let Ok(state) = State::try_from(buf) else {
-        return Err(Err::AccessDenied("invalid state for access token".into()));
+        return Err(Error::AccessDenied("invalid state for access token".into()));
     };
 
     let mut ctx = Context {
         state,
         issuer_meta: IssuerMetadata::metadata(&provider, &request.credential_issuer)
             .await
-            .map_err(|e| Err::ServerError(format!("metadata issue: {e}")))?,
+            .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?,
         holder_did: String::new(),
     };
 
@@ -70,12 +70,12 @@ async fn verify(
     tracing::debug!("Context::verify");
 
     let Some(token_state) = &context.state.token else {
-        return Err(Err::AccessDenied("invalid access token state".into()));
+        return Err(Error::AccessDenied("invalid access token state".into()));
     };
 
     // c_nonce expiry
     if token_state.c_nonce_expired() {
-        return Err(Err::AccessDenied("c_nonce has expired".into()));
+        return Err(Error::AccessDenied("c_nonce has expired".into()));
     }
 
     // TODO: add support for `credential_identifier`
@@ -84,7 +84,7 @@ async fn verify(
         // format and type request
         if let CredentialType::Format(format) = &request.credential_type {
             let Some(definition) = &request.credential_definition else {
-                return Err(Err::InvalidCredentialRequest("credential definition not set".into()));
+                return Err(Error::InvalidCredentialRequest("credential definition not set".into()));
             };
 
             // check request has been authorized:
@@ -98,7 +98,7 @@ async fn verify(
                 }
             }
             if !authorized {
-                return Err(Err::InvalidCredentialRequest(
+                return Err(Error::InvalidCredentialRequest(
                     "Requested credential has not been authorized".into(),
                 ));
             }
@@ -109,13 +109,13 @@ async fn verify(
         // is non-empty
         // ----------------------------------------------------------------
         let Some(proof) = &request.proof else {
-            return Err(Err::InvalidCredentialRequest("proof not set".into()));
+            return Err(Error::InvalidCredentialRequest("proof not set".into()));
         };
         // ----------------------------------------------------------------
 
         let ProofType::Jwt(proof_jwt) = &proof.proof else {
             let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
-            return Err(Err::InvalidProof {
+            return Err(Error::InvalidProof {
                 hint: "Proof not JWT".into(),
                 c_nonce,
                 c_nonce_expires_in,
@@ -125,7 +125,7 @@ async fn verify(
             Ok(jwt) => jwt,
             Err(e) => {
                 let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
-                return Err(Err::InvalidProof {
+                return Err(Error::InvalidProof {
                     hint: format!("issue decoding JWT: {e}"),
                     c_nonce,
                     c_nonce_expires_in,
@@ -135,7 +135,7 @@ async fn verify(
         // proof type
         if jwt.header.typ != Type::Proof {
             let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
-            return Err(Err::InvalidProof {
+            return Err(Error::InvalidProof {
                 hint: format!("Proof JWT 'typ' is not {}", Type::Proof),
                 c_nonce,
                 c_nonce_expires_in,
@@ -145,7 +145,7 @@ async fn verify(
         // previously issued c_nonce
         if jwt.claims.nonce.as_ref() != Some(&token_state.c_nonce) {
             let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
-            return Err(Err::InvalidProof {
+            return Err(Error::InvalidProof {
                 hint: "Proof JWT nonce claim is invalid".into(),
                 c_nonce,
                 c_nonce_expires_in,
@@ -157,7 +157,7 @@ async fn verify(
         let Some(kid) = jwt.header.kid else {
             let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
 
-            return Err(Err::InvalidProof {
+            return Err(Error::InvalidProof {
                 hint: "Proof JWT 'kid' is missing".into(),
                 c_nonce,
                 c_nonce_expires_in,
@@ -167,7 +167,7 @@ async fn verify(
         let Some(did) = kid.split('#').next() else {
             let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
 
-            return Err(Err::InvalidProof {
+            return Err(Error::InvalidProof {
                 hint: "Proof JWT DID is invalid".into(),
                 c_nonce,
                 c_nonce_expires_in,
@@ -192,7 +192,7 @@ async fn process(
 
     // generate nonce and update state
     let Some(token_state) = &context.state.token else {
-        return Err(Err::ServerError("Invalid token state".into()));
+        return Err(Error::ServerError("Invalid token state".into()));
     };
 
     // --------------------------------------------------------------------
@@ -201,7 +201,7 @@ async fn process(
     //    with proof based on an older c_nonce
     // --------------------------------------------------------------------
     // let Some(provider) = &self.provider else {
-    //     return Err(Err::ServerError("provider not set".into())));
+    //     return Err(Error::ServerError("provider not set".into())));
     // };
 
     // let c_nonce = gen::nonce();
@@ -240,10 +240,10 @@ async fn create_response(
         state.token = None;
 
         let buf = serde_json::to_vec(&state)
-            .map_err(|e| Err::ServerError(format!("issue serializing state: {e}")))?;
+            .map_err(|e| Error::ServerError(format!("issue serializing state: {e}")))?;
         StateManager::put(&provider, &txn_id, buf, state.expires_at)
             .await
-            .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
+            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
         // only need to return transaction_id
         return Ok(CredentialResponse {
@@ -257,7 +257,7 @@ async fn create_response(
     // generate proof for the credential
     let jwt = w3c_vc::proof::create(Format::JwtVcJson, Payload::Vc(vc), provider.clone())
         .await
-        .map_err(|e| Err::ServerError(format!("issue creating proof: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
 
     Ok(CredentialResponse {
         credential: Some(Kind::String(jwt)),
@@ -280,13 +280,13 @@ async fn create_vc(
     let definition = credential_definition(request, &config);
 
     let Some(subject_id) = &context.state.subject_id else {
-        return Err(Err::AccessDenied("holder not found".into()));
+        return Err(Error::AccessDenied("holder not found".into()));
     };
 
     // get ALL claims for holder/credential
     let mut claims_resp = Subject::claims(&provider, subject_id, &identifier)
         .await
-        .map_err(|e| Err::ServerError(format!("issue populating claims: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
 
     // defer issuance if claims are pending (approval?),
     if claims_resp.pending {
@@ -309,7 +309,7 @@ async fn create_vc(
 
     // HACK: fix this
     let Some(types) = definition.type_ else {
-        return Err(Err::ServerError("Credential type not set".into()));
+        return Err(Error::ServerError("Credential type not set".into()));
     };
 
     let vc_id = format!("{credential_issuer}/credentials/{}", types[1].clone());
@@ -325,7 +325,7 @@ async fn create_vc(
             claims: claims_resp.claims,
         })
         .build()
-        .map_err(|e| Err::ServerError(format!("issue building VC: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("issue building VC: {e}")))?;
 
     Ok(Some(vc))
 }
@@ -338,20 +338,20 @@ fn credential_configuration(
             let Some(config) =
                 context.issuer_meta.credential_configurations_supported.get(identifier)
             else {
-                return Err(Err::InvalidCredentialRequest("credential is not supported".into()));
+                return Err(Error::InvalidCredentialRequest("credential is not supported".into()));
             };
             Ok((identifier.clone(), config.clone()))
         }
         CredentialType::Format(format) => {
             let Some(definition) = &request.credential_definition else {
-                return Err(Err::InvalidCredentialRequest("credential definition not set".into()));
+                return Err(Error::InvalidCredentialRequest("credential definition not set".into()));
             };
             let Some(id_config) =
                 context.issuer_meta.credential_configurations_supported.iter().find(|(_, v)| {
                     &v.format == format && v.credential_definition.type_ == definition.type_
                 })
             else {
-                return Err(Err::InvalidCredentialRequest("credential is not supported".into()));
+                return Err(Error::InvalidCredentialRequest("credential is not supported".into()));
             };
             Ok((id_config.0.clone(), id_config.1.clone()))
         }
@@ -359,12 +359,12 @@ fn credential_configuration(
 }
 
 /// Creates, stores, and returns new `c_nonce` and `c_nonce_expires`_in values
-/// for use in `Err::InvalidProof` errors, as per specification.
+/// for use in `Error::InvalidProof` errors, as per specification.
 async fn err_nonce(context: &Context, provider: impl IssuerProvider) -> Result<(String, i64)> {
     // generate nonce and update state
     let mut state = context.state.clone();
     let Some(mut token_state) = state.token else {
-        return Err(Err::ServerError("token state not set".into()));
+        return Err(Error::ServerError("token state not set".into()));
     };
 
     let c_nonce = gen::nonce();
@@ -374,7 +374,7 @@ async fn err_nonce(context: &Context, provider: impl IssuerProvider) -> Result<(
 
     StateManager::put(&provider, &token_state.access_token, state.to_vec(), state.expires_at)
         .await
-        .map_err(|e| Err::ServerError(format!("issue saving state: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
     Ok((c_nonce, Expire::Nonce.duration().num_seconds()))
 }

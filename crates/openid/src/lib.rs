@@ -19,13 +19,13 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
-pub use self::error::Err;
+pub use self::error::Error;
 use self::issuance::GrantType;
 use self::presentation::VpFormat;
 
 /// Result type for `OpenID` for Verifiable Credential Issuance and Verifiable
 /// Presentations.
-pub type Result<T, E = Err> = std::result::Result<T, E>;
+pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// OAuth 2 client metadata used for registering clients of the issuance and
 /// vercre-wallet authorization servers.
@@ -186,11 +186,11 @@ impl Display for Client {
 }
 
 impl FromStr for Client {
-    type Err = error::Err;
+    type Err = error::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let Ok(res) = serde_json::from_str(s) else {
-            return Err(error::Err::InvalidRequest("failed to parse Verifier".into()));
+            return Err(error::Error::InvalidRequest("failed to parse Verifier".into()));
         };
         Ok(res)
     }

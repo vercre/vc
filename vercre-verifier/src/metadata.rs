@@ -7,7 +7,7 @@
 
 use openid::endpoint::{ClientMetadata, VerifierProvider};
 use openid::presentation::{MetadataRequest, MetadataResponse};
-use openid::{Err, Result};
+use openid::{Error,Result};
 use tracing::instrument;
 
 /// Endpoint for Wallets to request Verifier (Client) metadata.
@@ -31,7 +31,7 @@ async fn process(
     Ok(MetadataResponse {
         client: ClientMetadata::metadata(&provider, &req.client_id)
             .await
-            .map_err(|e| Err::ServerError(format!("issue getting metadata: {e}")))?,
+            .map_err(|e| Error::ServerError(format!("issue getting metadata: {e}")))?,
     })
 }
 
