@@ -3,8 +3,8 @@
 use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
-use openid::endpoint::{ClientMetadata, Result, StateManager, VerifierProvider};
-use openid::Client;
+use openid::endpoint::{Result, StateManager, VerifierMetadata, VerifierProvider, WalletMetadata};
+use openid::{Client, Server};
 use proof::jose::jwk::PublicKeyJwk;
 use proof::signature::{Algorithm, Signer, Verifier};
 
@@ -36,13 +36,19 @@ impl Deref for Provider {
 
 impl VerifierProvider for Provider {}
 
-impl ClientMetadata for Provider {
-    async fn metadata(&self, client_id: &str) -> Result<Client> {
-        self.client.get(client_id)
+impl VerifierMetadata for Provider {
+    async fn metadata(&self, verifier_id: &str) -> Result<Client> {
+        self.client.get(verifier_id)
     }
 
     async fn register(&self, client: &Client) -> Result<Client> {
         self.client.add(client)
+    }
+}
+
+impl WalletMetadata for Provider {
+    async fn metadata(&self, _wallet_id: &str) -> Result<Server> {
+        unimplemented!("WalletMetadata")
     }
 }
 

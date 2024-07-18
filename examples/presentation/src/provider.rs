@@ -6,8 +6,8 @@ use chrono::{DateTime, Utc};
 use test_utils::providers::proof::Enclave;
 pub use test_utils::providers::{Presentation, VERIFIER_DID, VERIFY_KEY_ID};
 use vercre_verifier::provider::{
-    Algorithm, Client, ClientMetadata, PublicKeyJwk, Result, Signer, StateManager, Verifier,
-    VerifierProvider,
+    Algorithm, Client, PublicKeyJwk, Result, Server, Signer, StateManager, Verifier,
+    VerifierMetadata, VerifierProvider, WalletMetadata,
 };
 
 #[derive(Clone, Debug)]
@@ -35,13 +35,19 @@ impl Deref for Provider {
 
 impl VerifierProvider for Provider {}
 
-impl ClientMetadata for Provider {
-    async fn metadata(&self, client_id: &str) -> Result<Client> {
-        self.client.get(client_id)
+impl VerifierMetadata for Provider {
+    async fn metadata(&self, verifier_id: &str) -> Result<Client> {
+        self.client.get(verifier_id)
     }
 
     async fn register(&self, client: &Client) -> Result<Client> {
         self.client.add(client)
+    }
+}
+
+impl WalletMetadata for Provider {
+    async fn metadata(&self, _wallet_id: &str) -> Result<Server> {
+        unimplemented!("WalletMetadata")
     }
 }
 

@@ -44,12 +44,12 @@ use std::collections::HashMap;
 
 use core_utils::gen;
 use dif_exch::{ClaimFormat, PresentationDefinition};
-use openid::endpoint::{ClientMetadata, StateManager, VerifierProvider};
+use openid::endpoint::{StateManager, VerifierMetadata, VerifierProvider};
 use openid::verifier::{
     ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
     PresentationDefinitionType, RequestObject, ResponseType,
 };
-use openid::{Error,Result};
+use openid::{Error, Result};
 use proof::signature::Algorithm;
 use tracing::instrument;
 use uuid::Uuid;
@@ -123,7 +123,7 @@ async fn process(
     let state_key = gen::state_key();
 
     // get client metadata
-    let Ok(client_meta) = ClientMetadata::metadata(&provider, &request.client_id).await else {
+    let Ok(client_meta) = VerifierMetadata::metadata(&provider, &request.client_id).await else {
         return Err(Error::InvalidRequest("invalid client_id".into()));
     };
 
