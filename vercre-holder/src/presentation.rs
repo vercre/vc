@@ -12,12 +12,11 @@ use std::str::FromStr;
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use dif_exch::{Constraints, PresentationSubmission};
-use crate::provider::HolderProvider;
 use openid::presentation::RequestObject;
 use serde::{Deserialize, Serialize};
 
 use crate::credential::Credential;
-use crate::provider::StateManager;
+use crate::provider::{HolderProvider, StateManager};
 
 /// `Presentation` maintains app state across steps of the presentation flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -92,9 +91,7 @@ impl FromStr for Status {
 }
 
 /// Get and put presentation state information using the supplied provider.
-async fn get_presentation(
-    provider: impl HolderProvider, id: &str,
-) -> anyhow::Result<Presentation> {
+async fn get_presentation(provider: impl HolderProvider, id: &str) -> anyhow::Result<Presentation> {
     let current_state = StateManager::get(&provider, id).await?;
     let presentation = serde_json::from_slice::<Presentation>(&current_state)?;
     Ok(presentation)

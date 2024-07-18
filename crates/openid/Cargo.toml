@@ -32,7 +32,7 @@ qrcode = { version = "0.14.1", default-features = false, features = ["image"] }
 serde.workspace = true
 serde_json.workspace = true
 serde_qs.workspace = true
-thiserror = "1.0.62"
+thiserror = "1.0.63"
 tracing.workspace = true
 w3c-vc.workspace = true
 

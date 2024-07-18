@@ -115,7 +115,6 @@ pub use create_offer::create_offer;
 pub use credential::credential;
 pub use deferred::deferred;
 pub use metadata::metadata;
-
 pub use openid::issuance::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     AuthorizationResponse, BatchCredentialRequest, BatchCredentialResponse, CreateOfferRequest,
