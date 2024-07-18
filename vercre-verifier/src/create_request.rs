@@ -41,7 +41,6 @@
 //! `request_uri` pointing to the prepared Request Object.
 
 use std::collections::HashMap;
-use std::fmt::Debug;
 
 use core_utils::gen;
 use dif_exch::{ClaimFormat, PresentationDefinition};
@@ -89,18 +88,12 @@ use crate::state::State;
 pub async fn create_request(
     provider: impl VerifierProvider, request: &CreateRequestRequest,
 ) -> Result<CreateRequestResponse> {
-    let ctx = Context {};
-    verify(&ctx, provider.clone(), request).await?;
-    process(&ctx, provider, request).await
+    verify(request).await?;
+    process(provider, request).await
 }
 
-#[derive(Debug)]
-struct Context {}
-
 #[allow(clippy::unused_async)]
-async fn verify(
-    _: &Context, _: impl VerifierProvider, request: &CreateRequestRequest,
-) -> Result<()> {
+async fn verify(request: &CreateRequestRequest) -> Result<()> {
     tracing::debug!("Context::verify");
 
     if request.input_descriptors.is_empty() {
@@ -110,7 +103,7 @@ async fn verify(
 }
 
 async fn process(
-    _: &Context, provider: impl VerifierProvider, request: &CreateRequestRequest,
+    provider: impl VerifierProvider, request: &CreateRequestRequest,
 ) -> Result<CreateRequestResponse> {
     tracing::debug!("Context::process");
 

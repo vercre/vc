@@ -13,8 +13,6 @@
 //!
 //! [JWT VC Presentation Profile]: (https://identity.foundation/jwt-vc-presentation-profile)
 
-use std::fmt::Debug;
-
 use openid::endpoint::{StateManager, VerifierProvider};
 use openid::presentation::{RequestObjectRequest, RequestObjectResponse, RequestObjectType};
 use openid::{Err, Result};
@@ -34,15 +32,11 @@ use crate::state::State;
 pub async fn request_object(
     provider: impl VerifierProvider, request: &RequestObjectRequest,
 ) -> Result<RequestObjectResponse> {
-    let ctx = Context {};
-    process(&ctx, provider, request).await
+    process(provider, request).await
 }
 
-#[derive(Debug)]
-struct Context {}
-
 async fn process(
-    _: &Context, provider: impl VerifierProvider, request: &RequestObjectRequest,
+    provider: impl VerifierProvider, request: &RequestObjectRequest,
 ) -> Result<RequestObjectResponse> {
     tracing::debug!("Context::process");
 

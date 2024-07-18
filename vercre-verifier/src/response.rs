@@ -20,8 +20,6 @@
 //! If the Response Type value is "code" (Authorization Code Grant Type), the VP
 //! Token is provided in the Token Response.
 
-use std::fmt::Debug;
-
 use core_utils::Kind;
 use openid::endpoint::{StateManager, VerifierProvider};
 use openid::presentation::{PresentationDefinitionType, ResponseRequest, ResponseResponse};
@@ -46,25 +44,8 @@ pub async fn response(
 ) -> Result<ResponseResponse> {
     // TODO: handle case where Wallet returns error instead of subm
 
-    // get state by client state key
-    let Some(state_key) = &request.state else {
-        return Err(Err::InvalidRequest("client state not found".into()));
-    };
-    let Ok(buf) = StateManager::get(&provider, state_key).await else {
-        return Err(Err::InvalidRequest("state not found".into()));
-    };
-
-    let ctx = Context {
-        state: State::try_from(buf)?,
-    };
-
-    verify(&ctx, provider.clone(), request).await?;
-    process(&ctx, provider, request).await
-}
-
-#[derive(Debug)]
-struct Context {
-    state: State,
+    verify(provider.clone(), request).await?;
+    process(provider, request).await
 }
 
 // TODO:
@@ -74,12 +55,18 @@ struct Context {
 
 // Verfiy the vp_token and presentation subm
 #[allow(clippy::too_many_lines)]
-async fn verify(
-    context: &Context, provider: impl VerifierProvider, request: &ResponseRequest,
-) -> Result<()> {
+async fn verify(provider: impl VerifierProvider, request: &ResponseRequest) -> Result<()> {
     tracing::debug!("Context::verify");
 
-    let saved_req = &context.state.request_object;
+    // get state by client state key
+    let Some(state_key) = &request.state else {
+        return Err(Err::InvalidRequest("client state not found".into()));
+    };
+    let Ok(buf) = StateManager::get(&provider, state_key).await else {
+        return Err(Err::InvalidRequest("state not found".into()));
+    };
+    let state = State::try_from(buf)?;
+    let saved_req = &state.request_object;
 
     // TODO: no token == error response, we should have already checked for an error
     let Some(vp_token) = request.vp_token.clone() else {
@@ -214,7 +201,7 @@ async fn verify(
 
 // Process the authorization request
 async fn process(
-    _: &Context, provider: impl VerifierProvider, request: &ResponseRequest,
+    provider: impl VerifierProvider, request: &ResponseRequest,
 ) -> Result<ResponseResponse> {
     tracing::debug!("Context::process");
 

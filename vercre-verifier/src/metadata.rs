@@ -5,8 +5,6 @@
 //! As the Verifier is a client to the Wallet's Authorization Server, this endpoint
 //! returns Client metadata as defined in [RFC7591](https://www.rfc-editor.org/rfc/rfc7591).
 
-use std::fmt::Debug;
-
 use openid::endpoint::{ClientMetadata, VerifierProvider};
 use openid::presentation::{MetadataRequest, MetadataResponse};
 use openid::{Err, Result};
@@ -22,15 +20,11 @@ use tracing::instrument;
 pub async fn metadata(
     provider: impl VerifierProvider, request: &MetadataRequest,
 ) -> Result<MetadataResponse> {
-    let ctx = Context {};
-    process(&ctx, provider, request).await
+    process(provider, request).await
 }
 
-#[derive(Debug)]
-struct Context {}
-
 async fn process(
-    _: &Context, provider: impl VerifierProvider, req: &MetadataRequest,
+    provider: impl VerifierProvider, req: &MetadataRequest,
 ) -> Result<MetadataResponse> {
     tracing::debug!("Context::process");
 
