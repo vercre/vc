@@ -1,11 +1,11 @@
 ---
 source: vercre-issuer/src/batch.rs
-assertion_line: 530
+assertion_line: 516
 expression: state
 ---
 expires_at: "[expires_at]"
 credential_issuer: "http://vercre.io"
-credential_configuration_ids:
+credential_identifiers:
   - EmployeeID_JWT
 subject_id: normal_user
 token:
