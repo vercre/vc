@@ -134,7 +134,7 @@ async fn process(
     let mut state = State::builder()
         .credential_issuer(request.credential_issuer.clone())
         .expires_at(Utc::now() + Expire::AuthCode.duration())
-        .credential_configuration_ids(request.credential_configuration_ids.clone())
+        .credential_identifiers(request.credential_configuration_ids.clone())
         .subject_id(request.subject_id.clone())
         .callback_id(request.callback_id.clone())
         .build()

@@ -41,7 +41,7 @@ pub struct State {
 
     /// Identifiers of credentials offered to/requested by the Wallet.
     #[builder(default)]
-    pub credential_configuration_ids: Vec<String>,
+    pub credential_identifiers: Vec<String>,
 
     /// The subject of the credential Holder.
     #[serde(skip_serializing_if = "Option::is_none")]

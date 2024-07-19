@@ -113,7 +113,7 @@ mod tests {
         let mut state = State::builder()
             .credential_issuer(CREDENTIAL_ISSUER.into())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credential_configuration_ids(credentials)
+            .credential_identifiers(credentials)
             .subject_id(Some(NORMAL_USER.into()))
             .build()
             .expect("should build state");

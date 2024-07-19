@@ -62,7 +62,7 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
         return Err(Error::InvalidRequest("unknown authorization server".into()));
     };
     let Some(auth_state) = &context.state.auth else {
-        return Err(Error::ServerError("Authorization state not set".into()));
+        return Err(Error::ServerError("authorization state not set".into()));
     };
 
     // grant_type
@@ -197,7 +197,7 @@ mod tests {
         let mut state = State::builder()
             .credential_issuer(CREDENTIAL_ISSUER.to_string())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credential_configuration_ids(credentials)
+            .credential_identifiers(credentials)
             .subject_id(Some(NORMAL_USER.to_string()))
             .build()
             .expect("should build state");
@@ -255,7 +255,7 @@ mod tests {
             .credential_issuer(CREDENTIAL_ISSUER.to_string())
             .client_id(CLIENT_ID)
             .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credential_configuration_ids(credentials)
+            .credential_identifiers(credentials)
             .subject_id(Some(NORMAL_USER.to_string()))
             .build()
             .expect("should build state");

@@ -261,7 +261,7 @@ async fn process(
         expires_at: Utc::now() + Expire::AuthCode.duration(),
         credential_issuer: request.credential_issuer.clone(),
         client_id: Some(request.client_id.clone()),
-        credential_configuration_ids: authzd_identifiers,
+        credential_identifiers: authzd_identifiers,
         subject_id: Some(request.subject_id.clone()),
         ..State::default()
     };
