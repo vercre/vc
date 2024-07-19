@@ -134,7 +134,7 @@ pub use token::token;
 async fn shell<'a, P, R, U, E, F, Fut>(provider: P, request: &'a R, handler: F) -> Result<U, E>
 where
     P: Provider,
-    R: 'a + Request + Sync,
+    R: Request + Sync,
     F: FnOnce(P, &'a R) -> Fut + Send,
     Fut: Future<Output = Result<U, E>> + Send,
 {
