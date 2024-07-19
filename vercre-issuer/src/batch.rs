@@ -45,7 +45,7 @@ pub async fn batch(
 
     let mut ctx = Context {
         state,
-        issuer_meta: IssuerMetadata::metadata(&provider, &request.credential_issuer)
+        issuer_config: IssuerMetadata::metadata(&provider, &request.credential_issuer)
             .await
             .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?,
         holder_did: String::new(),
@@ -57,7 +57,7 @@ pub async fn batch(
 
 #[derive(Debug)]
 struct Context {
-    issuer_meta: Issuer,
+    issuer_config: Issuer,
     state: State,
     holder_did: String,
 }
@@ -76,6 +76,8 @@ async fn verify(
         return Err(Error::AccessDenied("c_nonce has expired".into()));
     }
 
+    let mut supported_proofs = None;
+
     // TODO: add support for `credential_identifier`
     // verify each credential request
     for request in &request.credential_requests {
@@ -91,12 +93,16 @@ async fn verify(
             //   - match format + type against authorized items in state
             let mut authorized = false;
 
-            for (k, v) in &context.issuer_meta.credential_configurations_supported {
-                if (&v.format == format) && (v.credential_definition.type_ == definition.type_) {
-                    authorized = context.state.credential_configuration_ids.contains(k);
+            for (identifier, config) in &context.issuer_config.credential_configurations_supported {
+                if (&config.format == format)
+                    && (config.credential_definition.type_ == definition.type_)
+                {
+                    supported_proofs = config.proof_types_supported.as_ref();
+                    authorized = context.state.credential_identifiers.contains(identifier);
                     break;
                 }
             }
+
             if !authorized {
                 return Err(Error::InvalidCredentialRequest(
                     "Requested credential has not been authorized".into(),
@@ -104,76 +110,80 @@ async fn verify(
             }
         };
 
-        // ----------------------------------------------------------------
-        // TODO: check `proof_types_supported` param in `credential_configurations_supported`
-        // is non-empty
-        // ----------------------------------------------------------------
-        let Some(proof) = &request.proof else {
-            return Err(Error::InvalidCredentialRequest("proof not set".into()));
-        };
-        // ----------------------------------------------------------------
+        // TODO: refactor into separate funtion
+        if let Some(proof_types) = supported_proofs {
+            let Some(proof) = &request.proof else {
+                return Err(Error::InvalidCredentialRequest("proof not set".into()));
+            };
 
-        let ProofType::Jwt(proof_jwt) = &proof.proof else {
-            let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
-            return Err(Error::InvalidProof {
-                hint: "Proof not JWT".into(),
-                c_nonce,
-                c_nonce_expires_in,
-            });
-        };
-        let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, &provider).await {
-            Ok(jwt) => jwt,
-            Err(e) => {
+            let _proof_type = proof_types.get(&proof.proof_type).ok_or_else(|| {
+                Error::InvalidCredentialRequest("proof type not supported".into())
+            })?;
+
+            let ProofType::Jwt(proof_jwt) = &proof.proof else {
                 let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
                 return Err(Error::InvalidProof {
-                    hint: format!("issue decoding JWT: {e}"),
+                    hint: "Proof not JWT".into(),
+                    c_nonce,
+                    c_nonce_expires_in,
+                });
+            };
+
+            // TODO: check proof is signed with supported algorithm (from proof_type)
+            let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, &provider).await {
+                Ok(jwt) => jwt,
+                Err(e) => {
+                    let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
+                    return Err(Error::InvalidProof {
+                        hint: format!("issue decoding JWT: {e}"),
+                        c_nonce,
+                        c_nonce_expires_in,
+                    });
+                }
+            };
+            // proof type
+            if jwt.header.typ != Type::Proof {
+                let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
+                return Err(Error::InvalidProof {
+                    hint: format!("Proof JWT 'typ' is not {}", Type::Proof),
                     c_nonce,
                     c_nonce_expires_in,
                 });
             }
-        };
-        // proof type
-        if jwt.header.typ != Type::Proof {
-            let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
-            return Err(Error::InvalidProof {
-                hint: format!("Proof JWT 'typ' is not {}", Type::Proof),
-                c_nonce,
-                c_nonce_expires_in,
-            });
+
+            // previously issued c_nonce
+            if jwt.claims.nonce.as_ref() != Some(&token_state.c_nonce) {
+                let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
+                return Err(Error::InvalidProof {
+                    hint: "Proof JWT nonce claim is invalid".into(),
+                    c_nonce,
+                    c_nonce_expires_in,
+                });
+            }
+
+            // TODO: use `decode` method in w3c-vc
+            // Key ID
+            let Some(kid) = jwt.header.kid else {
+                let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
+
+                return Err(Error::InvalidProof {
+                    hint: "Proof JWT 'kid' is missing".into(),
+                    c_nonce,
+                    c_nonce_expires_in,
+                });
+            };
+            // HACK: save extracted DID for later use when issuing credential
+            let Some(did) = kid.split('#').next() else {
+                let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
+
+                return Err(Error::InvalidProof {
+                    hint: "Proof JWT DID is invalid".into(),
+                    c_nonce,
+                    c_nonce_expires_in,
+                });
+            };
+            context.holder_did = did.into();
         }
-
-        // previously issued c_nonce
-        if jwt.claims.nonce.as_ref() != Some(&token_state.c_nonce) {
-            let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
-            return Err(Error::InvalidProof {
-                hint: "Proof JWT nonce claim is invalid".into(),
-                c_nonce,
-                c_nonce_expires_in,
-            });
-        }
-
-        // TODO: use `decode` method in w3c-vc
-        // Key ID
-        let Some(kid) = jwt.header.kid else {
-            let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
-
-            return Err(Error::InvalidProof {
-                hint: "Proof JWT 'kid' is missing".into(),
-                c_nonce,
-                c_nonce_expires_in,
-            });
-        };
-        // HACK: save extracted DID for later use when issuing credential
-        let Some(did) = kid.split('#').next() else {
-            let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
-
-            return Err(Error::InvalidProof {
-                hint: "Proof JWT DID is invalid".into(),
-                c_nonce,
-                c_nonce_expires_in,
-            });
-        };
-        context.holder_did = did.into();
     }
 
     Ok(())
@@ -305,7 +315,7 @@ async fn create_vc(
         }
     }
 
-    let credential_issuer = &context.issuer_meta.credential_issuer;
+    let credential_issuer = &context.issuer_config.credential_issuer;
 
     // HACK: fix this
     let Some(types) = definition.type_ else {
@@ -336,7 +346,7 @@ fn credential_configuration(
     match &request.credential_type {
         CredentialType::Identifier(identifier) => {
             let Some(config) =
-                context.issuer_meta.credential_configurations_supported.get(identifier)
+                context.issuer_config.credential_configurations_supported.get(identifier)
             else {
                 return Err(Error::InvalidCredentialRequest("credential is not supported".into()));
             };
@@ -349,7 +359,7 @@ fn credential_configuration(
                 ));
             };
             let Some(id_config) =
-                context.issuer_meta.credential_configurations_supported.iter().find(|(_, v)| {
+                context.issuer_config.credential_configurations_supported.iter().find(|(_, v)| {
                     &v.format == format && v.credential_definition.type_ == definition.type_
                 })
             else {
@@ -427,7 +437,7 @@ mod tests {
         let mut state = State::builder()
             .credential_issuer(CREDENTIAL_ISSUER.into())
             .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credential_configuration_ids(credentials)
+            .credential_identifiers(credentials)
             .subject_id(Some(NORMAL_USER.into()))
             .build()
             .expect("should build state");
