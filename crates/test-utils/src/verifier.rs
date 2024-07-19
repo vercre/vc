@@ -4,7 +4,7 @@ use proof::jose::jwk::PublicKeyJwk;
 use proof::signature::{self, Algorithm, Signer};
 
 use crate::store::proof::Enclave;
-use crate::store::{state, verifier};
+use crate::store::{state, presentation};
 
 pub const VERIFIER_ID: &str = "http://vercre.io";
 pub const VERIFY_KEY_ID: &str = "publicKeyModel1Id";
@@ -12,7 +12,7 @@ pub const VERIFIER_DID: &str ="did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3Uo
 
 #[derive(Default, Clone, Debug)]
 pub struct Provider {
-    pub verifier: verifier::Store,
+    pub verifier: presentation::Store,
     pub state: state::Store,
 }
 
@@ -20,7 +20,7 @@ impl Provider {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            verifier: verifier::Store::new(),
+            verifier: presentation::Store::new(),
             state: state::Store::new(),
         }
     }
