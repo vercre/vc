@@ -2,14 +2,17 @@ mod providers;
 
 use std::sync::LazyLock;
 
+use chrono::Utc;
+use core_utils::{Kind, Quota};
 use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use openid::verifier::{CreateRequestRequest, DeviceFlow, PresentationDefinitionType};
+use serde_json::Map;
 use test_utils::verifier::{self, VERIFIER_ID};
 use vercre_holder::credential::Credential;
 use vercre_holder::presentation::Status;
 use vercre_holder::provider::CredentialStorer;
-use w3c_vc::model::VerifiableCredential;
+use w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use w3c_vc::proof::{self, Format, Payload};
 
 use crate::providers::holder;
@@ -45,7 +48,28 @@ fn setup_create_request() -> CreateRequestRequest {
 }
 
 async fn sample_credential() -> Credential {
-    let vc = VerifiableCredential::sample();
+    use chrono::TimeZone;
+    use serde_json::json;
+
+    let vc = VerifiableCredential {
+        context: vec![
+            Kind::String("https://www.w3.org/2018/credentials/v1".into()),
+            Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()),
+        ],
+        type_: vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()],
+        issuer: Kind::String("https://example.com/issuers/14".into()),
+        id: "https://example.com/credentials/3732".into(),
+        issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
+        credential_subject: Quota::One(CredentialSubject {
+            id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
+            claims: json!({"employeeId": "1234567890"})
+                .as_object()
+                .map_or_else(Map::default, Clone::clone),
+        }),
+        expiration_date: Some(Utc.with_ymd_and_hms(2033, 12, 20, 23, 21, 55).unwrap()),
+
+        ..VerifiableCredential::default()
+    };
 
     let payload = Payload::Vc(vc.clone());
     let jwt = proof::create(Format::JwtVcJson, payload, VERIFIER_PROVIDER.clone())

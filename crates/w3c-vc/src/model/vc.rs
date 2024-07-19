@@ -118,33 +118,6 @@ impl VerifiableCredential {
     pub fn builder() -> VcBuilder {
         VcBuilder::new()
     }
-
-    /// Returns a sample [`VerifiableCredential`] for use in type generation and tests
-    #[must_use]
-    pub fn sample() -> Self {
-        use chrono::TimeZone;
-        use serde_json::json;
-
-        Self {
-            context: vec![
-                Kind::String("https://www.w3.org/2018/credentials/v1".into()),
-                Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()),
-            ],
-            type_: vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()],
-            issuer: Kind::String("https://example.com/issuers/14".into()),
-            id: "https://example.com/credentials/3732".into(),
-            issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
-            credential_subject: Quota::One(CredentialSubject {
-                id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
-                claims: json!({"employeeId": "1234567890"})
-                    .as_object()
-                    .map_or_else(Map::default, Clone::clone),
-            }),
-            expiration_date: Some(Utc.with_ymd_and_hms(2033, 12, 20, 23, 21, 55).unwrap()),
-
-            ..Self::default()
-        }
-    }
 }
 
 impl dif_exch::Claims for VerifiableCredential {
@@ -473,7 +446,7 @@ mod tests {
     fn builder() {
         init_tracer();
 
-        let vc = VerifiableCredential::sample();
+        let vc = sample_vc();
         let json_vc = serde_json::to_value(&vc).expect("should serialize to json");
         println!("{}", json_vc);
 
@@ -523,7 +496,7 @@ mod tests {
     fn flexvec() {
         init_tracer();
 
-        let mut vc = VerifiableCredential::sample();
+        let mut vc = sample_vc();
         vc.credential_schema = Some(Quota::Many(vec![
             CredentialSchema { ..Default::default() },
             CredentialSchema { ..Default::default() },
@@ -552,7 +525,7 @@ mod tests {
     fn strobj() {
         init_tracer();
 
-        let mut vc = VerifiableCredential::sample();
+        let mut vc = sample_vc();
 
         // serialize with just issuer 'id' field set
         let vc_json = serde_json::to_value(&vc).expect("should serialize to json");
@@ -589,5 +562,30 @@ mod tests {
         let vc_de: VerifiableCredential =
             serde_json::from_value(vc_json).expect("should deserialize");
         assert_eq!(vc_de.issuer, vc.issuer, "issuer 'extra' fields should be populated");
+    }
+
+    fn sample_vc() -> VerifiableCredential {
+        use chrono::TimeZone;
+        use serde_json::json;
+
+        VerifiableCredential {
+            context: vec![
+                Kind::String("https://www.w3.org/2018/credentials/v1".into()),
+                Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()),
+            ],
+            type_: vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()],
+            issuer: Kind::String("https://example.com/issuers/14".into()),
+            id: "https://example.com/credentials/3732".into(),
+            issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
+            credential_subject: Quota::One(CredentialSubject {
+                id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
+                claims: json!({"employeeId": "1234567890"})
+                    .as_object()
+                    .map_or_else(Map::default, Clone::clone),
+            }),
+            expiration_date: Some(Utc.with_ymd_and_hms(2033, 12, 20, 23, 21, 55).unwrap()),
+
+            ..VerifiableCredential::default()
+        }
     }
 }
