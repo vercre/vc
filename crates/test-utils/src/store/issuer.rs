@@ -150,7 +150,7 @@ impl Store {
             }
         });
 
-        let issuer:Issuer = serde_json::from_value(issuer_json).expect("should serialize");
+        let issuer: Issuer = serde_json::from_value(issuer_json).expect("should serialize");
 
         Self {
             issuers: HashMap::from([

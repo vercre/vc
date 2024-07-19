@@ -9,7 +9,6 @@ workspace = true
 [dependencies]
 axum-extra.workspace = true
 axum.workspace = true
-chrono.workspace = true
 oauth2 = { version = "4.4.2" }
 serde.workspace = true
 serde_json.workspace = true
