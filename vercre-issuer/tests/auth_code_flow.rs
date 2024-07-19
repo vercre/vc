@@ -11,7 +11,7 @@ use test_utils::holder;
 use test_utils::issuer::{self, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_issuer::{
     AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse,
-    ProofClaims, TokenRequest, TokenResponse,
+    CredentialType, ProofClaims, TokenRequest, TokenResponse,
 };
 use w3c_vc::proof::{Payload, Verify};
 
@@ -139,8 +139,12 @@ async fn get_credential(input: TokenResponse) -> openid::Result<CredentialRespon
     let auth_det = auth_dets[0].authorization_detail.clone();
 
     // TODO: get identifier from token
+    let CredentialType::Format(format) = auth_det.credential_type.clone() else {
+        panic!("unexpected credential type");
+    };
+    
     let body = json!({
-        "format": auth_det.format.unwrap(),
+        "format": format,
         "credential_definition": auth_det.credential_definition,
         "proof":{
             "proof_type": "jwt",

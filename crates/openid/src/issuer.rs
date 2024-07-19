@@ -403,21 +403,10 @@ pub struct AuthorizationDetail {
     #[serde(rename = "type")]
     pub type_: AuthorizationDetailType,
 
-    /// Specifies the unique identifier of the Credential being described in the
-    /// `credential_configurations_supported` map in the Credential Issuer Metadata.
-    /// REQUIRED when `format` parameter is not set, otherwise MUST NOT be set.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_configuration_id: Option<String>,
-
-    /// The format of the Credential the Wallet is requesting. The format determines
-    /// further authorization details claims needed to identify the Credential type
-    /// in the requested format.
-    /// REQUIRED when `credential_configuration_id` parameter is not set. MUST NOT be
-    /// set if `credential_configuration_id` parameter is set.
-    ///
-    /// One of "`jwt_vc_json`", "`jwt_vc_json`-ld", "`ldp_vc`", or "`vc+sd-jwt`".
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub format: Option<CredentialFormat>,
+    /// Identifies Credentials requested using either `credential_identifier` or
+    /// supported credential `format`.
+    #[serde(flatten)]
+    pub credential_type: CredentialType,
 
     /// Contains the type values the Wallet requests authorization for at the Credential
     /// Issuer.
@@ -634,6 +623,8 @@ pub struct CredentialRequest {
 
     /// Identifies the Credential requested using either a `credential_identifier` or a
     /// supported credential `format`.
+    /// If `credential_identifiers` were returned in the Token Response, they MUST be
+    ///used here. Otherwise, they MUST NOT be used.
     #[serde(flatten)]
     pub credential_type: CredentialType,
 
@@ -663,8 +654,8 @@ impl Request for CredentialRequest {}
 /// Means used to identifiy a Credential type when requesting a Credential.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum CredentialType {
-    /// Identifies the Credential requested. REQUIRED when `credential_identifiers`
-    /// was returned in the Token Response. MUST NOT be used otherwise.
+    /// Specifies the unique identifier of the Credential being described in the
+    /// `credential_configurations_supported` map in the Credential Issuer Metadata.
     #[serde(rename = "credential_identifier")]
     Identifier(String),
 
@@ -1440,7 +1431,7 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                format: Some(CredentialFormat::JwtVcJson),
+                credential_type: CredentialType::Format(CredentialFormat::JwtVcJson),
                 credential_definition: Some(CredentialDefinition {
                     context: Some(vec![
                         "https://www.w3.org/2018/credentials/v1".into(),

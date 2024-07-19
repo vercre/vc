@@ -76,8 +76,8 @@ use chrono::Utc;
 use core_utils::gen;
 use openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    ClientMetadata, GrantType, Issuer, IssuerMetadata, Provider, ServerMetadata, StateManager,
-    Subject, TokenAuthorizationDetail,
+    ClientMetadata, CredentialType, GrantType, Issuer, IssuerMetadata, Provider, ServerMetadata,
+    StateManager, Subject, TokenAuthorizationDetail,
 };
 use openid::{Error, Result};
 use tracing::instrument;
@@ -96,33 +96,30 @@ pub async fn authorize(
     provider: impl Provider, request: &AuthorizationRequest,
 ) -> Result<AuthorizationResponse> {
     let mut ctx = Context::default();
-
-    // shell(&mut ctx, provider.clone(), request, verify).await?;
-    // shell(&mut ctx, provider, request, process).await
-    verify(&mut ctx, provider.clone(), request).await?;
-    process(&ctx, provider, request).await
+    verify(&mut ctx, &provider, request).await?;
+    process(&ctx, &provider, request).await
 }
 
 #[derive(Debug, Default)]
 struct Context {
-    issuer_meta: Issuer,
+    issuer_config: Issuer,
     auth_dets: HashMap<String, AuthorizationDetail>,
     scope_items: HashMap<String, String>,
 }
 
 async fn verify(
-    context: &mut Context, provider: impl Provider, request: &AuthorizationRequest,
+    context: &mut Context, provider: &impl Provider, request: &AuthorizationRequest,
 ) -> Result<()> {
     tracing::debug!("Context::verify");
 
-    let Ok(client_config) = ClientMetadata::metadata(&provider, &request.client_id).await else {
+    let Ok(client_config) = ClientMetadata::metadata(provider, &request.client_id).await else {
         return Err(Error::InvalidClient("invalid client_id".into()));
     };
-    let server_config = ServerMetadata::metadata(&provider, &request.credential_issuer)
+    let server_config = ServerMetadata::metadata(provider, &request.credential_issuer)
         .await
         .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
 
-    context.issuer_meta = IssuerMetadata::metadata(&provider, &request.credential_issuer)
+    context.issuer_config = IssuerMetadata::metadata(provider, &request.credential_issuer)
         .await
         .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
 
@@ -201,43 +198,49 @@ async fn verify(
 //   authorized for
 // - save related auth_dets/scope items in state
 async fn process(
-    context: &Context, provider: impl Provider, request: &AuthorizationRequest,
+    context: &Context, provider: &impl Provider, request: &AuthorizationRequest,
 ) -> Result<AuthorizationResponse> {
     tracing::debug!("Context::process");
 
-    let mut authzd_auth_dets = vec![];
-    let mut authzd_cfg_ids = vec![];
+    // *** For Credentials requested using `authorization_detail` parameter entries ***
+    // - check whether holder is authorized by calling `Subject` provider with
+    // `subject_id` and `credential_identifier`
+    let mut authzd_auth_detail = vec![];
+    let mut authzd_identifiers = vec![];
 
-    // check which requested `authorization_detail` entries the holder is authorized for
-    for (cfg_id, auth_det) in &context.auth_dets {
-        let auth = Subject::authorize(&provider, &request.subject_id, cfg_id)
+    for (credential_identifier, authorization_detail) in &context.auth_dets {
+        let authorized = Subject::authorize(provider, &request.subject_id, credential_identifier)
             .await
             .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
-        if auth {
-            let tkn_auth_det = TokenAuthorizationDetail {
-                authorization_detail: auth_det.clone(),
+
+        // subject is authorized to receive the requested credential
+        if authorized {
+            authzd_identifiers.push(credential_identifier.clone());
+            authzd_auth_detail.push(TokenAuthorizationDetail {
+                authorization_detail: authorization_detail.clone(),
+                // TODO: why not add `credential_identifier` here?
                 credential_identifiers: None,
-            };
-            authzd_auth_dets.push(tkn_auth_det.clone());
-            authzd_cfg_ids.push(cfg_id.clone());
+            });
         }
     }
-    let auth_dets = if authzd_auth_dets.is_empty() {
+
+    let authorization_details = if authzd_auth_detail.is_empty() {
         None
     } else {
-        Some(authzd_auth_dets)
+        Some(authzd_auth_detail)
     };
 
+    // *** For Credentials requested using `scope` parameter ***
+    // - follow the same process as above
     let mut authzd_scope_items = vec![];
 
-    // check which requested `scope` items the holder is authorized for
-    for (cfg_id, item) in &context.scope_items {
-        let auth = Subject::authorize(&provider, &request.subject_id, cfg_id)
+    for (credential_identifier, scope_item) in &context.scope_items {
+        let auth = Subject::authorize(provider, &request.subject_id, credential_identifier)
             .await
             .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
         if auth {
-            authzd_scope_items.push(item.clone());
-            authzd_cfg_ids.push(cfg_id.clone());
+            authzd_identifiers.push(credential_identifier.clone());
+            authzd_scope_items.push(scope_item.clone());
         }
     }
     let scope = if authzd_scope_items.is_empty() {
@@ -246,8 +249,8 @@ async fn process(
         Some(authzd_scope_items.join(" "))
     };
 
-    // error if holder is not authorized for any requested credentials
-    if auth_dets.is_none() && scope.is_none() {
+    // return an error if holder is not authorized for any requested credentials
+    if authorization_details.is_none() && scope.is_none() {
         return Err(Error::AccessDenied(
             "holder is not authorized for requested credentials".into(),
         ));
@@ -258,7 +261,7 @@ async fn process(
         expires_at: Utc::now() + Expire::AuthCode.duration(),
         credential_issuer: request.credential_issuer.clone(),
         client_id: Some(request.client_id.clone()),
-        credential_configuration_ids: authzd_cfg_ids,
+        credential_configuration_ids: authzd_identifiers,
         subject_id: Some(request.subject_id.clone()),
         ..State::default()
     };
@@ -267,20 +270,20 @@ async fn process(
         redirect_uri: request.redirect_uri.clone(),
         code_challenge: Some(request.code_challenge.clone()),
         code_challenge_method: Some(request.code_challenge_method.clone()),
-        authorization_details: auth_dets,
+        authorization_details,
         scope,
         ..Auth::default()
     };
     state.auth = Some(auth_state);
 
     let code = gen::auth_code();
-    StateManager::put(&provider, &code, state.to_vec(), state.expires_at)
+    StateManager::put(provider, &code, state.to_vec(), state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("state issue: {e}")))?;
 
     // remove offer state
     if let Some(issuer_state) = &request.issuer_state {
-        StateManager::purge(&provider, issuer_state)
+        StateManager::purge(provider, issuer_state)
             .await
             .map_err(|e| Error::ServerError(format!("state issue: {e}")))?;
     }
@@ -305,54 +308,51 @@ fn verify_authorization_details(
             return Err(Error::InvalidRequest("invalid authorization_details type".into()));
         }
 
-        let cfg_id_opt = &auth_det.credential_configuration_id;
-        let format_opt = &auth_det.format;
+        // verify requested credentials are supported
+        // N.B. only one of `credential_configuration_id` or `format` is allowed
+        match &auth_det.credential_type {
+            CredentialType::Identifier(identifier) => {
+                // is `credential_configuration_id` supported?
+                if !context
+                    .issuer_config
+                    .credential_configurations_supported
+                    .contains_key(identifier)
+                {
+                    return Err(Error::InvalidRequest(
+                        "unsupported credential_configuration_id".into(),
+                    ));
+                }
 
-        // verify that only one of `credential_configuration_id` or `format` is specified
-        if cfg_id_opt.is_some() && format_opt.is_some() {
-            return Err(Error::InvalidRequest(
-                "'credential_configuration_id and format cannot both be set".into(),
-            ));
-        }
-        if cfg_id_opt.is_none() && format_opt.is_none() {
-            return Err(Error::InvalidRequest(
-                "credential_configuration_id or format must be set".into(),
-            ));
-        }
+                // save auth_det by `credential_configuration_id` for later use
+                context.auth_dets.insert(identifier.clone(), auth_det.clone());
+                continue 'verify_details;
+            }
+            CredentialType::Format(format) => {
+                //  are `format` and `type` supported?
+                let Some(cred_def) = auth_det.credential_definition.as_ref() else {
+                    return Err(Error::InvalidRequest(
+                        "no `credential_definition` specified".into(),
+                    ));
+                };
 
-        // EITHER: verify requested `credential_configuration_id` is supported
-        if let Some(cfg_id) = cfg_id_opt {
-            if !context.issuer_meta.credential_configurations_supported.contains_key(cfg_id) {
+                // find matching `CredentialConfiguration`
+                for (cfg_id, cred_cfg) in &context.issuer_config.credential_configurations_supported
+                {
+                    if &cred_cfg.format == format
+                        && cred_cfg.credential_definition.type_ == cred_def.type_
+                    {
+                        // save auth_det by `credential_configuration_id` for later use
+                        context.auth_dets.insert(cfg_id.to_string(), auth_det.clone());
+                        continue 'verify_details;
+                    }
+                }
+
+                // no matching credential_configuration
                 return Err(Error::InvalidRequest(
-                    "unsupported credential_configuration_id".into(),
+                    "unsupported credential `format` or `type`".into(),
                 ));
             }
-
-            // save auth_det by `credential_configuration_id` for later use
-            context.auth_dets.insert(cfg_id.clone(), auth_det.clone());
-            continue 'verify_details;
-        }
-
-        // OR: verify requested `format` and `type` are supported
-        if let Some(format) = format_opt {
-            let Some(auth_def) = auth_det.credential_definition.as_ref() else {
-                return Err(Error::InvalidRequest("no `credential_definition` specified".into()));
-            };
-
-            // find matching `CredentialConfiguration`
-            for (cfg_id, cred_cfg) in &context.issuer_meta.credential_configurations_supported {
-                if &cred_cfg.format == format
-                    && cred_cfg.credential_definition.type_ == auth_def.type_
-                {
-                    // save auth_det by `credential_configuration_id` for later use
-                    context.auth_dets.insert(cfg_id.to_string(), auth_det.clone());
-                    continue 'verify_details;
-                }
-            }
-
-            // no matching credential_configuration
-            return Err(Error::InvalidRequest("unsupported credential `format` or `type`".into()));
-        }
+        };
     }
 
     Ok(())
@@ -363,7 +363,7 @@ fn verify_authorization_details(
 // N.B. has side effect of saving valid scope items into context for later use.
 fn verify_scope(context: &mut Context, scope: &str) -> Result<()> {
     'verify_scope: for item in scope.split_whitespace() {
-        for (cfg_id, cred_cfg) in &context.issuer_meta.credential_configurations_supported {
+        for (cfg_id, cred_cfg) in &context.issuer_config.credential_configurations_supported {
             // `authorization_details` credential request  takes precedence `scope` request
             if context.auth_dets.contains_key(cfg_id) {
                 continue;
