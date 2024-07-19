@@ -182,7 +182,8 @@ async fn verify(
 
     // code_challenge
     // N.B. while optional in the spec, we require it
-    let challenge_methods = server_config.oauth.code_challenge_methods_supported.unwrap_or_default();
+    let challenge_methods =
+        server_config.oauth.code_challenge_methods_supported.unwrap_or_default();
     if !challenge_methods.contains(&request.code_challenge_method) {
         return Err(Error::InvalidRequest("unsupported code_challenge_method".into()));
     }

@@ -1,42 +1,42 @@
-#![allow(missing_docs)]
-
-use std::ops::Deref;
-
 use chrono::{DateTime, Utc};
 use openid::issuer::{
-    self, Claims, Client,Server, ClientMetadata, Issuer, IssuerMetadata, Result, ServerMetadata, StateManager,
-    Subject,
+    Claims, Client, ClientMetadata, Issuer, IssuerMetadata, Result, Server, ServerMetadata,
+    StateManager, Subject,
 };
 use proof::jose::jwk::PublicKeyJwk;
 use proof::signature::{Algorithm, Signer, Verifier};
 
-use crate::proof::Enclave;
-pub use crate::providers::{Issuance, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER};
+use crate::store::proof::Enclave;
+use crate::store::{client, issuer, server, state, subject};
 
-#[derive(Clone, Debug)]
-pub struct Provider(Issuance);
+pub const CREDENTIAL_ISSUER: &str = "http://vercre.io";
+pub const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
+pub const NORMAL_USER: &str = "normal_user";
+pub const PENDING_USER: &str = "pending_user";
+
+#[derive(Default, Clone, Debug)]
+pub struct Provider {
+    pub client: client::Store,
+    pub issuer: issuer::Store,
+    pub server: server::Store,
+    pub subject: subject::Store,
+    pub state: state::Store,
+}
+
 impl Provider {
     #[must_use]
     pub fn new() -> Self {
-        Self(Issuance::new())
+        Self {
+            client: client::Store::new(),
+            issuer: issuer::Store::new(),
+            server: server::Store::new(),
+            subject: subject::Store::new(),
+            state: state::Store::new(),
+        }
     }
 }
 
-impl Default for Provider {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Deref for Provider {
-    type Target = Issuance;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl issuer::Provider for Provider {}
+impl openid::issuer::Provider for Provider {}
 
 impl ClientMetadata for Provider {
     async fn metadata(&self, client_id: &str) -> Result<Client> {

@@ -25,7 +25,6 @@ use self::issuer::GrantType;
 /// Presentations.
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-
 /// The `OpenID4VCI` specification defines commonly used [Credential Format Profiles]
 /// to support.  The profiles define Credential format specific parameters or claims
 /// used to support a particular format.

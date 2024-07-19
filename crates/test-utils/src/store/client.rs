@@ -15,7 +15,7 @@ pub struct Store {
 
 impl Store {
     pub fn new() -> Self {
-        let wallet = Client {
+        let client = Client {
             oauth: OAuthClient {
                 client_id: CLIENT_ID.into(),
                 client_name: Some("Wallet".into()),
@@ -27,38 +27,14 @@ impl Store {
             },
             credential_offer_endpoint: Some("openid-credential-offer://".into()),
         };
-        // let verifier = Client {
-        //     client_id: "http://vercre.io".into(),
-        //     client_name: Some("Verifier".into()),
-        //     redirect_uris: Some(vec!["http://localhost:3000/callback".into()]),
-        //     grant_types: None,
-        //     response_types: Some(vec!["vp_token".into(), "id_token vp_token".into()]),
-        //     vp_formats: Some(HashMap::from([
-        //         (
-        //             CredentialFormat::JwtVcJson,
-        //             VpFormat {
-        //                 alg: Some(vec!["ES256K".into()]),
-        //                 proof_type: Some(vec!["JsonWebSignature2020".into()]),
-        //             },
-        //         ),
-        //         (
-        //             CredentialFormat::JwtVcJson,
-        //             VpFormat {
-        //                 alg: Some(vec!["ES256K".into()]),
-        //                 proof_type: Some(vec!["JsonWebSignature2020".into()]),
-        //             },
-        //         ),
-        //     ])),
-        //     ..Client::default()
-        // };
 
         // Local verifier client for use when running end to end tests
-        let mut local = wallet.clone();
+        let mut local = client.clone();
         local.oauth.client_id = "http://localhost:8080".into();
 
         Self {
             clients: Arc::new(Mutex::new(HashMap::from([
-                (wallet.oauth.client_id.clone(), wallet),
+                (client.oauth.client_id.clone(), client),
                 (local.oauth.client_id.clone(), local),
             ]))),
         }

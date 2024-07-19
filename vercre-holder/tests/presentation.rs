@@ -5,7 +5,7 @@ use std::sync::LazyLock;
 use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use openid::verifier::{CreateRequestRequest, DeviceFlow, PresentationDefinitionType};
-use test_utils::{verifier, VERIFIER_ID};
+use test_utils::verifier::{self, VERIFIER_ID};
 use vercre_holder::credential::Credential;
 use vercre_holder::presentation::Status;
 use vercre_holder::provider::CredentialStorer;
@@ -52,7 +52,7 @@ async fn sample_credential() -> Credential {
         .await
         .expect("should encode");
 
-    let config = test_utils::sample::sample_credential_configuration_1();
+    let config = test_utils::sample::credential_configuration();
     Credential {
         issuer: "https://vercre.io".into(),
         id: vc.id.clone(),

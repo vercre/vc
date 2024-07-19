@@ -1,7 +1,6 @@
 //! # HTTP Server Example
 //!
 //! This example demonstrates how to use the Verifiable Credential Issuer (VCI)
-mod provider;
 
 use std::collections::HashMap;
 use std::sync::LazyLock; //Arc,
@@ -17,6 +16,7 @@ use axum_extra::TypedHeader;
 use oauth2::CsrfToken;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use test_utils::issuer::Provider;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};
@@ -29,8 +29,6 @@ use vercre_issuer::{
     CreateOfferResponse, CredentialRequest, CredentialResponse, DeferredCredentialRequest,
     DeferredCredentialResponse, MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,
 };
-
-use crate::provider::Provider;
 
 static AUTHORIZED: LazyLock<RwLock<HashMap<String, AuthorizationRequest>>> =
     LazyLock::new(|| RwLock::new(HashMap::new()));

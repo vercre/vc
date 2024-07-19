@@ -3,7 +3,7 @@ mod providers;
 use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
-use test_utils::{issuer, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_holder::provider::CredentialStorer;
 use vercre_holder::{OfferRequest, PinRequest, Status};
 use vercre_issuer::{CreateOfferRequest, CredentialOfferType};
