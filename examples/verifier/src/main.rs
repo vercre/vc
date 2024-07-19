@@ -4,6 +4,8 @@
 //! [Verifiable Credential HTTP API](
 //! https://identity.foundation/verifiable-credential/spec/#http-api).
 
+mod provider;
+
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -13,7 +15,6 @@ use axum_extra::headers::Host;
 use axum_extra::TypedHeader;
 use serde::Serialize;
 use serde_json::json;
-use test_utils::verifier::Provider;
 use tokio::net::TcpListener;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
@@ -23,6 +24,8 @@ use vercre_verifier::{
     CreateRequestRequest, CreateRequestResponse, RequestObjectRequest, RequestObjectResponse,
     ResponseRequest,
 };
+
+use crate::provider::Provider;
 
 #[tokio::main]
 async fn main() {

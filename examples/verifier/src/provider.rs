@@ -1,12 +1,11 @@
 use chrono::{DateTime, Utc};
-use openid::verifier::{Result, StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata};
-use proof::jose::jwk::PublicKeyJwk;
-use proof::signature::{self, Algorithm, Signer};
+use test_utils::store::proof::Enclave;
+use test_utils::store::{presentation, state};
+use vercre_verifier::provider::{
+    Algorithm, PublicKeyJwk, Result, SignatureVerifier, Signer, StateManager, Verifier,
+    VerifierMetadata, Wallet, WalletMetadata,
+};
 
-use crate::store::proof::Enclave;
-use crate::store::{presentation, state};
-
-pub const VERIFIER_ID: &str = "http://vercre.io";
 pub const VERIFY_KEY_ID: &str = "publicKeyModel1Id";
 pub const VERIFIER_DID: &str ="did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJwdWJsaWNLZXlNb2RlbDFJZCIsInB1YmxpY0tleUp3ayI6eyJjcnYiOiJzZWNwMjU2azEiLCJrdHkiOiJFQyIsIngiOiJ0WFNLQl9ydWJYUzdzQ2pYcXVwVkpFelRjVzNNc2ptRXZxMVlwWG45NlpnIiwieSI6ImRPaWNYcWJqRnhvR0otSzAtR0oxa0hZSnFpY19EX09NdVV3a1E3T2w2bmsifSwicHVycG9zZXMiOlsiYXV0aGVudGljYXRpb24iLCJrZXlBZ3JlZW1lbnQiXSwidHlwZSI6IkVjZHNhU2VjcDI1NmsxVmVyaWZpY2F0aW9uS2V5MjAxOSJ9XSwic2VydmljZXMiOlt7ImlkIjoic2VydmljZTFJZCIsInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly93d3cuc2VydmljZTEuY29tIiwidHlwZSI6InNlcnZpY2UxVHlwZSJ9XX19XSwidXBkYXRlQ29tbWl0bWVudCI6IkVpREtJa3dxTzY5SVBHM3BPbEhrZGI4Nm5ZdDBhTnhTSFp1MnItYmhFem5qZEEifSwic3VmZml4RGF0YSI6eyJkZWx0YUhhc2giOiJFaUNmRFdSbllsY0Q5RUdBM2RfNVoxQUh1LWlZcU1iSjluZmlxZHo1UzhWRGJnIiwicmVjb3ZlcnlDb21taXRtZW50IjoiRWlCZk9aZE10VTZPQnc4UGs4NzlRdFotMkotOUZiYmpTWnlvYUFfYnFENHpoQSJ9fQ";
 
@@ -26,7 +25,7 @@ impl Provider {
     }
 }
 
-impl openid::verifier::Provider for Provider {}
+impl vercre_verifier::provider::Provider for Provider {}
 
 impl VerifierMetadata for Provider {
     async fn metadata(&self, verifier_id: &str) -> Result<Verifier> {
@@ -77,7 +76,7 @@ impl Signer for Provider {
     }
 }
 
-impl signature::Verifier for Provider {
+impl SignatureVerifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
         Enclave::deref_jwk(did_url)
     }

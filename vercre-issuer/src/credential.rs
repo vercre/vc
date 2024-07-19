@@ -60,7 +60,7 @@ use crate::batch::batch;
 pub async fn credential(
     provider: impl Provider, request: &CredentialRequest,
 ) -> Result<CredentialResponse> {
-    crate::shell(provider, request, process).await
+    process(provider, request).await
 }
 
 async fn process(

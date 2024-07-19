@@ -1,7 +1,7 @@
 pub mod holder;
 pub mod issuer;
 pub mod sample;
-mod store;
+pub mod store;
 pub mod verifier;
 
 use std::sync::Once;

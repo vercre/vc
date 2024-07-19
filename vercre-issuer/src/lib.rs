@@ -108,7 +108,7 @@ pub mod provider {
     pub use proof::signature::{Algorithm, Signer, Verifier};
 }
 
-use std::future::Future;
+// use std::future::Future;
 
 pub use authorize::authorize;
 pub use batch::batch;
@@ -116,8 +116,8 @@ pub use create_offer::create_offer;
 pub use credential::credential;
 pub use deferred::deferred;
 pub use metadata::metadata;
-use openid::endpoint::Request;
-use openid::issuer::Provider;
+// use openid::endpoint::Request;
+// use openid::issuer::Provider;
 pub use openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     AuthorizationResponse, BatchCredentialRequest, BatchCredentialResponse, CreateOfferRequest,
@@ -131,13 +131,12 @@ pub use openid::Result;
 pub use register::register;
 pub use token::token;
 
-async fn shell<'a, P, R, U, E, F, Fut>(provider: P, request: &'a R, handler: F) -> Result<U, E>
-where
-    P: Provider,
-    R: Request + Sync,
-    F: FnOnce(P, &'a R) -> Fut + Send,
-    Fut: Future<Output = Result<U, E>> + Send,
-{
-    println!("in shell");
-    handler(provider, request).await
-}
+// async fn shell<'a, P, R, U, E, F, Fut>(provider: P, request: &'a R, handler: F) -> Result<U, E>
+// where
+//     P: Provider,
+//     R: Request + Sync,
+//     F: FnOnce(P, &'a R) -> Fut + Send,
+//     Fut: Future<Output = Result<U, E>> + Send,
+// {
+//     handler(provider, request).await
+// }

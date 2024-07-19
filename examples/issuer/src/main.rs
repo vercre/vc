@@ -2,6 +2,8 @@
 //!
 //! This example demonstrates how to use the Verifiable Credential Issuer (VCI)
 
+mod provider;
+
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
@@ -16,7 +18,6 @@ use axum_extra::TypedHeader;
 use oauth2::CsrfToken;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use test_utils::issuer::Provider;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};
@@ -30,6 +31,8 @@ use vercre_issuer::{
     DeferredCredentialResponse, MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,
 };
 
+use crate::provider::Provider;
+
 static AUTHORIZED: LazyLock<RwLock<HashMap<String, AuthorizationRequest>>> =
     LazyLock::new(|| RwLock::new(HashMap::new()));
 
@@ -38,7 +41,6 @@ async fn main() {
     let subscriber = FmtSubscriber::builder().with_max_level(Level::ERROR).finish();
     tracing::subscriber::set_global_default(subscriber).expect("set subscriber");
 
-    let provider = Provider::new();
     let cors = CorsLayer::new().allow_methods(Any).allow_origin(Any).allow_headers(Any);
 
     let router = Router::new()
@@ -56,7 +58,7 @@ async fn main() {
             header::CACHE_CONTROL,
             HeaderValue::from_static("no-cache, no-store"),
         ))
-        .with_state(provider);
+        .with_state(Provider::new());
 
     let listener = TcpListener::bind("0.0.0.0:8080").await.expect("should bind");
     tracing::info!("listening on {}", listener.local_addr().expect("should have addr"));
