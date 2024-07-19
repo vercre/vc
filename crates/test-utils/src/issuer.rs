@@ -7,7 +7,7 @@ use proof::jose::jwk::PublicKeyJwk;
 use proof::signature::{Algorithm, Signer, Verifier};
 
 use crate::store::proof::Enclave;
-use crate::store::{client, issuer, server, state, subject};
+use crate::store::{issuance, state};
 
 pub const CREDENTIAL_ISSUER: &str = "http://vercre.io";
 pub const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
@@ -16,10 +16,10 @@ pub const PENDING_USER: &str = "pending_user";
 
 #[derive(Default, Clone, Debug)]
 pub struct Provider {
-    pub client: client::Store,
-    pub issuer: issuer::Store,
-    pub server: server::Store,
-    pub subject: subject::Store,
+    pub client: issuance::ClientStore,
+    pub issuer: issuance::IssuerStore,
+    pub server: issuance::ServerStore,
+    pub subject: issuance::SubjectStore,
     pub state: state::Store,
 }
 
@@ -27,10 +27,10 @@ impl Provider {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            client: client::Store::new(),
-            issuer: issuer::Store::new(),
-            server: server::Store::new(),
-            subject: subject::Store::new(),
+            client: issuance::ClientStore::new(),
+            issuer: issuance::IssuerStore::new(),
+            server: issuance::ServerStore::new(),
+            subject: issuance::SubjectStore::new(),
             state: state::Store::new(),
         }
     }

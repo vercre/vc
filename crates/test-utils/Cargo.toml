@@ -16,7 +16,6 @@ version.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-proof.workspace = true
 anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true
@@ -24,6 +23,8 @@ ecdsa.workspace = true
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 k256.workspace = true
 openid.workspace = true
+proof.workspace = true
+serde.workspace = true
 serde_json.workspace = true
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 tracing.workspace = true

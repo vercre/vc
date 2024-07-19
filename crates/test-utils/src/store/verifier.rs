@@ -3,8 +3,7 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
 use openid::endpoint::Result;
-use openid::verifier::{CredentialFormat, Verifier, VpFormat};
-use openid::OAuthClient;
+use openid::verifier::Verifier;
 use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]
@@ -14,34 +13,8 @@ pub struct Store {
 
 impl Store {
     pub fn new() -> Self {
-        let verifier = Verifier {
-            oauth: OAuthClient {
-                client_id: "http://vercre.io".into(),
-                client_name: Some("Verifier".into()),
-                redirect_uris: Some(vec!["http://localhost:3000/callback".into()]),
-                grant_types: None,
-                response_types: Some(vec!["vp_token".into(), "id_token vp_token".into()]),
-                ..OAuthClient::default()
-            },
-            vp_formats: Some(HashMap::from([
-                (
-                    CredentialFormat::JwtVcJson,
-                    VpFormat {
-                        alg: Some(vec!["ES256K".into()]),
-                        proof_type: Some(vec!["JsonWebSignature2020".into()]),
-                    },
-                ),
-                (
-                    CredentialFormat::JwtVcJson,
-                    VpFormat {
-                        alg: Some(vec!["ES256K".into()]),
-                        proof_type: Some(vec!["JsonWebSignature2020".into()]),
-                    },
-                ),
-            ])),
-        };
-
-        // Local verifier client for use when running end to end tests
+        let json = include_bytes!("verifier.json");
+        let verifier: Verifier = serde_json::from_slice(json).expect("should serialize");
 
         Self {
             verifiers: Arc::new(Mutex::new(HashMap::from([(
