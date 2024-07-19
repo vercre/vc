@@ -61,7 +61,7 @@ pub async fn credential(
     provider: impl Provider, request: &CredentialRequest,
 ) -> Result<CredentialResponse> {
     // shell(&mut ctx, provider, request, process).await
-    process(provider, request).await
+    super::shell(provider, request, process).await
 }
 
 async fn process(

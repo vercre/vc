@@ -16,31 +16,6 @@ pub trait Request {
     }
 }
 
-/// Handler is implemented by all request handlers.
-pub trait Handler<'a, C, P, R, U, E>: Send
-where
-    R: Request + Sync,
-{
-    /// Handle the request.
-    fn handle(
-        self, context: C, provider: P, request: &'a R,
-    ) -> impl Future<Output = Result<U, E>> + Send;
-}
-
-// Blanket implementation for all functions that take a provider and a request and return a
-// future that resolves to a result.
-impl<'a, C, P, R, U, F, Fut, E> Handler<'a, C, P, R, U, E> for F
-where
-    R: 'a + Request + Sync,
-    F: FnOnce(C, P, &'a R) -> Fut + Send,
-    Fut: Future<Output = Result<U, E>> + Send,
-{
-    fn handle(
-        self, context: C, provider: P, request: &'a R,
-    ) -> impl Future<Output = Result<U, E>> + Send {
-        self(context, provider, request)
-    }
-}
 
 /// `StateManager` is used to store and manage server state.
 pub trait StateManager: Send + Sync {
