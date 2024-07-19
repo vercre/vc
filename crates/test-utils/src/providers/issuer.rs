@@ -11,11 +11,11 @@ pub struct Store {
 
 impl Store {
     pub fn new() -> Self {
-        let issuer = Issuer::sample();
+        let issuer = crate::sample::sample_issuer();
 
         Self {
             issuers: HashMap::from([
-                ("http://localhost:8080".into(), issuer.clone()),
+                ("http://localhost:8080".to_string(), issuer.clone()),
                 (issuer.credential_issuer.clone(), issuer),
             ]),
         }

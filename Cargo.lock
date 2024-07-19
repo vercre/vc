@@ -3076,7 +3076,6 @@ dependencies = [
  "serde_json",
  "serde_qs",
  "thiserror",
- "tracing",
  "w3c-vc",
 ]
 
@@ -5767,7 +5766,6 @@ dependencies = [
 name = "vercre-issuer"
 version = "0.1.0-alpha.4"
 dependencies = [
- "anyhow",
  "assert_let_bind",
  "base64ct",
  "chrono",

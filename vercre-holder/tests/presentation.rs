@@ -4,7 +4,6 @@ use std::sync::LazyLock;
 
 use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use insta::assert_yaml_snapshot as assert_snapshot;
-use openid::issuer::CredentialConfiguration;
 use openid::verifier::{CreateRequestRequest, DeviceFlow, PresentationDefinitionType};
 use test_utils::{verifier, VERIFIER_ID};
 use vercre_holder::credential::Credential;
@@ -18,30 +17,6 @@ use crate::providers::holder;
 static VERIFIER_PROVIDER: LazyLock<verifier::Provider> = LazyLock::new(verifier::Provider::new);
 static HOLDER_PROVIDER: LazyLock<holder::Provider> =
     LazyLock::new(|| holder::Provider::new(None, Some(VERIFIER_PROVIDER.clone())));
-
-// static CREATE_REQUEST: LazyLock<CreateRequestRequest> = LazyLock::new(|| CreateRequestRequest {
-//     client_id: VERIFIER_ID.into(),
-//     device_flow: DeviceFlow::CrossDevice,
-//     purpose: "To verify employment status".into(),
-//     input_descriptors: vec![InputDescriptor {
-//         id: "EmployeeID_JWT".into(),
-//         constraints: Constraints {
-//             fields: Some(vec![Field {
-//                 path: vec!["$.type".into()],
-//                 filter: Some(Filter {
-//                     type_: "string".into(),
-//                     value: FilterValue::Const("EmployeeIDCredential".into()),
-//                 }),
-//                 ..Default::default()
-//             }]),
-//             ..Default::default()
-//         },
-//         name: None,
-//         purpose: None,
-//         format: None,
-//     }],
-//     ..Default::default()
-// });
 
 fn setup_create_request() -> CreateRequestRequest {
     CreateRequestRequest {
@@ -77,7 +52,7 @@ async fn sample_credential() -> Credential {
         .await
         .expect("should encode");
 
-    let config = CredentialConfiguration::sample();
+    let config = test_utils::sample::sample_credential_configuration_1();
     Credential {
         issuer: "https://vercre.io".into(),
         id: vc.id.clone(),
