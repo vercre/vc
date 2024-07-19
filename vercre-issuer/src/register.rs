@@ -18,8 +18,6 @@ use crate::state::State;
 pub async fn register(
     provider: impl Provider, request: &RegistrationRequest,
 ) -> Result<RegistrationResponse> {
-    // shell(&mut ctx, provider.clone(), request, verify).await?;
-    // shell(&mut ctx, provider, request, process).await
     verify(provider.clone(), request).await?;
     process(provider, request).await
 }

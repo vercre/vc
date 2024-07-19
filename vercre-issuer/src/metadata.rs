@@ -39,7 +39,6 @@ use tracing::instrument;
 pub async fn metadata(
     provider: impl Provider, request: &MetadataRequest,
 ) -> Result<MetadataResponse> {
-    // shell(&mut ctx, provider, request, process).await
     process(provider, request).await
 }
 

@@ -43,8 +43,7 @@ pub async fn token(provider: impl Provider, request: &TokenRequest) -> Result<To
     };
 
     let ctx = Context { state };
-    // shell(&mut ctx, provider.clone(), request, verify).await?;
-    // shell(&mut ctx, provider, request, process).await
+
     verify(&ctx, provider.clone(), request).await?;
     process(&ctx, provider, request).await
 }
@@ -176,7 +175,7 @@ mod tests {
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid::issuer::{
-        AuthorizationDetail, AuthorizationDetailType, CredentialDefinition,
+        AuthorizationDetail, AuthorizationDetailType, CredentialDefinition, CredentialType,
         TokenAuthorizationDetail,
     };
     use openid::CredentialFormat;
@@ -272,7 +271,7 @@ mod tests {
             authorization_details: Some(vec![TokenAuthorizationDetail {
                 authorization_detail: AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,
-                    format: Some(CredentialFormat::JwtVcJson),
+                    credential_type: CredentialType::Format(CredentialFormat::JwtVcJson),
                     credential_definition: Some(CredentialDefinition {
                         type_: Some(vec![
                             "VerifiableCredential".into(),

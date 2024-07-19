@@ -43,8 +43,7 @@ use crate::state::State;
 pub async fn response(
     provider: impl Provider, request: &ResponseRequest,
 ) -> Result<ResponseResponse> {
-    // TODO: handle case where Wallet returns error instead of subm
-
+    // TODO: handle case where Wallet returns error instead of submission
     verify(provider.clone(), request).await?;
     process(provider, request).await
 }

@@ -28,7 +28,6 @@ use crate::state::State;
 pub async fn deferred(
     provider: impl Provider, request: &DeferredCredentialRequest,
 ) -> Result<DeferredCredentialResponse> {
-    // shell(&mut ctx, provider, request, process).await
     process(provider, request).await
 }
 

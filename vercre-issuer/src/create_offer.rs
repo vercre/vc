@@ -87,8 +87,6 @@ use crate::state::{Auth, Expire, State};
 pub async fn create_offer(
     provider: impl Provider, request: &CreateOfferRequest,
 ) -> Result<CreateOfferResponse> {
-    // shell(&mut ctx, provider.clone(), request, verify).await?;
-    // shell(&mut ctx, provider, request, process).await
     verify(provider.clone(), request).await?;
     process(provider, request).await
 }

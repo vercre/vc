@@ -51,8 +51,6 @@ pub async fn batch(
         holder_did: String::new(),
     };
 
-    // shell(&mut ctx, provider.clone(), request, verify).await?;
-    // shell(&mut ctx, provider, request, process).await
     verify(&mut ctx, provider.clone(), request).await?;
     process(&ctx, provider, request).await
 }
