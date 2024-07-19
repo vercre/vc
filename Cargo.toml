@@ -1,8 +1,8 @@
 [workspace]
 members = [
     "crates/*",
-    "examples/issuance",
-    "examples/presentation",
+    "examples/issuer",
+    "examples/verifier",
     "examples/wallet/src-tauri",
     "vercre-holder",
     "vercre-issuer",

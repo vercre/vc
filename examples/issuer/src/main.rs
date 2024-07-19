@@ -3,7 +3,7 @@
 //! This example demonstrates how to use the Verifiable Credential Issuer (VCI)
 
 use std::collections::HashMap;
-use std::sync::LazyLock; //Arc,
+use std::sync::LazyLock;
 
 use axum::extract::State;
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
@@ -70,6 +70,7 @@ async fn create_offer(
     Json(mut req): Json<CreateOfferRequest>,
 ) -> AxResult<CreateOfferResponse> {
     req.credential_issuer = format!("http://{host}");
+
     vercre_issuer::create_offer(provider, &req).await.into()
 }
 

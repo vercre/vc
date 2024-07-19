@@ -2383,7 +2383,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "issuance"
+name = "issuer"
 version = "0.0.0"
 dependencies = [
  "axum",
@@ -3507,22 +3507,6 @@ name = "precomputed-hash"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "925383efa346730478fb4838dbe9137d2a47675ad789c546d150a6e1dd4ab31c"
-
-[[package]]
-name = "presentation"
-version = "0.0.0"
-dependencies = [
- "axum",
- "axum-extra",
- "serde",
- "serde_json",
- "test-utils",
- "tokio",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "vercre-verifier",
-]
 
 [[package]]
 name = "proc-macro-crate"
@@ -5803,6 +5787,22 @@ dependencies = [
  "tracing",
  "uuid",
  "w3c-vc",
+]
+
+[[package]]
+name = "verifier"
+version = "0.0.0"
+dependencies = [
+ "axum",
+ "axum-extra",
+ "serde",
+ "serde_json",
+ "test-utils",
+ "tokio",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "vercre-verifier",
 ]
 
 [[package]]
