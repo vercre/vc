@@ -1,5 +1,6 @@
 //! # `OpenID` for Verifiable Presentations (`OpenID4VP`)
 
+use std::collections::HashMap;
 use std::fmt;
 use std::io::Cursor;
 
@@ -13,7 +14,7 @@ use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 use w3c_vc::model::VerifiablePresentation;
 
-use super::Client as ClientMetadata;
+pub use super::CredentialFormat;
 use crate::stringify;
 
 /// The Request Object Request is created by the Verifier to generate an
@@ -322,7 +323,7 @@ pub enum ClientMetadataType {
     /// A Client Metadata object embedded in the `RequestObject`.
     #[serde(rename = "client_metadata")]
     #[serde(with = "stringify")]
-    Object(ClientMetadata),
+    Object(Verifier),
 
     /// A URI pointing to where a Client Metadata object can be
     /// retrieved.
@@ -332,7 +333,7 @@ pub enum ClientMetadataType {
 
 impl Default for ClientMetadataType {
     fn default() -> Self {
-        Self::Object(ClientMetadata::default())
+        Self::Object(Verifier::default())
     }
 }
 
@@ -568,7 +569,7 @@ pub struct MetadataRequest {
 pub struct MetadataResponse {
     /// The Client metadata for the specified Verifier.
     #[serde(flatten)]
-    pub client: ClientMetadata,
+    pub client: Verifier,
 }
 
 /// Used to define the format and proof types of Verifiable Presentations and
@@ -587,17 +588,65 @@ pub struct VpFormat {
     pub proof_type: Option<Vec<String>>,
 }
 
+/// OAuth 2 client metadata used for registering clients of the issuance and
+/// vercre-wallet authorization servers.
+///
+/// In the case of Issuance, the Wallet is the Client and the Issuer is the
+/// Authorization Server.
+///
+/// In the case of Presentation, the Wallet is the Authorization Server and the
+/// Verifier is the Client.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Verifier {
+    /// OAuth 2.0 Client
+    #[serde(flatten)]
+    pub oauth: super::OAuthClient,
+
+    /// An object defining the formats and proof types of Verifiable Presentations
+    /// and Verifiable Credentials that a Verifier supports. For specific values that
+    /// can be used.
+    ///
+    /// # Example
+    ///
+    /// ```json
+    /// "jwt_vc_json": {
+    ///     "proof_type": [
+    ///         "JsonWebSignature2020"
+    ///     ]
+    /// }
+    /// ```
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vp_formats: Option<HashMap<CredentialFormat, VpFormat>>,
+}
+
+/// OAuth 2.0 Authorization Server metadata.
+/// See RFC 8414 - Authorization Server Metadata
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Wallet {
+    /// OAuth 2.0 Server
+    #[serde(flatten)]
+    pub oauth: super::OAuthServer,
+
+    /// Specifies whether the Wallet supports the transfer of
+    /// `presentation_definition` by reference, with true indicating support.
+    /// If omitted, the default value is true.
+    pub presentation_definition_uri_supported: bool,
+
+    /// A list of key value pairs, where the key identifies a Credential format
+    /// supported by the Wallet.
+    pub vp_formats_supported: Option<HashMap<String, VpFormat>>,
+}
+
 use std::fmt::Debug;
 use std::future::Future;
 
-use proof::signature::{Signer, Verifier};
+use proof::signature::{self, Signer};
 
 pub use crate::endpoint::{self, Result, StateManager};
-use crate::{Client, Server};
 
 /// Issuer Provider trait.
 pub trait Provider:
-    VerifierMetadata + WalletMetadata + StateManager + Signer + Verifier + Clone
+    VerifierMetadata + WalletMetadata + StateManager + Signer + signature::Verifier + Clone
 {
 }
 
@@ -606,16 +655,16 @@ pub trait Provider:
 #[allow(clippy::module_name_repetitions)]
 pub trait VerifierMetadata: Send + Sync {
     /// Returns client metadata for the specified client.
-    fn metadata(&self, verifier_id: &str) -> impl Future<Output = Result<Client>> + Send;
+    fn metadata(&self, verifier_id: &str) -> impl Future<Output = Result<Verifier>> + Send;
 
     /// Used by OAuth 2.0 clients to dynamically register with the authorization
     /// server.
-    fn register(&self, verifier: &Client) -> impl Future<Output = Result<Client>> + Send;
+    fn register(&self, verifier: &Verifier) -> impl Future<Output = Result<Verifier>> + Send;
 }
 
 /// The `WalletMetadata` trait is used by implementers to provide Wallet
 /// (Authorization Server) metadata.
 pub trait WalletMetadata: Send + Sync {
     /// Returns the Authorization Server's metadata.
-    fn metadata(&self, wallet_id: &str) -> impl Future<Output = Result<Server>> + Send;
+    fn metadata(&self, wallet_id: &str) -> impl Future<Output = Result<Wallet>> + Send;
 }

@@ -147,9 +147,9 @@ async fn process(
     let mut user_code = None;
 
     if request.pre_authorize {
-        // ------------------------------------------------
+        // -------------------------
         // Pre-authorized Code Grant
-        // ------------------------------------------------
+        // -------------------------
         let pre_auth_code = gen::auth_code();
 
         let tx_code = if request.tx_code_required {
@@ -165,7 +165,7 @@ async fn process(
         pre_auth_grant = Some(PreAuthorizedCodeGrant {
             pre_authorized_code: pre_auth_code.clone(),
             tx_code,
-            ..Default::default()
+            ..PreAuthorizedCodeGrant::default()
         });
 
         if request.tx_code_required {
@@ -182,9 +182,9 @@ async fn process(
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
     } else {
-        // ------------------------------------------------
+        // -------------------------
         // Authorization Code Grant
-        // ------------------------------------------------
+        // -------------------------
         let issuer_state = gen::state_key();
 
         auth_grant = Some(AuthorizationCodeGrant {

@@ -104,7 +104,7 @@ pub mod provider {
         Claims, ClientMetadata, IssuerMetadata, Provider, Result, ServerMetadata, StateManager,
         Subject,
     };
-    pub use openid::{Client, Server};
+    pub use openid::issuer::{Client, Server};
     pub use proof::jose::jwk::PublicKeyJwk;
     pub use proof::signature::{Algorithm, Signer, Verifier};
 }

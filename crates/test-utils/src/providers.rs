@@ -4,6 +4,7 @@ pub mod proof;
 pub mod server;
 pub mod state;
 pub mod subject;
+pub mod verifier;
 
 pub const CREDENTIAL_ISSUER: &str = "http://vercre.io";
 pub const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
@@ -37,7 +38,7 @@ impl Issuance {
 
 #[derive(Default, Clone, Debug)]
 pub struct Presentation {
-    pub client: client::Store,
+    pub verifier: verifier::Store,
     pub state: state::Store,
 }
 
@@ -45,7 +46,7 @@ impl Presentation {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            client: client::Store::new(),
+            verifier: verifier::Store::new(),
             state: state::Store::new(),
         }
     }

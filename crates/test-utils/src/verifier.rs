@@ -3,10 +3,12 @@
 use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
-use openid::verifier::{self, Result, StateManager, VerifierMetadata, WalletMetadata};
-use openid::{Client, Server};
+use openid::verifier::{
+    self, Result, StateManager, Verifier, VerifierMetadata, Wallet,
+    WalletMetadata,
+};
 use proof::jose::jwk::PublicKeyJwk;
-use proof::signature::{Algorithm, Signer, Verifier};
+use proof::signature::{self, Algorithm, Signer};
 
 use crate::proof::Enclave;
 pub use crate::providers::{Presentation, VERIFIER_DID, VERIFIER_ID, VERIFY_KEY_ID};
@@ -37,17 +39,17 @@ impl Deref for Provider {
 impl verifier::Provider for Provider {}
 
 impl VerifierMetadata for Provider {
-    async fn metadata(&self, verifier_id: &str) -> Result<Client> {
-        self.client.get(verifier_id)
+    async fn metadata(&self, verifier_id: &str) -> Result<Verifier> {
+        self.verifier.get(verifier_id)
     }
 
-    async fn register(&self, client: &Client) -> Result<Client> {
-        self.client.add(client)
+    async fn register(&self, client: &Verifier) -> Result<Verifier> {
+        self.verifier.add(client)
     }
 }
 
 impl WalletMetadata for Provider {
-    async fn metadata(&self, _wallet_id: &str) -> Result<Server> {
+    async fn metadata(&self, _wallet_id: &str) -> Result<Wallet> {
         unimplemented!("WalletMetadata")
     }
 }
@@ -85,7 +87,7 @@ impl Signer for Provider {
     }
 }
 
-impl Verifier for Provider {
+impl signature::Verifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
         Enclave::deref_jwk(did_url)
     }

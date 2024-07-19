@@ -95,15 +95,7 @@ use crate::state::{Auth, Expire, State};
 pub async fn authorize(
     provider: impl Provider, request: &AuthorizationRequest,
 ) -> Result<AuthorizationResponse> {
-    let issuer_meta = IssuerMetadata::metadata(&provider, &request.credential_issuer)
-        .await
-        .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
-
-    let mut ctx = Context {
-        issuer_meta,
-        auth_dets: HashMap::new(),
-        scope_items: HashMap::new(),
-    };
+    let mut ctx = Context::default();
 
     // shell(&mut ctx, provider.clone(), request, verify).await?;
     // shell(&mut ctx, provider, request, process).await
@@ -111,7 +103,7 @@ pub async fn authorize(
     process(&ctx, provider, request).await
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 struct Context {
     issuer_meta: Issuer,
     auth_dets: HashMap<String, AuthorizationDetail>,
@@ -130,14 +122,18 @@ async fn verify(
         .await
         .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
 
+    context.issuer_meta = IssuerMetadata::metadata(&provider, &request.credential_issuer)
+        .await
+        .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
+
     // 'authorization_code' grant_type allowed (client and server)?
-    let client_grant_types = client_config.grant_types.unwrap_or_default();
+    let client_grant_types = client_config.oauth.grant_types.unwrap_or_default();
     if !client_grant_types.contains(&GrantType::AuthorizationCode) {
         return Err(Error::InvalidRequest(
             "authorization_code grant not supported for client".into(),
         ));
     }
-    let server_grant_types = server_config.grant_types_supported.unwrap_or_default();
+    let server_grant_types = server_config.oauth.grant_types_supported.unwrap_or_default();
     if !server_grant_types.contains(&GrantType::AuthorizationCode) {
         return Err(Error::InvalidRequest(
             "authorization_code grant not supported for server".into(),
@@ -167,7 +163,7 @@ async fn verify(
     let Some(redirect_uri) = &request.redirect_uri else {
         return Err(Error::InvalidRequest("no redirect_uri specified".into()));
     };
-    let Some(redirect_uris) = client_config.redirect_uris else {
+    let Some(redirect_uris) = client_config.oauth.redirect_uris else {
         return Err(Error::InvalidRequest("no redirect_uris specified for client".into()));
     };
     if !redirect_uris.contains(redirect_uri) {
@@ -175,18 +171,18 @@ async fn verify(
     }
 
     // response_type
-    if !client_config.response_types.unwrap_or_default().contains(&request.response_type) {
+    if !client_config.oauth.response_types.unwrap_or_default().contains(&request.response_type) {
         return Err(Error::UnsupportedResponseType(
             "the response_type not supported by client".into(),
         ));
     }
-    if !server_config.response_types_supported.contains(&request.response_type) {
+    if !server_config.oauth.response_types_supported.contains(&request.response_type) {
         return Err(Error::UnsupportedResponseType("response_type not supported by server".into()));
     }
 
     // code_challenge
     // N.B. while optional in the spec, we require it
-    let challenge_methods = server_config.code_challenge_methods_supported.unwrap_or_default();
+    let challenge_methods = server_config.oauth.code_challenge_methods_supported.unwrap_or_default();
     if !challenge_methods.contains(&request.code_challenge_method) {
         return Err(Error::InvalidRequest("unsupported code_challenge_method".into()));
     }

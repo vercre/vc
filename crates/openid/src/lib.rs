@@ -13,7 +13,6 @@ pub mod issuer;
 mod stringify;
 pub mod verifier;
 
-use std::collections::HashMap;
 use std::fmt::{self, Display};
 use std::str::FromStr;
 
@@ -21,11 +20,72 @@ use serde::{Deserialize, Serialize};
 
 pub use self::error::Error;
 use self::issuer::GrantType;
-use self::verifier::VpFormat;
 
 /// Result type for `OpenID` for Verifiable Credential Issuance and Verifiable
 /// Presentations.
 pub type Result<T, E = Error> = std::result::Result<T, E>;
+
+
+/// The `OpenID4VCI` specification defines commonly used [Credential Format Profiles]
+/// to support.  The profiles define Credential format specific parameters or claims
+/// used to support a particular format.
+///
+///
+/// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq, Hash)]
+pub enum CredentialFormat {
+    /// A W3C Verifiable Credential.
+    ///
+    /// When this format is specified, Credential Offer, Authorization Details,
+    /// Credential Request, and Credential Issuer metadata, including
+    /// `credential_definition` object, MUST NOT be processed using JSON-LD rules.
+    #[default]
+    #[serde(rename = "jwt_vc_json")]
+    JwtVcJson,
+
+    /// A W3C Verifiable Credential.
+    ///
+    /// When using this format, data MUST NOT be processed using JSON-LD rules.
+    ///
+    /// N.B. The `@context` value in the `credential_definition` object can be used by
+    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
+    /// could apply JSON-LD processing to the Credential issued.
+    #[serde(rename = "ldp-vc")]
+    LdpVc,
+
+    /// A W3C Verifiable Credential.
+    ///
+    /// When using this format, data MUST NOT be processed using JSON-LD rules.
+    ///
+    /// N.B. The `@context` value in the `credential_definition` object can be used by
+    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
+    /// could apply JSON-LD processing to the Credential issued.
+    #[serde(rename = "jwt_vc_json-ld")]
+    JwtVcJsonLd,
+
+    /// ISO mDL.
+    ///
+    /// A Credential Format Profile for Credentials complying with [ISO.18013-5] —
+    /// ISO-compliant driving licence specification.
+    ///
+    /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
+    #[serde(rename = "mso_mdoc")]
+    MsoDoc,
+
+    /// IETF SD-JWT VC.
+    ///
+    /// A Credential Format Profile for Credentials complying with
+    /// [I-D.ietf-oauth-sd-jwt-vc] — SD-JWT-based Verifiable Credentials for
+    /// selective disclosure.
+    ///
+    /// [I-D.ietf-oauth-sd-jwt-vc]: (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-01)
+    #[serde(rename = "vc+sd-jwt")]
+    VcSdJwt,
+
+    /// W3C Verifiable Credential.
+    #[serde(rename = "jwt_vp_json")]
+    JwtVpJson,
+}
 
 /// OAuth 2 client metadata used for registering clients of the issuance and
 /// vercre-wallet authorization servers.
@@ -36,7 +96,7 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 /// In the case of Presentation, the Wallet is the Authorization Server and the
 /// Verifier is the Client.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Client {
+pub struct OAuthClient {
     /// ID of the registered client.
     pub client_id: String,
 
@@ -139,33 +199,9 @@ pub struct Client {
     /// A version identifier string for the client software identified by `software_id`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub software_version: Option<String>,
-
-    /// **`OpenID4VCI`**
-    /// Used by the Wallet to publish its Credential Offer endpoint. The Credential
-    /// Issuer should use "`openid-credential-offer://`" if unable to perform discovery
-    /// of the endpoint.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_offer_endpoint: Option<String>,
-
-    /// **`OpenID4VP`**
-    /// An object defining the formats and proof types of Verifiable Presentations
-    /// and Verifiable Credentials that a Verifier supports. For specific values that
-    /// can be used.
-    ///
-    /// # Example
-    ///
-    /// ```json
-    /// "jwt_vc_json": {
-    ///     "proof_type": [
-    ///         "JsonWebSignature2020"
-    ///     ]
-    /// }
-    /// ```
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub vp_formats: Option<HashMap<CredentialFormat, VpFormat>>,
 }
 
-impl Client {
+impl OAuthClient {
     /// Create a new Client with the specified client ID.
     #[must_use]
     pub fn new(client_id: &str) -> Self {
@@ -176,7 +212,7 @@ impl Client {
     }
 }
 
-impl Display for Client {
+impl Display for OAuthClient {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
         let Ok(s) = serde_json::to_string(self) else {
             return Err(fmt::Error);
@@ -185,7 +221,7 @@ impl Display for Client {
     }
 }
 
-impl FromStr for Client {
+impl FromStr for OAuthClient {
     type Err = error::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -198,8 +234,8 @@ impl FromStr for Client {
 
 /// OAuth 2.0 Authorization Server metadata.
 /// See RFC 8414 - Authorization Server Metadata
-#[derive(Default, Debug, Clone, Deserialize, Serialize)]
-pub struct Server {
+#[derive(Default, Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+pub struct OAuthServer {
     /// The authorization server's issuer identifier (URL). MUST be identical to
     /// the issuer identifier value in the well-known URI:
     /// `{issuer}/.well-known/oauth-authorization-server`.
@@ -310,135 +346,4 @@ pub struct Server {
     /// authorization server as a bundle.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub signed_metadata: Option<String>,
-
-    /// **`OpenID4VCI`**
-    /// Indicates whether the issuer accepts a Token Request with a
-    /// Pre-Authorized Code but without a client id. Defaults to false.
-    #[serde(rename = "pre-authorized_grant_anonymous_access_supported")]
-    pub pre_authorized_grant_anonymous_access_supported: bool,
-
-    /// **`OpenID4VP`**
-    /// Specifies whether the Wallet supports the transfer of
-    /// `presentation_definition` by reference, with true indicating support.
-    /// If omitted, the default value is true.
-    pub presentation_definition_uri_supported: bool,
-
-    /// **`OpenID4VP`**
-    /// A list of key value pairs, where the key identifies a Credential format
-    /// supported by the Wallet.
-    pub vp_formats_supported: Option<HashMap<String, VpFormat>>,
-}
-
-impl Server {
-    /// Create a new `Issuer` with the specified `credential_issuer` and
-    /// `credential_endpoint`.
-    #[must_use]
-    pub fn sample() -> Self {
-        Self {
-            issuer: "http://vercre.io".into(),
-            authorization_endpoint: "/auth".into(),
-            token_endpoint: "/token".into(),
-            scopes_supported: Some(vec!["openid".into()]),
-            response_types_supported: vec!["code".into()],
-            response_modes_supported: Some(vec!["query".into()]),
-            grant_types_supported: Some(vec![
-                GrantType::AuthorizationCode,
-                GrantType::PreAuthorizedCode,
-            ]),
-            code_challenge_methods_supported: Some(vec!["S256".into()]),
-            pre_authorized_grant_anonymous_access_supported: true,
-            presentation_definition_uri_supported: false,
-            jwks_uri: None,
-            registration_endpoint: None,
-            token_endpoint_auth_methods_supported: None,
-            token_endpoint_auth_signing_alg_values_supported: None,
-            service_documentation: None,
-            ui_locales_supported: None,
-            op_policy_uri: None,
-            op_tos_uri: None,
-            revocation_endpoint: None,
-            revocation_endpoint_auth_methods_supported: None,
-            revocation_endpoint_auth_signing_alg_values_supported: None,
-            introspection_endpoint: None,
-            introspection_endpoint_auth_methods_supported: None,
-            introspection_endpoint_auth_signing_alg_values_supported: None,
-            signed_metadata: None,
-            vp_formats_supported: None,
-            // vp_formats_supported: Some(HashMap::from([
-            //     (
-            //         "jwt_vc_json".into(),
-            //         VpFormat {
-            //             alg_values_supported: Some(vec!["ES256K".into(), "EdDSA".into()]),
-            //         },
-            //     ),
-            //     (
-            //         "jwt_vp_json".into(),
-            //         VpFormat {
-            //             alg_values_supported: Some(vec!["ES256K"into(), "EdDSA".into()]),
-            //         },
-            //     ),
-            // ])),
-        }
-    }
-}
-
-/// The `OpenID4VCI` specification defines commonly used [Credential Format Profiles]
-/// to support.  The profiles define Credential format specific parameters or claims
-/// used to support a particular format.
-///
-///
-/// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq, Hash)]
-pub enum CredentialFormat {
-    /// A W3C Verifiable Credential.
-    ///
-    /// When this format is specified, Credential Offer, Authorization Details,
-    /// Credential Request, and Credential Issuer metadata, including
-    /// `credential_definition` object, MUST NOT be processed using JSON-LD rules.
-    #[default]
-    #[serde(rename = "jwt_vc_json")]
-    JwtVcJson,
-
-    /// A W3C Verifiable Credential.
-    ///
-    /// When using this format, data MUST NOT be processed using JSON-LD rules.
-    ///
-    /// N.B. The `@context` value in the `credential_definition` object can be used by
-    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
-    /// could apply JSON-LD processing to the Credential issued.
-    #[serde(rename = "ldp-vc")]
-    LdpVc,
-
-    /// A W3C Verifiable Credential.
-    ///
-    /// When using this format, data MUST NOT be processed using JSON-LD rules.
-    ///
-    /// N.B. The `@context` value in the `credential_definition` object can be used by
-    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
-    /// could apply JSON-LD processing to the Credential issued.
-    #[serde(rename = "jwt_vc_json-ld")]
-    JwtVcJsonLd,
-
-    /// ISO mDL.
-    ///
-    /// A Credential Format Profile for Credentials complying with [ISO.18013-5] —
-    /// ISO-compliant driving licence specification.
-    ///
-    /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
-    #[serde(rename = "mso_mdoc")]
-    MsoDoc,
-
-    /// IETF SD-JWT VC.
-    ///
-    /// A Credential Format Profile for Credentials complying with
-    /// [I-D.ietf-oauth-sd-jwt-vc] — SD-JWT-based Verifiable Credentials for
-    /// selective disclosure.
-    ///
-    /// [I-D.ietf-oauth-sd-jwt-vc]: (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-01)
-    #[serde(rename = "vc+sd-jwt")]
-    VcSdJwt,
-
-    /// W3C Verifiable Credential.
-    #[serde(rename = "jwt_vp_json")]
-    JwtVpJson,
 }

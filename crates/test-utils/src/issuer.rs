@@ -4,10 +4,9 @@ use std::ops::Deref;
 
 use chrono::{DateTime, Utc};
 use openid::issuer::{
-    self, Claims, ClientMetadata, Issuer, IssuerMetadata, Result, ServerMetadata, StateManager,
+    self, Claims, Client,Server, ClientMetadata, Issuer, IssuerMetadata, Result, ServerMetadata, StateManager,
     Subject,
 };
-use openid::{Client, Server};
 use proof::jose::jwk::PublicKeyJwk;
 use proof::signature::{Algorithm, Signer, Verifier};
 

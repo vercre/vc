@@ -11,7 +11,7 @@ use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 use w3c_vc::model::VerifiableCredential;
 
-use super::{Client, CredentialFormat};
+pub use super::{CredentialFormat, OAuthClient, OAuthServer};
 use crate::endpoint::Request;
 use crate::stringify;
 
@@ -1495,6 +1495,41 @@ pub enum ValueType {
     Image,
 }
 
+/// OAuth 2 client metadata used for registering clients of the issuance and
+/// vercre-wallet authorization servers.
+///
+/// In the case of Issuance, the Wallet is the Client and the Issuer is the
+/// Authorization Server.
+///
+/// In the case of Presentation, the Wallet is the Authorization Server and the
+/// Verifier is the Client.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Client {
+    /// OAuth 2.0 Client
+    #[serde(flatten)]
+    pub oauth: OAuthClient,
+
+    /// Used by the Wallet to publish its Credential Offer endpoint. The Credential
+    /// Issuer should use "`openid-credential-offer://`" if unable to perform discovery
+    /// of the endpoint.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_offer_endpoint: Option<String>,
+}
+
+/// OAuth 2.0 Authorization Server metadata.
+/// See RFC 8414 - Authorization Server Metadata
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Server {
+    /// OAuth 2.0 Server
+    #[serde(flatten)]
+    pub oauth: OAuthServer,
+
+    /// Indicates whether the issuer accepts a Token Request with a
+    /// Pre-Authorized Code but without a client id. Defaults to false.
+    #[serde(rename = "pre-authorized_grant_anonymous_access_supported")]
+    pub pre_authorized_grant_anonymous_access_supported: bool,
+}
+
 use std::fmt::Debug;
 use std::future::Future;
 
@@ -1502,7 +1537,6 @@ use proof::signature::{Signer, Verifier};
 use serde_json::{Map, Value};
 
 pub use crate::endpoint::{self, Result, StateManager};
-use crate::Server;
 
 /// Issuer Provider trait.
 pub trait Provider:

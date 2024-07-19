@@ -168,12 +168,14 @@ pub use openid::Result;
 
 /// Re-export provider traits and types.
 pub mod provider {
+    pub use openid::issuer::{Client, CredentialFormat, Server};
     pub use openid::verifier::VpFormat;
     #[allow(clippy::module_name_repetitions)]
-    pub use openid::verifier::{Provider, Result, StateManager, VerifierMetadata, WalletMetadata};
-    pub use openid::{Client, CredentialFormat, Server};
+    pub use openid::verifier::{
+        Provider, Result, StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata,
+    };
     pub use proof::jose::jwk::PublicKeyJwk;
-    pub use proof::signature::{Algorithm, Signer, Verifier};
+    pub use proof::signature::{Algorithm, Signer, Verifier as SignatureVerifier};
 }
 pub use create_request::create_request;
 pub use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
