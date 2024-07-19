@@ -6,7 +6,7 @@ use openid::issuer::{
 use proof::jose::jwk::PublicKeyJwk;
 use proof::signature::{Algorithm, Signer, Verifier};
 
-use crate::store::proof::Enclave;
+use crate::store::proof::Keystore;
 use crate::store::{issuance, state};
 
 pub const CREDENTIAL_ISSUER: &str = "http://vercre.io";
@@ -92,16 +92,16 @@ impl Signer for Provider {
 
     fn verification_method(&self) -> String {
         //format!("{ISSUER_DID}#{VERIFY_KEY_ID}")
-        Enclave::verification_method()
+        Keystore::verification_method()
     }
 
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
-        Enclave::try_sign(msg)
+        Keystore::try_sign(msg)
     }
 }
 
 impl Verifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
-        Enclave::deref_jwk(did_url)
+        Keystore::deref_jwk(did_url)
     }
 }

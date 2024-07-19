@@ -11,9 +11,9 @@ const ISSUER_DID: &str ="did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg:
 const SERVER_JWK_D: &str = "0Md3MhPaKEpnKAyKE498EdDFerD5NLeKJ5Rb-vC16Gs";
 
 #[derive(Default, Clone, Debug)]
-pub struct Enclave;
+pub struct Keystore;
 
-impl Enclave {
+impl Keystore {
     pub fn verification_method() -> String {
         format!("{ISSUER_DID}#{VERIFY_KEY_ID}")
     }

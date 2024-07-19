@@ -3,7 +3,7 @@ use openid::verifier::{Result, StateManager, Verifier, VerifierMetadata, Wallet,
 use proof::jose::jwk::PublicKeyJwk;
 use proof::signature::{self, Algorithm, Signer};
 
-use crate::store::proof::Enclave;
+use crate::store::proof::Keystore;
 use crate::store::{presentation, state};
 
 pub const VERIFIER_ID: &str = "http://vercre.io";
@@ -65,7 +65,7 @@ impl Signer for Provider {
 
     fn verification_method(&self) -> String {
         format!("{VERIFIER_DID}#{VERIFY_KEY_ID}")
-        // Enclave::verification_method()
+        // Keystore::verification_method()
     }
 
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
@@ -73,12 +73,12 @@ impl Signer for Provider {
         // let signing_key: SigningKey<Secp256k1> = SigningKey::from_slice(&decoded)?;
         // let signature: Signature<Secp256k1> = signing_key.sign(msg);
         // Ok(signature.to_vec())
-        Enclave::try_sign(msg)
+        Keystore::try_sign(msg)
     }
 }
 
 impl signature::Verifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
-        Enclave::deref_jwk(did_url)
+        Keystore::deref_jwk(did_url)
     }
 }

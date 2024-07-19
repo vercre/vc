@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use test_utils::store::proof::Enclave;
+use test_utils::store::proof::Keystore;
 use test_utils::store::{presentation, state};
 use vercre_verifier::provider::{
     Algorithm, PublicKeyJwk, Result, SignatureVerifier, Signer, StateManager, Verifier,
@@ -64,7 +64,7 @@ impl Signer for Provider {
 
     fn verification_method(&self) -> String {
         format!("{VERIFIER_DID}#{VERIFY_KEY_ID}")
-        // Enclave::verification_method()
+        // Keystore::verification_method()
     }
 
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
@@ -72,12 +72,12 @@ impl Signer for Provider {
         // let signing_key: SigningKey<Secp256k1> = SigningKey::from_slice(&decoded)?;
         // let signature: Signature<Secp256k1> = signing_key.sign(msg);
         // Ok(signature.to_vec())
-        Enclave::try_sign(msg)
+        Keystore::try_sign(msg)
     }
 }
 
 impl SignatureVerifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
-        Enclave::deref_jwk(did_url)
+        Keystore::deref_jwk(did_url)
     }
 }
