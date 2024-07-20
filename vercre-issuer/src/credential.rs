@@ -89,7 +89,7 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use openid::endpoint::StateManager;
+    use openid::provider::StateManager;
     use openid::issuer::ProofClaims;
     use proof::jose::jws::{self, Type};
     use serde_json::json;

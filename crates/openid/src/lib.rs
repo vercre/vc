@@ -7,7 +7,7 @@
 //! directly by the end users. Any public types are re-exported through the respective
 //! top-level `vercre-xxx` crates.
 
-pub mod endpoint;
+pub mod provider;
 mod error;
 pub mod issuer;
 mod stringify;

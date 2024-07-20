@@ -8,14 +8,6 @@ use chrono::{DateTime, Utc};
 // pub type Result<T> = anyhow::Result<T>;
 pub type Result<T, E = anyhow::Error> = std::result::Result<T, E>;
 
-/// Request is implemented by all request types.
-pub trait Request {
-    /// The key used to access state data.
-    fn state_key(&self) -> Option<String> {
-        None
-    }
-}
-
 /// `StateManager` is used to store and manage server state.
 pub trait StateManager: Send + Sync {
     /// `StateStore` data (state) by provided key. The expiry parameter indicates

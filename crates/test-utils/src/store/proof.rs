@@ -3,7 +3,7 @@ use base64ct::{Base64UrlUnpadded, Encoding};
 use ecdsa::signature::Signer as _;
 use ecdsa::{Signature, SigningKey};
 use k256::Secp256k1;
-use openid::endpoint::Result;
+use openid::provider::Result;
 use proof::jose::jwk::PublicKeyJwk;
 
 pub const VERIFY_KEY_ID: &str = "publicKeyModel1Id";

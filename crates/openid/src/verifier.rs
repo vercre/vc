@@ -642,7 +642,7 @@ use std::future::Future;
 
 use proof::signature::{self, Signer};
 
-pub use crate::endpoint::{self, Result, StateManager};
+pub use crate::provider::{self, Result, StateManager};
 
 /// Issuer Provider trait.
 pub trait Provider:

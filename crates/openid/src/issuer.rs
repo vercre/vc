@@ -12,7 +12,6 @@ use serde::{Deserialize, Serialize};
 use w3c_vc::model::VerifiableCredential;
 
 pub use super::{CredentialFormat, OAuthClient, OAuthServer};
-use crate::endpoint::Request;
 use crate::stringify;
 
 // TODO: find a home for these shared types
@@ -69,8 +68,6 @@ pub struct CreateOfferRequest {
     /// payloads. If no ID is provided, callbacks will not be made.
     pub callback_id: Option<String>,
 }
-
-impl Request for CreateOfferRequest {}
 
 /// The response to a Credential Offer request.
 #[derive(Debug, Deserialize, Serialize)]
@@ -384,8 +381,6 @@ pub struct AuthorizationRequest {
     pub issuer_state: Option<String>,
 }
 
-impl Request for AuthorizationRequest {}
-
 /// Authorization details type.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub enum AuthorizationDetailType {
@@ -522,8 +517,6 @@ pub struct TokenRequest {
     pub user_code: Option<String>,
 }
 
-impl Request for TokenRequest {}
-
 /// Token Response as defined in [RFC6749].
 ///
 /// [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
@@ -648,8 +641,6 @@ pub struct CredentialRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_response_encryption: Option<CredentialResponseEncryption>,
 }
-
-impl Request for CredentialRequest {}
 
 /// Means used to identifiy a Credential type when requesting a Credential.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -812,8 +803,6 @@ pub struct BatchCredentialRequest {
     pub credential_requests: Vec<CredentialRequest>,
 }
 
-impl Request for BatchCredentialRequest {}
-
 /// The Batch Credential Response is a JSON object that contains an array of
 /// Credential Response objects.
 #[derive(Debug, Deserialize, Serialize)]
@@ -855,8 +844,6 @@ pub struct DeferredCredentialRequest {
     pub transaction_id: String,
 }
 
-impl Request for DeferredCredentialRequest {}
-
 /// The Deferred Credential Response uses the same format and credential
 /// parameters defined for a Credential Response.
 #[derive(Debug, Deserialize, Serialize)]
@@ -881,8 +868,6 @@ pub struct MetadataRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub languages: Option<String>,
 }
-
-impl Request for MetadataRequest {}
 
 /// Response containing the Credential Issuer's configuration.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
@@ -909,8 +894,6 @@ pub struct RegistrationRequest {
     #[serde(flatten)]
     pub client_metadata: Client,
 }
-
-impl Request for RegistrationRequest {}
 
 /// The registration response for a successful request.
 #[derive(Debug, Deserialize, Serialize)]
@@ -1331,7 +1314,7 @@ use std::future::Future;
 use proof::signature::{Signer, Verifier};
 use serde_json::{Map, Value};
 
-pub use crate::endpoint::{self, Result, StateManager};
+pub use crate::provider::{self, Result, StateManager};
 
 /// Issuer Provider trait.
 pub trait Provider:
@@ -1350,11 +1333,11 @@ pub trait Provider:
 /// to the library.
 pub trait ClientMetadata: Send + Sync {
     /// Returns client metadata for the specified client.
-    fn metadata(&self, client_id: &str) -> impl Future<Output = endpoint::Result<Client>> + Send;
+    fn metadata(&self, client_id: &str) -> impl Future<Output = provider::Result<Client>> + Send;
 
     /// Used by OAuth 2.0 clients to dynamically register with the authorization
     /// server.
-    fn register(&self, client: &Client) -> impl Future<Output = endpoint::Result<Client>> + Send;
+    fn register(&self, client: &Client) -> impl Future<Output = provider::Result<Client>> + Send;
 }
 
 /// The `IssuerMetadata` trait is used by implementers to provide Credential Issuer
@@ -1362,14 +1345,14 @@ pub trait ClientMetadata: Send + Sync {
 #[allow(clippy::module_name_repetitions)]
 pub trait IssuerMetadata: Send + Sync {
     /// Returns the Credential Issuer's metadata.
-    fn metadata(&self, issuer_id: &str) -> impl Future<Output = endpoint::Result<Issuer>> + Send;
+    fn metadata(&self, issuer_id: &str) -> impl Future<Output = provider::Result<Issuer>> + Send;
 }
 
 /// The `ServerMetadata` trait is used by implementers to provide Authorization Server
 /// metadata.
 pub trait ServerMetadata: Send + Sync {
     /// Returns the Authorization Server's metadata.
-    fn metadata(&self, server_id: &str) -> impl Future<Output = endpoint::Result<Server>> + Send;
+    fn metadata(&self, server_id: &str) -> impl Future<Output = provider::Result<Server>> + Send;
 }
 
 /// The Subject trait specifies how the library expects user information to be
@@ -1379,13 +1362,13 @@ pub trait Subject: Send + Sync {
     /// Returns `true` if the subject (holder) is authorized.
     fn authorize(
         &self, holder_subject: &str, credential_identifier: &str,
-    ) -> impl Future<Output = endpoint::Result<bool>> + Send;
+    ) -> impl Future<Output = provider::Result<bool>> + Send;
 
     /// Returns a populated `Claims` object for the given subject (holder) and
     /// credential definition.
     fn claims(
         &self, holder_subject: &str, credential_identifier: &str,
-    ) -> impl Future<Output = endpoint::Result<Claims>> + Send;
+    ) -> impl Future<Output = provider::Result<Claims>> + Send;
 }
 
 /// The user information returned by the Subject trait.
