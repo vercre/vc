@@ -10,8 +10,8 @@ mod storer;
 
 pub use client::{IssuerClient, VerifierClient};
 pub use dif_exch::Constraints;
-pub use openid::provider::{Result, StateManager};
 pub use openid::issuer::{IssuerMetadata, TxCode};
+pub use openid::provider::{Result, StateManager};
 pub use proof::jose::jwk::PublicKeyJwk;
 pub use proof::signature::{Algorithm, Signer, Verifier};
 pub use storer::CredentialStorer;

@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
-use openid::provider::Result;
 use openid::issuer::{Claims, Client, Issuer, Server};
+use openid::provider::Result;
 use serde::Deserialize;
 use serde_json::{Map, Value};
 use uuid::Uuid;

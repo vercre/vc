@@ -142,7 +142,7 @@ async fn get_credential(input: TokenResponse) -> openid::Result<CredentialRespon
     let CredentialType::Format(format) = auth_det.credential_type.clone() else {
         panic!("unexpected credential type");
     };
-    
+
     let body = json!({
         "format": format,
         "credential_definition": auth_det.credential_definition,
