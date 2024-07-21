@@ -42,26 +42,25 @@ impl Resolver for DidWeb {
 
         // 3. Generate an HTTPS URL to the expected location of the DID document by
         //    prepending https://.
-        let url = format!("https://{domain}");
+        let mut url = format!("https://{domain}");
 
         // 4. If no path has been specified in the URL, append /.well-known.
+        if !identifier.contains(':') {
+            url = format!("{url}/.well-known");
+        }
+
         // 5. Append /did.json to complete the URL.
-        let url = if identifier.contains(':') {
-            format!("{url}/did.json")
-        } else {
-            format!("{url}/.well-known/did.json")
-        };
+        url = format!("{url}/did.json");
 
         // 6. Perform an HTTP GET request to the URL using an agent that can successfully
         //    negotiate a secure HTTPS connection, which enforces the security requirements
         //    as described in 2.6 Security and privacy considerations.
         let bytes = client.get(&url).await.map_err(Error::Other)?;
-        // let doc: serde_json::Value = serde_json::from_slice(&bytes).expect("msg");
-        // println!("doc: {doc}");
 
         let document = serde_json::from_slice(&bytes)
             .map_err(|e| Error::Other(anyhow!("issue deserializing document: {e}")))?;
 
+        // TODO: implement security requirement:
         // 7. When performing the DNS resolution during the HTTP GET request, the client
         //    SHOULD utilize [RFC8484] in order to prevent tracking of the identity being
         //    resolved.
