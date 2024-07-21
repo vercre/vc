@@ -1,17 +1,22 @@
 //! # `OpenID` for Verifiable Credential Issuance
 
 use std::collections::HashMap;
+use std::fmt::Debug;
+use std::future::Future;
 use std::io::Cursor;
 
 use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
 use core_utils::Kind;
 use proof::jose::jwk::PublicKeyJwk;
+use proof::signature::{Signer, Verifier};
 use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
+use serde_json::{Map, Value};
 use w3c_vc::model::VerifiableCredential;
 
 pub use super::{CredentialFormat, OAuthClient, OAuthServer};
+pub use crate::provider::{self, Result, StateManager};
 use crate::stringify;
 
 // TODO: find a home for these shared types
@@ -1307,14 +1312,6 @@ pub struct Server {
     #[serde(rename = "pre-authorized_grant_anonymous_access_supported")]
     pub pre_authorized_grant_anonymous_access_supported: bool,
 }
-
-use std::fmt::Debug;
-use std::future::Future;
-
-use proof::signature::{Signer, Verifier};
-use serde_json::{Map, Value};
-
-pub use crate::provider::{self, Result, StateManager};
 
 /// Issuer Provider trait.
 pub trait Provider:

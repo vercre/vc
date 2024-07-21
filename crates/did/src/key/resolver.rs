@@ -16,7 +16,9 @@ use serde_json::json;
 use super::DidKey;
 use crate::did::{self, Error};
 use crate::document::{CreateOptions, Operator};
-use crate::{ContentMetadata, ContentType, Metadata, Options, Resolution, Resolver, Resource};
+use crate::{
+    ContentMetadata, ContentType, DidClient, Metadata, Options, Resolution, Resolver, Resource,
+};
 
 static URL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new("^did:key:z[a-km-zA-HJ-NP-Z1-9]+(?:&?[^=&]*=[^=&]*)*(#z[a-km-zA-HJ-NP-Z1-9]+)*$")
@@ -24,7 +26,9 @@ static URL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 impl Resolver for DidKey {
-    fn resolve(&self, did: &str, _: Option<Options>) -> did::Result<Resolution> {
+    async fn resolve(
+        &self, did: &str, _: Option<Options>, _: impl DidClient,
+    ) -> did::Result<Resolution> {
         // per the spec, use the create operation to generate a DID document
         let options = CreateOptions {
             enable_encryption_key_derivation: true,
@@ -52,7 +56,9 @@ impl Resolver for DidKey {
         })
     }
 
-    fn dereference(&self, did_url: &str, _opts: Option<Options>) -> did::Result<Resource> {
+    async fn dereference(
+        &self, did_url: &str, _opts: Option<Options>, client: impl DidClient,
+    ) -> did::Result<Resource> {
         // validate URL against pattern
         if !URL_REGEX.is_match(did_url) {
             return Err(Error::InvalidDidUrl("invalid did:key URL".into()));
@@ -71,7 +77,7 @@ impl Resolver for DidKey {
 
         // resolve DID document
         let did = format!("did:{}", url.path());
-        let resolution = self.resolve(&did, None)?;
+        let resolution = self.resolve(&did, None, client).await?;
 
         Ok(Resource {
             metadata: Metadata {
@@ -95,17 +101,24 @@ mod test {
     const DID: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
     const DID_URL: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
 
-    #[test]
-    fn resolve() {
-        let resolved = DidKey.resolve(DID, None).expect("should resolve");
+    struct Client {}
+    impl DidClient for Client {
+        async fn get(&self, _url: &str) -> anyhow::Result<Vec<u8>> {
+            Ok(vec![])
+        }
+    }
+
+    #[tokio::test]
+    async fn resolve() {
+        let resolved = DidKey.resolve(DID, None, Client {}).await.expect("should resolve");
 
         assert_snapshot!("document", resolved.document);
         assert_snapshot!("metadata", resolved.metadata);
     }
 
-    #[test]
-    fn dereference() {
-        let resource = DidKey.dereference(DID_URL, None).expect("should resolve");
+    #[tokio::test]
+    async fn dereference() {
+        let resource = DidKey.dereference(DID_URL, None, Client {}).await.expect("should resolve");
 
         assert_snapshot!("resource", resource);
     }

@@ -1,0 +1,48 @@
+{
+    "@context": [
+        "https://www.w3.org/ns/did/v1",
+        {
+            "@base": "did:web:credibil.io"
+        }
+    ],
+    "assertionMethod": [
+        "#412a9e38b16c4702a1e45f0fe3f5348cvcSigningKey-64378"
+    ],
+    "authentication": [
+        "#412a9e38b16c4702a1e45f0fe3f5348cvcSigningKey-64378"
+    ],
+    "id": "did:web:credibil.io",
+    "service": [
+        {
+            "id": "#linkeddomains",
+            "serviceEndpoint": {
+                "origins": [
+                    "https://credibil.io/"
+                ]
+            },
+            "type": "LinkedDomains"
+        },
+        {
+            "id": "#hub",
+            "serviceEndpoint": {
+                "instances": [
+                    "https://hub.did.msidentity.com/v1.0/357812d6-3a85-49e9-b840-09ec9a7e717a"
+                ]
+            },
+            "type": "IdentityHub"
+        }
+    ],
+    "verificationMethod": [
+        {
+            "controller": "did:web:credibil.io",
+            "id": "#412a9e38b16c4702a1e45f0fe3f5348cvcSigningKey-64378",
+            "publicKeyJwk": {
+                "crv": "secp256k1",
+                "kty": "EC",
+                "x": "5OZcXs9u_JdJdqp-mL3IWmT6Q9A4Dpff--wkM2x9TAU",
+                "y": "tkOFB7CwhIyc9j2BnIetmr5OVbpvMPnxn0w-UZ11vAs"
+            },
+            "type": "EcdsaSecp256k1VerificationKey2019"
+        }
+    ]
+}

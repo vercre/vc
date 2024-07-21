@@ -10,28 +10,67 @@
 
 use std::sync::LazyLock;
 
+use anyhow::anyhow;
 use regex::Regex;
 use serde_json::json;
 
-use super::DidKey;
+use super::DidWeb;
 use crate::did::{self, Error};
-use crate::document::{CreateOptions, Operator};
+use crate::DidClient;
+// use crate::document::{CreateOptions, Operator};
 use crate::{ContentMetadata, ContentType, Metadata, Options, Resolution, Resolver, Resource};
 
 static URL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new("^did:key:z[a-km-zA-HJ-NP-Z1-9]+(?:&?[^=&]*=[^=&]*)*(#z[a-km-zA-HJ-NP-Z1-9]+)*$")
-        .expect("should compile")
+    Regex::new("^did:web:(?<identifier>[a-zA-Z1-9.-:%]+)$").expect("should compile")
 });
 
-impl Resolver for DidKey {
-    fn resolve(&self, did: &str, _: Option<Options>) -> did::Result<Resolution> {
-        // per the spec, use the create operation to generate a DID document
-        let options = CreateOptions {
-            enable_encryption_key_derivation: true,
-            ..CreateOptions::default()
+impl Resolver for DidWeb {
+    async fn resolve(
+        &self, did: &str, _: Option<Options>, client: impl DidClient,
+    ) -> did::Result<Resolution> {
+        let Some(caps) = URL_REGEX.captures(did) else {
+            return Err(Error::InvalidDid("DID is not a valid did:web".to_string()));
+        };
+        let identifier = &caps["identifier"];
+
+        // 1. Replace ":" with "/" in the method specific identifier to obtain the fully
+        //    qualified domain name and optional path.
+        let domain = identifier.replace(':', "/");
+
+        // 2. If the domain contains a port percent decode the colon.
+        let domain = domain.replace("%3A", ":");
+
+        // 3. Generate an HTTPS URL to the expected location of the DID document by
+        //    prepending https://.
+        let url = format!("https://{domain}");
+
+        // 4. If no path has been specified in the URL, append /.well-known.
+        // 5. Append /did.json to complete the URL.
+        let url = if identifier.contains(':') {
+            format!("{url}/did.json")
+        } else {
+            format!("{url}/.well-known/did.json")
         };
 
-        let document = DidKey.create(did, options).map_err(|e| Error::InvalidDid(e.to_string()))?;
+        // 6. Perform an HTTP GET request to the URL using an agent that can successfully
+        //    negotiate a secure HTTPS connection, which enforces the security requirements
+        //    as described in 2.6 Security and privacy considerations.
+        let bytes = client.get(&url).await.map_err(Error::Other)?;
+        // let doc: serde_json::Value = serde_json::from_slice(&bytes).expect("msg");
+        // println!("doc: {doc}");
+
+        let document = serde_json::from_slice(&bytes)
+            .map_err(|e| Error::Other(anyhow!("issue deserializing document: {e}")))?;
+
+        // 7. When performing the DNS resolution during the HTTP GET request, the client
+        //    SHOULD utilize [RFC8484] in order to prevent tracking of the identity being
+        //    resolved.
+
+        // // per the spec, use the create operation to generate a DID document
+        // let options = CreateOptions {
+        //     enable_encryption_key_derivation: true,
+        //     ..CreateOptions::default()
+        // };
 
         Ok(Resolution {
             context: "https://w3id.org/did-resolution/v1".into(),
@@ -52,7 +91,9 @@ impl Resolver for DidKey {
         })
     }
 
-    fn dereference(&self, did_url: &str, _opts: Option<Options>) -> did::Result<Resource> {
+    async fn dereference(
+        &self, did_url: &str, _opts: Option<Options>, client: impl DidClient,
+    ) -> did::Result<Resource> {
         // validate URL against pattern
         if !URL_REGEX.is_match(did_url) {
             return Err(Error::InvalidDidUrl("invalid did:key URL".into()));
@@ -71,7 +112,7 @@ impl Resolver for DidKey {
 
         // resolve DID document
         let did = format!("did:{}", url.path());
-        let resolution = self.resolve(&did, None)?;
+        let resolution = self.resolve(&did, None, client).await?;
 
         Ok(Resource {
             metadata: Metadata {
@@ -88,25 +129,40 @@ impl Resolver for DidKey {
 
 #[cfg(test)]
 mod test {
+    use anyhow::anyhow;
     use insta::assert_json_snapshot as assert_snapshot;
 
     use super::*;
 
-    const DID: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
-    const DID_URL: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
+    struct Client {}
+    impl DidClient for Client {
+        async fn get(&self, url: &str) -> anyhow::Result<Vec<u8>> {
+            reqwest::get(url).await?.bytes().await.map_err(|e| anyhow!("{e}")).map(|b| b.to_vec())
+        }
+    }
 
-    #[test]
-    fn resolve() {
-        let resolved = DidKey.resolve(DID, None).expect("should resolve");
+    #[tokio::test]
+    async fn resolve_normal() {
+        const DID_URL: &str = "did:web:demo.credibil.io";
+        let resolved = DidWeb.resolve(DID_URL, None, Client {}).await.expect("should resolve");
 
         assert_snapshot!("document", resolved.document);
         assert_snapshot!("metadata", resolved.metadata);
     }
 
-    #[test]
-    fn dereference() {
-        let resource = DidKey.dereference(DID_URL, None).expect("should resolve");
+    // #[tokio::test]
+    // async fn resolve_path() {
+    //     const DID_URL: &str = "did:web:demo.credibil.io%3A443:demo";
+    //     let resolved = DidWeb.resolve(DID_URL, None, Client {}).await.expect("should resolve");
 
-        assert_snapshot!("resource", resource);
-    }
+    //     assert_snapshot!("document", resolved.document);
+    //     assert_snapshot!("metadata", resolved.metadata);
+    // }
+
+    // #[test]
+    // fn dereference() {
+    //     let resource = DidWeb.dereference(DID_URL, None).expect("should resolve");
+
+    //     assert_snapshot!("resource", resource);
+    // }
 }

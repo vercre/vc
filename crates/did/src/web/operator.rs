@@ -4,122 +4,122 @@
 //!
 //! See <https://w3c-ccg.github.io/did-method-key>
 
-use std::sync::LazyLock;
+// use std::sync::LazyLock;
 
-use base64ct::{Base64UrlUnpadded, Encoding};
-use curve25519_dalek::edwards::CompressedEdwardsY;
-use multibase::Base::Base58Btc;
-use regex::Regex;
-use serde_json::json;
+// use base64ct::{Base64UrlUnpadded, Encoding};
+// use core_utils::Kind;
+// use curve25519_dalek::edwards::CompressedEdwardsY;
+// use multibase::Base::Base58Btc;
+// use proof::jose::jwk::{Curve, KeyType, PublicKeyJwk};
+// use regex::Regex;
 
-use super::DidKey;
-use crate::did::{self, Error};
-use crate::document::{
-    CreateOptions, Document, Kind, Operator, PublicKey, PublicKeyFormat, VerificationMethod,
-};
-use crate::{Curve, KeyType, PublicKeyJwk};
+// use serde_json::json;
+use super::DidWeb;
+use crate::did::{self}; // Error
+use crate::document::{CreateOptions, Document, Operator}; // PublicKey, PublicKeyFormat, VerificationMethod,
 
-const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
-const X25519_CODEC: [u8; 2] = [0xec, 0x01];
+// const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
+// const X25519_CODEC: [u8; 2] = [0xec, 0x01];
 
-static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new("^did:web:(?<key>z[a-km-zA-HJ-NP-Z1-9]+)$").expect("should compile")
-});
+// static DID_REGEX: LazyLock<Regex> =
+//     LazyLock::new(|| Regex::new("^did:web:(?<identifier>z[a-zA-Z1-9.-]+)$").expect("should compile"));
 
-impl Operator for DidKey {
-    fn create(&self, did: &str, options: CreateOptions) -> did::Result<Document> {
-        // check DID is valid AND extract key
-        let Some(caps) = DID_REGEX.captures(did) else {
-            return Err(Error::InvalidDid("DID is not a valid did:web".to_string()));
-        };
-        let multi_key = &caps["key"];
+impl Operator for DidWeb {
+    fn create(&self, _did: &str, _options: CreateOptions) -> did::Result<Document> {
+        // // check DID is valid AND extract key
+        // let Some(caps) = DID_REGEX.captures(did) else {
+        //     return Err(Error::InvalidDid("DID is not a valid did:web".to_string()));
+        // };
+        // let multi_key = &caps["domain"];
 
-        // decode the the DID key
-        let (_, key_bytes) = multibase::decode(multi_key)
-            .map_err(|e| Error::InvalidDid(format!("issue decoding key: {e}")))?;
-        if key_bytes.len() - 2 != 32 {
-            return Err(Error::InvalidDid("invalid key length".into()));
-        }
-        if key_bytes[0..2] != ED25519_CODEC {
-            return Err(Error::InvalidDid("unsupported signature".into()));
-        }
+        // // decode the the DID key
+        // let (_, key_bytes) = multibase::decode(multi_key)
+        //     .map_err(|e| Error::InvalidDid(format!("issue decoding key: {e}")))?;
+        // if key_bytes.len() - 2 != 32 {
+        //     return Err(Error::InvalidDid("invalid key length".into()));
+        // }
+        // if key_bytes[0..2] != ED25519_CODEC {
+        //     return Err(Error::InvalidDid("unsupported signature".into()));
+        // }
 
-        let (context, public_key) = if options.public_key_format == PublicKeyFormat::Multikey
-            || options.public_key_format == PublicKeyFormat::Ed25519VerificationKey2020
-        {
-            (
-                Kind::String("https://w3id.org/security/data-integrity/v1".into()),
-                PublicKey::Multibase(multi_key.into()),
-            )
-        } else {
-            let verif_type = &options.public_key_format;
-            (
-                Kind::Object(json!({
-                    "publicKeyJwk": {
-                        "@id": "https://w3id.org/security#publicKeyJwk",
-                        "@type": "@json"
-                    },
-                    verif_type.to_string(): format!("https://w3id.org/security#{verif_type}"),
-                })),
-                PublicKey::Jwk(PublicKeyJwk {
-                    kty: KeyType::OKP,
-                    crv: Curve::Ed25519,
-                    x: Base64UrlUnpadded::encode_string(&key_bytes[2..]),
-                    ..PublicKeyJwk::default()
-                }),
-            )
-        };
+        // let (context, public_key) = if options.public_key_format == PublicKeyFormat::Multikey
+        //     || options.public_key_format == PublicKeyFormat::Ed25519VerificationKey2020
+        // {
+        //     (
+        //         Kind::String("https://w3id.org/security/data-integrity/v1".into()),
+        //         PublicKey::Multibase(multi_key.into()),
+        //     )
+        // } else {
+        //     let verif_type = &options.public_key_format;
+        //     (
+        //         Kind::Object(json!({
+        //             "publicKeyJwk": {
+        //                 "@id": "https://w3id.org/security#publicKeyJwk",
+        //                 "@type": "@json"
+        //             },
+        //             verif_type.to_string(): format!("https://w3id.org/security#{verif_type}"),
+        //         })),
+        //         PublicKey::Jwk(PublicKeyJwk {
+        //             kty: KeyType::Okp,
+        //             crv: Curve::Ed25519,
+        //             x: Base64UrlUnpadded::encode_string(&key_bytes[2..]),
+        //             ..PublicKeyJwk::default()
+        //         }),
+        //     )
+        // };
 
-        // key agreement
-        // <https://w3c-ccg.github.io/did-method-key/#encryption-method-creation-algorithm>
-        let key_agreement = if options.enable_encryption_key_derivation {
-            // derive an X25519 public encryption key from the Ed25519 key
-            let edwards_y = CompressedEdwardsY::from_slice(&key_bytes[2..]).map_err(|e| {
-                Error::InvalidPublicKey(format!("public key is not Edwards Y: {e}"))
-            })?;
-            let Some(edwards_pt) = edwards_y.decompress() else {
-                return Err(Error::InvalidPublicKey(
-                    "Edwards Y cannot be decompressed to point".into(),
-                ));
-            };
-            let x25519_bytes = edwards_pt.to_montgomery().to_bytes();
+        // // key agreement
+        // // <https://w3c-ccg.github.io/did-method-key/#encryption-method-creation-algorithm>
+        // let key_agreement = if options.enable_encryption_key_derivation {
+        //     // derive an X25519 public encryption key from the Ed25519 key
+        //     let edwards_y = CompressedEdwardsY::from_slice(&key_bytes[2..]).map_err(|e| {
+        //         Error::InvalidPublicKey(format!("public key is not Edwards Y: {e}"))
+        //     })?;
+        //     let Some(edwards_pt) = edwards_y.decompress() else {
+        //         return Err(Error::InvalidPublicKey(
+        //             "Edwards Y cannot be decompressed to point".into(),
+        //         ));
+        //     };
+        //     let x25519_bytes = edwards_pt.to_montgomery().to_bytes();
 
-            // base58B encode the raw key
-            let mut multi_bytes = vec![];
-            multi_bytes.extend_from_slice(&X25519_CODEC);
-            multi_bytes.extend_from_slice(&x25519_bytes);
-            let ek_multibase = multibase::encode(Base58Btc, &multi_bytes);
+        //     // base58B encode the raw key
+        //     let mut multi_bytes = vec![];
+        //     multi_bytes.extend_from_slice(&X25519_CODEC);
+        //     multi_bytes.extend_from_slice(&x25519_bytes);
+        //     let ek_multibase = multibase::encode(Base58Btc, &multi_bytes);
 
-            Some(vec![Kind::Object(VerificationMethod {
-                id: format!("{did}#{ek_multibase}"),
-                type_: options.public_key_format.clone(),
-                controller: did.into(),
-                public_key: PublicKey::Multibase(ek_multibase),
-                ..VerificationMethod::default()
-            })])
-        } else {
-            None
-        };
+        //     Some(vec![Kind::Object(VerificationMethod {
+        //         id: format!("{did}#{ek_multibase}"),
+        //         type_: options.public_key_format.clone(),
+        //         controller: did.into(),
+        //         public_key: PublicKey::Multibase(ek_multibase),
+        //         ..VerificationMethod::default()
+        //     })])
+        // } else {
+        //     None
+        // };
 
-        let kid = format!("{did}#{multi_key}");
+        // let kid = format!("{did}#{multi_key}");
 
-        Ok(Document {
-            context: vec![Kind::String(options.default_context), context],
-            id: did.into(),
-            verification_method: Some(vec![VerificationMethod {
-                id: kid.clone(),
-                type_: options.public_key_format,
-                controller: did.into(),
-                public_key,
-                ..VerificationMethod::default()
-            }]),
-            authentication: Some(vec![Kind::String(kid.clone())]),
-            assertion_method: Some(vec![Kind::String(kid.clone())]),
-            capability_invocation: Some(vec![Kind::String(kid.clone())]),
-            capability_delegation: Some(vec![Kind::String(kid)]),
-            key_agreement,
-            ..Document::default()
-        })
+        // Ok(Document {
+        //     context: vec![Kind::String(options.default_context), context],
+        //     id: did.into(),
+        //     verification_method: Some(vec![VerificationMethod {
+        //         id: kid.clone(),
+        //         type_: options.public_key_format,
+        //         controller: did.into(),
+        //         public_key,
+        //         ..VerificationMethod::default()
+        //     }]),
+        //     authentication: Some(vec![Kind::String(kid.clone())]),
+        //     assertion_method: Some(vec![Kind::String(kid.clone())]),
+        //     capability_invocation: Some(vec![Kind::String(kid.clone())]),
+        //     capability_delegation: Some(vec![Kind::String(kid)]),
+        //     key_agreement,
+        //     ..Document::default()
+        // })
+
+        todo!("implement create")
     }
 
     fn read(&self, did: &str, options: CreateOptions) -> did::Result<Document> {
@@ -146,7 +146,7 @@ mod test {
     // #[test]
     // fn resolve() {
     //     let did = "did:web:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
-    //     let resolved = DidKey.resolve(did, None).expect("should resolve");
+    //     let resolved = DidWeb.resolve(did, None).expect("should resolve");
 
     //     let document: Document =
     //         serde_json::from_value(DOCUMENT.to_owned()).expect("should deserialize");

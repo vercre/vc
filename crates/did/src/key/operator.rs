@@ -24,7 +24,7 @@ const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
 const X25519_CODEC: [u8; 2] = [0xec, 0x01];
 
 static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new("^did:key:(?<key>z[a-km-zA-HJ-NP-Z1-9]+)$").expect("should compile")
+    Regex::new("^did:key:(?<identifier>z[a-km-zA-HJ-NP-Z1-9]+)$").expect("should compile")
 });
 
 impl Operator for DidKey {
@@ -33,7 +33,7 @@ impl Operator for DidKey {
         let Some(caps) = DID_REGEX.captures(did) else {
             return Err(Error::InvalidDid("DID is not a valid did:key".into()));
         };
-        let multi_key = &caps["key"];
+        let multi_key = &caps["identifier"];
 
         // decode the the DID key
         let (_, key_bytes) = multibase::decode(multi_key)

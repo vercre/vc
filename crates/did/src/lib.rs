@@ -12,9 +12,10 @@ mod did;
 mod document;
 mod error;
 mod key;
-// mod web;
+mod web;
 
 use std::collections::HashMap;
+use std::future::Future;
 
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
@@ -22,6 +23,13 @@ use serde_json::Value;
 
 use crate::did::Error;
 use crate::document::{Document, DocumentMetadata};
+
+pub trait DidClient: Send + Sync {
+    fn get(&self, url: &str) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
+}
+// pub trait HttpHandler: Send + Sync {
+//     fn handle(&self, request: Request ) -> impl Future<Output = Result<Response>> + Send;
+// }
 
 /// Resolve a DID to a DID document.
 ///
@@ -40,11 +48,13 @@ use crate::document::{Document, DocumentMetadata};
 ///
 /// Returns a [DID resolution](https://www.w3.org/TR/did-core/#did-resolution-metadata)
 /// error as specified.
-pub fn resolve(did: &str, opts: Option<Options>) -> did::Result<Resolution> {
+pub async fn resolve(
+    did: &str, opts: Option<Options>, client: impl DidClient,
+) -> did::Result<Resolution> {
     // use DID-specific resolver
     let method = did.split(':').nth(1).unwrap_or_default();
     let result = match method {
-        "key" => key::DidKey.resolve(did, opts),
+        "key" => key::DidKey.resolve(did, opts, client).await,
         _ => Err(Error::MethodNotSupported(format!("{method} is not supported"))),
     };
 
@@ -71,7 +81,9 @@ pub trait Resolver {
     /// # Errors
     ///
     /// Returns an error if the DID cannot be resolved.
-    fn resolve(&self, did: &str, opts: Option<Options>) -> did::Result<Resolution>;
+    fn resolve(
+        &self, did: &str, opts: Option<Options>, client: impl DidClient,
+    ) -> impl Future<Output = did::Result<Resolution>> + Send;
 
     /// Returns the DID Document as a byte stream formatted to represent the Media Type
     /// specified in the `accept` property of the `options` argument.
@@ -79,8 +91,11 @@ pub trait Resolver {
     /// # Errors
     ///
     /// Returns an error if the DID cannot be resolved.
-    fn resolve_representation(&self, did: &str, options: Option<Options>) -> did::Result<Vec<u8>> {
-        let resolution = self.resolve(did, options.clone())?;
+    #[allow(async_fn_in_trait)]
+    async fn resolve_representation(
+        &self, did: &str, options: Option<Options>, client: impl DidClient,
+    ) -> did::Result<Vec<u8>> {
+        let resolution = self.resolve(did, options.clone(), client).await?;
 
         // if media type is application/ld+json, return resolution metadata
         if let Some(opts) = options
@@ -106,7 +121,9 @@ pub trait Resolver {
     ///
     /// Returns an error if the DID cannot be dereferenced.
     // TODO: expand this error.
-    fn dereference(&self, did_url: &str, opts: Option<Options>) -> did::Result<Resource>;
+    fn dereference(
+        &self, did_url: &str, opts: Option<Options>, client: impl DidClient,
+    ) -> impl Future<Output = did::Result<Resource>> + Send;
 }
 
 /// Used to pass addtional values to a `resolve` and `dereference` methods. Any
