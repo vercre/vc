@@ -14,7 +14,7 @@ expression: resolved.document
       "id": "did:web:demo.credibil.io#key-0",
       "type": "Multikey",
       "controller": "did:web:demo.credibil.io",
-      "publicKeyMultibase": "z9xALMvWGq39K7bxLJDdh2utNuhWqZoQyQQrgB5YY514P"
+      "publicKeyMultibase": "z6MkqYXgAGReqa7WcDmWhQYEg5Ka7BtZSCHE7Dbj7eDxN1ZX"
     }
   ],
   "authentication": [
@@ -31,10 +31,10 @@ expression: resolved.document
   ],
   "keyAgreement": [
     {
-      "id": "did:web:demo.credibil.io#z6LShB46aLwnZuCTzG3THyrkzptJbMvoXzqqQetLWUVxHAU7",
+      "id": "did:web:demo.credibil.io#z6LSkDKBEUY9fkd4RAave1m2oJMT8AtQWKPjUVYR11qC7U9U",
       "type": "Multikey",
       "controller": "did:web:demo.credibil.io",
-      "publicKeyMultibase": "z6LShB46aLwnZuCTzG3THyrkzptJbMvoXzqqQetLWUVxHAU7"
+      "publicKeyMultibase": "z6LSkDKBEUY9fkd4RAave1m2oJMT8AtQWKPjUVYR11qC7U9U"
     }
   ]
 }

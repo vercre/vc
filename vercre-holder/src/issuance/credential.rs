@@ -2,7 +2,7 @@
 //!
 //! Get an access token and then use that to get the credential on offer.
 
-use anyhow::bail;
+use anyhow::{anyhow, bail};
 use core_utils::Kind;
 use openid::issuer::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, GrantType,
@@ -151,8 +151,11 @@ async fn credential(
     let Some(value) = res.credential.as_ref() else {
         bail!("no credential in response");
     };
-    let Ok(Payload::Vc(vc)) = w3c_vc::proof::verify(Verify::Vc(value), verifier).await else {
-        bail!("could not parse credential");
+    let Payload::Vc(vc) = w3c_vc::proof::verify(Verify::Vc(value), verifier)
+        .await
+        .map_err(|e| anyhow!("issue parsing credential: {e}"))?
+    else {
+        bail!("expected VerifiableCredential");
     };
 
     let issuer_id = match &vc.issuer {

@@ -79,11 +79,10 @@ impl StateManager for Provider {
 
 impl Signer for Provider {
     fn algorithm(&self) -> Algorithm {
-        Algorithm::ES256K
+        Keystore::algorithm()
     }
 
     fn verification_method(&self) -> String {
-        //format!("{ISSUER_DID}#{VERIFY_KEY_ID}")
         Keystore::verification_method()
     }
 

@@ -24,13 +24,15 @@ impl DidWeb {
         Self
     }
 
-    fn create(&self, url: &str, options: CreateOptions) -> did::Result<Document> {
+    pub fn create(&self, url: &str, options: CreateOptions) -> did::Result<Document> {
         // create identifier from url
         let url =
             Url::parse(url).map_err(|e| Error::InvalidDid(format!("issue parsing url: {e}")))?;
         let host = url.host_str().ok_or(Error::InvalidDid("no host in url".into()))?;
         let mut did = format!("did:web:{host}");
-        if let Some(path)=url.path().strip_prefix('/') && !path.is_empty() {
+        if let Some(path) = url.path().strip_prefix('/')
+            && !path.is_empty()
+        {
             did = format!("{did}{}", path.replace('/', ":"));
         }
 
@@ -104,15 +106,15 @@ impl DidWeb {
         })
     }
 
-    fn read(&self, did: &str, options: CreateOptions) -> did::Result<Document> {
+    pub fn read(&self, did: &str, options: CreateOptions) -> did::Result<Document> {
         self.create(did, options)
     }
 
-    fn update(&self, _did: &str, _: CreateOptions) -> did::Result<Document> {
+    pub fn update(&self, _did: &str, _: CreateOptions) -> did::Result<Document> {
         unimplemented!("This DID Method does not support updating the DID Document")
     }
 
-    fn deactivate(&self, _did: &str, _: CreateOptions) -> did::Result<()> {
+    pub fn deactivate(&self, _did: &str, _: CreateOptions) -> did::Result<()> {
         unimplemented!("This DID Method does not support deactivating the DID Document")
     }
 }

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::str;
 use std::sync::{Arc, Mutex};
 
-use anyhow::{anyhow, bail};
+use anyhow::{anyhow};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::{DateTime, Utc};
 // TODO: remove this import
@@ -167,49 +167,53 @@ impl Signer for Provider {
     }
 }
 
+use test_utils::store::proof::Keystore;
+
 impl Verifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> anyhow::Result<PublicKeyJwk> {
-        let did = did_url.split('#').next().ok_or_else(|| anyhow!("Unable to parse DID"))?;
+        Keystore::deref_jwk(did_url).await
 
-        // if have long-form DID then try to extract key from metadata
-        let did_parts = did.split(':').collect::<Vec<&str>>();
+        // let did = did_url.split('#').next().ok_or_else(|| anyhow!("Unable to parse DID"))?;
 
-        // if DID is a JWK then return it
-        if did.starts_with("did:jwk:") {
-            let decoded = Base64UrlUnpadded::decode_vec(did_parts[2])
-                .map_err(|e| anyhow!("Unable to decode DID: {e}"))?;
-            return serde_json::from_slice::<PublicKeyJwk>(&decoded).map_err(anyhow::Error::from);
-        }
+        // // if have long-form DID then try to extract key from metadata
+        // let did_parts = did.split(':').collect::<Vec<&str>>();
 
-        // HACK: for now, assume DID is long-form with delta operation containing public key
-        // TODO: use vercre-did crate to dereference DID URL
+        // // if DID is a JWK then return it
+        // if did.starts_with("did:jwk:") {
+        //     let decoded = Base64UrlUnpadded::decode_vec(did_parts[2])
+        //         .map_err(|e| anyhow!("Unable to decode DID: {e}"))?;
+        //     return serde_json::from_slice::<PublicKeyJwk>(&decoded).map_err(anyhow::Error::from);
+        // }
 
-        // DID should be long-form ION
-        if did_parts.len() != 4 {
-            bail!("Short-form DID's are not supported");
-        }
+        // // HACK: for now, assume DID is long-form with delta operation containing public key
+        // // TODO: use vercre-did crate to dereference DID URL
 
-        let decoded = Base64UrlUnpadded::decode_vec(did_parts[3])
-            .map_err(|e| anyhow!("Unable to decode DID: {e}"))?;
-        let ion_op = serde_json::from_slice::<serde_json::Value>(&decoded)?;
+        // // DID should be long-form ION
+        // if did_parts.len() != 4 {
+        //     bail!("Short-form DID's are not supported");
+        // }
 
-        let pk_val = ion_op
-            .get("delta")
-            .unwrap()
-            .get("patches")
-            .unwrap()
-            .get(0)
-            .unwrap()
-            .get("document")
-            .unwrap()
-            .get("publicKeys")
-            .unwrap()
-            .get(0)
-            .unwrap()
-            .get("publicKeyJwk")
-            .unwrap();
+        // let decoded = Base64UrlUnpadded::decode_vec(did_parts[3])
+        //     .map_err(|e| anyhow!("Unable to decode DID: {e}"))?;
+        // let ion_op = serde_json::from_slice::<serde_json::Value>(&decoded)?;
 
-        serde_json::from_value(pk_val.clone()).map_err(anyhow::Error::from)
+        // let pk_val = ion_op
+        //     .get("delta")
+        //     .unwrap()
+        //     .get("patches")
+        //     .unwrap()
+        //     .get(0)
+        //     .unwrap()
+        //     .get("document")
+        //     .unwrap()
+        //     .get("publicKeys")
+        //     .unwrap()
+        //     .get(0)
+        //     .unwrap()
+        //     .get("publicKeyJwk")
+        //     .unwrap();
+
+        // serde_json::from_value(pk_val.clone()).map_err(anyhow::Error::from)
     }
 }
 
