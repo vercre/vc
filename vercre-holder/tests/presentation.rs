@@ -1,4 +1,4 @@
-mod providers;
+mod provider;
 
 use std::sync::LazyLock;
 
@@ -15,7 +15,7 @@ use vercre_holder::provider::CredentialStorer;
 use w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use w3c_vc::proof::{self, Format, Payload};
 
-use crate::providers::holder;
+use crate::provider as holder;
 
 static VERIFIER_PROVIDER: LazyLock<verifier::Provider> = LazyLock::new(verifier::Provider::new);
 static HOLDER_PROVIDER: LazyLock<holder::Provider> =

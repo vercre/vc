@@ -1,4 +1,4 @@
-mod providers;
+mod provider;
 
 use std::sync::LazyLock;
 
@@ -8,7 +8,7 @@ use vercre_holder::provider::CredentialStorer;
 use vercre_holder::{OfferRequest, PinRequest, Status};
 use vercre_issuer::{CreateOfferRequest, CredentialOfferType};
 
-use crate::providers::holder;
+use crate::provider as holder;
 
 static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
 static HOLDER_PROVIDER: LazyLock<holder::Provider> =

@@ -2,12 +2,12 @@ use std::collections::HashMap;
 use std::str;
 use std::sync::{Arc, Mutex};
 
-use anyhow::{anyhow};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::{DateTime, Utc};
 // TODO: remove this import
 use dif_exch::Constraints;
 use ecdsa::signature::Signer as _;
+use test_utils::store::state;
 use test_utils::{issuer, verifier};
 use vercre_holder::provider::{
     Algorithm, CredentialStorer, HolderProvider, IssuerClient, PublicKeyJwk, Result, Signer,
@@ -22,14 +22,11 @@ use vercre_holder::{
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
 const WALLET_JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
 
-// static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
-// static VERIFIER_PROVIDER: LazyLock<verifier::Provider> = LazyLock::new(verifier::Provider::new);
-
 #[derive(Default, Clone, Debug)]
 pub struct Provider {
     issuer: Option<issuer::Provider>,
     verifier: Option<verifier::Provider>,
-    state_store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
+    state: state::Store,
     cred_store: Arc<Mutex<HashMap<String, Credential>>>,
 }
 
@@ -39,7 +36,7 @@ impl Provider {
         Self {
             issuer,
             verifier,
-            state_store: Arc::new(Mutex::new(HashMap::new())),
+            state: state::Store::new(),
             cred_store: Arc::new(Mutex::new(HashMap::new())),
         }
     }
@@ -131,21 +128,16 @@ impl CredentialStorer for Provider {
 }
 
 impl StateManager for Provider {
-    async fn put(&self, key: &str, state: Vec<u8>, _: DateTime<Utc>) -> Result<()> {
-        self.state_store.lock().expect("should lock").insert(key.to_string(), state);
-        Ok(())
+    async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
+        self.state.put(key, state, dt)
     }
 
     async fn get(&self, key: &str) -> Result<Vec<u8>> {
-        let Some(state) = self.state_store.lock().expect("should lock").get(key).cloned() else {
-            return Err(anyhow!("state not found for key: {key}"));
-        };
-        Ok(state)
+        self.state.get(key)
     }
 
     async fn purge(&self, key: &str) -> Result<()> {
-        self.state_store.lock().expect("should lock").remove(key);
-        Ok(())
+        self.state.purge(key)
     }
 }
 
@@ -172,48 +164,6 @@ use test_utils::store::proof::Keystore;
 impl Verifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> anyhow::Result<PublicKeyJwk> {
         Keystore::deref_jwk(did_url).await
-
-        // let did = did_url.split('#').next().ok_or_else(|| anyhow!("Unable to parse DID"))?;
-
-        // // if have long-form DID then try to extract key from metadata
-        // let did_parts = did.split(':').collect::<Vec<&str>>();
-
-        // // if DID is a JWK then return it
-        // if did.starts_with("did:jwk:") {
-        //     let decoded = Base64UrlUnpadded::decode_vec(did_parts[2])
-        //         .map_err(|e| anyhow!("Unable to decode DID: {e}"))?;
-        //     return serde_json::from_slice::<PublicKeyJwk>(&decoded).map_err(anyhow::Error::from);
-        // }
-
-        // // HACK: for now, assume DID is long-form with delta operation containing public key
-        // // TODO: use vercre-did crate to dereference DID URL
-
-        // // DID should be long-form ION
-        // if did_parts.len() != 4 {
-        //     bail!("Short-form DID's are not supported");
-        // }
-
-        // let decoded = Base64UrlUnpadded::decode_vec(did_parts[3])
-        //     .map_err(|e| anyhow!("Unable to decode DID: {e}"))?;
-        // let ion_op = serde_json::from_slice::<serde_json::Value>(&decoded)?;
-
-        // let pk_val = ion_op
-        //     .get("delta")
-        //     .unwrap()
-        //     .get("patches")
-        //     .unwrap()
-        //     .get(0)
-        //     .unwrap()
-        //     .get("document")
-        //     .unwrap()
-        //     .get("publicKeys")
-        //     .unwrap()
-        //     .get(0)
-        //     .unwrap()
-        //     .get("publicKeyJwk")
-        //     .unwrap();
-
-        // serde_json::from_value(pk_val.clone()).map_err(anyhow::Error::from)
     }
 }
 
