@@ -2,11 +2,10 @@ use std::collections::HashMap;
 use std::str;
 use std::sync::{Arc, Mutex};
 
-use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::{DateTime, Utc};
 // TODO: remove this import
 use dif_exch::Constraints;
-use ecdsa::signature::Signer as _;
+use test_utils::store::keystore::{self, HolderKeystore};
 use test_utils::store::state;
 use test_utils::{issuer, verifier};
 use vercre_holder::provider::{
@@ -18,9 +17,6 @@ use vercre_holder::{
     RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse, TokenRequest,
     TokenResponse,
 };
-
-const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
-const WALLET_JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
 
 #[derive(Default, Clone, Debug)]
 pub struct Provider {
@@ -143,40 +139,20 @@ impl StateManager for Provider {
 
 impl Signer for Provider {
     fn algorithm(&self) -> Algorithm {
-        Algorithm::EdDSA
+        HolderKeystore::algorithm()
     }
 
     fn verification_method(&self) -> String {
-        format!("{}#0", holder_did())
+        HolderKeystore::verification_method()
     }
 
-    async fn try_sign(&self, msg: &[u8]) -> anyhow::Result<Vec<u8>> {
-        let decoded = Base64UrlUnpadded::decode_vec(WALLET_JWK_D)?;
-        let bytes: [u8; 32] = decoded.as_slice().try_into().expect("should convert ");
-        let signing_key = ed25519_dalek::SigningKey::from_bytes(&bytes);
-        let signature: ed25519_dalek::Signature = signing_key.sign(msg);
-        Ok(signature.to_vec())
+    async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
+        HolderKeystore::try_sign(msg)
     }
 }
-
-use test_utils::store::proof::Keystore;
 
 impl Verifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> anyhow::Result<PublicKeyJwk> {
-        Keystore::deref_jwk(did_url).await
+        keystore::deref_jwk(did_url).await
     }
-}
-
-#[must_use]
-pub fn holder_did() -> String {
-    let jwk = serde_json::json!({
-        "kty": "OKP",
-        "crv": "Ed25519",
-        "use": "sig",
-        "x": JWK_X,
-    });
-    let jwk_str = jwk.to_string();
-    let jwk_b64 = Base64UrlUnpadded::encode_string(jwk_str.as_bytes());
-
-    format!("did:jwk:{jwk_b64}")
 }

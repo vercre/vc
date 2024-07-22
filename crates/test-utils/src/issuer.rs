@@ -6,7 +6,7 @@ use openid::issuer::{
 use proof::jose::jwk::PublicKeyJwk;
 use proof::signature::{Algorithm, Signer, Verifier};
 
-use crate::store::proof::Keystore;
+use crate::store::keystore::IssuerKeystore;
 use crate::store::{issuance, state};
 
 pub const CREDENTIAL_ISSUER: &str = "http://vercre.io";
@@ -87,38 +87,20 @@ impl StateManager for Provider {
 
 impl Signer for Provider {
     fn algorithm(&self) -> Algorithm {
-        Keystore::algorithm()
+        IssuerKeystore::algorithm()
     }
 
     fn verification_method(&self) -> String {
-        Keystore::verification_method()
+        IssuerKeystore::verification_method()
     }
 
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
-        Keystore::try_sign(msg)
+        IssuerKeystore::try_sign(msg)
     }
 }
 
 impl Verifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
-        Keystore::deref_jwk(did_url).await
+        crate::store::keystore::deref_jwk(did_url).await
     }
 }
-
-// impl Signature for Provider {
-//     fn algorithm(&self) -> Algorithm {
-//         Keystore::algorithm()
-//     }
-
-//     fn verification_method(&self) -> String {
-//         Keystore::verification_method()
-//     }
-
-//     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
-//         Keystore::try_sign(msg)
-//     }
-
-//     async fn try_verify(&self, msg: &[u8]) -> Result<PublicKeyJwk> {
-//         Keystore::try_sign(msg)
-//     }
-// }

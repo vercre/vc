@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use test_utils::store::proof::Keystore;
+use test_utils::store::keystore::{self, VerifierKeystore};
 use test_utils::store::{presentation, state};
 use vercre_verifier::provider::{
     Algorithm, PublicKeyJwk, Result, SignatureVerifier, Signer, StateManager, Verifier,
@@ -56,20 +56,20 @@ impl StateManager for Provider {
 
 impl Signer for Provider {
     fn algorithm(&self) -> Algorithm {
-        Keystore::algorithm()
+        VerifierKeystore::algorithm()
     }
 
     fn verification_method(&self) -> String {
-        Keystore::verification_method()
+        VerifierKeystore::verification_method()
     }
 
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
-        Keystore::try_sign(msg)
+        VerifierKeystore::try_sign(msg)
     }
 }
 
 impl SignatureVerifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
-        Keystore::deref_jwk(did_url).await
+        keystore::deref_jwk(did_url).await
     }
 }

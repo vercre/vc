@@ -3,7 +3,7 @@ use openid::verifier::{Result, StateManager, Verifier, VerifierMetadata, Wallet,
 use proof::jose::jwk::PublicKeyJwk;
 use proof::signature::{self, Algorithm, Signer};
 
-use crate::store::proof::Keystore;
+use crate::store::keystore::VerifierKeystore;
 use crate::store::{presentation, state};
 
 pub const VERIFIER_ID: &str = "http://vercre.io";
@@ -58,20 +58,20 @@ impl StateManager for Provider {
 
 impl Signer for Provider {
     fn algorithm(&self) -> Algorithm {
-        Keystore::algorithm()
+        VerifierKeystore::algorithm()
     }
 
     fn verification_method(&self) -> String {
-        Keystore::verification_method()
+        VerifierKeystore::verification_method()
     }
 
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
-        Keystore::try_sign(msg)
+        VerifierKeystore::try_sign(msg)
     }
 }
 
 impl signature::Verifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
-        Keystore::deref_jwk(did_url).await
+        crate::store::keystore::deref_jwk(did_url).await
     }
 }
