@@ -20,10 +20,11 @@ const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
 const X25519_CODEC: [u8; 2] = [0xec, 0x01];
 
 impl DidWeb {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self
     }
 
+    #[allow(clippy::unused_self)]
     pub fn create(&self, url: &str, options: CreateOptions) -> did::Result<Document> {
         // create identifier from url
         let url =
@@ -50,7 +51,7 @@ impl DidWeb {
         let multi_key = multibase::encode(Base::Base58Btc, &multi_bytes);
 
         let context = Kind::String("https://w3id.org/security/data-integrity/v1".into());
-        let public_key = PublicKey::Multibase(multi_key.into());
+        let public_key = PublicKey::Multibase(multi_key);
 
         // key agreement
         // <https://w3c-ccg.github.io/did-method-key/#encryption-method-creation-algorithm>
@@ -77,7 +78,7 @@ impl DidWeb {
             Some(vec![Kind::Object(VerificationMethod {
                 id: format!("{did}#{ek_multibase}"),
                 type_: options.public_key_format.clone(),
-                controller: did.clone().into(),
+                controller: did.clone(),
                 public_key: PublicKey::Multibase(ek_multibase),
                 ..VerificationMethod::default()
             })])
@@ -110,10 +111,12 @@ impl DidWeb {
         self.create(did, options)
     }
 
+    #[allow(clippy::unused_self)]
     pub fn update(&self, _did: &str, _: CreateOptions) -> did::Result<Document> {
         unimplemented!("This DID Method does not support updating the DID Document")
     }
 
+    #[allow(clippy::unused_self)]
     pub fn deactivate(&self, _did: &str, _: CreateOptions) -> did::Result<()> {
         unimplemented!("This DID Method does not support deactivating the DID Document")
     }

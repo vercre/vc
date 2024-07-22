@@ -43,10 +43,12 @@ pub enum Error {
 }
 
 impl Error {
+    #[must_use]
     pub fn code(&self) -> String {
         self.to_string()
     }
 
+    #[must_use]
     pub fn message(&self) -> String {
         match self {
             Self::MethodNotSupported(msg)

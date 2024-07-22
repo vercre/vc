@@ -23,14 +23,20 @@ pub trait Operator {
     fn create(&self, did: &str, options: CreateOptions) -> did::Result<Document>;
 
     /// Reads a DID document for the given DID method.
+    ///
+    /// # Errors
     #[allow(dead_code)]
     fn read(&self, did: &str, options: CreateOptions) -> did::Result<Document>;
 
     /// Updates a DID document for the given DID method.
+    ///
+    /// # Errors
     #[allow(dead_code)]
     fn update(&self, did: &str, options: CreateOptions) -> did::Result<Document>;
 
     /// Deactivates a DID document for the given DID method.
+    ///
+    /// # Errors
     #[allow(dead_code)]
     fn deactivate(&self, did: &str, options: CreateOptions) -> did::Result<()>;
 }
