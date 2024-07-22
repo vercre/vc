@@ -94,6 +94,6 @@ impl Signer for Provider {
 
 impl Verifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
-        Keystore::deref_jwk(did_url)
+        Keystore::deref_jwk(did_url).await
     }
 }

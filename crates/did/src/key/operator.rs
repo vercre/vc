@@ -9,7 +9,7 @@ use std::sync::LazyLock;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use core_utils::Kind;
 use curve25519_dalek::edwards::CompressedEdwardsY;
-use multibase::Base::Base58Btc;
+use multibase::Base;
 use proof::jose::jwk::{Curve, KeyType, PublicKeyJwk};
 use regex::Regex;
 use serde_json::json;
@@ -89,7 +89,7 @@ impl Operator for DidKey {
             let mut multi_bytes = vec![];
             multi_bytes.extend_from_slice(&X25519_CODEC);
             multi_bytes.extend_from_slice(&x25519_bytes);
-            let ek_multibase = multibase::encode(Base58Btc, &multi_bytes);
+            let ek_multibase = multibase::encode(Base::Base58Btc, &multi_bytes);
 
             Some(vec![Kind::Object(VerificationMethod {
                 id: format!("{did}#{ek_multibase}"),

@@ -87,11 +87,10 @@ impl StateManager for Provider {
 
 impl Signer for Provider {
     fn algorithm(&self) -> Algorithm {
-        Algorithm::ES256K
+        Keystore::algorithm()
     }
 
     fn verification_method(&self) -> String {
-        //format!("{ISSUER_DID}#{VERIFY_KEY_ID}")
         Keystore::verification_method()
     }
 
@@ -102,6 +101,24 @@ impl Signer for Provider {
 
 impl Verifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
-        Keystore::deref_jwk(did_url)
+        Keystore::deref_jwk(did_url).await
     }
 }
+
+// impl Signature for Provider {
+//     fn algorithm(&self) -> Algorithm {
+//         Keystore::algorithm()
+//     }
+
+//     fn verification_method(&self) -> String {
+//         Keystore::verification_method()
+//     }
+
+//     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
+//         Keystore::try_sign(msg)
+//     }
+
+//     async fn try_verify(&self, msg: &[u8]) -> Result<PublicKeyJwk> {
+//         Keystore::try_sign(msg)
+//     }
+// }

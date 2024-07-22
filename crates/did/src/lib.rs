@@ -8,9 +8,9 @@
 //!
 //! See [DID resolution](https://www.w3.org/TR/did-core/#did-resolution) fpr more.
 
-mod did;
-mod document;
-mod error;
+pub mod did;
+pub mod document;
+pub mod error;
 mod key;
 mod web;
 
@@ -55,6 +55,7 @@ pub async fn resolve(
     let method = did.split(':').nth(1).unwrap_or_default();
     let result = match method {
         "key" => key::DidKey.resolve(did, opts, client).await,
+        "web" => web::DidWeb.resolve(did, opts, client).await,
         _ => Err(Error::MethodNotSupported(format!("{method} is not supported"))),
     };
 

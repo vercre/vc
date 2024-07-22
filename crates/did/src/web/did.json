@@ -1,48 +1,36 @@
 {
     "@context": [
         "https://www.w3.org/ns/did/v1",
-        {
-            "@base": "did:web:credibil.io"
-        }
+        "https://w3id.org/security/data-integrity/v1"
     ],
-    "assertionMethod": [
-        "#412a9e38b16c4702a1e45f0fe3f5348cvcSigningKey-64378"
-    ],
-    "authentication": [
-        "#412a9e38b16c4702a1e45f0fe3f5348cvcSigningKey-64378"
-    ],
-    "id": "did:web:credibil.io",
-    "service": [
-        {
-            "id": "#linkeddomains",
-            "serviceEndpoint": {
-                "origins": [
-                    "https://credibil.io/"
-                ]
-            },
-            "type": "LinkedDomains"
-        },
-        {
-            "id": "#hub",
-            "serviceEndpoint": {
-                "instances": [
-                    "https://hub.did.msidentity.com/v1.0/357812d6-3a85-49e9-b840-09ec9a7e717a"
-                ]
-            },
-            "type": "IdentityHub"
-        }
-    ],
+    "id": "did:web:demo.credibil.io",
     "verificationMethod": [
         {
-            "controller": "did:web:credibil.io",
-            "id": "#412a9e38b16c4702a1e45f0fe3f5348cvcSigningKey-64378",
-            "publicKeyJwk": {
-                "crv": "secp256k1",
-                "kty": "EC",
-                "x": "5OZcXs9u_JdJdqp-mL3IWmT6Q9A4Dpff--wkM2x9TAU",
-                "y": "tkOFB7CwhIyc9j2BnIetmr5OVbpvMPnxn0w-UZ11vAs"
-            },
-            "type": "EcdsaSecp256k1VerificationKey2019"
+            "id": "did:web:demo.credibil.io#key-0",
+            "type": "Multikey",
+            "controller": "did:web:demo.credibil.io",
+            "publicKeyMultibase": "z6MkqYXgAGReqa7WcDmWhQYEg5Ka7BtZSCHE7Dbj7eDxN1ZX"
         }
-    ]
+    ],
+    "authentication": [
+        "did:web:demo.credibil.io#key-0"
+    ],
+    "assertionMethod": [
+        "did:web:demo.credibil.io#key-0"
+    ],
+    "capabilityInvocation": [
+        "did:web:demo.credibil.io#key-0"
+    ],
+    "capabilityDelegation": [
+        "did:web:demo.credibil.io#key-0"
+    ],
+    "keyAgreement": [
+        {
+            "id": "did:web:demo.credibil.io#z6LSkDKBEUY9fkd4RAave1m2oJMT8AtQWKPjUVYR11qC7U9U",
+            "type": "Multikey",
+            "controller": "did:web:demo.credibil.io",
+            "publicKeyMultibase": "z6LSkDKBEUY9fkd4RAave1m2oJMT8AtQWKPjUVYR11qC7U9U"
+        }
+    ],
+    "signing": "btvu4hBlWsQzQkFc5VP576wb7_ha0RZK9MZzS6oumNA"
 }
