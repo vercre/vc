@@ -12,8 +12,8 @@
             "format": "jwt_vc_json",
             "scope": "EmployeeIDCredential",
             "cryptographic_binding_methods_supported": [
-                "did:jwk",
-                "did:ion"
+                "did:key",
+                "did:web"
             ],
             "credential_signing_alg_values_supported": [
                 "ES256K",
@@ -91,8 +91,8 @@
             "format": "jwt_vc_json",
             "scope": "DeveloperCredential",
             "cryptographic_binding_methods_supported": [
-                "did:jwk",
-                "did:ion"
+                "did:key",
+                "did:web"
             ],
             "credential_signing_alg_values_supported": [
                 "ES256K",

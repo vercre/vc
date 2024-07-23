@@ -324,6 +324,8 @@ mod tests {
             }
         })
     });
+
+    // TODO: replace the VC with one that uses did:web
     static VP_TOKEN: LazyLock<Value> = LazyLock::new(|| {
         json!([{
             "@context": [

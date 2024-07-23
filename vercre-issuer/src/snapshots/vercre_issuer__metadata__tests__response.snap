@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/metadata.rs
-assertion_line: 112
+assertion_line: 74
 expression: response
 ---
 credential_issuer: "http://vercre.io"
@@ -15,8 +15,8 @@ credential_configurations_supported:
     format: jwt_vc_json
     scope: DeveloperCredential
     cryptographic_binding_methods_supported:
-      - "did:jwk"
-      - "did:ion"
+      - "did:key"
+      - "did:web"
     credential_signing_alg_values_supported:
       - ES256K
       - EdDSA
@@ -67,8 +67,8 @@ credential_configurations_supported:
     format: jwt_vc_json
     scope: EmployeeIDCredential
     cryptographic_binding_methods_supported:
-      - "did:jwk"
-      - "did:ion"
+      - "did:key"
+      - "did:web"
     credential_signing_alg_values_supported:
       - ES256K
       - EdDSA

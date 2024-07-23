@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/tests/auth_code_flow.rs
-assertion_line: 40
+assertion_line: 39
 expression: vc
 ---
 "@context":
@@ -16,4 +16,4 @@ credentialSubject:
   email: normal.user@example.com
   familyName: Person
   givenName: Normal
-  id: "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwidXNlIjoic2lnIiwieCI6IjNMZzl5dmlBbVREQ3VWT3lMWEkzbHE5UzJwSG03M3lyM3d3QWtqd0NBaHcifQ"
+  id: "did:key:z6Mkj8Jr1rg3YjVWWhg7ahEYJibqhjBgZt1pDCbT4Lv7D4HX"

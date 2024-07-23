@@ -11,8 +11,41 @@ use proof::jose::jwk::PublicKeyJwk;
 
 struct Client {}
 impl did::DidClient for Client {
-    async fn get(&self, url: &str) -> anyhow::Result<Vec<u8>> {
-        reqwest::get(url).await?.bytes().await.map_err(|e| anyhow!("{e}")).map(|b| b.to_vec())
+    async fn get(&self, _url: &str) -> anyhow::Result<Vec<u8>> {
+        // reqwest::get(url).await?.bytes().await.map_err(|e| anyhow!("{e}")).map(|b| b.to_vec())
+        let doc = serde_json::json!({
+            "@context": [
+                "https://www.w3.org/ns/did/v1",
+                "https://w3id.org/security/data-integrity/v1"
+            ],
+            "id": "did:web:demo.credibil.io",
+            "verificationMethod": [{
+                "id": "did:web:demo.credibil.io#key-0",
+                "type": "Multikey",
+                "controller": "did:web:demo.credibil.io",
+                "publicKeyMultibase": "z6Mkr1NtupNezZtcUAMxJ79HPex6ZTR9RnGh8xfV257ZQdss"
+            }],
+            "authentication": [
+                "did:web:demo.credibil.io#key-0"
+            ],
+            "assertionMethod": [
+                "did:web:demo.credibil.io#key-0"
+            ],
+            "capabilityInvocation": [
+                "did:web:demo.credibil.io#key-0"
+            ],
+            "capabilityDelegation": [
+                "did:web:demo.credibil.io#key-0"
+            ],
+            "keyAgreement": [{
+                "id": "did:web:demo.credibil.io#key-1",
+                "type": "Multikey",
+                "controller": "did:web:demo.credibil.io",
+                "publicKeyMultibase": "z6LSo1jPr1g7qoR9UsYWoJs66FiaoHGAK5cJzBGSvQpuVEQv"
+            }]
+        });
+
+        Ok(serde_json::to_vec(&doc)?)
     }
 }
 
@@ -115,20 +148,8 @@ pub async fn deref_jwk(did_url: &str) -> Result<PublicKeyJwk> {
         return Ok(vm.public_key.to_jwk()?);
     }
 
-    // if have long-form DID then try to extract key from metadata
+    // handle legacy did:ion (from vercre-verifier::response::tests ln343)
     let did_parts = did.split(':').collect::<Vec<&str>>();
-
-    // if DID is a JWK then return it
-    if did.starts_with("did:jwk:") {
-        let decoded = Base64UrlUnpadded::decode_vec(did_parts[2])
-            .map_err(|e| anyhow!("Unable to decode DID: {e}"))?;
-        return serde_json::from_slice::<PublicKeyJwk>(&decoded).map_err(anyhow::Error::from);
-    }
-
-    // HACK: for now, assume DID is long-form with delta operation containing public key
-    // TODO: use vercre-did crate to dereference DID URL
-
-    // DID should be long-form ION
     if did_parts.len() != 4 {
         bail!("Short-form DID's are not supported");
     }

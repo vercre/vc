@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/batch.rs
-assertion_line: 537
+assertion_line: 505
 expression: vc
 ---
 "@context":
@@ -15,4 +15,4 @@ issuanceDate: "[issuanceDate]"
 credentialSubject:
   familyName: Person
   givenName: Normal
-  id: "did:jwk:eyJjcnYiOiJFZDI1NTE5Iiwia3R5IjoiT0tQIiwidXNlIjoic2lnIiwieCI6IjNMZzl5dmlBbVREQ3VWT3lMWEkzbHE5UzJwSG03M3lyM3d3QWtqd0NBaHcifQ"
+  id: "did:key:z6Mkj8Jr1rg3YjVWWhg7ahEYJibqhjBgZt1pDCbT4Lv7D4HX"

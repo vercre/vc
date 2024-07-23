@@ -1,6 +1,6 @@
 ---
 source: vercre-holder/tests/issuance.rs
-assertion_line: 55
+assertion_line: 60
 expression: issuance
 ---
 id: "[id]"
@@ -22,8 +22,8 @@ offered:
     format: jwt_vc_json
     scope: EmployeeIDCredential
     cryptographic_binding_methods_supported:
-      - "did:jwk"
-      - "did:ion"
+      - "did:key"
+      - "did:web"
     credential_signing_alg_values_supported:
       - ES256K
       - EdDSA
