@@ -20,12 +20,21 @@ const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
 const X25519_CODEC: [u8; 2] = [0xec, 0x01];
 
 impl DidWeb {
-    pub const fn new() -> Self {
-        Self
+    // HACK: generate a key pair
+    pub fn generate() -> Vec<u8> {
+        // TODO: pass in public key
+        let mut csprng = OsRng;
+        let signing_key: SigningKey = SigningKey::generate(&mut csprng);
+        let secret = Base64UrlUnpadded::encode_string(signing_key.as_bytes());
+        println!("signing: {secret}");
+
+        signing_key.verifying_key().to_bytes().to_vec()
     }
 
     #[allow(clippy::unused_self)]
-    pub fn create(&self, url: &str, options: CreateOptions) -> did::Result<Document> {
+    pub fn create(
+        url: &str, verifying_key: &[u8], options: CreateOptions,
+    ) -> did::Result<Document> {
         // create identifier from url
         let url =
             Url::parse(url).map_err(|e| Error::InvalidDid(format!("issue parsing url: {e}")))?;
@@ -37,18 +46,10 @@ impl DidWeb {
             did = format!("{did}{}", path.replace('/', ":"));
         }
 
-        // HACK: generate a key pair
-        // TODO: pass in public key
-        let mut csprng = OsRng;
-        let signing_key: SigningKey = SigningKey::generate(&mut csprng);
-
-        let secret = Base64UrlUnpadded::encode_string(signing_key.as_bytes());
-        println!("signing: {secret}");
-
         // multibase encode the public key
         let mut multi_bytes = vec![];
         multi_bytes.extend_from_slice(&ED25519_CODEC);
-        multi_bytes.extend_from_slice(signing_key.verifying_key().as_bytes());
+        multi_bytes.extend_from_slice(verifying_key);
         let multi_key = multibase::encode(Base::Base58Btc, &multi_bytes);
 
         let context = Kind::String("https://w3id.org/security/data-integrity/v1".into());
@@ -57,10 +58,8 @@ impl DidWeb {
         // key agreement
         // <https://w3c-ccg.github.io/did-method-key/#encryption-method-creation-algorithm>
         let key_agreement = if options.enable_encryption_key_derivation {
-            let key_bytes = signing_key.verifying_key().to_bytes();
-
             // derive an X25519 public encryption key from the Ed25519 key
-            let edwards_y = CompressedEdwardsY::from_slice(&key_bytes).map_err(|e| {
+            let edwards_y = CompressedEdwardsY::from_slice(verifying_key).map_err(|e| {
                 Error::InvalidPublicKey(format!("public key is not Edwards Y: {e}"))
             })?;
             let Some(edwards_pt) = edwards_y.decompress() else {
@@ -108,17 +107,18 @@ impl DidWeb {
         })
     }
 
-    pub fn read(&self, did: &str, options: CreateOptions) -> did::Result<Document> {
-        self.create(did, options)
+    pub fn read(_did: &str, _: CreateOptions) -> did::Result<Document> {
+        // self.create(did, options)
+        unimplemented!("read")
     }
 
     #[allow(clippy::unused_self)]
-    pub fn update(&self, _did: &str, _: CreateOptions) -> did::Result<Document> {
+    pub fn update(_did: &str, _: CreateOptions) -> did::Result<Document> {
         unimplemented!("This DID Method does not support updating the DID Document")
     }
 
     #[allow(clippy::unused_self)]
-    pub fn deactivate(&self, _did: &str, _: CreateOptions) -> did::Result<()> {
+    pub fn deactivate(_did: &str, _: CreateOptions) -> did::Result<()> {
         unimplemented!("This DID Method does not support deactivating the DID Document")
     }
 }
@@ -134,7 +134,8 @@ mod test {
         let mut options = CreateOptions::default();
         options.enable_encryption_key_derivation = true;
 
-        let res = DidWeb::new().create(url, options).expect("should create");
+        let verifying_key = DidWeb::generate();
+        let res = DidWeb::create(url, &verifying_key, options).expect("should create");
 
         let json = serde_json::to_string(&res).expect("should serialize");
         println!("{json}");

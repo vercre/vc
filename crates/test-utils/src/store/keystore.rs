@@ -70,8 +70,9 @@ impl VerifierKeystore {
     }
 }
 
-const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
-const HOLDER_SECRET: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
+const HOLDER_DID: &str = "did:key:z6Mkj8Jr1rg3YjVWWhg7ahEYJibqhjBgZt1pDCbT4Lv7D4HX";
+const HOLDER_VERIFY_KEY: &str = "z6Mkj8Jr1rg3YjVWWhg7ahEYJibqhjBgZt1pDCbT4Lv7D4HX";
+const HOLDER_SECRET: &str = "8rmFFiUcTjjrL5mgBzWykaH39D64VD0mbDHwILvsu30";
 
 #[derive(Default, Clone, Debug)]
 pub struct HolderKeystore;
@@ -82,17 +83,7 @@ impl HolderKeystore {
     }
 
     pub fn verification_method() -> String {
-        let jwk = serde_json::json!({
-            "kty": "OKP",
-            "crv": "Ed25519",
-            "use": "sig",
-            "x": JWK_X,
-        });
-        let jwk_str = jwk.to_string();
-        let jwk_b64 = Base64UrlUnpadded::encode_string(jwk_str.as_bytes());
-
-        let did = format!("did:jwk:{jwk_b64}");
-        format!("{}#0", did)
+        format!("{HOLDER_DID}#{HOLDER_VERIFY_KEY}")
     }
 
     pub fn try_sign(msg: &[u8]) -> Result<Vec<u8>> {
@@ -106,6 +97,7 @@ impl HolderKeystore {
 
 // TODO: rename this to try_verify()
 pub async fn deref_jwk(did_url: &str) -> Result<PublicKeyJwk> {
+    // TODO: use did crate dereference to resolve DID URL
     let did = did_url.split('#').next().ok_or_else(|| anyhow!("Unable to parse DID"))?;
 
     if did.starts_with("did:web") || did.starts_with("did:key") {
@@ -120,7 +112,7 @@ pub async fn deref_jwk(did_url: &str) -> Result<PublicKeyJwk> {
         };
 
         let vm = &verifcation_methods[0];
-        return vm.public_key.to_jwk().map_err(|e| anyhow!("{e}"));
+        return Ok(vm.public_key.to_jwk()?);
     }
 
     // if have long-form DID then try to extract key from metadata
