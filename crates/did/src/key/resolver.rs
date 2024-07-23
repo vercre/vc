@@ -26,9 +26,7 @@ static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 impl DidKey {
-    pub async fn resolve(
-        did: &str, _: Option<Options>, _: impl DidClient,
-    ) -> did::Result<Resolution> {
+    pub fn resolve(did: &str, _: Option<Options>, _: impl DidClient) -> did::Result<Resolution> {
         // check DID is valid AND extract key
         let Some(caps) = DID_REGEX.captures(did) else {
             return Err(Error::InvalidDid("DID is not a valid did:key".into()));
@@ -73,7 +71,8 @@ impl DidKey {
         })
     }
 
-    pub async fn dereference(
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn dereference(
         did_url: &str, _opts: Option<Options>, client: impl DidClient,
     ) -> did::Result<Dereferenced> {
         // validate URL against pattern
@@ -82,7 +81,7 @@ impl DidKey {
 
         // resolve DID document
         let did = format!("did:{}", url.path());
-        let resolution = Self::resolve(&did, None, client).await?;
+        let resolution = Self::resolve(&did, None, client)?;
 
         // TODO: search by fragment in document
         let Some(document) = resolution.document else {
@@ -124,14 +123,14 @@ mod test {
 
     #[tokio::test]
     async fn resolve() {
-        let resolved = DidKey::resolve(DID, None, Client {}).await.expect("should resolve");
+        let resolved = DidKey::resolve(DID, None, Client {}).expect("should resolve");
         assert_snapshot!("resolved", resolved);
     }
 
     #[tokio::test]
     async fn dereference() {
         let dereferenced =
-            DidKey::dereference(DID_URL, None, Client {}).await.expect("should dereference");
+            DidKey::dereference(DID_URL, None, Client {}).expect("should dereference");
         assert_snapshot!("dereferenced", dereferenced);
     }
 }

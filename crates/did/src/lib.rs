@@ -55,7 +55,7 @@ pub async fn resolve(
     let method = did.split(':').nth(1).unwrap_or_default();
 
     let result = match method {
-        "key" => key::DidKey::resolve(did, opts, client).await,
+        "key" => key::DidKey::resolve(did, opts, client),
         "web" => web::DidWeb::resolve(did, opts, client).await,
         _ => Err(Error::MethodNotSupported(format!("{method} is not supported"))),
     };
@@ -75,13 +75,16 @@ pub async fn resolve(
     result
 }
 
+/// Dereference a DID URL into a resource.
+/// 
+/// # Errors
 pub async fn dereference(
     did_url: &str, opts: Option<Options>, client: impl DidClient,
 ) -> did::Result<Dereferenced> {
     let method = did_url.split(':').nth(1).unwrap_or_default();
 
     match method {
-        "key" => key::DidKey::dereference(did_url, opts, client).await,
+        "key" => key::DidKey::dereference(did_url, opts, client),
         "web" => web::DidWeb::dereference(did_url, opts, client).await,
         _ => Err(Error::MethodNotSupported(format!("{method} is not supported"))),
     }
@@ -249,7 +252,7 @@ pub enum Resource {
 
 impl Default for Resource {
     fn default() -> Self {
-        Resource::VerificationMethod(VerificationMethod::default())
+        Self::VerificationMethod(VerificationMethod::default())
     }
 }
 
