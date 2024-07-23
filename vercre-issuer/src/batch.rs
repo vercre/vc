@@ -496,6 +496,7 @@ mod tests {
         let Some(vc_kind) = &response.credential_responses[0].credential else {
             panic!("credential is missing");
         };
+
         let Payload::Vc(vc) =
             w3c_vc::proof::verify(Verify::Vc(vc_kind), &provider).await.expect("should decode")
         else {

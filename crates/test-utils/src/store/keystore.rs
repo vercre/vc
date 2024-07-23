@@ -128,51 +128,21 @@ impl HolderKeystore {
     }
 }
 
-// TODO: rename this to try_verify()
+// TODO: move this back into did crate
 pub async fn deref_jwk(did_url: &str) -> Result<PublicKeyJwk> {
     // TODO: use did crate dereference to resolve DID URL
     let did = did_url.split('#').next().ok_or_else(|| anyhow!("Unable to parse DID"))?;
 
-    if did.starts_with("did:web") || did.starts_with("did:key") {
-        let client = Client {};
-        let resp = did::resolve(did, None, client).await?;
+    let client = Client {};
+    let resp = did::resolve(did, None, client).await?;
 
-        let Some(document) = resp.document else {
-            bail!("Unable to resolve DID document");
-        };
-        let Some(verifcation_methods) = document.verification_method else {
-            bail!("Unable to find verification method in DID document");
-        };
+    let Some(document) = resp.document else {
+        bail!("Unable to resolve DID document");
+    };
+    let Some(verifcation_methods) = document.verification_method else {
+        bail!("Unable to find verification method in DID document");
+    };
 
-        let vm = &verifcation_methods[0];
-        return Ok(vm.public_key.to_jwk()?);
-    }
-
-    // handle legacy did:ion (from vercre-verifier::response::tests ln343)
-    let did_parts = did.split(':').collect::<Vec<&str>>();
-    if did_parts.len() != 4 {
-        bail!("Short-form DID's are not supported");
-    }
-
-    let decoded = Base64UrlUnpadded::decode_vec(did_parts[3])
-        .map_err(|e| anyhow!("Unable to decode DID: {e}"))?;
-    let ion_op = serde_json::from_slice::<serde_json::Value>(&decoded)?;
-
-    let pk_val = ion_op
-        .get("delta")
-        .unwrap()
-        .get("patches")
-        .unwrap()
-        .get(0)
-        .unwrap()
-        .get("document")
-        .unwrap()
-        .get("publicKeys")
-        .unwrap()
-        .get(0)
-        .unwrap()
-        .get("publicKeyJwk")
-        .unwrap();
-
-    serde_json::from_value(pk_val.clone()).map_err(anyhow::Error::from)
+    let vm = &verifcation_methods[0];
+    Ok(vm.public_key.to_jwk()?)
 }
