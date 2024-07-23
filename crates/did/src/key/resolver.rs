@@ -15,7 +15,7 @@ use serde_json::json;
 
 use super::DidKey;
 use crate::did::{self, Error};
-use crate::document::{CreateOptions, Operator};
+use crate::document::CreateOptions;
 use crate::{
     ContentMetadata, ContentType, DidClient, Metadata, Options, Resolution, Resolver, Resource,
 };

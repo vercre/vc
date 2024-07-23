@@ -9,7 +9,7 @@
             "id": "did:web:demo.credibil.io#key-0",
             "type": "Multikey",
             "controller": "did:web:demo.credibil.io",
-            "publicKeyMultibase": "z6MkqYXgAGReqa7WcDmWhQYEg5Ka7BtZSCHE7Dbj7eDxN1ZX"
+            "publicKeyMultibase": "z6Mkr1NtupNezZtcUAMxJ79HPex6ZTR9RnGh8xfV257ZQdss"
         }
     ],
     "authentication": [
@@ -26,11 +26,11 @@
     ],
     "keyAgreement": [
         {
-            "id": "did:web:demo.credibil.io#z6LSkDKBEUY9fkd4RAave1m2oJMT8AtQWKPjUVYR11qC7U9U",
+            "id": "did:web:demo.credibil.io#key-1",
             "type": "Multikey",
             "controller": "did:web:demo.credibil.io",
-            "publicKeyMultibase": "z6LSkDKBEUY9fkd4RAave1m2oJMT8AtQWKPjUVYR11qC7U9U"
+            "publicKeyMultibase": "z6LSo1jPr1g7qoR9UsYWoJs66FiaoHGAK5cJzBGSvQpuVEQv"
         }
     ],
-    "signing": "btvu4hBlWsQzQkFc5VP576wb7_ha0RZK9MZzS6oumNA"
+    "signing": "cCxmHfFfIJvP74oNKjAuRC3zYoDMo0pFsAs19yKMowY"
 }
