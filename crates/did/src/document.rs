@@ -5,13 +5,17 @@
 use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
 
+use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::{DateTime, Utc};
 use core_utils::{Kind, Quota};
-use proof::jose::jwk::PublicKeyJwk;
+use multibase::Base;
+use proof::jose::jwk::{Curve, KeyType, PublicKeyJwk};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::did;
+use crate::did::{self, Error};
+
+const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
 
 /// DID resolution functions required to be implemented by conforming DID resolvers.
 pub trait Operator {
@@ -266,6 +270,53 @@ pub enum PublicKey {
 impl Default for PublicKey {
     fn default() -> Self {
         Self::Multibase(String::new())
+    }
+}
+
+impl PublicKey {
+    /// Converts a Multibase public key to JWK format.
+    ///
+    /// # Errors
+    pub fn to_jwk(&self) -> did::Result<PublicKeyJwk> {
+        match self {
+            Self::Jwk(jwk) => Ok(jwk.clone()),
+            Self::Multibase(multi_key) => {
+                let (_, key_bytes) = multibase::decode(multi_key)
+                    .map_err(|e| Error::InvalidPublicKey(format!("issue decoding key: {e}")))?;
+                if key_bytes.len() - 2 != 32 {
+                    return Err(Error::InvalidPublicKeyLength("key is not 32 bytes long".into()));
+                }
+                if key_bytes[0..2] != ED25519_CODEC {
+                    return Err(Error::InvalidPublicKey("not Ed25519".into()));
+                }
+
+                Ok(PublicKeyJwk {
+                    kty: KeyType::Okp,
+                    crv: Curve::Ed25519,
+                    x: Base64UrlUnpadded::encode_string(&key_bytes[2..]),
+                    ..PublicKeyJwk::default()
+                })
+            }
+        }
+    }
+
+    /// Converts a JWK public key to Multibase format.
+    ///
+    /// # Errors
+    pub fn to_multibase(&self) -> did::Result<String> {
+        match self {
+            Self::Multibase(multibase) => Ok(multibase.clone()),
+            Self::Jwk(jwk) => {
+                let key_bytes = Base64UrlUnpadded::decode_vec(&jwk.x)
+                    .map_err(|e| Error::InvalidPublicKey(format!("issue decoding key: {e}")))?;
+                let mut multi_bytes = vec![];
+                multi_bytes.extend_from_slice(&ED25519_CODEC);
+                multi_bytes.extend_from_slice(&key_bytes);
+                let multibase = multibase::encode(Base::Base58Btc, &multi_bytes);
+
+                Ok(multibase)
+            }
+        }
     }
 }
 
