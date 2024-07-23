@@ -1,6 +1,5 @@
 use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
-use did::document::PublicKey;
 // use ecdsa::signature::Signer as _;
 // use ecdsa::{Signature, SigningKey};
 use ed25519_dalek::Signer;
@@ -8,11 +7,7 @@ use ed25519_dalek::{SecretKey, SigningKey};
 // use k256::Secp256k1;
 use openid::provider::Result;
 use proof::jose::jwa::Algorithm;
-use proof::jose::jwk::{Curve, KeyType, PublicKeyJwk};
-
-const ISSUER_DID: &str = "did:web:demo.credibil.io";
-const ISSUER_VERIFY_KEY: &str = "key-0";
-const ISSUER_SECRET: &str = "btvu4hBlWsQzQkFc5VP576wb7_ha0RZK9MZzS6oumNA";
+use proof::jose::jwk::PublicKeyJwk;
 
 struct Client {}
 impl did::DidClient for Client {
@@ -23,6 +18,10 @@ impl did::DidClient for Client {
 
 #[derive(Default, Clone, Debug)]
 pub struct IssuerKeystore;
+
+const ISSUER_DID: &str = "did:web:demo.credibil.io";
+const ISSUER_VERIFY_KEY: &str = "key-0";
+const ISSUER_SECRET: &str = "cCxmHfFfIJvP74oNKjAuRC3zYoDMo0pFsAs19yKMowY";
 
 impl IssuerKeystore {
     pub fn algorithm() -> Algorithm {
@@ -49,17 +48,21 @@ impl IssuerKeystore {
 #[derive(Default, Clone, Debug)]
 pub struct VerifierKeystore;
 
+const VERIFIER_DID: &str = "did:web:demo.credibil.io";
+const VERIFIER_VERIFY_KEY: &str = "key-0";
+const VERIFIER_SECRET: &str = "cCxmHfFfIJvP74oNKjAuRC3zYoDMo0pFsAs19yKMowY";
+
 impl VerifierKeystore {
     pub fn algorithm() -> Algorithm {
         Algorithm::EdDSA
     }
 
     pub fn verification_method() -> String {
-        format!("{ISSUER_DID}#{ISSUER_VERIFY_KEY}")
+        format!("{VERIFIER_DID}#{VERIFIER_VERIFY_KEY}")
     }
 
     pub fn try_sign(msg: &[u8]) -> Result<Vec<u8>> {
-        let decoded = Base64UrlUnpadded::decode_vec(ISSUER_SECRET)?;
+        let decoded = Base64UrlUnpadded::decode_vec(VERIFIER_SECRET)?;
         let secret_key: SecretKey =
             decoded.try_into().map_err(|_| anyhow!("Invalid secret key"))?;
         let signing_key: SigningKey = SigningKey::from_bytes(&secret_key);
@@ -68,7 +71,7 @@ impl VerifierKeystore {
 }
 
 const JWK_X: &str = "3Lg9yviAmTDCuVOyLXI3lq9S2pHm73yr3wwAkjwCAhw";
-const WALLET_JWK_D: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
+const HOLDER_SECRET: &str = "Y1KNbzOcX112pXI3v6sFvcr8uBLw4Pc2ciZTWdZx-As";
 
 #[derive(Default, Clone, Debug)]
 pub struct HolderKeystore;
@@ -93,7 +96,7 @@ impl HolderKeystore {
     }
 
     pub fn try_sign(msg: &[u8]) -> Result<Vec<u8>> {
-        let decoded = Base64UrlUnpadded::decode_vec(WALLET_JWK_D)?;
+        let decoded = Base64UrlUnpadded::decode_vec(HOLDER_SECRET)?;
         let bytes: [u8; 32] = decoded.as_slice().try_into().expect("should convert ");
         let signing_key = ed25519_dalek::SigningKey::from_bytes(&bytes);
         let signature: ed25519_dalek::Signature = signing_key.sign(msg);
@@ -115,32 +118,9 @@ pub async fn deref_jwk(did_url: &str) -> Result<PublicKeyJwk> {
         let Some(verifcation_methods) = document.verification_method else {
             bail!("Unable to find verification method in DID document");
         };
+
         let vm = &verifcation_methods[0];
-
-        match &vm.public_key {
-            PublicKey::Jwk(pk) => return Ok(pk.clone()),
-            PublicKey::Multibase(multi_key) => {
-                // convert Multibase to Jwk
-                const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
-
-                // decode the the DID key
-                let (_, key_bytes) =
-                    multibase::decode(multi_key).map_err(|e| anyhow!("issue decoding key: {e}"))?;
-                if key_bytes.len() - 2 != 32 {
-                    bail!("invalid key length");
-                }
-                if key_bytes[0..2] != ED25519_CODEC {
-                    bail!("unsupported signature");
-                }
-
-                return Ok(PublicKeyJwk {
-                    kty: KeyType::Okp,
-                    crv: Curve::Ed25519,
-                    x: Base64UrlUnpadded::encode_string(&key_bytes[2..]),
-                    ..PublicKeyJwk::default()
-                });
-            }
-        }
+        return vm.public_key.to_jwk().map_err(|e| anyhow!("{e}"));
     }
 
     // if have long-form DID then try to extract key from metadata
