@@ -264,7 +264,7 @@ async fn create_response(
         });
     };
 
-    // generate proof for the credential
+    // sign credential (jwt = enveloping proof)
     let jwt = w3c_vc::proof::create(Format::JwtVcJson, Payload::Vc(vc), provider.clone())
         .await
         .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;

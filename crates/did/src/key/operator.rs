@@ -4,53 +4,48 @@
 //!
 //! See <https://w3c-ccg.github.io/did-method-key>
 
-use std::sync::LazyLock;
-
 use base64ct::{Base64UrlUnpadded, Encoding};
 use core_utils::Kind;
 use curve25519_dalek::edwards::CompressedEdwardsY;
-use multibase::Base::Base58Btc;
+use ed25519_dalek::SigningKey;
+use multibase::Base;
 use proof::jose::jwk::{Curve, KeyType, PublicKeyJwk};
-use regex::Regex;
+use rand::rngs::OsRng;
 use serde_json::json;
 
 use super::DidKey;
 use crate::did::{self, Error};
-use crate::document::{
-    CreateOptions, Document, Operator, PublicKey, PublicKeyFormat, VerificationMethod,
-};
+use crate::document::{CreateOptions, Document, PublicKey, PublicKeyFormat, VerificationMethod};
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
 const X25519_CODEC: [u8; 2] = [0xec, 0x01];
 
-static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new("^did:key:(?<identifier>z[a-km-zA-HJ-NP-Z1-9]+)$").expect("should compile")
-});
+impl DidKey {
+    // HACK: generate a key pair
+    pub fn generate() -> Vec<u8> {
+        // TODO: pass in public key
+        let mut csprng = OsRng;
+        let signing_key: SigningKey = SigningKey::generate(&mut csprng);
+        let secret = Base64UrlUnpadded::encode_string(signing_key.as_bytes());
+        println!("signing: {secret}");
 
-impl Operator for DidKey {
-    fn create(&self, did: &str, options: CreateOptions) -> did::Result<Document> {
-        // check DID is valid AND extract key
-        let Some(caps) = DID_REGEX.captures(did) else {
-            return Err(Error::InvalidDid("DID is not a valid did:key".into()));
-        };
-        let multi_key = &caps["identifier"];
+        signing_key.verifying_key().to_bytes().to_vec()
+    }
 
-        // decode the the DID key
-        let (_, key_bytes) = multibase::decode(multi_key)
-            .map_err(|e| Error::InvalidDid(format!("issue decoding key: {e}")))?;
-        if key_bytes.len() - 2 != 32 {
-            return Err(Error::InvalidDid("invalid key length".into()));
-        }
-        if key_bytes[0..2] != ED25519_CODEC {
-            return Err(Error::InvalidDid("unsupported signature".into()));
-        }
+    pub fn create(verifying_key: &[u8], options: CreateOptions) -> did::Result<Document> {
+        let mut multi_bytes = vec![];
+        multi_bytes.extend_from_slice(&ED25519_CODEC);
+        multi_bytes.extend_from_slice(verifying_key);
+        let multikey = multibase::encode(Base::Base58Btc, &multi_bytes);
+
+        let did = format!("did:key:{multikey}");
 
         let (context, public_key) = if options.public_key_format == PublicKeyFormat::Multikey
             || options.public_key_format == PublicKeyFormat::Ed25519VerificationKey2020
         {
             (
                 Kind::String("https://w3id.org/security/data-integrity/v1".into()),
-                PublicKey::Multibase(multi_key.into()),
+                PublicKey::Multibase(multikey.clone()),
             )
         } else {
             let verif_type = &options.public_key_format;
@@ -65,7 +60,7 @@ impl Operator for DidKey {
                 PublicKey::Jwk(PublicKeyJwk {
                     kty: KeyType::Okp,
                     crv: Curve::Ed25519,
-                    x: Base64UrlUnpadded::encode_string(&key_bytes[2..]),
+                    x: Base64UrlUnpadded::encode_string(verifying_key),
                     ..PublicKeyJwk::default()
                 }),
             )
@@ -75,7 +70,7 @@ impl Operator for DidKey {
         // <https://w3c-ccg.github.io/did-method-key/#encryption-method-creation-algorithm>
         let key_agreement = if options.enable_encryption_key_derivation {
             // derive an X25519 public encryption key from the Ed25519 key
-            let edwards_y = CompressedEdwardsY::from_slice(&key_bytes[2..]).map_err(|e| {
+            let edwards_y = CompressedEdwardsY::from_slice(verifying_key).map_err(|e| {
                 Error::InvalidPublicKey(format!("public key is not Edwards Y: {e}"))
             })?;
             let Some(edwards_pt) = edwards_y.decompress() else {
@@ -89,28 +84,28 @@ impl Operator for DidKey {
             let mut multi_bytes = vec![];
             multi_bytes.extend_from_slice(&X25519_CODEC);
             multi_bytes.extend_from_slice(&x25519_bytes);
-            let ek_multibase = multibase::encode(Base58Btc, &multi_bytes);
+            let multikey = multibase::encode(Base::Base58Btc, &multi_bytes);
 
             Some(vec![Kind::Object(VerificationMethod {
-                id: format!("{did}#{ek_multibase}"),
+                id: format!("{did}#{multikey}"),
                 type_: options.public_key_format.clone(),
-                controller: did.into(),
-                public_key: PublicKey::Multibase(ek_multibase),
+                controller: did.clone(),
+                public_key: PublicKey::Multibase(multikey),
                 ..VerificationMethod::default()
             })])
         } else {
             None
         };
 
-        let kid = format!("{did}#{multi_key}");
+        let kid = format!("{did}#{multikey}");
 
         Ok(Document {
             context: vec![Kind::String(options.default_context), context],
-            id: did.into(),
+            id: did.clone(),
             verification_method: Some(vec![VerificationMethod {
                 id: kid.clone(),
                 type_: options.public_key_format,
-                controller: did.into(),
+                controller: did,
                 public_key,
                 ..VerificationMethod::default()
             }]),
@@ -123,84 +118,26 @@ impl Operator for DidKey {
         })
     }
 
-    fn read(&self, did: &str, options: CreateOptions) -> did::Result<Document> {
-        self.create(did, options)
-    }
-
-    fn update(&self, _did: &str, _: CreateOptions) -> did::Result<Document> {
-        unimplemented!("This DID Method does not support updating the DID Document")
-    }
-
-    fn deactivate(&self, _did: &str, _: CreateOptions) -> did::Result<()> {
-        unimplemented!("This DID Method does not support deactivating the DID Document")
+    pub fn read(_did: &str, _: CreateOptions) -> did::Result<Document> {
+        // self.resolve(did, options)
+        unimplemented!("read")
     }
 }
 
 #[cfg(test)]
 mod test {
-    // use std::sync::LazyLock;
 
-    // use serde_json::{json, Value};
+    use super::*;
 
-    // use super::*;
+    #[test]
+    fn create() {
+        let mut options = CreateOptions::default();
+        options.enable_encryption_key_derivation = true;
 
-    // #[test]
-    // fn resolve() {
-    //     let did = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
-    //     let resolved = DidKey.resolve(did, None).expect("should resolve");
+        let verifying_key = DidKey::generate();
+        let res = DidKey::create(&verifying_key, options).expect("should create");
 
-    //     let document: Document =
-    //         serde_json::from_value(DOCUMENT.to_owned()).expect("should deserialize");
-    //     assert_eq!(resolved.document, Some(document));
-
-    //     let metadata: Metadata =
-    //         serde_json::from_value(METADATA.to_owned()).expect("should deserialize");
-    //     assert_eq!(resolved.metadata, metadata);
-    // }
-
-    // static DID_URL: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
-    // static DOCUMENT: LazyLock<Value> = LazyLock::new(|| {
-    //     json!({
-    //         "@context": [
-    //             "https://www.w3.org/ns/did/v1",
-    //             {
-    //                 "Ed25519VerificationKey2020": "https://w3id.org/security#Ed25519VerificationKey2020",
-    //                 "publicKeyJwk": {
-    //                     "@id": "https://w3id.org/security#publicKeyJwk",
-    //                     "@type": "@json"
-    //                 }
-    //             }
-    //         ],
-    //         "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-    //         "verificationMethod": [
-    //             {
-    //                 "id": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-    //                 "type": "Ed25519VerificationKey2020",
-    //                 "controller": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-    //                 "publicKeyJwk": {
-    //                     "kty": "OKP",
-    //                     "crv": "Ed25519",
-    //                     "x": "Lm_M42cB3HkUiODQsXRcweM6TByfzEHGO9ND274JcOY"
-    //                 }
-    //             }
-    //         ],
-    //         "authentication": [
-    //             "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
-    //         ],
-    //         "assertionMethod": [
-    //             "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
-    //         ]
-    //     })
-    // });
-    // static METADATA: LazyLock<Value> = LazyLock::new(|| {
-    //     json!({
-    //       "contentType": "application/did+ld+json",
-    //       "pattern": "^did:key:z[a-km-zA-HJ-NP-Z1-9]+$",
-    //       "did": {
-    //         "didString": "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-    //         "methodSpecificId": "z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK",
-    //         "method": "key"
-    //       }
-    //     })
-    // });
+        let json = serde_json::to_string(&res).expect("should serialize");
+        println!("{json}");
+    }
 }

@@ -15,11 +15,15 @@ use serde_json::json;
 
 use super::DidKey;
 use crate::did::{self, Error};
-use crate::document::{CreateOptions, Operator};
+use crate::document::CreateOptions;
 use crate::{
     ContentMetadata, ContentType, DidClient, Metadata, Options, Resolution, Resolver, Resource,
 };
 
+const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
+static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new("^did:key:(?<identifier>z[a-km-zA-HJ-NP-Z1-9]+)$").expect("should compile")
+});
 static URL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new("^did:key:z[a-km-zA-HJ-NP-Z1-9]+(?:&?[^=&]*=[^=&]*)*(#z[a-km-zA-HJ-NP-Z1-9]+)*$")
         .expect("should compile")
@@ -29,13 +33,30 @@ impl Resolver for DidKey {
     async fn resolve(
         &self, did: &str, _: Option<Options>, _: impl DidClient,
     ) -> did::Result<Resolution> {
+        // check DID is valid AND extract key
+        let Some(caps) = DID_REGEX.captures(did) else {
+            return Err(Error::InvalidDid("DID is not a valid did:key".into()));
+        };
+        let multikey = &caps["identifier"];
+
+        // decode the the DID key
+        let (_, key_bytes) = multibase::decode(multikey)
+            .map_err(|e| Error::InvalidDid(format!("issue decoding key: {e}")))?;
+        if key_bytes.len() - 2 != 32 {
+            return Err(Error::InvalidDid("invalid key length".into()));
+        }
+        if key_bytes[0..2] != ED25519_CODEC {
+            return Err(Error::InvalidDid("unsupported signature".into()));
+        }
+
         // per the spec, use the create operation to generate a DID document
         let options = CreateOptions {
             enable_encryption_key_derivation: true,
             ..CreateOptions::default()
         };
 
-        let document = Self.create(did, options).map_err(|e| Error::InvalidDid(e.to_string()))?;
+        let document =
+            Self::create(&key_bytes[2..], options).map_err(|e| Error::InvalidDid(e.to_string()))?;
 
         Ok(Resolution {
             context: "https://w3id.org/did-resolution/v1".into(),
