@@ -17,21 +17,17 @@ use super::DidKey;
 use crate::did::{self, Error};
 use crate::document::CreateOptions;
 use crate::{
-    ContentMetadata, ContentType, DidClient, Metadata, Options, Resolution, Resolver, Resource,
+    ContentMetadata, ContentType, Dereferenced, DidClient, Metadata, Options, Resolution, Resource,
 };
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
 static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new("^did:key:(?<identifier>z[a-km-zA-HJ-NP-Z1-9]+)$").expect("should compile")
 });
-static URL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new("^did:key:z[a-km-zA-HJ-NP-Z1-9]+(?:&?[^=&]*=[^=&]*)*(#z[a-km-zA-HJ-NP-Z1-9]+)*$")
-        .expect("should compile")
-});
 
-impl Resolver for DidKey {
-    async fn resolve(
-        &self, did: &str, _: Option<Options>, _: impl DidClient,
+impl DidKey {
+    pub async fn resolve(
+        did: &str, _: Option<Options>, _: impl DidClient,
     ) -> did::Result<Resolution> {
         // check DID is valid AND extract key
         let Some(caps) = DID_REGEX.captures(did) else {
@@ -77,35 +73,32 @@ impl Resolver for DidKey {
         })
     }
 
-    async fn dereference(
-        &self, did_url: &str, _opts: Option<Options>, client: impl DidClient,
-    ) -> did::Result<Resource> {
+    pub async fn dereference(
+        did_url: &str, _opts: Option<Options>, client: impl DidClient,
+    ) -> did::Result<Dereferenced> {
         // validate URL against pattern
-        if !URL_REGEX.is_match(did_url) {
-            return Err(Error::InvalidDidUrl("invalid did:key URL".into()));
-        }
         let url = url::Url::parse(did_url)
             .map_err(|e| Error::InvalidDidUrl(format!("issue parsing URL: {e}")))?;
 
-        // extract URL parameters from query string (if any)
-        // let params = match url.query().as_ref() {
-        //     Some(query) => Some(
-        //         serde_urlencoded::from_str::<Parameters>(query)
-        //             .map_err(|e| Error::InvalidDidUrl(format!("issue parsing query: {e}")))?,
-        //     ),
-        //     None => None,
-        // };
-
         // resolve DID document
         let did = format!("did:{}", url.path());
-        let resolution = self.resolve(&did, None, client).await?;
+        let resolution = Self::resolve(&did, None, client).await?;
 
-        Ok(Resource {
+        // TODO: search by fragment in document
+        let Some(document) = resolution.document else {
+            return Err(Error::InvalidDid("Unable to resolve DID document".into()));
+        };
+        let Some(verifcation_methods) = document.verification_method else {
+            return Err(Error::NotFound("verification method missing".into()));
+        };
+        let vm = verifcation_methods[0].clone();
+
+        Ok(Dereferenced {
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
                 ..Metadata::default()
             },
-            content_stream: resolution.document,
+            content_stream: Some(Resource::VerificationMethod(vm)),
             content_metadata: Some(ContentMetadata {
                 document_metadata: resolution.document_metadata,
             }),
@@ -131,16 +124,14 @@ mod test {
 
     #[tokio::test]
     async fn resolve() {
-        let resolved = DidKey.resolve(DID, None, Client {}).await.expect("should resolve");
-
-        assert_snapshot!("document", resolved.document);
-        assert_snapshot!("metadata", resolved.metadata);
+        let resolved = DidKey::resolve(DID, None, Client {}).await.expect("should resolve");
+        assert_snapshot!("resolved", resolved);
     }
 
     #[tokio::test]
     async fn dereference() {
-        let resource = DidKey.dereference(DID_URL, None, Client {}).await.expect("should resolve");
-
-        assert_snapshot!("resource", resource);
+        let dereferenced =
+            DidKey::dereference(DID_URL, None, Client {}).await.expect("should dereference");
+        assert_snapshot!("dereferenced", dereferenced);
     }
 }

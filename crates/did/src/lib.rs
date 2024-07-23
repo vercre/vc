@@ -22,7 +22,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::did::Error;
-use crate::document::{Document, DocumentMetadata};
+use crate::document::{Document, DocumentMetadata, VerificationMethod};
 
 pub trait DidClient: Send + Sync {
     fn get(&self, url: &str) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
@@ -53,9 +53,10 @@ pub async fn resolve(
 ) -> did::Result<Resolution> {
     // use DID-specific resolver
     let method = did.split(':').nth(1).unwrap_or_default();
+
     let result = match method {
-        "key" => key::DidKey.resolve(did, opts, client).await,
-        "web" => web::DidWeb.resolve(did, opts, client).await,
+        "key" => key::DidKey::resolve(did, opts, client).await,
+        "web" => web::DidWeb::resolve(did, opts, client).await,
         _ => Err(Error::MethodNotSupported(format!("{method} is not supported"))),
     };
 
@@ -72,6 +73,18 @@ pub async fn resolve(
     };
 
     result
+}
+
+pub async fn dereference(
+    did_url: &str, opts: Option<Options>, client: impl DidClient,
+) -> did::Result<Dereferenced> {
+    let method = did_url.split(':').nth(1).unwrap_or_default();
+
+    match method {
+        "key" => key::DidKey::dereference(did_url, opts, client).await,
+        "web" => web::DidWeb::dereference(did_url, opts, client).await,
+        _ => Err(Error::MethodNotSupported(format!("{method} is not supported"))),
+    }
 }
 
 /// DID resolution functions required to be implemented by conforming DID resolvers.
@@ -213,7 +226,7 @@ pub struct Resolution {
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub struct Resource {
+pub struct Dereferenced {
     /// A metadata structure consisting of values relating to the results of the
     /// DID URL dereferencing process. MUST NOT be empty in the case of an error.
     pub metadata: Metadata,
@@ -221,12 +234,23 @@ pub struct Resource {
     /// The dereferenced resource corresponding to the DID URL. MUST be empty if
     /// dereferencing was unsuccessful. MUST be empty if dereferencing is
     /// unsuccessful.
-    pub content_stream: Option<Document>,
+    pub content_stream: Option<Resource>,
 
     /// Metadata about the `content_stream`. If `content_stream` is a DID document,
     /// this MUST be `DidDocumentMetadata`. If dereferencing is unsuccessful, MUST
     /// be empty.
     pub content_metadata: Option<ContentMetadata>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub enum Resource {
+    VerificationMethod(VerificationMethod),
+}
+
+impl Default for Resource {
+    fn default() -> Self {
+        Resource::VerificationMethod(VerificationMethod::default())
+    }
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]

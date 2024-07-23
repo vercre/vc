@@ -31,9 +31,3 @@ impl Signer for Provider {
         HolderKeystore::try_sign(msg)
     }
 }
-
-// impl Verifier for Provider {
-//     async fn deref_jwk(&self, did_url: &str) -> anyhow::Result<PublicKeyJwk> {
-//         keystore::deref_jwk(did_url).await
-//     }
-// }

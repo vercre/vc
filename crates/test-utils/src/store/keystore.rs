@@ -130,19 +130,15 @@ impl HolderKeystore {
 
 // TODO: move this back into did crate
 pub async fn deref_jwk(did_url: &str) -> Result<PublicKeyJwk> {
-    // TODO: use did::dereference() here
-    let did = did_url.split('#').next().ok_or_else(|| anyhow!("Unable to parse DID"))?;
-
+    // dereference DID URL to public key
     let client = Client {};
-    let resp = did::resolve(did, None, client).await?;
+    let resp = did::dereference(did_url, None, client).await?;
 
-    let Some(document) = resp.document else {
-        bail!("Unable to resolve DID document");
-    };
-    let Some(verifcation_methods) = document.verification_method else {
-        bail!("Unable to find verification method in DID document");
+    // extract public key from verification method
+    let vm = match resp.content_stream {
+        Some(did::Resource::VerificationMethod(vm)) => vm,
+        _ => bail!("Verification method not found"),
     };
 
-    let vm = &verifcation_methods[0];
     Ok(vm.public_key.to_jwk()?)
 }

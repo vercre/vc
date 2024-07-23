@@ -16,19 +16,19 @@ use serde_json::json;
 
 use super::DidWeb;
 use crate::did::{self, Error};
-use crate::DidClient;
-// use crate::document::{CreateOptions, Operator};
-use crate::{ContentMetadata, ContentType, Metadata, Options, Resolution, Resolver, Resource};
+use crate::{
+    ContentMetadata, ContentType, Dereferenced, DidClient, Metadata, Options, Resolution, Resource,
+};
 
-static URL_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new("^did:web:(?<identifier>[a-zA-Z1-9.-:%]+)$").expect("should compile")
 });
 
-impl Resolver for DidWeb {
-    async fn resolve(
-        &self, did: &str, _: Option<Options>, client: impl DidClient,
+impl DidWeb {
+    pub async fn resolve(
+        did: &str, _: Option<Options>, client: impl DidClient,
     ) -> did::Result<Resolution> {
-        let Some(caps) = URL_REGEX.captures(did) else {
+        let Some(caps) = DID_REGEX.captures(did) else {
             return Err(Error::InvalidDid("DID is not a valid did:web".to_string()));
         };
         let identifier = &caps["identifier"];
@@ -90,35 +90,33 @@ impl Resolver for DidWeb {
         })
     }
 
-    async fn dereference(
-        &self, did_url: &str, _opts: Option<Options>, client: impl DidClient,
-    ) -> did::Result<Resource> {
-        // validate URL against pattern
-        if !URL_REGEX.is_match(did_url) {
-            return Err(Error::InvalidDidUrl("invalid did:key URL".into()));
-        }
+    pub async fn dereference(
+        did_url: &str, _opts: Option<Options>, client: impl DidClient,
+    ) -> did::Result<Dereferenced> {
         let url = url::Url::parse(did_url)
             .map_err(|e| Error::InvalidDidUrl(format!("issue parsing URL: {e}")))?;
 
-        // extract URL parameters from query string (if any)
-        // let params = match url.query().as_ref() {
-        //     Some(query) => Some(
-        //         serde_urlencoded::from_str::<Parameters>(query)
-        //             .map_err(|e| Error::InvalidDidUrl(format!("issue parsing query: {e}")))?,
-        //     ),
-        //     None => None,
-        // };
+        println!("url: {}", url.fragment().unwrap());
 
         // resolve DID document
         let did = format!("did:{}", url.path());
-        let resolution = self.resolve(&did, None, client).await?;
+        let resolution = Self::resolve(&did, None, client).await?;
 
-        Ok(Resource {
+        // TODO: search by fragment in document
+        let Some(document) = resolution.document else {
+            return Err(Error::InvalidDid("Unable to resolve DID document".into()));
+        };
+        let Some(verifcation_methods) = document.verification_method else {
+            return Err(Error::NotFound("verification method missing".into()));
+        };
+        let vm = verifcation_methods[0].clone();
+
+        Ok(Dereferenced {
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
                 ..Metadata::default()
             },
-            content_stream: resolution.document,
+            content_stream: Some(Resource::VerificationMethod(vm)),
             content_metadata: Some(ContentMetadata {
                 document_metadata: resolution.document_metadata,
             }),
@@ -143,7 +141,7 @@ mod test {
     #[tokio::test]
     async fn resolve_normal() {
         const DID_URL: &str = "did:web:demo.credibil.io";
-        let resolved = DidWeb.resolve(DID_URL, None, Client {}).await.expect("should resolve");
+        let resolved = DidWeb::resolve(DID_URL, None, Client {}).await.expect("should resolve");
 
         assert_snapshot!("document", resolved.document);
         assert_snapshot!("metadata", resolved.metadata);
