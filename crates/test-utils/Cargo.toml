@@ -20,10 +20,7 @@ anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true
 did = { path = "../did" }
-ecdsa.workspace = true
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
-k256.workspace = true
-multibase = "0.9"
 openid.workspace = true
 proof.workspace = true
 reqwest = "0.12.5"

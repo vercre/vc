@@ -130,7 +130,7 @@ impl HolderKeystore {
 
 // TODO: move this back into did crate
 pub async fn deref_jwk(did_url: &str) -> Result<PublicKeyJwk> {
-    // TODO: use did crate dereference to resolve DID URL
+    // TODO: use did::dereference() here
     let did = did_url.split('#').next().ok_or_else(|| anyhow!("Unable to parse DID"))?;
 
     let client = Client {};
