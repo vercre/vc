@@ -118,7 +118,7 @@ impl DidKey {
         })
     }
 
-    pub fn read(&self, _did: &str, _: CreateOptions) -> did::Result<Document> {
+    pub fn read(_did: &str, _: CreateOptions) -> did::Result<Document> {
         // self.resolve(did, options)
         unimplemented!("read")
     }
