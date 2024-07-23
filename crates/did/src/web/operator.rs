@@ -37,7 +37,8 @@ impl DidWeb {
             did = format!("{did}{}", path.replace('/', ":"));
         }
 
-        // generate a key pair
+        // HACK: generate a key pair
+        // TODO: pass in public key
         let mut csprng = OsRng;
         let signing_key: SigningKey = SigningKey::generate(&mut csprng);
 
@@ -76,7 +77,7 @@ impl DidWeb {
             let ek_multibase = multibase::encode(Base::Base58Btc, &multi_bytes);
 
             Some(vec![Kind::Object(VerificationMethod {
-                id: format!("{did}#{ek_multibase}"),
+                id: format!("{did}#key-1"),
                 type_: options.public_key_format.clone(),
                 controller: did.clone(),
                 public_key: PublicKey::Multibase(ek_multibase),
@@ -124,9 +125,6 @@ impl DidWeb {
 
 #[cfg(test)]
 mod test {
-    // use std::sync::LazyLock;
-
-    // use serde_json::{json, Value};
 
     use super::*;
 
