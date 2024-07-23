@@ -128,11 +128,9 @@ impl HolderKeystore {
     }
 }
 
-// TODO: move this back into did crate
+/// Dereference DID URL to public key
 pub async fn deref_jwk(did_url: &str) -> Result<PublicKeyJwk> {
-    // dereference DID URL to public key
-    let client = Client {};
-    let resp = did::dereference(did_url, None, client).await?;
+    let resp = did::dereference(did_url, None, Client {}).await?;
 
     // extract public key from verification method
     let vm = match resp.content_stream {
