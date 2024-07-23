@@ -4,12 +4,12 @@ use std::collections::HashMap;
 use std::str;
 use std::sync::{Arc, LazyLock};
 
+use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 // TODO: remove this import
 use dif_exch::Constraints;
 use futures::lock::Mutex;
 use test_utils::store::keystore::{self, HolderKeystore};
-use test_utils::store::state;
 use test_utils::{issuer, verifier};
 use vercre_holder::provider::{
     Algorithm, CredentialStorer, HolderProvider, IssuerClient, PublicKeyJwk, Result, Signer,
@@ -26,19 +26,15 @@ static VERIFIER_PROVIDER: LazyLock<verifier::Provider> = LazyLock::new(verifier:
 
 #[derive(Clone, Debug)]
 pub struct Provider {
-    // app_handle: tauri::AppHandle,
-    state: state::Store,
+    state_store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
     cred_store: Arc<Mutex<HashMap<String, Credential>>>,
 }
 
 impl Provider {
     #[must_use]
-    pub fn new(
-        _app_handle: &tauri::AppHandle, _state_store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
-    ) -> Self {
+    pub fn new(_: &tauri::AppHandle, state_store: Arc<Mutex<HashMap<String, Vec<u8>>>>) -> Self {
         Self {
-            // app_handle,
-            state: state::Store::new(),
+            state_store,
             cred_store: Arc::new(Mutex::new(HashMap::new())),
         }
     }
@@ -127,16 +123,21 @@ impl CredentialStorer for Provider {
 }
 
 impl StateManager for Provider {
-    async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
-        self.state.put(key, state, dt)
+    async fn put(&self, key: &str, state: Vec<u8>, _: DateTime<Utc>) -> Result<()> {
+        self.state_store.lock().await.insert(key.to_string(), state);
+        Ok(())
     }
 
     async fn get(&self, key: &str) -> Result<Vec<u8>> {
-        self.state.get(key)
+        let Some(state) = self.state_store.lock().await.get(key).cloned() else {
+            return Err(anyhow!("state not found for key: {key}"));
+        };
+        Ok(state)
     }
 
     async fn purge(&self, key: &str) -> Result<()> {
-        self.state.purge(key)
+        self.state_store.lock().await.remove(key);
+        Ok(())
     }
 }
 
