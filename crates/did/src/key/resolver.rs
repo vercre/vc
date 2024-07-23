@@ -84,6 +84,9 @@ impl DidKey {
         let resolution = Self::resolve(&did, None, client)?;
 
         // TODO: search by fragment in document
+        // let data = serde_json::json!({"x": { "y": ["z", "zz"] }});
+        // assert_eq!(data.pointer("/x/y/1").unwrap(), &json!("zz"));
+
         let Some(document) = resolution.document else {
             return Err(Error::InvalidDid("Unable to resolve DID document".into()));
         };
