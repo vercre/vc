@@ -128,14 +128,13 @@ impl HolderKeystore {
     }
 }
 
-/// Dereference DID URL to public key
+/// Dereference DID URL to public key. For example,  did:web:demo.credibil.io#key-0.
 pub async fn deref_jwk(did_url: &str) -> Result<PublicKeyJwk> {
     let resp = did::dereference(did_url, None, Client {}).await?;
 
-    // extract public key from verification method
-    let vm = match resp.content_stream {
-        Some(did::Resource::VerificationMethod(vm)) => vm,
-        _ => bail!("Verification method not found"),
+    // get public key specified by the url fragment
+    let Some(did::Resource::VerificationMethod(vm)) = resp.content_stream else {
+        bail!("Verification method not found");
     };
 
     Ok(vm.public_key.to_jwk()?)

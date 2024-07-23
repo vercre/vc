@@ -76,7 +76,7 @@ pub async fn resolve(
 }
 
 /// Dereference a DID URL into a resource.
-/// 
+///
 /// # Errors
 pub async fn dereference(
     did_url: &str, opts: Option<Options>, client: impl DidClient,

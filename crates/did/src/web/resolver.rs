@@ -102,21 +102,25 @@ impl DidWeb {
         let did = format!("did:{}", url.path());
         let resolution = Self::resolve(&did, None, client).await?;
 
-        // TODO: search by fragment in document
         let Some(document) = resolution.document else {
             return Err(Error::InvalidDid("Unable to resolve DID document".into()));
         };
         let Some(verifcation_methods) = document.verification_method else {
             return Err(Error::NotFound("verification method missing".into()));
         };
-        let vm = verifcation_methods[0].clone();
+
+        // for now we assume the DID URL is the ID of the verification method
+        // e.g. did:web:demo.credibil.io#key-0
+        let Some(vm) = verifcation_methods.iter().find(|vm| vm.id == did_url) else {
+            return Err(Error::NotFound("verification method not found".into()));
+        };
 
         Ok(Dereferenced {
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
                 ..Metadata::default()
             },
-            content_stream: Some(Resource::VerificationMethod(vm)),
+            content_stream: Some(Resource::VerificationMethod(vm.clone())),
             content_metadata: Some(ContentMetadata {
                 document_metadata: resolution.document_metadata,
             }),
