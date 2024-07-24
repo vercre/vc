@@ -130,15 +130,15 @@ impl DidWeb {
 
 #[cfg(test)]
 mod test {
-    use anyhow::anyhow;
     use insta::assert_json_snapshot as assert_snapshot;
 
     use super::*;
 
     struct Client {}
     impl DidClient for Client {
-        async fn get(&self, url: &str) -> anyhow::Result<Vec<u8>> {
-            reqwest::get(url).await?.bytes().await.map_err(|e| anyhow!("{e}")).map(|b| b.to_vec())
+        async fn get(&self, _url: &str) -> anyhow::Result<Vec<u8>> {
+            Ok(include_bytes!("did.json").to_vec())
+            // reqwest::get(url).await?.bytes().await.map_err(|e| anyhow!("{e}")).map(|b| b.to_vec())
         }
     }
 
