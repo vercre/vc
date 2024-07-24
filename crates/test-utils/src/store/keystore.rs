@@ -13,39 +13,7 @@ struct Client {}
 impl did::DidClient for Client {
     async fn get(&self, _url: &str) -> anyhow::Result<Vec<u8>> {
         // reqwest::get(url).await?.bytes().await.map_err(|e| anyhow!("{e}")).map(|b| b.to_vec())
-        let doc = serde_json::json!({
-            "@context": [
-                "https://www.w3.org/ns/did/v1",
-                "https://w3id.org/security/data-integrity/v1"
-            ],
-            "id": "did:web:demo.credibil.io",
-            "verificationMethod": [{
-                "id": "did:web:demo.credibil.io#key-0",
-                "type": "Multikey",
-                "controller": "did:web:demo.credibil.io",
-                "publicKeyMultibase": "z6Mkr1NtupNezZtcUAMxJ79HPex6ZTR9RnGh8xfV257ZQdss"
-            }],
-            "authentication": [
-                "did:web:demo.credibil.io#key-0"
-            ],
-            "assertionMethod": [
-                "did:web:demo.credibil.io#key-0"
-            ],
-            "capabilityInvocation": [
-                "did:web:demo.credibil.io#key-0"
-            ],
-            "capabilityDelegation": [
-                "did:web:demo.credibil.io#key-0"
-            ],
-            "keyAgreement": [{
-                "id": "did:web:demo.credibil.io#key-1",
-                "type": "Multikey",
-                "controller": "did:web:demo.credibil.io",
-                "publicKeyMultibase": "z6LSo1jPr1g7qoR9UsYWoJs66FiaoHGAK5cJzBGSvQpuVEQv"
-            }]
-        });
-
-        Ok(serde_json::to_vec(&doc)?)
+        Ok(include_bytes!("did.json").to_vec())
     }
 }
 

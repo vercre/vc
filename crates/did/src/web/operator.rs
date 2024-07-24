@@ -43,7 +43,7 @@ impl DidWeb {
         if let Some(path) = url.path().strip_prefix('/')
             && !path.is_empty()
         {
-            did = format!("{did}{}", path.replace('/', ":"));
+            did = format!("{did}:{}", path.replace('/', ":"));
         }
 
         // multibase encode the public key
@@ -130,7 +130,7 @@ mod test {
 
     #[test]
     fn create() {
-        let url = "https://demo.credibil.io";
+        let url = "https://demo.credibil.io/entity/funder";
         let mut options = CreateOptions::default();
         options.enable_encryption_key_derivation = true;
 

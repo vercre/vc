@@ -31,6 +31,5 @@
             "controller": "did:web:demo.credibil.io",
             "publicKeyMultibase": "z6LSo1jPr1g7qoR9UsYWoJs66FiaoHGAK5cJzBGSvQpuVEQv"
         }
-    ],
-    "signing": "cCxmHfFfIJvP74oNKjAuRC3zYoDMo0pFsAs19yKMowY"
+    ]
 }
