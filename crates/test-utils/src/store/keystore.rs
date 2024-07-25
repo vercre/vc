@@ -9,6 +9,7 @@ use openid::provider::Result;
 use proof::jose::jwa::Algorithm;
 use proof::jose::jwk::PublicKeyJwk;
 
+// Mock DID client
 struct Client {}
 impl did::DidClient for Client {
     async fn get(&self, _url: &str) -> anyhow::Result<Vec<u8>> {
@@ -97,6 +98,9 @@ impl HolderKeystore {
 }
 
 /// Dereference DID URL to public key. For example,  did:web:demo.credibil.io#key-0.
+/// 
+/// did:web:demo.credibil.io -> did:web:demo.credibil.io/.well-known/did.json
+/// did:web:demo.credibil.io:entity:supplier -> did:web:demo.credibil.io/entity/supplier/did.json
 pub async fn deref_jwk(did_url: &str) -> Result<PublicKeyJwk> {
     let resp = did::dereference(did_url, None, Client {}).await?;
 
