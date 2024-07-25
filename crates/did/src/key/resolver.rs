@@ -16,9 +16,10 @@ use serde_json::json;
 use super::DidKey;
 use crate::document::CreateOptions;
 use crate::error::Error;
-use crate::{
+use crate::resolution::{
     ContentMetadata, ContentType, Dereference, DidClient, Metadata, Options, Resolve, Resource,
 };
+
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
 static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {

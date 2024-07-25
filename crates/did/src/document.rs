@@ -299,15 +299,16 @@ pub struct DocumentMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub canonical_id: Option<String>,
 
-    pub method: MethodMetadata,
+    pub method: Method,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub struct MethodMetadata {
-    pub published: bool,
-    pub recovery_commitment: String,
-    pub update_commitment: String,
+pub enum Method {
+    #[default]
+    None,
+    Key(),
+    Web(),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

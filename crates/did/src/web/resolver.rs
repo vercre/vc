@@ -16,7 +16,7 @@ use serde_json::json;
 
 use super::DidWeb;
 use crate::error::Error;
-use crate::{
+use crate::resolution::{
     ContentMetadata, ContentType, Dereference, DidClient, Metadata, Options, Resolve, Resource,
 };
 

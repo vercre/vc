@@ -1,6 +1,6 @@
 ---
 source: crates/did/src/web/resolver.rs
-assertion_line: 148
+assertion_line: 150
 expression: resolved.document
 ---
 {
@@ -12,8 +12,8 @@ expression: resolved.document
   "verificationMethod": [
     {
       "id": "did:web:demo.credibil.io#key-0",
-      "type": "Multikey",
       "controller": "did:web:demo.credibil.io",
+      "type": "Multikey",
       "publicKeyMultibase": "z6Mkr1NtupNezZtcUAMxJ79HPex6ZTR9RnGh8xfV257ZQdss"
     }
   ],
@@ -32,8 +32,8 @@ expression: resolved.document
   "keyAgreement": [
     {
       "id": "did:web:demo.credibil.io#key-1",
-      "type": "Multikey",
       "controller": "did:web:demo.credibil.io",
+      "type": "Multikey",
       "publicKeyMultibase": "z6LSo1jPr1g7qoR9UsYWoJs66FiaoHGAK5cJzBGSvQpuVEQv"
     }
   ]
