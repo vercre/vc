@@ -6,7 +6,7 @@
 //! See:
 //!
 //! - <https://w3c-ccg.github.io/did-method-key>
-//! - <https://w3c-ccg.github.io/did-resolution>
+//! - <https://w3c.github.io/did-resolution>
 
 use std::sync::LazyLock;
 
@@ -15,9 +15,9 @@ use regex::Regex;
 use serde_json::json;
 
 use super::DidWeb;
-use crate::did::{self, Error};
+use crate::error::Error;
 use crate::{
-    ContentMetadata, ContentType, Dereferenced, DidClient, Metadata, Options, Resolution, Resource,
+    ContentMetadata, ContentType, Dereference, DidClient, Metadata, Options, Resolve, Resource,
 };
 
 static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
@@ -27,7 +27,7 @@ static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 impl DidWeb {
     pub async fn resolve(
         did: &str, _: Option<Options>, client: impl DidClient,
-    ) -> did::Result<Resolution> {
+    ) -> crate::Result<Resolve> {
         let Some(caps) = DID_REGEX.captures(did) else {
             return Err(Error::InvalidDid("DID is not a valid did:web".to_string()));
         };
@@ -71,7 +71,7 @@ impl DidWeb {
         //     ..CreateOptions::default()
         // };
 
-        Ok(Resolution {
+        Ok(Resolve {
             context: "https://w3id.org/did-resolution/v1".into(),
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
@@ -86,13 +86,13 @@ impl DidWeb {
                 ..Metadata::default()
             },
             document: Some(document),
-            ..Resolution::default()
+            ..Resolve::default()
         })
     }
 
     pub async fn dereference(
         did_url: &str, _opts: Option<Options>, client: impl DidClient,
-    ) -> did::Result<Dereferenced> {
+    ) -> crate::Result<Dereference> {
         let url = url::Url::parse(did_url)
             .map_err(|e| Error::InvalidDidUrl(format!("issue parsing URL: {e}")))?;
 
@@ -115,7 +115,7 @@ impl DidWeb {
             return Err(Error::NotFound("verification method not found".into()));
         };
 
-        Ok(Dereferenced {
+        Ok(Dereference {
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
                 ..Metadata::default()

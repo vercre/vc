@@ -13,8 +13,8 @@ use rand::rngs::OsRng;
 use url::Url;
 
 use super::DidWeb;
-use crate::did::{self, Error};
 use crate::document::{CreateOptions, Document, PublicKey, VerificationMethod};
+use crate::error::Error;
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
 const X25519_CODEC: [u8; 2] = [0xec, 0x01];
@@ -34,7 +34,7 @@ impl DidWeb {
     #[allow(clippy::unused_self)]
     pub fn create(
         url: &str, verifying_key: &[u8], options: CreateOptions,
-    ) -> did::Result<Document> {
+    ) -> crate::Result<Document> {
         // create identifier from url
         let url =
             Url::parse(url).map_err(|e| Error::InvalidDid(format!("issue parsing url: {e}")))?;
@@ -107,18 +107,18 @@ impl DidWeb {
         })
     }
 
-    pub fn read(_did: &str, _: CreateOptions) -> did::Result<Document> {
+    pub fn read(_did: &str, _: CreateOptions) -> crate::Result<Document> {
         // self.create(did, options)
         unimplemented!("read")
     }
 
     #[allow(clippy::unused_self)]
-    pub fn update(_did: &str, _: CreateOptions) -> did::Result<Document> {
+    pub fn update(_did: &str, _: CreateOptions) -> crate::Result<Document> {
         unimplemented!("This DID Method does not support updating the DID Document")
     }
 
     #[allow(clippy::unused_self)]
-    pub fn deactivate(_did: &str, _: CreateOptions) -> did::Result<()> {
+    pub fn deactivate(_did: &str, _: CreateOptions) -> crate::Result<()> {
         unimplemented!("This DID Method does not support deactivating the DID Document")
     }
 }

@@ -6,7 +6,7 @@
 //! See:
 //!
 //! - <https://w3c-ccg.github.io/did-method-key>
-//! - <https://w3c-ccg.github.io/did-resolution>
+//! - <https://w3c.github.io/did-resolution>
 
 pub mod operator;
 pub mod resolver;

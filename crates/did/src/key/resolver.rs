@@ -6,7 +6,7 @@
 //! See:
 //!
 //! - <https://w3c-ccg.github.io/did-method-key>
-//! - <https://w3c-ccg.github.io/did-resolution>
+//! - <https://w3c.github.io/did-resolution>
 
 use std::sync::LazyLock;
 
@@ -14,10 +14,10 @@ use regex::Regex;
 use serde_json::json;
 
 use super::DidKey;
-use crate::did::{self, Error};
 use crate::document::CreateOptions;
+use crate::error::Error;
 use crate::{
-    ContentMetadata, ContentType, Dereferenced, DidClient, Metadata, Options, Resolution, Resource,
+    ContentMetadata, ContentType, Dereference, DidClient, Metadata, Options, Resolve, Resource,
 };
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
@@ -26,7 +26,7 @@ static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 impl DidKey {
-    pub fn resolve(did: &str, _: Option<Options>, _: impl DidClient) -> did::Result<Resolution> {
+    pub fn resolve(did: &str, _: Option<Options>, _: impl DidClient) -> crate::Result<Resolve> {
         // check DID is valid AND extract key
         let Some(caps) = DID_REGEX.captures(did) else {
             return Err(Error::InvalidDid("DID is not a valid did:key".into()));
@@ -52,7 +52,7 @@ impl DidKey {
         let document =
             Self::create(&key_bytes[2..], options).map_err(|e| Error::InvalidDid(e.to_string()))?;
 
-        Ok(Resolution {
+        Ok(Resolve {
             context: "https://w3id.org/did-resolution/v1".into(),
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
@@ -67,14 +67,14 @@ impl DidKey {
                 ..Metadata::default()
             },
             document: Some(document),
-            ..Resolution::default()
+            ..Resolve::default()
         })
     }
 
     #[allow(clippy::needless_pass_by_value)]
     pub fn dereference(
         did_url: &str, _opts: Option<Options>, client: impl DidClient,
-    ) -> did::Result<Dereferenced> {
+    ) -> crate::Result<Dereference> {
         // validate URL against pattern
         let url = url::Url::parse(did_url)
             .map_err(|e| Error::InvalidDidUrl(format!("issue parsing URL: {e}")))?;
@@ -96,7 +96,7 @@ impl DidKey {
             return Err(Error::NotFound("verification method not found".into()));
         };
 
-        Ok(Dereferenced {
+        Ok(Dereference {
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
                 ..Metadata::default()

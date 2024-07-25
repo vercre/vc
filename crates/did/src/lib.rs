@@ -8,7 +8,6 @@
 //!
 //! See [DID resolution](https://www.w3.org/TR/did-core/#did-resolution) fpr more.
 
-pub mod did;
 pub mod document;
 pub mod error;
 mod key;
@@ -17,19 +16,17 @@ mod web;
 use std::collections::HashMap;
 use std::future::Future;
 
-use anyhow::anyhow;
+pub use error::Error;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::did::Error;
 use crate::document::{Document, DocumentMetadata, VerificationMethod};
+
+pub type Result<T> = std::result::Result<T, Error>;
 
 pub trait DidClient: Send + Sync {
     fn get(&self, url: &str) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
 }
-// pub trait HttpHandler: Send + Sync {
-//     fn handle(&self, request: Request ) -> impl Future<Output = Result<Response>> + Send;
-// }
 
 /// Resolve a DID to a DID document.
 ///
@@ -50,7 +47,7 @@ pub trait DidClient: Send + Sync {
 /// error as specified.
 pub async fn resolve(
     did: &str, opts: Option<Options>, client: impl DidClient,
-) -> did::Result<Resolution> {
+) -> crate::Result<Resolve> {
     // use DID-specific resolver
     let method = did.split(':').nth(1).unwrap_or_default();
 
@@ -61,14 +58,14 @@ pub async fn resolve(
     };
 
     if let Err(e) = result {
-        return Ok(Resolution {
+        return Ok(Resolve {
             metadata: Metadata {
                 error: Some(e.to_string()),
                 error_message: Some(e.message()),
                 content_type: ContentType::DidLdJson,
                 ..Metadata::default()
             },
-            ..Resolution::default()
+            ..Resolve::default()
         });
     };
 
@@ -80,7 +77,7 @@ pub async fn resolve(
 /// # Errors
 pub async fn dereference(
     did_url: &str, opts: Option<Options>, client: impl DidClient,
-) -> did::Result<Dereferenced> {
+) -> crate::Result<Dereference> {
     let method = did_url.split(':').nth(1).unwrap_or_default();
 
     match method {
@@ -88,59 +85,6 @@ pub async fn dereference(
         "web" => web::DidWeb::dereference(did_url, opts, client).await,
         _ => Err(Error::MethodNotSupported(format!("{method} is not supported"))),
     }
-}
-
-/// DID resolution functions required to be implemented by conforming DID resolvers.
-pub trait Resolver {
-    /// Returns the DID document specifier by the `did` argument in its abstract form
-    /// (a map).
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the DID cannot be resolved.
-    fn resolve(
-        &self, did: &str, opts: Option<Options>, client: impl DidClient,
-    ) -> impl Future<Output = did::Result<Resolution>> + Send;
-
-    /// Returns the DID Document as a byte stream formatted to represent the Media Type
-    /// specified in the `accept` property of the `options` argument.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the DID cannot be resolved.
-    #[allow(async_fn_in_trait)]
-    async fn resolve_representation(
-        &self, did: &str, options: Option<Options>, client: impl DidClient,
-    ) -> did::Result<Vec<u8>> {
-        let resolution = self.resolve(did, options.clone(), client).await?;
-
-        // if media type is application/ld+json, return resolution metadata
-        if let Some(opts) = options
-            && opts.accept == Some(ContentType::DidLdJson)
-        {
-            return serde_json::to_vec(&resolution)
-                .map_err(|e| Error::Other(anyhow!("issue serializing resolution: {e}")));
-        }
-
-        // if media type is application/did+ld+json, only return DID document
-        serde_json::to_vec(&resolution.document)
-            .map_err(|e| Error::Other(anyhow!("issue serializing DID document: {e}")))
-    }
-
-    /// Dereferences the provided DID URL into a resource with contents depending on the
-    /// DID URL's components, including the DID method, method-specific identifier, path,
-    /// query, and fragment.
-    ///
-    /// See <https://w3c-ccg.github.io/did-resolution/#dereferencing> for more
-    /// detail.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the DID cannot be dereferenced.
-    // TODO: expand this error.
-    fn dereference(
-        &self, did_url: &str, opts: Option<Options>, client: impl DidClient,
-    ) -> impl Future<Output = did::Result<Resource>> + Send;
 }
 
 /// Used to pass addtional values to a `resolve` and `dereference` methods. Any
@@ -211,7 +155,7 @@ pub struct Parameters {
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub struct Resolution {
+pub struct Resolve {
     #[serde(rename = "@context")]
     pub context: String,
 
@@ -229,7 +173,7 @@ pub struct Resolution {
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub struct Dereferenced {
+pub struct Dereference {
     /// A metadata structure consisting of values relating to the results of the
     /// DID URL dereferencing process. MUST NOT be empty in the case of an error.
     pub metadata: Metadata,

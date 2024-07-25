@@ -14,8 +14,8 @@ use rand::rngs::OsRng;
 use serde_json::json;
 
 use super::DidKey;
-use crate::did::{self, Error};
 use crate::document::{CreateOptions, Document, PublicKey, PublicKeyFormat, VerificationMethod};
+use crate::error::Error;
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
 const X25519_CODEC: [u8; 2] = [0xec, 0x01];
@@ -32,7 +32,7 @@ impl DidKey {
         signing_key.verifying_key().to_bytes().to_vec()
     }
 
-    pub fn create(verifying_key: &[u8], options: CreateOptions) -> did::Result<Document> {
+    pub fn create(verifying_key: &[u8], options: CreateOptions) -> crate::Result<Document> {
         let mut multi_bytes = vec![];
         multi_bytes.extend_from_slice(&ED25519_CODEC);
         multi_bytes.extend_from_slice(verifying_key);
@@ -118,7 +118,7 @@ impl DidKey {
         })
     }
 
-    pub fn read(_did: &str, _: CreateOptions) -> did::Result<Document> {
+    pub fn read(_did: &str, _: CreateOptions) -> crate::Result<Document> {
         // self.resolve(did, options)
         unimplemented!("read")
     }

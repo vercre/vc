@@ -13,73 +13,9 @@ use proof::jose::jwk::{Curve, KeyType, PublicKeyJwk};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::did::{self, Error};
+use crate::error::Error;
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
-
-/// DID resolution functions required to be implemented by conforming DID resolvers.
-pub trait Operator {
-    /// Creates a DID document for the given DID method.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the DID Document cannot be created.
-    fn create(&self, did: &str, options: CreateOptions) -> did::Result<Document>;
-
-    /// Reads a DID document for the given DID method.
-    ///
-    /// # Errors
-    #[allow(dead_code)]
-    fn read(&self, did: &str, options: CreateOptions) -> did::Result<Document>;
-
-    /// Updates a DID document for the given DID method.
-    ///
-    /// # Errors
-    #[allow(dead_code)]
-    fn update(&self, did: &str, options: CreateOptions) -> did::Result<Document>;
-
-    /// Deactivates a DID document for the given DID method.
-    ///
-    /// # Errors
-    #[allow(dead_code)]
-    fn deactivate(&self, did: &str, options: CreateOptions) -> did::Result<()>;
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CreateOptions {
-    /// Format to use for the the public key.
-    pub public_key_format: PublicKeyFormat,
-
-    /// Default context for the DID document. SHOULD be set to
-    /// `"https://www.w3.org/ns/did/v1"`.
-    pub default_context: String,
-
-    /// Enable experimental public key types. SHOULD be set to "false".
-    pub enable_experimental_public_key_types: bool,
-
-    /// Will add a `keyAgreement` object to the DID document.
-    pub enable_encryption_key_derivation: bool,
-
-    // service_endpoints: Vec<Value>,
-    // verification_methods: Vec<Value>,
-    // authentication: Vec<Value>,
-    /// Additional options.
-    #[serde(flatten)]
-    pub additional: Option<HashMap<String, String>>,
-}
-
-impl Default for CreateOptions {
-    fn default() -> Self {
-        Self {
-            public_key_format: PublicKeyFormat::default(),
-            enable_experimental_public_key_types: false,
-            default_context: "https://www.w3.org/ns/did/v1".to_string(),
-            enable_encryption_key_derivation: false,
-            additional: None,
-        }
-    }
-}
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -211,13 +147,13 @@ pub struct VerificationMethod {
     /// A DID that identifies the verification method.
     pub id: String,
 
-    /// Kind references a verification method type. SHOULD be a registered type
-    /// (in DID Specification Registries).
-    #[serde(rename = "type")]
-    pub type_: PublicKeyFormat,
-
     /// The DID of the controller of the verification method.
     pub controller: String,
+
+    /// The verification method type. SHOULD be a registered type (in DID Specification
+    /// Registries).
+    #[serde(rename = "type")]
+    pub type_: PublicKeyFormat,
 
     /// The public key material for the verification method.
     #[serde(flatten)]
@@ -236,9 +172,6 @@ pub enum PublicKeyFormat {
 
     /// X25519 Key Agreement Key, 2020 version
     X25519KeyAgreementKey2020,
-    //
-    // /// JsonWebKey2020
-    // JsonWebKey2020,
 }
 
 // TODO: set context based on key format:
@@ -277,7 +210,7 @@ impl PublicKey {
     /// Converts a Multibase public key to JWK format.
     ///
     /// # Errors
-    pub fn to_jwk(&self) -> did::Result<PublicKeyJwk> {
+    pub fn jwk(&self) -> crate::Result<PublicKeyJwk> {
         match self {
             Self::Jwk(jwk) => Ok(jwk.clone()),
             Self::Multibase(multi_key) => {
@@ -303,7 +236,7 @@ impl PublicKey {
     /// Converts a JWK public key to Multibase format.
     ///
     /// # Errors
-    pub fn to_multibase(&self) -> did::Result<String> {
+    pub fn multibase(&self) -> crate::Result<String> {
         match self {
             Self::Multibase(multibase) => Ok(multibase.clone()),
             Self::Jwk(jwk) => {
@@ -375,4 +308,64 @@ pub struct MethodMetadata {
     pub published: bool,
     pub recovery_commitment: String,
     pub update_commitment: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateOptions {
+    /// Format to use for the the public key.
+    pub public_key_format: PublicKeyFormat,
+
+    /// Default context for the DID document. SHOULD be set to
+    /// `"https://www.w3.org/ns/did/v1"`.
+    pub default_context: String,
+
+    /// Enable experimental public key types. SHOULD be set to "false".
+    pub enable_experimental_public_key_types: bool,
+
+    /// Will add a `keyAgreement` object to the DID document.
+    pub enable_encryption_key_derivation: bool,
+
+    // service_endpoints: Vec<Value>,
+    // verification_methods: Vec<Value>,
+    // authentication: Vec<Value>,
+    /// Additional options.
+    #[serde(flatten)]
+    pub additional: Option<HashMap<String, String>>,
+}
+
+impl Default for CreateOptions {
+    fn default() -> Self {
+        Self {
+            public_key_format: PublicKeyFormat::default(),
+            enable_experimental_public_key_types: false,
+            default_context: "https://www.w3.org/ns/did/v1".to_string(),
+            enable_encryption_key_derivation: false,
+            additional: None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_jwk() {
+        let jwk = PublicKeyJwk {
+            kty: KeyType::Okp,
+            crv: Curve::Ed25519,
+            x: "q6rjRnEH_XK72jvB8FNBJtOl9_gDs6NW49cAz6p2sW4".to_string(),
+            ..PublicKeyJwk::default()
+        };
+
+        let public_key =
+            PublicKey::Multibase("z6Mkr1NtupNezZtcUAMxJ79HPex6ZTR9RnGh8xfV257ZQdss".into());
+
+        assert_eq!(
+            "z6Mkr1NtupNezZtcUAMxJ79HPex6ZTR9RnGh8xfV257ZQdss",
+            public_key.multibase().unwrap()
+        );
+        assert_eq!(jwk, public_key.jwk().unwrap());
+    }
 }
