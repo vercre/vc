@@ -1,12 +1,9 @@
 #![allow(missing_docs)]
 
-// use std::sync::LazyLock;
-
-use anyhow::anyhow;
 use ed25519_dalek::{SigningKey, VerifyingKey};
-use proof::{Decryptor, Encryptor, Keyring, Signer, Verifier};
+use proof::{Decryptor, Encryptor, Keyring, Signer};
 use rand::rngs::OsRng;
-use signature::{Signer as _, Verifier as _};
+use signature::Signer as _;
 
 // static KEYPAIR: LazyLock<KeyPair> = LazyLock::new(|| KeyPair::gen());
 
@@ -67,17 +64,17 @@ impl Signer for Curve25519 {
     }
 }
 
-impl Verifier for Curve25519 {
-    type VerifyingKey = VerifyingKey;
+// impl Verifier for Curve25519 {
+//     type VerifyingKey = VerifyingKey;
 
-    fn verify(
-        &self, data: &[u8], signature: &[u8], verifying_key: &Self::VerifyingKey,
-    ) -> anyhow::Result<()> {
-        let sig_bytes: &[u8; 64] = signature.try_into()?;
-        let sig = ed25519_dalek::Signature::from_bytes(sig_bytes);
-        verifying_key.verify(data, &sig).map_err(|_| anyhow!("signature verification failed"))
-    }
-}
+//     fn verify(
+//         &self, data: &[u8], signature: &[u8], verifying_key: &Self::VerifyingKey,
+//     ) -> anyhow::Result<()> {
+//         let sig_bytes: &[u8; 64] = signature.try_into()?;
+//         let sig = ed25519_dalek::Signature::from_bytes(sig_bytes);
+//         verifying_key.verify(data, &sig).map_err(|_| anyhow!("signature verification failed"))
+//     }
+// }
 
 impl Encryptor for Curve25519 {
     // type PublicKey = x25519_dalek::PublicKey;

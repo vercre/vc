@@ -36,19 +36,22 @@ pub struct Header {
     /// of the JWS.
     pub typ: Type,
 
-    /// Contains the key ID. If the Credential is bound to a DID, the kid refers to a
-    /// DID URL which identifies a particular key in the DID Document that the
-    /// Credential should bound to. Alternatively, may refer to  a key inside a JWKS.
-    ///
-    /// MUST NOT be set if `jwk` property is set.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub kid: Option<String>,
+    // /// Contains the key ID. If the Credential is bound to a DID, the kid refers to a
+    // /// DID URL which identifies a particular key in the DID Document that the
+    // /// Credential should bound to. Alternatively, may refer to a key inside a JWKS.
+    // ///
+    // /// MUST NOT be set if `jwk` property is set.
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub kid: Option<String>,
 
-    /// Contains the key material the new Credential shall be bound to.
-    ///
-    /// MUST NOT be set if `kid` is set.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub jwk: Option<PublicKeyJwk>,
+    // /// Contains the key material the new Credential shall be bound to.
+    // ///
+    // /// MUST NOT be set if `kid` is set.
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub jwk: Option<PublicKeyJwk>,
+    /// The key material for the public key
+    #[serde(flatten)]
+    pub key: KeyType,
 
     /// Contains a certificate (or certificate chain) corresponding to the key used to
     /// sign the JWT. This element MAY be used to convey a key attestation. In such a
@@ -90,5 +93,25 @@ pub enum Type {
 impl Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{self:?}")
+    }
+}
+
+/// The type of public key material for the JWT.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub enum KeyType {
+    /// Contains the key ID. If the Credential is bound to a DID, the kid refers to a
+    /// DID URL which identifies a particular key in the DID Document that the
+    /// Credential should bound to. Alternatively, may refer to a key inside a JWKS.
+    #[serde(rename = "kid")]
+    KeyId(String),
+
+    /// Contains the key material the new Credential shall be bound to.
+    #[serde(rename = "jwk")]
+    Jwk(PublicKeyJwk),
+}
+
+impl Default for KeyType {
+    fn default() -> Self {
+        Self::KeyId(String::new())
     }
 }

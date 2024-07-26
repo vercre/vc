@@ -18,7 +18,7 @@ use openid::issuer::{
     ProofType, Provider, StateManager, Subject,
 };
 use openid::{Error, Result};
-use proof::jose::jws::{self, Type};
+use proof::jose::jws::{self, KeyType, Type};
 use tracing::instrument;
 use w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use w3c_vc::proof::{Format, Payload};
@@ -163,7 +163,7 @@ async fn verify(
 
             // TODO: use `decode` method in w3c-vc
             // Key ID
-            let Some(kid) = jwt.header.kid else {
+            let KeyType::KeyId(kid) = &jwt.header.key else {
                 let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
 
                 return Err(Error::InvalidProof {

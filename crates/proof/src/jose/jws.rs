@@ -14,7 +14,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 
 use crate::jose::jwk::{Curve, PublicKeyJwk};
-pub use crate::jose::jwt::{Header, Jwt, Type};
+pub use crate::jose::jwt::{Header, Jwt, KeyType, Type};
 use crate::signature::{Algorithm, Signer, Verifier};
 
 /// Encode the provided header and claims and sign, returning a JWT in compact JWS form.
@@ -31,7 +31,7 @@ where
     let header = Header {
         alg: signer.algorithm(),
         typ,
-        kid: Some(signer.verification_method()),
+        key: KeyType::KeyId(signer.verification_method()),
         ..Header::default()
     };
 
@@ -80,7 +80,10 @@ where
     }
 
     // verify signature
-    let jwk = verifier.deref_jwk(&header.kid.clone().unwrap_or_default()).await?;
+    let KeyType::KeyId(kid) = &header.key else {
+        bail!("'kid' is not set");
+    };
+    let jwk = verifier.deref_jwk(kid).await?;
     verify(&jwk, &format!("{}.{}", parts[0], parts[1]), &sig)?;
 
     Ok(Jwt { header, claims })
