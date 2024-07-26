@@ -3,8 +3,8 @@ use openid::issuer::{
     Claims, Client, ClientMetadata, Issuer, IssuerMetadata, Result, Server, ServerMetadata,
     StateManager, Subject,
 };
-use jose::jwk::PublicKeyJwk;
-use jose::signature::{Algorithm, Signer, Verifier};
+use proof::jose::jwk::PublicKeyJwk;
+use proof::signature::{Algorithm, Signer, Verifier};
 
 use crate::store::keystore::IssuerKeystore;
 use crate::store::{issuance, state};

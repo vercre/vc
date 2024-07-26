@@ -640,7 +640,7 @@ pub struct Wallet {
 use std::fmt::Debug;
 use std::future::Future;
 
-use jose::signature::{self, Signer};
+use proof::signature::{self, Signer};
 
 pub use crate::provider::{self, Result, StateManager};
 

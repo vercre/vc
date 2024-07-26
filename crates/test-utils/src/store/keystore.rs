@@ -6,8 +6,8 @@ use ed25519_dalek::Signer;
 use ed25519_dalek::{SecretKey, SigningKey};
 // use k256::Secp256k1;
 use openid::provider::Result;
-use jose::jwa::Algorithm;
-use jose::jwk::PublicKeyJwk;
+use proof::jose::jwa::Algorithm;
+use proof::jose::jwk::PublicKeyJwk;
 
 // Mock DID client
 struct Client {}

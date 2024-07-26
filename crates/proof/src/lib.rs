@@ -38,11 +38,12 @@
 //! [VC-JOSE-COSE]: https://w3c.github.io/vc-jose-cose
 //! [OpenID4VP]: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
 
-pub mod jwa;
-mod jwe;
-pub mod jwk;
-pub mod jws;
-mod jwt;
+// pub mod jwa;
+// mod jwe;
+// pub mod jwk;
+// pub mod jws;
+// mod jwt;
+pub mod jose;
 pub mod signature;
 
 // use signature::Keypair;

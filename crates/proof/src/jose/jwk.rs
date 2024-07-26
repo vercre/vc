@@ -9,7 +9,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::jwe::EncryptionAlgorithm;
+use crate::jose::jwe::EncryptionAlgorithm;
 
 /// Simplified JSON Web Key (JWK) key structure.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, Eq, PartialEq)]

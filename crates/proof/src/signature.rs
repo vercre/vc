@@ -4,8 +4,8 @@
 
 use std::future::{Future, IntoFuture};
 
-pub use crate::jwa::Algorithm;
-use crate::jwk::PublicKeyJwk;
+pub use crate::jose::jwa::Algorithm;
+use crate::jose::jwk::PublicKeyJwk;
 
 /// Signer is used by implementers to provide signing functionality for
 /// Verifiable Credential issuance and Verifiable Presentation submissions.

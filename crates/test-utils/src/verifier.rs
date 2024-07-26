@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
-use jose::jwk::PublicKeyJwk;
-use jose::signature::{self, Algorithm, Signer};
 use openid::verifier::{Result, StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata};
+use proof::jose::jwk::PublicKeyJwk;
+use proof::signature::{self, Algorithm, Signer};
 
 use crate::store::keystore::VerifierKeystore;
 use crate::store::{presentation, state};

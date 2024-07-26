@@ -4,7 +4,7 @@ use assert_let_bind::assert_let;
 use chrono::Utc;
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
-use jose::jws::{self, Type};
+use proof::jose::jws::{self, Type};
 use serde_json::json;
 use test_utils::holder;
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, PENDING_USER};

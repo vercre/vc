@@ -50,7 +50,7 @@ use openid::verifier::{
     VerifierMetadata,
 };
 use openid::{Error, Result};
-use jose::signature::Algorithm;
+use proof::signature::Algorithm;
 use tracing::instrument;
 use uuid::Uuid;
 

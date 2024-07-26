@@ -15,8 +15,8 @@ use openid::issuer::{
 pub use openid::issuer::{IssuerMetadata, TxCode};
 pub use openid::provider::{Result, StateManager};
 use openid::verifier::{RequestObjectResponse, ResponseRequest, ResponseResponse};
-pub use jose::jwk::PublicKeyJwk;
-pub use jose::signature::{Algorithm, Signer, Verifier};
+pub use proof::jose::jwk::PublicKeyJwk;
+pub use proof::signature::{Algorithm, Signer, Verifier};
 
 use crate::credential::{Credential, Logo};
 

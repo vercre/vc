@@ -17,7 +17,7 @@ use openid::verifier::{
     Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, StateManager,
 };
 use openid::{Error, Result};
-use jose::jws::{self, Type};
+use proof::jose::jws::{self, Type};
 use tracing::instrument;
 
 use crate::state::State;

@@ -8,8 +8,8 @@ use base64ct::{Base64UrlUnpadded, Encoding};
 use core_utils::Kind;
 use curve25519_dalek::edwards::CompressedEdwardsY;
 use ed25519_dalek::SigningKey;
-use jose::jwk::{Curve, KeyType, PublicKeyJwk};
 use multibase::Base;
+use proof::jose::jwk::{Curve, KeyType, PublicKeyJwk};
 use rand::rngs::OsRng;
 use serde_json::json;
 

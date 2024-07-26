@@ -18,7 +18,7 @@ use openid::issuer::{
     ProofType, Provider, StateManager, Subject,
 };
 use openid::{Error, Result};
-use jose::jws::{self, KeyType, Type};
+use proof::jose::jws::{self, KeyType, Type};
 use tracing::instrument;
 use w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use w3c_vc::proof::{Format, Payload};
