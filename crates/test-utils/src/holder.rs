@@ -1,5 +1,5 @@
 use openid::provider::Result;
-use proof::signature::{Algorithm, Signer};
+use jose::signature::{Algorithm, Signer};
 
 use crate::store::keystore::HolderKeystore;
 

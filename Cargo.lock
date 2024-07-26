@@ -1093,8 +1093,8 @@ dependencies = [
  "curve25519-dalek",
  "ed25519-dalek",
  "insta",
+ "jose",
  "multibase",
- "proof",
  "rand 0.8.5",
  "regex",
  "reqwest 0.12.5",
@@ -2469,6 +2469,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8eaf4bc02d17cbdd7ff4c7438cafcdf7fb9a4613313ad11b4f8fefe7d3fa0130"
 
 [[package]]
+name = "jose"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "aes-gcm",
+ "anyhow",
+ "base64ct",
+ "crypto_box",
+ "ecdsa",
+ "ed25519-dalek",
+ "k256",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "signature",
+ "tracing",
+ "x25519-dalek",
+]
+
+[[package]]
 name = "js-sys"
 version = "0.3.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3071,7 +3090,7 @@ dependencies = [
  "dif-exch",
  "image",
  "insta",
- "proof",
+ "jose",
  "qrcode",
  "serde",
  "serde_json",
@@ -3567,25 +3586,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e719e8df665df0d1c8fbfd238015744736151d4445ec0836b8e628aae103b77"
 dependencies = [
  "unicode-ident",
-]
-
-[[package]]
-name = "proof"
-version = "0.1.0-alpha.4"
-dependencies = [
- "aes-gcm",
- "anyhow",
- "base64ct",
- "crypto_box",
- "ecdsa",
- "ed25519-dalek",
- "k256",
- "rand 0.8.5",
- "serde",
- "serde_json",
- "signature",
- "tracing",
- "x25519-dalek",
 ]
 
 [[package]]
@@ -5154,8 +5154,8 @@ dependencies = [
  "chrono",
  "did",
  "ed25519-dalek",
+ "jose",
  "openid",
- "proof",
  "reqwest 0.12.5",
  "serde",
  "serde_json",
@@ -5733,8 +5733,8 @@ dependencies = [
  "ecdsa",
  "ed25519-dalek",
  "insta",
+ "jose",
  "openid",
- "proof",
  "serde",
  "serde_json",
  "serde_qs",
@@ -5759,8 +5759,8 @@ dependencies = [
  "derive_builder",
  "futures",
  "insta",
+ "jose",
  "openid",
- "proof",
  "serde",
  "serde_json",
  "sha2",
@@ -5780,8 +5780,8 @@ dependencies = [
  "derive_builder",
  "dif-exch",
  "insta",
+ "jose",
  "openid",
- "proof",
  "serde",
  "serde_json",
  "serde_json_path",
@@ -5850,7 +5850,7 @@ dependencies = [
  "chrono",
  "core-utils",
  "dif-exch",
- "proof",
+ "jose",
  "serde",
  "serde_json",
  "tracing",

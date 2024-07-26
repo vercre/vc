@@ -9,7 +9,7 @@ use dif_exch::Constraints;
 use openid::verifier::{
     PresentationDefinitionType, RequestObject, RequestObjectResponse, RequestObjectType,
 };
-use proof::jose::jws;
+use jose::jws;
 use tracing::instrument;
 use uuid::Uuid;
 

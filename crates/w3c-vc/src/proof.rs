@@ -30,10 +30,10 @@ mod controller;
 pub mod integrity;
 mod jose;
 
+use ::jose::jws;
+use ::jose::signature::{Signer, Verifier};
 use anyhow::bail;
 use core_utils::{Kind, Quota};
-use proof::jose::jws;
-use proof::signature::{Signer, Verifier};
 use serde::{Deserialize, Serialize};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};

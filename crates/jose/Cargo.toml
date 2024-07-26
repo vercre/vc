@@ -1,5 +1,5 @@
 [package]
-name = "proof"
+name = "jose"
 description = "OpenID Data Model"
 license = "MIT OR Apache-2.0"
 publish = false
@@ -25,13 +25,13 @@ version.workspace = true
 workspace = true
 
 [dependencies]
+k256 = "0.13.3"
 aes-gcm = "0.10.3"
 anyhow.workspace = true
 base64ct.workspace = true
 crypto_box = { version = "0.9.1", features = ["chacha20", "heapless"] }
 ecdsa.workspace = true
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
-k256.workspace = true
 rand = "0.8.5"
 serde.workspace = true
 serde_json.workspace = true

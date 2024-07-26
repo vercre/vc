@@ -71,7 +71,7 @@ mod tests {
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid::issuer::{CredentialRequest, ProofClaims};
-    use proof::jose::jws::{self, Type};
+    use jose::jws::{self, Type};
     use serde_json::json;
     use test_utils::holder;
     use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};

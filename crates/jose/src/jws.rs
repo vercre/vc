@@ -13,8 +13,8 @@ use ecdsa::signature::Verifier as _;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
-use crate::jose::jwk::{Curve, PublicKeyJwk};
-pub use crate::jose::jwt::{Header, Jwt, KeyType, Type};
+use crate::jwk::{Curve, PublicKeyJwk};
+pub use crate::jwt::{Header, Jwt, KeyType, Type};
 use crate::signature::{Algorithm, Signer, Verifier};
 
 /// Encode the provided header and claims and sign, returning a JWT in compact JWS form.

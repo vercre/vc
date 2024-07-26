@@ -59,7 +59,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::jose::jwk::{Curve, KeyType, PublicKeyJwk};
+use crate::jwk::{Curve, KeyType, PublicKeyJwk};
 use crate::{Decryptor, Encryptor};
 
 /// Encrypt plaintext and return a JWE.
