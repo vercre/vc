@@ -7,7 +7,9 @@
 use base64ct::{Base64UrlUnpadded, Encoding};
 use core_utils::Kind;
 use curve25519_dalek::edwards::CompressedEdwardsY;
+// use ecdsa::signature::Signer as _;
 use ed25519_dalek::SigningKey;
+// use k256::Secp256k1;
 use multibase::Base;
 use rand::rngs::OsRng;
 use url::Url;
@@ -130,6 +132,19 @@ mod test {
 
     #[test]
     fn create() {
+        let url = "https://demo.credibil.io/entity/funder";
+        let mut options = CreateOptions::default();
+        options.enable_encryption_key_derivation = true;
+
+        let verifying_key = DidWeb::generate();
+        let res = DidWeb::create(url, &verifying_key, options).expect("should create");
+
+        let json = serde_json::to_string(&res).expect("should serialize");
+        println!("{json}");
+    }
+
+    #[test]
+    fn create_2() {
         let url = "https://demo.credibil.io/entity/funder";
         let mut options = CreateOptions::default();
         options.enable_encryption_key_derivation = true;
