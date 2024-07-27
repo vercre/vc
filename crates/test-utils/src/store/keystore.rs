@@ -1,7 +1,6 @@
 use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
-// use ecdsa::signature::Signer as _;
-// use ecdsa::{Signature, SigningKey};
+// use ecdsa::{Signature, Signer as _, SigningKey};
 use ed25519_dalek::Signer;
 use ed25519_dalek::{SecretKey, SigningKey};
 // use k256::Secp256k1;
@@ -98,7 +97,7 @@ impl HolderKeystore {
 }
 
 /// Dereference DID URL to public key. For example,  did:web:demo.credibil.io#key-0.
-/// 
+///
 /// did:web:demo.credibil.io -> did:web:demo.credibil.io/.well-known/did.json
 /// did:web:demo.credibil.io:entity:supplier -> did:web:demo.credibil.io/entity/supplier/did.json
 pub async fn deref_jwk(did_url: &str) -> Result<PublicKeyJwk> {
@@ -110,4 +109,19 @@ pub async fn deref_jwk(did_url: &str) -> Result<PublicKeyJwk> {
     };
 
     Ok(vm.public_key.jwk()?)
+}
+
+#[cfg(test)]
+mod tests{
+    use super::*;
+
+    #[tokio::test]
+    async fn test_deref_jwk() {
+        let did_url = "did:web:demo.credibil.io#key-0";
+        let jwk = deref_jwk(did_url).await.unwrap();
+        println!("{:?}", jwk);
+        // assert_eq!(jwk.kty, "OKP");
+        // assert_eq!(jwk.crv, "Ed25519");
+        // assert_eq!(jwk.x, "cCxmHfFfIJvP74oNKjAuRC3zYoDMo0pFsAs19yKMowY");
+    }
 }
