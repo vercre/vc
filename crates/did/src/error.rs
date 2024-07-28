@@ -1,5 +1,3 @@
-
-
 /// DID resolution error codes
 #[derive(thiserror::Error, Debug)]
 pub enum Error {

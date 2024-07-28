@@ -20,7 +20,6 @@ use crate::resolution::{
     ContentMetadata, ContentType, Dereference, DidClient, Metadata, Options, Resolve, Resource,
 };
 
-
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
 static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new("^did:key:(?<identifier>z[a-km-zA-HJ-NP-Z1-9]+)$").expect("should compile")

@@ -112,7 +112,7 @@ pub async fn deref_jwk(did_url: &str) -> Result<PublicKeyJwk> {
 }
 
 #[cfg(test)]
-mod tests{
+mod tests {
     use super::*;
 
     #[tokio::test]
