@@ -15,7 +15,7 @@ use serde::Serialize;
 
 use crate::jose::jwk::{Curve, PublicKeyJwk};
 pub use crate::jose::jwt::{Header, Jwt, KeyType, Type};
-use crate::signature::{Algorithm, Signer, Verifier};
+use crate::{Algorithm, Signer, Verifier};
 
 /// Encode the provided header and claims and sign, returning a JWT in compact JWS form.
 ///

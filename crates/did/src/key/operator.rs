@@ -7,9 +7,9 @@
 use base64ct::{Base64UrlUnpadded, Encoding};
 use core_utils::Kind;
 use curve25519_dalek::edwards::CompressedEdwardsY;
+use datasec::jose::jwk::{Curve, KeyType, PublicKeyJwk};
 use ed25519_dalek::SigningKey;
 use multibase::Base;
-use proof::jose::jwk::{Curve, KeyType, PublicKeyJwk};
 use rand::rngs::OsRng;
 use serde_json::json;
 

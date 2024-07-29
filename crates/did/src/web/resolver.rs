@@ -54,7 +54,7 @@ impl DidWeb {
 
         // 6. Perform an HTTP GET request to the URL using an agent that can successfully
         //    negotiate a secure HTTPS connection, which enforces the security requirements
-        //    as described in 2.6 Security and privacy considerations.
+        //    as described in 2.6 DataSec and privacy considerations.
         let bytes = client.get(&url).await.map_err(Error::Other)?;
 
         let document = serde_json::from_slice(&bytes)

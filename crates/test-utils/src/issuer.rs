@@ -1,10 +1,10 @@
 use chrono::{DateTime, Utc};
+use datasec::jose::jwk::PublicKeyJwk;
+use datasec::{Algorithm, DataSec, Decryptor, Encryptor, Signer, Verifier};
 use openid::issuer::{
     Claims, Client, ClientMetadata, Issuer, IssuerMetadata, Result, Server, ServerMetadata,
     StateManager, Subject,
 };
-use proof::jose::jwk::PublicKeyJwk;
-use proof::signature::{Algorithm, Decryptor, Encryptor, Security, Signer, Verifier};
 
 use crate::store::keystore::IssuerKeystore;
 use crate::store::{issuance, state};
@@ -85,7 +85,7 @@ impl StateManager for Provider {
     }
 }
 
-impl Security for Provider {
+impl DataSec for Provider {
     fn signer(&self, _identifier: &str) -> impl Signer {
         self.clone()
     }

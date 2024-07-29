@@ -1,5 +1,5 @@
+use datasec::{Algorithm, Signer};
 use openid::provider::Result;
-use proof::signature::{Algorithm, Signer};
 
 use crate::store::keystore::HolderKeystore;
 

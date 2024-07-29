@@ -13,7 +13,7 @@ use std::fmt::{Debug, Display};
 use serde::{Deserialize, Serialize};
 
 use crate::jose::jwk::PublicKeyJwk;
-use crate::signature::Algorithm;
+use crate::Algorithm;
 
 /// Represents a JWT as used for proof and credential presentation.
 #[derive(Clone, Debug, Default, Serialize, PartialEq, Eq)]

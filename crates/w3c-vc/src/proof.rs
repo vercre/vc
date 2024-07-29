@@ -32,8 +32,8 @@ mod jose;
 
 use anyhow::bail;
 use core_utils::{Kind, Quota};
-use proof::jose::jws;
-use proof::signature::{Signer, Verifier};
+use datasec::jose::jws;
+use datasec::{Signer, Verifier};
 use serde::{Deserialize, Serialize};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};

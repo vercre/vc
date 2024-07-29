@@ -8,8 +8,8 @@ use std::fmt::{self, Display, Formatter};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::{DateTime, Utc};
 use core_utils::{Kind, Quota};
+use datasec::jose::jwk::{Curve, KeyType, PublicKeyJwk};
 use multibase::Base;
-use proof::jose::jwk::{Curve, KeyType, PublicKeyJwk};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 

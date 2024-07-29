@@ -8,8 +8,8 @@ use std::io::Cursor;
 use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
 use core_utils::Kind;
-use proof::jose::jwk::PublicKeyJwk;
-pub use proof::signature::Security;
+use datasec::jose::jwk::PublicKeyJwk;
+pub use datasec::DataSec;
 use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
@@ -1315,7 +1315,7 @@ pub struct Server {
 
 /// Issuer Provider trait.
 pub trait Provider:
-    ClientMetadata + IssuerMetadata + ServerMetadata + Subject + StateManager + Security + Clone
+    ClientMetadata + IssuerMetadata + ServerMetadata + Subject + StateManager + DataSec + Clone
 {
 }
 

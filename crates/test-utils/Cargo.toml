@@ -19,10 +19,10 @@ crate-type = ["cdylib", "rlib"]
 anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true
+datasec.workspace = true
 did = { path = "../did" }
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 openid.workspace = true
-proof.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }

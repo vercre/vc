@@ -25,9 +25,9 @@
     - [RFC Process](./stability/rfc-process.md)
     - [Release Process](./stability/release-process.md)
 
-- [Security](./security/index.md)
+- [DataSec](./security/index.md)
     - [Disclosure Policy](./security/disclosure-policy.md)
-    - [Security Bugs](./security/security-bugs.md)
+    - [DataSec Bugs](./security/security-bugs.md)
 
 # Contributer Guide
 

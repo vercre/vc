@@ -48,7 +48,7 @@ dif-exch = { path = "crates/dif-exch" }
 ecdsa = "0.16.9"
 futures = "0.3.30"
 insta = { version = "1.39.0", features = ["redactions", "yaml"] }
-proof = { path = "crates/proof" }
+datasec = { path = "crates/datasec" }
 openid = { path = "crates/openid" }
 serde = { version = "1.0.204", features = ["derive"] }
 serde_json = { version = "1.0.121", features = ["alloc"] }

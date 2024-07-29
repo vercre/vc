@@ -9,8 +9,8 @@ use std::io::Cursor;
 use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
 use core_utils::Kind;
+pub use datasec::DataSec;
 use dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
-pub use proof::signature::Security;
 use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
@@ -642,7 +642,7 @@ pub struct Wallet {
 }
 
 /// Issuer Provider trait.
-pub trait Provider: VerifierMetadata + WalletMetadata + StateManager + Security + Clone {}
+pub trait Provider: VerifierMetadata + WalletMetadata + StateManager + DataSec + Clone {}
 
 /// The `VerifierMetadata` trait is used by implementers to provide `Verifier` (client)
 /// metadata to the library.

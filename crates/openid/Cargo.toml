@@ -25,9 +25,9 @@ anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true
 core-utils.workspace = true
+datasec.workspace = true
 dif-exch.workspace = true
 image = { version = "0.25.2", default-features = false, features = ["png"] }
-proof.workspace = true
 qrcode = { version = "0.14.1", default-features = false, features = ["image"] }
 serde.workspace = true
 serde_json.workspace = true

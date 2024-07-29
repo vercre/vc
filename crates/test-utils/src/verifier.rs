@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
+use datasec::jose::jwk::PublicKeyJwk;
+use datasec::{self, Algorithm, DataSec, Decryptor, Encryptor, Signer};
 use openid::verifier::{Result, StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata};
-use proof::jose::jwk::PublicKeyJwk;
-use proof::signature::{self, Algorithm, Decryptor, Encryptor, Security, Signer};
 
 use crate::store::keystore::VerifierKeystore;
 use crate::store::{presentation, state};
@@ -56,12 +56,12 @@ impl StateManager for Provider {
     }
 }
 
-impl Security for Provider {
+impl DataSec for Provider {
     fn signer(&self, _identifier: &str) -> impl Signer {
         self.clone()
     }
 
-    fn verifier(&self, _identifier: &str) -> impl signature::Verifier {
+    fn verifier(&self, _identifier: &str) -> impl datasec::Verifier {
         self.clone()
     }
 
@@ -88,7 +88,7 @@ impl Signer for Provider {
     }
 }
 
-impl signature::Verifier for Provider {
+impl datasec::Verifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
         crate::store::keystore::deref_jwk(did_url).await
     }

@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use test_utils::store::keystore::{self, VerifierKeystore};
 use test_utils::store::{presentation, state};
 use vercre_verifier::provider::{
-    Algorithm, Decryptor, Encryptor, PublicKeyJwk, Result, Security, SignatureVerifier, Signer,
+    Algorithm, Decryptor, Encryptor, PublicKeyJwk, Result, DataSec, SignatureVerifier, Signer,
     StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata,
 };
 
@@ -54,7 +54,7 @@ impl StateManager for Provider {
     }
 }
 
-impl Security for Provider {
+impl DataSec for Provider {
     fn signer(&self, _identifier: &str) -> impl Signer {
         self.clone()
     }

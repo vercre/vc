@@ -3,7 +3,7 @@ use test_utils::store::keystore::{self, IssuerKeystore};
 use test_utils::store::{issuance, state};
 use vercre_issuer::provider::{
     Algorithm, Claims, Client, ClientMetadata, Decryptor, Encryptor, Issuer, IssuerMetadata,
-    PublicKeyJwk, Result, Security, Server, ServerMetadata, Signer, StateManager, Subject,
+    PublicKeyJwk, Result, DataSec, Server, ServerMetadata, Signer, StateManager, Subject,
     Verifier,
 };
 
@@ -78,7 +78,7 @@ impl StateManager for Provider {
     }
 }
 
-impl Security for Provider {
+impl DataSec for Provider {
     fn signer(&self, _identifier: &str) -> impl Signer {
         self.clone()
     }

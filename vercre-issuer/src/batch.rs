@@ -15,10 +15,10 @@ use core_utils::{gen, Kind};
 use openid::issuer::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
     CredentialRequest, CredentialResponse, CredentialType, Issuer, IssuerMetadata, ProofClaims,
-    ProofType, Provider, Security, StateManager, Subject,
+    ProofType, Provider, DataSec, StateManager, Subject,
 };
 use openid::{Error, Result};
-use proof::jose::jws::{self, KeyType, Type};
+use datasec::jose::jws::{self, KeyType, Type};
 use tracing::instrument;
 use w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use w3c_vc::proof::{Format, Payload};
@@ -129,7 +129,7 @@ async fn verify(
                 });
             };
 
-            let verifier = Security::verifier(&provider, &request.credential_issuer);
+            let verifier = DataSec::verifier(&provider, &request.credential_issuer);
 
             // TODO: check proof is signed with supported algorithm (from proof_type)
             let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, &verifier).await {
@@ -267,7 +267,7 @@ async fn create_response(
     };
 
     // sign credential (jwt = enveloping proof)
-    let signer = Security::signer(&provider, &request.credential_issuer);
+    let signer = DataSec::signer(&provider, &request.credential_issuer);
     let jwt = w3c_vc::proof::create(Format::JwtVcJson, Payload::Vc(vc), signer)
         .await
         .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;

@@ -4,7 +4,7 @@ use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
-use proof::jose::jws::{self, Type};
+use datasec::jose::jws::{self, Type};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use test_utils::holder;

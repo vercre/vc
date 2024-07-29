@@ -174,9 +174,9 @@ pub mod provider {
     pub use openid::verifier::{
         Provider, Result, StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata,
     };
-    pub use proof::jose::jwk::PublicKeyJwk;
-    pub use proof::signature::{
-        Algorithm, Decryptor, Encryptor, Security, Signer, Verifier as SignatureVerifier,
+    pub use datasec::jose::jwk::PublicKeyJwk;
+    pub use datasec::{
+        Algorithm, Decryptor, Encryptor, DataSec, Signer, Verifier as SignatureVerifier,
     };
 }
 pub use create_request::create_request;

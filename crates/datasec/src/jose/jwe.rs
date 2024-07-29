@@ -66,7 +66,7 @@ use crate::{Decryptor, Encryptor};
 ///
 /// N.B. We currently only support ECDH-ES key agreement and A128GCM
 /// content encryption.
-pub fn encrypt<T: Serialize>(
+pub async fn encrypt<T: Serialize>(
     plaintext: T, recipient_key: &[u8; 32], encryptor: &impl Encryptor,
 ) -> anyhow::Result<String> {
     // 1. Key Management Mode determines the Content Encryption Key (CEK)
@@ -78,7 +78,7 @@ pub fn encrypt<T: Serialize>(
 
     // 3. Use Key Agreement Algorithm (ECDH) to compute a shared secret to wrap the CEK.
     // 4. Encrypt the CEK and set as the JWE Encrypted Key.
-    let encrypted_cek = encryptor.encrypt(&cek, recipient_key)?;
+    let encrypted_cek = encryptor.encrypt(&cek, recipient_key).await?;
 
     // 9. Generate a random JWE Initialization Vector (nonce) of the correct size
     //    for the content encryption algorithm (A128GCM).
@@ -129,7 +129,7 @@ pub fn encrypt<T: Serialize>(
 // use aes_gcm::AesGcm;
 
 /// Decrypt the JWE and return the plaintext.
-pub fn decrypt<T: DeserializeOwned>(
+pub async fn decrypt<T: DeserializeOwned>(
     compact_jwe: &str, decryptor: &impl Decryptor,
 ) -> anyhow::Result<T> {
     // 1. Parse the JWE to extract the serialized values of it's components.
@@ -157,7 +157,7 @@ pub fn decrypt<T: DeserializeOwned>(
         .map_err(|e| anyhow!("issue decoding sender public key `x`: {e}"))?;
     let sender_key: &[u8; crypto_box::KEY_SIZE] = sender_key.as_slice().try_into()?;
 
-    let cek = decryptor.decrypt(&encrypted_cek, sender_key)?;
+    let cek = decryptor.decrypt(&encrypted_cek, sender_key).await?;
 
     // 12. Record whether the CEK could be successfully determined for this recipient.
     // 14. Compute the Encoded Protected Header value base64(JWE Protected Header).
@@ -328,17 +328,18 @@ mod test {
     // use x25519_dalek::{PublicKey, StaticSecret};
     use super::*;
 
-    #[test]
-    fn round_trip() {
+    #[tokio::test]
+    async fn round_trip() {
         let key_store = KeyStore::new();
         let recipient_public = PublicKey::from(&key_store.recipient_secret);
 
         // round trip: encrypt and then decrypt
         let plaintext = "The true sign of intelligence is not knowledge but imagination.";
 
-        let compact_jwe =
-            encrypt(plaintext, &recipient_public.to_bytes(), &key_store).expect("should encrypt");
-        let decrypted: String = decrypt(&compact_jwe, &key_store).expect("should decrypt");
+        let compact_jwe = encrypt(plaintext, &recipient_public.to_bytes(), &key_store)
+            .await
+            .expect("should encrypt");
+        let decrypted: String = decrypt(&compact_jwe, &key_store).await.expect("should decrypt");
 
         assert_eq!(plaintext, decrypted);
     }
@@ -363,7 +364,7 @@ mod test {
     }
 
     impl Encryptor for KeyStore {
-        fn encrypt(
+        async fn encrypt(
             &self, plaintext: &[u8], recipient_public_key: &[u8],
         ) -> anyhow::Result<Vec<u8>> {
             let pk: &[u8; 32] = recipient_public_key.try_into()?;
@@ -388,7 +389,9 @@ mod test {
     }
 
     impl Decryptor for KeyStore {
-        fn decrypt(&self, ciphertext: &[u8], sender_public_key: &[u8]) -> anyhow::Result<Vec<u8>> {
+        async fn decrypt(
+            &self, ciphertext: &[u8], sender_public_key: &[u8],
+        ) -> anyhow::Result<Vec<u8>> {
             let pk: &[u8; 32] = sender_public_key.try_into()?;
 
             let chachabox = ChaChaBox::new(&PublicKey::from(*pk), &self.recipient_secret);

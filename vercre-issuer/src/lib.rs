@@ -104,8 +104,8 @@ pub mod provider {
         Claims, ClientMetadata, IssuerMetadata, Provider, Result, ServerMetadata, StateManager,
         Subject,
     };
-    pub use proof::jose::jwk::PublicKeyJwk;
-    pub use proof::signature::{Algorithm, Decryptor, Encryptor, Security, Signer, Verifier};
+    pub use datasec::jose::jwk::PublicKeyJwk;
+    pub use datasec::{Algorithm, Decryptor, Encryptor, DataSec, Signer, Verifier};
 }
 
 // use std::future::Future;

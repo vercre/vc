@@ -1,5 +1,5 @@
 [package]
-name = "proof"
+name = "datasec"
 description = "Proof utilities"
 license = "MIT OR Apache-2.0"
 publish = false
@@ -39,3 +39,4 @@ x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
 
 [dev-dependencies]
 signature = "2.2.0"
+tokio.workspace = true

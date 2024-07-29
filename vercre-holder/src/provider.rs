@@ -7,6 +7,8 @@
 
 use std::future::Future;
 
+pub use datasec::jose::jwk::PublicKeyJwk;
+pub use datasec::{Algorithm, Signer, Verifier};
 pub use dif_exch::Constraints;
 use openid::issuer::{
     CredentialRequest, CredentialResponse, MetadataRequest, MetadataResponse, TokenRequest,
@@ -15,8 +17,6 @@ use openid::issuer::{
 pub use openid::issuer::{IssuerMetadata, TxCode};
 pub use openid::provider::{Result, StateManager};
 use openid::verifier::{RequestObjectResponse, ResponseRequest, ResponseResponse};
-pub use proof::jose::jwk::PublicKeyJwk;
-pub use proof::signature::{Algorithm, Signer, Verifier};
 
 use crate::credential::{Credential, Logo};
 
