@@ -22,7 +22,7 @@
 
 use core_utils::Kind;
 use openid::verifier::{
-    PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, StateManager,
+    PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, Security, StateManager,
 };
 use openid::{Error, Result};
 use serde_json::Value;
@@ -68,6 +68,8 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
     let state = State::try_from(buf)?;
     let saved_req = &state.request_object;
 
+    let verifier = Security::verifier(&provider, &saved_req.client_id);
+
     // TODO: no token == error response, we should have already checked for an error
     let Some(vp_token) = request.vp_token.clone() else {
         return Err(Error::InvalidRequest("client state not found".into()));
@@ -77,7 +79,7 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
 
     // check nonce matches
     for vp_val in &vp_token {
-        let (vp, nonce) = match w3c_vc::proof::verify(Verify::Vp(vp_val), &provider).await {
+        let (vp, nonce) = match w3c_vc::proof::verify(Verify::Vp(vp_val), &verifier).await {
             Ok(Payload::Vp { vp, nonce, .. }) => (vp, nonce),
             Ok(_) => return Err(Error::InvalidRequest("proof payload is invalid".into())),
             Err(e) => return Err(Error::ServerError(format!("issue verifying VP proof: {e}"))),
@@ -164,7 +166,7 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
             _ => return Err(Error::InvalidRequest(format!("unexpected VC format: {vc_node}"))),
         };
 
-        let Payload::Vc(vc) = w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider)
+        let Payload::Vc(vc) = w3c_vc::proof::verify(Verify::Vc(&vc_kind), &verifier)
             .await
             .map_err(|e| Error::InvalidRequest(format!("invalid VC proof: {e}")))?
         else {

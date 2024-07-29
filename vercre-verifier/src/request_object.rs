@@ -14,7 +14,8 @@
 //! [JWT VC Presentation Profile]: (https://identity.foundation/jwt-vc-presentation-profile)
 
 use openid::verifier::{
-    Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, StateManager,
+    Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, Security,
+    StateManager,
 };
 use openid::{Error, Result};
 use proof::jose::jws::{self, Type};
@@ -54,7 +55,8 @@ async fn process(
         return Err(Error::InvalidRequest("client ID mismatch".into()));
     }
 
-    let jwt = jws::encode(Type::Request, &req_obj, provider.clone())
+    let signer = Security::signer(&provider, &request.client_id);
+    let jwt = jws::encode(Type::Request, &req_obj, signer)
         .await
         .map_err(|e| Error::ServerError(format!("issue encoding jwt: {e}")))?;
 

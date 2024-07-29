@@ -2,8 +2,9 @@ use chrono::{DateTime, Utc};
 use test_utils::store::keystore::{self, IssuerKeystore};
 use test_utils::store::{issuance, state};
 use vercre_issuer::provider::{
-    Algorithm, Claims, Client, ClientMetadata, Issuer, IssuerMetadata, PublicKeyJwk, Result,
-    Server, ServerMetadata, Signer, StateManager, Subject, Verifier,
+    Algorithm, Claims, Client, ClientMetadata, Decryptor, Encryptor, Issuer, IssuerMetadata,
+    PublicKeyJwk, Result, Security, Server, ServerMetadata, Signer, StateManager, Subject,
+    Verifier,
 };
 
 #[derive(Default, Clone, Debug)]
@@ -77,6 +78,24 @@ impl StateManager for Provider {
     }
 }
 
+impl Security for Provider {
+    fn signer(&self, _identifier: &str) -> impl Signer {
+        self.clone()
+    }
+
+    fn verifier(&self, _identifier: &str) -> impl Verifier {
+        self.clone()
+    }
+
+    fn encryptor(&self, _identifier: &str) -> impl Encryptor {
+        self.clone()
+    }
+
+    fn decryptor(&self, _identifier: &str) -> impl Decryptor {
+        self.clone()
+    }
+}
+
 impl Signer for Provider {
     fn algorithm(&self) -> Algorithm {
         IssuerKeystore::algorithm()
@@ -94,5 +113,24 @@ impl Signer for Provider {
 impl Verifier for Provider {
     async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
         keystore::deref_jwk(did_url).await
+    }
+}
+
+impl Encryptor for Provider {
+    async fn encrypt(&self, _plaintext: &[u8], _recipient_public_key: &[u8]) -> Result<Vec<u8>> {
+        // crate::store::keystore::encrypt(plaintext, recipient_public_key)
+        todo!()
+    }
+
+    fn public_key(&self) -> Vec<u8> {
+        // IssuerKeystore::public_key()
+        todo!()
+    }
+}
+
+impl Decryptor for Provider {
+    async fn decrypt(&self, _ciphertext: &[u8], _sender_public_key: &[u8]) -> Result<Vec<u8>> {
+        // IssuerKeystore::decrypt(ciphertext)
+        todo!()
     }
 }

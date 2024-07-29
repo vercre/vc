@@ -2,12 +2,15 @@
 
 use std::collections::HashMap;
 use std::fmt;
+use std::fmt::Debug;
+use std::future::Future;
 use std::io::Cursor;
 
 use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
 use core_utils::Kind;
 use dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
+pub use proof::signature::Security;
 use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
@@ -15,6 +18,7 @@ use serde::{Deserialize, Serialize};
 use w3c_vc::model::VerifiablePresentation;
 
 pub use super::CredentialFormat;
+pub use crate::provider::{self, Result, StateManager};
 use crate::stringify;
 
 /// The Request Object Request is created by the Verifier to generate an
@@ -637,18 +641,8 @@ pub struct Wallet {
     pub vp_formats_supported: Option<HashMap<String, VpFormat>>,
 }
 
-use std::fmt::Debug;
-use std::future::Future;
-
-use proof::signature::{self, Signer};
-
-pub use crate::provider::{self, Result, StateManager};
-
 /// Issuer Provider trait.
-pub trait Provider:
-    VerifierMetadata + WalletMetadata + StateManager + Signer + signature::Verifier + Clone
-{
-}
+pub trait Provider: VerifierMetadata + WalletMetadata + StateManager + Security + Clone {}
 
 /// The `VerifierMetadata` trait is used by implementers to provide `Verifier` (client)
 /// metadata to the library.

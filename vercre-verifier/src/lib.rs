@@ -175,7 +175,9 @@ pub mod provider {
         Provider, Result, StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata,
     };
     pub use proof::jose::jwk::PublicKeyJwk;
-    pub use proof::signature::{Algorithm, Signer, Verifier as SignatureVerifier};
+    pub use proof::signature::{
+        Algorithm, Decryptor, Encryptor, Security, Signer, Verifier as SignatureVerifier,
+    };
 }
 pub use create_request::create_request;
 pub use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};

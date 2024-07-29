@@ -15,7 +15,7 @@ use core_utils::{gen, Kind};
 use openid::issuer::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
     CredentialRequest, CredentialResponse, CredentialType, Issuer, IssuerMetadata, ProofClaims,
-    ProofType, Provider, StateManager, Subject,
+    ProofType, Provider, Security, StateManager, Subject,
 };
 use openid::{Error, Result};
 use proof::jose::jws::{self, KeyType, Type};
@@ -121,7 +121,7 @@ async fn verify(
             })?;
 
             let ProofType::Jwt(proof_jwt) = &proof.proof else {
-                let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
+                let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
                 return Err(Error::InvalidProof {
                     hint: "Proof not JWT".into(),
                     c_nonce,
@@ -129,11 +129,13 @@ async fn verify(
                 });
             };
 
+            let verifier = Security::verifier(&provider, &request.credential_issuer);
+
             // TODO: check proof is signed with supported algorithm (from proof_type)
-            let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, &provider).await {
+            let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, &verifier).await {
                 Ok(jwt) => jwt,
                 Err(e) => {
-                    let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
+                    let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
                     return Err(Error::InvalidProof {
                         hint: format!("issue decoding JWT: {e}"),
                         c_nonce,
@@ -143,7 +145,7 @@ async fn verify(
             };
             // proof type
             if jwt.header.typ != Type::Proof {
-                let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
+                let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
                 return Err(Error::InvalidProof {
                     hint: format!("Proof JWT 'typ' is not {}", Type::Proof),
                     c_nonce,
@@ -153,7 +155,7 @@ async fn verify(
 
             // previously issued c_nonce
             if jwt.claims.nonce.as_ref() != Some(&token_state.c_nonce) {
-                let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
+                let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
                 return Err(Error::InvalidProof {
                     hint: "Proof JWT nonce claim is invalid".into(),
                     c_nonce,
@@ -164,7 +166,7 @@ async fn verify(
             // TODO: use `decode` method in w3c-vc
             // Key ID
             let KeyType::KeyId(kid) = &jwt.header.key else {
-                let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
+                let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
 
                 return Err(Error::InvalidProof {
                     hint: "Proof JWT 'kid' is missing".into(),
@@ -174,7 +176,7 @@ async fn verify(
             };
             // HACK: save extracted DID for later use when issuing credential
             let Some(did) = kid.split('#').next() else {
-                let (c_nonce, c_nonce_expires_in) = err_nonce(context, provider).await?;
+                let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
 
                 return Err(Error::InvalidProof {
                     hint: "Proof JWT DID is invalid".into(),
@@ -265,7 +267,8 @@ async fn create_response(
     };
 
     // sign credential (jwt = enveloping proof)
-    let jwt = w3c_vc::proof::create(Format::JwtVcJson, Payload::Vc(vc), provider.clone())
+    let signer = Security::signer(&provider, &request.credential_issuer);
+    let jwt = w3c_vc::proof::create(Format::JwtVcJson, Payload::Vc(vc), signer)
         .await
         .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
 
@@ -372,7 +375,7 @@ fn credential_configuration(
 
 /// Creates, stores, and returns new `c_nonce` and `c_nonce_expires`_in values
 /// for use in `Error::InvalidProof` errors, as per specification.
-async fn err_nonce(context: &Context, provider: impl Provider) -> Result<(String, i64)> {
+async fn err_nonce(context: &Context, provider: &impl Provider) -> Result<(String, i64)> {
     // generate nonce and update state
     let mut state = context.state.clone();
     let Some(mut token_state) = state.token else {
@@ -384,7 +387,7 @@ async fn err_nonce(context: &Context, provider: impl Provider) -> Result<(String
     token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
     state.token = Some(token_state.clone());
 
-    StateManager::put(&provider, &token_state.access_token, state.to_vec(), state.expires_at)
+    StateManager::put(provider, &token_state.access_token, state.to_vec(), state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
