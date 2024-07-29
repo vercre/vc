@@ -66,7 +66,7 @@ use crate::{Decryptor, Encryptor};
 ///
 /// N.B. We currently only support ECDH-ES key agreement and A128GCM
 /// content encryption.
-pub async fn encrypt<T: Serialize>(
+pub async fn encrypt<T: Serialize + Send>(
     plaintext: T, recipient_key: &[u8; 32], encryptor: &impl Encryptor,
 ) -> anyhow::Result<String> {
     // 1. Key Management Mode determines the Content Encryption Key (CEK)
