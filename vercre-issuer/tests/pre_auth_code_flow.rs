@@ -2,9 +2,10 @@ use std::sync::LazyLock;
 
 use assert_let_bind::assert_let;
 use chrono::Utc;
+use datasec::jose::jws::{self, Type};
+use datasec::DataSec;
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
-use datasec::jose::jws::{self, Type};
 use serde_json::json;
 use test_utils::holder;
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -27,9 +28,12 @@ async fn pre_auth_flow() {
     let Some(vc_kind) = &resp.credential else {
         panic!("VC is not present");
     };
-    let Payload::Vc(vc) = w3c_vc::proof::verify(Verify::Vc(vc_kind), &ISSUER_PROVIDER.clone())
-        .await
-        .expect("should decode")
+
+    let provider = ISSUER_PROVIDER.clone();
+    let verifier = DataSec::verifier(&provider, CREDENTIAL_ISSUER).expect("should get verifier");
+
+    let Payload::Vc(vc) =
+        w3c_vc::proof::verify(Verify::Vc(vc_kind), &verifier).await.expect("should decode")
     else {
         panic!("should be VC");
     };

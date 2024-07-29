@@ -45,23 +45,23 @@ use std::future::{Future, IntoFuture};
 pub use crate::jose::jwa::Algorithm;
 use crate::jose::jwk::PublicKeyJwk;
 
-/// The security trait provides a set of methods for signing, encrypting,
+/// The `DataSec` trait is used to provide methods needed for signing, encrypting,
 /// verifying, and decrypting data. Implementers of this trait are expected to
 /// provide the necessary cryptographic functionality to support Verifiable
 /// Credential issuance and Verifiable Presentation submissions.
 pub trait DataSec: Send + Sync {
     /// Signer provides digital signing-related funtionality.
     /// The `identifier` parameter is one of `credential_issuer` or `verifier_id`.
-    fn signer(&self, identifier: &str) -> impl Signer;
+    fn signer(&self, identifier: &str) -> anyhow::Result<impl Signer>;
 
     /// Verifier provides digital signature verification functionality.
-    fn verifier(&self, identifier: &str) -> impl Verifier;
+    fn verifier(&self, identifier: &str) -> anyhow::Result<impl Verifier>;
 
     /// Encryptor provides data encryption functionality.
-    fn encryptor(&self, identifier: &str) -> impl Encryptor;
+    fn encryptor(&self, identifier: &str) -> anyhow::Result<impl Encryptor>;
 
     /// Decryptor provides data decryption functionality.
-    fn decryptor(&self, identifier: &str) -> impl Decryptor;
+    fn decryptor(&self, identifier: &str) -> anyhow::Result<impl Decryptor>;
 }
 
 /// Signer is used by implementers to provide signing functionality for

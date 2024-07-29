@@ -2,9 +2,10 @@ use std::sync::LazyLock;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
+use datasec::jose::jws::{self, Type};
+use datasec::DataSec;
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
-use datasec::jose::jws::{self, Type};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use test_utils::holder;
@@ -28,9 +29,11 @@ async fn auth_code_flow() {
     let Some(vc_kind) = &resp.credential else {
         panic!("VC is not present");
     };
-    let Payload::Vc(vc) = w3c_vc::proof::verify(Verify::Vc(vc_kind), &ISSUER_PROVIDER.clone())
-        .await
-        .expect("should decode")
+
+    let provider = ISSUER_PROVIDER.clone();
+    let verifier = DataSec::verifier(&provider, CREDENTIAL_ISSUER).expect("should get verifier");
+    let Payload::Vc(vc) =
+        w3c_vc::proof::verify(Verify::Vc(vc_kind), &verifier).await.expect("should decode")
     else {
         panic!("should be VC");
     };

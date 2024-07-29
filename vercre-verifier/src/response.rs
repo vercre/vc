@@ -22,7 +22,7 @@
 
 use core_utils::Kind;
 use openid::verifier::{
-    PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, DataSec, StateManager,
+    DataSec, PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, StateManager,
 };
 use openid::{Error, Result};
 use serde_json::Value;
@@ -68,7 +68,8 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
     let state = State::try_from(buf)?;
     let saved_req = &state.request_object;
 
-    let verifier = DataSec::verifier(&provider, &saved_req.client_id);
+    let verifier = DataSec::verifier(&provider, &saved_req.client_id)
+        .map_err(|e| Error::ServerError(format!("issue  resolving verifier: {e}")))?;
 
     // TODO: no token == error response, we should have already checked for an error
     let Some(vp_token) = request.vp_token.clone() else {

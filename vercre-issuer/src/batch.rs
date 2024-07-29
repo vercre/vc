@@ -12,13 +12,13 @@ use std::fmt::Debug;
 
 use chrono::Utc;
 use core_utils::{gen, Kind};
+use datasec::jose::jws::{self, KeyType, Type};
 use openid::issuer::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
-    CredentialRequest, CredentialResponse, CredentialType, Issuer, IssuerMetadata, ProofClaims,
-    ProofType, Provider, DataSec, StateManager, Subject,
+    CredentialRequest, CredentialResponse, CredentialType, DataSec, Issuer, IssuerMetadata,
+    ProofClaims, ProofType, Provider, StateManager, Subject,
 };
 use openid::{Error, Result};
-use datasec::jose::jws::{self, KeyType, Type};
 use tracing::instrument;
 use w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use w3c_vc::proof::{Format, Payload};
@@ -129,7 +129,8 @@ async fn verify(
                 });
             };
 
-            let verifier = DataSec::verifier(&provider, &request.credential_issuer);
+            let verifier = DataSec::verifier(&provider, &request.credential_issuer)
+                .map_err(|e| Error::ServerError(format!("issue  resolving verifier: {e}")))?;
 
             // TODO: check proof is signed with supported algorithm (from proof_type)
             let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, &verifier).await {
@@ -267,7 +268,8 @@ async fn create_response(
     };
 
     // sign credential (jwt = enveloping proof)
-    let signer = DataSec::signer(&provider, &request.credential_issuer);
+    let signer = DataSec::signer(&provider, &request.credential_issuer)
+        .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
     let jwt = w3c_vc::proof::create(Format::JwtVcJson, Payload::Vc(vc), signer)
         .await
         .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
@@ -324,7 +326,6 @@ async fn create_vc(
     let Some(types) = definition.type_ else {
         return Err(Error::ServerError("Credential type not set".into()));
     };
-
     let vc_id = format!("{credential_issuer}/credentials/{}", types[1].clone());
 
     let vc = VerifiableCredential::builder()
@@ -500,8 +501,10 @@ mod tests {
             panic!("credential is missing");
         };
 
+        let verifier =
+            DataSec::verifier(&provider, &request.credential_issuer).expect("should get verifier");
         let Payload::Vc(vc) =
-            w3c_vc::proof::verify(Verify::Vc(vc_kind), &provider).await.expect("should decode")
+            w3c_vc::proof::verify(Verify::Vc(vc_kind), &verifier).await.expect("should decode")
         else {
             panic!("should be VC");
         };

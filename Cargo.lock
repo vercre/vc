@@ -2417,6 +2417,7 @@ dependencies = [
 name = "issuer"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
  "axum",
  "axum-extra",
  "chrono",
@@ -5799,6 +5800,7 @@ dependencies = [
 name = "verifier"
 version = "0.0.0"
 dependencies = [
+ "anyhow",
  "axum",
  "axum-extra",
  "chrono",

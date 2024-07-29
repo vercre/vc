@@ -5,11 +5,11 @@
 //! query parameter.
 
 use anyhow::{anyhow, bail};
+use datasec::jose::jws;
 use dif_exch::Constraints;
 use openid::verifier::{
     PresentationDefinitionType, RequestObject, RequestObjectResponse, RequestObjectType,
 };
-use datasec::jose::jws;
 use tracing::instrument;
 use uuid::Uuid;
 

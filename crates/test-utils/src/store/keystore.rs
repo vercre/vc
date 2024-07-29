@@ -1,12 +1,12 @@
 use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
+use datasec::jose::jwa::Algorithm;
+use datasec::jose::jwk::PublicKeyJwk;
 // use ecdsa::{Signature, Signer as _, SigningKey};
 use ed25519_dalek::Signer;
 use ed25519_dalek::{SecretKey, SigningKey};
 // use k256::Secp256k1;
 use openid::provider::Result;
-use datasec::jose::jwa::Algorithm;
-use datasec::jose::jwk::PublicKeyJwk;
 
 // Mock DID client
 struct Client {}
@@ -25,15 +25,15 @@ const ISSUER_VERIFY_KEY: &str = "key-0";
 const ISSUER_SECRET: &str = "cCxmHfFfIJvP74oNKjAuRC3zYoDMo0pFsAs19yKMowY";
 
 impl IssuerKeystore {
-    pub fn algorithm() -> Algorithm {
+    pub fn algorithm(&self) -> Algorithm {
         Algorithm::EdDSA
     }
 
-    pub fn verification_method() -> String {
+    pub fn verification_method(&self) -> String {
         format!("{ISSUER_DID}#{ISSUER_VERIFY_KEY}")
     }
 
-    pub fn try_sign(msg: &[u8]) -> Result<Vec<u8>> {
+    pub fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
         // let decoded = Base64UrlUnpadded::decode_vec(SECRET_KEY)?;
         // let signing_key: SigningKey<Secp256k1> = SigningKey::from_slice(&decoded)?;
         // Ok(signing_key.sign(msg).to_vec())
@@ -54,15 +54,15 @@ const VERIFIER_VERIFY_KEY: &str = "key-0";
 const VERIFIER_SECRET: &str = "cCxmHfFfIJvP74oNKjAuRC3zYoDMo0pFsAs19yKMowY";
 
 impl VerifierKeystore {
-    pub fn algorithm() -> Algorithm {
+    pub fn algorithm(&self) -> Algorithm {
         Algorithm::EdDSA
     }
 
-    pub fn verification_method() -> String {
+    pub fn verification_method(&self) -> String {
         format!("{VERIFIER_DID}#{VERIFIER_VERIFY_KEY}")
     }
 
-    pub fn try_sign(msg: &[u8]) -> Result<Vec<u8>> {
+    pub fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
         let decoded = Base64UrlUnpadded::decode_vec(VERIFIER_SECRET)?;
         let secret_key: SecretKey =
             decoded.try_into().map_err(|_| anyhow!("Invalid secret key"))?;

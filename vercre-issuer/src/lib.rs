@@ -98,14 +98,14 @@ mod token;
 
 /// Re-export provider traits and types.
 pub mod provider {
+    pub use datasec::jose::jwk::PublicKeyJwk;
+    pub use datasec::{Algorithm, DataSec, Decryptor, Encryptor, Signer, Verifier};
     pub use openid::issuer::{ClaimDefinition, Client, GrantType, Issuer, Server};
     #[allow(clippy::module_name_repetitions)]
     pub use openid::issuer::{
         Claims, ClientMetadata, IssuerMetadata, Provider, Result, ServerMetadata, StateManager,
         Subject,
     };
-    pub use datasec::jose::jwk::PublicKeyJwk;
-    pub use datasec::{Algorithm, Decryptor, Encryptor, DataSec, Signer, Verifier};
 }
 
 // use std::future::Future;

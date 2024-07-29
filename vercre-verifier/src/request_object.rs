@@ -13,12 +13,11 @@
 //!
 //! [JWT VC Presentation Profile]: (https://identity.foundation/jwt-vc-presentation-profile)
 
+use datasec::jose::jws::{self, Type};
 use openid::verifier::{
-    Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, DataSec,
-    StateManager,
+    DataSec, Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, StateManager,
 };
 use openid::{Error, Result};
-use datasec::jose::jws::{self, Type};
 use tracing::instrument;
 
 use crate::state::State;
@@ -55,7 +54,8 @@ async fn process(
         return Err(Error::InvalidRequest("client ID mismatch".into()));
     }
 
-    let signer = DataSec::signer(&provider, &request.client_id);
+    let signer = DataSec::signer(&provider, &request.client_id)
+        .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
     let jwt = jws::encode(Type::Request, &req_obj, signer)
         .await
         .map_err(|e| Error::ServerError(format!("issue encoding jwt: {e}")))?;
@@ -117,9 +117,10 @@ mod tests {
             panic!("no JWT found in response");
         };
 
-        let jwt: jws::Jwt<RequestObject> =
-            jws::decode(&jwt_enc, &Provider::new()).await.expect("jwt is valid");
+        let verifier = DataSec::verifier(&provider, VERIFIER_ID).expect("should get verifier");
 
+        let jwt: jws::Jwt<RequestObject> =
+            jws::decode(&jwt_enc, &verifier).await.expect("jwt is valid");
         assert_snapshot!("response", jwt);
 
         // request state should not exist

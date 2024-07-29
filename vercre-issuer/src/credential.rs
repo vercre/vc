@@ -88,10 +88,11 @@ async fn process(
 mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
+    use datasec::jose::jws::{self, Type};
+    use datasec::DataSec;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use openid::issuer::ProofClaims;
     use openid::provider::StateManager;
-    use datasec::jose::jws::{self, Type};
     use serde_json::json;
     use test_utils::holder;
     use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -169,8 +170,11 @@ mod tests {
         let Some(vc_kind) = &response.credential else {
             panic!("VC is not base64 encoded string");
         };
+
+        let verifier =
+            DataSec::verifier(&provider, &request.credential_issuer).expect("should get verifier");
         let Payload::Vc(vc) =
-            w3c_vc::proof::verify(Verify::Vc(vc_kind), &provider).await.expect("should decode")
+            w3c_vc::proof::verify(Verify::Vc(vc_kind), &verifier).await.expect("should decode")
         else {
             panic!("should be VC");
         };

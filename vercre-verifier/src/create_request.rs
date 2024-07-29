@@ -43,6 +43,7 @@
 use std::collections::HashMap;
 
 use core_utils::gen;
+use datasec::Algorithm;
 use dif_exch::{ClaimFormat, PresentationDefinition};
 use openid::verifier::{
     ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
@@ -50,7 +51,6 @@ use openid::verifier::{
     VerifierMetadata,
 };
 use openid::{Error, Result};
-use datasec::Algorithm;
 use tracing::instrument;
 use uuid::Uuid;
 

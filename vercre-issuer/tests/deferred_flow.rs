@@ -2,9 +2,9 @@ use std::sync::LazyLock;
 
 use assert_let_bind::assert_let;
 use chrono::Utc;
+use datasec::jose::jws::{self, Type};
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
-use datasec::jose::jws::{self, Type};
 use serde_json::json;
 use test_utils::holder;
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, PENDING_USER};

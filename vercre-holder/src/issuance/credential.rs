@@ -4,11 +4,11 @@
 
 use anyhow::{anyhow, bail};
 use core_utils::Kind;
+use datasec::jose::jws::{self, Type};
 use openid::issuer::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, GrantType,
     Proof, ProofClaims, ProofType, TokenRequest,
 };
-use datasec::jose::jws::{self, Type};
 use tracing::instrument;
 use w3c_vc::proof::{Payload, Verify};
 

@@ -4,6 +4,7 @@ use std::sync::LazyLock;
 
 use chrono::Utc;
 use core_utils::{Kind, Quota};
+use datasec::DataSec;
 use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use openid::verifier::{CreateRequestRequest, DeviceFlow, PresentationDefinitionType};
@@ -71,10 +72,11 @@ async fn sample_credential() -> Credential {
         ..VerifiableCredential::default()
     };
 
+    let provider = VERIFIER_PROVIDER.clone();
+    let signer = DataSec::signer(&provider, VERIFIER_ID).expect("should get verifier");
+
     let payload = Payload::Vc(vc.clone());
-    let jwt = proof::create(Format::JwtVcJson, payload, VERIFIER_PROVIDER.clone())
-        .await
-        .expect("should encode");
+    let jwt = proof::create(Format::JwtVcJson, payload, signer).await.expect("should encode");
 
     let config = test_utils::sample::credential_configuration();
     Credential {

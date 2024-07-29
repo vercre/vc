@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use test_utils::store::keystore::{self, VerifierKeystore};
 use test_utils::store::{presentation, state};
 use vercre_verifier::provider::{
-    Algorithm, Decryptor, Encryptor, PublicKeyJwk, Result, DataSec, SignatureVerifier, Signer,
+    Algorithm, DataSec, Decryptor, Encryptor, PublicKeyJwk, Result, SignatureVerifier, Signer,
     StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata,
 };
 
@@ -54,45 +54,47 @@ impl StateManager for Provider {
     }
 }
 
+struct VerifierSec(VerifierKeystore);
+
 impl DataSec for Provider {
-    fn signer(&self, _identifier: &str) -> impl Signer {
-        self.clone()
+    fn signer(&self, _identifier: &str) -> anyhow::Result<impl Signer> {
+        Ok(VerifierSec(VerifierKeystore {}))
     }
 
-    fn verifier(&self, _identifier: &str) -> impl SignatureVerifier {
-        self.clone()
+    fn verifier(&self, _identifier: &str) -> anyhow::Result<impl SignatureVerifier> {
+        Ok(VerifierSec(VerifierKeystore {}))
     }
 
-    fn encryptor(&self, _identifier: &str) -> impl Encryptor {
-        self.clone()
+    fn encryptor(&self, _identifier: &str) -> anyhow::Result<impl Encryptor> {
+        Ok(VerifierSec(VerifierKeystore {}))
     }
 
-    fn decryptor(&self, _identifier: &str) -> impl Decryptor {
-        self.clone()
+    fn decryptor(&self, _identifier: &str) -> anyhow::Result<impl Decryptor> {
+        Ok(VerifierSec(VerifierKeystore {}))
     }
 }
 
-impl Signer for Provider {
+impl Signer for VerifierSec {
     fn algorithm(&self) -> Algorithm {
-        VerifierKeystore::algorithm()
+        self.0.algorithm()
     }
 
     fn verification_method(&self) -> String {
-        VerifierKeystore::verification_method()
+        self.0.verification_method()
     }
 
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
-        VerifierKeystore::try_sign(msg)
+        self.0.try_sign(msg)
     }
 }
 
-impl SignatureVerifier for Provider {
+impl SignatureVerifier for VerifierSec {
     async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
         keystore::deref_jwk(did_url).await
     }
 }
 
-impl Encryptor for Provider {
+impl Encryptor for VerifierSec {
     async fn encrypt(&self, _plaintext: &[u8], _recipient_public_key: &[u8]) -> Result<Vec<u8>> {
         todo!()
     }
@@ -102,7 +104,7 @@ impl Encryptor for Provider {
     }
 }
 
-impl Decryptor for Provider {
+impl Decryptor for VerifierSec {
     async fn decrypt(&self, _ciphertext: &[u8], _sender_public_key: &[u8]) -> Result<Vec<u8>> {
         todo!()
     }
