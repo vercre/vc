@@ -15,6 +15,7 @@ rust-version.workspace = true
 version.workspace = true
 
 [lib]
+crate-type = ["lib", "staticlib", "cdylib"]
 # crate-type = ["cdylib", "rlib"]
 
 [lints]
@@ -31,11 +32,11 @@ log = "0.4.22"
 reqwest = { version = "0.12.5", features = ["json"] }
 serde.workspace = true
 serde_json.workspace = true
-tauri = { version = "2.0.0-beta.25", features = ["test"] }
-tauri-plugin-deep-link = "2.0.0-beta.10"
-tauri-plugin-log = "2.0.0-beta.10"
-tauri-plugin-shell = "2.0.0-beta.10"
-tauri-plugin-store = "2.0.0-beta.11"
+tauri = { version = "2.0.0-beta", features = ["test"] }
+tauri-plugin-deep-link = "2.0.0-rc.0"
+tauri-plugin-log = "2.0.0-rc.0"
+tauri-plugin-shell = "2.0.0-rc.0"
+tauri-plugin-store = "2.0.0-rc.0"
 test-utils.workspace = true
 typeshare = "1.0.3"
 urlencoding = "2.1.3"
@@ -46,7 +47,7 @@ vercre-verifier.workspace = true
 [dev-dependencies]
 
 [build-dependencies]
-tauri-build = { version = "2.0.0-beta.19", features = [] }
+tauri-build = { version = "2.0.0-beta", features = [] }
 
 [features]
 # by default Tauri runs in production mode

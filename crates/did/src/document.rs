@@ -64,18 +64,29 @@ pub struct Document {
     /// The `authentication` verification relationship is used to specify how the DID
     /// subject is expected to be authenticated, for purposes such as logging into
     /// a website or engaging in any sort of challenge-response protocol.
+    /// <https://www.w3.org/TR/did-core/#authentication>
     #[serde(skip_serializing_if = "Option::is_none")]
     pub authentication: Option<Vec<Kind<VerificationMethod>>>,
 
     /// The `assertion_method` verification relationship is used to specify how the DID
     /// subject is expected to express claims, such as for the purposes of issuing a
     /// Verifiable Credential.
+    /// <https://www.w3.org/TR/did-core/#assertion>
     #[serde(skip_serializing_if = "Option::is_none")]
     pub assertion_method: Option<Vec<Kind<VerificationMethod>>>,
+
+    /// The `key_agreement` verification relationship is used to specify how an entity
+    /// can generate encryption material in order to transmit confidential information
+    /// intended for the DID subject, such as for the purposes of establishing a secure
+    /// communication channel with the recipient.
+    /// <https://www.w3.org/TR/did-core/#key-agreement>
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub key_agreement: Option<Vec<Kind<VerificationMethod>>>,
 
     /// The `capability_invocation` verification relationship is used to specify a
     /// verification method that might be used by the DID subject to invoke a
     /// cryptographic capability, such as the authorization to update the DID Document.
+    /// <https://www.w3.org/TR/did-core/#capability-invocation>
     #[serde(skip_serializing_if = "Option::is_none")]
     pub capability_invocation: Option<Vec<Kind<VerificationMethod>>>,
 
@@ -83,15 +94,9 @@ pub struct Document {
     /// mechanism that might be used by the DID subject to delegate a cryptographic
     /// capability to another party, such as delegating the authority to access a
     /// specific HTTP API to a subordinate.
+    /// <https://www.w3.org/TR/did-core/#capability-delegation>
     #[serde(skip_serializing_if = "Option::is_none")]
     pub capability_delegation: Option<Vec<Kind<VerificationMethod>>>,
-
-    /// The `key_agreement` verification relationship is used to specify how an entity
-    /// can generate encryption material in order to transmit confidential information
-    /// intended for the DID subject, such as for the purposes of establishing a secure
-    /// communication channel with the recipient.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub key_agreement: Option<Vec<Kind<VerificationMethod>>>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub did_document_metadata: Option<DocumentMetadata>,
