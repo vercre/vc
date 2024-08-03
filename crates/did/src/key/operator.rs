@@ -88,7 +88,7 @@ impl DidKey {
             multi_bytes.extend_from_slice(&x25519_bytes);
             let multikey = multibase::encode(Base::Base58Btc, &multi_bytes);
 
-            let method_type = match options.public_key_format.clone() {
+            let method_type = match options.public_key_format {
                 PublicKeyFormat::Multikey => MethodType::Multikey {
                     public_key_multibase: multikey.clone(),
                 },
@@ -107,7 +107,7 @@ impl DidKey {
 
         let kid = format!("{did}#{multikey}");
 
-        let method_type = match options.public_key_format.clone() {
+        let method_type = match options.public_key_format {
             PublicKeyFormat::Multikey => MethodType::Multikey {
                 public_key_multibase: public_key.multibase().unwrap(),
             },

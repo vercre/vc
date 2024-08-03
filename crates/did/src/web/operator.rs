@@ -77,9 +77,9 @@ impl DidWeb {
             multi_bytes.extend_from_slice(&x25519_bytes);
             let multikey = multibase::encode(Base::Base58Btc, &multi_bytes);
 
-            let method_type = match options.public_key_format.clone() {
+            let method_type = match options.public_key_format {
                 PublicKeyFormat::Multikey => MethodType::Multikey {
-                    public_key_multibase: multikey.clone(),
+                    public_key_multibase: multikey,
                 },
                 _ => return Err(Error::InvalidPublicKey("Unsupported public key format".into())),
             };
@@ -95,9 +95,9 @@ impl DidWeb {
         };
 
         let kid = format!("{did}#key-0");
-        let method_type = match options.public_key_format.clone() {
+        let method_type = match options.public_key_format {
             PublicKeyFormat::Multikey => MethodType::Multikey {
-                public_key_multibase: multikey.clone(),
+                public_key_multibase: multikey,
             },
             _ => return Err(Error::InvalidPublicKey("Unsupported public key format".into())),
         };
