@@ -15,7 +15,7 @@ use rand::rngs::OsRng;
 use url::Url;
 
 use super::DidWeb;
-use crate::document::{CreateOptions, Document, PublicKey, VerificationMethod};
+use crate::document::{CreateOptions, Document, MethodType, PublicKeyFormat, VerificationMethod};
 use crate::error::Error;
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
@@ -52,10 +52,10 @@ impl DidWeb {
         let mut multi_bytes = vec![];
         multi_bytes.extend_from_slice(&ED25519_CODEC);
         multi_bytes.extend_from_slice(verifying_key);
-        let multi_key = multibase::encode(Base::Base58Btc, &multi_bytes);
+        let multikey = multibase::encode(Base::Base58Btc, &multi_bytes);
 
         let context = Kind::String("https://w3id.org/security/data-integrity/v1".into());
-        let public_key = PublicKey::Multibase(multi_key);
+        // let multikey = PublicKey::Multibase(multi_key);
 
         // key agreement
         // <https://w3c-ccg.github.io/did-method-key/#encryption-method-creation-algorithm>
@@ -75,13 +75,19 @@ impl DidWeb {
             let mut multi_bytes = vec![];
             multi_bytes.extend_from_slice(&X25519_CODEC);
             multi_bytes.extend_from_slice(&x25519_bytes);
-            let ek_multibase = multibase::encode(Base::Base58Btc, &multi_bytes);
+            let multikey = multibase::encode(Base::Base58Btc, &multi_bytes);
+
+            let method_type = match options.public_key_format.clone() {
+                PublicKeyFormat::Multikey => MethodType::Multikey {
+                    public_key_multibase: multikey.clone(),
+                },
+                _ => return Err(Error::InvalidPublicKey("Unsupported public key format".into())),
+            };
 
             Some(vec![Kind::Object(VerificationMethod {
                 id: format!("{did}#key-1"),
-                type_: options.public_key_format.clone(),
                 controller: did.clone(),
-                public_key: PublicKey::Multibase(ek_multibase),
+                method_type,
                 ..VerificationMethod::default()
             })])
         } else {
@@ -89,15 +95,20 @@ impl DidWeb {
         };
 
         let kid = format!("{did}#key-0");
+        let method_type = match options.public_key_format.clone() {
+            PublicKeyFormat::Multikey => MethodType::Multikey {
+                public_key_multibase: multikey.clone(),
+            },
+            _ => return Err(Error::InvalidPublicKey("Unsupported public key format".into())),
+        };
 
         Ok(Document {
             context: vec![Kind::String(options.default_context), context],
             id: did.clone(),
             verification_method: Some(vec![VerificationMethod {
                 id: kid.clone(),
-                type_: options.public_key_format,
                 controller: did,
-                public_key,
+                method_type,
                 ..VerificationMethod::default()
             }]),
             authentication: Some(vec![Kind::String(kid.clone())]),
@@ -139,7 +150,7 @@ mod test {
         let verifying_key = DidWeb::generate();
         let res = DidWeb::create(url, &verifying_key, options).expect("should create");
 
-        let json = serde_json::to_string(&res).expect("should serialize");
+        let json = serde_json::to_string_pretty(&res).expect("should serialize");
         println!("{json}");
     }
 
@@ -152,7 +163,7 @@ mod test {
         let verifying_key = DidWeb::generate();
         let res = DidWeb::create(url, &verifying_key, options).expect("should create");
 
-        let json = serde_json::to_string(&res).expect("should serialize");
+        let json = serde_json::to_string_pretty(&res).expect("should serialize");
         println!("{json}");
     }
 }

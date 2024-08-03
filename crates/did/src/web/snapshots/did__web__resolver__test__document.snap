@@ -23,12 +23,6 @@ expression: resolved.document
   "assertionMethod": [
     "did:web:demo.credibil.io#key-0"
   ],
-  "capabilityInvocation": [
-    "did:web:demo.credibil.io#key-0"
-  ],
-  "capabilityDelegation": [
-    "did:web:demo.credibil.io#key-0"
-  ],
   "keyAgreement": [
     {
       "id": "did:web:demo.credibil.io#key-1",
@@ -36,5 +30,11 @@ expression: resolved.document
       "type": "Multikey",
       "publicKeyMultibase": "z6LSo1jPr1g7qoR9UsYWoJs66FiaoHGAK5cJzBGSvQpuVEQv"
     }
+  ],
+  "capabilityInvocation": [
+    "did:web:demo.credibil.io#key-0"
+  ],
+  "capabilityDelegation": [
+    "did:web:demo.credibil.io#key-0"
   ]
 }

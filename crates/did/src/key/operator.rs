@@ -14,7 +14,9 @@ use rand::rngs::OsRng;
 use serde_json::json;
 
 use super::DidKey;
-use crate::document::{CreateOptions, Document, PublicKey, PublicKeyFormat, VerificationMethod};
+use crate::document::{
+    CreateOptions, Document, MethodType, PublicKey, PublicKeyFormat, VerificationMethod,
+};
 use crate::error::Error;
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
@@ -86,11 +88,17 @@ impl DidKey {
             multi_bytes.extend_from_slice(&x25519_bytes);
             let multikey = multibase::encode(Base::Base58Btc, &multi_bytes);
 
+            let method_type = match options.public_key_format.clone() {
+                PublicKeyFormat::Multikey => MethodType::Multikey {
+                    public_key_multibase: multikey.clone(),
+                },
+                _ => return Err(Error::InvalidPublicKey("Unsupported public key format".into())),
+            };
+
             Some(vec![Kind::Object(VerificationMethod {
                 id: format!("{did}#{multikey}"),
-                type_: options.public_key_format.clone(),
                 controller: did.clone(),
-                public_key: PublicKey::Multibase(multikey),
+                method_type,
                 ..VerificationMethod::default()
             })])
         } else {
@@ -99,14 +107,22 @@ impl DidKey {
 
         let kid = format!("{did}#{multikey}");
 
+        let method_type = match options.public_key_format.clone() {
+            PublicKeyFormat::Multikey => MethodType::Multikey {
+                public_key_multibase: public_key.multibase().unwrap(),
+            },
+            _ => MethodType::JsonWebKey {
+                public_key_jwk: public_key.jwk().unwrap(),
+            },
+        };
+
         Ok(Document {
             context: vec![Kind::String(options.default_context), context],
             id: did.clone(),
             verification_method: Some(vec![VerificationMethod {
                 id: kid.clone(),
-                type_: options.public_key_format,
                 controller: did,
-                public_key,
+                method_type,
                 ..VerificationMethod::default()
             }]),
             authentication: Some(vec![Kind::String(kid.clone())]),
@@ -137,7 +153,7 @@ mod test {
         let verifying_key = DidKey::generate();
         let res = DidKey::create(&verifying_key, options).expect("should create");
 
-        let json = serde_json::to_string(&res).expect("should serialize");
+        let json = serde_json::to_string_pretty(&res).expect("should serialize");
         println!("{json}");
     }
 }

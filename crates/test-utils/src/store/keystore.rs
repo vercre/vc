@@ -108,7 +108,7 @@ pub async fn deref_jwk(did_url: &str) -> Result<PublicKeyJwk> {
         bail!("Verification method not found");
     };
 
-    Ok(vm.public_key.jwk()?)
+    Ok(vm.method_type.jwk()?)
 }
 
 #[cfg(test)]

@@ -157,22 +157,103 @@ pub struct VerificationMethod {
 
     /// The verification method type. SHOULD be a registered type (in DID Specification
     /// Registries).
-    #[serde(rename = "type")]
-    pub type_: PublicKeyFormat,
-
-    /// The public key material for the verification method.
     #[serde(flatten)]
-    pub public_key: PublicKey,
+    pub method_type: MethodType,
 }
 
-/// Cryptographic curve type.
+/// Verification method types. SHOULD be registered in the [DID Specification
+/// Registries](https://www.w3.org/TR/did-spec-registries).
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(tag = "type")]
+#[serde(rename_all_fields = "camelCase")]
+pub enum MethodType {
+    /// Key is encoded as a Multibase. The Multikey data model is a specific type of
+    /// verification method that encodes key types into a single binary stream that
+    /// is then encoded as a Multibase value.
+    /// <https://w3c.github.io/controller-document/#multikey>
+    Multikey { public_key_multibase: String },
+
+    /// Key is JWK. The JSON Web Key (JWK) data model is a specific type of
+    /// verification method that uses the JWK specification [RFC7517] to encode
+    /// key types into a set of parameters.
+    /// <https://w3c.github.io/controller-document/#jsonwebkey>
+    JsonWebKey { public_key_jwk: PublicKeyJwk },
+}
+
+impl Default for MethodType {
+    fn default() -> Self {
+        Self::Multikey {
+            public_key_multibase: String::new(),
+        }
+    }
+}
+
+impl MethodType {
+    /// Converts a Multibase public key to JWK format.
+    ///
+    /// # Errors
+    pub fn jwk(&self) -> crate::Result<PublicKeyJwk> {
+        match self {
+            Self::JsonWebKey { public_key_jwk } => Ok(public_key_jwk.clone()),
+            Self::Multikey { public_key_multibase } => {
+                let (_, key_bytes) = multibase::decode(public_key_multibase)
+                    .map_err(|e| Error::InvalidPublicKey(format!("issue decoding key: {e}")))?;
+                if key_bytes.len() - 2 != 32 {
+                    return Err(Error::InvalidPublicKeyLength("key is not 32 bytes long".into()));
+                }
+                if key_bytes[0..2] != ED25519_CODEC {
+                    return Err(Error::InvalidPublicKey("not Ed25519".into()));
+                }
+
+                Ok(PublicKeyJwk {
+                    kty: KeyType::Okp,
+                    crv: Curve::Ed25519,
+                    x: Base64UrlUnpadded::encode_string(&key_bytes[2..]),
+                    ..PublicKeyJwk::default()
+                })
+            }
+        }
+    }
+
+    /// Converts a JWK public key to Multibase format.
+    ///
+    /// # Errors
+    pub fn multibase(&self) -> crate::Result<String> {
+        match self {
+            Self::Multikey { public_key_multibase } => Ok(public_key_multibase.clone()),
+            Self::JsonWebKey { public_key_jwk } => {
+                let key_bytes = Base64UrlUnpadded::decode_vec(&public_key_jwk.x)
+                    .map_err(|e| Error::InvalidPublicKey(format!("issue decoding key: {e}")))?;
+                let mut multi_bytes = vec![];
+                multi_bytes.extend_from_slice(&ED25519_CODEC);
+                multi_bytes.extend_from_slice(&key_bytes);
+                let multibase = multibase::encode(Base::Base58Btc, &multi_bytes);
+
+                Ok(multibase)
+            }
+        }
+    }
+}
+
+/// Verification method types. SHOULD be registered in the [DID Specification
+/// Registries](https://www.w3.org/TR/did-spec-registries).
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub enum PublicKeyFormat {
-    /// Key is encoded as a Multibase.
+    /// Key is encoded as a Multibase. The Multikey data model is a specific type of
+    /// verification method that encodes key types into a single binary stream that
+    /// is then encoded as a Multibase value.
+    /// <https://w3c.github.io/controller-document/#multikey>
     #[default]
     Multikey,
 
-    /// ED2559 Verification Key, 2020 version
+    /// Key is JWK. The JSON Web Key (JWK) data model is a specific type of
+    /// verification method that uses the JWK specification [RFC7517] to encode
+    /// key types into a set of parameters.
+    /// <https://w3c.github.io/controller-document/#jsonwebkey>
+    JsonWebKey,
+
+    /// Key is ED2559 Verification Key
+    /// <https://w3id.org/security/suites/ed25519-2020/v1>
     Ed25519VerificationKey2020,
 
     /// X25519 Key Agreement Key, 2020 version
@@ -189,6 +270,7 @@ impl Display for PublicKeyFormat {
             Self::Multikey => write!(f, "Multikey"),
             Self::Ed25519VerificationKey2020 => write!(f, "Ed25519VerificationKey2020"),
             Self::X25519KeyAgreementKey2020 => write!(f, "X25519KeyAgreementKey2020"),
+            Self::JsonWebKey => write!(f, "JsonWebKey"),
         }
     }
 }
@@ -335,6 +417,7 @@ pub struct CreateOptions {
     // service_endpoints: Vec<Value>,
     // verification_methods: Vec<Value>,
     // authentication: Vec<Value>,
+    //
     /// Additional options.
     #[serde(flatten)]
     pub additional: Option<HashMap<String, String>>,
