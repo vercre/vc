@@ -13,8 +13,14 @@ expression: resolved.document
     {
       "id": "did:web:demo.credibil.io#key-0",
       "controller": "did:web:demo.credibil.io",
-      "type": "Multikey",
-      "publicKeyMultibase": "z6Mkr1NtupNezZtcUAMxJ79HPex6ZTR9RnGh8xfV257ZQdss"
+      "type": "JsonWebKey",
+      "publicKeyJwk": {
+        "kty": "EC",
+        "alg": null,
+        "crv": "ES256K",
+        "x": "H846FVf9umFYyRrEvC5uQa-__2sKLW9H3O89THClFm4",
+        "y": "VoMVEnKQsKNtu_sS20M0LPUR5yYEQz4YxUq4hQaQIzQ"
+      }
     }
   ],
   "authentication": [
@@ -27,8 +33,14 @@ expression: resolved.document
     {
       "id": "did:web:demo.credibil.io#key-1",
       "controller": "did:web:demo.credibil.io",
-      "type": "Multikey",
-      "publicKeyMultibase": "z6LSo1jPr1g7qoR9UsYWoJs66FiaoHGAK5cJzBGSvQpuVEQv"
+      "type": "JsonWebKey",
+      "publicKeyJwk": {
+        "kty": "EC",
+        "alg": null,
+        "crv": "ES256K",
+        "x": "H846FVf9umFYyRrEvC5uQa-__2sKLW9H3O89THClFm4",
+        "y": "VoMVEnKQsKNtu_sS20M0LPUR5yYEQz4YxUq4hQaQIzQ"
+      }
     }
   ],
   "capabilityInvocation": [

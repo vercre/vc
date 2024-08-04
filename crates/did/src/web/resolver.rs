@@ -165,13 +165,4 @@ mod test {
 
         assert_snapshot!("dereferenced", dereferenced);
     }
-
-    // #[tokio::test]
-    // async fn resolve_path() {
-    //     const DID_URL: &str = "did:web:demo.credibil.io%3A443:demo";
-    //     let resolved = DidWeb.resolve(DID_URL, None, Client {}).await.expect("should resolve");
-
-    //     assert_snapshot!("document", resolved.document);
-    //     assert_snapshot!("metadata", resolved.metadata);
-    // }
 }
