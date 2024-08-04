@@ -137,7 +137,7 @@ mod test {
     struct Client {}
     impl DidClient for Client {
         async fn get(&self, _url: &str) -> anyhow::Result<Vec<u8>> {
-            Ok(include_bytes!("did.json").to_vec())
+            Ok(include_bytes!("did-ecdsa.json").to_vec())
             // reqwest::get(url).await?.bytes().await.map_err(|e| anyhow!("{e}")).map(|b| b.to_vec())
         }
     }
@@ -145,10 +145,25 @@ mod test {
     #[tokio::test]
     async fn resolve_normal() {
         const DID_URL: &str = "did:web:demo.credibil.io";
-        let resolved = DidWeb::resolve(DID_URL, None, Client {}).await.expect("should resolve");
 
+        let resolved = DidWeb::resolve(DID_URL, None, Client {}).await.expect("should resolve");
         assert_snapshot!("document", resolved.document);
         assert_snapshot!("metadata", resolved.metadata);
+    }
+
+    #[tokio::test]
+    async fn dereference() {
+        const DID_URL: &str = "did:web:demo.credibil.io#key-0";
+
+        let dereferenced =
+            DidWeb::dereference(DID_URL, None, Client {}).await.expect("should dereference");
+
+        // let Some(Resource::VerificationMethod(vm)) = dereferenced.content_stream else {
+        //     panic!("Verification method not found");
+        // };
+        // println!("{:?}", vm.method_type.jwk());
+
+        // assert_snapshot!("dereferenced", dereferenced);
     }
 
     // #[tokio::test]
@@ -158,12 +173,5 @@ mod test {
 
     //     assert_snapshot!("document", resolved.document);
     //     assert_snapshot!("metadata", resolved.metadata);
-    // }
-
-    // #[test]
-    // fn dereference() {
-    //     let resource = DidWeb.dereference(DID_URL, None).expect("should resolve");
-
-    //     assert_snapshot!("resource", resource);
     // }
 }
