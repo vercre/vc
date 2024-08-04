@@ -163,7 +163,7 @@ mod test {
         // };
         // println!("{:?}", vm.method_type.jwk());
 
-        // assert_snapshot!("dereferenced", dereferenced);
+        assert_snapshot!("dereferenced", dereferenced);
     }
 
     // #[tokio::test]
