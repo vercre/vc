@@ -152,9 +152,6 @@ async fn credential(
         bail!("no credential in response");
     };
 
-    let jwk = verifier.deref_jwk("did:web:demo.credibil.io#key-0").await?;
-    println!("credential jwk: {jwk:?}");
-
     let Payload::Vc(vc) = w3c_vc::proof::verify(Verify::Vc(value), verifier)
         .await
         .map_err(|e| anyhow!("issue parsing credential: {e}"))?

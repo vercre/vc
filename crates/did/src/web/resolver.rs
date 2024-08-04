@@ -96,8 +96,6 @@ impl DidWeb {
         let url = url::Url::parse(did_url)
             .map_err(|e| Error::InvalidDidUrl(format!("issue parsing URL: {e}")))?;
 
-        println!("url: {}", url.fragment().unwrap());
-
         // resolve DID document
         let did = format!("did:{}", url.path());
         let resolution = Self::resolve(&did, None, client).await?;
