@@ -1,5 +1,6 @@
 [package]
 name = "verifier"
+publish = false
 edition.workspace = true
 authors.workspace = true
 

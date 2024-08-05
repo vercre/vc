@@ -25,3 +25,7 @@ plugin to check for broken links:
 ```sh
 cargo install mdbook-linkcheck
 ```
+
+## Publishing
+
+The documentation is published directly to GitHub pages on commit to `main` using GitHub actions.

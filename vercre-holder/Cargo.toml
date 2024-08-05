@@ -1,6 +1,6 @@
 [package]
 name = "vercre-holder"
-description = "OpenID compliant Verifiable Credential holder API"
+description = "OpenID compliant Verifiable Credential holder API, typically implemented by a wallet"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 authors.workspace = true

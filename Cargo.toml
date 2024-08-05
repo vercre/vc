@@ -22,7 +22,7 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/vercre/vercre"
 rust-version = "1.80"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 
 [workspace.lints.rust]
 missing_docs = "warn"
@@ -42,14 +42,14 @@ axum = { version = "0.7.5", features = ["macros"] }
 axum-extra = { version = "0.9.3", features = ["typed-header"] }
 base64ct = { version = "1.6.0", features = ["std"] }
 chrono = { version = "0.4.38", features = ["serde"] }
-core-utils = { path = "crates/core-utils" }
+core-utils = { path = "crates/core-utils", version = "0.1.0-alpha.5" }
 derive_builder = "0.20.0"
 dif-exch = { path = "crates/dif-exch" }
 ecdsa = "0.16.9"
 futures = "0.3.30"
 insta = { version = "1.39.0", features = ["redactions", "yaml"] }
-datasec = { path = "crates/datasec" }
-openid = { path = "crates/openid" }
+datasec = { path = "crates/datasec", version = "0.1.0-alpha.5" }
+openid = { path = "crates/openid", version = "0.1.0-alpha.5" }
 serde = { version = "1.0.204", features = ["derive"] }
 serde_json = { version = "1.0.122", features = ["alloc"] }
 serde_qs = "0.13.0"
@@ -59,10 +59,10 @@ tower-http = { version = "0.5.2", features = ["cors", "set-header", "trace"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 uuid = { version = "1.10.0", features = ["fast-rng", "v4"] }
-vercre-holder = { path = "vercre-holder" }
-vercre-issuer = { path = "vercre-issuer" }
-vercre-verifier = { path = "vercre-verifier" }
-w3c-vc = { path = "crates/w3c-vc" }
+vercre-holder = { path = "vercre-holder", version = "0.1.0-alpha.5" }
+vercre-issuer = { path = "vercre-issuer", version = "0.1.0-alpha.5" }
+vercre-verifier = { path = "vercre-verifier", version = "0.1.0-alpha.5" }
+w3c-vc = { path = "crates/w3c-vc", version = "0.1.0-alpha.5" }
 
 [workspace.metadata.bin]
 cargo-xcode = { version = "=1.7.0" }

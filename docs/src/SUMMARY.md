@@ -7,17 +7,17 @@
 - [Architecture](./architecture/index.md)
 
 - [Using the API](./using/index.md)
-    - [Issuance](./using/issuance/index.md)
-        - [Endpoints](./using/issuance/endpoints.md)
-        - [Providers](./using/issuance/provders.md)
+    - [Issuer](./using/issuer/index.md)
+        - [Endpoints](./using/issuer/endpoints.md)
+        - [Providers](./using/issuer/providers.md)
 
-    - [Presentation](./using/presentation/index.md)
-        - [Endpoints](./using/presentation/endpoints.md)
-        - [Providers](./using/presentation/provders.md)
+    - [Verifier](./using/verifier/index.md)
+        - [Endpoints](./using/verifier/endpoints.md)
+        - [Providers](./using/verifier/providers.md)
 
-    - [Wallet](./using/wallet/index.md)
-        - [Endpoints](./using/wallet/endpoints.md)
-        - [Providers](./using/wallet/provders.md)
+    - [Holder](./using/holder/index.md)
+        - [Endpoints](./using/holder/endpoints.md)
+        - [Providers](./using/holder/providers.md)
 
 - [Stability](./stability/index.md)
     - [Platform Support](./stability/platform-support.md)

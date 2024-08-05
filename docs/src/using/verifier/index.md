@@ -1,4 +1,4 @@
-# Presentation
+# Verifier
 
 Based on the [OpenID for Verifiable Presentations](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
 specification, the [vercre-vp](https://github.com/vercre/vercre/tree/main/vercre-vp) 

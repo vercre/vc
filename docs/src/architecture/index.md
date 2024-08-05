@@ -17,9 +17,9 @@ presenting them to Verifiers.
 
 Each top-level library maps to one of the model's three components:
 
-- [vercre-issuer](../using/issuance/index.md) to the _Issuer_
-- [vercre-verifier](../using/presentation/index.md) to the _Verifier_
-- [vercre-holder](../using/wallet/index.md) to the _Holder_.
+- [vercre-issuer](../using/issuer/index.md) to the _Issuer_
+- [vercre-verifier](../using/verifier/index.md) to the _Verifier_
+- [vercre-holder](../using/holder/index.md) to the _Holder_.
 
 ## Providers
 

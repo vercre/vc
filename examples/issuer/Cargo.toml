@@ -1,5 +1,6 @@
 [package]
 name = "issuer"
+publish = false
 edition.workspace = true
 authors.workspace = true
 
