@@ -8,7 +8,7 @@ data persistence, secure signing, and callback functionality. Each provider requ
 library user to implement a corresponding trait, as defined below.
 
 _See Vercre's example
-[issuance providers](https://github.com/vercre/vercre/blob/main/examples/providers/src/issuance.rs)
+[issuer providers](https://github.com/vercre/vercre/blob/main/examples/issuer/src/provider.rs)
 for more detail._
 
 ## Client Metadata

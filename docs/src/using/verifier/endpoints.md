@@ -1,6 +1,6 @@
 # Endpoints
 
-As mentioned previously, the presentation API is comprised of the a set of endpoints,
+The presentation API is comprised of the a set of endpoints,
 called in sequence to issue a Credential. The primary endpoints are:
 
 - `Create Request` — prepares an Authorization Request for the Verifier to send to the 
@@ -14,7 +14,7 @@ called in sequence to issue a Credential. The primary endpoints are:
 
 - `Verifier Metadata` — endpoint to surface Verifier metadata to the Wallet.
 
-Each endpoint is described in more detail further down.
+Each endpoint is described in more detail below.
 
 ## Exposing Endpoints
 
@@ -25,21 +25,18 @@ minimal Pre-Authorized flow example. The example uses [axum](https://docs.rs/axu
 but any Rust web server should suffice.
 
 For the sake of brevity, imports, tracing, etc. are omitted. A more complete example can
-be found in the [examples directory](https://github.com/vercre/vercre/tree/main/examples/presentation).
+be found in the [examples directory](https://github.com/vercre/vercre/tree/main/examples/verifier).
 
 ```rust,ignore
 #[tokio::main]
 async fn main() {
-    // set up requisite providers
-    let endpoint = Arc::new(Endpoint::new(Provider::new()));
-
     // http endpoints
     let router = Router::new()
         .route("/create_request", post(create_request))
         .route("/request/:client_state", get(request_object))
         .route("/callback", get(response))
         .route("/post", post(response))
-        .with_state(endpoint);
+        .with_state(Provider::new());  // <- set up requisite providers in server state
 
     // run the server
     let listener = TcpListener::bind("0.0.0.0:8080").await.expect("should bind");
@@ -63,12 +60,12 @@ of `host`, `:authority`, or `Forwarded` (if behind a proxy) headers of the HTTP 
 
 ```rust,ignore
 async fn create_request(
-    State(endpoint): State<Arc<Endpoint<Provider>>>,  // <- get providers from state
+    State(endpoint): State<Provider>,  // <- get providers from state
     TypedHeader(host): TypedHeader<Host>,
     Json(mut req): Json<CreateRequestRequest>,        // <- convert request body
 ) -> AxResult<CreateOfferResponse> {
     request.client_id = format!("http://{host}");     // <- set verifier
-    endpoint.create_request(&request).await.into()    // <- forward to library
+    vercre_verifier::create_request(provider, &request).await.into()    // <- forward to library
 }
 ```
 
