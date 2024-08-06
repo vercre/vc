@@ -23,21 +23,18 @@ minimal Pre-Authorized flow example. The example uses [axum](https://docs.rs/axu
 but any Rust web server should suffice.
 
 For the sake of brevity, imports, tracing, etc. are omitted. A more complete example can
-be found in the [examples directory](https://github.com/vercre/vercre/tree/main/examples/issuance).
+be found in the [examples directory](https://github.com/vercre/vercre/tree/main/examples/issuer).
 
 ```rust,ignore
 #[tokio::main]
 async fn main() {
-    // set up requisite providers
-    let endpoint = Arc::new(Endpoint::new(Provider::new()));
-
     // http endpoints
     let router = Router::new()
         .route("/create_offer", post(create_offer))
         .route("/.well-known/openid-credential-issuer", get(metadata))
         .route("/token", post(token))
         .route("/credential", post(credential))
-        .with_state(endpoint);
+        .with_state(Provider::new());  // <- set up requisite providers in server state
 
     // run the server
     let listener = TcpListener::bind("0.0.0.0:8080").await.expect("should bind");
@@ -59,14 +56,15 @@ Other than forwarding the request to the library, the handler is responsible for
 the `credential_issuer` attribute on the request object. This value should come from one
 of `host`, `:authority`, or `Forwarded` (if behind a proxy) headers of the HTTP request.
 
+
 ```rust,ignore
 async fn create_offer(
-    State(endpoint): State<Arc<Endpoint<Provider>>>,  // <- get providers from state
+    State(provider): State<Provider>,                 // <- get providers from state
     TypedHeader(host): TypedHeader<Host>,
     Json(mut req): Json<CreateOfferRequest>,          // <- convert request body
 ) -> AxResult<CreateOfferResponse> {
     req.credential_issuer = format!("http://{host}"); // <- set credential issuer
-    endpoint.create_offer(&req).await.into()          // <- forward to library
+    vercre_issuer::create_offer(&req).await.into()    // <- forward to library
 }
 ```
 

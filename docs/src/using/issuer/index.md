@@ -1,10 +1,10 @@
-# Issuance
+# Issuer
 
 Based on the [OpenID for Verifiable Credential Issuance](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
 specification, the [vercre-issuer](https://github.com/vercre/vercre/tree/main/vercre-issuer) 
 library provides an API for issuing Verifiable Credentials.
 
-The API is comprised of the a set of endpoints, called in sequence to issue a Credential.
+The API is comprised of a set of endpoints, called in sequence to issue a Credential.
 The sequence is determined both by the flow used to initiate the issuance process as well
 as such things as whether the issuer defers Credential issuance.
 
@@ -52,7 +52,7 @@ and the flow continues from Token Endpoint to Credential Endpoint as above.
 ## Implementing the API
 
 In the following sections, we will cover implementing the API, in particular 
-[endpoints](./endpoints.md) and [providers](./provders.md).
+[endpoints](./endpoints.md) and [providers](./providers.md).
 
 ### Working example 
 If you want to skip ahead, this [API example](https://github.com/vercre/vercre/tree/main/examples/issuance)

@@ -10,17 +10,17 @@
 The Vercre API comprises three top-level libraries that form the backbone of OpenID 
 for Verifiable Credentials.
 
-- [Issuance](./issuance/index.md) — based on the [OpenID for Verifiable Credential Issuance]
+- [Issuer](./issuer/index.md) — based on the [OpenID for Verifiable Credential Issuance]
   specification, the [vercre-issuer] library provides an API for issuing Verifiable 
   Credentials.
 
-- [Presentation](./presentation/index.md) — based on the [OpenID for VerifiablePresentations]
+- [Verifier](./verifier/index.md) — based on the [OpenID for VerifiablePresentations]
   specification, the [vercre-verifier] library provides an API for  requesting and presenting 
   Verifiable Credentials.
 
-- [Wallet](./wallet/index.md) — the the [vercre-holder] library is built against both
+- [Holder](./holder/index.md) — the the [vercre-holder] library is built against both
   specifications and can be used to simplify interactions with the issuance and 
-  presentation APIs.
+  presentation APIs. A typical implementation of the holder library would be a credential wallet.
 
 ## Design Axioms
 
@@ -41,7 +41,7 @@ the libraries in a non-HTTP context.
 ### Embrace asynchronous Rust
 
 The libraries are built using asynchronous Rust in order allow for efficient handling
-of I/O and mximum utility.
+of I/O and maximum utility.
 
 ### Be opinionated
 
