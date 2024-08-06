@@ -1,6 +1,6 @@
 # Endpoints
 
-As mentioned previously, the issuance API is comprised of the a set of endpoints,
+The issuance API is comprised of the a set of endpoints,
 called in sequence to issue a Credential. The primary endpoints are:
 
 - `Create Offer` — creates Credential Offer used by Issuer to initiate issuance
