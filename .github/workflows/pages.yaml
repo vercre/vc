@@ -36,7 +36,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.3
+        uses: mozilla-actions/sccache-action@v0.0.5
 
       - name: Setup mdBook
         uses: jontze/action-mdbook@v2
