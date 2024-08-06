@@ -96,7 +96,7 @@ pub trait Verifier: Send + Sync {
         -> impl Future<Output = anyhow::Result<PublicKeyJwk>> + Send;
 }
 
-/// Signer is used by implementers to provide signing functionality for
+/// Encryptor is used by implementers to provide encryption functionality for
 /// Verifiable Credential issuance and Verifiable Presentation submissions.
 pub trait Encryptor: Send + Sync {
     fn encrypt(
@@ -106,7 +106,7 @@ pub trait Encryptor: Send + Sync {
     fn public_key(&self) -> Vec<u8>;
 }
 
-/// Verifier is used by implementers to provide verification functionality for
+/// Decryptor is used by implementers to provide decryption functionality for
 /// Verifiable Credential issuance and Verifiable Presentation submissions.
 pub trait Decryptor: Send + Sync {
     fn decrypt(
