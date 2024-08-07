@@ -1,6 +1,6 @@
 ---
 source: crates/did/src/web/resolver.rs
-assertion_line: 150
+assertion_line: 148
 expression: resolved.document
 ---
 {
