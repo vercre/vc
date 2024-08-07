@@ -1,5 +1,11 @@
 # Verifiable Credentials
 
+>This crate is a higher order crate to support the Vercre suite of crates. It is not intended to be used directly. See
+>
+>* [vercre-issuer](https://crates.io/crates/vercre-issuer)
+>* [vercre-verifier](https://crates.io/crates/vercre-verifier)
+>* [vercre-holder](https://crates.io/crates/vercre-holder)
+
 Created to support the [Verifiable Credentials Data Model v2.0], this crate implements
 some of the family of W3C Recommendations for Verifiable Credentials as outlined in the
 [Verifiable Credentials Overview].

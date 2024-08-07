@@ -1,4 +1,4 @@
-//! # `OpenID4VC` Types
+//! # `OpenID` for Verifiable Credentials Types
 //!
 //! Types and logic used in the `OpenID4VC` specifications and consumed by
 //! `vercre-issuer`,`vercre-verifier`, and `vercre-holder` crates.

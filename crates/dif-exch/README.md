@@ -1,5 +1,11 @@
 # Presentation Exchange
 
+>This crate is a higher order crate to support the Vercre suite of crates. It is not intended to be used directly. See
+>
+>* [vercre-issuer](https://crates.io/crates/vercre-issuer)
+>* [vercre-verifier](https://crates.io/crates/vercre-verifier)
+>* [vercre-holder](https://crates.io/crates/vercre-holder)
+
 Created to support the DIF [Presentation Exchange 2.0.0] this crate contains building
 blocks for articulating identity proof requirements (`Presentation Definition`) and 
 the proofs or Claims, submitted in accordance with those requirements 

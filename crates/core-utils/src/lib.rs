@@ -1,4 +1,7 @@
-//! # `OpenID` Core
+//! # Core Utilities for Vercre
+//!
+//! This crate provides common utilities for the Vercre project and is not intended to be used
+//! directly.
 
 // generic member access API on the error trait
 // https://github.com/rust-lang/rust/issues/99301

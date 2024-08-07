@@ -1,5 +1,8 @@
 //! # Verifiable Credentials
 //!
+//! This crate provides common utilities for the Vercre project and is not intended to be used
+//! directly.
+//! 
 //! This library encompasses the family of W3C Recommendations for Verifiable
 //! Credentials, as outlined below.
 //!

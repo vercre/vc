@@ -1,4 +1,4 @@
-# Core Utilities for Vercre
+# Vercre Test Utilities
 
 Shared logic for higher order crates.
 

@@ -2,7 +2,12 @@
 #![allow(dead_code)]
 #![allow(clippy::missing_errors_doc)]
 
-//! # JSON Object Signing and Encryption (JOSE) Proofs
+//! # Data Security for Vercre
+//!
+//! This crate provides common utilities for the Vercre project and is not intended to be used
+//! directly.
+//!
+//! ## JSON Object Signing and Encryption (JOSE) Proofs
 //!
 //! [JOSE] proofs are enveloping proofs for Credentials based on JWT [RFC7519],
 //! JWS [RFC7515], and JWK [RFC7517].
