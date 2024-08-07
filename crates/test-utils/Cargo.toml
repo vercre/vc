@@ -1,6 +1,7 @@
 [package]
 name = "vercre-test-utils"
 description = "Test utilities"
+license = "MIT OR Apache-2.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
