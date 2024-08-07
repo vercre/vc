@@ -7,13 +7,13 @@ can't build it!
 
 ## Installing `wasm32` Targets
 
-To compile the tests, you'll need the `wasm32-wasi` and
+To compile the tests, you'll need the `wasm32-wasip1` and
 `wasm32-unknown-unknown` targets installed, which, assuming you're using
 [rustup.rs](https://rustup.rs) to manage your Rust versions, can be done as
 follows:
 
 ```shell
-rustup target add wasm32-wasi
+rustup target add wasm32-wasip1
 ```
 
 ## Running All Tests
@@ -25,35 +25,27 @@ cargo test --workspace
 ```
 
 You can also exclude a particular crate from testing with `--exclude`. For
-example, if you want to avoid testing the `wastime-fuzzing` crate — which
-requires that `libclang` is installed on your system, and for some reason maybe
-you don't have it — you can run:
+example, if you want to avoid testing the `vercre-verifier` crate:
 
 ```shell
-cargo test --workspace --exclude vercre-fuzzing
-```
-
-Similarly, to skip WASI integration tests, run:
-
-```shell
-cargo test --workspace --exclude test-programs
+cargo test --workspace --exclude vercre-verifier
 ```
 
 ## Testing a Specific Crate
 
 You can test a particular Vercre crate with `cargo test -p
-vercre-whatever`. For example, to test the `vercre-wallet` crate, execute
+vercre-whatever`. For example, to test the `vercre-issuer` crate, execute
 this command:
 
 ```shell
-cargo test -p vercre-wallet
+cargo test -p vercre-issuer
 ```
 
 Alternatively, you can `cd` into the crate's directory, and run `cargo test`
 there, without needing to supply the `-p` flag:
 
 ```shell
-cd vercre-wallet/
+cd vercre-issuer/
 cargo test
 ```
 
@@ -83,8 +75,7 @@ If you're writing a unit test and a `test` module doesn't already exist, you can
 create one.
 
 For more "integration-y" tests, we create a `tests` directory within the crate,
-and put the tests inside there. For example, there are various code
-cache-related tests at `crates/environ/tests/cache_*.rs`. Always feel free to
+and put the tests inside there. For example, there are various end-to-end flow tests at `vercre-holder/tests`. Always feel free to
 add a `tests` directory to a crate, if you want to add a new test and there
 aren't any existing tests.
 

@@ -58,7 +58,6 @@ pub trait IssuerClient {
 /// This provider allows the wallet to interact with a verifier's services that are compliant with
 /// OpenID for Verifiable Presentations. While the specification is oriented towards HTTP, the trait
 /// allows the wallet (and verifier's services) to be transport layer agnostic.
-#[allow(clippy::module_name_repetitions)]
 pub trait VerifierClient {
     /// Get a request object. If an error is returned, the wallet will cancel the presentation flow.
     fn get_request_object(
@@ -73,7 +72,6 @@ pub trait VerifierClient {
 
 /// `CredentialStorer` is used by wallet implementations to provide persistent storage of Verifiable
 /// Credentials.
-#[allow(clippy::module_name_repetitions)]
 pub trait CredentialStorer: Send + Sync {
     // TODO: should Credential param be owned?
 

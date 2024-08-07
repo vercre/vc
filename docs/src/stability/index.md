@@ -11,5 +11,5 @@ For Vercre, the stability of the API is primarily affected by:
 * The number of supported features and platforms — the greater the number, the higher
   the risk a change will impact some users.
 
-In the following sections , we outline our to managing this change — from instigation
+In the following sections , we outline our management of this change — from instigation
 through to release.

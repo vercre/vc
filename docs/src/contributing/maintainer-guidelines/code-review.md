@@ -60,6 +60,10 @@ expected to review the pull requests which are assigned to you.** Your only
 responsibility is to ensure that contributors know what to expect from us, and
 to arrange that _somebody_ reviews each PR.
 
+<div class="hidden">
+
+TODO: Review this hidden div content
+
 We have several different teams that reviewers may be auto-assigned from. You
 should be in teams where you are likely to know who to re-assign a PR to, if you
 can't review it yourself. The teams are determined by the `CODEOWNERS` file at
@@ -77,8 +81,9 @@ coarse-grained teams:
 [vercre-fuzz-reviewers]: https://github.com/orgs/vercre/teams/vercre-fuzz-reviewers
 [vercre-default-reviewers]: https://github.com/orgs/vercre/teams/vercre-default-reviewers
 
-Ideally, auto-assigned reviewers should be attending the regular Vercre or
-Cranelift meetings, as appropriate for the areas they're reviewing. This is to
+</div>
+
+Ideally, auto-assigned reviewers should be attending the regular Vercre meetings, as appropriate for the areas they're reviewing. This is to
 help these reviewers stay aware of who is working on what, to more easily hand
 off PRs to the most relevant reviewer for the work. However, this is only
 advice, not a hard requirement.

@@ -1,5 +1,7 @@
 # Release Process
 
+**Vercre is currently in alpha** so the content of this page is subject to change, but we document our release process goals here for now.
+
 This section serves as a high-level summary of Vercre's process. A more detailed
 description of the process can be found in the [contributing section].
 
@@ -18,7 +20,9 @@ A release is scheduled when an automated PR is sent to bump the version on the 5
 every month with the release effected when the PR is merged. The PR typically gets
 merged within a few days.
 
+<div class="hidden">
 **TODO: use Github Action to schedule Release PR**
+</div>
 
 ## Breaking Changes
 
@@ -27,7 +31,7 @@ backwards-compatibility. This is not expected to happen frequently, however, and
 breaking change will follow these criteria:
 
 * Minor breaking changes, either behavior or with APIs, will be documented in
-  the `RELEASES.md` release notes. Minor changes will require some degree of
+  the `CHANGELOG.md` release notes. Minor changes will require some degree of
   consensus but are not required to go through the entire RFC process.
 
 * Major breaking changes, such as major refactorings to the API, will be
@@ -51,5 +55,5 @@ backwards-compatibility and are intended to be trivial for users to upgrade to.
 Currently, Vercre's release process encompasses the three top-level `vercre-xxx` Rust
 crates.
 
-Other projects maintained by the Vercre will also likely be released, with the same
+Other projects maintained by the Vercre maintainers will also likely be released, with the same
 version numbers, with the main Vercre project soon after a release is made.

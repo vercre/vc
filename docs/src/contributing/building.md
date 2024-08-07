@@ -37,17 +37,17 @@ with `cargo run`.
 ## Building Other Vercre Crates
 
 You can build any of the Vercre crates by appending `-p vercre-whatever` to
-the `cargo build` invocation. For example, to build the `vercre-wallet` crate,
+the `cargo build` invocation. For example, to build the `vercre-holder` crate,
 execute this command:
 
 ```shell
-cargo build -p vercre-wallet
+cargo build -p vercre-holder
 ```
 
 Alternatively, you can `cd` into the crate's directory, and run `cargo build`
 there, without needing to supply the `-p` flag:
 
 ```shell
-cd vercre-wallet
+cd vercre-holder
 cargo build
 ```
