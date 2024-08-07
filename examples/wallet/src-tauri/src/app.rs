@@ -38,13 +38,14 @@ pub struct AppState {
     pub error: Option<String>,
 }
 
-impl AppState {
-    /// Set the application state to a startup state.
-    pub fn init(&mut self) {
-        self.sub_app = SubApp::Splash;
-        self.credential = Vec::new();
-        self.issuance = Issuance::default();
-        self.presentation = Presentation::default();
-        self.error = None;
-    }
-}
+// impl AppState {
+//     //Set the application state to a startup state.
+    
+//     pub fn init(&mut self) {
+//         self.sub_app = SubApp::Splash;
+//         self.credential = Vec::new();
+//         self.issuance = Issuance::default();
+//         self.presentation = Presentation::default();
+//         self.error = None;
+//     }
+// }

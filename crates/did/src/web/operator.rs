@@ -18,11 +18,14 @@ use super::DidWeb;
 use crate::document::{CreateOptions, Document, MethodType, PublicKeyFormat, VerificationMethod};
 use crate::error::Error;
 
+#[allow(dead_code)]
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
+#[allow(dead_code)]
 const X25519_CODEC: [u8; 2] = [0xec, 0x01];
 
 impl DidWeb {
     // HACK: generate a key pair
+    #[allow(dead_code)]
     pub fn generate() -> Vec<u8> {
         // TODO: pass in public key
         let mut csprng = OsRng;
@@ -33,7 +36,7 @@ impl DidWeb {
         signing_key.verifying_key().to_bytes().to_vec()
     }
 
-    #[allow(clippy::unused_self)]
+    #[allow(dead_code)]
     pub fn create(
         url: &str, verifying_key: &[u8], options: CreateOptions,
     ) -> crate::Result<Document> {
@@ -120,17 +123,18 @@ impl DidWeb {
         })
     }
 
+    #[allow(dead_code)]
     pub fn read(_did: &str, _: CreateOptions) -> crate::Result<Document> {
         // self.create(did, options)
         unimplemented!("read")
     }
 
-    #[allow(clippy::unused_self)]
+    #[allow(dead_code)]
     pub fn update(_did: &str, _: CreateOptions) -> crate::Result<Document> {
         unimplemented!("This DID Method does not support updating the DID Document")
     }
 
-    #[allow(clippy::unused_self)]
+    #[allow(dead_code)]
     pub fn deactivate(_did: &str, _: CreateOptions) -> crate::Result<()> {
         unimplemented!("This DID Method does not support deactivating the DID Document")
     }

@@ -24,6 +24,7 @@ const X25519_CODEC: [u8; 2] = [0xec, 0x01];
 
 impl DidKey {
     // HACK: generate a key pair
+    #[allow(dead_code)]
     pub fn generate() -> Vec<u8> {
         // TODO: pass in public key
         let mut csprng = OsRng;
@@ -134,6 +135,7 @@ impl DidKey {
         })
     }
 
+    #[allow(dead_code)]
     pub fn read(_did: &str, _: CreateOptions) -> crate::Result<Document> {
         // self.resolve(did, options)
         unimplemented!("read")
