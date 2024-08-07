@@ -115,8 +115,9 @@ fn verify_es256k(jwk: &PublicKeyJwk, msg: &str, sig: &[u8]) -> anyhow::Result<()
 
     let verifying_key = VerifyingKey::<Secp256k1>::from_sec1_bytes(&sec1)?;
     let signature: Signature<Secp256k1> = Signature::from_slice(sig)?;
+    let normalised = signature.normalize_s().unwrap_or(signature);
 
-    Ok(verifying_key.verify(msg.as_bytes(), &signature)?)
+    Ok(verifying_key.verify(msg.as_bytes(), &normalised)?)
 }
 
 // Verify the signature of the provided message using the EdDSA algorithm.
