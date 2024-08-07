@@ -2,7 +2,7 @@
 name = "wallet"
 description = "Example wallet client for vercre-holder crate"
 license = "MIT OR Apache-2.0"
-readme = "README.md"
+publish = false
 
 authors.workspace = true
 categories.workspace = true

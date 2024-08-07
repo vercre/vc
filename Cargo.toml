@@ -44,7 +44,7 @@ base64ct = { version = "1.6.0", features = ["std"] }
 chrono = { version = "0.4.38", features = ["serde"] }
 core-utils = { path = "crates/core-utils", version = "0.1.0-alpha.4" }
 derive_builder = "0.20.0"
-dif-exch = { path = "crates/dif-exch" }
+dif-exch = { path = "crates/dif-exch", version = "0.1.0-alpha.4" }
 ecdsa = "0.16.9"
 futures = "0.3.30"
 insta = { version = "1.39.0", features = ["redactions", "yaml"] }
@@ -53,7 +53,7 @@ openid = { path = "crates/openid", version = "0.1.0-alpha.4" }
 serde = { version = "1.0.204", features = ["derive"] }
 serde_json = { version = "1.0.122", features = ["alloc"] }
 serde_qs = "0.13.0"
-test-utils = { path = "crates/test-utils" }
+test-utils = { path = "crates/test-utils", version = "0.1.0-alpha.4" }
 tokio = { version = "1.39.2", features = ["macros", "rt-multi-thread"] }
 tower-http = { version = "0.5.2", features = ["cors", "set-header", "trace"] }
 tracing = "0.1.40"

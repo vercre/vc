@@ -101,12 +101,12 @@ args = ["publish", "--allow-dirty", "--dry-run", "--package", "vercre-holder"]
 # args = release level: one of `release`, `major`, `minor`, `patch`, `alpha`, `beta`, `rc`
 [tasks.release]
 command = "cargo"
-args = ["${0}"]
+args = ["release", "${@}"]
 install_crate = "cargo-release"
 
 [tasks.publish]
 command = "cargo"
-args = ["${0}", "--execute"]
+args = ["release", "${@}", "--execute"]
 install_crate = "cargo-release"
 
 # -----------------------------------------------------------------------------
