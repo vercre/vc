@@ -98,11 +98,11 @@ mod token;
 
 /// Re-export provider traits and types.
 pub mod provider {
-    pub use datasec::jose::jwk::PublicKeyJwk;
-    pub use datasec::{Algorithm, DataSec, Decryptor, Encryptor, Signer, Verifier};
-    pub use openid::issuer::{ClaimDefinition, Client, GrantType, Issuer, Server};
+    pub use vercre_datasec::jose::jwk::PublicKeyJwk;
+    pub use vercre_datasec::{Algorithm, DataSec, Decryptor, Encryptor, Signer, Verifier};
+    pub use vercre_openid::issuer::{ClaimDefinition, Client, GrantType, Issuer, Server};
     #[allow(clippy::module_name_repetitions)]
-    pub use openid::issuer::{
+    pub use vercre_openid::issuer::{
         Claims, ClientMetadata, IssuerMetadata, Provider, Result, ServerMetadata, StateManager,
         Subject,
     };
@@ -116,7 +116,9 @@ pub use create_offer::create_offer;
 pub use credential::credential;
 pub use deferred::deferred;
 pub use metadata::metadata;
-pub use openid::issuer::{
+pub use register::register;
+pub use token::token;
+pub use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     AuthorizationResponse, BatchCredentialRequest, BatchCredentialResponse, CreateOfferRequest,
     CreateOfferResponse, CredentialConfiguration, CredentialOffer, CredentialOfferType,
@@ -125,9 +127,7 @@ pub use openid::issuer::{
     ProofClaims, ProofType, RegistrationRequest, RegistrationResponse, TokenAuthorizationDetail,
     TokenRequest, TokenResponse, TxCode,
 };
-pub use openid::Result;
-pub use register::register;
-pub use token::token;
+pub use vercre_openid::Result;
 
 // async fn shell<'a, P, R, U, E, F, Fut>(provider: P, request: &'a R, handler: F) -> Result<U, E>
 // where

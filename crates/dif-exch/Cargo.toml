@@ -1,8 +1,7 @@
 [package]
-name = "dif-exch"
+name = "vercre-dif-exch"
 description = "An implementation of DIF Presentation Exchange specification."
 license = "MIT OR Apache-2.0"
-publish = false
 readme = "README.md"
 authors.workspace = true
 categories.workspace = true

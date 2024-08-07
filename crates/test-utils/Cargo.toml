@@ -1,7 +1,6 @@
 [package]
-name = "test-utils"
+name = "vercre-test-utils"
 description = "Test utilities"
-publish = false
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -19,10 +18,10 @@ crate-type = ["cdylib", "rlib"]
 anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true
-datasec.workspace = true
-did = { path = "../did" }
+vercre-datasec.workspace = true
+vercre-did = { path = "../did", version = "0.1.0-alpha.4" }
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
-openid.workspace = true
+vercre-openid.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }

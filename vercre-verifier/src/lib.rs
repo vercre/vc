@@ -164,28 +164,28 @@ mod response;
 mod state;
 
 /// Re-export types.
-pub use openid::Result;
+pub use vercre_openid::Result;
 
 /// Re-export provider traits and types.
 pub mod provider {
-    pub use datasec::jose::jwk::PublicKeyJwk;
-    pub use datasec::{
+    pub use vercre_datasec::jose::jwk::PublicKeyJwk;
+    pub use vercre_datasec::{
         Algorithm, DataSec, Decryptor, Encryptor, Signer, Verifier as SignatureVerifier,
     };
-    pub use openid::issuer::{Client, CredentialFormat, Server};
-    pub use openid::verifier::VpFormat;
+    pub use vercre_openid::issuer::{Client, CredentialFormat, Server};
+    pub use vercre_openid::verifier::VpFormat;
     #[allow(clippy::module_name_repetitions)]
-    pub use openid::verifier::{
+    pub use vercre_openid::verifier::{
         Provider, Result, StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata,
     };
 }
 pub use create_request::create_request;
-pub use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 pub use metadata::metadata;
-pub use openid::verifier::{
+pub use request_object::request_object;
+pub use response::response;
+pub use vercre_dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
+pub use vercre_openid::verifier::{
     ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
     MetadataRequest, MetadataResponse, PresentationDefinitionType, RequestObject,
     RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse, ResponseType,
 };
-pub use request_object::request_object;
-pub use response::response;

@@ -1,4 +1,4 @@
-use openid::issuer::CredentialConfiguration;
+use vercre_openid::issuer::CredentialConfiguration;
 
 pub fn credential_configuration() -> CredentialConfiguration {
     let issuer = crate::store::issuance::IssuerStore::new()

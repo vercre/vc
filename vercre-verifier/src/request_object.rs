@@ -13,12 +13,12 @@
 //!
 //! [JWT VC Presentation Profile]: (https://identity.foundation/jwt-vc-presentation-profile)
 
-use datasec::jose::jws::{self, Type};
-use openid::verifier::{
+use tracing::instrument;
+use vercre_datasec::jose::jws::{self, Type};
+use vercre_openid::verifier::{
     DataSec, Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, StateManager,
 };
-use openid::{Error, Result};
-use tracing::instrument;
+use vercre_openid::{Error, Result};
 
 use crate::state::State;
 
@@ -67,18 +67,18 @@ async fn process(
 
 #[cfg(test)]
 mod tests {
-    use dif_exch::PresentationDefinition;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use openid::verifier::{
+    use vercre_dif_exch::PresentationDefinition;
+    use vercre_openid::verifier::{
         ClientIdScheme, ClientMetadataType, PresentationDefinitionType, RequestObject, ResponseType,
     };
-    use test_utils::verifier::{Provider, VERIFIER_ID};
+    use vercre_test_utils::verifier::{Provider, VERIFIER_ID};
 
     use super::*;
 
     #[tokio::test]
     async fn request_jwt() {
-        test_utils::init_tracer();
+        vercre_test_utils::init_tracer();
 
         let provider = Provider::new();
         let state_key = "ABCDEF123456";

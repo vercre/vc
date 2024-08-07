@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
-use openid::provider::Result;
-use openid::verifier::Verifier;
 use uuid::Uuid;
+use vercre_openid::provider::Result;
+use vercre_openid::verifier::Verifier;
 
 #[derive(Default, Clone, Debug)]
 pub struct Store {

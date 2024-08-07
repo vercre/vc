@@ -73,14 +73,14 @@ use std::fmt::Debug;
 use std::vec;
 
 use chrono::Utc;
-use core_utils::gen;
-use openid::issuer::{
+use tracing::instrument;
+use vercre_core_utils::gen;
+use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
     ClientMetadata, CredentialType, GrantType, Issuer, IssuerMetadata, Provider, ServerMetadata,
     StateManager, Subject, TokenAuthorizationDetail,
 };
-use openid::{Error, Result};
-use tracing::instrument;
+use vercre_openid::{Error, Result};
 
 // use crate::shell;
 use crate::state::{Auth, Expire, State};
@@ -387,13 +387,13 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use sha2::{Digest, Sha256};
-    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+    use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
     use super::*;
 
     #[tokio::test]
     async fn authzn_details() {
-        test_utils::init_tracer();
+        vercre_test_utils::init_tracer();
 
         let provider = Provider::new();
 
@@ -451,7 +451,7 @@ mod tests {
 
     #[tokio::test]
     async fn scope() {
-        test_utils::init_tracer();
+        vercre_test_utils::init_tracer();
 
         let provider = Provider::new();
         let verifier_hash = Sha256::digest("ABCDEF12345");

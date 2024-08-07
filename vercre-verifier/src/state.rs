@@ -3,9 +3,9 @@
 
 use chrono::{DateTime, TimeDelta, Utc};
 use derive_builder::Builder;
-use openid::verifier::RequestObject;
-use openid::{Error, Result};
 use serde::{Deserialize, Serialize};
+use vercre_openid::verifier::RequestObject;
+use vercre_openid::{Error, Result};
 
 pub enum Expire {
     Request,
@@ -71,7 +71,7 @@ impl State {
 }
 
 impl TryFrom<&[u8]> for State {
-    type Error = openid::Error;
+    type Error = vercre_openid::Error;
 
     fn try_from(value: &[u8]) -> Result<Self> {
         Self::from_slice(value)
@@ -79,7 +79,7 @@ impl TryFrom<&[u8]> for State {
 }
 
 impl TryFrom<Vec<u8>> for State {
-    type Error = openid::Error;
+    type Error = vercre_openid::Error;
 
     fn try_from(value: Vec<u8>) -> Result<Self> {
         Self::try_from(value.as_slice())

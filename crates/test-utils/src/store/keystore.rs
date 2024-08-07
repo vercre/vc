@@ -1,16 +1,16 @@
 use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
-use datasec::jose::jwa::Algorithm;
-use datasec::jose::jwk::PublicKeyJwk;
 // use ecdsa::{Signature, Signer as _, SigningKey};
 use ed25519_dalek::Signer;
 use ed25519_dalek::{SecretKey, SigningKey};
+use vercre_datasec::jose::jwa::Algorithm;
+use vercre_datasec::jose::jwk::PublicKeyJwk;
 // use k256::Secp256k1;
-use openid::provider::Result;
+use vercre_openid::provider::Result;
 
 // Mock DID client
 struct Client {}
-impl did::DidClient for Client {
+impl vercre_did::DidClient for Client {
     async fn get(&self, _url: &str) -> anyhow::Result<Vec<u8>> {
         // reqwest::get(url).await?.bytes().await.map_err(|e| anyhow!("{e}")).map(|b| b.to_vec())
         Ok(include_bytes!("did.json").to_vec())
@@ -101,10 +101,10 @@ impl HolderKeystore {
 /// did:web:demo.credibil.io -> did:web:demo.credibil.io/.well-known/did.json
 /// did:web:demo.credibil.io:entity:supplier -> did:web:demo.credibil.io/entity/supplier/did.json
 pub async fn deref_jwk(did_url: &str) -> Result<PublicKeyJwk> {
-    let resp = did::dereference(did_url, None, Client {}).await?;
+    let resp = vercre_did::dereference(did_url, None, Client {}).await?;
 
     // get public key specified by the url fragment
-    let Some(did::Resource::VerificationMethod(vm)) = resp.content_stream else {
+    let Some(vercre_did::Resource::VerificationMethod(vm)) = resp.content_stream else {
         bail!("Verification method not found");
     };
 

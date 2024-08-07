@@ -3,9 +3,9 @@
 
 use chrono::{DateTime, TimeDelta, Utc};
 use derive_builder::Builder;
-use openid::issuer::{CredentialRequest, TokenAuthorizationDetail};
-use openid::{Error, Result};
 use serde::{Deserialize, Serialize};
+use vercre_openid::issuer::{CredentialRequest, TokenAuthorizationDetail};
+use vercre_openid::{Error, Result};
 
 pub enum Expire {
     AuthCode,
@@ -145,7 +145,7 @@ impl State {
 }
 
 impl TryFrom<&[u8]> for State {
-    type Error = openid::Error;
+    type Error = vercre_openid::Error;
 
     fn try_from(value: &[u8]) -> Result<Self> {
         match serde_json::from_slice::<Self>(value) {
@@ -161,7 +161,7 @@ impl TryFrom<&[u8]> for State {
 }
 
 impl TryFrom<Vec<u8>> for State {
-    type Error = openid::Error;
+    type Error = vercre_openid::Error;
 
     fn try_from(value: Vec<u8>) -> Result<Self> {
         Self::try_from(value.as_slice())

@@ -2,25 +2,25 @@ use std::sync::LazyLock;
 
 use assert_let_bind::assert_let;
 use chrono::Utc;
-use datasec::jose::jws::{self, Type};
-use datasec::DataSec;
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
-use test_utils::holder;
-use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+use vercre_datasec::jose::jws::{self, Type};
+use vercre_datasec::DataSec;
 use vercre_issuer::{
     CreateOfferRequest, CreateOfferResponse, CredentialOfferType, CredentialRequest,
     CredentialResponse, ProofClaims, TokenRequest, TokenResponse,
 };
-use w3c_vc::proof::{Payload, Verify};
+use vercre_test_utils::holder;
+use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+use vercre_w3c_vc::proof::{Payload, Verify};
 
 static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
 
 // Run through entire pre-authorized code flow.
 #[tokio::test]
 async fn pre_auth_flow() {
-    test_utils::init_tracer();
+    vercre_test_utils::init_tracer();
 
     // go through the pre-auth code flow
     let resp = get_offer().and_then(get_token).and_then(get_credential).await.expect("Ok");
@@ -33,7 +33,7 @@ async fn pre_auth_flow() {
     let verifier = DataSec::verifier(&provider, CREDENTIAL_ISSUER).expect("should get verifier");
 
     let Payload::Vc(vc) =
-        w3c_vc::proof::verify(Verify::Vc(vc_kind), &verifier).await.expect("should decode")
+        vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &verifier).await.expect("should decode")
     else {
         panic!("should be VC");
     };
@@ -46,7 +46,7 @@ async fn pre_auth_flow() {
 
 // Simulate Issuer request to '/create_offer' endpoint to get credential offer to use to
 // make credential offer to Wallet.
-async fn get_offer() -> openid::Result<CreateOfferResponse> {
+async fn get_offer() -> vercre_openid::Result<CreateOfferResponse> {
     // offer request
     let body = json!({
         "credential_configuration_ids": ["EmployeeID_JWT"],
@@ -65,7 +65,7 @@ async fn get_offer() -> openid::Result<CreateOfferResponse> {
 
 // Simulate Wallet request to '/token' endpoint with pre-authorized code to get
 // access token
-async fn get_token(input: CreateOfferResponse) -> openid::Result<TokenResponse> {
+async fn get_token(input: CreateOfferResponse) -> vercre_openid::Result<TokenResponse> {
     assert_let!(CredentialOfferType::Object(offer), &input.credential_offer);
     assert_let!(Some(grants), &offer.grants);
     assert_let!(Some(pre_authorized_code), &grants.pre_authorized_code);
@@ -85,7 +85,7 @@ async fn get_token(input: CreateOfferResponse) -> openid::Result<TokenResponse> 
 }
 
 // Simulate Wallet request to '/credential' endpoint with access token to get credential.
-async fn get_credential(input: TokenResponse) -> openid::Result<CredentialResponse> {
+async fn get_credential(input: TokenResponse) -> vercre_openid::Result<CredentialResponse> {
     let claims = ProofClaims {
         iss: Some(CLIENT_ID.into()),
         aud: CREDENTIAL_ISSUER.into(),

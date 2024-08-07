@@ -6,11 +6,9 @@ use std::sync::{Arc, LazyLock};
 
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
-// TODO: remove this import
-use dif_exch::Constraints;
 use futures::lock::Mutex;
-use test_utils::store::keystore::{self, HolderKeystore};
-use test_utils::{issuer, verifier};
+// TODO: remove this import
+use vercre_dif_exch::Constraints;
 use vercre_holder::provider::{
     Algorithm, CredentialStorer, HolderProvider, IssuerClient, PublicKeyJwk, Result, Signer,
     StateManager, Verifier, VerifierClient,
@@ -20,6 +18,8 @@ use vercre_holder::{
     RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse, TokenRequest,
     TokenResponse,
 };
+use vercre_test_utils::store::keystore::{self, HolderKeystore};
+use vercre_test_utils::{issuer, verifier};
 
 static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
 static VERIFIER_PROVIDER: LazyLock<verifier::Provider> = LazyLock::new(verifier::Provider::new);

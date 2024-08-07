@@ -11,9 +11,9 @@ use std::str::FromStr;
 
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
-use dif_exch::{Constraints, PresentationSubmission};
-use openid::verifier::RequestObject;
 use serde::{Deserialize, Serialize};
+use vercre_dif_exch::{Constraints, PresentationSubmission};
+use vercre_openid::verifier::RequestObject;
 
 use crate::credential::Credential;
 use crate::provider::{HolderProvider, StateManager};

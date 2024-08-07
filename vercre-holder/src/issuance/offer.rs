@@ -7,10 +7,10 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
-use openid::issuer::{CredentialConfiguration, CredentialOffer, MetadataRequest};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
+use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, MetadataRequest};
 
 use super::{Issuance, Status};
 use crate::provider::{HolderProvider, IssuerClient};

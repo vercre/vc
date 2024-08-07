@@ -7,13 +7,13 @@ use std::io::Cursor;
 
 use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
-use core_utils::Kind;
-use datasec::jose::jwk::PublicKeyJwk;
-pub use datasec::DataSec;
 use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use w3c_vc::model::VerifiableCredential;
+use vercre_core_utils::Kind;
+use vercre_datasec::jose::jwk::PublicKeyJwk;
+pub use vercre_datasec::DataSec;
+use vercre_w3c_vc::model::VerifiableCredential;
 
 pub use super::{CredentialFormat, OAuthClient, OAuthServer};
 pub use crate::provider::{self, Result, StateManager};

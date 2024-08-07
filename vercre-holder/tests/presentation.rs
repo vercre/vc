@@ -3,18 +3,18 @@ mod provider;
 use std::sync::LazyLock;
 
 use chrono::Utc;
-use core_utils::{Kind, Quota};
-use datasec::DataSec;
-use dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use insta::assert_yaml_snapshot as assert_snapshot;
-use openid::verifier::{CreateRequestRequest, DeviceFlow, PresentationDefinitionType};
 use serde_json::Map;
-use test_utils::verifier::{self, VERIFIER_ID};
+use vercre_core_utils::{Kind, Quota};
+use vercre_datasec::DataSec;
+use vercre_dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use vercre_holder::credential::Credential;
 use vercre_holder::presentation::Status;
 use vercre_holder::provider::CredentialStorer;
-use w3c_vc::model::{CredentialSubject, VerifiableCredential};
-use w3c_vc::proof::{self, Format, Payload};
+use vercre_openid::verifier::{CreateRequestRequest, DeviceFlow, PresentationDefinitionType};
+use vercre_test_utils::verifier::{self, VERIFIER_ID};
+use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
+use vercre_w3c_vc::proof::{self, Format, Payload};
 
 use crate::provider as holder;
 
@@ -78,7 +78,7 @@ async fn sample_credential() -> Credential {
     let payload = Payload::Vc(vc.clone());
     let jwt = proof::create(Format::JwtVcJson, payload, signer).await.expect("should encode");
 
-    let config = test_utils::sample::credential_configuration();
+    let config = vercre_test_utils::sample::credential_configuration();
     Credential {
         issuer: "https://vercre.io".into(),
         id: vc.id.clone(),

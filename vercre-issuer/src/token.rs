@@ -14,13 +14,13 @@
 use std::fmt::Debug;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
-use core_utils::gen;
-use openid::issuer::{
-    GrantType, Provider, ServerMetadata, StateManager, TokenRequest, TokenResponse, TokenType,
-};
-use openid::{Error, Result};
 use sha2::{Digest, Sha256};
 use tracing::instrument;
+use vercre_core_utils::gen;
+use vercre_openid::issuer::{
+    GrantType, Provider, ServerMetadata, StateManager, TokenRequest, TokenResponse, TokenType,
+};
+use vercre_openid::{Error, Result};
 
 // use crate::shell;
 use crate::state::{Expire, State, Token};
@@ -174,20 +174,20 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use openid::issuer::{
+    use serde_json::json;
+    use vercre_openid::issuer::{
         AuthorizationDetail, AuthorizationDetailType, CredentialDefinition, CredentialType,
         TokenAuthorizationDetail,
     };
-    use openid::CredentialFormat;
-    use serde_json::json;
-    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+    use vercre_openid::CredentialFormat;
+    use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
     use super::*;
     use crate::state::Auth;
 
     #[tokio::test]
     async fn simple_tossken() {
-        test_utils::init_tracer();
+        vercre_test_utils::init_tracer();
 
         let provider = Provider::new();
 
@@ -244,7 +244,7 @@ mod tests {
 
     #[tokio::test]
     async fn authzn_token() {
-        test_utils::init_tracer();
+        vercre_test_utils::init_tracer();
 
         let provider = Provider::new();
 

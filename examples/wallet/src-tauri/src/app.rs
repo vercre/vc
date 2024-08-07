@@ -40,7 +40,7 @@ pub struct AppState {
 
 // impl AppState {
 //     //Set the application state to a startup state.
-    
+
 //     pub fn init(&mut self) {
 //         self.sub_app = SubApp::Splash;
 //         self.credential = Vec::new();

@@ -3,14 +3,14 @@
 //! Get an access token and then use that to get the credential on offer.
 
 use anyhow::{anyhow, bail};
-use core_utils::Kind;
-use datasec::jose::jws::{self, Type};
-use openid::issuer::{
+use tracing::instrument;
+use vercre_core_utils::Kind;
+use vercre_datasec::jose::jws::{self, Type};
+use vercre_openid::issuer::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, GrantType,
     Proof, ProofClaims, ProofType, TokenRequest,
 };
-use tracing::instrument;
-use w3c_vc::proof::{Payload, Verify};
+use vercre_w3c_vc::proof::{Payload, Verify};
 
 use super::{Issuance, Status};
 use crate::credential::Credential;
@@ -152,7 +152,7 @@ async fn credential(
         bail!("no credential in response");
     };
 
-    let Payload::Vc(vc) = w3c_vc::proof::verify(Verify::Vc(value), verifier)
+    let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(value), verifier)
         .await
         .map_err(|e| anyhow!("issue parsing credential: {e}"))?
     else {

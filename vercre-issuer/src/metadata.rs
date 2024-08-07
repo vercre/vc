@@ -23,9 +23,9 @@
 //!     Accept-Language: fr-ch, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5
 //! ```
 
-use openid::issuer::{IssuerMetadata, MetadataRequest, MetadataResponse, Provider};
-use openid::{Error, Result};
 use tracing::instrument;
+use vercre_openid::issuer::{IssuerMetadata, MetadataRequest, MetadataResponse, Provider};
+use vercre_openid::{Error, Result};
 
 // use crate::shell;
 
@@ -56,13 +56,13 @@ async fn process(provider: impl Provider, request: &MetadataRequest) -> Result<M
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use test_utils::issuer::{Provider, CREDENTIAL_ISSUER};
+    use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER};
 
     use super::*;
 
     #[tokio::test]
     async fn metadata_ok() {
-        test_utils::init_tracer();
+        vercre_test_utils::init_tracer();
 
         let provider = Provider::new();
 

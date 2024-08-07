@@ -777,15 +777,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "core-utils"
-version = "0.1.0-alpha.4"
-dependencies = [
- "base64ct",
- "fastrand",
- "serde",
-]
-
-[[package]]
 name = "cpufeatures"
 version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1019,25 +1010,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "datasec"
-version = "0.1.0-alpha.4"
-dependencies = [
- "aes-gcm",
- "anyhow",
- "base64ct",
- "crypto_box",
- "ecdsa",
- "ed25519-dalek",
- "k256",
- "serde",
- "serde_json",
- "signature",
- "tokio",
- "tracing",
- "x25519-dalek",
-]
-
-[[package]]
 name = "der"
 version = "0.7.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1099,43 +1071,6 @@ dependencies = [
  "quote",
  "rustc_version",
  "syn 2.0.72",
-]
-
-[[package]]
-name = "did"
-version = "0.1.0-alpha.4"
-dependencies = [
- "anyhow",
- "base64ct",
- "chrono",
- "core-utils",
- "curve25519-dalek",
- "datasec",
- "ecdsa",
- "ed25519-dalek",
- "insta",
- "k256",
- "multibase",
- "rand 0.8.5",
- "regex",
- "reqwest 0.12.5",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
- "url",
-]
-
-[[package]]
-name = "dif-exch"
-version = "0.1.0-alpha.4"
-dependencies = [
- "anyhow",
- "chrono",
- "regex",
- "serde",
- "serde_json",
- "serde_json_path",
 ]
 
 [[package]]
@@ -2425,12 +2360,12 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_qs",
- "test-utils",
  "tokio",
  "tower-http",
  "tracing",
  "tracing-subscriber",
  "vercre-issuer",
+ "vercre-test-utils",
 ]
 
 [[package]]
@@ -3080,26 +3015,6 @@ dependencies = [
  "is-wsl",
  "libc",
  "pathdiff",
-]
-
-[[package]]
-name = "openid"
-version = "0.1.0-alpha.4"
-dependencies = [
- "anyhow",
- "base64ct",
- "chrono",
- "core-utils",
- "datasec",
- "dif-exch",
- "image",
- "insta",
- "qrcode",
- "serde",
- "serde_json",
- "serde_qs",
- "thiserror",
- "w3c-vc",
 ]
 
 [[package]]
@@ -5154,25 +5069,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "test-utils"
-version = "0.1.0-alpha.4"
-dependencies = [
- "anyhow",
- "base64ct",
- "chrono",
- "datasec",
- "did",
- "ed25519-dalek",
- "openid",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
 name = "thin-slice"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5730,30 +5626,95 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
+name = "vercre-core-utils"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "base64ct",
+ "fastrand",
+ "serde",
+]
+
+[[package]]
+name = "vercre-datasec"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "aes-gcm",
+ "anyhow",
+ "base64ct",
+ "crypto_box",
+ "ecdsa",
+ "ed25519-dalek",
+ "k256",
+ "serde",
+ "serde_json",
+ "signature",
+ "tokio",
+ "tracing",
+ "x25519-dalek",
+]
+
+[[package]]
+name = "vercre-did"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "curve25519-dalek",
+ "ecdsa",
+ "ed25519-dalek",
+ "insta",
+ "k256",
+ "multibase",
+ "rand 0.8.5",
+ "regex",
+ "reqwest 0.12.5",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "url",
+ "vercre-core-utils",
+ "vercre-datasec",
+]
+
+[[package]]
+name = "vercre-dif-exch"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "regex",
+ "serde",
+ "serde_json",
+ "serde_json_path",
+]
+
+[[package]]
 name = "vercre-holder"
 version = "0.1.0-alpha.4"
 dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
- "core-utils",
- "datasec",
- "dif-exch",
  "ecdsa",
  "ed25519-dalek",
  "insta",
- "openid",
  "serde",
  "serde_json",
  "serde_qs",
- "test-utils",
  "tokio",
  "tracing",
  "urlencoding",
  "uuid",
+ "vercre-core-utils",
+ "vercre-datasec",
+ "vercre-dif-exch",
  "vercre-issuer",
+ "vercre-openid",
+ "vercre-test-utils",
  "vercre-verifier",
- "w3c-vc",
+ "vercre-w3c-vc",
 ]
 
 [[package]]
@@ -5763,19 +5724,58 @@ dependencies = [
  "assert_let_bind",
  "base64ct",
  "chrono",
- "core-utils",
- "datasec",
  "derive_builder",
  "futures",
  "insta",
- "openid",
  "serde",
  "serde_json",
  "sha2",
- "test-utils",
  "tokio",
  "tracing",
- "w3c-vc",
+ "vercre-core-utils",
+ "vercre-datasec",
+ "vercre-openid",
+ "vercre-test-utils",
+ "vercre-w3c-vc",
+]
+
+[[package]]
+name = "vercre-openid"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "image",
+ "insta",
+ "qrcode",
+ "serde",
+ "serde_json",
+ "serde_qs",
+ "thiserror",
+ "vercre-core-utils",
+ "vercre-datasec",
+ "vercre-dif-exch",
+ "vercre-w3c-vc",
+]
+
+[[package]]
+name = "vercre-test-utils"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "ed25519-dalek",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "vercre-datasec",
+ "vercre-did",
+ "vercre-openid",
 ]
 
 [[package]]
@@ -5784,20 +5784,37 @@ version = "0.1.0-alpha.4"
 dependencies = [
  "assert_let_bind",
  "chrono",
- "core-utils",
- "datasec",
  "derive_builder",
- "dif-exch",
  "insta",
- "openid",
  "serde",
  "serde_json",
  "serde_json_path",
- "test-utils",
  "tokio",
  "tracing",
  "uuid",
- "w3c-vc",
+ "vercre-core-utils",
+ "vercre-datasec",
+ "vercre-dif-exch",
+ "vercre-openid",
+ "vercre-test-utils",
+ "vercre-w3c-vc",
+]
+
+[[package]]
+name = "vercre-w3c-vc"
+version = "0.1.0-alpha.4"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "serde",
+ "serde_json",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "vercre-core-utils",
+ "vercre-datasec",
+ "vercre-dif-exch",
 ]
 
 [[package]]
@@ -5810,11 +5827,11 @@ dependencies = [
  "chrono",
  "serde",
  "serde_json",
- "test-utils",
  "tokio",
  "tower-http",
  "tracing",
  "tracing-subscriber",
+ "vercre-test-utils",
  "vercre-verifier",
 ]
 
@@ -5851,23 +5868,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "w3c-vc"
-version = "0.1.0-alpha.4"
-dependencies = [
- "anyhow",
- "base64ct",
- "chrono",
- "core-utils",
- "datasec",
- "dif-exch",
- "serde",
- "serde_json",
- "tracing",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
 name = "walkdir"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5884,7 +5884,6 @@ dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
- "dif-exch",
  "futures",
  "http 1.1.0",
  "log",
@@ -5897,11 +5896,12 @@ dependencies = [
  "tauri-plugin-log",
  "tauri-plugin-shell",
  "tauri-plugin-store",
- "test-utils",
  "typeshare",
  "urlencoding",
+ "vercre-dif-exch",
  "vercre-holder",
  "vercre-issuer",
+ "vercre-test-utils",
  "vercre-verifier",
 ]
 

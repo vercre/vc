@@ -5,13 +5,13 @@
 //! See <https://w3c-ccg.github.io/did-method-key>
 
 use base64ct::{Base64UrlUnpadded, Encoding};
-use core_utils::Kind;
 use curve25519_dalek::edwards::CompressedEdwardsY;
-use datasec::jose::jwk::{Curve, KeyType, PublicKeyJwk};
 use ed25519_dalek::SigningKey;
 use multibase::Base;
 use rand::rngs::OsRng;
 use serde_json::json;
+use vercre_core_utils::Kind;
+use vercre_datasec::jose::jwk::{Curve, KeyType, PublicKeyJwk};
 
 use super::DidKey;
 use crate::document::{

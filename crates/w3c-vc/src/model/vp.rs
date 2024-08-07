@@ -11,10 +11,10 @@ use std::str::FromStr;
 
 use anyhow::bail;
 use base64ct::{Base64UrlUnpadded, Encoding};
-use core_utils::{Kind, Quota};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
+use vercre_core_utils::{Kind, Quota};
 
 use crate::proof::integrity::Proof;
 

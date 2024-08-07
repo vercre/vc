@@ -31,10 +31,10 @@ pub mod integrity;
 mod jose;
 
 use anyhow::bail;
-use core_utils::{Kind, Quota};
-use datasec::jose::jws;
-use datasec::{Signer, Verifier};
 use serde::{Deserialize, Serialize};
+use vercre_core_utils::{Kind, Quota};
+use vercre_datasec::jose::jws;
+use vercre_datasec::{Signer, Verifier};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
 

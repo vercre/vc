@@ -5,9 +5,9 @@
 
 use std::ops::Deref;
 
-use openid::issuer::CredentialConfiguration;
 use serde::{Deserialize, Serialize};
-use w3c_vc::model::VerifiableCredential;
+use vercre_openid::issuer::CredentialConfiguration;
+use vercre_w3c_vc::model::VerifiableCredential;
 
 /// The Credential model contains information about a credential owned by the
 /// Wallet.

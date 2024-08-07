@@ -1,5 +1,5 @@
-use datasec::{Algorithm, Signer};
-use openid::provider::Result;
+use vercre_datasec::{Algorithm, Signer};
+use vercre_openid::provider::Result;
 
 use crate::store::keystore::HolderKeystore;
 

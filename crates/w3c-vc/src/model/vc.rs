@@ -12,9 +12,9 @@ use std::collections::HashMap;
 
 use anyhow::bail;
 use chrono::{DateTime, Utc};
-use core_utils::{Kind, Quota};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
+use vercre_core_utils::{Kind, Quota};
 
 use crate::proof::integrity::Proof;
 
@@ -120,7 +120,7 @@ impl VerifiableCredential {
     }
 }
 
-impl dif_exch::Claims for VerifiableCredential {
+impl vercre_dif_exch::Claims for VerifiableCredential {
     fn to_json(&self) -> anyhow::Result<serde_json::Value> {
         serde_json::to_value(self).map_err(Into::into)
     }

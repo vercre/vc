@@ -37,8 +37,8 @@ use std::fmt::Debug;
 use std::str;
 
 use chrono::{TimeDelta, Utc};
-use core_utils::{Kind, Quota};
 use serde::{Deserialize, Serialize};
+use vercre_core_utils::{Kind, Quota};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
 

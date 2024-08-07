@@ -1,9 +1,9 @@
 //! # Dynamic Client Registration Endpoint
 
 use chrono::Utc;
-use openid::issuer::{Provider, RegistrationRequest, RegistrationResponse, StateManager};
-use openid::{Error, Result};
 use tracing::instrument;
+use vercre_openid::issuer::{Provider, RegistrationRequest, RegistrationResponse, StateManager};
+use vercre_openid::{Error, Result};
 
 // use crate::shell;
 use crate::state::State;
@@ -58,14 +58,14 @@ async fn process(
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
-    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER};
+    use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER};
 
     use super::*;
     use crate::state::{Expire, Token};
 
     #[tokio::test]
     async fn registration_ok() {
-        test_utils::init_tracer();
+        vercre_test_utils::init_tracer();
 
         let provider = Provider::new();
         let access_token = "ABCDEF";

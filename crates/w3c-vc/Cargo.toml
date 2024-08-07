@@ -1,8 +1,7 @@
 [package]
-name = "w3c-vc"
+name = "vercre-w3c-vc"
 description = "Primary Verifiable Credential building blocks, including dependencies."
 license = "MIT OR Apache-2.0"
-publish = false
 readme = "README.md"
 authors.workspace = true
 categories.workspace = true
@@ -24,9 +23,9 @@ workspace = true
 anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true
-core-utils.workspace = true
-datasec.workspace = true
-dif-exch.workspace = true
+vercre-core-utils.workspace = true
+vercre-datasec.workspace = true
+vercre-dif-exch.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tracing.workspace = true

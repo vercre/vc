@@ -2,24 +2,24 @@ use std::sync::LazyLock;
 
 use assert_let_bind::assert_let;
 use chrono::Utc;
-use datasec::jose::jws::{self, Type};
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
-use test_utils::holder;
-use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, PENDING_USER};
+use vercre_datasec::jose::jws::{self, Type};
 use vercre_issuer::{
     CreateOfferRequest, CreateOfferResponse, CredentialOfferType, CredentialRequest,
     CredentialResponse, DeferredCredentialRequest, DeferredCredentialResponse, ProofClaims,
     TokenRequest, TokenResponse,
 };
+use vercre_test_utils::holder;
+use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, PENDING_USER};
 
 static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
 
 // Run through entire pre-authorized code flow.
 #[tokio::test]
 async fn deferred_flow() {
-    test_utils::init_tracer();
+    vercre_test_utils::init_tracer();
 
     // go through the pre-auth flow to token endpoint
     let token_resp = get_offer().and_then(get_token).await.expect("Ok");
@@ -42,7 +42,7 @@ async fn deferred_flow() {
 
 // Simulate Issuer request to '/create_offer' endpoint to get credential offer to use to
 // make credential offer to Wallet.
-async fn get_offer() -> openid::Result<CreateOfferResponse> {
+async fn get_offer() -> vercre_openid::Result<CreateOfferResponse> {
     // offer request
     let body = json!({
         "credential_configuration_ids": ["EmployeeID_JWT"],
@@ -61,7 +61,7 @@ async fn get_offer() -> openid::Result<CreateOfferResponse> {
 
 // Simulate Wallet request to '/token' endpoint with pre-authorized code to get
 // access token
-async fn get_token(input: CreateOfferResponse) -> openid::Result<TokenResponse> {
+async fn get_token(input: CreateOfferResponse) -> vercre_openid::Result<TokenResponse> {
     assert_let!(CredentialOfferType::Object(offer), &input.credential_offer);
 
     assert_let!(Some(grants), &offer.grants);
@@ -82,7 +82,7 @@ async fn get_token(input: CreateOfferResponse) -> openid::Result<TokenResponse> 
 }
 
 // Simulate Wallet request to '/credential' endpoint with access token to get credential.
-async fn get_credential(input: TokenResponse) -> openid::Result<CredentialResponse> {
+async fn get_credential(input: TokenResponse) -> vercre_openid::Result<CredentialResponse> {
     // create CredentialRequest to 'send' to the app
     let claims = ProofClaims {
         iss: Some(CLIENT_ID.into()),
@@ -116,7 +116,7 @@ async fn get_credential(input: TokenResponse) -> openid::Result<CredentialRespon
 
 async fn get_deferred(
     tkn: TokenResponse, cred_resp: CredentialResponse,
-) -> openid::Result<DeferredCredentialResponse> {
+) -> vercre_openid::Result<DeferredCredentialResponse> {
     let request = DeferredCredentialRequest {
         credential_issuer: CREDENTIAL_ISSUER.into(),
         access_token: tkn.access_token,

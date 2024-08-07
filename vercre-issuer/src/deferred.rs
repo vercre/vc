@@ -8,11 +8,11 @@
 //! the issuance of the Credential previously requested at the Credential Endpoint or
 //! the Batch Credential Endpoint.
 
-use openid::issuer::{
+use tracing::instrument;
+use vercre_openid::issuer::{
     DeferredCredentialRequest, DeferredCredentialResponse, Provider, StateManager,
 };
-use openid::{Error, Result};
-use tracing::instrument;
+use vercre_openid::{Error, Result};
 
 use crate::credential::credential;
 // use crate::shell;
@@ -69,21 +69,21 @@ async fn process(
 mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
-    use datasec::jose::jws::{self, Type};
-    use datasec::DataSec;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use openid::issuer::{CredentialRequest, ProofClaims};
     use serde_json::json;
-    use test_utils::holder;
-    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-    use w3c_vc::proof::{Payload, Verify};
+    use vercre_datasec::jose::jws::{self, Type};
+    use vercre_datasec::DataSec;
+    use vercre_openid::issuer::{CredentialRequest, ProofClaims};
+    use vercre_test_utils::holder;
+    use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+    use vercre_w3c_vc::proof::{Payload, Verify};
 
     use super::*;
     use crate::state::{Deferred, Expire, Token};
 
     #[tokio::test]
     async fn deferred_ok() {
-        test_utils::init_tracer();
+        vercre_test_utils::init_tracer();
 
         let provider = Provider::new();
         let access_token = "tkn-ABCDEF";
@@ -173,8 +173,9 @@ mod tests {
 
         let verifier =
             DataSec::verifier(&provider, &request.credential_issuer).expect("should get verifier");
-        let Payload::Vc(vc) =
-            w3c_vc::proof::verify(Verify::Vc(vc_kind), &verifier).await.expect("should decode")
+        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &verifier)
+            .await
+            .expect("should decode")
         else {
             panic!("should be VC");
         };

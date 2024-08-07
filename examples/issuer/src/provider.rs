@@ -1,11 +1,11 @@
 use chrono::{DateTime, Utc};
-use test_utils::store::keystore::{self, IssuerKeystore};
-use test_utils::store::{issuance, state};
 use vercre_issuer::provider::{
     Algorithm, Claims, Client, ClientMetadata, DataSec, Decryptor, Encryptor, Issuer,
     IssuerMetadata, PublicKeyJwk, Result, Server, ServerMetadata, Signer, StateManager, Subject,
     Verifier,
 };
+use vercre_test_utils::store::keystore::{self, IssuerKeystore};
+use vercre_test_utils::store::{issuance, state};
 
 #[derive(Default, Clone, Debug)]
 pub struct Provider {

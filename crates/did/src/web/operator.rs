@@ -5,7 +5,6 @@
 //! See <https://w3c-ccg.github.io/did-method-web>
 
 use base64ct::{Base64UrlUnpadded, Encoding};
-use core_utils::Kind;
 use curve25519_dalek::edwards::CompressedEdwardsY;
 // use ecdsa::signature::Signer as _;
 use ed25519_dalek::SigningKey;
@@ -13,6 +12,7 @@ use ed25519_dalek::SigningKey;
 use multibase::Base;
 use rand::rngs::OsRng;
 use url::Url;
+use vercre_core_utils::Kind;
 
 use super::DidWeb;
 use crate::document::{CreateOptions, Document, MethodType, PublicKeyFormat, VerificationMethod};

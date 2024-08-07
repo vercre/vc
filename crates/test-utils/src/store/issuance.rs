@@ -2,11 +2,11 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
-use openid::issuer::{Claims, Client, Issuer, Server};
-use openid::provider::Result;
 use serde::Deserialize;
 use serde_json::{Map, Value};
 use uuid::Uuid;
+use vercre_openid::issuer::{Claims, Client, Issuer, Server};
+use vercre_openid::provider::Result;
 
 // pub const NORMAL_USER: &str = "normal_user";
 // pub const PENDING_USER: &str = "pending_user";

@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
-use datasec::jose::jwk::PublicKeyJwk;
-use datasec::{Algorithm, DataSec, Decryptor, Encryptor, Signer, Verifier};
-use openid::issuer::{
+use vercre_datasec::jose::jwk::PublicKeyJwk;
+use vercre_datasec::{Algorithm, DataSec, Decryptor, Encryptor, Signer, Verifier};
+use vercre_openid::issuer::{
     Claims, Client, ClientMetadata, Issuer, IssuerMetadata, Result, Server, ServerMetadata,
     StateManager, Subject,
 };
@@ -36,7 +36,7 @@ impl Provider {
     }
 }
 
-impl openid::issuer::Provider for Provider {}
+impl vercre_openid::issuer::Provider for Provider {}
 
 impl ClientMetadata for Provider {
     async fn metadata(&self, client_id: &str) -> Result<Client> {

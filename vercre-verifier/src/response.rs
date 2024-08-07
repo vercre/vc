@@ -20,16 +20,16 @@
 //! If the Response Type value is "code" (Authorization Code Grant Type), the VP
 //! Token is provided in the Token Response.
 
-use core_utils::Kind;
-use openid::verifier::{
-    DataSec, PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, StateManager,
-};
-use openid::{Error, Result};
 use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
-use w3c_vc::model::VerifiableCredential;
-use w3c_vc::proof::{Payload, Verify};
+use vercre_core_utils::Kind;
+use vercre_openid::verifier::{
+    DataSec, PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, StateManager,
+};
+use vercre_openid::{Error, Result};
+use vercre_w3c_vc::model::VerifiableCredential;
+use vercre_w3c_vc::proof::{Payload, Verify};
 
 use crate::state::State;
 
@@ -80,7 +80,7 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
 
     // check nonce matches
     for vp_val in &vp_token {
-        let (vp, nonce) = match w3c_vc::proof::verify(Verify::Vp(vp_val), &verifier).await {
+        let (vp, nonce) = match vercre_w3c_vc::proof::verify(Verify::Vp(vp_val), &verifier).await {
             Ok(Payload::Vp { vp, nonce, .. }) => (vp, nonce),
             Ok(_) => return Err(Error::InvalidRequest("proof payload is invalid".into())),
             Err(e) => return Err(Error::ServerError(format!("issue verifying VP proof: {e}"))),
@@ -167,9 +167,10 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
             _ => return Err(Error::InvalidRequest(format!("unexpected VC format: {vc_node}"))),
         };
 
-        let Payload::Vc(vc) = w3c_vc::proof::verify(Verify::Vc(&vc_kind), &verifier)
-            .await
-            .map_err(|e| Error::InvalidRequest(format!("invalid VC proof: {e}")))?
+        let Payload::Vc(vc) =
+            vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &verifier)
+                .await
+                .map_err(|e| Error::InvalidRequest(format!("invalid VC proof: {e}")))?
         else {
             return Err(Error::InvalidRequest("proof payload is invalid".into()));
         };
@@ -228,12 +229,12 @@ async fn process(provider: impl Provider, request: &ResponseRequest) -> Result<R
 mod tests {
     use std::sync::LazyLock;
 
-    use dif_exch::PresentationDefinition;
-    use openid::verifier::{
+    use serde_json::json;
+    use vercre_dif_exch::PresentationDefinition;
+    use vercre_openid::verifier::{
         ClientIdScheme, ClientMetadataType, RequestObject, ResponseRequest, ResponseType,
     };
-    use serde_json::json;
-    use test_utils::verifier::Provider;
+    use vercre_test_utils::verifier::Provider;
 
     use super::*;
 
@@ -241,7 +242,7 @@ mod tests {
 
     #[tokio::test]
     async fn send_response() {
-        test_utils::init_tracer();
+        vercre_test_utils::init_tracer();
 
         let provider = Provider::new();
         let pres_def = serde_json::from_value::<PresentationDefinition>(DEFINITION.to_owned())

@@ -65,14 +65,14 @@
 //! See <https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-offer-endpoint>
 
 use chrono::Utc;
-use core_utils::gen;
-use openid::issuer::{
+use tracing::instrument;
+use vercre_core_utils::gen;
+use vercre_openid::issuer::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer,
     CredentialOfferType, Grants, IssuerMetadata, PreAuthorizedCodeGrant, Provider, StateManager,
     TxCode,
 };
-use openid::{Error, Result};
-use tracing::instrument;
+use vercre_openid::{Error, Result};
 
 // use crate::shell;
 use crate::state::{Auth, Expire, State};
@@ -214,13 +214,13 @@ mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
-    use test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
 
     use super::*;
 
     #[tokio::test]
     async fn pre_authorize() {
-        test_utils::init_tracer();
+        vercre_test_utils::init_tracer();
 
         let provider = Provider::new();
 

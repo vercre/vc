@@ -4,10 +4,7 @@ use std::sync::{Arc, Mutex};
 
 use chrono::{DateTime, Utc};
 // TODO: remove this import
-use dif_exch::Constraints;
-use test_utils::store::keystore::{self, HolderKeystore};
-use test_utils::store::state;
-use test_utils::{issuer, verifier};
+use vercre_dif_exch::Constraints;
 use vercre_holder::provider::{
     Algorithm, CredentialStorer, HolderProvider, IssuerClient, PublicKeyJwk, Result, Signer,
     StateManager, Verifier, VerifierClient,
@@ -17,6 +14,9 @@ use vercre_holder::{
     RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse, TokenRequest,
     TokenResponse,
 };
+use vercre_test_utils::store::keystore::{self, HolderKeystore};
+use vercre_test_utils::store::state;
+use vercre_test_utils::{issuer, verifier};
 
 #[derive(Default, Clone, Debug)]
 pub struct Provider {

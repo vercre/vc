@@ -40,23 +40,23 @@ mod issuance;
 pub mod presentation;
 pub mod provider;
 
-pub use core_utils::Quota;
-pub use dif_exch::Constraints;
 pub use issuance::accept::accept;
 pub use issuance::credential::get_credentials;
 pub use issuance::offer::offer;
 pub use issuance::pin::pin;
-pub use openid::issuer::{
+pub use presentation::authorize::authorize;
+pub use presentation::present::present;
+pub use presentation::request::request;
+pub use vercre_core_utils::Quota;
+pub use vercre_dif_exch::Constraints;
+pub use vercre_openid::issuer::{
     CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse, GrantType,
     Issuer, MetadataRequest, MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
     TxCode,
 };
-pub use openid::verifier::{
+pub use vercre_openid::verifier::{
     RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
 };
-pub use presentation::authorize::authorize;
-pub use presentation::present::present;
-pub use presentation::request::request;
 
 // pub use issuance::Issuance;
 pub use crate::credential::{Credential, Logo};

@@ -7,16 +7,16 @@
 
 use std::future::Future;
 
-pub use datasec::jose::jwk::PublicKeyJwk;
-pub use datasec::{Algorithm, Signer, Verifier};
-pub use dif_exch::Constraints;
-use openid::issuer::{
+pub use vercre_datasec::jose::jwk::PublicKeyJwk;
+pub use vercre_datasec::{Algorithm, Signer, Verifier};
+pub use vercre_dif_exch::Constraints;
+use vercre_openid::issuer::{
     CredentialRequest, CredentialResponse, MetadataRequest, MetadataResponse, TokenRequest,
     TokenResponse,
 };
-pub use openid::issuer::{IssuerMetadata, TxCode};
-pub use openid::provider::{Result, StateManager};
-use openid::verifier::{RequestObjectResponse, ResponseRequest, ResponseResponse};
+pub use vercre_openid::issuer::{IssuerMetadata, TxCode};
+pub use vercre_openid::provider::{Result, StateManager};
+use vercre_openid::verifier::{RequestObjectResponse, ResponseRequest, ResponseResponse};
 
 use crate::credential::{Credential, Logo};
 

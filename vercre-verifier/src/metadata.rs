@@ -5,9 +5,9 @@
 //! As the Verifier is a client to the Wallet's Authorization Server, this endpoint
 //! returns Client metadata as defined in [RFC7591](https://www.rfc-editor.org/rfc/rfc7591).
 
-use openid::verifier::{MetadataRequest, MetadataResponse, Provider, VerifierMetadata};
-use openid::{Error, Result};
 use tracing::instrument;
+use vercre_openid::verifier::{MetadataRequest, MetadataResponse, Provider, VerifierMetadata};
+use vercre_openid::{Error, Result};
 
 /// Endpoint for Wallets to request Verifier (Client) metadata.
 ///
@@ -35,14 +35,14 @@ async fn process(provider: impl Provider, req: &MetadataRequest) -> Result<Metad
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use test_utils::verifier::Provider;
+    use vercre_test_utils::verifier::Provider;
 
     // use providers::wallet_provider::holder_provider::CLIENT_ID;
     use super::*;
 
     #[tokio::test]
     async fn metadata_ok() {
-        test_utils::init_tracer();
+        vercre_test_utils::init_tracer();
         let provider = Provider::new();
 
         let request = MetadataRequest {

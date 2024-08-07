@@ -11,17 +11,17 @@
 use std::fmt::Debug;
 
 use chrono::Utc;
-use core_utils::{gen, Kind};
-use datasec::jose::jws::{self, KeyType, Type};
-use openid::issuer::{
+use tracing::instrument;
+use vercre_core_utils::{gen, Kind};
+use vercre_datasec::jose::jws::{self, KeyType, Type};
+use vercre_openid::issuer::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
     CredentialRequest, CredentialResponse, CredentialType, DataSec, Issuer, IssuerMetadata,
     ProofClaims, ProofType, Provider, StateManager, Subject,
 };
-use openid::{Error, Result};
-use tracing::instrument;
-use w3c_vc::model::{CredentialSubject, VerifiableCredential};
-use w3c_vc::proof::{Format, Payload};
+use vercre_openid::{Error, Result};
+use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
+use vercre_w3c_vc::proof::{Format, Payload};
 
 // use crate::shell;
 use crate::state::{Deferred, Expire, State};
@@ -270,7 +270,7 @@ async fn create_response(
     // sign credential (jwt = enveloping proof)
     let signer = DataSec::signer(&provider, &request.credential_issuer)
         .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
-    let jwt = w3c_vc::proof::create(Format::JwtVcJson, Payload::Vc(vc), signer)
+    let jwt = vercre_w3c_vc::proof::create(Format::JwtVcJson, Payload::Vc(vc), signer)
         .await
         .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
 
@@ -421,16 +421,16 @@ mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
-    use test_utils::holder;
-    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-    use w3c_vc::proof::Verify;
+    use vercre_test_utils::holder;
+    use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+    use vercre_w3c_vc::proof::Verify;
 
     use super::*;
     use crate::state::Token;
 
     #[tokio::test]
     async fn authorization_details() {
-        test_utils::init_tracer();
+        vercre_test_utils::init_tracer();
 
         let provider = Provider::new();
         let access_token = "ABCDEF";
@@ -503,8 +503,9 @@ mod tests {
 
         let verifier =
             DataSec::verifier(&provider, &request.credential_issuer).expect("should get verifier");
-        let Payload::Vc(vc) =
-            w3c_vc::proof::verify(Verify::Vc(vc_kind), &verifier).await.expect("should decode")
+        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &verifier)
+            .await
+            .expect("should decode")
         else {
             panic!("should be VC");
         };

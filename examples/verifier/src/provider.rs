@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
-use test_utils::store::keystore::{self, VerifierKeystore};
-use test_utils::store::{presentation, state};
+use vercre_test_utils::store::keystore::{self, VerifierKeystore};
+use vercre_test_utils::store::{presentation, state};
 use vercre_verifier::provider::{
     Algorithm, DataSec, Decryptor, Encryptor, PublicKeyJwk, Result, SignatureVerifier, Signer,
     StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata,

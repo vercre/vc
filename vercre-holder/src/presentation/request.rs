@@ -5,13 +5,13 @@
 //! query parameter.
 
 use anyhow::{anyhow, bail};
-use datasec::jose::jws;
-use dif_exch::Constraints;
-use openid::verifier::{
-    PresentationDefinitionType, RequestObject, RequestObjectResponse, RequestObjectType,
-};
 use tracing::instrument;
 use uuid::Uuid;
+use vercre_datasec::jose::jws;
+use vercre_dif_exch::Constraints;
+use vercre_openid::verifier::{
+    PresentationDefinitionType, RequestObject, RequestObjectResponse, RequestObjectType,
+};
 
 use super::{Presentation, Status};
 use crate::provider::{CredentialStorer, HolderProvider, Verifier, VerifierClient};

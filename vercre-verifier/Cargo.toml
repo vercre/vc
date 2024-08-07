@@ -20,20 +20,20 @@ workspace = true
 
 [dependencies]
 chrono.workspace = true
-core-utils.workspace = true
-datasec.workspace = true
+vercre-core-utils.workspace = true
+vercre-datasec.workspace = true
 derive_builder.workspace = true
-dif-exch.workspace = true
-openid.workspace = true
+vercre-dif-exch.workspace = true
+vercre-openid.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_json_path = { version = "0.6.7", default-features = true }
 tracing.workspace = true
 uuid.workspace = true
-w3c-vc.workspace = true
+vercre-w3c-vc.workspace = true
 
 [dev-dependencies]
 assert_let_bind.workspace = true
 insta.workspace = true
-test-utils.workspace = true
+vercre-test-utils.workspace = true
 tokio.workspace = true

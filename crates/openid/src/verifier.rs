@@ -8,14 +8,14 @@ use std::io::Cursor;
 
 use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
-use core_utils::Kind;
-pub use datasec::DataSec;
-use dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
-use w3c_vc::model::VerifiablePresentation;
+use vercre_core_utils::Kind;
+pub use vercre_datasec::DataSec;
+use vercre_dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
+use vercre_w3c_vc::model::VerifiablePresentation;
 
 pub use super::CredentialFormat;
 pub use crate::provider::{self, Result, StateManager};

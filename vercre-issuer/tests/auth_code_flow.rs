@@ -2,26 +2,26 @@ use std::sync::LazyLock;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
-use datasec::jose::jws::{self, Type};
-use datasec::DataSec;
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use sha2::{Digest, Sha256};
-use test_utils::holder;
-use test_utils::issuer::{self, CREDENTIAL_ISSUER, NORMAL_USER};
+use vercre_datasec::jose::jws::{self, Type};
+use vercre_datasec::DataSec;
 use vercre_issuer::{
     AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse,
     CredentialType, ProofClaims, TokenRequest, TokenResponse,
 };
-use w3c_vc::proof::{Payload, Verify};
+use vercre_test_utils::holder;
+use vercre_test_utils::issuer::{self, CREDENTIAL_ISSUER, NORMAL_USER};
+use vercre_w3c_vc::proof::{Payload, Verify};
 
 static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
 
 // Run through entire authorization code flow.
 #[tokio::test]
 async fn auth_code_flow() {
-    test_utils::init_tracer();
+    vercre_test_utils::init_tracer();
 
     // go through the auth code flow
     let resp = authorize().and_then(get_token).and_then(get_credential).await.expect("Ok");
@@ -33,7 +33,7 @@ async fn auth_code_flow() {
     let provider = ISSUER_PROVIDER.clone();
     let verifier = DataSec::verifier(&provider, CREDENTIAL_ISSUER).expect("should get verifier");
     let Payload::Vc(vc) =
-        w3c_vc::proof::verify(Verify::Vc(vc_kind), &verifier).await.expect("should decode")
+        vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &verifier).await.expect("should decode")
     else {
         panic!("should be VC");
     };
@@ -47,7 +47,7 @@ async fn auth_code_flow() {
 
 // Simulate Issuer request to '/create_offer' endpoint to get credential offer to use to
 // make credential offer to Wallet.
-async fn authorize() -> openid::Result<AuthorizationResponse> {
+async fn authorize() -> vercre_openid::Result<AuthorizationResponse> {
     // authorize request
     let auth_dets = json!([{
         "type": "openid_credential",
@@ -94,7 +94,7 @@ async fn authorize() -> openid::Result<AuthorizationResponse> {
 
 // Simulate Wallet request to '/token' endpoint with pre-authorized code to get
 // access token
-async fn get_token(input: AuthorizationResponse) -> openid::Result<TokenResponse> {
+async fn get_token(input: AuthorizationResponse) -> vercre_openid::Result<TokenResponse> {
     // create TokenRequest to 'send' to the app
     let body = json!({
         "client_id": issuer::CLIENT_ID,
@@ -121,7 +121,7 @@ async fn get_token(input: AuthorizationResponse) -> openid::Result<TokenResponse
 }
 
 // Simulate Wallet request to '/credential' endpoint with access token to get credential.
-async fn get_credential(input: TokenResponse) -> openid::Result<CredentialResponse> {
+async fn get_credential(input: TokenResponse) -> vercre_openid::Result<CredentialResponse> {
     // create CredentialRequest to 'send' to the app
     let claims = ProofClaims {
         iss: Some(issuer::CLIENT_ID.into()),
