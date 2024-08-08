@@ -5627,7 +5627,7 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "vercre-core-utils"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 dependencies = [
  "base64ct",
  "fastrand",
@@ -5636,7 +5636,7 @@ dependencies = [
 
 [[package]]
 name = "vercre-datasec"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -5655,7 +5655,7 @@ dependencies = [
 
 [[package]]
 name = "vercre-did"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 dependencies = [
  "anyhow",
  "base64ct",
@@ -5680,7 +5680,7 @@ dependencies = [
 
 [[package]]
 name = "vercre-dif-exch"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 dependencies = [
  "anyhow",
  "chrono",
@@ -5692,7 +5692,7 @@ dependencies = [
 
 [[package]]
 name = "vercre-holder"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 dependencies = [
  "anyhow",
  "base64ct",
@@ -5719,7 +5719,7 @@ dependencies = [
 
 [[package]]
 name = "vercre-issuer"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 dependencies = [
  "assert_let_bind",
  "base64ct",
@@ -5741,7 +5741,7 @@ dependencies = [
 
 [[package]]
 name = "vercre-openid"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 dependencies = [
  "anyhow",
  "base64ct",
@@ -5761,7 +5761,7 @@ dependencies = [
 
 [[package]]
 name = "vercre-test-utils"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 dependencies = [
  "anyhow",
  "base64ct",
@@ -5780,7 +5780,7 @@ dependencies = [
 
 [[package]]
 name = "vercre-verifier"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 dependencies = [
  "assert_let_bind",
  "chrono",
@@ -5802,7 +5802,7 @@ dependencies = [
 
 [[package]]
 name = "vercre-w3c-vc"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 dependencies = [
  "anyhow",
  "base64ct",
@@ -5879,7 +5879,7 @@ dependencies = [
 
 [[package]]
 name = "wallet"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 dependencies = [
  "anyhow",
  "base64ct",
