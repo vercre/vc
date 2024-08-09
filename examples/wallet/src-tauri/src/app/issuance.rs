@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use vercre_holder::{CredentialConfiguration, CredentialOffer, OfferRequest, PinRequest, Status, TxCode};
+use vercre_holder::{CredentialConfiguration, CredentialOffer, OfferRequest, PinRequest, IssuanceStatus, TxCode};
 
 use super::{AppState, SubApp};
 use crate::provider::Provider;
@@ -16,7 +16,7 @@ pub struct IssuanceState {
     /// Issuance flow identifier to pass to the vercre-holder crate for state management.
     pub id: String,
     /// Status of the issuance flow.
-    pub status: Status,
+    pub status: IssuanceStatus,
     /// Issuer of the credential(s)
     pub issuer: String,
     /// Description of the credential(s) offered, keyed by credential configuration ID.
