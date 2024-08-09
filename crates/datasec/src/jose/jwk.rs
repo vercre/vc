@@ -23,9 +23,6 @@ pub struct PublicKeyJwk {
     /// Key type.
     pub kty: KeyType,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub alg: Option<EncryptionAlgorithm>,
-
     /// Cryptographic curve type.
     pub crv: Curve,
 
@@ -35,6 +32,10 @@ pub struct PublicKeyJwk {
     /// Y coordinate. Not required for `EdDSA` verification keys.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub y: Option<String>,
+
+    /// Algorithm intended for use with the key.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub alg: Option<EncryptionAlgorithm>,
 
     /// Use of the key.
     #[serde(rename = "use")]
@@ -54,6 +55,7 @@ pub enum KeyType {
     #[serde(rename = "EC")]
     Ec,
 
+    /// Octet string
     #[serde(rename = "oct")]
     Oct,
 }

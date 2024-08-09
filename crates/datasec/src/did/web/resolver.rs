@@ -14,10 +14,10 @@ use regex::Regex;
 use serde_json::json;
 
 use super::DidWeb;
-use crate::did::Error;
 use crate::did::resolution::{
-    ContentMetadata, ContentType, Dereference, Metadata, Options, Resolve, Resource,
+    ContentMetadata, ContentType, Dereferenced, Metadata, Options, Resolved, Resource,
 };
+use crate::did::Error;
 use crate::{did, DidResolver};
 
 static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
@@ -27,7 +27,7 @@ static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 impl DidWeb {
     pub async fn resolve(
         did: &str, _: Option<Options>, resolver: &impl DidResolver,
-    ) -> did::Result<Resolve> {
+    ) -> did::Result<Resolved> {
         let Some(caps) = DID_REGEX.captures(did) else {
             return Err(Error::InvalidDid("DID is not a valid did:web".to_string()));
         };
@@ -71,8 +71,7 @@ impl DidWeb {
         //     ..CreateOptions::default()
         // };
 
-        Ok(Resolve {
-            context: "https://w3id.org/did-resolution/v1".into(),
+        Ok(Resolved {
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
                 additional: Some(json!({
@@ -86,13 +85,13 @@ impl DidWeb {
                 ..Metadata::default()
             },
             document: Some(document),
-            ..Resolve::default()
+            ..Resolved::default()
         })
     }
 
     pub async fn dereference(
         did_url: &str, _opts: Option<Options>, resolver: &impl DidResolver,
-    ) -> did::Result<Dereference> {
+    ) -> did::Result<Dereferenced> {
         let url = url::Url::parse(did_url)
             .map_err(|e| Error::InvalidDidUrl(format!("issue parsing URL: {e}")))?;
 
@@ -113,7 +112,7 @@ impl DidWeb {
             return Err(Error::NotFound("verification method not found".into()));
         };
 
-        Ok(Dereference {
+        Ok(Dereferenced {
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
                 ..Metadata::default()

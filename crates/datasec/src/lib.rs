@@ -1,5 +1,5 @@
-#![allow(missing_docs)]
-#![allow(dead_code)]
+// #![allow(missing_docs)]
+// #![allow(dead_code)]
 // #![allow(clippy::missing_errors_doc)]
 #![feature(let_chains)]
 
@@ -122,16 +122,19 @@ pub trait DidResolver: Send + Sync {
 /// Encryptor is used by implementers to provide encryption functionality for
 /// Verifiable Credential issuance and Verifiable Presentation submissions.
 pub trait Encryptor: Send + Sync {
+    /// Encrypt the plaintext using the recipient's public key.
     fn encrypt(
         &self, plaintext: &[u8], recipient_public_key: &[u8],
     ) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
 
+    /// The public key of the encryptor.
     fn public_key(&self) -> Vec<u8>;
 }
 
 /// Decryptor is used by implementers to provide decryption functionality for
 /// Verifiable Credential issuance and Verifiable Presentation submissions.
 pub trait Decryptor: Send + Sync {
+    /// Decrypt the ciphertext using the sender's public key.
     fn decrypt(
         &self, ciphertext: &[u8], sender_public_key: &[u8],
     ) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;

@@ -316,15 +316,22 @@ pub struct Recipient {
     encrypted_key: Option<String>,
 }
 
+/// The algorithm used to encrypt or determine the value of the content encryption
+/// key (CEK).
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub enum CekAlgorithm {
+    /// Elliptic Curve Diffie-Hellman Ephemeral-Static key agreement 
+    /// (using Concat KDF).
     #[default]
     #[serde(rename = "ECDH-ES")]
     EcdhEs,
 }
 
+/// The algorithm used to perform authenticated encryption on the plaintext to
+/// produce the ciphertext and the Authentication Tag. MUST be an AEAD algorithm.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub enum EncryptionAlgorithm {
+    /// AES in Galois/Counter Mode (GCM) using a 128-bit key.
     #[default]
     #[serde(rename = "A128GCM")]
     A128Gcm,
@@ -335,7 +342,6 @@ mod test {
     use crypto_box::aead::{Aead, OsRng};
     use crypto_box::{ChaChaBox, PublicKey, SecretKey};
 
-    // use x25519_dalek::{PublicKey, StaticSecret};
     use super::*;
 
     #[tokio::test]
@@ -357,8 +363,6 @@ mod test {
     // Basic key store for testing
     struct KeyStore {
         x25519_secret: x25519_dalek::StaticSecret,
-        ed25519_secret: ed25519_dalek::SigningKey,
-        sender_secret: SecretKey,
         recipient_secret: SecretKey,
     }
 
@@ -366,8 +370,6 @@ mod test {
         fn new() -> Self {
             Self {
                 x25519_secret: x25519_dalek::StaticSecret::random_from_rng(&mut OsRng),
-                ed25519_secret: ed25519_dalek::SigningKey::generate(&mut OsRng),
-                sender_secret: SecretKey::generate(&mut OsRng),
                 recipient_secret: SecretKey::generate(&mut OsRng),
             }
         }
@@ -379,9 +381,7 @@ mod test {
         ) -> anyhow::Result<Vec<u8>> {
             let pk: &[u8; 32] = recipient_public_key.try_into()?;
 
-            // let chachabox = ChaChaBox::new(&PublicKey::from(*pk), &self.sender_secret);
             let secret_key = SecretKey::from_bytes(self.x25519_secret.to_bytes());
-            // let secret_key = SecretKey::from_bytes(self.ed25519_secret.to_bytes());
 
             let chachabox = ChaChaBox::new(&PublicKey::from(*pk), &secret_key);
             let ciphertext = chachabox
@@ -392,9 +392,7 @@ mod test {
         }
 
         fn public_key(&self) -> Vec<u8> {
-            // self.sender_secret.public_key().as_bytes().to_vec()
             x25519_dalek::PublicKey::from(&self.x25519_secret).as_bytes().to_vec()
-            // ed25519_dalek::VerifyingKey::from(&self.ed25519_secret).to_montgomery().to_bytes().to_vec()
         }
     }
 

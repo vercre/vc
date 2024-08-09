@@ -33,7 +33,7 @@ use crate::DidResolver;
 /// error as specified.
 pub async fn resolve(
     did: &str, opts: Option<Options>, resolver: &impl DidResolver,
-) -> did::Result<Resolve> {
+) -> did::Result<Resolved> {
     // use DID-specific resolver
     let method = did.split(':').nth(1).unwrap_or_default();
 
@@ -44,14 +44,14 @@ pub async fn resolve(
     };
 
     if let Err(e) = result {
-        return Ok(Resolve {
+        return Ok(Resolved {
             metadata: Metadata {
                 error: Some(e.to_string()),
                 error_message: Some(e.message()),
                 content_type: ContentType::DidLdJson,
                 ..Metadata::default()
             },
-            ..Resolve::default()
+            ..Resolved::default()
         });
     };
 
@@ -63,7 +63,7 @@ pub async fn resolve(
 /// # Errors
 pub async fn dereference(
     did_url: &str, opts: Option<Options>, resolver: &impl DidResolver,
-) -> did::Result<Dereference> {
+) -> did::Result<Dereferenced> {
     let method = did_url.split(':').nth(1).unwrap_or_default();
 
     match method {
@@ -139,12 +139,10 @@ pub struct Parameters {
     pub additional: Option<HashMap<String, Value>>,
 }
 
+/// Returned by `resolve` DID methods.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub struct Resolve {
-    #[serde(rename = "@context")]
-    pub context: String,
-
+pub struct Resolved {
     /// Resolution metadata.
     pub metadata: Metadata,
 
@@ -157,9 +155,10 @@ pub struct Resolve {
     pub document_metadata: Option<DocumentMetadata>,
 }
 
+/// `Dereferenced` contains the result of dereferencing a DID URL.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub struct Dereference {
+pub struct Dereferenced {
     /// A metadata structure consisting of values relating to the results of the
     /// DID URL dereferencing process. MUST NOT be empty in the case of an error.
     pub metadata: Metadata,
@@ -175,8 +174,11 @@ pub struct Dereference {
     pub content_metadata: Option<ContentMetadata>,
 }
 
+/// Resource represents the DID document resource returned as a result of DID
+/// dereferencing. The resource is a DID document or a subset of a DID document.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum Resource {
+    /// The `VerificationMethod` resource.
     VerificationMethod(VerificationMethod),
 }
 
@@ -186,6 +188,7 @@ impl Default for Resource {
     }
 }
 
+/// DID document metadata.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Metadata {
@@ -211,12 +214,14 @@ pub struct Metadata {
 /// The Media Type of the returned resource.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub enum ContentType {
+    /// JSON-LD representation of a DID document.
     #[default]
     #[serde(rename = "application/did+ld+json")]
     DidLdJson,
-
-    #[serde(rename = "application/ld+json")]
-    LdJson,
+    //
+    // /// The JSON-LD Media Type.
+    // #[serde(rename = "application/ld+json")]
+    // LdJson,
 }
 
 /// Metadata about the `content_stream`. If `content_stream` is a DID document,

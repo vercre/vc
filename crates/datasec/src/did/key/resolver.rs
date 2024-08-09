@@ -16,7 +16,7 @@ use serde_json::json;
 use super::DidKey;
 use crate::did::document::CreateOptions;
 use crate::did::resolution::{
-    ContentMetadata, ContentType, Dereference, Metadata, Options, Resolve, Resource,
+    ContentMetadata, ContentType, Dereferenced, Metadata, Options, Resolved, Resource,
 };
 use crate::did::Error;
 use crate::{did, DidResolver};
@@ -27,7 +27,7 @@ static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 impl DidKey {
-    pub fn resolve(did: &str, _: Option<Options>, _: &impl DidResolver) -> did::Result<Resolve> {
+    pub fn resolve(did: &str, _: Option<Options>, _: &impl DidResolver) -> did::Result<Resolved> {
         // check DID is valid AND extract key
         let Some(caps) = DID_REGEX.captures(did) else {
             return Err(Error::InvalidDid("DID is not a valid did:key".into()));
@@ -53,8 +53,7 @@ impl DidKey {
         let document =
             Self::create(&key_bytes[2..], options).map_err(|e| Error::InvalidDid(e.to_string()))?;
 
-        Ok(Resolve {
-            context: "https://w3id.org/did-resolution/v1".into(),
+        Ok(Resolved {
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
                 additional: Some(json!({
@@ -68,14 +67,14 @@ impl DidKey {
                 ..Metadata::default()
             },
             document: Some(document),
-            ..Resolve::default()
+            ..Resolved::default()
         })
     }
 
     #[allow(clippy::needless_pass_by_value)]
     pub fn dereference(
         did_url: &str, _opts: Option<Options>, resolver: &impl DidResolver,
-    ) -> did::Result<Dereference> {
+    ) -> did::Result<Dereferenced> {
         // validate URL against pattern
         let url = url::Url::parse(did_url)
             .map_err(|e| Error::InvalidDidUrl(format!("issue parsing URL: {e}")))?;
@@ -97,7 +96,7 @@ impl DidKey {
             return Err(Error::NotFound("verification method not found".into()));
         };
 
-        Ok(Dereference {
+        Ok(Dereferenced {
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
                 ..Metadata::default()

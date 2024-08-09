@@ -100,6 +100,11 @@ pub struct Document {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub capability_delegation: Option<Vec<Kind<VerificationMethod>>>,
 
+    /// If resolution is successful, this MUST be metadata about the DID document.
+    /// This typically does not change between invocations of the resolve and
+    /// resolveRepresentation functions unless the DID document changes.
+    /// If resolution is unsuccessful, this output MUST be an empty.
+    /// <https://w3c.github.io/did-core/#dfn-diddocumentmetadata>
     #[serde(skip_serializing_if = "Option::is_none")]
     pub did_document_metadata: Option<DocumentMetadata>,
 }
@@ -173,13 +178,24 @@ pub enum MethodType {
     /// verification method that encodes key types into a single binary stream that
     /// is then encoded as a Multibase value.
     /// <https://w3c.github.io/controller-document/#multikey>
-    Multikey { public_key_multibase: String },
+    #[serde(alias = "Ed25519VerificationKey2020")]
+    Multikey {
+        /// The public key encoded as a Multibase.
+        public_key_multibase: String,
+    },
 
     /// Key is JWK. The JSON Web Key (JWK) data model is a specific type of
     /// verification method that uses the JWK specification [RFC7517] to encode
     /// key types into a set of parameters.
     /// <https://w3c.github.io/controller-document/#jsonwebkey>
-    JsonWebKey { public_key_jwk: PublicKeyJwk },
+    #[serde(alias = "JsonWebKey2020")]
+    JsonWebKey {
+        /// The public key encoded as a JWK.
+        public_key_jwk: PublicKeyJwk,
+    },
+    //
+    // #[serde(alias = "Ed25519VerificationKey2018")]
+    // Base58 { public_key_base58: String },
 }
 
 impl Default for MethodType {
@@ -342,6 +358,8 @@ impl PublicKey {
     }
 }
 
+/// DID document metadata. This typically does not change unless the DID document
+/// changes.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 #[allow(clippy::module_name_repetitions)]
@@ -387,19 +405,9 @@ pub struct DocumentMetadata {
     /// DID document.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub canonical_id: Option<String>,
-
-    pub method: Method,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub enum Method {
-    #[default]
-    None,
-    Key(),
-    Web(),
-}
-
+/// Options that can be provided when creating a DID document.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateOptions {
