@@ -6,7 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
-## [v0.1.0-alpha.5](https://github.com/vercre/vercre/compare/vercre-wallet-v0.1.0-alpha.4...vercre-wallet-v0.1.0-alpha.5) - 2024-03-01
+## [v0.1.0-alpha.6](https://github.com/vercre/vercre/compare/vercre-holder-v0.1.0-alpha.6...vercre-holder-v0.1.0-alpha.7) - 2024-08-08
+
+### Breaking changes
+
+- Internal flow state for issuance and presentation is no longer returned in endpoint responses; Only the minimum information required by the holder's agent is returned.
+
+
+## [v0.1.0-alpha.6](https://github.com/vercre/vercre/releases/tag/vercre-holder-v0.1.0-alpha.6) - 2024-08-08
 
 ### Breaking changes
 

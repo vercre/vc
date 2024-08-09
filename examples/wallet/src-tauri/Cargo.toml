@@ -32,7 +32,7 @@ log = "0.4.22"
 reqwest = { version = "0.12.5", features = ["json"] }
 serde.workspace = true
 serde_json.workspace = true
-tauri = { version = "2.0.0-beta", features = ["test"] }
+tauri = { version = "2.0.0-rc.1", features = ["test"] }
 tauri-plugin-deep-link = "2.0.0-rc.0"
 tauri-plugin-log = "2.0.0-rc.0"
 tauri-plugin-shell = "2.0.0-rc.0"
@@ -47,7 +47,7 @@ vercre-verifier.workspace = true
 [dev-dependencies]
 
 [build-dependencies]
-tauri-build = { version = "2.0.0-beta", features = [] }
+tauri-build = { version = "2.0.0-rc.1", features = [] }
 
 [features]
 # by default Tauri runs in production mode

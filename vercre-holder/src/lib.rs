@@ -22,7 +22,7 @@
 //! ** Provider **
 //!
 //! Implementors need to implement 'Provider' traits that are responsible for handling storage and
-//! signing. See [`core-utils`](https://docs.rs/core-utils/latest/core_utils/) for core provider
+//! signing. See [`vercre-openid`](https://docs.rs/vercre-openid/latest/vercre_openid/provider/) for core provider
 //! traits, and the `provider` module in this crate for traits specific to holder agents.
 //!
 //! # Example
@@ -42,7 +42,7 @@ pub mod provider;
 
 pub use issuance::accept::accept;
 pub use issuance::credential::get_credentials;
-pub use issuance::offer::offer;
+pub use issuance::offer::{offer, OfferRequest, OfferResponse};
 pub use issuance::pin::pin;
 pub use presentation::authorize::authorize;
 pub use presentation::present::present;
@@ -58,9 +58,7 @@ pub use vercre_openid::verifier::{
     RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
 };
 
-// pub use issuance::Issuance;
 pub use crate::credential::{Credential, Logo};
-pub use crate::issuance::offer::OfferRequest;
 pub use crate::issuance::pin::PinRequest;
-pub use crate::issuance::{Issuance, Status};
+pub use crate::issuance::Status;
 pub use crate::presentation::Presentation;

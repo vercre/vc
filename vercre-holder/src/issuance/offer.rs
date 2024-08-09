@@ -4,13 +4,13 @@
 //! issuer. The endpoint uses the holder client to get metadata and present the offer details for
 //! acceptance/rejection by the holder.
 
-use std::fmt::Debug;
+use std::{collections::HashMap, fmt::Debug};
 
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
-use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, MetadataRequest};
+use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, MetadataRequest, TxCode};
 
 use super::{Issuance, Status};
 use crate::provider::{HolderProvider, IssuerClient};
@@ -28,11 +28,32 @@ pub struct OfferRequest {
     pub offer: CredentialOffer,
 }
 
+/// `OfferResponse` is the response from the `offer` endpoint. The agent application can use this
+/// to present the offer to the holder for acceptance.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[allow(clippy::module_name_repetitions)]
+pub struct OfferResponse {
+    /// The issuance flow identifier.
+    pub issuance_id: String,
+
+    /// The status of the issuance flow.
+    pub status: Status,
+
+    /// The identifer of the credential issuer.
+    pub issuer: String,
+
+    /// The credentials offered from the issuer to the holder, keyed by credential configuration ID.
+    pub offered: HashMap<String, CredentialConfiguration>,
+
+    /// Details of any PIN required by the holder to accept the offer.
+    pub tx_code: Option<TxCode>,
+}
+
 /// Initiates the issuance flow triggered by a new credential offer.
 #[instrument(level = "debug", skip(provider))]
 pub async fn offer(
     provider: impl HolderProvider, request: &OfferRequest,
-) -> anyhow::Result<Issuance> {
+) -> anyhow::Result<OfferResponse> {
     tracing::debug!("Endpoint::offer");
 
     if request.offer.credential_configuration_ids.is_empty() {
@@ -45,11 +66,11 @@ pub async fn offer(
         tracing::error!(target: "Endpoint::offer", ?e);
         return Err(e);
     };
-    if grants.pre_authorized_code.is_none() {
+    let Some(pre_authorized_code) = &grants.pre_authorized_code else {
         let e = anyhow!("no pre-authorized code");
         tracing::error!(target: "Endpoint::offer", ?e);
         return Err(e);
-    }
+    };
 
     // Establish a new issuance flow state
     let mut issuance = Issuance {
@@ -101,5 +122,13 @@ pub async fn offer(
         return Err(e);
     };
 
-    Ok(issuance)
+    let res = OfferResponse {
+        issuance_id: issuance.id,
+        status: issuance.status,
+        issuer: request.offer.credential_issuer.clone(),
+        offered: issuance.offered.clone(),
+        tx_code: pre_authorized_code.tx_code.clone(),
+    };
+
+    Ok(res)
 }
