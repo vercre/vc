@@ -14,12 +14,12 @@ use vercre_w3c_vc::proof::{Payload, Verify};
 
 use super::{Issuance, Status};
 use crate::credential::Credential;
-use crate::provider::{CredentialStorer, HolderProvider, IssuerClient, Verifier};
+use crate::provider::{CredentialStorer, HolderProvider, IssuerClient, StateManager, Verifier};
 
 /// Progresses the issuance flow by getting an access token then using that to get the
 /// credentials contained in the offer.
 #[instrument(level = "debug", skip(provider))]
-pub async fn get_credentials(provider: impl HolderProvider, request: String) -> anyhow::Result<()> {
+pub async fn get_credentials(provider: impl HolderProvider, request: String) -> anyhow::Result<Status> {
     tracing::debug!("Endpoint::get_credentials");
 
     let mut issuance = match super::get_issuance(provider.clone(), &request).await {
@@ -63,7 +63,6 @@ pub async fn get_credentials(provider: impl HolderProvider, request: String) -> 
         };
 
         let request = credential_request(&issuance, id, cfg, &proof);
-        issuance.status = Status::Requested;
 
         let cred_res = match IssuerClient::get_credential(&provider, &issuance.id, &request).await {
             Ok(cred_res) => cred_res,
@@ -108,7 +107,10 @@ pub async fn get_credentials(provider: impl HolderProvider, request: String) -> 
         };
     }
 
-    Ok(())
+    // Release issuance state.
+    StateManager::purge(&provider, &issuance.id).await?;
+
+    Ok(Status::Requested)
 }
 
 /// Construct a token request.

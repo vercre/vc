@@ -7,9 +7,10 @@ mod credential;
 mod issuance;
 mod presentation;
 
+pub use issuance::IssuanceState;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use vercre_holder::{Credential, Issuance, Presentation};
+use vercre_holder::{Credential, Presentation};
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
@@ -31,21 +32,9 @@ pub struct AppState {
     /// Credentials stored in the wallet
     pub credential: Vec<Credential>,
     /// State of issuance flow (if active)
-    pub issuance: Issuance,
+    pub issuance: IssuanceState,
     /// State of presentation flow (if active)
     pub presentation: Presentation,
     /// Error information
     pub error: Option<String>,
 }
-
-// impl AppState {
-//     //Set the application state to a startup state.
-
-//     pub fn init(&mut self) {
-//         self.sub_app = SubApp::Splash;
-//         self.credential = Vec::new();
-//         self.issuance = Issuance::default();
-//         self.presentation = Presentation::default();
-//         self.error = None;
-//     }
-// }

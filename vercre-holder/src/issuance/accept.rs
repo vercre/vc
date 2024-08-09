@@ -7,13 +7,13 @@
 use anyhow::anyhow;
 use tracing::instrument;
 
-use crate::issuance::{Issuance, Status};
+use crate::issuance::Status;
 use crate::provider::HolderProvider;
 
 /// Progresses the issuance flow triggered by a holder accepting a credential offer.
 /// The request is the issuance flow ID.
 #[instrument(level = "debug", skip(provider))]
-pub async fn accept(provider: impl HolderProvider, request: String) -> anyhow::Result<Issuance> {
+pub async fn accept(provider: impl HolderProvider, request: String) -> anyhow::Result<Status> {
     tracing::debug!("Endpoint::accept");
 
     let mut issuance = match super::get_issuance(provider.clone(), &request).await {
@@ -51,5 +51,5 @@ pub async fn accept(provider: impl HolderProvider, request: String) -> anyhow::R
         return Err(e);
     };
 
-    Ok(issuance)
+    Ok(issuance.status)
 }
