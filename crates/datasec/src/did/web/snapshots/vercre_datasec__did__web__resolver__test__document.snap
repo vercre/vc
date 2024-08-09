@@ -1,6 +1,6 @@
 ---
 source: crates/datasec/src/did/web/resolver.rs
-assertion_line: 148
+assertion_line: 150
 expression: resolved.document
 ---
 {
@@ -16,7 +16,6 @@ expression: resolved.document
       "type": "JsonWebKey",
       "publicKeyJwk": {
         "kty": "EC",
-        "alg": null,
         "crv": "ES256K",
         "x": "H846FVf9umFYyRrEvC5uQa-__2sKLW9H3O89THClFm4",
         "y": "VoMVEnKQsKNtu_sS20M0LPUR5yYEQz4YxUq4hQaQIzQ"
@@ -36,7 +35,6 @@ expression: resolved.document
       "type": "JsonWebKey",
       "publicKeyJwk": {
         "kty": "EC",
-        "alg": null,
         "crv": "ES256K",
         "x": "H846FVf9umFYyRrEvC5uQa-__2sKLW9H3O89THClFm4",
         "y": "VoMVEnKQsKNtu_sS20M0LPUR5yYEQz4YxUq4hQaQIzQ"

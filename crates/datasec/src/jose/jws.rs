@@ -12,11 +12,10 @@ use base64ct::{Base64UrlUnpadded, Encoding};
 use ecdsa::signature::Verifier as _;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use crate::did;
 
 use crate::jose::jwk::{Curve, PublicKeyJwk};
 pub use crate::jose::jwt::{Header, Jwt, KeyType, Type};
-use crate::{Algorithm, DidResolver, Signer};
+use crate::{did, Algorithm, DidResolver, Signer};
 
 /// Encode the provided header and claims and sign, returning a JWT in compact JWS form.
 ///
@@ -86,14 +85,13 @@ where
     };
     // let jwk = verifier.deref_jwk(kid).await?;
 
-
     let resp = did::dereference(kid, None, resolver).await?;
 
     // get public key specified by the url fragment
     let Some(did::Resource::VerificationMethod(vm)) = resp.content_stream else {
         bail!("Verification method not found");
     };
-    let jwk=vm.method_type.jwk()?;
+    let jwk = vm.method_type.jwk()?;
 
     verify(&jwk, &format!("{}.{}", parts[0], parts[1]), &sig)?;
 

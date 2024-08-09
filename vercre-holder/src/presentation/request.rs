@@ -14,7 +14,7 @@ use vercre_openid::verifier::{
 };
 
 use super::{Presentation, Status};
-use crate::provider::{CredentialStorer, HolderProvider, DidResolver, VerifierClient};
+use crate::provider::{CredentialStorer, DidResolver, HolderProvider, VerifierClient};
 
 /// Initiates the presentation flow triggered by a new presentation request where the form of
 /// the request is a URI to retrieve the request details or a `PresentationRequest` struct as a

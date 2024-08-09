@@ -60,16 +60,32 @@ pub use crate::jose::jwk::PublicKeyJwk;
 pub trait DataSec: Send + Sync {
     /// Signer provides digital signing-related funtionality.
     /// The `identifier` parameter is one of `credential_issuer` or `verifier_id`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the signer cannot be created.
     fn signer(&self, identifier: &str) -> anyhow::Result<impl Signer>;
 
     /// Returns a resolver that can be used to resolve an external reference to
     /// public key material.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the resolver cannot be created.
     fn resolver(&self, identifier: &str) -> anyhow::Result<impl DidResolver>;
 
     /// Encryptor provides data encryption functionality.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the encryptor cannot be created.
     fn encryptor(&self, identifier: &str) -> anyhow::Result<impl Encryptor>;
 
     /// Decryptor provides data decryption functionality.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the decryptor cannot be created.
     fn decryptor(&self, identifier: &str) -> anyhow::Result<impl Decryptor>;
 }
 
@@ -93,7 +109,7 @@ pub trait Signer: Send + Sync {
     fn try_sign(&self, msg: &[u8]) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
 }
 
-/// DidResolver is used to resolve an external reference to public key material.
+/// `DidResolver` is used to resolve an external reference to public key material.
 pub trait DidResolver: Send + Sync {
     /// Resolve the DID URL to a DID Document.
     ///

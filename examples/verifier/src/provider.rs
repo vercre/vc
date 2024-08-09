@@ -2,8 +2,8 @@ use chrono::{DateTime, Utc};
 use vercre_test_utils::store::keystore::{self, VerifierKeystore};
 use vercre_test_utils::store::{presentation, state};
 use vercre_verifier::provider::{
-    Algorithm, DataSec, Decryptor, DidResolver, Encryptor, Result, Signer, StateManager, Verifier,
-    VerifierMetadata, Wallet, WalletMetadata,Document
+    Algorithm, DataSec, Decryptor, DidResolver, Document, Encryptor, Result, Signer, StateManager,
+    Verifier, VerifierMetadata, Wallet, WalletMetadata,
 };
 
 #[derive(Default, Clone, Debug)]

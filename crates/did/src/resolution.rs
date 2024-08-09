@@ -1,6 +1,6 @@
-//! # DID DidResolver
+//! # DID Resolver
 //!
-//! This crate provides a DID DidResolver trait and a set of default implementations for
+//! This crate provides a DID Resolver trait and a set of default implementations for
 //! resolving DIDs.
 //!
 //! See [DID resolution](https://www.w3.org/TR/did-core/#did-resolution) fpr more.

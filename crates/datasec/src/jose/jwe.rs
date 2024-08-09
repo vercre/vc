@@ -66,6 +66,10 @@ use crate::{Decryptor, Encryptor};
 ///
 /// N.B. We currently only support ECDH-ES key agreement and A128GCM
 /// content encryption.
+///
+/// # Errors
+///
+/// Returns an error if the plaintext cannot be encrypted.
 pub async fn encrypt<T: Serialize + Send>(
     plaintext: T, recipient_key: &[u8; 32], encryptor: &impl Encryptor,
 ) -> anyhow::Result<String> {
@@ -129,6 +133,12 @@ pub async fn encrypt<T: Serialize + Send>(
 // use aes_gcm::AesGcm;
 
 /// Decrypt the JWE and return the plaintext.
+///
+/// N.B. We currently only support ECDH-ES key agreement and A128GCM
+///
+/// # Errors
+///
+/// Returns an error if the JWE cannot be decrypted.
 pub async fn decrypt<T: DeserializeOwned>(
     compact_jwe: &str, decryptor: &impl Decryptor,
 ) -> anyhow::Result<T> {

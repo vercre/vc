@@ -10,8 +10,8 @@ use futures::lock::Mutex;
 // TODO: remove this import
 use vercre_dif_exch::Constraints;
 use vercre_holder::provider::{
-    Algorithm, CredentialStorer, HolderProvider, IssuerClient, DidResolver, Result,
-    Signer, StateManager, VerifierClient,Document
+    Algorithm, CredentialStorer, DidResolver, Document, HolderProvider, IssuerClient, Result,
+    Signer, StateManager, VerifierClient,
 };
 use vercre_holder::{
     Credential, CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse,

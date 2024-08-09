@@ -14,7 +14,7 @@ use vercre_w3c_vc::proof::{Payload, Verify};
 
 use super::{Issuance, Status};
 use crate::credential::Credential;
-use crate::provider::{CredentialStorer, HolderProvider, IssuerClient, DidResolver};
+use crate::provider::{CredentialStorer, DidResolver, HolderProvider, IssuerClient};
 
 /// Progresses the issuance flow by getting an access token then using that to get the
 /// credentials contained in the offer.

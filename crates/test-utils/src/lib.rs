@@ -1,7 +1,7 @@
 //! # Test Utilities for Vercre
-//! 
+//!
 //! Some hard-coded provider trait implementations that can be used for testing and examples.
-//! 
+//!
 //! This crate provides common utilities for the Vercre project and is not intended to be used
 //! directly.
 

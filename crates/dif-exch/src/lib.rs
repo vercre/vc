@@ -2,7 +2,7 @@
 //!
 //! This crate provides common utilities for the Vercre project and is not intended to be used
 //! directly.
-//! 
+//!
 //! Specifications:
 //! - <https://identity.foundation/presentation-exchange/spec/v2.0.0>
 //! - <https://identity.foundation/jwt-vc-presentation-profile>

@@ -1,7 +1,8 @@
 use chrono::{DateTime, Utc};
 use vercre_issuer::provider::{
-    Algorithm, Claims, Client, ClientMetadata, DataSec, Decryptor, DidResolver, Encryptor, Issuer,
-    IssuerMetadata, Result, Server, ServerMetadata, Signer, StateManager, Subject,Document
+    Algorithm, Claims, Client, ClientMetadata, DataSec, Decryptor, DidResolver, Document,
+    Encryptor, Issuer, IssuerMetadata, Result, Server, ServerMetadata, Signer, StateManager,
+    Subject,
 };
 use vercre_test_utils::store::keystore::{self, IssuerKeystore};
 use vercre_test_utils::store::{issuance, state};
