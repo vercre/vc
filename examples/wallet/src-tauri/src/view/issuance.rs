@@ -76,10 +76,7 @@ impl From<IssuanceState> for IssuanceView {
             cred.issuer = Some(state.issuer.clone());
             creds.insert(id.clone(), cred);
         }
-        let mut schema = None;
-        if state.tx_code.is_some() {
-            schema = Some(state.tx_code.unwrap().into());
-        }
+        let schema = state.tx_code.clone().map(Into::into);
         Self {
             status: state.status.into(),
             credentials: creds,
