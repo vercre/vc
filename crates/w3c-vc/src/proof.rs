@@ -34,7 +34,7 @@ use anyhow::bail;
 use serde::{Deserialize, Serialize};
 use vercre_core_utils::{Kind, Quota};
 use vercre_datasec::jose::jws;
-use vercre_datasec::{Signer, Verifier};
+use vercre_datasec::{DidResolver, Signer};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
 
@@ -140,19 +140,19 @@ pub enum Verify<'a> {
 /// # Errors
 /// TODO: Add errors
 #[allow(clippy::unused_async)]
-pub async fn verify(proof: Verify<'_>, verifier: &impl Verifier) -> anyhow::Result<Payload> {
+pub async fn verify(proof: Verify<'_>, resolver: &impl DidResolver) -> anyhow::Result<Payload> {
     match proof {
         Verify::Vc(value) => {
             let Kind::String(token) = value else {
                 bail!("VerifiableCredential is not a JWT");
             };
-            let jwt = jws::decode::<jose::VcClaims>(token, verifier).await?;
+            let jwt = jws::decode::<jose::VcClaims>(token, resolver).await?;
             Ok(Payload::Vc(jwt.claims.vc))
         }
         Verify::Vp(value) => {
             match value {
                 Kind::String(token) => {
-                    let jwt = jws::decode::<jose::VpClaims>(token, verifier).await?;
+                    let jwt = jws::decode::<jose::VpClaims>(token, resolver).await?;
                     Ok(Payload::Vp {
                         vp: jwt.claims.vp,
                         client_id: jwt.claims.aud,

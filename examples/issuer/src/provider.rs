@@ -1,8 +1,7 @@
 use chrono::{DateTime, Utc};
 use vercre_issuer::provider::{
-    Algorithm, Claims, Client, ClientMetadata, DataSec, Decryptor, Encryptor, Issuer,
-    IssuerMetadata, PublicKeyJwk, Result, Server, ServerMetadata, Signer, StateManager, Subject,
-    Verifier,
+    Algorithm, Claims, Client, ClientMetadata, DataSec, Decryptor, DidResolver, Encryptor, Issuer,
+    IssuerMetadata, Result, Server, ServerMetadata, Signer, StateManager, Subject,Document
 };
 use vercre_test_utils::store::keystore::{self, IssuerKeystore};
 use vercre_test_utils::store::{issuance, state};
@@ -85,7 +84,7 @@ impl DataSec for Provider {
         Ok(IssuerSec(IssuerKeystore {}))
     }
 
-    fn verifier(&self, _identifier: &str) -> anyhow::Result<impl Verifier> {
+    fn resolver(&self, _identifier: &str) -> anyhow::Result<impl DidResolver> {
         Ok(IssuerSec(IssuerKeystore {}))
     }
 
@@ -112,27 +111,24 @@ impl Signer for IssuerSec {
     }
 }
 
-impl Verifier for IssuerSec {
-    async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
-        keystore::deref_jwk(did_url).await
+impl DidResolver for IssuerSec {
+    async fn resolve(&self, did_url: &str) -> Result<Document> {
+        keystore::get_did(did_url).await
     }
 }
 
 impl Encryptor for IssuerSec {
     async fn encrypt(&self, _plaintext: &[u8], _recipient_public_key: &[u8]) -> Result<Vec<u8>> {
-        // crate::store::keystore::encrypt(plaintext, recipient_public_key)
         todo!()
     }
 
     fn public_key(&self) -> Vec<u8> {
-        // IssuerKeystore::public_key()
         todo!()
     }
 }
 
 impl Decryptor for IssuerSec {
     async fn decrypt(&self, _ciphertext: &[u8], _sender_public_key: &[u8]) -> Result<Vec<u8>> {
-        // IssuerKeystore::decrypt(ciphertext)
         todo!()
     }
 }

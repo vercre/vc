@@ -117,10 +117,10 @@ mod tests {
             panic!("no JWT found in response");
         };
 
-        let verifier = DataSec::verifier(&provider, VERIFIER_ID).expect("should get verifier");
+        let resolver = DataSec::resolver(&provider, VERIFIER_ID).expect("should get resolver");
 
         let jwt: jws::Jwt<RequestObject> =
-            jws::decode(&jwt_enc, &verifier).await.expect("jwt is valid");
+            jws::decode(&jwt_enc, &resolver).await.expect("jwt is valid");
         assert_snapshot!("response", jwt);
 
         // request state should not exist

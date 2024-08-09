@@ -14,7 +14,7 @@ use vercre_openid::verifier::{
 };
 
 use super::{Presentation, Status};
-use crate::provider::{CredentialStorer, HolderProvider, Verifier, VerifierClient};
+use crate::provider::{CredentialStorer, HolderProvider, DidResolver, VerifierClient};
 
 /// Initiates the presentation flow triggered by a new presentation request where the form of
 /// the request is a URI to retrieve the request details or a `PresentationRequest` struct as a
@@ -95,12 +95,12 @@ fn parse_presentation_definition(request: &str) -> anyhow::Result<RequestObject>
 
 /// Extract a presentation `RequestObject` from a `RequestObjectResponse`.
 async fn parse_request_object_response(
-    res: &RequestObjectResponse, verifier: &impl Verifier,
+    res: &RequestObjectResponse, resolver: &impl DidResolver,
 ) -> anyhow::Result<RequestObject> {
     let RequestObjectType::Jwt(token) = &res.request_object else {
         bail!("no serialized JWT found in response");
     };
-    let jwt: jws::Jwt<RequestObject> = match jws::decode(token, verifier).await {
+    let jwt: jws::Jwt<RequestObject> = match jws::decode(token, resolver).await {
         Ok(jwt) => jwt,
         Err(e) => bail!("failed to parse JWT: {e}"),
     };

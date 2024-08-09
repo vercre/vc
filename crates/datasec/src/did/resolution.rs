@@ -6,18 +6,14 @@
 //! See [DID resolution](https://www.w3.org/TR/did-core/#did-resolution) fpr more.
 
 use std::collections::HashMap;
-use std::future::Future;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::document::{Document, DocumentMetadata, VerificationMethod};
-use crate::error::Error;
-use crate::{key, web};
-
-pub trait DidClient: Send + Sync {
-    fn get(&self, url: &str) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
-}
+use crate::did::document::{Document, DocumentMetadata, VerificationMethod};
+use crate::did::error::Error;
+use crate::did::{self, key, web};
+use crate::DidResolver;
 
 /// Resolve a DID to a DID document.
 ///
@@ -37,14 +33,14 @@ pub trait DidClient: Send + Sync {
 /// Returns a [DID resolution](https://www.w3.org/TR/did-core/#did-resolution-metadata)
 /// error as specified.
 pub async fn resolve(
-    did: &str, opts: Option<Options>, client: impl DidClient,
-) -> crate::Result<Resolve> {
+    did: &str, opts: Option<Options>, resolver: &impl DidResolver,
+) -> did::Result<Resolve> {
     // use DID-specific resolver
     let method = did.split(':').nth(1).unwrap_or_default();
 
     let result = match method {
-        "key" => key::DidKey::resolve(did, opts, client),
-        "web" => web::DidWeb::resolve(did, opts, client).await,
+        "key" => key::DidKey::resolve(did, opts, resolver),
+        "web" => web::DidWeb::resolve(did, opts, resolver).await,
         _ => Err(Error::MethodNotSupported(format!("{method} is not supported"))),
     };
 
@@ -67,13 +63,13 @@ pub async fn resolve(
 ///
 /// # Errors
 pub async fn dereference(
-    did_url: &str, opts: Option<Options>, client: impl DidClient,
-) -> crate::Result<Dereference> {
+    did_url: &str, opts: Option<Options>, resolver: &impl DidResolver,
+) -> did::Result<Dereference> {
     let method = did_url.split(':').nth(1).unwrap_or_default();
 
     match method {
-        "key" => key::DidKey::dereference(did_url, opts, client),
-        "web" => web::DidWeb::dereference(did_url, opts, client).await,
+        "key" => key::DidKey::dereference(did_url, opts, resolver),
+        "web" => web::DidWeb::dereference(did_url, opts, resolver).await,
         _ => Err(Error::MethodNotSupported(format!("{method} is not supported"))),
     }
 }

@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
-use vercre_datasec::jose::jwk::PublicKeyJwk;
-use vercre_datasec::{self, Algorithm, DataSec, Decryptor, Encryptor, Signer};
+use vercre_datasec::{
+    self, Algorithm, DataSec, Decryptor, DidResolver, Document, Encryptor, Signer,
+};
 use vercre_openid::verifier::{
     Result, StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata,
 };
@@ -65,7 +66,7 @@ impl DataSec for Provider {
         Ok(VerifierSec(VerifierKeystore {}))
     }
 
-    fn verifier(&self, _identifier: &str) -> anyhow::Result<impl vercre_datasec::Verifier> {
+    fn resolver(&self, _identifier: &str) -> anyhow::Result<impl DidResolver> {
         Ok(VerifierSec(VerifierKeystore {}))
     }
 
@@ -92,9 +93,9 @@ impl Signer for VerifierSec {
     }
 }
 
-impl vercre_datasec::Verifier for VerifierSec {
-    async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
-        crate::store::keystore::deref_jwk(did_url).await
+impl DidResolver for VerifierSec {
+    async fn resolve(&self, did_url: &str) -> Result<Document> {
+        crate::store::keystore::get_did(did_url).await
     }
 }
 

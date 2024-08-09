@@ -6,8 +6,8 @@ use chrono::{DateTime, Utc};
 // TODO: remove this import
 use vercre_dif_exch::Constraints;
 use vercre_holder::provider::{
-    Algorithm, CredentialStorer, HolderProvider, IssuerClient, PublicKeyJwk, Result, Signer,
-    StateManager, Verifier, VerifierClient,
+    Algorithm, CredentialStorer, DidResolver, Document, HolderProvider, IssuerClient, Result,
+    Signer, StateManager, VerifierClient,
 };
 use vercre_holder::{
     Credential, CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse,
@@ -151,8 +151,8 @@ impl Signer for Provider {
     }
 }
 
-impl Verifier for Provider {
-    async fn deref_jwk(&self, did_url: &str) -> anyhow::Result<PublicKeyJwk> {
-        keystore::deref_jwk(did_url).await
+impl DidResolver for Provider {
+    async fn resolve(&self, did_url: &str) -> anyhow::Result<Document> {
+        keystore::get_did(did_url).await
     }
 }

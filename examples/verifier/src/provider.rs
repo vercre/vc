@@ -2,8 +2,8 @@ use chrono::{DateTime, Utc};
 use vercre_test_utils::store::keystore::{self, VerifierKeystore};
 use vercre_test_utils::store::{presentation, state};
 use vercre_verifier::provider::{
-    Algorithm, DataSec, Decryptor, Encryptor, PublicKeyJwk, Result, SignatureVerifier, Signer,
-    StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata,
+    Algorithm, DataSec, Decryptor, DidResolver, Encryptor, Result, Signer, StateManager, Verifier,
+    VerifierMetadata, Wallet, WalletMetadata,Document
 };
 
 #[derive(Default, Clone, Debug)]
@@ -61,7 +61,7 @@ impl DataSec for Provider {
         Ok(VerifierSec(VerifierKeystore {}))
     }
 
-    fn verifier(&self, _identifier: &str) -> anyhow::Result<impl SignatureVerifier> {
+    fn resolver(&self, _identifier: &str) -> anyhow::Result<impl DidResolver> {
         Ok(VerifierSec(VerifierKeystore {}))
     }
 
@@ -88,9 +88,9 @@ impl Signer for VerifierSec {
     }
 }
 
-impl SignatureVerifier for VerifierSec {
-    async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
-        keystore::deref_jwk(did_url).await
+impl DidResolver for VerifierSec {
+    async fn resolve(&self, did_url: &str) -> Result<Document> {
+        keystore::get_did(did_url).await
     }
 }
 

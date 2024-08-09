@@ -23,6 +23,7 @@ pub struct PublicKeyJwk {
     /// Key type.
     pub kty: KeyType,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub alg: Option<EncryptionAlgorithm>,
 
     /// Cryptographic curve type.

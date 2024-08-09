@@ -171,9 +171,9 @@ mod tests {
             panic!("VC is not base64 encoded string");
         };
 
-        let verifier =
-            DataSec::verifier(&provider, &request.credential_issuer).expect("should get verifier");
-        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &verifier)
+        let resolver =
+            DataSec::resolver(&provider, &request.credential_issuer).expect("should get resolver");
+        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &resolver)
             .await
             .expect("should decode")
         else {

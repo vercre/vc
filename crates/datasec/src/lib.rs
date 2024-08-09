@@ -1,6 +1,7 @@
 #![allow(missing_docs)]
 #![allow(dead_code)]
-#![allow(clippy::missing_errors_doc)]
+// #![allow(clippy::missing_errors_doc)]
+#![feature(let_chains)]
 
 //! # Data Security for Vercre
 //!
@@ -43,12 +44,14 @@
 //! [VC-JOSE-COSE]: https://w3c.github.io/vc-jose-cose
 //! [OpenID4VP]: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
 
+pub mod did;
 pub mod jose;
 
 use std::future::{Future, IntoFuture};
 
+pub use crate::did::Document;
 pub use crate::jose::jwa::Algorithm;
-use crate::jose::jwk::PublicKeyJwk;
+pub use crate::jose::jwk::PublicKeyJwk;
 
 /// The `DataSec` trait is used to provide methods needed for signing, encrypting,
 /// verifying, and decrypting data. Implementers of this trait are expected to
@@ -59,8 +62,9 @@ pub trait DataSec: Send + Sync {
     /// The `identifier` parameter is one of `credential_issuer` or `verifier_id`.
     fn signer(&self, identifier: &str) -> anyhow::Result<impl Signer>;
 
-    /// Verifier provides digital signature verification functionality.
-    fn verifier(&self, identifier: &str) -> anyhow::Result<impl Verifier>;
+    /// Returns a resolver that can be used to resolve an external reference to
+    /// public key material.
+    fn resolver(&self, identifier: &str) -> anyhow::Result<impl DidResolver>;
 
     /// Encryptor provides data encryption functionality.
     fn encryptor(&self, identifier: &str) -> anyhow::Result<impl Encryptor>;
@@ -89,16 +93,14 @@ pub trait Signer: Send + Sync {
     fn try_sign(&self, msg: &[u8]) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
 }
 
-/// Verifier is used by implementers to provide verification functionality for
-/// Verifiable Credential issuance and Verifiable Presentation submissions.
-pub trait Verifier: Send + Sync {
-    /// Dereference DID URL to the public key JWK specified in the URL fragment.
+/// DidResolver is used to resolve an external reference to public key material.
+pub trait DidResolver: Send + Sync {
+    /// Resolve the DID URL to a DID Document.
     ///
     /// # Errors
     ///
-    /// Returns an error if the DID URL cannot be dereferenced to a JWK
-    fn deref_jwk(&self, did_url: &str)
-        -> impl Future<Output = anyhow::Result<PublicKeyJwk>> + Send;
+    /// Returns an error if the DID URL cannot be resolved.
+    fn resolve(&self, did_url: &str) -> impl Future<Output = anyhow::Result<Document>> + Send;
 }
 
 /// Encryptor is used by implementers to provide encryption functionality for

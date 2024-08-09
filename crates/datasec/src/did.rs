@@ -1,6 +1,3 @@
-#![allow(missing_docs)]
-#![feature(let_chains)]
-
 //! # DID DidResolver
 //!
 //! This crate provides common utilities for the Vercre project and is not intended to be used
@@ -17,11 +14,13 @@ mod key;
 mod resolution;
 mod web;
 
+pub use document::Document;
 pub use error::Error;
 pub use resolution::{
-    dereference, resolve, ContentType, Dereference, DidClient, Metadata, Options, Resolve, Resource,
+    dereference, resolve, ContentType, Dereference, Metadata, Options, Resolve, Resource,
 };
 
+/// Did Result type using did module-specific Error
 pub type Result<T> = std::result::Result<T, Error>;
 
 // TODO:

@@ -8,7 +8,7 @@
 use std::future::Future;
 
 pub use vercre_datasec::jose::jwk::PublicKeyJwk;
-pub use vercre_datasec::{Algorithm, Signer, Verifier};
+pub use vercre_datasec::{Algorithm, DidResolver, Document, Signer};
 pub use vercre_dif_exch::Constraints;
 use vercre_openid::issuer::{
     CredentialRequest, CredentialResponse, MetadataRequest, MetadataResponse, TokenRequest,
@@ -24,7 +24,7 @@ use crate::credential::{Credential, Logo};
 /// by holder clients.
 #[allow(clippy::module_name_repetitions)]
 pub trait HolderProvider:
-    IssuerClient + VerifierClient + CredentialStorer + StateManager + Signer + Verifier + Clone
+    IssuerClient + VerifierClient + CredentialStorer + StateManager + Signer + DidResolver + Clone
 {
 }
 

@@ -14,7 +14,7 @@ use vercre_w3c_vc::proof::{Payload, Verify};
 
 use super::{Issuance, Status};
 use crate::credential::Credential;
-use crate::provider::{CredentialStorer, HolderProvider, IssuerClient, Verifier};
+use crate::provider::{CredentialStorer, HolderProvider, IssuerClient, DidResolver};
 
 /// Progresses the issuance flow by getting an access token then using that to get the
 /// credentials contained in the offer.
@@ -146,13 +146,13 @@ fn credential_request(
 /// Construct a credential from a credential response.
 async fn credential(
     credential_configuration: &CredentialConfiguration, res: &CredentialResponse,
-    verifier: &impl Verifier,
+    resolver: &impl DidResolver,
 ) -> anyhow::Result<Credential> {
     let Some(value) = res.credential.as_ref() else {
         bail!("no credential in response");
     };
 
-    let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(value), verifier)
+    let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(value), resolver)
         .await
         .map_err(|e| anyhow!("issue parsing credential: {e}"))?
     else {

@@ -1,0 +1,25 @@
+---
+source: crates/datasec/src/did/web/resolver.rs
+assertion_line: 164
+expression: dereferenced
+---
+{
+  "metadata": {
+    "contentType": "application/did+ld+json"
+  },
+  "contentStream": {
+    "VerificationMethod": {
+      "id": "did:web:demo.credibil.io#key-0",
+      "controller": "did:web:demo.credibil.io",
+      "type": "JsonWebKey",
+      "publicKeyJwk": {
+        "kty": "EC",
+        "alg": null,
+        "crv": "ES256K",
+        "x": "H846FVf9umFYyRrEvC5uQa-__2sKLW9H3O89THClFm4",
+        "y": "VoMVEnKQsKNtu_sS20M0LPUR5yYEQz4YxUq4hQaQIzQ"
+      }
+    }
+  },
+  "contentMetadata": {}
+}

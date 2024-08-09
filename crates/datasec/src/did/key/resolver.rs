@@ -14,11 +14,12 @@ use regex::Regex;
 use serde_json::json;
 
 use super::DidKey;
-use crate::document::CreateOptions;
-use crate::error::Error;
-use crate::resolution::{
-    ContentMetadata, ContentType, Dereference, DidClient, Metadata, Options, Resolve, Resource,
+use crate::did::document::CreateOptions;
+use crate::did::error::Error;
+use crate::did::resolution::{
+    ContentMetadata, ContentType, Dereference, Metadata, Options, Resolve, Resource,
 };
+use crate::{did, DidResolver};
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
 static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
@@ -26,7 +27,7 @@ static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 impl DidKey {
-    pub fn resolve(did: &str, _: Option<Options>, _: impl DidClient) -> crate::Result<Resolve> {
+    pub fn resolve(did: &str, _: Option<Options>, _: &impl DidResolver) -> did::Result<Resolve> {
         // check DID is valid AND extract key
         let Some(caps) = DID_REGEX.captures(did) else {
             return Err(Error::InvalidDid("DID is not a valid did:key".into()));
@@ -73,15 +74,15 @@ impl DidKey {
 
     #[allow(clippy::needless_pass_by_value)]
     pub fn dereference(
-        did_url: &str, _opts: Option<Options>, client: impl DidClient,
-    ) -> crate::Result<Dereference> {
+        did_url: &str, _opts: Option<Options>, resolver: &impl DidResolver,
+    ) -> did::Result<Dereference> {
         // validate URL against pattern
         let url = url::Url::parse(did_url)
             .map_err(|e| Error::InvalidDidUrl(format!("issue parsing URL: {e}")))?;
 
         // resolve DID document
         let did = format!("did:{}", url.path());
-        let resolution = Self::resolve(&did, None, client)?;
+        let resolution = Self::resolve(&did, None, resolver)?;
 
         let Some(document) = resolution.document else {
             return Err(Error::InvalidDid("Unable to resolve DID document".into()));
@@ -114,27 +115,28 @@ mod test {
     use insta::assert_json_snapshot as assert_snapshot;
 
     use super::*;
+    use crate::did::Document;
 
     const DID: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
     const DID_URL: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
 
-    struct Client {}
-    impl DidClient for Client {
-        async fn get(&self, _url: &str) -> anyhow::Result<Vec<u8>> {
-            Ok(vec![])
+    struct MockResolver;
+    impl DidResolver for MockResolver {
+        async fn resolve(&self, _url: &str) -> anyhow::Result<Document> {
+            Ok(Document::default())
         }
     }
 
     #[tokio::test]
     async fn resolve() {
-        let resolved = DidKey::resolve(DID, None, Client {}).expect("should resolve");
+        let resolved = DidKey::resolve(DID, None, &MockResolver).expect("should resolve");
         assert_snapshot!("resolved", resolved);
     }
 
     #[tokio::test]
     async fn dereference() {
         let dereferenced =
-            DidKey::dereference(DID_URL, None, Client {}).expect("should dereference");
+            DidKey::dereference(DID_URL, None, &MockResolver).expect("should dereference");
         assert_snapshot!("dereferenced", dereferenced);
     }
 }

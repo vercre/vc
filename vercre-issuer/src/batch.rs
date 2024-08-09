@@ -129,11 +129,11 @@ async fn verify(
                 });
             };
 
-            let verifier = DataSec::verifier(&provider, &request.credential_issuer)
+            let resolver = DataSec::resolver(&provider, &request.credential_issuer)
                 .map_err(|e| Error::ServerError(format!("issue  resolving verifier: {e}")))?;
 
             // TODO: check proof is signed with supported algorithm (from proof_type)
-            let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, &verifier).await {
+            let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, &resolver).await {
                 Ok(jwt) => jwt,
                 Err(e) => {
                     let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
@@ -501,9 +501,9 @@ mod tests {
             panic!("credential is missing");
         };
 
-        let verifier =
-            DataSec::verifier(&provider, &request.credential_issuer).expect("should get verifier");
-        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &verifier)
+        let resolver =
+            DataSec::resolver(&provider, &request.credential_issuer).expect("should get verifier");
+        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &resolver)
             .await
             .expect("should decode")
         else {

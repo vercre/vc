@@ -1,12 +1,11 @@
 use chrono::{DateTime, Utc};
-use vercre_datasec::jose::jwk::PublicKeyJwk;
-use vercre_datasec::{Algorithm, DataSec, Decryptor, Encryptor, Signer, Verifier};
+use vercre_datasec::{Algorithm, DataSec, Decryptor, DidResolver, Document, Encryptor, Signer};
 use vercre_openid::issuer::{
     Claims, Client, ClientMetadata, Issuer, IssuerMetadata, Result, Server, ServerMetadata,
     StateManager, Subject,
 };
 
-use crate::store::keystore::IssuerKeystore;
+use crate::store::keystore::{self, IssuerKeystore};
 use crate::store::{issuance, state};
 
 pub const CREDENTIAL_ISSUER: &str = "http://vercre.io";
@@ -92,7 +91,7 @@ impl DataSec for Provider {
         Ok(IssuerSec(IssuerKeystore {}))
     }
 
-    fn verifier(&self, _identifier: &str) -> anyhow::Result<impl Verifier> {
+    fn resolver(&self, _identifier: &str) -> anyhow::Result<impl DidResolver> {
         Ok(IssuerSec(IssuerKeystore {}))
     }
 
@@ -119,9 +118,9 @@ impl Signer for IssuerSec {
     }
 }
 
-impl Verifier for IssuerSec {
-    async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
-        crate::store::keystore::deref_jwk(did_url).await
+impl DidResolver for IssuerSec {
+    async fn resolve(&self, did_url: &str) -> Result<Document> {
+        keystore::get_did(did_url).await
     }
 }
 
