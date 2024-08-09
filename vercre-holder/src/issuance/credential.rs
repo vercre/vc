@@ -25,6 +25,7 @@ pub async fn get_credentials(provider: impl HolderProvider, request: String) -> 
     let mut issuance = match super::get_issuance(provider.clone(), &request).await {
         Ok(issuance) => issuance,
         Err(e) => {
+            log::info!("Issuance retrieval failed: {:?}", e);
             tracing::error!(target: "Endpoint::get_credentials", ?e);
             return Err(e);
         }
