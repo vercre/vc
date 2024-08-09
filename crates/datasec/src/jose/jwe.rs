@@ -320,7 +320,7 @@ pub struct Recipient {
 /// key (CEK).
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub enum CekAlgorithm {
-    /// Elliptic Curve Diffie-Hellman Ephemeral-Static key agreement 
+    /// Elliptic Curve Diffie-Hellman Ephemeral-Static key agreement
     /// (using Concat KDF).
     #[default]
     #[serde(rename = "ECDH-ES")]

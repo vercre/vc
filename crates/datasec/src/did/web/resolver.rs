@@ -14,10 +14,9 @@ use regex::Regex;
 use serde_json::json;
 
 use super::DidWeb;
-use crate::did::resolution::{
-    ContentMetadata, ContentType, Dereferenced, Metadata, Options, Resolved, Resource,
+use crate::did::{
+    ContentMetadata, ContentType, Dereferenced, Error, Metadata, Options, Resolved, Resource,
 };
-use crate::did::Error;
 use crate::{did, DidResolver};
 
 static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {

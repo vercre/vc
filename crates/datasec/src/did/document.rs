@@ -189,6 +189,7 @@ pub enum MethodType {
     /// key types into a set of parameters.
     /// <https://w3c.github.io/controller-document/#jsonwebkey>
     #[serde(alias = "JsonWebKey2020")]
+    #[serde(alias = "EcdsaSecp256k1VerificationKey2019")]
     JsonWebKey {
         /// The public key encoded as a JWK.
         public_key_jwk: PublicKeyJwk,

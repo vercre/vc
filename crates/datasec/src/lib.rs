@@ -49,7 +49,7 @@ pub mod jose;
 
 use std::future::{Future, IntoFuture};
 
-pub use crate::did::Document;
+pub use crate::did::document::Document;
 pub use crate::jose::jwa::Algorithm;
 pub use crate::jose::jwk::PublicKeyJwk;
 

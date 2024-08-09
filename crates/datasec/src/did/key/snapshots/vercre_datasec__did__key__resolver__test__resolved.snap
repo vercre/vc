@@ -4,7 +4,6 @@ assertion_line: 132
 expression: resolved
 ---
 {
-  "@context": "https://w3id.org/did-resolution/v1",
   "metadata": {
     "contentType": "application/did+ld+json",
     "did": {

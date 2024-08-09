@@ -15,10 +15,9 @@ use serde_json::json;
 
 use super::DidKey;
 use crate::did::document::CreateOptions;
-use crate::did::resolution::{
-    ContentMetadata, ContentType, Dereferenced, Metadata, Options, Resolved, Resource,
+use crate::did::{
+    ContentMetadata, ContentType, Dereferenced, Error, Metadata, Options, Resolved, Resource,
 };
-use crate::did::Error;
 use crate::{did, DidResolver};
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
