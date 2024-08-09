@@ -4,7 +4,7 @@ use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::provider::CredentialStorer;
-use vercre_holder::{OfferRequest, PinRequest, Status};
+use vercre_holder::{OfferRequest, PinRequest, IssuanceStatus};
 use vercre_issuer::{CreateOfferRequest, CredentialOfferType};
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
@@ -52,7 +52,7 @@ async fn e2e_issuance() {
     let status = vercre_holder::accept(HOLDER_PROVIDER.clone(), issuance.issuance_id.clone())
         .await
         .expect("should accept offer");
-    assert_eq!(status, Status::PendingPin);
+    assert_eq!(status, IssuanceStatus::PendingPin);
 
     // Enter PIN
     let pin_req = PinRequest {
@@ -61,7 +61,7 @@ async fn e2e_issuance() {
     };
     let status =
         vercre_holder::pin(HOLDER_PROVIDER.clone(), &pin_req).await.expect("should apply pin");
-    assert_eq!(status, Status::Accepted);
+    assert_eq!(status, IssuanceStatus::Accepted);
 
     // Get (and store) credentials
     vercre_holder::get_credentials(HOLDER_PROVIDER.clone(), issuance.issuance_id.clone())

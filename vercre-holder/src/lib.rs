@@ -60,5 +60,5 @@ pub use vercre_openid::verifier::{
 
 pub use crate::credential::{Credential, Logo};
 pub use crate::issuance::pin::PinRequest;
-pub use crate::issuance::Status;
-pub use crate::presentation::Presentation;
+pub use crate::issuance::Status as IssuanceStatus;
+pub use crate::presentation::{Presentation, Status as PresentationStatus};

@@ -4,11 +4,11 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use vercre_holder::presentation::{Presentation, Status};
 
-use crate::view::credential::CredentialDisplay;
+use crate::{app::PresentationState, view::credential::CredentialDisplay};
 
-/// Status of the presentation flow
+/// Status of the presentation flow. This is re-typed instead of using the status defined by
+/// vercre-holder so that we can use typeshare to generate the equivalent TypeScript enum.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 #[allow(clippy::module_name_repetitions)]
@@ -28,13 +28,13 @@ pub enum PresentationStatus {
 }
 
 /// Convert from `vercre_holder::presentation::Status` to `PresentationStatus`
-impl From<Status> for PresentationStatus {
-    fn from(status: Status) -> Self {
+impl From<vercre_holder::PresentationStatus> for PresentationStatus {
+    fn from(status: vercre_holder::PresentationStatus) -> Self {
         match status {
-            Status::Inactive => Self::Inactive,
-            Status::Requested => Self::Requested,
-            Status::Authorized => Self::Authorized,
-            Status::Failed(_) => Self::Failed,
+            vercre_holder::PresentationStatus::Inactive => Self::Inactive,
+            vercre_holder::PresentationStatus::Requested => Self::Requested,
+            vercre_holder::PresentationStatus::Authorized => Self::Authorized,
+            vercre_holder::PresentationStatus::Failed(_) => Self::Failed,
         }
     }
 }
@@ -51,8 +51,8 @@ pub struct PresentationView {
 }
 
 /// Convert underlying presentation flow state to view model
-impl From<Presentation> for PresentationView {
-    fn from(state: Presentation) -> Self {
+impl From<PresentationState> for PresentationView {
+    fn from(state: PresentationState) -> Self {
         let mut creds = HashMap::new();
         for cred in &state.credentials {
             creds.insert(cred.id.clone(), cred.into());

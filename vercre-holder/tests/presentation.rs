@@ -11,7 +11,7 @@ use vercre_dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use vercre_holder::credential::Credential;
 use vercre_holder::presentation::Status;
 use vercre_holder::provider::CredentialStorer;
-use vercre_openid::verifier::{CreateRequestRequest, DeviceFlow, PresentationDefinitionType};
+use vercre_openid::verifier::{CreateRequestRequest, DeviceFlow};
 use vercre_test_utils::verifier::{self, VERIFIER_ID};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{self, Format, Payload};
@@ -113,44 +113,22 @@ async fn e2e_presentation_uri() {
 
     assert_eq!(presentation.status, Status::Requested);
     assert_snapshot!("presentation_requested", presentation, {
-        ".id" => "[id]",
-        ".request" => insta::sorted_redaction(),
-        ".request.nonce" => "[nonce]",
-        ".request.state" => "[state]",
-        ".request.presentation_definition" => "[presentation_definition]",
+        ".presentation_id" => "[presentation_id]",
         ".credentials[0].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
     });
 
-    // Because of the presentation definition ID being unique per call, we redact it in the snapshot
-    // above, so do a check of a couple of key fields just to make sure we have data we know will
-    // be helpful further in the process.
-    let PresentationDefinitionType::Object(pd) =
-        presentation.request.presentation_definition.clone()
-    else {
-        panic!("should have presentation definition");
-    };
-    assert_eq!(pd.input_descriptors.len(), 1);
-    assert_eq!(pd.input_descriptors[0].id, "EmployeeID_JWT");
-
     // Authorize the presentation
-    let presentation = vercre_holder::authorize(HOLDER_PROVIDER.clone(), presentation.id.clone())
-        .await
-        .expect("should authorize presentation");
-
-    assert_eq!(presentation.status, Status::Authorized);
-    assert_snapshot!("presentation_authorized", presentation, {
-        ".id" => "[id]",
-        ".request" => insta::sorted_redaction(),
-        ".request.nonce" => "[nonce]",
-        ".request.state" => "[state]",
-        ".request.presentation_definition" => "[presentation_definition]",
-        ".credentials" => "[credentials checked on previous step]",
-    });
+    let status =
+        vercre_holder::authorize(HOLDER_PROVIDER.clone(), presentation.presentation_id.clone())
+            .await
+            .expect("should authorize presentation");
+    assert_eq!(status, Status::Authorized);
 
     // Process the presentation
-    let response = vercre_holder::present(HOLDER_PROVIDER.clone(), presentation.id.clone())
-        .await
-        .expect("should process present");
+    let response =
+        vercre_holder::present(HOLDER_PROVIDER.clone(), presentation.presentation_id.clone())
+            .await
+            .expect("should process present");
     assert_snapshot!("response_response", response);
 }
 
@@ -179,43 +157,21 @@ async fn e2e_presentation_obj() {
 
     assert_eq!(presentation.status, Status::Requested);
     assert_snapshot!("presentation_requested2", presentation, {
-        ".id" => "[id]",
-        ".request" => insta::sorted_redaction(),
-        ".request.nonce" => "[nonce]",
-        ".request.state" => "[state]",
-        ".request.presentation_definition" => "[presentation_definition]",
+        ".presentation_id" => "[presentation_id]",
         ".credentials[0].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
     });
 
-    // Because of the presentation definition ID being unique per call, we redact it in the snapshot
-    // above, so do a check of a couple of key fields just to make sure we have data we know will
-    // be helpful further in the process.
-    let PresentationDefinitionType::Object(pd) =
-        presentation.request.presentation_definition.clone()
-    else {
-        panic!("should have presentation definition");
-    };
-    assert_eq!(pd.input_descriptors.len(), 1);
-    assert_eq!(pd.input_descriptors[0].id, "EmployeeID_JWT");
-
     // Authorize the presentation
-    let presentation = vercre_holder::authorize(HOLDER_PROVIDER.clone(), presentation.id.clone())
-        .await
-        .expect("should authorize presentation");
-
-    assert_eq!(presentation.status, Status::Authorized);
-    assert_snapshot!("presentation_authorized2", presentation, {
-        ".id" => "[id]",
-        ".request" => insta::sorted_redaction(),
-        ".request.nonce" => "[nonce]",
-        ".request.state" => "[state]",
-        ".request.presentation_definition" => "[presentation_definition]",
-        ".credentials" => "[credentials checked on previous step]",
-    });
+    let status =
+        vercre_holder::authorize(HOLDER_PROVIDER.clone(), presentation.presentation_id.clone())
+            .await
+            .expect("should authorize presentation");
+    assert_eq!(status, Status::Authorized);
 
     // Process the presentation
-    let response = vercre_holder::present(HOLDER_PROVIDER.clone(), presentation.id.clone())
-        .await
-        .expect("should process present");
+    let response =
+        vercre_holder::present(HOLDER_PROVIDER.clone(), presentation.presentation_id.clone())
+            .await
+            .expect("should process present");
     assert_snapshot!("response_response2", response);
 }

@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use vercre_holder::{Status, TxCode};
+use vercre_holder::TxCode;
 
 use crate::app::IssuanceState;
 use crate::view::credential::CredentialDisplay;
@@ -38,16 +38,16 @@ pub enum IssuanceStatus {
 }
 
 /// Convert from `vercre_holder::issuance::Status` to `IssuanceStatus`
-impl From<Status> for IssuanceStatus {
-    fn from(status: Status) -> Self {
+impl From<vercre_holder::IssuanceStatus> for IssuanceStatus {
+    fn from(status: vercre_holder::IssuanceStatus) -> Self {
         match status {
-            Status::Inactive => Self::Inactive,
-            Status::Offered => Self::Offered,
-            Status::Ready => Self::Ready,
-            Status::PendingPin => Self::PendingPin,
-            Status::Accepted => Self::Accepted,
-            Status::Requested => Self::Requested,
-            Status::Failed(_) => Self::Failed,
+            vercre_holder::IssuanceStatus::Inactive => Self::Inactive,
+            vercre_holder::IssuanceStatus::Offered => Self::Offered,
+            vercre_holder::IssuanceStatus::Ready => Self::Ready,
+            vercre_holder::IssuanceStatus::PendingPin => Self::PendingPin,
+            vercre_holder::IssuanceStatus::Accepted => Self::Accepted,
+            vercre_holder::IssuanceStatus::Requested => Self::Requested,
+            vercre_holder::IssuanceStatus::Failed(_) => Self::Failed,
         }
     }
 }
