@@ -16,6 +16,7 @@ use serde_json::Value;
 use uuid::Uuid;
 use vercre_core_utils::{Kind, Quota};
 
+use crate::model::vc::VerifiableCredential;
 use crate::proof::integrity::Proof;
 
 /// A Verifiable Presentation is used to combine and present credentials to a
@@ -43,13 +44,13 @@ pub struct VerifiablePresentation {
     /// e.g. `"type": ["VerifiablePresentation",
     /// "CredentialManagerPresentation"]`
     #[serde(rename = "type")]
-    pub type_: Vec<String>, // TODO: deserialize from string or array
+    pub type_: Quota<String>,
 
     /// The verifiableCredential property MUST be constructed from one or more
     /// verifiable credentials, or of data derived from verifiable
     /// credentials in a cryptographically verifiable format.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub verifiable_credential: Option<Vec<Value>>,
+    pub verifiable_credential: Option<Vec<Kind<VerifiableCredential>>>,
 
     /// Holder is a URI for the entity that is generating the presentation.
     /// For example, did:example:ebfeb1f712ebc6f1c276e12ec21.
@@ -104,7 +105,7 @@ impl VpBuilder {
         // sensibile defaults
         builder.vp.id = Some(format!("urn:uuid:{}", Uuid::new_v4()));
         builder.vp.context.push(Kind::String("https://www.w3.org/2018/credentials/v1".into()));
-        builder.vp.type_.push("VerifiablePresentation".into());
+        builder.vp.type_ = Quota::One("VerifiablePresentation".into());
         builder
     }
 
@@ -118,13 +119,19 @@ impl VpBuilder {
     /// Adds a type to the `type` property
     #[must_use]
     pub fn add_type(mut self, type_: impl Into<String>) -> Self {
-        self.vp.type_.push(type_.into());
+        let mut vp_type = match self.vp.type_ {
+            Quota::One(t) => vec![t],
+            Quota::Many(t) => t,
+        };
+        vp_type.push(type_.into());
+
+        self.vp.type_ = Quota::Many(vp_type);
         self
     }
 
     /// Adds a `verifiable_credential`
     #[must_use]
-    pub fn add_credential(mut self, vc: Value) -> Self {
+    pub fn add_credential(mut self, vc: Kind<VerifiableCredential>) -> Self {
         if let Some(verifiable_credential) = self.vp.verifiable_credential.as_mut() {
             verifiable_credential.push(vc);
         } else {
@@ -149,7 +156,7 @@ impl VpBuilder {
         if self.vp.context.len() < 2 {
             bail!("context is required");
         }
-        if self.vp.type_.len() < 2 {
+        if let Quota::One(_) = self.vp.type_ {
             bail!("type is required");
         }
 
@@ -237,7 +244,7 @@ mod tests {
         VerifiablePresentation::builder()
             .add_context(Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()))
             .add_type("EmployeeIDCredential")
-            .add_credential(serde_json::to_value(vc)?)
+            .add_credential(Kind::Object(vc))
             .build()
     }
 }

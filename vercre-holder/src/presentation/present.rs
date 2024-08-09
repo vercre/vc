@@ -150,8 +150,7 @@ fn create_vp(
     }
 
     for c in &presentation.credentials {
-        let val = serde_json::to_value(&c.issued)?;
-        builder = builder.add_credential(val);
+        builder = builder.add_credential(Kind::String(c.issued.clone()));
     }
     builder.build()
 }
