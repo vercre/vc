@@ -23,15 +23,15 @@ workspace = true
 anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true
-vercre-core-utils.workspace = true
-vercre-datasec.workspace = true
-vercre-dif-exch.workspace = true
 image = { version = "0.25.2", default-features = false, features = ["png"] }
 qrcode = { version = "0.14.1", default-features = false, features = ["image"] }
 serde.workspace = true
 serde_json.workspace = true
 serde_qs.workspace = true
 thiserror = "1.0.63"
+vercre-core-utils.workspace = true
+vercre-datasec.workspace = true
+vercre-dif-exch.workspace = true
 vercre-w3c-vc.workspace = true
 
 [dev-dependencies]

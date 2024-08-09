@@ -19,15 +19,14 @@ crate-type = ["cdylib", "rlib"]
 anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true
-vercre-datasec.workspace = true
-vercre-did = { path = "../did", version = "0.1.0-alpha.6" }
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
-vercre-openid.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 tracing.workspace = true
 uuid.workspace = true
+vercre-datasec.workspace = true
+vercre-openid.workspace = true
 
 [dev-dependencies]
 tokio.workspace = true

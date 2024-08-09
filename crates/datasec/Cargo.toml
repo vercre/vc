@@ -16,10 +16,6 @@ version.workspace = true
 [lib]
 # crate-type = ["cdylib", "rlib"]
 
-# [features]
-# default = []
-# secp256k1 = []
-
 [lints]
 workspace = true
 

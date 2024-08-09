@@ -22,16 +22,16 @@ workspace = true
 [dependencies]
 anyhow.workspace = true
 chrono.workspace = true
-vercre-core-utils.workspace = true
-vercre-datasec.workspace = true
-vercre-dif-exch.workspace = true
-vercre-openid.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_qs.workspace = true
 tracing.workspace = true
 urlencoding = "2.1.3"
 uuid.workspace = true
+vercre-core-utils.workspace = true
+vercre-datasec.workspace = true
+vercre-dif-exch.workspace = true
+vercre-openid.workspace = true
 vercre-w3c-vc.workspace = true
 
 [dev-dependencies]
@@ -39,7 +39,7 @@ base64ct.workspace = true
 ecdsa.workspace = true
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 insta.workspace = true
-vercre-test-utils.workspace = true
 tokio.workspace = true
 vercre-issuer.workspace = true
+vercre-test-utils.workspace = true
 vercre-verifier.workspace = true
