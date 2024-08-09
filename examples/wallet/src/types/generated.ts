@@ -99,7 +99,10 @@ export interface IssuanceView {
 	pin_schema?: PinSchema;
 }
 
-/** Status of the presentation flow */
+/**
+ * Status of the presentation flow. This is re-typed instead of using the status defined by
+ * vercre-holder so that we can use typeshare to generate the equivalent TypeScript enum.
+ */
 export enum PresentationStatus {
 	/** No authorization request is being processed. */
 	Inactive = "Inactive",
