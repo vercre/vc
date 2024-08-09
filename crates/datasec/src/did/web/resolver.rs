@@ -14,7 +14,7 @@ use regex::Regex;
 use serde_json::json;
 
 use super::DidWeb;
-use crate::did::error::Error;
+use crate::did::Error;
 use crate::did::resolution::{
     ContentMetadata, ContentType, Dereference, Metadata, Options, Resolve, Resource,
 };

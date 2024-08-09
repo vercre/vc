@@ -11,8 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::did::document::{Document, DocumentMetadata, VerificationMethod};
-use crate::did::error::Error;
-use crate::did::{self, key, web};
+use crate::did::{self, key, web, Error};
 use crate::DidResolver;
 
 /// Resolve a DID to a DID document.

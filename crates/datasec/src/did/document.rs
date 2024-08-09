@@ -12,8 +12,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use vercre_core_utils::{Kind, Quota};
 
-use crate::did;
-use crate::did::error::Error;
+use crate::did::{self, Error};
 use crate::jose::jwk::{Curve, KeyType, PublicKeyJwk};
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];

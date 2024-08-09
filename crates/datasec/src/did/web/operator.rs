@@ -19,7 +19,7 @@ use crate::did;
 use crate::did::document::{
     CreateOptions, Document, MethodType, PublicKeyFormat, VerificationMethod,
 };
-use crate::did::error::Error;
+use crate::did::Error;
 
 #[allow(dead_code)]
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];

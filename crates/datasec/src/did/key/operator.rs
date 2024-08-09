@@ -17,7 +17,7 @@ use crate::did;
 use crate::did::document::{
     CreateOptions, Document, MethodType, PublicKey, PublicKeyFormat, VerificationMethod,
 };
-use crate::did::error::Error;
+use crate::did::Error;
 use crate::jose::jwk::{Curve, KeyType, PublicKeyJwk};
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
