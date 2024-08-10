@@ -83,7 +83,6 @@ where
     let KeyType::KeyId(kid) = &header.key else {
         bail!("'kid' is not set");
     };
-    // let jwk = verifier.deref_jwk(kid).await?;
 
     let resp = did::dereference(kid, None, resolver).await?;
 

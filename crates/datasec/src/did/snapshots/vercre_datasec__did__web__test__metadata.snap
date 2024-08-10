@@ -1,6 +1,6 @@
 ---
-source: crates/datasec/src/did/web/resolver.rs
-assertion_line: 149
+source: crates/datasec/src/did/web.rs
+assertion_line: 114
 expression: resolved.metadata
 ---
 {

@@ -15,9 +15,7 @@ use serde_json::json;
 
 use super::DidKey;
 use crate::did::document::CreateOptions;
-use crate::did::{
-    ContentMetadata, ContentType, Dereferenced, Error, Metadata, Options, Resolved, Resource,
-};
+use crate::did::{ContentType, Error, Metadata, Options, Resolved};
 use crate::{did, DidResolver};
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
@@ -69,43 +67,6 @@ impl DidKey {
             ..Resolved::default()
         })
     }
-
-    #[allow(clippy::needless_pass_by_value)]
-    pub fn dereference(
-        did_url: &str, _opts: Option<Options>, resolver: &impl DidResolver,
-    ) -> did::Result<Dereferenced> {
-        // validate URL against pattern
-        let url = url::Url::parse(did_url)
-            .map_err(|e| Error::InvalidDidUrl(format!("issue parsing URL: {e}")))?;
-
-        // resolve DID document
-        let did = format!("did:{}", url.path());
-        let resolution = Self::resolve(&did, None, resolver)?;
-
-        let Some(document) = resolution.document else {
-            return Err(Error::InvalidDid("Unable to resolve DID document".into()));
-        };
-        let Some(verifcation_methods) = document.verification_method else {
-            return Err(Error::NotFound("verification method missing".into()));
-        };
-
-        // for now we assume the DID URL is the ID of the verification method
-        // e.g. did:key:z6MkhaXgBZD#z6MkhaXgBZD
-        let Some(vm) = verifcation_methods.iter().find(|vm| vm.id == did_url) else {
-            return Err(Error::NotFound("verification method not found".into()));
-        };
-
-        Ok(Dereferenced {
-            metadata: Metadata {
-                content_type: ContentType::DidLdJson,
-                ..Metadata::default()
-            },
-            content_stream: Some(Resource::VerificationMethod(vm.clone())),
-            content_metadata: Some(ContentMetadata {
-                document_metadata: resolution.document_metadata,
-            }),
-        })
-    }
 }
 
 #[cfg(test)]
@@ -117,11 +78,10 @@ mod test {
     use crate::Binding;
 
     const DID: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
-    const DID_URL: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
 
     struct MockResolver;
     impl DidResolver for MockResolver {
-        async fn resolve(&self, _binding: Binding) -> anyhow::Result<Document> {
+        async fn resolve(&self, _: Binding) -> anyhow::Result<Document> {
             Ok(Document::default())
         }
     }
@@ -130,12 +90,5 @@ mod test {
     async fn resolve() {
         let resolved = DidKey::resolve(DID, None, &MockResolver).expect("should resolve");
         assert_snapshot!("resolved", resolved);
-    }
-
-    #[tokio::test]
-    async fn dereference() {
-        let dereferenced =
-            DidKey::dereference(DID_URL, None, &MockResolver).expect("should dereference");
-        assert_snapshot!("dereferenced", dereferenced);
     }
 }
