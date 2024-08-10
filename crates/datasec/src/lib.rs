@@ -109,14 +109,32 @@ pub trait Signer: Send + Sync {
     fn try_sign(&self, msg: &[u8]) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
 }
 
-/// `DidResolver` is used to resolve an external reference to public key material.
+/// `DidResolver` is used to proxy the resolution of a DID document. Resolution can
+/// either be local as in the case of `did:key`, or remote as in the case of `did:web`
+/// or `did:ion`.
+///
+/// Implementers simply implement the transport protocol for the binding and return
+/// the resulting DID document.
 pub trait DidResolver: Send + Sync {
     /// Resolve the DID URL to a DID Document.
     ///
     /// # Errors
     ///
     /// Returns an error if the DID URL cannot be resolved.
-    fn resolve(&self, did_url: &str) -> impl Future<Output = anyhow::Result<Document>> + Send;
+    fn resolve(&self, binding: Binding) -> impl Future<Output = anyhow::Result<Document>> + Send;
+}
+
+/// DID resolver binding options used by the client DID Resolver (proxy) to bind to a
+/// DID resolution server.
+pub enum Binding {
+    /// Local binding (no transport protocol)
+    Local,
+
+    /// HTTPS binding
+    Https(String),
+
+    /// RPC binding to remote (`DIDComm`?) binding
+    Rpc(String),
 }
 
 /// Encryptor is used by implementers to provide encryption functionality for

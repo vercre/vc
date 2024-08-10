@@ -6,16 +6,16 @@ use chrono::{DateTime, Utc};
 // TODO: remove this import
 use vercre_dif_exch::Constraints;
 use vercre_holder::provider::{
-    Algorithm, CredentialStorer, DidResolver, Document, HolderProvider, IssuerClient, Result,
-    Signer, StateManager, VerifierClient,
+    Algorithm, Binding, CredentialStorer, DidResolver, Document, HolderProvider, IssuerClient,
+    Result, Signer, StateManager, VerifierClient,
 };
 use vercre_holder::{
     Credential, CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse,
     RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse, TokenRequest,
     TokenResponse,
 };
-use vercre_test_utils::store::keystore::{self, HolderKeystore};
-use vercre_test_utils::store::state;
+use vercre_test_utils::store::keystore::HolderKeystore;
+use vercre_test_utils::store::{resolver, state};
 use vercre_test_utils::{issuer, verifier};
 
 #[derive(Default, Clone, Debug)]
@@ -152,7 +152,7 @@ impl Signer for Provider {
 }
 
 impl DidResolver for Provider {
-    async fn resolve(&self, did_url: &str) -> anyhow::Result<Document> {
-        keystore::get_did(did_url).await
+    async fn resolve(&self, binding: Binding) -> anyhow::Result<Document> {
+        resolver::resolve_did(binding).await
     }
 }

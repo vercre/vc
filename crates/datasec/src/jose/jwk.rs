@@ -7,7 +7,7 @@
 //!
 //! TODO:
 //! Support:
-//! (key) type: `EcdsaSecp256k1VerificationKey2019` | `JsonWebKey2020` | 
+//! (key) type: `EcdsaSecp256k1VerificationKey2019` | `JsonWebKey2020` |
 //!     `Ed25519VerificationKey2020` | `Ed25519VerificationKey2018` |
 //!     `X25519KeyAgreementKey2019`
 //! crv: `Ed25519` | `secp256k1` | `P-256` | `P-384` | `P-521`

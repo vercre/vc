@@ -2,7 +2,6 @@ use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ed25519_dalek::{SecretKey, Signer, SigningKey};
 use vercre_datasec::jose::jwa::Algorithm;
-use vercre_datasec::Document;
 use vercre_openid::provider::Result;
 
 #[derive(Default, Clone, Debug)]
@@ -82,13 +81,4 @@ impl HolderKeystore {
         let signature: ed25519_dalek::Signature = signing_key.sign(msg);
         Ok(signature.to_vec())
     }
-}
-
-/// Dereference DID URL to public key. For example,  did:web:demo.credibil.io#key-0.
-///
-/// did:web:demo.credibil.io -> did:web:demo.credibil.io/.well-known/did.json
-/// did:web:demo.credibil.io:entity:supplier -> did:web:demo.credibil.io/entity/supplier/did.json
-pub async fn get_did(_did_url: &str) -> Result<Document> {
-    serde_json::from_slice(include_bytes!("did.json"))
-        .map_err(|e| anyhow!("issue deserializing document: {e}"))
 }

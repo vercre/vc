@@ -1,12 +1,14 @@
 use chrono::{DateTime, Utc};
-use vercre_datasec::{Algorithm, DataSec, Decryptor, DidResolver, Document, Encryptor, Signer};
+use vercre_datasec::{
+    Algorithm, Binding, DataSec, Decryptor, DidResolver, Document, Encryptor, Signer,
+};
 use vercre_openid::issuer::{
     Claims, Client, ClientMetadata, Issuer, IssuerMetadata, Result, Server, ServerMetadata,
     StateManager, Subject,
 };
 
-use crate::store::keystore::{self, IssuerKeystore};
-use crate::store::{issuance, state};
+use crate::store::keystore::IssuerKeystore;
+use crate::store::{issuance, resolver, state};
 
 pub const CREDENTIAL_ISSUER: &str = "http://vercre.io";
 pub const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
@@ -119,8 +121,8 @@ impl Signer for IssuerSec {
 }
 
 impl DidResolver for IssuerSec {
-    async fn resolve(&self, did_url: &str) -> Result<Document> {
-        keystore::get_did(did_url).await
+    async fn resolve(&self, binding: Binding) -> Result<Document> {
+        resolver::resolve_did(binding).await
     }
 }
 

@@ -1,11 +1,11 @@
 use chrono::{DateTime, Utc};
 use vercre_issuer::provider::{
-    Algorithm, Claims, Client, ClientMetadata, DataSec, Decryptor, DidResolver, Document,
+    Algorithm, Binding, Claims, Client, ClientMetadata, DataSec, Decryptor, DidResolver, Document,
     Encryptor, Issuer, IssuerMetadata, Result, Server, ServerMetadata, Signer, StateManager,
     Subject,
 };
-use vercre_test_utils::store::keystore::{self, IssuerKeystore};
-use vercre_test_utils::store::{issuance, state};
+use vercre_test_utils::store::keystore::IssuerKeystore;
+use vercre_test_utils::store::{issuance, resolver, state};
 
 #[derive(Default, Clone, Debug)]
 pub struct Provider {
@@ -113,8 +113,8 @@ impl Signer for IssuerSec {
 }
 
 impl DidResolver for IssuerSec {
-    async fn resolve(&self, did_url: &str) -> Result<Document> {
-        keystore::get_did(did_url).await
+    async fn resolve(&self, binding: Binding) -> Result<Document> {
+        resolver::resolve_did(binding).await
     }
 }
 

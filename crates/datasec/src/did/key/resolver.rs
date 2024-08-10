@@ -114,13 +114,14 @@ mod test {
 
     use super::*;
     use crate::did::Document;
+    use crate::Binding;
 
     const DID: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
     const DID_URL: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
 
     struct MockResolver;
     impl DidResolver for MockResolver {
-        async fn resolve(&self, _url: &str) -> anyhow::Result<Document> {
+        async fn resolve(&self, _binding: Binding) -> anyhow::Result<Document> {
             Ok(Document::default())
         }
     }

@@ -1,13 +1,13 @@
 use chrono::{DateTime, Utc};
 use vercre_datasec::{
-    self, Algorithm, DataSec, Decryptor, DidResolver, Document, Encryptor, Signer,
+    self, Algorithm, Binding, DataSec, Decryptor, DidResolver, Document, Encryptor, Signer,
 };
 use vercre_openid::verifier::{
     Result, StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata,
 };
 
 use crate::store::keystore::VerifierKeystore;
-use crate::store::{presentation, state};
+use crate::store::{presentation, resolver, state};
 
 pub const VERIFIER_ID: &str = "http://vercre.io";
 
@@ -94,8 +94,8 @@ impl Signer for VerifierSec {
 }
 
 impl DidResolver for VerifierSec {
-    async fn resolve(&self, did_url: &str) -> Result<Document> {
-        crate::store::keystore::get_did(did_url).await
+    async fn resolve(&self, binding: Binding) -> Result<Document> {
+        resolver::resolve_did(binding).await
     }
 }
 
