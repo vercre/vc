@@ -17,7 +17,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::did::document::{Document, DocumentMetadata, VerificationMethod};
+use crate::did::document::{Document, DocumentMetadata, Service, VerificationMethod};
 use crate::{did, DidResolver};
 
 /// Did Result type using did module-specific Error
@@ -187,13 +187,19 @@ pub struct Dereferenced {
 /// dereferencing. The resource is a DID document or a subset of a DID document.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum Resource {
-    /// The `VerificationMethod` resource.
+    ///  DID `Document` resource.
+    Document(Document),
+
+    /// `VerificationMethod` resource.
     VerificationMethod(VerificationMethod),
+
+    /// `Service` resource.
+    Service(Service),
 }
 
 impl Default for Resource {
     fn default() -> Self {
-        Self::VerificationMethod(VerificationMethod::default())
+        Self::Document(Document::default())
     }
 }
 
