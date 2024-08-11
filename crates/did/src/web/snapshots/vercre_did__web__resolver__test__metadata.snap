@@ -1,0 +1,14 @@
+---
+source: crates/did/src/web/resolver.rs
+assertion_line: 149
+expression: resolved.metadata
+---
+{
+  "contentType": "application/did+ld+json",
+  "did": {
+    "didString": "did:web:demo.credibil.io",
+    "method": "key",
+    "methodSpecificId": "demo.credibil.io"
+  },
+  "pattern": "^did:key:z[a-km-zA-HJ-NP-Z1-9]+$"
+}

@@ -1,0 +1,45 @@
+{
+    "@context": [
+        "https://www.w3.org/ns/did/v1",
+        "https://w3id.org/security/data-integrity/v1"
+    ],
+    "id": "did:web:demo.credibil.io",
+    "verificationMethod": [
+        {
+            "id": "did:web:demo.credibil.io#key-0",
+            "type": "JsonWebKey",
+            "controller": "did:web:demo.credibil.io",
+            "publicKeyJwk": {
+                "kty": "EC",
+                "crv": "secp256k1",
+                "x": "H846FVf9umFYyRrEvC5uQa-__2sKLW9H3O89THClFm4",
+                "y": "VoMVEnKQsKNtu_sS20M0LPUR5yYEQz4YxUq4hQaQIzQ"
+            }
+        }
+    ],
+    "authentication": [
+        "did:web:demo.credibil.io#key-0"
+    ],
+    "assertionMethod": [
+        "did:web:demo.credibil.io#key-0"
+    ],
+    "capabilityInvocation": [
+        "did:web:demo.credibil.io#key-0"
+    ],
+    "capabilityDelegation": [
+        "did:web:demo.credibil.io#key-0"
+    ],
+    "keyAgreement": [
+        {
+            "id": "did:web:demo.credibil.io#key-1",
+            "type": "JsonWebKey",
+            "controller": "did:web:demo.credibil.io",
+            "publicKeyJwk": {
+                "kty": "EC",
+                "crv": "secp256k1",
+                "x": "H846FVf9umFYyRrEvC5uQa-__2sKLW9H3O89THClFm4",
+                "y": "VoMVEnKQsKNtu_sS20M0LPUR5yYEQz4YxUq4hQaQIzQ"
+            }
+        }
+    ]
+}

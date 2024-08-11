@@ -87,15 +87,8 @@ where
         bail!("'kid' is not set");
     };
 
-    // let resp = did::dereference(kid, None, resolver).await?;
-    // // get public key specified by the url fragment
-    // let Some(did::Resource::VerificationMethod(vm)) = resp.content_stream else {
-    //     bail!("Verification method not found");
-    // };
-    // let jwk = vm.method_type.jwk()?;
-
+    // resolve 'kid' to Jwk (hint: kid will contain a DID URL for now)
     let jwk = pk_cb(kid).await?;
-
     verify(&jwk, &format!("{}.{}", parts[0], parts[1]), &sig)?;
 
     Ok(Jwt { header, claims })
