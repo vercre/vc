@@ -1,22 +1,11 @@
 ---
 source: vercre-holder/tests/issuance.rs
-assertion_line: 47
+assertion_line: 46
 expression: issuance
 ---
-id: "[id]"
-client_id: 96bfb9cb-0513-7d64-5532-bed74c48f9ab
+issuance_id: "[issuance_id]"
 status: Ready
-offer:
-  credential_configuration_ids:
-    - EmployeeID_JWT
-  credential_issuer: "http://vercre.io"
-  grants:
-    "urn:ietf:params:oauth:grant-type:pre-authorized_code":
-      pre-authorized_code: "[pre-authorized_code]"
-      tx_code:
-        input_mode: numeric
-        length: 6
-        description: Please provide the one-time code received
+issuer: "http://vercre.io"
 offered:
   EmployeeID_JWT:
     format: jwt_vc_json
@@ -70,8 +59,7 @@ offered:
           display:
             - name: Given name
               locale: en-NZ
-pin: ~
-token:
-  access_token: ""
-  token_type: Bearer
-  expires_in: 0
+tx_code:
+  input_mode: numeric
+  length: 6
+  description: Please provide the one-time code received

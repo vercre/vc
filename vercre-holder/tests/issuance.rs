@@ -4,7 +4,7 @@ use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::provider::CredentialStorer;
-use vercre_holder::{OfferRequest, PinRequest, Status};
+use vercre_holder::{OfferRequest, PinRequest, IssuanceStatus};
 use vercre_issuer::{CreateOfferRequest, CredentialOfferType};
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
@@ -43,47 +43,28 @@ async fn e2e_issuance() {
     let issuance = vercre_holder::offer(HOLDER_PROVIDER.clone(), &offer_req)
         .await
         .expect("should process offer");
-
     assert_snapshot!("issuance_created", issuance, {
-        ".id" => "[id]",
-        ".offer" => insta::sorted_redaction(),
-        ".offer.grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
+        ".issuance_id" => "[issuance_id]",
         ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
     });
 
     // Accept offer
-    let issuance = vercre_holder::accept(HOLDER_PROVIDER.clone(), issuance.id.clone())
+    let status = vercre_holder::accept(HOLDER_PROVIDER.clone(), issuance.issuance_id.clone())
         .await
         .expect("should accept offer");
-
-    assert_eq!(issuance.status, Status::PendingPin);
-    assert_snapshot!("issuance_accepted", issuance, {
-        ".id" => "[id]",
-        ".offer" => insta::sorted_redaction(),
-        ".offer.grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
-        ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
-    });
+    assert_eq!(status, IssuanceStatus::PendingPin);
 
     // Enter PIN
     let pin_req = PinRequest {
-        id: issuance.id.clone(),
+        id: issuance.issuance_id.clone(),
         pin: offer_resp.user_code.expect("should have user code"),
     };
-    let issuance =
+    let status =
         vercre_holder::pin(HOLDER_PROVIDER.clone(), &pin_req).await.expect("should apply pin");
-
-    assert_eq!(issuance.status, Status::Accepted);
-    assert_eq!(issuance.pin, Some(pin_req.pin.clone()));
-    assert_snapshot!("issuance_pin", issuance, {
-        ".id" => "[id]",
-        ".offer" => insta::sorted_redaction(),
-        ".offer.grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
-        ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
-        ".pin" => "[pin]",
-    });
+    assert_eq!(status, IssuanceStatus::Accepted);
 
     // Get (and store) credentials
-    vercre_holder::get_credentials(HOLDER_PROVIDER.clone(), issuance.id.clone())
+    vercre_holder::get_credentials(HOLDER_PROVIDER.clone(), issuance.issuance_id.clone())
         .await
         .expect("should get credentials");
 

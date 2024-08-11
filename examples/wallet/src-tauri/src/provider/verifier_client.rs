@@ -1,6 +1,6 @@
 use http::header::{ACCEPT, CONTENT_TYPE};
-use vercre_holder::callback::VerifierClient;
-use vercre_holder::presentation::{RequestObjectResponse, ResponseRequest, ResponseResponse};
+use vercre_holder::provider::VerifierClient;
+use vercre_holder::{RequestObjectResponse, ResponseRequest, ResponseResponse};
 
 use super::Provider;
 
@@ -23,11 +23,14 @@ impl VerifierClient for Provider {
 
     /// Send the presentation to the verifier.
     async fn present(
-        &self, _flow_id: &str, uri: &str, presentation: &ResponseRequest,
+        &self, _flow_id: &str, uri: Option<&str>, presentation: &ResponseRequest,
     ) -> anyhow::Result<ResponseResponse> {
         let client = reqwest::Client::new();
+        let Some(presentation_url) = uri else {
+            return Err(anyhow::anyhow!("No URI provided"));
+        };
         let result = client
-            .post(uri)
+            .post(presentation_url)
             .header(CONTENT_TYPE, "multipart/form-data")
             .header(ACCEPT, "application/json")
             .form(presentation)

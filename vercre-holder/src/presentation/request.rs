@@ -5,6 +5,7 @@
 //! query parameter.
 
 use anyhow::{anyhow, bail};
+use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_datasec::jose::jws;
@@ -14,7 +15,23 @@ use vercre_openid::verifier::{
 };
 
 use super::{Presentation, Status};
+use crate::credential::Credential;
 use crate::provider::{CredentialStorer, HolderProvider, Verifier, VerifierClient};
+
+/// `RequestResponse` is the response from the `request` endpoint. It contains enough information
+/// for the holder to authorize (or reject) the presentation request.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[allow(clippy::module_name_repetitions)]
+pub struct RequestResponse {
+    /// The presentation flow identifier.
+    pub presentation_id: String,
+
+    /// The status of the presentation flow.
+    pub status: Status,
+
+    /// The list of credentials that match the verifier's request.
+    pub credentials: Vec<Credential>,
+}
 
 /// Initiates the presentation flow triggered by a new presentation request where the form of
 /// the request is a URI to retrieve the request details or a `PresentationRequest` struct as a
@@ -22,7 +39,7 @@ use crate::provider::{CredentialStorer, HolderProvider, Verifier, VerifierClient
 #[instrument(level = "debug", skip(provider))]
 pub async fn request(
     provider: impl HolderProvider, request: &String,
-) -> anyhow::Result<Presentation> {
+) -> anyhow::Result<RequestResponse> {
     let Ok(request_str) = urlencoding::decode(request) else {
         let e = anyhow!("unable to decode request url string");
         tracing::error!(target: "Endpoint::request", ?e);
@@ -84,7 +101,15 @@ pub async fn request(
         return Err(e);
     }
 
-    Ok(presentation)
+    // Return enough state for the holder agent to make a decision on whether to authorize the
+    // presentation request or reject it.
+    let response = RequestResponse {
+        presentation_id: presentation.id,
+        status: presentation.status,
+        credentials: presentation.credentials.clone(),
+    };
+
+    Ok(response)
 }
 
 /// Extract a presentation request from a query string parameter.

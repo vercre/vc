@@ -8,14 +8,14 @@ use std::fmt::Debug;
 use anyhow::anyhow;
 use tracing::instrument;
 
-use super::{Issuance, Status};
+use super::Status;
 use crate::provider::HolderProvider;
 
 /// A `PinRequest` is a request to set a PIN for use in the issuance flow.
 #[derive(Clone, Debug, Default)]
 #[allow(clippy::module_name_repetitions)]
 pub struct PinRequest {
-    /// The issuance flow ID.
+    /// The issuance flow ID returned by the `offer` endpoint.
     pub id: String,
     /// The PIN to set.
     pub pin: String,
@@ -24,7 +24,7 @@ pub struct PinRequest {
 /// Progresses the issuance flow triggered by a holder setting a PIN.
 /// The request is the issuance flow ID.
 #[instrument(level = "debug", skip(provider))]
-pub async fn pin(provider: impl HolderProvider, request: &PinRequest) -> anyhow::Result<Issuance> {
+pub async fn pin(provider: impl HolderProvider, request: &PinRequest) -> anyhow::Result<Status> {
     tracing::debug!("Endpoint::pin");
 
     let mut issuance = match super::get_issuance(provider.clone(), &request.id).await {
@@ -50,5 +50,5 @@ pub async fn pin(provider: impl HolderProvider, request: &PinRequest) -> anyhow:
         return Err(e);
     };
 
-    Ok(issuance)
+    Ok(issuance.status)
 }
