@@ -5646,6 +5646,7 @@ dependencies = [
  "curve25519-dalek",
  "ecdsa",
  "ed25519-dalek",
+ "futures",
  "insta",
  "k256",
  "multibase",
@@ -5705,6 +5706,7 @@ dependencies = [
 name = "vercre-issuer"
 version = "0.1.0-alpha.6"
 dependencies = [
+ "anyhow",
  "assert_let_bind",
  "base64ct",
  "chrono",

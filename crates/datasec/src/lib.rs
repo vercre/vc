@@ -52,6 +52,7 @@ use std::future::{Future, IntoFuture};
 pub use crate::did::document::Document;
 pub use crate::jose::jwa::Algorithm;
 pub use crate::jose::jwk::PublicKeyJwk;
+pub use crate::jose::jwt::Jwt;
 
 /// The `DataSec` trait is used to provide methods needed for signing, encrypting,
 /// verifying, and decrypting data. Implementers of this trait are expected to
@@ -121,7 +122,7 @@ pub trait DidResolver: Send + Sync {
     /// # Errors
     ///
     /// Returns an error if the DID URL cannot be resolved.
-    fn resolve(&self, binding: Binding) -> impl Future<Output = anyhow::Result<Document>> + Send;
+    fn resolve(&self, binding: Binding) -> impl Future<Output = anyhow::Result<Document>> + Send+Sync;
 }
 
 /// DID resolver binding options used by the client DID Resolver (proxy) to bind to a

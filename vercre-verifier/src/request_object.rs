@@ -68,6 +68,7 @@ async fn process(
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use vercre_datasec::did;
     use vercre_dif_exch::PresentationDefinition;
     use vercre_openid::verifier::{
         ClientIdScheme, ClientMetadataType, PresentationDefinitionType, RequestObject, ResponseType,
@@ -117,10 +118,20 @@ mod tests {
             panic!("no JWT found in response");
         };
 
-        let resolver = DataSec::resolver(&provider, VERIFIER_ID).expect("should get resolver");
+        let resolver = &DataSec::resolver(&provider, VERIFIER_ID).expect("should get resolver");
 
-        let jwt: jws::Jwt<RequestObject> =
-            jws::decode(&jwt_enc, &resolver).await.expect("jwt is valid");
+        let jwt: jws::Jwt<RequestObject> = jws::decode(&jwt_enc, move |kid: String| {
+            async move {
+                let resp = did::dereference(&kid, None, resolver).await?;
+                // get public key specified by the url fragment
+                let Some(did::Resource::VerificationMethod(vm)) = resp.content_stream else {
+                    panic!("Verification method not found");
+                };
+                vm.method_type.jwk().map_err(Into::into)
+            }
+        })
+        .await
+        .expect("jwt is valid");
         assert_snapshot!("response", jwt);
 
         // request state should not exist

@@ -7,6 +7,7 @@
 use anyhow::{anyhow, bail};
 use tracing::instrument;
 use uuid::Uuid;
+use vercre_datasec::did;
 use vercre_datasec::jose::jws;
 use vercre_dif_exch::Constraints;
 use vercre_openid::verifier::{
@@ -100,7 +101,18 @@ async fn parse_request_object_response(
     let RequestObjectType::Jwt(token) = &res.request_object else {
         bail!("no serialized JWT found in response");
     };
-    let jwt: jws::Jwt<RequestObject> = match jws::decode(token, resolver).await {
+    let jwt: jws::Jwt<RequestObject> = match jws::decode(token, move |kid: String| {
+        async move {
+            let resp = did::dereference(&kid, None, resolver).await?;
+            // get public key specified by the url fragment
+            let Some(did::Resource::VerificationMethod(vm)) = resp.content_stream else {
+                bail!("Verification method not found");
+            };
+            vm.method_type.jwk().map_err(Into::into)
+        }
+    })
+    .await
+    {
         Ok(jwt) => jwt,
         Err(e) => bail!("failed to parse JWT: {e}"),
     };

@@ -10,9 +10,11 @@
 
 use std::fmt::Debug;
 
+use anyhow::bail;
 use chrono::Utc;
 use tracing::instrument;
 use vercre_core_utils::{gen, Kind};
+use vercre_datasec::did;
 use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_openid::issuer::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
@@ -62,6 +64,7 @@ struct Context {
     holder_did: String,
 }
 
+#[allow(clippy::too_many_lines)]
 async fn verify(
     context: &mut Context, provider: impl Provider, request: &BatchCredentialRequest,
 ) -> Result<()> {
@@ -129,11 +132,22 @@ async fn verify(
                 });
             };
 
-            let resolver = DataSec::resolver(&provider, &request.credential_issuer)
+            let resolver = &DataSec::resolver(&provider, &request.credential_issuer)
                 .map_err(|e| Error::ServerError(format!("issue  resolving verifier: {e}")))?;
 
             // TODO: check proof is signed with supported algorithm (from proof_type)
-            let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, &resolver).await {
+            let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, move |kid: String| {
+                async move {
+                    let resp = did::dereference(&kid, None, resolver).await?;
+                    // get public key specified by the url fragment
+                    let Some(did::Resource::VerificationMethod(vm)) = resp.content_stream else {
+                        bail!("Verification method not found");
+                    };
+                    vm.method_type.jwk().map_err(Into::into)
+                }
+            })
+            .await
+            {
                 Ok(jwt) => jwt,
                 Err(e) => {
                     let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;

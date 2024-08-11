@@ -25,6 +25,7 @@ version.workspace = true
 workspace = true
 
 [dependencies]
+anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true
 derive_builder.workspace = true

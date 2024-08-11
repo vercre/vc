@@ -10,12 +10,13 @@
 use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ecdsa::signature::Verifier as _;
+use futures::Future;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
 use crate::jose::jwk::{Curve, PublicKeyJwk};
 pub use crate::jose::jwt::{Header, Jwt, KeyType, Type};
-use crate::{did, Algorithm, DidResolver, Signer};
+use crate::{Algorithm, Signer};
 
 /// Encode the provided header and claims and sign, returning a JWT in compact JWS form.
 ///
@@ -52,9 +53,11 @@ where
 ///
 /// # Errors
 /// TODO: Add errors
-pub async fn decode<T>(token: &str, resolver: &impl DidResolver) -> anyhow::Result<Jwt<T>>
+pub async fn decode<F, Fut, T>(token: &str, pk_cb: F) -> anyhow::Result<Jwt<T>>
 where
     T: DeserializeOwned + Send,
+    F: Fn(String) -> Fut + Send + Sync,
+    Fut: Future<Output = anyhow::Result<PublicKeyJwk>> + Send + Sync,
 {
     // TODO: cater for different key types
     let parts = token.split('.').collect::<Vec<&str>>();
@@ -80,17 +83,18 @@ where
     }
 
     // verify signature
-    let KeyType::KeyId(kid) = &header.key else {
+    let KeyType::KeyId(kid) = header.key.clone() else {
         bail!("'kid' is not set");
     };
 
-    let resp = did::dereference(kid, None, resolver).await?;
+    // let resp = did::dereference(kid, None, resolver).await?;
+    // // get public key specified by the url fragment
+    // let Some(did::Resource::VerificationMethod(vm)) = resp.content_stream else {
+    //     bail!("Verification method not found");
+    // };
+    // let jwk = vm.method_type.jwk()?;
 
-    // get public key specified by the url fragment
-    let Some(did::Resource::VerificationMethod(vm)) = resp.content_stream else {
-        bail!("Verification method not found");
-    };
-    let jwk = vm.method_type.jwk()?;
+    let jwk = pk_cb(kid).await?;
 
     verify(&jwk, &format!("{}.{}", parts[0], parts[1]), &sig)?;
 

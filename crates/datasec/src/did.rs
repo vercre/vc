@@ -36,13 +36,13 @@ pub async fn dereference(
 
     // resolve DID document
     let method = did_url.split(':').nth(1).unwrap_or_default();
-    let resolved = match method {
+    let resolution = match method {
         "key" => key::DidKey::resolve(&did, opts, resolver)?,
         "web" => web::DidWeb::resolve(&did, opts, resolver).await?,
         _ => return Err(Error::MethodNotSupported(format!("{method} is not supported"))),
     };
 
-    let Some(document) = resolved.document else {
+    let Some(document) = resolution.document else {
         return Err(Error::InvalidDid("Unable to resolve DID document".into()));
     };
 
@@ -64,7 +64,7 @@ pub async fn dereference(
         },
         content_stream: Some(Resource::VerificationMethod(vm.clone())),
         content_metadata: Some(ContentMetadata {
-            document_metadata: resolved.document_metadata,
+            document_metadata: resolution.document_metadata,
         }),
     })
 }
