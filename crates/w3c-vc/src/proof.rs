@@ -141,39 +141,30 @@ pub enum Verify<'a> {
 /// TODO: Add errors
 #[allow(clippy::unused_async)]
 pub async fn verify(proof: Verify<'_>, resolver: &impl DidResolver) -> anyhow::Result<Payload> {
+    //
+    let callback = move |kid: String| {
+        async move {
+            let resp = did::dereference(&kid, None, resolver).await?;
+            // get public key specified by the url fragment
+            let Some(did::Resource::VerificationMethod(vm)) = resp.content_stream else {
+                bail!("Verification method not found");
+            };
+            vm.method_type.jwk().map_err(Into::into)
+        }
+    };
+
     match proof {
         Verify::Vc(value) => {
             let Kind::String(token) = value else {
                 bail!("VerifiableCredential is not a JWT");
             };
-            let jwt: jwt::Jwt<jose::VcClaims> = jws::decode(token, move |kid: String| {
-                async move {
-                    let resp = did::dereference(&kid, None, resolver).await?;
-                    // get public key specified by the url fragment
-                    let Some(did::Resource::VerificationMethod(vm)) = resp.content_stream else {
-                        bail!("Verification method not found");
-                    };
-                    vm.method_type.jwk().map_err(Into::into)
-                }
-            })
-            .await?;
+            let jwt: jwt::Jwt<jose::VcClaims> = jws::decode(token, callback).await?;
             Ok(Payload::Vc(jwt.claims.vc))
         }
         Verify::Vp(value) => {
             match value {
                 Kind::String(token) => {
-                    let jwt: jwt::Jwt<jose::VpClaims> = jws::decode(token, move |kid| {
-                        async move {
-                            let resp = did::dereference(&kid, None, resolver).await?;
-                            // get public key specified by the url fragment
-                            let Some(did::Resource::VerificationMethod(vm)) = resp.content_stream
-                            else {
-                                bail!("Verification method not found");
-                            };
-                            vm.method_type.jwk().map_err(Into::into)
-                        }
-                    })
-                    .await?;
+                    let jwt: jwt::Jwt<jose::VpClaims> = jws::decode(token, callback).await?;
                     Ok(Payload::Vp {
                         vp: jwt.claims.vp,
                         client_id: jwt.claims.aud,

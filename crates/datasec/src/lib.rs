@@ -122,7 +122,9 @@ pub trait DidResolver: Send + Sync {
     /// # Errors
     ///
     /// Returns an error if the DID URL cannot be resolved.
-    fn resolve(&self, binding: Binding) -> impl Future<Output = anyhow::Result<Document>> + Send+Sync;
+    fn resolve(
+        &self, binding: Binding,
+    ) -> impl Future<Output = anyhow::Result<Document>> + Send + Sync;
 }
 
 /// DID resolver binding options used by the client DID Resolver (proxy) to bind to a

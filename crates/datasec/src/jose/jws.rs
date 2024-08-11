@@ -56,7 +56,7 @@ where
 pub async fn decode<F, Fut, T>(token: &str, pk_cb: F) -> anyhow::Result<Jwt<T>>
 where
     T: DeserializeOwned + Send,
-    F: Fn(String) -> Fut + Send + Sync,
+    F: FnOnce(String) -> Fut + Send + Sync,
     Fut: Future<Output = anyhow::Result<PublicKeyJwk>> + Send + Sync,
 {
     // TODO: cater for different key types
