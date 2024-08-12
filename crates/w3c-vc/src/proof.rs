@@ -32,7 +32,7 @@ mod jose;
 
 use anyhow::bail;
 use serde::{Deserialize, Serialize};
-use vercre_core_utils::{Kind, Quota};
+use vercre_core::{Kind, Quota};
 use vercre_datasec::jose::{jws, jwt};
 use vercre_datasec::{verify_key, DidResolver, Signer};
 

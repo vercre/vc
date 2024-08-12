@@ -12,7 +12,7 @@ use ed25519_dalek::SigningKey;
 use multibase::Base;
 use rand::rngs::OsRng;
 use url::Url;
-use vercre_core_utils::Kind;
+use vercre_core::Kind;
 
 use super::DidWeb;
 use crate::document::{CreateOptions, Document, MethodType, PublicKeyFormat, VerificationMethod};

@@ -23,7 +23,7 @@
 use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
-use vercre_core_utils::Kind;
+use vercre_core::Kind;
 use vercre_openid::verifier::{
     DataSec, PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, StateManager,
 };

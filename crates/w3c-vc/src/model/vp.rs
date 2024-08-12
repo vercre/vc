@@ -14,7 +14,7 @@ use base64ct::{Base64UrlUnpadded, Encoding};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
-use vercre_core_utils::{Kind, Quota};
+use vercre_core::{Kind, Quota};
 
 use crate::model::vc::VerifiableCredential;
 use crate::proof::integrity::Proof;

@@ -10,7 +10,7 @@ use chrono::{DateTime, Utc};
 use multibase::Base;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use vercre_core_utils::{Kind, Quota};
+use vercre_core::{Kind, Quota};
 
 use crate::did::{self, Error};
 use crate::jose::jwk::{Curve, KeyType, PublicKeyJwk};

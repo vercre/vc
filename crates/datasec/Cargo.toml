@@ -28,8 +28,8 @@ crypto_box = { version = "0.9.1", features = ["chacha20", "heapless"] }
 curve25519-dalek = "4.1.3"
 ecdsa.workspace = true
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
-k256 = "0.13.3"
 futures.workspace = true
+k256 = "0.13.3"
 multibase = "0.9"
 rand = "0.8.5"
 regex = "1.10.6"
@@ -38,7 +38,7 @@ serde_json.workspace = true
 thiserror = "1.0"
 tracing.workspace = true
 url = "2.5.2"
-vercre-core-utils.workspace = true
+vercre-core.workspace = true
 x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
 
 [dev-dependencies]

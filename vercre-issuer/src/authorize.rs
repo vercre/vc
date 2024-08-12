@@ -74,7 +74,7 @@ use std::vec;
 
 use chrono::Utc;
 use tracing::instrument;
-use vercre_core_utils::gen;
+use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
     ClientMetadata, CredentialType, GrantType, Issuer, IssuerMetadata, Provider, ServerMetadata,

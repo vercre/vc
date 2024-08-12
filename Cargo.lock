@@ -5626,7 +5626,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
-name = "vercre-core-utils"
+name = "vercre-core"
 version = "0.1.0-alpha.6"
 dependencies = [
  "base64ct",
@@ -5659,7 +5659,7 @@ dependencies = [
  "tokio",
  "tracing",
  "url",
- "vercre-core-utils",
+ "vercre-core",
  "x25519-dalek",
 ]
 
@@ -5684,7 +5684,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "url",
- "vercre-core-utils",
+ "vercre-core",
  "vercre-datasec",
 ]
 
@@ -5717,7 +5717,7 @@ dependencies = [
  "tracing",
  "urlencoding",
  "uuid",
- "vercre-core-utils",
+ "vercre-core",
  "vercre-datasec",
  "vercre-dif-exch",
  "vercre-issuer",
@@ -5743,7 +5743,7 @@ dependencies = [
  "sha2",
  "tokio",
  "tracing",
- "vercre-core-utils",
+ "vercre-core",
  "vercre-datasec",
  "vercre-openid",
  "vercre-test-utils",
@@ -5764,7 +5764,7 @@ dependencies = [
  "serde_json",
  "serde_qs",
  "thiserror",
- "vercre-core-utils",
+ "vercre-core",
  "vercre-datasec",
  "vercre-dif-exch",
  "vercre-w3c-vc",
@@ -5803,7 +5803,7 @@ dependencies = [
  "tokio",
  "tracing",
  "uuid",
- "vercre-core-utils",
+ "vercre-core",
  "vercre-datasec",
  "vercre-dif-exch",
  "vercre-openid",
@@ -5823,7 +5823,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
- "vercre-core-utils",
+ "vercre-core",
  "vercre-datasec",
  "vercre-dif-exch",
 ]

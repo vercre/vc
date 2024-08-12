@@ -4,7 +4,7 @@
 
 use anyhow::{anyhow, bail};
 use tracing::instrument;
-use vercre_core_utils::Kind;
+use vercre_core::Kind;
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_openid::issuer::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, GrantType,

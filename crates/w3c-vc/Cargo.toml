@@ -27,7 +27,7 @@ serde.workspace = true
 serde_json.workspace = true
 tracing.workspace = true
 uuid.workspace = true
-vercre-core-utils.workspace = true
+vercre-core.workspace = true
 vercre-datasec.workspace = true
 vercre-dif-exch.workspace = true
 

@@ -44,7 +44,7 @@ use std::collections::HashMap;
 
 use tracing::instrument;
 use uuid::Uuid;
-use vercre_core_utils::gen;
+use vercre_core::gen;
 use vercre_datasec::Algorithm;
 use vercre_dif_exch::{ClaimFormat, PresentationDefinition};
 use vercre_openid::verifier::{

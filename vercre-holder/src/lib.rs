@@ -47,7 +47,7 @@ pub use issuance::pin::pin;
 pub use presentation::authorize::authorize;
 pub use presentation::present::present;
 pub use presentation::request::request;
-pub use vercre_core_utils::Quota;
+pub use vercre_core::Quota;
 pub use vercre_dif_exch::Constraints;
 pub use vercre_openid::issuer::{
     CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse, GrantType,

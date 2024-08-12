@@ -12,7 +12,7 @@ use std::fmt::Debug;
 
 use chrono::Utc;
 use tracing::instrument;
-use vercre_core_utils::{gen, Kind};
+use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::{verify_key, DataSec};
 use vercre_openid::issuer::{

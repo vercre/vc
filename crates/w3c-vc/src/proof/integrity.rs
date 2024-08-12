@@ -47,7 +47,7 @@ use std::str::FromStr;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use vercre_core_utils::Quota;
+use vercre_core::Quota;
 
 /// To be verifiable, a credential must contain at least one proof mechanism,
 /// and details necessary to evaluate that proof. A proof may be external — an

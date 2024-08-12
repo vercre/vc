@@ -6,7 +6,7 @@
 use anyhow::{anyhow, bail};
 use tracing::instrument;
 use uuid::Uuid;
-use vercre_core_utils::Kind;
+use vercre_core::Kind;
 use vercre_dif_exch::{DescriptorMap, FilterValue, PathNested, PresentationSubmission};
 use vercre_openid::verifier::{PresentationDefinitionType, ResponseRequest, ResponseResponse};
 use vercre_w3c_vc::model::vp::VerifiablePresentation;

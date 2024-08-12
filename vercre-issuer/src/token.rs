@@ -16,7 +16,7 @@ use std::fmt::Debug;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use sha2::{Digest, Sha256};
 use tracing::instrument;
-use vercre_core_utils::gen;
+use vercre_core::gen;
 use vercre_openid::issuer::{
     GrantType, Provider, ServerMetadata, StateManager, TokenRequest, TokenResponse, TokenType,
 };

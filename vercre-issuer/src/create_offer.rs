@@ -66,7 +66,7 @@
 
 use chrono::Utc;
 use tracing::instrument;
-use vercre_core_utils::gen;
+use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer,
     CredentialOfferType, Grants, IssuerMetadata, PreAuthorizedCodeGrant, Provider, StateManager,

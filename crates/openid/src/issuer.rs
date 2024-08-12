@@ -10,7 +10,7 @@ use base64ct::{Base64, Encoding};
 use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use vercre_core_utils::Kind;
+use vercre_core::Kind;
 use vercre_datasec::jose::jwk::PublicKeyJwk;
 pub use vercre_datasec::DataSec;
 use vercre_w3c_vc::model::VerifiableCredential;

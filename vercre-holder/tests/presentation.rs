@@ -5,7 +5,7 @@ use std::sync::LazyLock;
 use chrono::Utc;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::Map;
-use vercre_core_utils::{Kind, Quota};
+use vercre_core::{Kind, Quota};
 use vercre_datasec::DataSec;
 use vercre_dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use vercre_holder::credential::Credential;
