@@ -1,7 +1,6 @@
 use chrono::{DateTime, Utc};
-use vercre_datasec::{
-    Algorithm, Binding, DataSec, Decryptor, DidResolver, Document, Encryptor, Signer,
-};
+use vercre_datasec::{Algorithm, DataSec, Decryptor, Encryptor, Signer};
+use vercre_did::{Binding, DidResolver, DidSec, Document};
 use vercre_openid::issuer::{
     Claims, Client, Issuer, Metadata, Result, Server, StateStore, Subject,
 };
@@ -88,15 +87,17 @@ impl DataSec for Provider {
         Ok(IssuerSec(IssuerKeystore {}))
     }
 
-    fn resolver(&self, _identifier: &str) -> anyhow::Result<impl DidResolver> {
-        Ok(IssuerSec(IssuerKeystore {}))
-    }
-
     fn encryptor(&self, _identifier: &str) -> anyhow::Result<impl Encryptor> {
         Ok(IssuerSec(IssuerKeystore {}))
     }
 
     fn decryptor(&self, _identifier: &str) -> anyhow::Result<impl Decryptor> {
+        Ok(IssuerSec(IssuerKeystore {}))
+    }
+}
+
+impl DidSec for Provider {
+    fn resolver(&self, _identifier: &str) -> anyhow::Result<impl DidResolver> {
         Ok(IssuerSec(IssuerKeystore {}))
     }
 }

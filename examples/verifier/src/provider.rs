@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use vercre_did::DidSec;
 use vercre_test_utils::store::keystore::VerifierKeystore;
 use vercre_test_utils::store::{presentation, resolver, state};
 use vercre_verifier::provider::{
@@ -59,15 +60,17 @@ impl DataSec for Provider {
         Ok(VerifierSec(VerifierKeystore {}))
     }
 
-    fn resolver(&self, _identifier: &str) -> anyhow::Result<impl DidResolver> {
-        Ok(VerifierSec(VerifierKeystore {}))
-    }
-
     fn encryptor(&self, _identifier: &str) -> anyhow::Result<impl Encryptor> {
         Ok(VerifierSec(VerifierKeystore {}))
     }
 
     fn decryptor(&self, _identifier: &str) -> anyhow::Result<impl Decryptor> {
+        Ok(VerifierSec(VerifierKeystore {}))
+    }
+}
+
+impl DidSec for Provider {
+    fn resolver(&self, _identifier: &str) -> anyhow::Result<impl DidResolver> {
         Ok(VerifierSec(VerifierKeystore {}))
     }
 }

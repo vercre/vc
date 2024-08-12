@@ -6,8 +6,8 @@ use chrono::{DateTime, Utc};
 // TODO: remove this import
 use vercre_dif_exch::Constraints;
 use vercre_holder::provider::{
-    Algorithm, Binding, CredentialStorer, DidResolver, Document, HolderProvider, Issuer,
-    Result, Signer, StateStore, Verifier,
+    Algorithm, Binding, CredentialStorer, DidResolver, Document, HolderProvider, Issuer, Result,
+    Signer, StateStore, Verifier,
 };
 use vercre_holder::{
     Credential, CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse,

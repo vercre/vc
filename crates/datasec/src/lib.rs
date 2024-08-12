@@ -44,12 +44,10 @@
 //! [VC-JOSE-COSE]: https://w3c.github.io/vc-jose-cose
 //! [OpenID4VP]: https://openid.net/specs/openid-4-verifiable-presentations-1_0.html
 
-pub mod did;
 pub mod jose;
 
 use std::future::{Future, IntoFuture};
 
-pub use crate::did::document::Document;
 pub use crate::jose::jwa::Algorithm;
 pub use crate::jose::jwk::PublicKeyJwk;
 pub use crate::jose::jwt::Jwt;
@@ -66,14 +64,6 @@ pub trait DataSec: Send + Sync {
     ///
     /// Returns an error if the signer cannot be created.
     fn signer(&self, identifier: &str) -> anyhow::Result<impl Signer>;
-
-    /// Returns a resolver that can be used to resolve an external reference to
-    /// public key material.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the resolver cannot be created.
-    fn resolver(&self, identifier: &str) -> anyhow::Result<impl DidResolver>;
 
     /// Encryptor provides data encryption functionality.
     ///
@@ -108,36 +98,6 @@ pub trait Signer: Send + Sync {
 
     /// `TrySign` is the fallible version of Sign.
     fn try_sign(&self, msg: &[u8]) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
-}
-
-/// `DidResolver` is used to proxy the resolution of a DID document. Resolution can
-/// either be local as in the case of `did:key`, or remote as in the case of `did:web`
-/// or `did:ion`.
-///
-/// Implementers simply implement the transport protocol for the binding and return
-/// the resulting DID document.
-pub trait DidResolver: Send + Sync {
-    /// Resolve the DID URL to a DID Document.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the DID URL cannot be resolved.
-    fn resolve(
-        &self, binding: Binding,
-    ) -> impl Future<Output = anyhow::Result<Document>> + Send + Sync;
-}
-
-/// DID resolver binding options used by the client DID Resolver (proxy) to bind to a
-/// DID resolution server.
-pub enum Binding {
-    /// Local binding (no transport protocol)
-    Local,
-
-    /// HTTPS binding
-    Https(String),
-
-    /// RPC binding to remote (`DIDComm`?) binding
-    Rpc(String),
 }
 
 /// Encryptor is used by implementers to provide encryption functionality for

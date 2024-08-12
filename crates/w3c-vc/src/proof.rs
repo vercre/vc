@@ -34,7 +34,8 @@ use anyhow::bail;
 use serde::{Deserialize, Serialize};
 use vercre_core::{Kind, Quota};
 use vercre_datasec::jose::{jws, jwt};
-use vercre_datasec::{DidResolver, Signer};
+use vercre_datasec::Signer;
+use vercre_did::DidResolver;
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
 use crate::verify_key;

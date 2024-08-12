@@ -5642,25 +5642,17 @@ dependencies = [
  "aes-gcm",
  "anyhow",
  "base64ct",
- "chrono",
  "crypto_box",
- "curve25519-dalek",
  "ecdsa",
  "ed25519-dalek",
  "futures",
  "insta",
  "k256",
- "multibase",
- "rand 0.8.5",
- "regex",
  "serde",
  "serde_json",
  "signature",
- "thiserror",
  "tokio",
  "tracing",
- "url",
- "vercre-core",
  "x25519-dalek",
 ]
 
@@ -5672,10 +5664,8 @@ dependencies = [
  "base64ct",
  "chrono",
  "curve25519-dalek",
- "ecdsa",
  "ed25519-dalek",
  "insta",
- "k256",
  "multibase",
  "rand 0.8.5",
  "regex",
@@ -5720,6 +5710,7 @@ dependencies = [
  "uuid",
  "vercre-core",
  "vercre-datasec",
+ "vercre-did",
  "vercre-dif-exch",
  "vercre-issuer",
  "vercre-openid",
@@ -5746,6 +5737,7 @@ dependencies = [
  "tracing",
  "vercre-core",
  "vercre-datasec",
+ "vercre-did",
  "vercre-openid",
  "vercre-test-utils",
  "vercre-w3c-vc",
@@ -5767,6 +5759,7 @@ dependencies = [
  "thiserror",
  "vercre-core",
  "vercre-datasec",
+ "vercre-did",
  "vercre-dif-exch",
  "vercre-w3c-vc",
 ]
@@ -5786,6 +5779,7 @@ dependencies = [
  "tracing-subscriber",
  "uuid",
  "vercre-datasec",
+ "vercre-did",
  "vercre-openid",
 ]
 
@@ -5806,6 +5800,7 @@ dependencies = [
  "uuid",
  "vercre-core",
  "vercre-datasec",
+ "vercre-did",
  "vercre-dif-exch",
  "vercre-openid",
  "vercre-test-utils",
@@ -5826,6 +5821,7 @@ dependencies = [
  "uuid",
  "vercre-core",
  "vercre-datasec",
+ "vercre-did",
  "vercre-dif-exch",
 ]
 
@@ -5843,6 +5839,7 @@ dependencies = [
  "tower-http",
  "tracing",
  "tracing-subscriber",
+ "vercre-did",
  "vercre-test-utils",
  "vercre-verifier",
 ]
@@ -5910,11 +5907,8 @@ dependencies = [
  "tauri-plugin-store",
  "typeshare",
  "urlencoding",
- "vercre-dif-exch",
  "vercre-holder",
- "vercre-issuer",
  "vercre-test-utils",
- "vercre-verifier",
 ]
 
 [[package]]

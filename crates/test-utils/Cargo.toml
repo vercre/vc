@@ -26,6 +26,7 @@ tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 tracing.workspace = true
 uuid.workspace = true
 vercre-datasec.workspace = true
+vercre-did.workspace = true
 vercre-openid.workspace = true
 
 [dev-dependencies]

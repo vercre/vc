@@ -8,7 +8,8 @@
 use std::future::Future;
 
 pub use vercre_datasec::jose::jwk::PublicKeyJwk;
-pub use vercre_datasec::{Algorithm, Binding, DidResolver, Document, Signer};
+pub use vercre_datasec::{Algorithm, Signer};
+pub use vercre_did::{Binding, DidResolver, Document};
 pub use vercre_dif_exch::Constraints;
 use vercre_openid::issuer::{
     CredentialRequest, CredentialResponse, MetadataRequest, MetadataResponse, TokenRequest,

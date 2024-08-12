@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use vercre_datasec::{Binding, Document};
+use vercre_did::{Binding, Document};
 use vercre_openid::provider::Result;
 
 /// Dereference DID URL to public key. For example,  did:web:demo.credibil.io#key-0.

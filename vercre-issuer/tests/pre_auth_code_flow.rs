@@ -6,7 +6,7 @@ use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use vercre_datasec::jose::jws::{self, Type};
-use vercre_datasec::DataSec;
+use vercre_did::DidSec;
 use vercre_issuer::{
     CreateOfferRequest, CreateOfferResponse, CredentialOfferType, CredentialRequest,
     CredentialResponse, ProofClaims, TokenRequest, TokenResponse,
@@ -30,7 +30,7 @@ async fn pre_auth_flow() {
     };
 
     let provider = ISSUER_PROVIDER.clone();
-    let resolver = DataSec::resolver(&provider, CREDENTIAL_ISSUER).expect("should get resolver");
+    let resolver = DidSec::resolver(&provider, CREDENTIAL_ISSUER).expect("should get resolver");
 
     let Payload::Vc(vc) =
         vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &resolver).await.expect("should decode")

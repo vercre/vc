@@ -24,8 +24,9 @@ use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
 use vercre_core::Kind;
+use vercre_did::DidSec;
 use vercre_openid::verifier::{
-    DataSec, PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, StateStore,
+    PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, StateStore,
 };
 use vercre_openid::{Error, Result};
 use vercre_w3c_vc::model::VerifiableCredential;
@@ -68,7 +69,7 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
     let state = State::try_from(buf)?;
     let saved_req = &state.request_object;
 
-    let resolver = DataSec::resolver(&provider, &saved_req.client_id)
+    let resolver = DidSec::resolver(&provider, &saved_req.client_id)
         .map_err(|e| Error::ServerError(format!("issue getting resolver: {e}")))?;
 
     // TODO: no token == error response, we should have already checked for an error

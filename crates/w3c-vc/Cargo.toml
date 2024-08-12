@@ -29,6 +29,7 @@ tracing.workspace = true
 uuid.workspace = true
 vercre-core.workspace = true
 vercre-datasec.workspace = true
+vercre-did.workspace = true
 vercre-dif-exch.workspace = true
 
 [dev-dependencies]

@@ -68,6 +68,7 @@ async fn process(
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use vercre_did::DidSec;
     use vercre_dif_exch::PresentationDefinition;
     use vercre_openid::verifier::{
         ClientIdScheme, ClientMetadataType, PresentationDefinitionType, RequestObject, ResponseType,
@@ -118,7 +119,7 @@ mod tests {
             panic!("no JWT found in response");
         };
 
-        let resolver = &DataSec::resolver(&provider, VERIFIER_ID).expect("should get resolver");
+        let resolver = &DidSec::resolver(&provider, VERIFIER_ID).expect("should get resolver");
 
         let callback = verify_key!(resolver);
 
