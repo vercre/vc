@@ -1,11 +1,10 @@
 use chrono::{DateTime, Utc};
 use vercre_issuer::provider::{
-    Algorithm, Claims, Client, ClientMetadata, DataSec, Decryptor, Encryptor, Issuer,
-    IssuerMetadata, PublicKeyJwk, Result, Server, ServerMetadata, Signer, StateManager, Subject,
-    Verifier,
+    Algorithm, Binding, Claims, Client, DataSec, Decryptor, DidResolver, DidSec, Document,
+    Encryptor, Issuer, Metadata, Result, Server, Signer, StateStore, Subject,
 };
-use vercre_test_utils::store::keystore::{self, IssuerKeystore};
-use vercre_test_utils::store::{issuance, state};
+use vercre_test_utils::store::keystore::IssuerKeystore;
+use vercre_test_utils::store::{issuance, resolver, state};
 
 #[derive(Default, Clone, Debug)]
 pub struct Provider {
@@ -31,24 +30,20 @@ impl Provider {
 
 impl vercre_issuer::provider::Provider for Provider {}
 
-impl ClientMetadata for Provider {
-    async fn metadata(&self, client_id: &str) -> Result<Client> {
+impl Metadata for Provider {
+    async fn client(&self, client_id: &str) -> Result<Client> {
         self.client.get(client_id)
     }
 
     async fn register(&self, client: &Client) -> Result<Client> {
         self.client.add(client)
     }
-}
 
-impl IssuerMetadata for Provider {
-    async fn metadata(&self, issuer_id: &str) -> Result<Issuer> {
+    async fn issuer(&self, issuer_id: &str) -> Result<Issuer> {
         self.issuer.get(issuer_id)
     }
-}
 
-impl ServerMetadata for Provider {
-    async fn metadata(&self, server_id: &str) -> Result<Server> {
+    async fn server(&self, server_id: &str) -> Result<Server> {
         self.server.get(server_id)
     }
 }
@@ -64,7 +59,7 @@ impl Subject for Provider {
     }
 }
 
-impl StateManager for Provider {
+impl StateStore for Provider {
     async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
         self.state.put(key, state, dt)
     }
@@ -85,15 +80,17 @@ impl DataSec for Provider {
         Ok(IssuerSec(IssuerKeystore {}))
     }
 
-    fn verifier(&self, _identifier: &str) -> anyhow::Result<impl Verifier> {
-        Ok(IssuerSec(IssuerKeystore {}))
-    }
-
     fn encryptor(&self, _identifier: &str) -> anyhow::Result<impl Encryptor> {
         Ok(IssuerSec(IssuerKeystore {}))
     }
 
     fn decryptor(&self, _identifier: &str) -> anyhow::Result<impl Decryptor> {
+        Ok(IssuerSec(IssuerKeystore {}))
+    }
+}
+
+impl DidSec for Provider {
+    fn resolver(&self, _identifier: &str) -> anyhow::Result<impl DidResolver> {
         Ok(IssuerSec(IssuerKeystore {}))
     }
 }
@@ -112,27 +109,24 @@ impl Signer for IssuerSec {
     }
 }
 
-impl Verifier for IssuerSec {
-    async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
-        keystore::deref_jwk(did_url).await
+impl DidResolver for IssuerSec {
+    async fn resolve(&self, binding: Binding) -> Result<Document> {
+        resolver::resolve_did(binding).await
     }
 }
 
 impl Encryptor for IssuerSec {
     async fn encrypt(&self, _plaintext: &[u8], _recipient_public_key: &[u8]) -> Result<Vec<u8>> {
-        // crate::store::keystore::encrypt(plaintext, recipient_public_key)
         todo!()
     }
 
     fn public_key(&self) -> Vec<u8> {
-        // IssuerKeystore::public_key()
         todo!()
     }
 }
 
 impl Decryptor for IssuerSec {
     async fn decrypt(&self, _ciphertext: &[u8], _sender_public_key: &[u8]) -> Result<Vec<u8>> {
-        // IssuerKeystore::decrypt(ciphertext)
         todo!()
     }
 }

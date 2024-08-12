@@ -14,7 +14,7 @@ use anyhow::bail;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use vercre_core_utils::{Kind, Quota};
+use vercre_core::{Kind, Quota};
 
 use crate::proof::integrity::Proof;
 

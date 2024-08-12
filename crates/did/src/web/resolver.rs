@@ -10,15 +10,13 @@
 
 use std::sync::LazyLock;
 
-use anyhow::anyhow;
 use regex::Regex;
 use serde_json::json;
 
 use super::DidWeb;
 use crate::error::Error;
-use crate::resolution::{
-    ContentMetadata, ContentType, Dereference, DidClient, Metadata, Options, Resolve, Resource,
-};
+use crate::resolution::{ContentType, Metadata, Options, Resolved};
+use crate::{Binding, DidResolver};
 
 static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new("^did:web:(?<identifier>[a-zA-Z1-9.-:%]+)$").expect("should compile")
@@ -26,8 +24,8 @@ static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 
 impl DidWeb {
     pub async fn resolve(
-        did: &str, _: Option<Options>, client: impl DidClient,
-    ) -> crate::Result<Resolve> {
+        did: &str, _: Option<Options>, resolver: &impl DidResolver,
+    ) -> crate::Result<Resolved> {
         let Some(caps) = DID_REGEX.captures(did) else {
             return Err(Error::InvalidDid("DID is not a valid did:web".to_string()));
         };
@@ -55,10 +53,7 @@ impl DidWeb {
         // 6. Perform an HTTP GET request to the URL using an agent that can successfully
         //    negotiate a secure HTTPS connection, which enforces the security requirements
         //    as described in 2.6 DataSec and privacy considerations.
-        let bytes = client.get(&url).await.map_err(Error::Other)?;
-
-        let document = serde_json::from_slice(&bytes)
-            .map_err(|e| Error::Other(anyhow!("issue deserializing document: {e}")))?;
+        let document = resolver.resolve(Binding::Https(url)).await.map_err(Error::Other)?;
 
         // TODO: implement security requirement:
         // 7. When performing the DNS resolution during the HTTP GET request, the client
@@ -71,7 +66,7 @@ impl DidWeb {
         //     ..CreateOptions::default()
         // };
 
-        Ok(Resolve {
+        Ok(Resolved {
             context: "https://w3id.org/did-resolution/v1".into(),
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
@@ -86,57 +81,25 @@ impl DidWeb {
                 ..Metadata::default()
             },
             document: Some(document),
-            ..Resolve::default()
-        })
-    }
-
-    pub async fn dereference(
-        did_url: &str, _opts: Option<Options>, client: impl DidClient,
-    ) -> crate::Result<Dereference> {
-        let url = url::Url::parse(did_url)
-            .map_err(|e| Error::InvalidDidUrl(format!("issue parsing URL: {e}")))?;
-
-        // resolve DID document
-        let did = format!("did:{}", url.path());
-        let resolution = Self::resolve(&did, None, client).await?;
-
-        let Some(document) = resolution.document else {
-            return Err(Error::InvalidDid("Unable to resolve DID document".into()));
-        };
-        let Some(verifcation_methods) = document.verification_method else {
-            return Err(Error::NotFound("verification method missing".into()));
-        };
-
-        // for now we assume the DID URL is the ID of the verification method
-        // e.g. did:web:demo.credibil.io#key-0
-        let Some(vm) = verifcation_methods.iter().find(|vm| vm.id == did_url) else {
-            return Err(Error::NotFound("verification method not found".into()));
-        };
-
-        Ok(Dereference {
-            metadata: Metadata {
-                content_type: ContentType::DidLdJson,
-                ..Metadata::default()
-            },
-            content_stream: Some(Resource::VerificationMethod(vm.clone())),
-            content_metadata: Some(ContentMetadata {
-                document_metadata: resolution.document_metadata,
-            }),
+            ..Resolved::default()
         })
     }
 }
 
 #[cfg(test)]
 mod test {
+    use anyhow::anyhow;
     use insta::assert_json_snapshot as assert_snapshot;
 
     use super::*;
+    use crate::document::Document;
+    use crate::Binding;
 
-    struct Client {}
-    impl DidClient for Client {
-        async fn get(&self, _url: &str) -> anyhow::Result<Vec<u8>> {
-            Ok(include_bytes!("did-ecdsa.json").to_vec())
-            // reqwest::get(url).await?.bytes().await.map_err(|e| anyhow!("{e}")).map(|b| b.to_vec())
+    struct MockResolver;
+    impl DidResolver for MockResolver {
+        async fn resolve(&self, _binding: Binding) -> anyhow::Result<Document> {
+            serde_json::from_slice(include_bytes!("did-ecdsa.json"))
+                .map_err(|e| anyhow!("issue deserializing document: {e}"))
         }
     }
 
@@ -144,23 +107,8 @@ mod test {
     async fn resolve_normal() {
         const DID_URL: &str = "did:web:demo.credibil.io";
 
-        let resolved = DidWeb::resolve(DID_URL, None, Client {}).await.expect("should resolve");
+        let resolved = DidWeb::resolve(DID_URL, None, &MockResolver).await.expect("should resolve");
         assert_snapshot!("document", resolved.document);
         assert_snapshot!("metadata", resolved.metadata);
-    }
-
-    #[tokio::test]
-    async fn dereference() {
-        const DID_URL: &str = "did:web:demo.credibil.io#key-0";
-
-        let dereferenced =
-            DidWeb::dereference(DID_URL, None, Client {}).await.expect("should dereference");
-
-        // let Some(Resource::VerificationMethod(vm)) = dereferenced.content_stream else {
-        //     panic!("Verification method not found");
-        // };
-        // println!("{:?}", vm.method_type.jwk());
-
-        assert_snapshot!("dereferenced", dereferenced);
     }
 }

@@ -10,7 +10,7 @@ use ed25519_dalek::SigningKey;
 use multibase::Base;
 use rand::rngs::OsRng;
 use serde_json::json;
-use vercre_core_utils::Kind;
+use vercre_core::Kind;
 use vercre_datasec::jose::jwk::{Curve, KeyType, PublicKeyJwk};
 
 use super::DidKey;

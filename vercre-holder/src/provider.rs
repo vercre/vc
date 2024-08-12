@@ -8,14 +8,15 @@
 use std::future::Future;
 
 pub use vercre_datasec::jose::jwk::PublicKeyJwk;
-pub use vercre_datasec::{Algorithm, Signer, Verifier};
+pub use vercre_datasec::{Algorithm, Signer};
+pub use vercre_did::{Binding, DidResolver, Document};
 pub use vercre_dif_exch::Constraints;
 use vercre_openid::issuer::{
     CredentialRequest, CredentialResponse, MetadataRequest, MetadataResponse, TokenRequest,
     TokenResponse,
 };
-pub use vercre_openid::issuer::{IssuerMetadata, TxCode};
-pub use vercre_openid::provider::{Result, StateManager};
+pub use vercre_openid::issuer::{Metadata, TxCode};
+pub use vercre_openid::provider::{Result, StateStore};
 use vercre_openid::verifier::{RequestObjectResponse, ResponseRequest, ResponseResponse};
 
 use crate::credential::{Credential, Logo};
@@ -24,7 +25,7 @@ use crate::credential::{Credential, Logo};
 /// by holder clients.
 #[allow(clippy::module_name_repetitions)]
 pub trait HolderProvider:
-    IssuerClient + VerifierClient + CredentialStorer + StateManager + Signer + Verifier + Clone
+    Issuer + Verifier + CredentialStorer + StateStore + Signer + DidResolver + Clone
 {
 }
 
@@ -32,7 +33,7 @@ pub trait HolderProvider:
 /// OpenID for VC Issuance. While the specification is oriented towards HTTP, the trait allows the
 /// wallet (and issuance services) to be transport layer agnostic.
 #[allow(clippy::module_name_repetitions)]
-pub trait IssuerClient {
+pub trait Issuer {
     /// Get issuer metadata. If an error is returned, the wallet will cancel the issuance flow.
     fn get_metadata(
         &self, flow_id: &str, req: &MetadataRequest,
@@ -58,7 +59,7 @@ pub trait IssuerClient {
 /// This provider allows the wallet to interact with a verifier's services that are compliant with
 /// OpenID for Verifiable Presentations. While the specification is oriented towards HTTP, the trait
 /// allows the wallet (and verifier's services) to be transport layer agnostic.
-pub trait VerifierClient {
+pub trait Verifier {
     /// Get a request object. If an error is returned, the wallet will cancel the presentation flow.
     fn get_request_object(
         &self, flow_id: &str, req: &str,

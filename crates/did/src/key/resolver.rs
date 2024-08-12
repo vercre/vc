@@ -16,9 +16,8 @@ use serde_json::json;
 use super::DidKey;
 use crate::document::CreateOptions;
 use crate::error::Error;
-use crate::resolution::{
-    ContentMetadata, ContentType, Dereference, DidClient, Metadata, Options, Resolve, Resource,
-};
+use crate::resolution::{ContentType, Metadata, Options, Resolved};
+use crate::DidResolver;
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
 static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
@@ -26,7 +25,7 @@ static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 impl DidKey {
-    pub fn resolve(did: &str, _: Option<Options>, _: impl DidClient) -> crate::Result<Resolve> {
+    pub fn resolve(did: &str, _: Option<Options>, _: &impl DidResolver) -> crate::Result<Resolved> {
         // check DID is valid AND extract key
         let Some(caps) = DID_REGEX.captures(did) else {
             return Err(Error::InvalidDid("DID is not a valid did:key".into()));
@@ -52,7 +51,7 @@ impl DidKey {
         let document =
             Self::create(&key_bytes[2..], options).map_err(|e| Error::InvalidDid(e.to_string()))?;
 
-        Ok(Resolve {
+        Ok(Resolved {
             context: "https://w3id.org/did-resolution/v1".into(),
             metadata: Metadata {
                 content_type: ContentType::DidLdJson,
@@ -67,44 +66,7 @@ impl DidKey {
                 ..Metadata::default()
             },
             document: Some(document),
-            ..Resolve::default()
-        })
-    }
-
-    #[allow(clippy::needless_pass_by_value)]
-    pub fn dereference(
-        did_url: &str, _opts: Option<Options>, client: impl DidClient,
-    ) -> crate::Result<Dereference> {
-        // validate URL against pattern
-        let url = url::Url::parse(did_url)
-            .map_err(|e| Error::InvalidDidUrl(format!("issue parsing URL: {e}")))?;
-
-        // resolve DID document
-        let did = format!("did:{}", url.path());
-        let resolution = Self::resolve(&did, None, client)?;
-
-        let Some(document) = resolution.document else {
-            return Err(Error::InvalidDid("Unable to resolve DID document".into()));
-        };
-        let Some(verifcation_methods) = document.verification_method else {
-            return Err(Error::NotFound("verification method missing".into()));
-        };
-
-        // for now we assume the DID URL is the ID of the verification method
-        // e.g. did:key:z6MkhaXgBZD#z6MkhaXgBZD
-        let Some(vm) = verifcation_methods.iter().find(|vm| vm.id == did_url) else {
-            return Err(Error::NotFound("verification method not found".into()));
-        };
-
-        Ok(Dereference {
-            metadata: Metadata {
-                content_type: ContentType::DidLdJson,
-                ..Metadata::default()
-            },
-            content_stream: Some(Resource::VerificationMethod(vm.clone())),
-            content_metadata: Some(ContentMetadata {
-                document_metadata: resolution.document_metadata,
-            }),
+            ..Resolved::default()
         })
     }
 }
@@ -114,27 +76,21 @@ mod test {
     use insta::assert_json_snapshot as assert_snapshot;
 
     use super::*;
+    use crate::document::Document;
+    use crate::Binding;
 
     const DID: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
-    const DID_URL: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
 
-    struct Client {}
-    impl DidClient for Client {
-        async fn get(&self, _url: &str) -> anyhow::Result<Vec<u8>> {
-            Ok(vec![])
+    struct MockResolver;
+    impl DidResolver for MockResolver {
+        async fn resolve(&self, _: Binding) -> anyhow::Result<Document> {
+            Ok(Document::default())
         }
     }
 
     #[tokio::test]
     async fn resolve() {
-        let resolved = DidKey::resolve(DID, None, Client {}).expect("should resolve");
+        let resolved = DidKey::resolve(DID, None, &MockResolver).expect("should resolve");
         assert_snapshot!("resolved", resolved);
-    }
-
-    #[tokio::test]
-    async fn dereference() {
-        let dereferenced =
-            DidKey::dereference(DID_URL, None, Client {}).expect("should dereference");
-        assert_snapshot!("dereferenced", dereferenced);
     }
 }

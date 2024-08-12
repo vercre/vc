@@ -4,7 +4,7 @@
 
 use anyhow::{anyhow, bail};
 use tracing::instrument;
-use vercre_core_utils::Kind;
+use vercre_core::Kind;
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_openid::issuer::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, GrantType,
@@ -14,12 +14,14 @@ use vercre_w3c_vc::proof::{Payload, Verify};
 
 use super::{Issuance, Status};
 use crate::credential::Credential;
-use crate::provider::{CredentialStorer, HolderProvider, IssuerClient, StateManager, Verifier};
+use crate::provider::{CredentialStorer, DidResolver, HolderProvider, Issuer, StateStore};
 
 /// Progresses the issuance flow by getting an access token then using that to get the
 /// credentials contained in the offer.
 #[instrument(level = "debug", skip(provider))]
-pub async fn get_credentials(provider: impl HolderProvider, request: String) -> anyhow::Result<Status> {
+pub async fn get_credentials(
+    provider: impl HolderProvider, request: String,
+) -> anyhow::Result<Status> {
     tracing::debug!("Endpoint::get_credentials");
 
     let mut issuance = match super::get_issuance(provider.clone(), &request).await {
@@ -32,7 +34,7 @@ pub async fn get_credentials(provider: impl HolderProvider, request: String) -> 
 
     // Request an access token from the issuer.
     let token_request = token_request(&issuance);
-    issuance.token = match IssuerClient::get_token(&provider, &issuance.id, &token_request).await {
+    issuance.token = match Issuer::get_token(&provider, &issuance.id, &token_request).await {
         Ok(token) => token,
         Err(e) => {
             tracing::error!(target: "Endpoint::get_credentials", ?e);
@@ -64,7 +66,7 @@ pub async fn get_credentials(provider: impl HolderProvider, request: String) -> 
 
         let request = credential_request(&issuance, id, cfg, &proof);
 
-        let cred_res = match IssuerClient::get_credential(&provider, &issuance.id, &request).await {
+        let cred_res = match Issuer::get_credential(&provider, &issuance.id, &request).await {
             Ok(cred_res) => cred_res,
             Err(e) => {
                 tracing::error!(target: "Endpoint::get_credentials", ?e);
@@ -92,7 +94,7 @@ pub async fn get_credentials(provider: impl HolderProvider, request: String) -> 
             // TODO: Locale?
             if let Some(logo_info) = &display[0].logo {
                 if let Some(uri) = &logo_info.uri {
-                    if let Ok(logo) = IssuerClient::get_logo(&provider, &issuance.id, uri).await {
+                    if let Ok(logo) = Issuer::get_logo(&provider, &issuance.id, uri).await {
                         credential.logo = Some(logo);
                     }
                 }
@@ -108,7 +110,7 @@ pub async fn get_credentials(provider: impl HolderProvider, request: String) -> 
     }
 
     // Release issuance state.
-    StateManager::purge(&provider, &issuance.id).await?;
+    StateStore::purge(&provider, &issuance.id).await?;
 
     Ok(Status::Requested)
 }
@@ -148,13 +150,13 @@ fn credential_request(
 /// Construct a credential from a credential response.
 async fn credential(
     credential_configuration: &CredentialConfiguration, res: &CredentialResponse,
-    verifier: &impl Verifier,
+    resolver: &impl DidResolver,
 ) -> anyhow::Result<Credential> {
     let Some(value) = res.credential.as_ref() else {
         bail!("no credential in response");
     };
 
-    let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(value), verifier)
+    let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(value), resolver)
         .await
         .map_err(|e| anyhow!("issue parsing credential: {e}"))?
     else {

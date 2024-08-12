@@ -16,7 +16,7 @@
 use tracing::instrument;
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_openid::verifier::{
-    DataSec, Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, StateManager,
+    DataSec, Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, StateStore,
 };
 use vercre_openid::{Error, Result};
 
@@ -42,7 +42,7 @@ async fn process(
     tracing::debug!("Context::process");
 
     // retrieve request object from state
-    let buf = StateManager::get(&provider, &request.state)
+    let buf = StateStore::get(&provider, &request.state)
         .await
         .map_err(|e| Error::ServerError(format!("issue fetching state: {e}")))?;
     let state = State::from_slice(&buf)
@@ -68,11 +68,13 @@ async fn process(
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use vercre_did::DidSec;
     use vercre_dif_exch::PresentationDefinition;
     use vercre_openid::verifier::{
         ClientIdScheme, ClientMetadataType, PresentationDefinitionType, RequestObject, ResponseType,
     };
     use vercre_test_utils::verifier::{Provider, VERIFIER_ID};
+    use vercre_w3c_vc::verify_key;
 
     use super::*;
 
@@ -103,7 +105,7 @@ mod tests {
         };
 
         let state = State::builder().request_object(req_obj).build().expect("should build state");
-        StateManager::put(&provider, &state_key, state.to_vec(), state.expires_at)
+        StateStore::put(&provider, &state_key, state.to_vec(), state.expires_at)
             .await
             .expect("state exists");
 
@@ -117,13 +119,15 @@ mod tests {
             panic!("no JWT found in response");
         };
 
-        let verifier = DataSec::verifier(&provider, VERIFIER_ID).expect("should get verifier");
+        let resolver = &DidSec::resolver(&provider, VERIFIER_ID).expect("should get resolver");
+
+        let callback = verify_key!(resolver);
 
         let jwt: jws::Jwt<RequestObject> =
-            jws::decode(&jwt_enc, &verifier).await.expect("jwt is valid");
+            jws::decode(&jwt_enc, callback).await.expect("jwt is valid");
         assert_snapshot!("response", jwt);
 
         // request state should not exist
-        assert!(StateManager::get(&provider, state_key).await.is_ok());
+        assert!(StateStore::get(&provider, state_key).await.is_ok());
     }
 }

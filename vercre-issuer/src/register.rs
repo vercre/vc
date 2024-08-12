@@ -1,8 +1,7 @@
 //! # Dynamic Client Registration Endpoint
 
-use chrono::Utc;
 use tracing::instrument;
-use vercre_openid::issuer::{Provider, RegistrationRequest, RegistrationResponse, StateManager};
+use vercre_openid::issuer::{Provider, RegistrationRequest, RegistrationResponse, StateStore};
 use vercre_openid::{Error, Result};
 
 // use crate::shell;
@@ -25,17 +24,12 @@ pub async fn register(
 async fn verify(provider: impl Provider, request: &RegistrationRequest) -> Result<()> {
     tracing::debug!("Context::verify");
 
-    let buf = match StateManager::get(&provider, &request.access_token).await {
+    // verify state is still accessible (has not expired)
+    let buf = match StateStore::get(&provider, &request.access_token).await {
         Ok(buf) => buf,
         Err(e) => return Err(Error::ServerError(format!("State not found: {e}"))),
     };
-    let state = State::try_from(buf)?;
-
-    // token (access or acceptance) expiry
-    let expires = state.expires_at.signed_duration_since(Utc::now()).num_seconds();
-    if expires < 0 {
-        return Err(Error::InvalidRequest("access Token has expired".into()));
-    }
+    let _ = State::try_from(buf)?;
 
     Ok(())
 }
@@ -56,6 +50,7 @@ async fn process(
 
 #[cfg(test)]
 mod tests {
+    use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER};
@@ -83,7 +78,7 @@ mod tests {
             ..Default::default()
         });
 
-        StateManager::put(&provider, access_token, state.to_vec(), state.expires_at)
+        StateStore::put(&provider, access_token, state.to_vec(), state.expires_at)
             .await
             .expect("state saved");
 

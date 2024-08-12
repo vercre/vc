@@ -16,26 +16,24 @@ version.workspace = true
 [lib]
 # crate-type = ["cdylib", "rlib"]
 
-# [features]
-# default = []
-# secp256k1 = []
-
 [lints]
 workspace = true
 
 [dependencies]
-k256 = "0.13.3"
 aes-gcm = "0.10.3"
 anyhow.workspace = true
 base64ct.workspace = true
 crypto_box = { version = "0.9.1", features = ["chacha20", "heapless"] }
 ecdsa.workspace = true
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
+futures.workspace = true
+k256 = "0.13.3"
 serde.workspace = true
 serde_json.workspace = true
 tracing.workspace = true
 x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
 
 [dev-dependencies]
+insta = { version = "1.39.0", features = ["filters", "json", "redactions", "yaml"] }
 signature = "2.2.0"
 tokio.workspace = true

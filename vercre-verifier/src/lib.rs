@@ -168,16 +168,12 @@ pub use vercre_openid::Result;
 
 /// Re-export provider traits and types.
 pub mod provider {
-    pub use vercre_datasec::jose::jwk::PublicKeyJwk;
-    pub use vercre_datasec::{
-        Algorithm, DataSec, Decryptor, Encryptor, Signer, Verifier as SignatureVerifier,
-    };
+    pub use vercre_datasec::{Algorithm, DataSec, Decryptor, Encryptor, PublicKeyJwk, Signer};
+    pub use vercre_did::{Binding, DidResolver, Document};
     pub use vercre_openid::issuer::{Client, CredentialFormat, Server};
     pub use vercre_openid::verifier::VpFormat;
     #[allow(clippy::module_name_repetitions)]
-    pub use vercre_openid::verifier::{
-        Provider, Result, StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata,
-    };
+    pub use vercre_openid::verifier::{Metadata, Provider, Result, StateStore, Verifier, Wallet};
 }
 pub use create_request::create_request;
 pub use metadata::metadata;

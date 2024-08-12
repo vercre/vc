@@ -10,17 +10,64 @@ use base64ct::{Base64, Encoding};
 use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use vercre_core_utils::Kind;
+use vercre_core::{stringify, Kind};
 use vercre_datasec::jose::jwk::PublicKeyJwk;
-pub use vercre_datasec::DataSec;
+use vercre_datasec::DataSec;
+use vercre_did::DidSec;
 use vercre_w3c_vc::model::VerifiableCredential;
 
-pub use super::{CredentialFormat, OAuthClient, OAuthServer};
-pub use crate::provider::{self, Result, StateManager};
-use crate::stringify;
+pub use super::CredentialFormat;
+pub use crate::oauth::{OAuthClient, OAuthServer};
+pub use crate::provider::{self, Result, StateStore};
 
-// TODO: find a home for these shared types
-// TODO: move sample data to test-utils
+// TODO: find a home for shared types
+
+/// Issuer Provider trait.
+pub trait Provider: Metadata + Subject + StateStore + DataSec + DidSec + Clone {}
+
+/// The `Metadata` trait is used by implementers to provide `Client`, `Issuer`, and
+/// `Server` metadata to the library.
+pub trait Metadata: Send + Sync {
+    /// Client (wallet) metadata for the specified issuance client.
+    fn client(&self, client_id: &str) -> impl Future<Output = provider::Result<Client>> + Send;
+
+    /// Credential Issuer metadata for the specified issuer.
+    fn issuer(&self, issuer_id: &str) -> impl Future<Output = provider::Result<Issuer>> + Send;
+
+    /// Authorization Server metadata for the specified issuer/server.
+    fn server(&self, server_id: &str) -> impl Future<Output = provider::Result<Server>> + Send;
+
+    /// Used by OAuth 2.0 clients to dynamically register clients with the authorization
+    /// server.
+    fn register(&self, client: &Client) -> impl Future<Output = provider::Result<Client>> + Send;
+}
+
+/// The Subject trait specifies how the library expects issuance subject (user)
+/// information to be provided by implementers.
+pub trait Subject: Send + Sync {
+    /// Authorize issuance of the credential specified by `credential_configuration_id`.
+    /// Returns `true` if the subject (holder) is authorized.
+    fn authorize(
+        &self, holder_subject: &str, credential_identifier: &str,
+    ) -> impl Future<Output = provider::Result<bool>> + Send;
+
+    /// Returns a populated `Claims` object for the given subject (holder) and
+    /// credential definition.
+    fn claims(
+        &self, holder_subject: &str, credential_identifier: &str,
+    ) -> impl Future<Output = provider::Result<Claims>> + Send;
+}
+
+/// The user information returned by the Subject trait.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Claims {
+    /// The credential subject populated for the user.
+    pub claims: Map<String, Value>,
+
+    /// Specifies whether user information required for the credential subject
+    /// is pending.
+    pub pending: bool,
+}
 
 /// Grant Types supported by the Authorization Server.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
@@ -1311,65 +1358,6 @@ pub struct Server {
     /// Pre-Authorized Code but without a client id. Defaults to false.
     #[serde(rename = "pre-authorized_grant_anonymous_access_supported")]
     pub pre_authorized_grant_anonymous_access_supported: bool,
-}
-
-/// Issuer Provider trait.
-pub trait Provider:
-    ClientMetadata + IssuerMetadata + ServerMetadata + Subject + StateManager + DataSec + Clone
-{
-}
-
-/// The `ClientMetadata` trait is used by implementers to provide `Client` metadata
-/// to the library.
-pub trait ClientMetadata: Send + Sync {
-    /// Returns client metadata for the specified client.
-    fn metadata(&self, client_id: &str) -> impl Future<Output = provider::Result<Client>> + Send;
-
-    /// Used by OAuth 2.0 clients to dynamically register with the authorization
-    /// server.
-    fn register(&self, client: &Client) -> impl Future<Output = provider::Result<Client>> + Send;
-}
-
-/// The `IssuerMetadata` trait is used by implementers to provide Credential Issuer
-/// metadata.
-#[allow(clippy::module_name_repetitions)]
-pub trait IssuerMetadata: Send + Sync {
-    /// Returns the Credential Issuer's metadata.
-    fn metadata(&self, issuer_id: &str) -> impl Future<Output = provider::Result<Issuer>> + Send;
-}
-
-/// The `ServerMetadata` trait is used by implementers to provide Authorization Server
-/// metadata.
-pub trait ServerMetadata: Send + Sync {
-    /// Returns the Authorization Server's metadata.
-    fn metadata(&self, server_id: &str) -> impl Future<Output = provider::Result<Server>> + Send;
-}
-
-/// The Subject trait specifies how the library expects user information to be
-/// provided by implementers.
-pub trait Subject: Send + Sync {
-    /// Authorize issuance of the credential specified by `credential_configuration_id`.
-    /// Returns `true` if the subject (holder) is authorized.
-    fn authorize(
-        &self, holder_subject: &str, credential_identifier: &str,
-    ) -> impl Future<Output = provider::Result<bool>> + Send;
-
-    /// Returns a populated `Claims` object for the given subject (holder) and
-    /// credential definition.
-    fn claims(
-        &self, holder_subject: &str, credential_identifier: &str,
-    ) -> impl Future<Output = provider::Result<Claims>> + Send;
-}
-
-/// The user information returned by the Subject trait.
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Claims {
-    /// The credential subject populated for the user.
-    pub claims: Map<String, Value>,
-
-    /// Specifies whether user information required for the credential subject
-    /// is pending.
-    pub pending: bool,
 }
 
 #[cfg(test)]

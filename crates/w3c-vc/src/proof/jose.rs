@@ -38,7 +38,7 @@ use std::str;
 
 use chrono::{TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
-use vercre_core_utils::{Kind, Quota};
+use vercre_core::{Kind, Quota};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
 

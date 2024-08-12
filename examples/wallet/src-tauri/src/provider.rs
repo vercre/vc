@@ -11,9 +11,10 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use futures::lock::Mutex;
 use vercre_holder::provider::{
-    Algorithm, HolderProvider, PublicKeyJwk, Result, Signer, StateManager, Verifier,
+    Algorithm, Binding, DidResolver, Document, HolderProvider, Result, Signer, StateStore,
 };
-use vercre_test_utils::store::keystore::{self, HolderKeystore};
+use vercre_test_utils::store::keystore::HolderKeystore;
+use vercre_test_utils::store::resolver;
 
 #[derive(Clone, Debug)]
 pub struct Provider {
@@ -35,7 +36,7 @@ impl Provider {
 
 impl HolderProvider for Provider {}
 
-impl StateManager for Provider {
+impl StateStore for Provider {
     async fn put(&self, key: &str, state: Vec<u8>, _: DateTime<Utc>) -> Result<()> {
         self.state_store.lock().await.insert(key.to_string(), state);
         Ok(())
@@ -68,8 +69,8 @@ impl Signer for Provider {
     }
 }
 
-impl Verifier for Provider {
-    async fn deref_jwk(&self, did_url: &str) -> anyhow::Result<PublicKeyJwk> {
-        keystore::deref_jwk(did_url).await
+impl DidResolver for Provider {
+    async fn resolve(&self, binding: Binding) -> anyhow::Result<Document> {
+        resolver::resolve_did(binding).await
     }
 }

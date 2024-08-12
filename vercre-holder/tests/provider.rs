@@ -6,16 +6,16 @@ use chrono::{DateTime, Utc};
 // TODO: remove this import
 use vercre_dif_exch::Constraints;
 use vercre_holder::provider::{
-    Algorithm, CredentialStorer, HolderProvider, IssuerClient, PublicKeyJwk, Result, Signer,
-    StateManager, Verifier, VerifierClient,
+    Algorithm, Binding, CredentialStorer, DidResolver, Document, HolderProvider, Issuer, Result,
+    Signer, StateStore, Verifier,
 };
 use vercre_holder::{
     Credential, CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse,
     RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse, TokenRequest,
     TokenResponse,
 };
-use vercre_test_utils::store::keystore::{self, HolderKeystore};
-use vercre_test_utils::store::state;
+use vercre_test_utils::store::keystore::HolderKeystore;
+use vercre_test_utils::store::{resolver, state};
 use vercre_test_utils::{issuer, verifier};
 
 #[derive(Default, Clone, Debug)]
@@ -40,7 +40,7 @@ impl Provider {
 
 impl HolderProvider for Provider {}
 
-impl IssuerClient for Provider {
+impl Issuer for Provider {
     async fn get_metadata(
         &self, _flow_id: &str, req: &MetadataRequest,
     ) -> anyhow::Result<MetadataResponse> {
@@ -65,7 +65,7 @@ impl IssuerClient for Provider {
     }
 }
 
-impl VerifierClient for Provider {
+impl Verifier for Provider {
     async fn get_request_object(
         &self, _flow_id: &str, req: &str,
     ) -> anyhow::Result<RequestObjectResponse> {
@@ -123,7 +123,7 @@ impl CredentialStorer for Provider {
     }
 }
 
-impl StateManager for Provider {
+impl StateStore for Provider {
     async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
         self.state.put(key, state, dt)
     }
@@ -151,8 +151,8 @@ impl Signer for Provider {
     }
 }
 
-impl Verifier for Provider {
-    async fn deref_jwk(&self, did_url: &str) -> anyhow::Result<PublicKeyJwk> {
-        keystore::deref_jwk(did_url).await
+impl DidResolver for Provider {
+    async fn resolve(&self, binding: Binding) -> anyhow::Result<Document> {
+        resolver::resolve_did(binding).await
     }
 }

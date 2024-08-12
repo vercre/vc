@@ -1,9 +1,10 @@
 use chrono::{DateTime, Utc};
-use vercre_test_utils::store::keystore::{self, VerifierKeystore};
-use vercre_test_utils::store::{presentation, state};
+use vercre_did::DidSec;
+use vercre_test_utils::store::keystore::VerifierKeystore;
+use vercre_test_utils::store::{presentation, resolver, state};
 use vercre_verifier::provider::{
-    Algorithm, DataSec, Decryptor, Encryptor, PublicKeyJwk, Result, SignatureVerifier, Signer,
-    StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata,
+    Algorithm, Binding, DataSec, Decryptor, DidResolver, Document, Encryptor, Metadata, Result,
+    Signer, StateStore, Verifier, Wallet,
 };
 
 #[derive(Default, Clone, Debug)]
@@ -24,23 +25,21 @@ impl Provider {
 
 impl vercre_verifier::provider::Provider for Provider {}
 
-impl VerifierMetadata for Provider {
-    async fn metadata(&self, verifier_id: &str) -> Result<Verifier> {
+impl Metadata for Provider {
+    async fn verifier(&self, verifier_id: &str) -> Result<Verifier> {
         self.verifier.get(verifier_id)
     }
 
     async fn register(&self, verifier: &Verifier) -> Result<Verifier> {
         self.verifier.add(verifier)
     }
-}
 
-impl WalletMetadata for Provider {
-    async fn metadata(&self, _wallet_id: &str) -> Result<Wallet> {
+    async fn wallet(&self, _wallet_id: &str) -> Result<Wallet> {
         unimplemented!("WalletMetadata")
     }
 }
 
-impl StateManager for Provider {
+impl StateStore for Provider {
     async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
         self.state.put(key, state, dt)
     }
@@ -61,15 +60,17 @@ impl DataSec for Provider {
         Ok(VerifierSec(VerifierKeystore {}))
     }
 
-    fn verifier(&self, _identifier: &str) -> anyhow::Result<impl SignatureVerifier> {
-        Ok(VerifierSec(VerifierKeystore {}))
-    }
-
     fn encryptor(&self, _identifier: &str) -> anyhow::Result<impl Encryptor> {
         Ok(VerifierSec(VerifierKeystore {}))
     }
 
     fn decryptor(&self, _identifier: &str) -> anyhow::Result<impl Decryptor> {
+        Ok(VerifierSec(VerifierKeystore {}))
+    }
+}
+
+impl DidSec for Provider {
+    fn resolver(&self, _identifier: &str) -> anyhow::Result<impl DidResolver> {
         Ok(VerifierSec(VerifierKeystore {}))
     }
 }
@@ -88,9 +89,9 @@ impl Signer for VerifierSec {
     }
 }
 
-impl SignatureVerifier for VerifierSec {
-    async fn deref_jwk(&self, did_url: &str) -> Result<PublicKeyJwk> {
-        keystore::deref_jwk(did_url).await
+impl DidResolver for VerifierSec {
+    async fn resolve(&self, binding: Binding) -> Result<Document> {
+        resolver::resolve_did(binding).await
     }
 }
 

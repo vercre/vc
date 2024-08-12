@@ -4,7 +4,8 @@
 //! issuer. The endpoint uses the holder client to get metadata and present the offer details for
 //! acceptance/rejection by the holder.
 
-use std::{collections::HashMap, fmt::Debug};
+use std::collections::HashMap;
+use std::fmt::Debug;
 
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
@@ -13,7 +14,7 @@ use uuid::Uuid;
 use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, MetadataRequest, TxCode};
 
 use super::{Issuance, Status};
-use crate::provider::{HolderProvider, IssuerClient};
+use crate::provider::{HolderProvider, Issuer};
 
 /// `OfferRequest` is the request to the `offer` endpoint to initiate an issuance flow.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -94,7 +95,7 @@ pub async fn offer(
     };
 
     // The wallet client's provider makes the metadata request to the issuer.
-    let md_response = match IssuerClient::get_metadata(&provider, &issuance.id, &md_request).await {
+    let md_response = match Issuer::get_metadata(&provider, &issuance.id, &md_request).await {
         Ok(md) => md,
         Err(e) => {
             tracing::error!(target: "Endpoint::offer", ?e);

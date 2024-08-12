@@ -11,32 +11,64 @@
 //!
 //! See [DID resolution](https://www.w3.org/TR/did-core/#did-resolution) fpr more.
 
+// TODO: add support for the following key types:
+// (key) type: EcdsaSecp256k1VerificationKey2019 | JsonWebKey2020 | Ed25519VerificationKey2020 |
+//             Ed25519VerificationKey2018 | X25519KeyAgreementKey2019
+// crv: Ed25519 | secp256k1 | P-256 | P-384 | p-521
+
 pub mod document;
 pub mod error;
 mod key;
 mod resolution;
 mod web;
 
+use std::future::Future;
+
 pub use error::Error;
 pub use resolution::{
-    dereference, resolve, ContentType, Dereference, DidClient, Metadata, Options, Resolve, Resource,
+    dereference, resolve, ContentType, Dereferenced, Metadata, Options, Resolved, Resource,
 };
+
+pub use crate::document::Document;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-// TODO:
+pub trait DidSec: Send + Sync {
+    /// Returns a resolver that can be used to resolve an external reference to
+    /// public key material.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the resolver cannot be created.
+    fn resolver(&self, identifier: &str) -> anyhow::Result<impl DidResolver>;
+}
 
-// Support:
-// (key) type: EcdsaSecp256k1VerificationKey2019 | JsonWebKey2020 | Ed25519VerificationKey2020 | Ed25519VerificationKey2018 | X25519KeyAgreementKey2019
-// crv: Ed25519 | secp256k1 | P-256 | P-384 | p-521
+/// `DidResolver` is used to proxy the resolution of a DID document. Resolution can
+/// either be local as in the case of `did:key`, or remote as in the case of `did:web`
+/// or `did:ion`.
+///
+/// Implementers simply implement the transport protocol for the binding and return
+/// the resulting DID document.
+pub trait DidResolver: Send + Sync {
+    /// Resolve the DID URL to a DID Document.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the DID URL cannot be resolved.
+    fn resolve(
+        &self, binding: Binding,
+    ) -> impl Future<Output = anyhow::Result<Document>> + Send + Sync;
+}
 
-// JWK Thumbprint
-// It is RECOMMENDED that JWK kid values are set to the public key fingerprint [RFC7638]:
-//  Create hash (SHA-256) of UTF-8 representation of JSON from {crv,kty,x,y}
-//
-// example:
-//  - JSON: {"crv":"Ed25519","kty":"OKP","x":"11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"}
-//  - SHA-256: 90facafea9b1556698540f70c0117a22ea37bd5cf3ed3c47093c1707282b4b89
-//  - base64url JWK Thumbprint: "kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k"
+/// DID resolver binding options used by the client DID Resolver (proxy) to bind to a
+/// DID resolution server.
+pub enum Binding {
+    /// Local binding (no transport protocol)
+    Local,
 
-// https://www.rfc-editor.org/rfc/rfc7638
+    /// HTTPS binding
+    Https(String),
+
+    /// RPC binding to remote (`DIDComm`?) binding
+    Rpc(String),
+}

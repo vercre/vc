@@ -1,10 +1,9 @@
 use anyhow::anyhow;
 use vercre_holder::provider::CredentialStorer;
 
-use crate::app::{AppState, SubApp};
-
 use super::issuance::IssuanceState;
 use super::presentation::PresentationState;
+use crate::app::{AppState, SubApp};
 
 impl AppState {
     /// Reset the application state to its default values.

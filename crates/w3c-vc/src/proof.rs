@@ -32,11 +32,13 @@ mod jose;
 
 use anyhow::bail;
 use serde::{Deserialize, Serialize};
-use vercre_core_utils::{Kind, Quota};
-use vercre_datasec::jose::jws;
-use vercre_datasec::{Signer, Verifier};
+use vercre_core::{Kind, Quota};
+use vercre_datasec::jose::{jws, jwt};
+use vercre_datasec::Signer;
+use vercre_did::DidResolver;
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
+use crate::verify_key;
 
 /// Credential format options for the resulting proof.
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -140,19 +142,20 @@ pub enum Verify<'a> {
 /// # Errors
 /// TODO: Add errors
 #[allow(clippy::unused_async)]
-pub async fn verify(proof: Verify<'_>, verifier: &impl Verifier) -> anyhow::Result<Payload> {
+pub async fn verify(proof: Verify<'_>, resolver: &impl DidResolver) -> anyhow::Result<Payload> {
     match proof {
         Verify::Vc(value) => {
             let Kind::String(token) = value else {
                 bail!("VerifiableCredential is not a JWT");
             };
-            let jwt = jws::decode::<jose::VcClaims>(token, verifier).await?;
+            let jwt: jwt::Jwt<jose::VcClaims> = jws::decode(token, verify_key!(resolver)).await?;
             Ok(Payload::Vc(jwt.claims.vc))
         }
         Verify::Vp(value) => {
             match value {
                 Kind::String(token) => {
-                    let jwt = jws::decode::<jose::VpClaims>(token, verifier).await?;
+                    let jwt: jwt::Jwt<jose::VpClaims> =
+                        jws::decode(token, verify_key!(resolver)).await?;
                     Ok(Payload::Vp {
                         vp: jwt.claims.vp,
                         client_id: jwt.claims.aud,

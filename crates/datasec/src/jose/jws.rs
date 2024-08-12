@@ -10,12 +10,13 @@
 use anyhow::{anyhow, bail};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ecdsa::signature::Verifier as _;
+use futures::Future;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
 use crate::jose::jwk::{Curve, PublicKeyJwk};
 pub use crate::jose::jwt::{Header, Jwt, KeyType, Type};
-use crate::{Algorithm, Signer, Verifier};
+use crate::{Algorithm, Signer};
 
 /// Encode the provided header and claims and sign, returning a JWT in compact JWS form.
 ///
@@ -52,9 +53,11 @@ where
 ///
 /// # Errors
 /// TODO: Add errors
-pub async fn decode<T>(token: &str, verifier: &impl Verifier) -> anyhow::Result<Jwt<T>>
+pub async fn decode<F, Fut, T>(token: &str, pk_cb: F) -> anyhow::Result<Jwt<T>>
 where
     T: DeserializeOwned + Send,
+    F: FnOnce(String) -> Fut + Send + Sync,
+    Fut: Future<Output = anyhow::Result<PublicKeyJwk>> + Send + Sync,
 {
     // TODO: cater for different key types
     let parts = token.split('.').collect::<Vec<&str>>();
@@ -80,10 +83,12 @@ where
     }
 
     // verify signature
-    let KeyType::KeyId(kid) = &header.key else {
+    let KeyType::KeyId(kid) = header.key.clone() else {
         bail!("'kid' is not set");
     };
-    let jwk = verifier.deref_jwk(kid).await?;
+
+    // resolve 'kid' to Jwk (hint: kid will contain a DID URL for now)
+    let jwk = pk_cb(kid).await?;
     verify(&jwk, &format!("{}.{}", parts[0], parts[1]), &sig)?;
 
     Ok(Jwt { header, claims })

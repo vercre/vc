@@ -23,9 +23,10 @@
 use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
-use vercre_core_utils::Kind;
+use vercre_core::Kind;
+use vercre_did::DidSec;
 use vercre_openid::verifier::{
-    DataSec, PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, StateManager,
+    PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, StateStore,
 };
 use vercre_openid::{Error, Result};
 use vercre_w3c_vc::model::VerifiableCredential;
@@ -62,14 +63,14 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
     let Some(state_key) = &request.state else {
         return Err(Error::InvalidRequest("client state not found".into()));
     };
-    let Ok(buf) = StateManager::get(&provider, state_key).await else {
+    let Ok(buf) = StateStore::get(&provider, state_key).await else {
         return Err(Error::InvalidRequest("state not found".into()));
     };
     let state = State::try_from(buf)?;
     let saved_req = &state.request_object;
 
-    let verifier = DataSec::verifier(&provider, &saved_req.client_id)
-        .map_err(|e| Error::ServerError(format!("issue  resolving verifier: {e}")))?;
+    let resolver = DidSec::resolver(&provider, &saved_req.client_id)
+        .map_err(|e| Error::ServerError(format!("issue getting resolver: {e}")))?;
 
     // TODO: no token == error response, we should have already checked for an error
     let Some(vp_token) = request.vp_token.clone() else {
@@ -80,7 +81,7 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
 
     // check nonce matches
     for vp_val in &vp_token {
-        let (vp, nonce) = match vercre_w3c_vc::proof::verify(Verify::Vp(vp_val), &verifier).await {
+        let (vp, nonce) = match vercre_w3c_vc::proof::verify(Verify::Vp(vp_val), &resolver).await {
             Ok(Payload::Vp { vp, nonce, .. }) => (vp, nonce),
             Ok(_) => return Err(Error::InvalidRequest("proof payload is invalid".into())),
             Err(e) => return Err(Error::ServerError(format!("issue verifying VP proof: {e}"))),
@@ -168,7 +169,7 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
         };
 
         let Payload::Vc(vc) =
-            vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &verifier)
+            vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &resolver)
                 .await
                 .map_err(|e| Error::InvalidRequest(format!("invalid VC proof: {e}")))?
         else {
@@ -211,7 +212,7 @@ async fn process(provider: impl Provider, request: &ResponseRequest) -> Result<R
     let Some(state_key) = &request.state else {
         return Err(Error::InvalidRequest("client state not found".into()));
     };
-    StateManager::purge(&provider, state_key)
+    StateStore::purge(&provider, state_key)
         .await
         .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
 
@@ -266,7 +267,7 @@ mod tests {
 
         // set up state
         let state = State::builder().request_object(req_obj).build().expect("should build state");
-        StateManager::put(&provider, &state_key, state.to_vec(), state.expires_at)
+        StateStore::put(&provider, &state_key, state.to_vec(), state.expires_at)
             .await
             .expect("state exists");
 

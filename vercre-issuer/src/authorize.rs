@@ -74,11 +74,11 @@ use std::vec;
 
 use chrono::Utc;
 use tracing::instrument;
-use vercre_core_utils::gen;
+use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    ClientMetadata, CredentialType, GrantType, Issuer, IssuerMetadata, Provider, ServerMetadata,
-    StateManager, Subject, TokenAuthorizationDetail,
+    CredentialType, GrantType, Issuer, Metadata, Provider, StateStore, Subject,
+    TokenAuthorizationDetail,
 };
 use vercre_openid::{Error, Result};
 
@@ -112,14 +112,14 @@ async fn verify(
 ) -> Result<()> {
     tracing::debug!("Context::verify");
 
-    let Ok(client_config) = ClientMetadata::metadata(provider, &request.client_id).await else {
+    let Ok(client_config) = Metadata::client(provider, &request.client_id).await else {
         return Err(Error::InvalidClient("invalid client_id".into()));
     };
-    let server_config = ServerMetadata::metadata(provider, &request.credential_issuer)
+    let server_config = Metadata::server(provider, &request.credential_issuer)
         .await
         .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
 
-    context.issuer_config = IssuerMetadata::metadata(provider, &request.credential_issuer)
+    context.issuer_config = Metadata::issuer(provider, &request.credential_issuer)
         .await
         .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
 
@@ -277,13 +277,13 @@ async fn process(
     state.auth = Some(auth_state);
 
     let code = gen::auth_code();
-    StateManager::put(provider, &code, state.to_vec(), state.expires_at)
+    StateStore::put(provider, &code, state.to_vec(), state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("state issue: {e}")))?;
 
     // remove offer state
     if let Some(issuer_state) = &request.issuer_state {
-        StateManager::purge(provider, issuer_state)
+        StateStore::purge(provider, issuer_state)
             .await
             .map_err(|e| Error::ServerError(format!("state issue: {e}")))?;
     }
@@ -440,7 +440,7 @@ mod tests {
         });
 
         // compare response with saved state
-        let buf = StateManager::get(&provider, &response.code).await.expect("state exists");
+        let buf = StateStore::get(&provider, &response.code).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
         assert_snapshot!("authzn-state", state, {
             ".expires_at" => "[expires_at]",
@@ -479,7 +479,7 @@ mod tests {
         });
 
         // compare response with saved state
-        let buf = StateManager::get(&provider, &response.code).await.expect("state exists");
+        let buf = StateStore::get(&provider, &response.code).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
         assert_snapshot!("scope-state", state, {
             ".expires_at" => "[expires_at]",

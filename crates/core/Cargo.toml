@@ -1,5 +1,5 @@
 [package]
-name = "vercre-core-utils"
+name = "vercre-core"
 description = "OpenID Data Model"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
@@ -26,5 +26,6 @@ workspace = true
 base64ct.workspace = true
 fastrand = "2.1.0"
 serde.workspace = true
+serde_json.workspace = true
 
 [dev-dependencies]

@@ -6,14 +6,14 @@
 use anyhow::{anyhow, bail};
 use tracing::instrument;
 use uuid::Uuid;
-use vercre_core_utils::Kind;
+use vercre_core::Kind;
 use vercre_dif_exch::{DescriptorMap, FilterValue, PathNested, PresentationSubmission};
 use vercre_openid::verifier::{PresentationDefinitionType, ResponseRequest, ResponseResponse};
 use vercre_w3c_vc::model::vp::VerifiablePresentation;
 use vercre_w3c_vc::proof::{self, Format, Payload};
 
 use super::{Presentation, Status};
-use crate::provider::{HolderProvider, Signer, VerifierClient};
+use crate::provider::{HolderProvider, Signer, Verifier};
 
 /// Creates a presentation submission, signs it and sends it to the verifier. The `request`
 /// parameter is the presentation flow ID of an authorized presentation request created in
@@ -79,9 +79,7 @@ pub async fn present(
     let res_uri =
         presentation.request.response_uri.map(|uri| uri.trim_end_matches('/').to_string());
     let response =
-        match VerifierClient::present(&provider, &presentation.id, res_uri.as_deref(), &res_req)
-            .await
-        {
+        match Verifier::present(&provider, &presentation.id, res_uri.as_deref(), &res_req).await {
             Ok(response) => response,
             Err(e) => {
                 tracing::error!(target: "Endpoint::present", ?e);
@@ -150,8 +148,7 @@ fn create_vp(
     }
 
     for c in &presentation.credentials {
-        let val = serde_json::to_value(&c.issued)?;
-        builder = builder.add_credential(val);
+        builder = builder.add_credential(Kind::String(c.issued.clone()));
     }
     builder.build()
 }

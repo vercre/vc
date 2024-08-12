@@ -10,7 +10,7 @@
 
 use tracing::instrument;
 use vercre_openid::issuer::{
-    DeferredCredentialRequest, DeferredCredentialResponse, Provider, StateManager,
+    DeferredCredentialRequest, DeferredCredentialResponse, Provider, StateStore,
 };
 use vercre_openid::{Error, Result};
 
@@ -37,7 +37,7 @@ async fn process(
     tracing::debug!("Context::process");
 
     // retrieve deferred credential request from state
-    let Ok(buf) = StateManager::get(&provider, &request.transaction_id).await else {
+    let Ok(buf) = StateStore::get(&provider, &request.transaction_id).await else {
         return Err(Error::InvalidTransactionId("deferred state not found".into()));
     };
     let Ok(state) = State::try_from(buf) else {
@@ -49,7 +49,7 @@ async fn process(
     };
 
     // remove deferred state item
-    StateManager::purge(&provider, &request.transaction_id)
+    StateStore::purge(&provider, &request.transaction_id)
         .await
         .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
 
@@ -72,7 +72,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use vercre_datasec::jose::jws::{self, Type};
-    use vercre_datasec::DataSec;
+    use vercre_did::DidSec;
     use vercre_openid::issuer::{CredentialRequest, ProofClaims};
     use vercre_test_utils::holder;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -136,7 +136,7 @@ mod tests {
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             ..Default::default()
         });
-        StateManager::put(&provider, access_token, state.to_vec(), state.expires_at)
+        StateStore::put(&provider, access_token, state.to_vec(), state.expires_at)
             .await
             .expect("state exists");
 
@@ -146,7 +146,7 @@ mod tests {
             transaction_id: transaction_id.into(),
             credential_request: cred_req.clone(),
         });
-        StateManager::put(&provider, transaction_id, state.to_vec(), state.expires_at)
+        StateStore::put(&provider, transaction_id, state.to_vec(), state.expires_at)
             .await
             .expect("state exists");
 
@@ -171,9 +171,9 @@ mod tests {
             panic!("VC is not base64 encoded string");
         };
 
-        let verifier =
-            DataSec::verifier(&provider, &request.credential_issuer).expect("should get verifier");
-        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &verifier)
+        let resolver =
+            DidSec::resolver(&provider, &request.credential_issuer).expect("should get resolver");
+        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &resolver)
             .await
             .expect("should decode")
         else {
@@ -186,7 +186,7 @@ mod tests {
         });
 
         // token state should remain unchanged
-        assert_let!(Ok(buf), StateManager::get(&provider, access_token).await);
+        assert_let!(Ok(buf), StateStore::get(&provider, access_token).await);
         let state = State::try_from(buf).expect("token state is valid");
         assert_snapshot!("state", state, {
             ".expires_at" => "[expires_at]",
@@ -195,6 +195,6 @@ mod tests {
         });
 
         // deferred state should not exist
-        assert!(StateManager::get(&provider, transaction_id).await.is_err());
+        assert!(StateStore::get(&provider, transaction_id).await.is_err());
     }
 }

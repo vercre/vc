@@ -16,7 +16,7 @@ use vercre_dif_exch::{Constraints, PresentationSubmission};
 use vercre_openid::verifier::RequestObject;
 
 use crate::credential::Credential;
-use crate::provider::{HolderProvider, StateManager};
+use crate::provider::{HolderProvider, StateStore};
 
 /// `Presentation` maintains app state across steps of the presentation flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -92,7 +92,7 @@ impl FromStr for Status {
 
 /// Get and put presentation state information using the supplied provider.
 async fn get_presentation(provider: impl HolderProvider, id: &str) -> anyhow::Result<Presentation> {
-    let current_state = StateManager::get(&provider, id).await?;
+    let current_state = StateStore::get(&provider, id).await?;
     let presentation = serde_json::from_slice::<Presentation>(&current_state)?;
     Ok(presentation)
 }
@@ -100,7 +100,7 @@ async fn get_presentation(provider: impl HolderProvider, id: &str) -> anyhow::Re
 async fn put_presentation(
     provider: impl HolderProvider, presentation: &Presentation,
 ) -> anyhow::Result<()> {
-    StateManager::put(
+    StateStore::put(
         &provider,
         &presentation.id,
         serde_json::to_vec(&presentation)?,

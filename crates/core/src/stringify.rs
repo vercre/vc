@@ -72,6 +72,9 @@ where
 }
 
 pub mod option {
+    //! This module provides a serde serializer and deserializer for 'stringifying'
+    //! optional types.
+
     use std::fmt;
     use std::marker::PhantomData;
 

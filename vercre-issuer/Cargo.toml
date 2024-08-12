@@ -25,21 +25,23 @@ version.workspace = true
 workspace = true
 
 [dependencies]
+anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true
-vercre-core-utils.workspace = true
-vercre-datasec.workspace = true
 derive_builder.workspace = true
-vercre-openid.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sha2 = "0.10.8"
 tracing.workspace = true
+vercre-core.workspace = true
+vercre-datasec.workspace = true
+vercre-did.workspace = true
+vercre-openid.workspace = true
 vercre-w3c-vc.workspace = true
 
 [dev-dependencies]
 assert_let_bind.workspace = true
 futures.workspace = true
 insta.workspace = true
-vercre-test-utils.workspace = true
 tokio.workspace = true
+vercre-test-utils.workspace = true
