@@ -35,10 +35,15 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 /// `DidResolver` is used to proxy the resolution of a DID document. Resolution can
 /// either be local as in the case of `did:key`, or remote as in the case of `did:web`
-/// or `did:ion`.
+/// or `did:dht`.
 ///
-/// Implementers simply implement the transport protocol for the binding and return
-/// the resulting DID document.
+/// Implementers need only return the DID document specified by the url. This may be
+/// by directly dereferencing the URL, looking up a local cache, or fetching from a
+/// remote DID resolver.
+///
+/// For example, a DID resolver for `did:web` would fetch the DID document from the
+/// specified URL. A DID resolver for `did:dht`should forward the request to a remote
+/// DID resolver for the DHT network.
 pub trait DidResolver: Send + Sync {
     /// Resolve the DID URL to a DID Document.
     ///

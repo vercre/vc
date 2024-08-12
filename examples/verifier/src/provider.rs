@@ -52,6 +52,12 @@ impl StateStore for Provider {
     }
 }
 
+impl DidResolver for Provider {
+    async fn resolve(&self, url: &str) -> anyhow::Result<Document> {
+        resolver::resolve_did(url).await
+    }
+}
+
 struct VerifierSec(VerifierKeystore);
 
 impl SecOps for Provider {
@@ -68,12 +74,6 @@ impl SecOps for Provider {
     }
 }
 
-impl DidResolver for Provider {
-    async fn resolve(&self, url: &str) -> anyhow::Result<Document> {
-        resolver::resolve_did(url).await
-    }
-}
-
 impl Signer for VerifierSec {
     fn algorithm(&self) -> Algorithm {
         self.0.algorithm()
@@ -85,12 +85,6 @@ impl Signer for VerifierSec {
 
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
         self.0.try_sign(msg)
-    }
-}
-
-impl DidResolver for VerifierSec {
-    async fn resolve(&self, url: &str) -> Result<Document> {
-        resolver::resolve_did(url).await
     }
 }
 

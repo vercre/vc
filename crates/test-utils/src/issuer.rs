@@ -80,6 +80,12 @@ impl StateStore for Provider {
     }
 }
 
+impl DidResolver for Provider {
+    async fn resolve(&self, url: &str) -> anyhow::Result<Document> {
+        resolver::resolve_did(url).await
+    }
+}
+
 struct IssuerSec(IssuerKeystore);
 
 impl SecOps for Provider {
@@ -96,12 +102,6 @@ impl SecOps for Provider {
     }
 }
 
-impl DidResolver for Provider {
-    async fn resolve(&self, url: &str) -> anyhow::Result<Document> {
-        resolver::resolve_did(url).await
-    }
-}
-
 impl Signer for IssuerSec {
     fn algorithm(&self) -> Algorithm {
         self.0.algorithm()
@@ -113,12 +113,6 @@ impl Signer for IssuerSec {
 
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
         self.0.try_sign(msg)
-    }
-}
-
-impl DidResolver for IssuerSec {
-    async fn resolve(&self, url: &str) -> Result<Document> {
-        resolver::resolve_did(url).await
     }
 }
 
