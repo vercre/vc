@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use vercre_datasec::{Algorithm, Decryptor, Encryptor, SecOps, Signer};
-use vercre_did::{Binding, DidResolver, Document};
+use vercre_did::{DidResolver, Document};
 use vercre_openid::issuer::{
     Claims, Client, Issuer, Metadata, Result, Server, StateStore, Subject,
 };
@@ -97,8 +97,8 @@ impl SecOps for Provider {
 }
 
 impl DidResolver for Provider {
-    async fn resolve(&self, binding: Binding) -> anyhow::Result<Document> {
-        resolver::resolve_did(binding).await
+    async fn resolve(&self, url: &str) -> anyhow::Result<Document> {
+        resolver::resolve_did(url).await
     }
 }
 
@@ -117,8 +117,8 @@ impl Signer for IssuerSec {
 }
 
 impl DidResolver for IssuerSec {
-    async fn resolve(&self, binding: Binding) -> Result<Document> {
-        resolver::resolve_did(binding).await
+    async fn resolve(&self, url: &str) -> Result<Document> {
+        resolver::resolve_did(url).await
     }
 }
 

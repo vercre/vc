@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use vercre_issuer::provider::{
-    Algorithm, Binding, Claims, Client, Decryptor, DidResolver, Document, Encryptor, Issuer,
-    Metadata, Result, SecOps, Server, Signer, StateStore, Subject,
+    Algorithm, Claims, Client, Decryptor, DidResolver, Document, Encryptor, Issuer, Metadata,
+    Result, SecOps, Server, Signer, StateStore, Subject,
 };
 use vercre_test_utils::store::keystore::IssuerKeystore;
 use vercre_test_utils::store::{issuance, resolver, state};
@@ -90,8 +90,8 @@ impl SecOps for Provider {
 }
 
 impl DidResolver for Provider {
-    async fn resolve(&self, binding: Binding) -> anyhow::Result<Document> {
-        resolver::resolve_did(binding).await
+    async fn resolve(&self, url: &str) -> anyhow::Result<Document> {
+        resolver::resolve_did(url).await
     }
 }
 
@@ -110,8 +110,8 @@ impl Signer for IssuerSec {
 }
 
 impl DidResolver for IssuerSec {
-    async fn resolve(&self, binding: Binding) -> Result<Document> {
-        resolver::resolve_did(binding).await
+    async fn resolve(&self, url: &str) -> Result<Document> {
+        resolver::resolve_did(url).await
     }
 }
 

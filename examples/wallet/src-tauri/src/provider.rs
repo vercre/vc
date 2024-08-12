@@ -11,7 +11,7 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use futures::lock::Mutex;
 use vercre_holder::provider::{
-    Algorithm, Binding, DidResolver, Document, HolderProvider, Result, Signer, StateStore,
+    Algorithm, DidResolver, Document, HolderProvider, Result, Signer, StateStore,
 };
 use vercre_test_utils::store::keystore::HolderKeystore;
 use vercre_test_utils::store::resolver;
@@ -70,7 +70,7 @@ impl Signer for Provider {
 }
 
 impl DidResolver for Provider {
-    async fn resolve(&self, binding: Binding) -> anyhow::Result<Document> {
-        resolver::resolve_did(binding).await
+    async fn resolve(&self, url: &str) -> anyhow::Result<Document> {
+        resolver::resolve_did(url).await
     }
 }

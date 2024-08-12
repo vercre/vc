@@ -45,20 +45,5 @@ pub trait DidResolver: Send + Sync {
     /// # Errors
     ///
     /// Returns an error if the DID URL cannot be resolved.
-    fn resolve(
-        &self, binding: Binding,
-    ) -> impl Future<Output = anyhow::Result<Document>> + Send + Sync;
-}
-
-/// DID resolver binding options used by the client DID Resolver (proxy) to bind to a
-/// DID resolution server.
-pub enum Binding {
-    /// Local binding (no transport protocol)
-    Local,
-
-    /// HTTPS binding
-    Https(String),
-
-    /// RPC binding to remote (`DIDComm`?) binding
-    Rpc(String),
+    fn resolve(&self, url: &str) -> impl Future<Output = anyhow::Result<Document>> + Send + Sync;
 }

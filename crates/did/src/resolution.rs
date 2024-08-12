@@ -283,11 +283,10 @@ mod test {
     use insta::assert_json_snapshot as assert_snapshot;
 
     use super::*;
-    use crate::Binding;
 
     struct MockResolver;
     impl DidResolver for MockResolver {
-        async fn resolve(&self, _binding: Binding) -> anyhow::Result<Document> {
+        async fn resolve(&self, _url: &str) -> anyhow::Result<Document> {
             serde_json::from_slice(include_bytes!("web/did-ecdsa.json"))
                 .map_err(|e| anyhow!("issue deserializing document: {e}"))
         }

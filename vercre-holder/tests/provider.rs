@@ -6,8 +6,8 @@ use chrono::{DateTime, Utc};
 // TODO: remove this import
 use vercre_dif_exch::Constraints;
 use vercre_holder::provider::{
-    Algorithm, Binding, CredentialStorer, DidResolver, Document, HolderProvider, Issuer, Result,
-    Signer, StateStore, Verifier,
+    Algorithm, CredentialStorer, DidResolver, Document, HolderProvider, Issuer, Result, Signer,
+    StateStore, Verifier,
 };
 use vercre_holder::{
     Credential, CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse,
@@ -152,7 +152,7 @@ impl Signer for Provider {
 }
 
 impl DidResolver for Provider {
-    async fn resolve(&self, binding: Binding) -> anyhow::Result<Document> {
-        resolver::resolve_did(binding).await
+    async fn resolve(&self, url: &str) -> anyhow::Result<Document> {
+        resolver::resolve_did(url).await
     }
 }
