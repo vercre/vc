@@ -10,16 +10,15 @@
 
 use std::fmt::Debug;
 
-use anyhow::bail;
 use chrono::Utc;
 use tracing::instrument;
 use vercre_core_utils::{gen, Kind};
-use vercre_datasec::did;
 use vercre_datasec::jose::jws::{self, KeyType, Type};
+use vercre_datasec::{verify_key, DataSec};
 use vercre_openid::issuer::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
-    CredentialRequest, CredentialResponse, CredentialType, DataSec, Issuer, IssuerMetadata,
-    ProofClaims, ProofType, Provider, StateManager, Subject,
+    CredentialRequest, CredentialResponse, CredentialType, Issuer, IssuerMetadata, ProofClaims,
+    ProofType, Provider, StateManager, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
@@ -136,28 +135,18 @@ async fn verify(
                 .map_err(|e| Error::ServerError(format!("issue  resolving verifier: {e}")))?;
 
             // TODO: check proof is signed with supported algorithm (from proof_type)
-            let jwt: jws::Jwt<ProofClaims> = match jws::decode(proof_jwt, move |kid: String| {
-                async move {
-                    let resp = did::dereference(&kid, None, resolver).await?;
-                    // get public key specified by the url fragment
-                    let Some(did::Resource::VerificationMethod(vm)) = resp.content_stream else {
-                        bail!("Verification method not found");
-                    };
-                    vm.method_type.jwk().map_err(Into::into)
-                }
-            })
-            .await
-            {
-                Ok(jwt) => jwt,
-                Err(e) => {
-                    let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
-                    return Err(Error::InvalidProof {
-                        hint: format!("issue decoding JWT: {e}"),
-                        c_nonce,
-                        c_nonce_expires_in,
-                    });
-                }
-            };
+            let jwt: jws::Jwt<ProofClaims> =
+                match jws::decode(proof_jwt, verify_key!(resolver)).await {
+                    Ok(jwt) => jwt,
+                    Err(e) => {
+                        let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
+                        return Err(Error::InvalidProof {
+                            hint: format!("issue decoding JWT: {e}"),
+                            c_nonce,
+                            c_nonce_expires_in,
+                        });
+                    }
+                };
             // proof type
             if jwt.header.typ != Type::Proof {
                 let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;

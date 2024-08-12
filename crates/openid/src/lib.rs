@@ -346,3 +346,35 @@ pub struct OAuthServer {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub signed_metadata: Option<String>,
 }
+
+
+
+// // Err::<code> + hint + state
+// ($code:expr, state: $state:expr, $($msg:tt)+) => {{
+//     use $crate::error::Ancillary as _;
+//     return Err($code).hint(format!($($msg)+)).state($state);
+// }};
+
+// // Err::<code> + hint
+// ($code:expr, $($msg:tt)+) => {{
+//     use $crate::error::Ancillary as _;
+//     return Err($code).hint(format!($($msg)+));
+// }};
+
+// // Err::<code> + state
+// ($code:expr, state: $state:expr) => {{
+//     return Err($code.into()).state($state);
+// }};
+
+// // Err::<code>
+// (code: $code:expr) => {{
+//     return Err($code.into());
+// }};
+
+// // one or more tokens e.g. "error: {e}"
+// ($($msg:tt)+) => {{
+//     use $crate::error::Err;
+//     use $crate::error::Ancillary as _;
+//     use anyhow::anyhow;
+//     return Err(Err::ServerError(anyhow!($($msg)+))).hint(format!($($msg)+));
+// }};

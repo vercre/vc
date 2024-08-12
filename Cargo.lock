@@ -5664,6 +5664,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "vercre-did"
+version = "0.1.0-alpha.6"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "curve25519-dalek",
+ "ecdsa",
+ "ed25519-dalek",
+ "insta",
+ "k256",
+ "multibase",
+ "rand 0.8.5",
+ "regex",
+ "reqwest 0.12.5",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "url",
+ "vercre-core-utils",
+ "vercre-datasec",
+]
+
+[[package]]
 name = "vercre-dif-exch"
 version = "0.1.0-alpha.6"
 dependencies = [
@@ -5767,6 +5792,7 @@ dependencies = [
 name = "vercre-verifier"
 version = "0.1.0-alpha.6"
 dependencies = [
+ "anyhow",
  "assert_let_bind",
  "chrono",
  "derive_builder",
