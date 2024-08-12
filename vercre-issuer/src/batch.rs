@@ -68,7 +68,7 @@ struct Context {
 async fn verify(
     context: &mut Context, provider: impl Provider, request: &BatchCredentialRequest,
 ) -> Result<()> {
-    tracing::debug!("Context::verify");
+    tracing::debug!("batch::verify");
 
     let Some(token_state) = &context.state.token else {
         return Err(Error::AccessDenied("invalid access token state".into()));
@@ -196,7 +196,7 @@ async fn verify(
 async fn process(
     context: &Context, provider: impl Provider, request: &BatchCredentialRequest,
 ) -> Result<BatchCredentialResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("batch::process");
 
     // process credential requests
     let mut responses = Vec::<CredentialResponse>::new();
@@ -236,7 +236,7 @@ async fn process(
 async fn create_response(
     context: &Context, provider: impl Provider, request: &CredentialRequest,
 ) -> Result<CredentialResponse> {
-    tracing::debug!("Context::create_response");
+    tracing::trace!("batch::create_response");
 
     // Try to create a VC. If None, then return a deferred issuance response.
     let Some(vc) = create_vc(context, provider.clone(), request).await? else {
@@ -289,7 +289,7 @@ async fn create_response(
 async fn create_vc(
     context: &Context, provider: impl Provider, request: &CredentialRequest,
 ) -> Result<Option<VerifiableCredential>> {
-    tracing::debug!("Context::create_vc");
+    tracing::debug!("batch::create_vc");
 
     // get credential identifier and configuration
     let (identifier, config) = credential_configuration(context, request)?;
@@ -323,7 +323,7 @@ async fn create_vc(
 
     let credential_issuer = &context.issuer_config.credential_issuer;
 
-    // HACK: fix this
+    // HACK: fix this (AW: why is this a hack?)
     let Some(types) = definition.type_ else {
         return Err(Error::ServerError("Credential type not set".into()));
     };
@@ -400,7 +400,7 @@ async fn err_nonce(context: &Context, provider: &impl Provider) -> Result<(Strin
 fn credential_definition(
     request: &CredentialRequest, config: &CredentialConfiguration,
 ) -> CredentialDefinition {
-    tracing::debug!("Context::credential_definition");
+    tracing::debug!("batch::credential_definition");
 
     let mut definition =
         request.credential_definition.clone().unwrap_or_else(|| CredentialDefinition {

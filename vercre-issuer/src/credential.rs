@@ -68,7 +68,7 @@ pub async fn credential(
 async fn process(
     provider: impl Provider, request: &CredentialRequest,
 ) -> Result<CredentialResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("credential::process");
 
     let request = BatchCredentialRequest {
         credential_issuer: request.credential_issuer.clone(),

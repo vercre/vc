@@ -39,7 +39,7 @@ pub async fn request_object(
 async fn process(
     provider: impl Provider, request: &RequestObjectRequest,
 ) -> Result<RequestObjectResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("request_object::process");
 
     // retrieve request object from state
     let buf = StateStore::get(&provider, &request.state)

@@ -107,8 +107,8 @@ pub struct InputDescriptor {
 /// format.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ClaimFormat {
-    /// An array of one or more algorithmic identifiers, e.g. `["Ed2219",
-    /// "ES256K"]`.
+    /// An array of one or more algorithmic identifiers,
+    /// e.g. `["Ed2219", "ES256K"]`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub alg: Option<Vec<String>>,
 

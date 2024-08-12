@@ -55,7 +55,7 @@ struct Context {
 
 // Verify the token request.
 async fn verify(context: &Context, provider: impl Provider, request: &TokenRequest) -> Result<()> {
-    tracing::debug!("Context::verify");
+    tracing::debug!("token::verify");
 
     let Ok(server_meta) = Metadata::server(&provider, &request.credential_issuer).await else {
         return Err(Error::InvalidRequest("unknown authorization server".into()));
@@ -113,7 +113,7 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
 async fn process(
     context: &Context, provider: impl Provider, request: &TokenRequest,
 ) -> Result<TokenResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("token::process");
 
     // prevent auth code reuse
     StateStore::purge(&provider, &auth_state_key(request)?)

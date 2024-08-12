@@ -56,7 +56,7 @@ pub async fn response(
 // Verfiy the vp_token and presentation subm
 #[allow(clippy::too_many_lines)]
 async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()> {
-    tracing::debug!("Context::verify");
+    tracing::debug!("response::verify");
 
     // get state by client state key
     let Some(state_key) = &request.state else {
@@ -68,9 +68,8 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
     let state = State::try_from(buf)?;
     let saved_req = &state.request_object;
 
-    // TODO: no token == error response, we should have already checked for an error
     let Some(vp_token) = request.vp_token.clone() else {
-        return Err(Error::InvalidRequest("client state not found".into()));
+        return Err(Error::InvalidRequest("vp_token not founnd".into()));
     };
 
     let mut vps = vec![];
@@ -202,7 +201,7 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
 
 // Process the authorization request
 async fn process(provider: impl Provider, request: &ResponseRequest) -> Result<ResponseResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("response::process");
 
     // clear state
     let Some(state_key) = &request.state else {

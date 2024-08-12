@@ -34,7 +34,7 @@ pub async fn deferred(
 async fn process(
     provider: impl Provider, request: &DeferredCredentialRequest,
 ) -> Result<DeferredCredentialResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("deferred::process");
 
     // retrieve deferred credential request from state
     let Ok(buf) = StateStore::get(&provider, &request.transaction_id).await else {

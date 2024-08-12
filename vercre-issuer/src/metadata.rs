@@ -43,7 +43,7 @@ pub async fn metadata(
 }
 
 async fn process(provider: impl Provider, request: &MetadataRequest) -> Result<MetadataResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("metadata::process");
 
     // TODO: add languages to request
     let credential_issuer = Metadata::issuer(&provider, &request.credential_issuer)

@@ -110,7 +110,7 @@ struct Context {
 async fn verify(
     context: &mut Context, provider: &impl Provider, request: &AuthorizationRequest,
 ) -> Result<()> {
-    tracing::debug!("Context::verify");
+    tracing::debug!("authorize::verify");
 
     let Ok(client_config) = Metadata::client(provider, &request.client_id).await else {
         return Err(Error::InvalidClient("invalid client_id".into()));
@@ -200,7 +200,7 @@ async fn verify(
 async fn process(
     context: &Context, provider: &impl Provider, request: &AuthorizationRequest,
 ) -> Result<AuthorizationResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("authorize::process");
 
     // *** For Credentials requested using `authorization_detail` parameter entries ***
     // - check whether holder is authorized by calling `Subject` provider with

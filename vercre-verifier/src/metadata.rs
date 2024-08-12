@@ -23,7 +23,7 @@ pub async fn metadata(
 }
 
 async fn process(provider: impl Provider, req: &MetadataRequest) -> Result<MetadataResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("metadata::process");
 
     Ok(MetadataResponse {
         client: Metadata::verifier(&provider, &req.client_id)
