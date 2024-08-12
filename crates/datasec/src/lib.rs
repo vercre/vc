@@ -49,11 +49,11 @@ pub use crate::jose::jwa::Algorithm;
 pub use crate::jose::jwk::PublicKeyJwk;
 pub use crate::jose::jwt::Jwt;
 
-/// The `DataSec` trait is used to provide methods needed for signing, encrypting,
+/// The `SecOps` trait is used to provide methods needed for signing, encrypting,
 /// verifying, and decrypting data. Implementers of this trait are expected to
 /// provide the necessary cryptographic functionality to support Verifiable
 /// Credential issuance and Verifiable Presentation submissions.
-pub trait DataSec: Send + Sync {
+pub trait SecOps: Send + Sync {
     /// Signer provides digital signing-related funtionality.
     /// The `identifier` parameter is one of `credential_issuer` or `verifier_id`.
     ///
@@ -123,9 +123,9 @@ pub trait Decryptor: Send + Sync {
 // /// # Example
 // ///
 // /// ```rust,ignore
-// /// use vercre_datasec::{verify_key, DataSec};
+// /// use vercre_datasec::{verify_key, SecOps};
 // ///
-// /// let resolver = DataSec::resolver(&provider, &request.credential_issuer)?;
+// /// let resolver = SecOps::resolver(&provider, &request.credential_issuer)?;
 // /// let jwt = jws::decode(proof_jwt, verify_key!(resolver)).await?;
 // /// ...
 // /// ```

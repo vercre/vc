@@ -33,16 +33,6 @@ pub use crate::document::Document;
 /// Returns DID-specific errors.
 pub type Result<T> = std::result::Result<T, Error>;
 
-pub trait DidOps: Send + Sync {
-    /// Returns a resolver that can be used to resolve an external reference to
-    /// public key material.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the resolver cannot be created.
-    fn resolver(&self, identifier: &str) -> anyhow::Result<impl DidResolver>;
-}
-
 /// `DidResolver` is used to proxy the resolution of a DID document. Resolution can
 /// either be local as in the case of `did:key`, or remote as in the case of `did:web`
 /// or `did:ion`.

@@ -23,9 +23,9 @@ pub mod status;
 /// # Example
 ///
 /// ```rust,ignore
-/// use vercre_datasec::{verify_key, DataSec};
+/// use vercre_datasec::{verify_key, SecOps};
 ///
-/// let resolver = DataSec::resolver(&provider, &request.credential_issuer)?;
+/// let resolver = SecOps::resolver(&provider, &request.credential_issuer)?;
 /// let jwt = jws::decode(proof_jwt, verify_key!(resolver)).await?;
 /// ...
 /// ```

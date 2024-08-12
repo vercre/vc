@@ -99,8 +99,8 @@ mod token;
 /// Re-export provider traits and types.
 pub mod provider {
     pub use vercre_datasec::jose::jwk::PublicKeyJwk;
-    pub use vercre_datasec::{Algorithm, DataSec, Decryptor, Encryptor, Signer};
-    pub use vercre_did::{Binding, DidResolver, DidOps, Document};
+    pub use vercre_datasec::{Algorithm, SecOps, Decryptor, Encryptor, Signer};
+    pub use vercre_did::{Binding, DidResolver, Document};
     pub use vercre_openid::issuer::{ClaimDefinition, Client, GrantType, Issuer, Server};
     #[allow(clippy::module_name_repetitions)]
     pub use vercre_openid::issuer::{Claims, Metadata, Provider, Result, StateStore, Subject};

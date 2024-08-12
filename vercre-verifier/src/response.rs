@@ -24,7 +24,6 @@ use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
 use vercre_core::Kind;
-use vercre_did::DidOps;
 use vercre_openid::verifier::{
     PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, StateStore,
 };
@@ -68,9 +67,7 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
     };
     let state = State::try_from(buf)?;
     let saved_req = &state.request_object;
-
-    let resolver = DidOps::resolver(&provider, &saved_req.client_id)
-        .map_err(|e| Error::ServerError(format!("issue getting resolver: {e}")))?;
+    let resolver = &provider;
 
     // TODO: no token == error response, we should have already checked for an error
     let Some(vp_token) = request.vp_token.clone() else {
@@ -81,7 +78,7 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
 
     // check nonce matches
     for vp_val in &vp_token {
-        let (vp, nonce) = match vercre_w3c_vc::proof::verify(Verify::Vp(vp_val), &resolver).await {
+        let (vp, nonce) = match vercre_w3c_vc::proof::verify(Verify::Vp(vp_val), resolver).await {
             Ok(Payload::Vp { vp, nonce, .. }) => (vp, nonce),
             Ok(_) => return Err(Error::InvalidRequest("proof payload is invalid".into())),
             Err(e) => return Err(Error::ServerError(format!("issue verifying VP proof: {e}"))),
@@ -168,10 +165,9 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
             _ => return Err(Error::InvalidRequest(format!("unexpected VC format: {vc_node}"))),
         };
 
-        let Payload::Vc(vc) =
-            vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &resolver)
-                .await
-                .map_err(|e| Error::InvalidRequest(format!("invalid VC proof: {e}")))?
+        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), resolver)
+            .await
+            .map_err(|e| Error::InvalidRequest(format!("invalid VC proof: {e}")))?
         else {
             return Err(Error::InvalidRequest("proof payload is invalid".into()));
         };

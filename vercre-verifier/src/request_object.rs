@@ -16,7 +16,7 @@
 use tracing::instrument;
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_openid::verifier::{
-    DataSec, Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, StateStore,
+    Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, SecOps, StateStore,
 };
 use vercre_openid::{Error, Result};
 
@@ -54,7 +54,7 @@ async fn process(
         return Err(Error::InvalidRequest("client ID mismatch".into()));
     }
 
-    let signer = DataSec::signer(&provider, &request.client_id)
+    let signer = SecOps::signer(&provider, &request.client_id)
         .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
     let jwt = jws::encode(Type::Request, &req_obj, signer)
         .await
@@ -68,7 +68,6 @@ async fn process(
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use vercre_did::DidOps;
     use vercre_dif_exch::PresentationDefinition;
     use vercre_openid::verifier::{
         ClientIdScheme, ClientMetadataType, PresentationDefinitionType, RequestObject, ResponseType,
@@ -119,8 +118,7 @@ mod tests {
             panic!("no JWT found in response");
         };
 
-        let resolver = &DidOps::resolver(&provider, VERIFIER_ID).expect("should get resolver");
-
+        let resolver = &provider;
         let callback = verify_key!(resolver);
 
         let jwt: jws::Jwt<RequestObject> =

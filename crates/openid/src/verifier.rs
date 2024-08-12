@@ -13,8 +13,8 @@ use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 use vercre_core::{stringify, Kind};
-pub use vercre_datasec::DataSec;
-use vercre_did::DidOps;
+pub use vercre_datasec::SecOps;
+use vercre_did::DidResolver;
 use vercre_dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 use vercre_w3c_vc::model::VerifiablePresentation;
 
@@ -23,7 +23,7 @@ pub use crate::oauth::{OAuthClient, OAuthServer};
 pub use crate::provider::{self, Result, StateStore};
 
 /// Verifier Provider trait.
-pub trait Provider: Metadata + StateStore + DataSec + DidOps + Clone {}
+pub trait Provider: Metadata + StateStore + SecOps + DidResolver + Clone {}
 
 /// The `Metadata` trait is used by implementers to provide `Verifier` (client)
 /// metadata to the library.

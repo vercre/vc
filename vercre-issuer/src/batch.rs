@@ -14,8 +14,7 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
-use vercre_datasec::DataSec;
-use vercre_did::DidOps;
+use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
     CredentialRequest, CredentialResponse, CredentialType, Issuer, Metadata, ProofClaims,
@@ -133,10 +132,8 @@ async fn verify(
                 });
             };
 
-            let resolver = &DidOps::resolver(&provider, &request.credential_issuer)
-                .map_err(|e| Error::ServerError(format!("issue  resolving verifier: {e}")))?;
-
             // TODO: check proof is signed with supported algorithm (from proof_type)
+            let resolver = &provider;
             let jwt: jws::Jwt<ProofClaims> =
                 match jws::decode(proof_jwt, verify_key!(resolver)).await {
                     Ok(jwt) => jwt,
@@ -273,7 +270,7 @@ async fn create_response(
     };
 
     // sign credential (jwt = enveloping proof)
-    let signer = DataSec::signer(&provider, &request.credential_issuer)
+    let signer = SecOps::signer(&provider, &request.credential_issuer)
         .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
     let jwt = vercre_w3c_vc::proof::create(Format::JwtVcJson, Payload::Vc(vc), signer)
         .await
@@ -506,9 +503,8 @@ mod tests {
             panic!("credential is missing");
         };
 
-        let resolver =
-            DidOps::resolver(&provider, &request.credential_issuer).expect("should get verifier");
-        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &resolver)
+        let resolver = &provider;
+        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), resolver)
             .await
             .expect("should decode")
         else {

@@ -52,7 +52,7 @@ impl DidWeb {
 
         // 6. Perform an HTTP GET request to the URL using an agent that can successfully
         //    negotiate a secure HTTPS connection, which enforces the security requirements
-        //    as described in 2.6 DataSec and privacy considerations.
+        //    as described in 2.6 SecOps and privacy considerations.
         let document = resolver.resolve(Binding::Https(url)).await.map_err(Error::Other)?;
 
         // TODO: implement security requirement:

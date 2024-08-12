@@ -72,7 +72,6 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use vercre_datasec::jose::jws::{self, Type};
-    use vercre_did::DidOps;
     use vercre_openid::issuer::{CredentialRequest, ProofClaims};
     use vercre_test_utils::holder;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -171,9 +170,8 @@ mod tests {
             panic!("VC is not base64 encoded string");
         };
 
-        let resolver =
-            DidOps::resolver(&provider, &request.credential_issuer).expect("should get resolver");
-        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &resolver)
+        let resolver = &provider;
+        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), resolver)
             .await
             .expect("should decode")
         else {

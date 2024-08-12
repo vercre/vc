@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
-use vercre_datasec::{self, Algorithm, DataSec, Decryptor, Encryptor, Signer};
-use vercre_did::{Binding, DidOps, DidResolver, Document};
+use vercre_datasec::{self, Algorithm, Decryptor, Encryptor, SecOps, Signer};
+use vercre_did::{Binding, DidResolver, Document};
 use vercre_openid::verifier::{Metadata, Result, StateStore, Verifier, Wallet};
 
 use crate::store::keystore::VerifierKeystore;
@@ -56,7 +56,7 @@ impl StateStore for Provider {
 
 struct VerifierSec(VerifierKeystore);
 
-impl DataSec for Provider {
+impl SecOps for Provider {
     fn signer(&self, _identifier: &str) -> anyhow::Result<impl Signer> {
         Ok(VerifierSec(VerifierKeystore {}))
     }
@@ -70,9 +70,9 @@ impl DataSec for Provider {
     }
 }
 
-impl DidOps for Provider {
-    fn resolver(&self, _identifier: &str) -> anyhow::Result<impl DidResolver> {
-        Ok(VerifierSec(VerifierKeystore {}))
+impl DidResolver for Provider {
+    async fn resolve(&self, binding: Binding) -> anyhow::Result<Document> {
+        resolver::resolve_did(binding).await
     }
 }
 
