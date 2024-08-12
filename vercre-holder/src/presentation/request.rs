@@ -8,7 +8,7 @@ use anyhow::{anyhow, bail};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
-use vercre_datasec::verify_key;
+use vercre_w3c_vc::verify_key;
 use vercre_datasec::jose::jws;
 use vercre_dif_exch::Constraints;
 use vercre_openid::verifier::{

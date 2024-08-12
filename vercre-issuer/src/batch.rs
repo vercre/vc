@@ -14,7 +14,7 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
-use vercre_datasec::{verify_key, DataSec};
+use vercre_datasec::DataSec;
 use vercre_openid::issuer::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
     CredentialRequest, CredentialResponse, CredentialType, Issuer, IssuerMetadata, ProofClaims,
@@ -23,6 +23,7 @@ use vercre_openid::issuer::{
 use vercre_openid::{Error, Result};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{Format, Payload};
+use vercre_w3c_vc::verify_key;
 
 // use crate::shell;
 use crate::state::{Deferred, Expire, State};

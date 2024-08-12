@@ -161,30 +161,30 @@ pub trait Decryptor: Send + Sync {
     ) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
 }
 
-/// Generates a closure to resolve public key material required by `Jws::decode`.
-///
-/// # Example
-///
-/// ```rust,ignore
-/// use vercre_datasec::{verify_key, DataSec};
-///
-/// let resolver = DataSec::resolver(&provider, &request.credential_issuer)?;
-/// let jwt = jws::decode(proof_jwt, verify_key!(resolver)).await?;
-/// ...
-/// ```
-#[doc(hidden)]
-#[macro_export]
-macro_rules! verify_key {
-    ($resolver:expr) => {{
-        use anyhow::anyhow;
-        use vercre_datasec::did;
+// /// Generate a closure to resolve public key material required by `Jws::decode`.
+// ///
+// /// # Example
+// ///
+// /// ```rust,ignore
+// /// use vercre_datasec::{verify_key, DataSec};
+// ///
+// /// let resolver = DataSec::resolver(&provider, &request.credential_issuer)?;
+// /// let jwt = jws::decode(proof_jwt, verify_key!(resolver)).await?;
+// /// ...
+// /// ```
+// #[doc(hidden)]
+// #[macro_export]
+// macro_rules! verify_key {
+//     ($resolver:expr) => {{
+//         use anyhow::anyhow;
+//         use vercre_datasec::did;
 
-        move |kid: String| async move {
-            let resp = did::dereference(&kid, None, $resolver).await?;
-            let Some(did::Resource::VerificationMethod(vm)) = resp.content_stream else {
-                return Err(anyhow!("Verification method not found"));
-            };
-            vm.method_type.jwk().map_err(|e| anyhow!("JWK not found: {e}"))
-        }
-    }};
-}
+//         move |kid: String| async move {
+//             let resp = did::dereference(&kid, None, $resolver).await?;
+//             let Some(did::Resource::VerificationMethod(vm)) = resp.content_stream else {
+//                 return Err(anyhow!("Verification method not found"));
+//             };
+//             vm.method_type.jwk().map_err(|e| anyhow!("JWK not found: {e}"))
+//         }
+//     }};
+// }
