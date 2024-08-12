@@ -1,5 +1,5 @@
 //! # OAuth 2.0 Types
-//! 
+//!
 //! Types for OAuth 2.0 clients and servers.
 
 use std::fmt::{self, Display};

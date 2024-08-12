@@ -68,12 +68,12 @@ async fn process(
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use vercre_w3c_vc::verify_key;
     use vercre_dif_exch::PresentationDefinition;
     use vercre_openid::verifier::{
         ClientIdScheme, ClientMetadataType, PresentationDefinitionType, RequestObject, ResponseType,
     };
     use vercre_test_utils::verifier::{Provider, VERIFIER_ID};
+    use vercre_w3c_vc::verify_key;
 
     use super::*;
 
@@ -120,7 +120,7 @@ mod tests {
 
         let resolver = &DataSec::resolver(&provider, VERIFIER_ID).expect("should get resolver");
 
-        let callback= verify_key!(resolver);
+        let callback = verify_key!(resolver);
 
         let jwt: jws::Jwt<RequestObject> =
             jws::decode(&jwt_enc, callback).await.expect("jwt is valid");

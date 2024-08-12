@@ -14,12 +14,14 @@ use vercre_w3c_vc::proof::{Payload, Verify};
 
 use super::{Issuance, Status};
 use crate::credential::Credential;
-use crate::provider::{CredentialStorer, HolderProvider, IssuerClient, StateManager, DidResolver};
+use crate::provider::{CredentialStorer, DidResolver, HolderProvider, IssuerClient, StateManager};
 
 /// Progresses the issuance flow by getting an access token then using that to get the
 /// credentials contained in the offer.
 #[instrument(level = "debug", skip(provider))]
-pub async fn get_credentials(provider: impl HolderProvider, request: String) -> anyhow::Result<Status> {
+pub async fn get_credentials(
+    provider: impl HolderProvider, request: String,
+) -> anyhow::Result<Status> {
     tracing::debug!("Endpoint::get_credentials");
 
     let mut issuance = match super::get_issuance(provider.clone(), &request).await {

@@ -61,10 +61,6 @@ pub async fn resolve(
 /// Dereference a DID URL into a resource.
 ///
 /// # Errors
-
-/// Dereference a DID URL into a resource.
-///
-/// # Errors
 pub async fn dereference(
     did_url: &str, opts: Option<Options>, resolver: &impl DidResolver,
 ) -> crate::Result<Dereferenced> {
@@ -265,7 +261,6 @@ pub struct ContentMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub document_metadata: Option<DocumentMetadata>,
 }
-
 
 #[cfg(test)]
 mod test {

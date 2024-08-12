@@ -1,10 +1,10 @@
 use base64ct::{Base64, Encoding};
 use http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
+use vercre_holder::provider::IssuerClient;
 use vercre_holder::{
     CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse, TokenRequest,
     TokenResponse,
 };
-use vercre_holder::provider::IssuerClient;
 
 use super::Provider;
 

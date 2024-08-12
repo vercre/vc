@@ -8,16 +8,16 @@ use anyhow::{anyhow, bail};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
-use vercre_w3c_vc::verify_key;
 use vercre_datasec::jose::jws;
 use vercre_dif_exch::Constraints;
 use vercre_openid::verifier::{
     PresentationDefinitionType, RequestObject, RequestObjectResponse, RequestObjectType,
 };
+use vercre_w3c_vc::verify_key;
 
 use super::{Presentation, Status};
 use crate::credential::Credential;
-use crate::provider::{CredentialStorer, HolderProvider, DidResolver, VerifierClient};
+use crate::provider::{CredentialStorer, DidResolver, HolderProvider, VerifierClient};
 
 /// `RequestResponse` is the response from the `request` endpoint. It contains enough information
 /// for the holder to authorize (or reject) the presentation request.
@@ -126,9 +126,7 @@ async fn parse_request_object_response(
     let RequestObjectType::Jwt(token) = &res.request_object else {
         bail!("no serialized JWT found in response");
     };
-    let jwt: jws::Jwt<RequestObject> = match jws::decode(token, verify_key!(resolver))
-    .await
-    {
+    let jwt: jws::Jwt<RequestObject> = match jws::decode(token, verify_key!(resolver)).await {
         Ok(jwt) => jwt,
         Err(e) => bail!("failed to parse JWT: {e}"),
     };

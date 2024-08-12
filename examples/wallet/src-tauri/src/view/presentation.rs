@@ -5,7 +5,8 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 
-use crate::{app::PresentationState, view::credential::CredentialDisplay};
+use crate::app::PresentationState;
+use crate::view::credential::CredentialDisplay;
 
 /// Status of the presentation flow. This is re-typed instead of using the status defined by
 /// vercre-holder so that we can use typeshare to generate the equivalent TypeScript enum.

@@ -4,7 +4,8 @@
 //! issuer. The endpoint uses the holder client to get metadata and present the offer details for
 //! acceptance/rejection by the holder.
 
-use std::{collections::HashMap, fmt::Debug};
+use std::collections::HashMap;
+use std::fmt::Debug;
 
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};

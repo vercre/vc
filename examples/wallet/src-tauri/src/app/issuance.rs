@@ -3,7 +3,9 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use vercre_holder::{CredentialConfiguration, CredentialOffer, OfferRequest, PinRequest, IssuanceStatus, TxCode};
+use vercre_holder::{
+    CredentialConfiguration, CredentialOffer, IssuanceStatus, OfferRequest, PinRequest, TxCode,
+};
 
 use super::{AppState, SubApp};
 use crate::provider::Provider;

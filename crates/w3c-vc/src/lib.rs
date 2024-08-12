@@ -15,7 +15,7 @@ pub mod schema;
 pub mod status;
 
 // TODO: move this macro to a more appropriate location (its own crate perhaps).
-// N.B. the current dependency tree is a little complex, so this is a temporary 
+// N.B. the current dependency tree is a little complex, so this is a temporary
 // solution that avoids cyclic dependencies.
 
 /// Generate a closure to resolve public key material required by `Jws::decode`.
