@@ -6,18 +6,13 @@
 //! See [DID resolution](https://www.w3.org/TR/did-core/#did-resolution) fpr more.
 
 use std::collections::HashMap;
-use std::future::Future;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::document::{Document, DocumentMetadata, VerificationMethod};
 use crate::error::Error;
-use crate::{key, web};
-
-pub trait DidClient: Send + Sync {
-    fn get(&self, url: &str) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
-}
+use crate::{key, web, DidResolver};
 
 /// Resolve a DID to a DID document.
 ///
@@ -37,26 +32,26 @@ pub trait DidClient: Send + Sync {
 /// Returns a [DID resolution](https://www.w3.org/TR/did-core/#did-resolution-metadata)
 /// error as specified.
 pub async fn resolve(
-    did: &str, opts: Option<Options>, client: impl DidClient,
-) -> crate::Result<Resolve> {
+    did: &str, opts: Option<Options>, resolver: &impl DidResolver,
+) -> crate::Result<Resolved> {
     // use DID-specific resolver
     let method = did.split(':').nth(1).unwrap_or_default();
 
     let result = match method {
-        "key" => key::DidKey::resolve(did, opts, client),
-        "web" => web::DidWeb::resolve(did, opts, client).await,
+        "key" => key::DidKey::resolve(did, opts, resolver),
+        "web" => web::DidWeb::resolve(did, opts, resolver).await,
         _ => Err(Error::MethodNotSupported(format!("{method} is not supported"))),
     };
 
     if let Err(e) = result {
-        return Ok(Resolve {
+        return Ok(Resolved {
             metadata: Metadata {
                 error: Some(e.to_string()),
                 error_message: Some(e.message()),
                 content_type: ContentType::DidLdJson,
                 ..Metadata::default()
             },
-            ..Resolve::default()
+            ..Resolved::default()
         });
     };
 
@@ -66,16 +61,51 @@ pub async fn resolve(
 /// Dereference a DID URL into a resource.
 ///
 /// # Errors
-pub async fn dereference(
-    did_url: &str, opts: Option<Options>, client: impl DidClient,
-) -> crate::Result<Dereference> {
-    let method = did_url.split(':').nth(1).unwrap_or_default();
 
-    match method {
-        "key" => key::DidKey::dereference(did_url, opts, client),
-        "web" => web::DidWeb::dereference(did_url, opts, client).await,
-        _ => Err(Error::MethodNotSupported(format!("{method} is not supported"))),
-    }
+/// Dereference a DID URL into a resource.
+///
+/// # Errors
+pub async fn dereference(
+    did_url: &str, opts: Option<Options>, resolver: &impl DidResolver,
+) -> crate::Result<Dereferenced> {
+    // extract DID from DID URL
+    let url = url::Url::parse(did_url)
+        .map_err(|e| Error::InvalidDidUrl(format!("issue parsing URL: {e}")))?;
+    let did = format!("did:{}", url.path());
+
+    // resolve DID document
+    let method = did_url.split(':').nth(1).unwrap_or_default();
+    let resolution = match method {
+        "key" => key::DidKey::resolve(&did, opts, resolver)?,
+        "web" => web::DidWeb::resolve(&did, opts, resolver).await?,
+        _ => return Err(Error::MethodNotSupported(format!("{method} is not supported"))),
+    };
+
+    let Some(document) = resolution.document else {
+        return Err(Error::InvalidDid("Unable to resolve DID document".into()));
+    };
+
+    // process document to dereference DID URL for requested resource
+    let Some(verifcation_methods) = document.verification_method else {
+        return Err(Error::NotFound("verification method missing".into()));
+    };
+
+    // for now we assume the DID URL is the ID of the verification method
+    // e.g. did:web:demo.credibil.io#key-0
+    let Some(vm) = verifcation_methods.iter().find(|vm| vm.id == did_url) else {
+        return Err(Error::NotFound("verification method not found".into()));
+    };
+
+    Ok(Dereferenced {
+        metadata: Metadata {
+            content_type: ContentType::DidLdJson,
+            ..Metadata::default()
+        },
+        content_stream: Some(Resource::VerificationMethod(vm.clone())),
+        content_metadata: Some(ContentMetadata {
+            document_metadata: resolution.document_metadata,
+        }),
+    })
 }
 
 /// Used to pass addtional values to a `resolve` and `dereference` methods. Any
@@ -146,7 +176,7 @@ pub struct Parameters {
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub struct Resolve {
+pub struct Resolved {
     #[serde(rename = "@context")]
     pub context: String,
 
@@ -164,7 +194,7 @@ pub struct Resolve {
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub struct Dereference {
+pub struct Dereferenced {
     /// A metadata structure consisting of values relating to the results of the
     /// DID URL dereferencing process. MUST NOT be empty in the case of an error.
     pub metadata: Metadata,
@@ -234,4 +264,48 @@ pub struct ContentMetadata {
     #[serde(flatten)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub document_metadata: Option<DocumentMetadata>,
+}
+
+
+#[cfg(test)]
+mod test {
+    use anyhow::anyhow;
+    use insta::assert_json_snapshot as assert_snapshot;
+
+    use super::*;
+    use crate::Binding;
+
+    struct MockResolver;
+    impl DidResolver for MockResolver {
+        async fn resolve(&self, _binding: Binding) -> anyhow::Result<Document> {
+            serde_json::from_slice(include_bytes!("web/did-ecdsa.json"))
+                .map_err(|e| anyhow!("issue deserializing document: {e}"))
+        }
+    }
+
+    #[test]
+    fn error_code() {
+        let err = Error::MethodNotSupported("Method not supported".into());
+
+        println!("err: {:?}", err.to_string());
+        assert_eq!(err.message(), "Method not supported");
+    }
+
+    #[tokio::test]
+    async fn deref_web() {
+        const DID_URL: &str = "did:web:demo.credibil.io#key-0";
+
+        let dereferenced =
+            dereference(DID_URL, None, &MockResolver).await.expect("should dereference");
+        assert_snapshot!("deref_web", dereferenced);
+    }
+
+    #[tokio::test]
+    async fn deref_key() {
+        const DID_URL: &str = "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK";
+
+        let dereferenced =
+            dereference(DID_URL, None, &MockResolver).await.expect("should dereference");
+        assert_snapshot!("deref_key", dereferenced);
+    }
 }
