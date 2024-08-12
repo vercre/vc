@@ -30,9 +30,8 @@ async fn auth_code_flow() {
     };
 
     let provider = ISSUER_PROVIDER.clone();
-    let resolver = &provider;
     let Payload::Vc(vc) =
-        vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), resolver).await.expect("should decode")
+        vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &provider).await.expect("should decode")
     else {
         panic!("should be VC");
     };

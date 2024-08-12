@@ -118,11 +118,8 @@ mod tests {
             panic!("no JWT found in response");
         };
 
-        let resolver = &provider;
-        let callback = verify_key!(resolver);
-
         let jwt: jws::Jwt<RequestObject> =
-            jws::decode(&jwt_enc, callback).await.expect("jwt is valid");
+            jws::decode(&jwt_enc, verify_key!(&provider)).await.expect("jwt is valid");
         assert_snapshot!("response", jwt);
 
         // request state should not exist

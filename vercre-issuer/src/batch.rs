@@ -133,9 +133,8 @@ async fn verify(
             };
 
             // TODO: check proof is signed with supported algorithm (from proof_type)
-            let resolver = &provider;
             let jwt: jws::Jwt<ProofClaims> =
-                match jws::decode(proof_jwt, verify_key!(resolver)).await {
+                match jws::decode(proof_jwt, verify_key!(&provider)).await {
                     Ok(jwt) => jwt,
                     Err(e) => {
                         let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
@@ -503,8 +502,7 @@ mod tests {
             panic!("credential is missing");
         };
 
-        let resolver = &provider;
-        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), resolver)
+        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &provider)
             .await
             .expect("should decode")
         else {

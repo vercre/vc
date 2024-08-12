@@ -36,8 +36,11 @@ macro_rules! verify_key {
         use anyhow::anyhow;
         use vercre_did::Resource;
 
+        // create local reference before moving into closure
+        let resolver = $resolver;
+
         move |kid: String| async move {
-            let resp = vercre_did::dereference(&kid, None, $resolver).await?;
+            let resp = vercre_did::dereference(&kid, None, resolver).await?;
             let Some(Resource::VerificationMethod(vm)) = resp.content_stream else {
                 return Err(anyhow!("Verification method not found"));
             };

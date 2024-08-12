@@ -170,8 +170,7 @@ mod tests {
             panic!("VC is not base64 encoded string");
         };
 
-        let resolver = &provider;
-        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), resolver)
+        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &provider)
             .await
             .expect("should decode")
         else {
