@@ -15,7 +15,7 @@ use tracing::instrument;
 use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::DataSec;
-use vercre_did::DidSec;
+use vercre_did::DidOps;
 use vercre_openid::issuer::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
     CredentialRequest, CredentialResponse, CredentialType, Issuer, Metadata, ProofClaims,
@@ -133,7 +133,7 @@ async fn verify(
                 });
             };
 
-            let resolver = &DidSec::resolver(&provider, &request.credential_issuer)
+            let resolver = &DidOps::resolver(&provider, &request.credential_issuer)
                 .map_err(|e| Error::ServerError(format!("issue  resolving verifier: {e}")))?;
 
             // TODO: check proof is signed with supported algorithm (from proof_type)
@@ -507,7 +507,7 @@ mod tests {
         };
 
         let resolver =
-            DidSec::resolver(&provider, &request.credential_issuer).expect("should get verifier");
+            DidOps::resolver(&provider, &request.credential_issuer).expect("should get verifier");
         let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &resolver)
             .await
             .expect("should decode")

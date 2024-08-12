@@ -13,7 +13,7 @@ use serde_json::{Map, Value};
 use vercre_core::{stringify, Kind};
 use vercre_datasec::jose::jwk::PublicKeyJwk;
 use vercre_datasec::DataSec;
-use vercre_did::DidSec;
+use vercre_did::DidOps;
 use vercre_w3c_vc::model::VerifiableCredential;
 
 pub use super::CredentialFormat;
@@ -23,7 +23,7 @@ pub use crate::provider::{self, Result, StateStore};
 // TODO: find a home for shared types
 
 /// Issuer Provider trait.
-pub trait Provider: Metadata + Subject + StateStore + DataSec + DidSec + Clone {}
+pub trait Provider: Metadata + Subject + StateStore + DataSec + DidOps + Clone {}
 
 /// The `Metadata` trait is used by implementers to provide `Client`, `Issuer`, and
 /// `Server` metadata to the library.

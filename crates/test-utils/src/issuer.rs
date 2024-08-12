@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use vercre_datasec::{Algorithm, DataSec, Decryptor, Encryptor, Signer};
-use vercre_did::{Binding, DidResolver, DidSec, Document};
+use vercre_did::{Binding, DidOps, DidResolver, Document};
 use vercre_openid::issuer::{
     Claims, Client, Issuer, Metadata, Result, Server, StateStore, Subject,
 };
@@ -96,7 +96,7 @@ impl DataSec for Provider {
     }
 }
 
-impl DidSec for Provider {
+impl DidOps for Provider {
     fn resolver(&self, _identifier: &str) -> anyhow::Result<impl DidResolver> {
         Ok(IssuerSec(IssuerKeystore {}))
     }

@@ -1,6 +1,3 @@
-// #![allow(missing_docs)]
-// #![allow(dead_code)]
-// #![allow(clippy::missing_errors_doc)]
 #![feature(let_chains)]
 
 //! # Data Security for Vercre

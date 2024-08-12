@@ -93,7 +93,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use vercre_datasec::jose::jws::{self, Type};
-    use vercre_did::DidSec;
+    use vercre_did::DidOps;
     use vercre_openid::issuer::ProofClaims;
     use vercre_openid::provider::StateStore;
     use vercre_test_utils::holder;
@@ -174,7 +174,7 @@ mod tests {
         };
 
         let resolver =
-            DidSec::resolver(&provider, &request.credential_issuer).expect("should get resolver");
+            DidOps::resolver(&provider, &request.credential_issuer).expect("should get resolver");
         let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &resolver)
             .await
             .expect("should decode")

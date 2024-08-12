@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use vercre_issuer::provider::{
-    Algorithm, Binding, Claims, Client, DataSec, Decryptor, DidResolver, DidSec, Document,
+    Algorithm, Binding, Claims, Client, DataSec, Decryptor, DidResolver, DidOps, Document,
     Encryptor, Issuer, Metadata, Result, Server, Signer, StateStore, Subject,
 };
 use vercre_test_utils::store::keystore::IssuerKeystore;
@@ -89,7 +89,7 @@ impl DataSec for Provider {
     }
 }
 
-impl DidSec for Provider {
+impl DidOps for Provider {
     fn resolver(&self, _identifier: &str) -> anyhow::Result<impl DidResolver> {
         Ok(IssuerSec(IssuerKeystore {}))
     }

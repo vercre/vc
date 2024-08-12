@@ -1,4 +1,3 @@
-#![allow(missing_docs)]
 #![feature(let_chains)]
 
 //! # DID Resolver
@@ -11,13 +10,13 @@
 //!
 //! See [DID resolution](https://www.w3.org/TR/did-core/#did-resolution) fpr more.
 
-// TODO: add support for the following key types:
-// (key) type: EcdsaSecp256k1VerificationKey2019 | JsonWebKey2020 | Ed25519VerificationKey2020 |
+// TODO: add support for the following:
+//   key type: EcdsaSecp256k1VerificationKey2019 | JsonWebKey2020 | Ed25519VerificationKey2020 |
 //             Ed25519VerificationKey2018 | X25519KeyAgreementKey2019
-// crv: Ed25519 | secp256k1 | P-256 | P-384 | p-521
+//   crv: Ed25519 | secp256k1 | P-256 | P-384 | p-521
 
-pub mod document;
-pub mod error;
+mod document;
+mod error;
 mod key;
 mod resolution;
 mod web;
@@ -31,9 +30,10 @@ pub use resolution::{
 
 pub use crate::document::Document;
 
+/// Returns DID-specific errors.
 pub type Result<T> = std::result::Result<T, Error>;
 
-pub trait DidSec: Send + Sync {
+pub trait DidOps: Send + Sync {
     /// Returns a resolver that can be used to resolve an external reference to
     /// public key material.
     ///

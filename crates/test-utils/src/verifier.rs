@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use vercre_datasec::{self, Algorithm, DataSec, Decryptor, Encryptor, Signer};
-use vercre_did::{Binding, DidResolver, DidSec, Document};
+use vercre_did::{Binding, DidOps, DidResolver, Document};
 use vercre_openid::verifier::{Metadata, Result, StateStore, Verifier, Wallet};
 
 use crate::store::keystore::VerifierKeystore;
@@ -70,7 +70,7 @@ impl DataSec for Provider {
     }
 }
 
-impl DidSec for Provider {
+impl DidOps for Provider {
     fn resolver(&self, _identifier: &str) -> anyhow::Result<impl DidResolver> {
         Ok(VerifierSec(VerifierKeystore {}))
     }
