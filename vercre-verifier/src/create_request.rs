@@ -49,8 +49,7 @@ use vercre_datasec::Algorithm;
 use vercre_dif_exch::{ClaimFormat, PresentationDefinition};
 use vercre_openid::verifier::{
     ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
-    PresentationDefinitionType, Provider, RequestObject, ResponseType, StateStore,
-    VerifierMetadata,
+    Metadata, PresentationDefinitionType, Provider, RequestObject, ResponseType, StateStore,
 };
 use vercre_openid::{Error, Result};
 
@@ -123,7 +122,7 @@ async fn process(
     let state_key = gen::state_key();
 
     // get client metadata
-    let Ok(client_meta) = VerifierMetadata::metadata(&provider, &request.client_id).await else {
+    let Ok(verifier_meta) = Metadata::verifier(&provider, &request.client_id).await else {
         return Err(Error::InvalidRequest("invalid client_id".into()));
     };
 
@@ -132,7 +131,7 @@ async fn process(
         state: Some(state_key.clone()),
         nonce: gen::nonce(),
         presentation_definition: PresentationDefinitionType::Object(pres_def),
-        client_metadata: ClientMetadataType::Object(client_meta),
+        client_metadata: ClientMetadataType::Object(verifier_meta),
         client_id_scheme: Some(ClientIdScheme::RedirectUri),
         ..Default::default()
     };

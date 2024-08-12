@@ -17,7 +17,7 @@ use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::DataSec;
 use vercre_openid::issuer::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
-    CredentialRequest, CredentialResponse, CredentialType, Issuer, IssuerMetadata, ProofClaims,
+    CredentialRequest, CredentialResponse, CredentialType, Issuer, Metadata, ProofClaims,
     ProofType, Provider, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
@@ -47,7 +47,7 @@ pub async fn batch(
 
     let mut ctx = Context {
         state,
-        issuer_config: IssuerMetadata::metadata(&provider, &request.credential_issuer)
+        issuer_config: Metadata::issuer(&provider, &request.credential_issuer)
             .await
             .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?,
         holder_did: String::new(),

@@ -2,8 +2,8 @@ use chrono::{DateTime, Utc};
 use vercre_test_utils::store::keystore::VerifierKeystore;
 use vercre_test_utils::store::{presentation, resolver, state};
 use vercre_verifier::provider::{
-    Algorithm, Binding, DataSec, Decryptor, DidResolver, Document, Encryptor, Result, Signer,
-    StateStore, Verifier, VerifierMetadata, Wallet, WalletMetadata,
+    Algorithm, Binding, DataSec, Decryptor, DidResolver, Document, Encryptor, Metadata, Result,
+    Signer, StateStore, Verifier, Wallet,
 };
 
 #[derive(Default, Clone, Debug)]
@@ -24,18 +24,16 @@ impl Provider {
 
 impl vercre_verifier::provider::Provider for Provider {}
 
-impl VerifierMetadata for Provider {
-    async fn metadata(&self, verifier_id: &str) -> Result<Verifier> {
+impl Metadata for Provider {
+    async fn verifier(&self, verifier_id: &str) -> Result<Verifier> {
         self.verifier.get(verifier_id)
     }
 
     async fn register(&self, verifier: &Verifier) -> Result<Verifier> {
         self.verifier.add(verifier)
     }
-}
 
-impl WalletMetadata for Provider {
-    async fn metadata(&self, _wallet_id: &str) -> Result<Wallet> {
+    async fn wallet(&self, _wallet_id: &str) -> Result<Wallet> {
         unimplemented!("WalletMetadata")
     }
 }

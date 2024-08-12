@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use vercre_issuer::provider::{
-    Algorithm, Binding, Claims, Client, ClientMetadata, DataSec, Decryptor, DidResolver, Document,
-    Encryptor, Issuer, IssuerMetadata, Result, Server, ServerMetadata, Signer, StateStore, Subject,
+    Algorithm, Binding, Claims, Client, DataSec, Decryptor, DidResolver, Document, Encryptor,
+    Issuer, Metadata, Result, Server, Signer, StateStore, Subject,
 };
 use vercre_test_utils::store::keystore::IssuerKeystore;
 use vercre_test_utils::store::{issuance, resolver, state};
@@ -30,24 +30,20 @@ impl Provider {
 
 impl vercre_issuer::provider::Provider for Provider {}
 
-impl ClientMetadata for Provider {
-    async fn metadata(&self, client_id: &str) -> Result<Client> {
+impl Metadata for Provider {
+    async fn client(&self, client_id: &str) -> Result<Client> {
         self.client.get(client_id)
     }
 
     async fn register(&self, client: &Client) -> Result<Client> {
         self.client.add(client)
     }
-}
 
-impl IssuerMetadata for Provider {
-    async fn metadata(&self, issuer_id: &str) -> Result<Issuer> {
+    async fn issuer(&self, issuer_id: &str) -> Result<Issuer> {
         self.issuer.get(issuer_id)
     }
-}
 
-impl ServerMetadata for Provider {
-    async fn metadata(&self, server_id: &str) -> Result<Server> {
+    async fn server(&self, server_id: &str) -> Result<Server> {
         self.server.get(server_id)
     }
 }

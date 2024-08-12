@@ -6,7 +6,7 @@
 //! returns Client metadata as defined in [RFC7591](https://www.rfc-editor.org/rfc/rfc7591).
 
 use tracing::instrument;
-use vercre_openid::verifier::{MetadataRequest, MetadataResponse, Provider, VerifierMetadata};
+use vercre_openid::verifier::{Metadata, MetadataRequest, MetadataResponse, Provider};
 use vercre_openid::{Error, Result};
 
 /// Endpoint for Wallets to request Verifier (Client) metadata.
@@ -26,7 +26,7 @@ async fn process(provider: impl Provider, req: &MetadataRequest) -> Result<Metad
     tracing::debug!("Context::process");
 
     Ok(MetadataResponse {
-        client: VerifierMetadata::metadata(&provider, &req.client_id)
+        client: Metadata::verifier(&provider, &req.client_id)
             .await
             .map_err(|e| Error::ServerError(format!("issue getting metadata: {e}")))?,
     })

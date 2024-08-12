@@ -69,8 +69,7 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer,
-    CredentialOfferType, Grants, IssuerMetadata, PreAuthorizedCodeGrant, Provider, StateStore,
-    TxCode,
+    CredentialOfferType, Grants, Metadata, PreAuthorizedCodeGrant, Provider, StateStore, TxCode,
 };
 use vercre_openid::{Error, Result};
 
@@ -94,7 +93,7 @@ pub async fn create_offer(
 async fn verify(provider: impl Provider, request: &CreateOfferRequest) -> Result<()> {
     tracing::debug!("Context::verify");
 
-    let issuer_meta = IssuerMetadata::metadata(&provider, &request.credential_issuer)
+    let issuer_meta = Metadata::issuer(&provider, &request.credential_issuer)
         .await
         .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
 

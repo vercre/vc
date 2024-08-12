@@ -77,8 +77,8 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    ClientMetadata, CredentialType, GrantType, Issuer, IssuerMetadata, Provider, ServerMetadata,
-    StateStore, Subject, TokenAuthorizationDetail,
+    CredentialType, GrantType, Issuer, Metadata, Provider, StateStore, Subject,
+    TokenAuthorizationDetail,
 };
 use vercre_openid::{Error, Result};
 
@@ -112,14 +112,14 @@ async fn verify(
 ) -> Result<()> {
     tracing::debug!("Context::verify");
 
-    let Ok(client_config) = ClientMetadata::metadata(provider, &request.client_id).await else {
+    let Ok(client_config) = Metadata::client(provider, &request.client_id).await else {
         return Err(Error::InvalidClient("invalid client_id".into()));
     };
-    let server_config = ServerMetadata::metadata(provider, &request.credential_issuer)
+    let server_config = Metadata::server(provider, &request.credential_issuer)
         .await
         .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
 
-    context.issuer_config = IssuerMetadata::metadata(provider, &request.credential_issuer)
+    context.issuer_config = Metadata::issuer(provider, &request.credential_issuer)
         .await
         .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
 

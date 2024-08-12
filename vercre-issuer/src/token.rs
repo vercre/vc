@@ -18,7 +18,7 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    GrantType, Provider, ServerMetadata, StateStore, TokenRequest, TokenResponse, TokenType,
+    GrantType, Metadata, Provider, StateStore, TokenRequest, TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
 
@@ -57,8 +57,7 @@ struct Context {
 async fn verify(context: &Context, provider: impl Provider, request: &TokenRequest) -> Result<()> {
     tracing::debug!("Context::verify");
 
-    let Ok(server_meta) = ServerMetadata::metadata(&provider, &request.credential_issuer).await
-    else {
+    let Ok(server_meta) = Metadata::server(&provider, &request.credential_issuer).await else {
         return Err(Error::InvalidRequest("unknown authorization server".into()));
     };
     let Some(auth_state) = &context.state.auth else {

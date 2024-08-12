@@ -3,8 +3,7 @@ use vercre_datasec::{
     Algorithm, Binding, DataSec, Decryptor, DidResolver, Document, Encryptor, Signer,
 };
 use vercre_openid::issuer::{
-    Claims, Client, ClientMetadata, Issuer, IssuerMetadata, Result, Server, ServerMetadata,
-    StateStore, Subject,
+    Claims, Client, Issuer, Metadata, Result, Server, StateStore, Subject,
 };
 
 use crate::store::keystore::IssuerKeystore;
@@ -39,24 +38,20 @@ impl Provider {
 
 impl vercre_openid::issuer::Provider for Provider {}
 
-impl ClientMetadata for Provider {
-    async fn metadata(&self, client_id: &str) -> Result<Client> {
+impl Metadata for Provider {
+    async fn client(&self, client_id: &str) -> Result<Client> {
         self.client.get(client_id)
     }
 
     async fn register(&self, client: &Client) -> Result<Client> {
         self.client.add(client)
     }
-}
 
-impl IssuerMetadata for Provider {
-    async fn metadata(&self, issuer_id: &str) -> Result<Issuer> {
+    async fn issuer(&self, issuer_id: &str) -> Result<Issuer> {
         self.issuer.get(issuer_id)
     }
-}
 
-impl ServerMetadata for Provider {
-    async fn metadata(&self, server_id: &str) -> Result<Server> {
+    async fn server(&self, server_id: &str) -> Result<Server> {
         self.server.get(server_id)
     }
 }

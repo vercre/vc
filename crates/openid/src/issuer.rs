@@ -22,35 +22,23 @@ pub use crate::provider::{self, Result, StateStore};
 // TODO: find a home for shared types
 
 /// Issuer Provider trait.
-pub trait Provider:
-    ClientMetadata + IssuerMetadata + ServerMetadata + Subject + StateStore + DataSec + Clone
-{
-}
+pub trait Provider: Metadata + Subject + StateStore + DataSec + Clone {}
 
-/// The `ClientMetadata` trait is used by implementers to provide `Client` metadata
-/// to the library.
-pub trait ClientMetadata: Send + Sync {
-    /// Returns client metadata for the specified client.
-    fn metadata(&self, client_id: &str) -> impl Future<Output = provider::Result<Client>> + Send;
+/// The `Metadata` trait is used by implementers to provide `Client`, `Issuer`, and
+/// `Server` metadata to the library.
+pub trait Metadata: Send + Sync {
+    /// Client metadata for the specified client.
+    fn client(&self, client_id: &str) -> impl Future<Output = provider::Result<Client>> + Send;
+
+    /// Credential Issuer metadata for the specified credential issuer.
+    fn issuer(&self, issuer_id: &str) -> impl Future<Output = provider::Result<Issuer>> + Send;
+
+    /// Authorization Server metadata for the specified server.
+    fn server(&self, server_id: &str) -> impl Future<Output = provider::Result<Server>> + Send;
 
     /// Used by OAuth 2.0 clients to dynamically register with the authorization
     /// server.
     fn register(&self, client: &Client) -> impl Future<Output = provider::Result<Client>> + Send;
-}
-
-/// The `IssuerMetadata` trait is used by implementers to provide Credential Issuer
-/// metadata.
-#[allow(clippy::module_name_repetitions)]
-pub trait IssuerMetadata: Send + Sync {
-    /// Returns the Credential Issuer's metadata.
-    fn metadata(&self, issuer_id: &str) -> impl Future<Output = provider::Result<Issuer>> + Send;
-}
-
-/// The `ServerMetadata` trait is used by implementers to provide Authorization Server
-/// metadata.
-pub trait ServerMetadata: Send + Sync {
-    /// Returns the Authorization Server's metadata.
-    fn metadata(&self, server_id: &str) -> impl Future<Output = provider::Result<Server>> + Send;
 }
 
 /// The Subject trait specifies how the library expects user information to be

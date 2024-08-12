@@ -24,7 +24,7 @@
 //! ```
 
 use tracing::instrument;
-use vercre_openid::issuer::{IssuerMetadata, MetadataRequest, MetadataResponse, Provider};
+use vercre_openid::issuer::{Metadata, MetadataRequest, MetadataResponse, Provider};
 use vercre_openid::{Error, Result};
 
 // use crate::shell;
@@ -46,10 +46,9 @@ async fn process(provider: impl Provider, request: &MetadataRequest) -> Result<M
     tracing::debug!("Context::process");
 
     // TODO: add languages to request
-    let credential_issuer =
-        IssuerMetadata::metadata(&provider, &request.credential_issuer)
-            .await
-            .map_err(|e| Error::ServerError(format!("issue getting metadata: {e}")))?;
+    let credential_issuer = Metadata::issuer(&provider, &request.credential_issuer)
+        .await
+        .map_err(|e| Error::ServerError(format!("issue getting metadata: {e}")))?;
     Ok(MetadataResponse { credential_issuer })
 }
 

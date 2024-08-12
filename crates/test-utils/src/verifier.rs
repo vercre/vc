@@ -2,9 +2,7 @@ use chrono::{DateTime, Utc};
 use vercre_datasec::{
     self, Algorithm, Binding, DataSec, Decryptor, DidResolver, Document, Encryptor, Signer,
 };
-use vercre_openid::verifier::{
-    Result, StateStore, Verifier, VerifierMetadata, Wallet, WalletMetadata,
-};
+use vercre_openid::verifier::{Metadata, Result, StateStore, Verifier, Wallet};
 
 use crate::store::keystore::VerifierKeystore;
 use crate::store::{presentation, resolver, state};
@@ -29,18 +27,16 @@ impl Provider {
 
 impl vercre_openid::verifier::Provider for Provider {}
 
-impl VerifierMetadata for Provider {
-    async fn metadata(&self, verifier_id: &str) -> Result<Verifier> {
+impl Metadata for Provider {
+    async fn verifier(&self, verifier_id: &str) -> Result<Verifier> {
         self.verifier.get(verifier_id)
     }
 
     async fn register(&self, verifier: &Verifier) -> Result<Verifier> {
         self.verifier.add(verifier)
     }
-}
 
-impl WalletMetadata for Provider {
-    async fn metadata(&self, _wallet_id: &str) -> Result<Wallet> {
+    async fn wallet(&self, _wallet_id: &str) -> Result<Wallet> {
         unimplemented!("WalletMetadata")
     }
 }

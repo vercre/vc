@@ -14,7 +14,7 @@ use vercre_openid::issuer::{
     CredentialRequest, CredentialResponse, MetadataRequest, MetadataResponse, TokenRequest,
     TokenResponse,
 };
-pub use vercre_openid::issuer::{IssuerMetadata, TxCode};
+pub use vercre_openid::issuer::{Metadata, TxCode};
 pub use vercre_openid::provider::{Result, StateStore};
 use vercre_openid::verifier::{RequestObjectResponse, ResponseRequest, ResponseResponse};
 

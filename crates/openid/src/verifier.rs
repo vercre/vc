@@ -22,25 +22,20 @@ pub use crate::oauth::{OAuthClient, OAuthServer};
 pub use crate::provider::{self, Result, StateStore};
 
 /// Verifier Provider trait.
-pub trait Provider: VerifierMetadata + WalletMetadata + StateStore + DataSec + Clone {}
+pub trait Provider: Metadata + StateStore + DataSec + Clone {}
 
-/// The `VerifierMetadata` trait is used by implementers to provide `Verifier` (client)
+/// The `Metadata` trait is used by implementers to provide `Verifier` (client)
 /// metadata to the library.
-#[allow(clippy::module_name_repetitions)]
-pub trait VerifierMetadata: Send + Sync {
-    /// Returns client metadata for the specified client.
-    fn metadata(&self, verifier_id: &str) -> impl Future<Output = Result<Verifier>> + Send;
+pub trait Metadata: Send + Sync {
+    /// Verifier (Client) metadata for the specified verifier.
+    fn verifier(&self, verifier_id: &str) -> impl Future<Output = Result<Verifier>> + Send;
+
+    /// Wallet (Authorization Server) metadata.
+    fn wallet(&self, wallet_id: &str) -> impl Future<Output = Result<Wallet>> + Send;
 
     /// Used by OAuth 2.0 clients to dynamically register with the authorization
     /// server.
     fn register(&self, verifier: &Verifier) -> impl Future<Output = Result<Verifier>> + Send;
-}
-
-/// The `WalletMetadata` trait is used by implementers to provide Wallet
-/// (Authorization Server) metadata.
-pub trait WalletMetadata: Send + Sync {
-    /// Returns the Authorization Server's metadata.
-    fn metadata(&self, wallet_id: &str) -> impl Future<Output = Result<Wallet>> + Send;
 }
 
 /// The Request Object Request is created by the Verifier to generate an
