@@ -78,9 +78,8 @@ mod tests {
             ..Default::default()
         });
 
-        StateStore::put(&provider, access_token, state.to_vec(), state.expires_at)
-            .await
-            .expect("state saved");
+        let ser = state.to_vec().expect("should serialize");
+        StateStore::put(&provider, access_token, ser, state.expires_at).await.expect("state saved");
 
         let body = json!({
             "client_id": CLIENT_ID,

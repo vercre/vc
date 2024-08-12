@@ -135,7 +135,9 @@ mod tests {
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             ..Default::default()
         });
-        StateStore::put(&provider, access_token, state.to_vec(), state.expires_at)
+
+        let ser = state.to_vec().expect("should serialize");
+        StateStore::put(&provider, access_token, ser, state.expires_at)
             .await
             .expect("state exists");
 
@@ -145,7 +147,9 @@ mod tests {
             transaction_id: transaction_id.into(),
             credential_request: cred_req.clone(),
         });
-        StateStore::put(&provider, transaction_id, state.to_vec(), state.expires_at)
+
+        let ser = state.to_vec().expect("should serialize");
+        StateStore::put(&provider, transaction_id, ser, state.expires_at)
             .await
             .expect("state exists");
 

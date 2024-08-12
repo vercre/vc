@@ -98,7 +98,7 @@ mod tests {
             client_id_scheme: Some(ClientIdScheme::RedirectUri),
             client_metadata: ClientMetadataType::Object(Default::default()),
 
-            // TODO: populate these
+            // TODO: populate missing RequestObject attributes
             redirect_uri: None,
             scope: None,
         };

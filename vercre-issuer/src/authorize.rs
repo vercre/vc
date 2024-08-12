@@ -277,7 +277,7 @@ async fn process(
     state.auth = Some(auth_state);
 
     let code = gen::auth_code();
-    StateStore::put(provider, &code, state.to_vec(), state.expires_at)
+    StateStore::put(provider, &code, state.to_vec()?, state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("state issue: {e}")))?;
 

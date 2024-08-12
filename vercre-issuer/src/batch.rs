@@ -389,7 +389,7 @@ async fn err_nonce(context: &Context, provider: &impl Provider) -> Result<(Strin
     token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
     state.token = Some(token_state.clone());
 
-    StateStore::put(provider, &token_state.access_token, state.to_vec(), state.expires_at)
+    StateStore::put(provider, &token_state.access_token, state.to_vec()?, state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -455,7 +455,8 @@ mod tests {
             ..Default::default()
         });
 
-        StateStore::put(&provider, access_token, state.to_vec(), state.expires_at)
+        let ser = state.to_vec().expect("should serialize");
+        StateStore::put(&provider, access_token, ser, state.expires_at)
             .await
             .expect("state exists");
 

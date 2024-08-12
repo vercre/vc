@@ -48,10 +48,9 @@ pub async fn response(
     process(provider, request).await
 }
 
-// TODO:
-// Validate the integrity, authenticity, and holder binding of each Verifiable
-// Presentation in the VP Token according to the rules of the respective
-// Presentation format.
+// TODO: validate  Verifiable Presentation by format
+// Check integrity, authenticity, and holder binding of each Presentation 
+// in the VP Token according to the rules for the Presentation's format.
 
 // Verfiy the vp_token and presentation subm
 #[allow(clippy::too_many_lines)]
@@ -191,10 +190,9 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
         // }
     }
 
-    // TODO:
-    // Perform the checks required by the Verifier's policy based on the set of
-    // trust requirements such as trust frameworks it belongs to (i.e.,
-    // revocation checks), if applicable.
+    // TODO: perform Verifier policy checks
+    // Checks based on the set of trust requirements such as trust frameworks
+    // it belongs to (i.e., revocation checks), if applicable.
 
     Ok(())
 }
@@ -211,7 +209,6 @@ async fn process(provider: impl Provider, request: &ResponseRequest) -> Result<R
         .await
         .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
 
-    // TODO: use callback to advise client of result
     Ok(ResponseResponse {
         // TODO: add response to state using `response_code` so Wallet can fetch full response
         // TODO: align redirct_uri to spec

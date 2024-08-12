@@ -21,7 +21,7 @@ use crate::{Algorithm, Signer};
 /// Encode the provided header and claims and sign, returning a JWT in compact JWS form.
 ///
 /// # Errors
-/// TODO: add error docs
+/// TODO: document errors
 pub async fn encode<T>(typ: Type, claims: &T, signer: impl Signer) -> anyhow::Result<String>
 where
     T: Serialize + Send + Sync,
@@ -52,7 +52,7 @@ where
 /// Decode the JWT token and return the claims.
 ///
 /// # Errors
-/// TODO: Add errors
+/// TODO: document errors
 pub async fn decode<F, Fut, T>(token: &str, pk_cb: F) -> anyhow::Result<Jwt<T>>
 where
     T: DeserializeOwned + Send,

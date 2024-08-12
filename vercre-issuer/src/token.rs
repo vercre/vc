@@ -11,6 +11,9 @@
 //! credentials, or other sensitive information, as well as the "Pragma" response
 //! header field [RFC2616](https://www.rfc-editor.org/rfc/rfc2616) with a value of "no-cache".
 
+// TODO: test `credential_configuration_id` in `authorization_details`
+// TODO: analyse `credential_identifiers` use in `authorization_details`
+
 use std::fmt::Debug;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
@@ -139,7 +142,7 @@ async fn process(
             .build()
             .map_err(|e| Error::ServerError(format!("issue building token state: {e}")))?,
     );
-    StateStore::put(&provider, &token, state.to_vec(), state.expires_at)
+    StateStore::put(&provider, &token, state.to_vec()?, state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -208,7 +211,8 @@ mod tests {
             ..Default::default()
         });
 
-        StateStore::put(&provider, pre_auth_code, state.to_vec(), state.expires_at)
+        let ser = state.to_vec().expect("should serialize");
+        StateStore::put(&provider, pre_auth_code, ser, state.expires_at)
             .await
             .expect("state exists");
 
@@ -286,9 +290,8 @@ mod tests {
             ..Default::default()
         });
 
-        StateStore::put(&provider, auth_code, state.to_vec(), state.expires_at)
-            .await
-            .expect("state exists");
+        let ser = state.to_vec().expect("should serialize");
+        StateStore::put(&provider, auth_code, ser, state.expires_at).await.expect("state exists");
 
         // create TokenRequest to 'send' to the app
         let body = json!({

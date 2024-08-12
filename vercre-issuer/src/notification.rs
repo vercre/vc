@@ -1,3 +1,5 @@
+// TODO: implement Notification endpoint
+
 //! # Notification Endpoint
 //!
 //! This endpoint is used by the Wallet to notify the Credential Issuer of certain
