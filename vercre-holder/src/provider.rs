@@ -15,7 +15,7 @@ use vercre_openid::issuer::{
     TokenResponse,
 };
 pub use vercre_openid::issuer::{IssuerMetadata, TxCode};
-pub use vercre_openid::provider::{Result, StateManager};
+pub use vercre_openid::provider::{Result, StateStore};
 use vercre_openid::verifier::{RequestObjectResponse, ResponseRequest, ResponseResponse};
 
 use crate::credential::{Credential, Logo};
@@ -24,7 +24,7 @@ use crate::credential::{Credential, Logo};
 /// by holder clients.
 #[allow(clippy::module_name_repetitions)]
 pub trait HolderProvider:
-    IssuerClient + VerifierClient + CredentialStorer + StateManager + Signer + DidResolver + Clone
+    IssuerClient + VerifierClient + CredentialStorer + StateStore + Signer + DidResolver + Clone
 {
 }
 

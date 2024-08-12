@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 use vercre_dif_exch::Constraints;
 use vercre_holder::provider::{
     Algorithm, Binding, CredentialStorer, DidResolver, Document, HolderProvider, IssuerClient,
-    Result, Signer, StateManager, VerifierClient,
+    Result, Signer, StateStore, VerifierClient,
 };
 use vercre_holder::{
     Credential, CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse,
@@ -123,7 +123,7 @@ impl CredentialStorer for Provider {
     }
 }
 
-impl StateManager for Provider {
+impl StateStore for Provider {
     async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
         self.state.put(key, state, dt)
     }

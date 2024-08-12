@@ -3,7 +3,7 @@ use vercre_datasec::{
     self, Algorithm, Binding, DataSec, Decryptor, DidResolver, Document, Encryptor, Signer,
 };
 use vercre_openid::verifier::{
-    Result, StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata,
+    Result, StateStore, Verifier, VerifierMetadata, Wallet, WalletMetadata,
 };
 
 use crate::store::keystore::VerifierKeystore;
@@ -45,7 +45,7 @@ impl WalletMetadata for Provider {
     }
 }
 
-impl StateManager for Provider {
+impl StateStore for Provider {
     async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
         self.state.put(key, state, dt)
     }

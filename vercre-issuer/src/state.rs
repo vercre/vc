@@ -48,11 +48,6 @@ pub struct State {
     #[builder(default)]
     pub subject_id: Option<String>,
 
-    /// The callback ID for the current request.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(default)]
-    pub callback_id: Option<String>,
-
     /// Authorization state.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[builder(default)]

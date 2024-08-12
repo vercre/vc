@@ -39,11 +39,11 @@ pub trait WalletMetadata: Send + Sync {
 
 ## State Manager
 
-As its name implies, `StateManager` is responsible for temporarily storing and 
+As its name implies, `StateStore` is responsible for temporarily storing and 
 managing state on behalf of the library.
 
 ```rust,ignore
-pub trait StateManager: Send + Sync {
+pub trait StateStore: Send + Sync {
     fn put(&self, key: &str, data: Vec<u8>, expiry: DateTime<Utc>,
     ) -> impl Future<Output = Result<()>> + Send;
 

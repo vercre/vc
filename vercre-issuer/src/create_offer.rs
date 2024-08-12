@@ -69,7 +69,7 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer,
-    CredentialOfferType, Grants, IssuerMetadata, PreAuthorizedCodeGrant, Provider, StateManager,
+    CredentialOfferType, Grants, IssuerMetadata, PreAuthorizedCodeGrant, Provider, StateStore,
     TxCode,
 };
 use vercre_openid::{Error, Result};
@@ -136,7 +136,6 @@ async fn process(
         .expires_at(Utc::now() + Expire::AuthCode.duration())
         .credential_identifiers(request.credential_configuration_ids.clone())
         .subject_id(request.subject_id.clone())
-        .callback_id(request.callback_id.clone())
         .build()
         .map_err(|e| Error::ServerError(format!("issue creating state: {e}")))?;
 
@@ -176,7 +175,7 @@ async fn process(
             .build()
             .map_err(|e| Error::ServerError(format!("issue building auth state: {e}")))?;
         state.auth = Some(auth_state);
-        StateManager::put(&provider, &pre_auth_code, state.to_vec(), state.expires_at)
+        StateStore::put(&provider, &pre_auth_code, state.to_vec(), state.expires_at)
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
     } else {
@@ -189,7 +188,7 @@ async fn process(
             issuer_state: Some(issuer_state.clone()),
             authorization_server: None,
         });
-        StateManager::put(&provider, &issuer_state, state.to_vec(), state.expires_at)
+        StateStore::put(&provider, &issuer_state, state.to_vec(), state.expires_at)
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
     }
@@ -253,7 +252,7 @@ mod tests {
 
         // compare response with saved state
         let state_key = &pre_auth_code.pre_authorized_code; //as_ref().expect("has state");
-        let buf = StateManager::get(&provider, state_key).await.expect("state exists");
+        let buf = StateStore::get(&provider, state_key).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
 
         assert_snapshot!("state", &state, {

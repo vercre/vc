@@ -4,7 +4,7 @@ use vercre_datasec::{
 };
 use vercre_openid::issuer::{
     Claims, Client, ClientMetadata, Issuer, IssuerMetadata, Result, Server, ServerMetadata,
-    StateManager, Subject,
+    StateStore, Subject,
 };
 
 use crate::store::keystore::IssuerKeystore;
@@ -72,7 +72,7 @@ impl Subject for Provider {
     }
 }
 
-impl StateManager for Provider {
+impl StateStore for Provider {
     async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
         self.state.put(key, state, dt)
     }

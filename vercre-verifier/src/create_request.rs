@@ -49,7 +49,7 @@ use vercre_datasec::Algorithm;
 use vercre_dif_exch::{ClaimFormat, PresentationDefinition};
 use vercre_openid::verifier::{
     ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
-    PresentationDefinitionType, Provider, RequestObject, ResponseType, StateManager,
+    PresentationDefinitionType, Provider, RequestObject, ResponseType, StateStore,
     VerifierMetadata,
 };
 use vercre_openid::{Error, Result};
@@ -156,7 +156,7 @@ async fn process(
         .request_object(req_obj)
         .build()
         .map_err(|e| Error::ServerError(format!("issue building state: {e}")))?;
-    StateManager::put(&provider, &state_key, state.to_vec(), state.expires_at)
+    StateStore::put(&provider, &state_key, state.to_vec(), state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -219,7 +219,7 @@ mod tests {
 
         // compare response with saved state
         let state_key = req_obj.state.as_ref().expect("has state");
-        let buf = StateManager::get(&provider, state_key).await.expect("state exists");
+        let buf = StateStore::get(&provider, state_key).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
 
         assert_eq!(req_obj.nonce, state.request_object.nonce);
@@ -265,7 +265,7 @@ mod tests {
 
         // check state for RequestObject
         let state_key = req_uri.split('/').last().expect("has state");
-        let buf = StateManager::get(&provider, state_key).await.expect("state exists");
+        let buf = StateStore::get(&provider, state_key).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
         assert_snapshot!("cd-state", state, {
             ".expires_at" => "[expires_at]",

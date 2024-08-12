@@ -29,11 +29,6 @@ pub struct State {
     /// The Verifier's Request Object. Saved for use by the `request_uri` endpoint
     /// and in comparing the Presentation Definition to the Presentation Submission.
     pub request_object: RequestObject,
-
-    // The callback ID for the current request.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(default)]
-    pub callback_id: Option<String>,
 }
 
 impl State {

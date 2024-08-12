@@ -105,7 +105,7 @@ pub mod provider {
     pub use vercre_openid::issuer::{ClaimDefinition, Client, GrantType, Issuer, Server};
     #[allow(clippy::module_name_repetitions)]
     pub use vercre_openid::issuer::{
-        Claims, ClientMetadata, IssuerMetadata, Provider, Result, ServerMetadata, StateManager,
+        Claims, ClientMetadata, IssuerMetadata, Provider, Result, ServerMetadata, StateStore,
         Subject,
     };
 }

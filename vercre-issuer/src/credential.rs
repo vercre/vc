@@ -95,7 +95,7 @@ mod tests {
     use vercre_datasec::jose::jws::{self, Type};
     use vercre_datasec::DataSec;
     use vercre_openid::issuer::ProofClaims;
-    use vercre_openid::provider::StateManager;
+    use vercre_openid::provider::StateStore;
     use vercre_test_utils::holder;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_w3c_vc::proof::{Payload, Verify};
@@ -129,7 +129,7 @@ mod tests {
             ..Default::default()
         });
 
-        StateManager::put(&provider, access_token, state.to_vec(), state.expires_at)
+        StateStore::put(&provider, access_token, state.to_vec(), state.expires_at)
             .await
             .expect("state saved");
 
@@ -188,7 +188,7 @@ mod tests {
         });
 
         // token state should remain unchanged
-        assert_let!(Ok(buf), StateManager::get(&provider, access_token).await);
+        assert_let!(Ok(buf), StateStore::get(&provider, access_token).await);
         let state = State::try_from(buf).expect("state is valid");
         assert_snapshot!("state", state, {
             ".expires_at" => "[expires_at]",

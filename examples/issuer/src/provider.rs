@@ -1,8 +1,7 @@
 use chrono::{DateTime, Utc};
 use vercre_issuer::provider::{
     Algorithm, Binding, Claims, Client, ClientMetadata, DataSec, Decryptor, DidResolver, Document,
-    Encryptor, Issuer, IssuerMetadata, Result, Server, ServerMetadata, Signer, StateManager,
-    Subject,
+    Encryptor, Issuer, IssuerMetadata, Result, Server, ServerMetadata, Signer, StateStore, Subject,
 };
 use vercre_test_utils::store::keystore::IssuerKeystore;
 use vercre_test_utils::store::{issuance, resolver, state};
@@ -64,7 +63,7 @@ impl Subject for Provider {
     }
 }
 
-impl StateManager for Provider {
+impl StateStore for Provider {
     async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
         self.state.put(key, state, dt)
     }

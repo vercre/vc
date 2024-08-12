@@ -16,7 +16,7 @@
 use tracing::instrument;
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_openid::verifier::{
-    DataSec, Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, StateManager,
+    DataSec, Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, StateStore,
 };
 use vercre_openid::{Error, Result};
 
@@ -42,7 +42,7 @@ async fn process(
     tracing::debug!("Context::process");
 
     // retrieve request object from state
-    let buf = StateManager::get(&provider, &request.state)
+    let buf = StateStore::get(&provider, &request.state)
         .await
         .map_err(|e| Error::ServerError(format!("issue fetching state: {e}")))?;
     let state = State::from_slice(&buf)
@@ -104,7 +104,7 @@ mod tests {
         };
 
         let state = State::builder().request_object(req_obj).build().expect("should build state");
-        StateManager::put(&provider, &state_key, state.to_vec(), state.expires_at)
+        StateStore::put(&provider, &state_key, state.to_vec(), state.expires_at)
             .await
             .expect("state exists");
 
@@ -127,6 +127,6 @@ mod tests {
         assert_snapshot!("response", jwt);
 
         // request state should not exist
-        assert!(StateManager::get(&provider, state_key).await.is_ok());
+        assert!(StateStore::get(&provider, state_key).await.is_ok());
     }
 }

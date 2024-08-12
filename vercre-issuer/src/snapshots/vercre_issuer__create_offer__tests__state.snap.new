@@ -1,0 +1,12 @@
+---
+source: vercre-issuer/src/create_offer.rs
+assertion_line: 258
+expression: "&state"
+---
+expires_at: "[expires_at]"
+credential_issuer: "http://vercre.io"
+credential_identifiers:
+  - EmployeeID_JWT
+subject_id: normal_user
+auth:
+  user_code: "[user_code]"

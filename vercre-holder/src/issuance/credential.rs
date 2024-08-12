@@ -14,7 +14,7 @@ use vercre_w3c_vc::proof::{Payload, Verify};
 
 use super::{Issuance, Status};
 use crate::credential::Credential;
-use crate::provider::{CredentialStorer, DidResolver, HolderProvider, IssuerClient, StateManager};
+use crate::provider::{CredentialStorer, DidResolver, HolderProvider, IssuerClient, StateStore};
 
 /// Progresses the issuance flow by getting an access token then using that to get the
 /// credentials contained in the offer.
@@ -110,7 +110,7 @@ pub async fn get_credentials(
     }
 
     // Release issuance state.
-    StateManager::purge(&provider, &issuance.id).await?;
+    StateStore::purge(&provider, &issuance.id).await?;
 
     Ok(Status::Requested)
 }

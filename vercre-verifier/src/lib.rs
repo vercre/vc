@@ -176,7 +176,7 @@ pub mod provider {
     pub use vercre_openid::verifier::VpFormat;
     #[allow(clippy::module_name_repetitions)]
     pub use vercre_openid::verifier::{
-        Provider, Result, StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata,
+        Provider, Result, StateStore, Verifier, VerifierMetadata, Wallet, WalletMetadata,
     };
 }
 pub use create_request::create_request;

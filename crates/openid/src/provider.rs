@@ -5,11 +5,10 @@ use std::future::Future;
 use chrono::{DateTime, Utc};
 
 /// Result is used for all external errors.
-// pub type Result<T> = anyhow::Result<T>;
 pub type Result<T, E = anyhow::Error> = std::result::Result<T, E>;
 
-/// `StateManager` is used to store and manage server state.
-pub trait StateManager: Send + Sync {
+/// `StateStore` is used to store and retrieve server state between requests.
+pub trait StateStore: Send + Sync {
     /// `StateStore` data (state) by provided key. The expiry parameter indicates
     /// when data can be expunged removed from the state store.
     fn put(

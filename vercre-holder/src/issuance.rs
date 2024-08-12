@@ -14,7 +14,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, TokenResponse};
 
-use crate::provider::{HolderProvider, StateManager};
+use crate::provider::{HolderProvider, StateStore};
 
 /// `Issuance` represents app state across the steps of the issuance flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -71,13 +71,13 @@ pub enum Status {
 
 /// Get and put issuance state information using the supplied provider.
 async fn get_issuance(provider: impl HolderProvider, id: &str) -> anyhow::Result<Issuance> {
-    let current_state = StateManager::get(&provider, id).await?;
+    let current_state = StateStore::get(&provider, id).await?;
     let issuance = serde_json::from_slice::<Issuance>(&current_state)?;
     Ok(issuance)
 }
 
 async fn put_issuance(provider: impl HolderProvider, issuance: &Issuance) -> anyhow::Result<()> {
-    StateManager::put(
+    StateStore::put(
         &provider,
         &issuance.id,
         serde_json::to_vec(&issuance)?,

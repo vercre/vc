@@ -18,7 +18,7 @@ use vercre_datasec::DataSec;
 use vercre_openid::issuer::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
     CredentialRequest, CredentialResponse, CredentialType, Issuer, IssuerMetadata, ProofClaims,
-    ProofType, Provider, StateManager, Subject,
+    ProofType, Provider, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
@@ -38,7 +38,7 @@ use crate::state::{Deferred, Expire, State};
 pub async fn batch(
     provider: impl Provider, request: &BatchCredentialRequest,
 ) -> Result<BatchCredentialResponse> {
-    let Ok(buf) = StateManager::get(&provider, &request.access_token).await else {
+    let Ok(buf) = StateStore::get(&provider, &request.access_token).await else {
         return Err(Error::AccessDenied("invalid access token".into()));
     };
     let Ok(state) = State::try_from(buf) else {
@@ -226,7 +226,7 @@ async fn process(
     // token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
     // state.token = Some(token_state.clone());
     // let buf = serde_json::to_vec(&state)?;
-    // StateManager::put(provider, &token_state.access_token, buf, state.expires_at).await?;
+    // StateStore::put(provider, &token_state.access_token, buf, state.expires_at).await?;
 
     Ok(BatchCredentialResponse {
         credential_responses: responses.clone(),
@@ -258,7 +258,7 @@ async fn create_response(
 
         let buf = serde_json::to_vec(&state)
             .map_err(|e| Error::ServerError(format!("issue serializing state: {e}")))?;
-        StateManager::put(&provider, &txn_id, buf, state.expires_at)
+        StateStore::put(&provider, &txn_id, buf, state.expires_at)
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -392,7 +392,7 @@ async fn err_nonce(context: &Context, provider: &impl Provider) -> Result<(Strin
     token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
     state.token = Some(token_state.clone());
 
-    StateManager::put(provider, &token_state.access_token, state.to_vec(), state.expires_at)
+    StateStore::put(provider, &token_state.access_token, state.to_vec(), state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -458,7 +458,7 @@ mod tests {
             ..Default::default()
         });
 
-        StateManager::put(&provider, access_token, state.to_vec(), state.expires_at)
+        StateStore::put(&provider, access_token, state.to_vec(), state.expires_at)
             .await
             .expect("state exists");
 
@@ -520,7 +520,7 @@ mod tests {
         });
 
         // token state should remain unchanged
-        assert_let!(Ok(buf), StateManager::get(&provider, access_token).await);
+        assert_let!(Ok(buf), StateStore::get(&provider, access_token).await);
         let state = State::try_from(buf).expect("state is valid");
         assert_snapshot!("ad-state", state, {
             ".expires_at" => "[expires_at]",
@@ -554,7 +554,7 @@ mod tests {
     //         ..Default::default()
     //     });
 
-    //     StateManager::put(&provider, access_token, state.to_vec(), state.expires_at)
+    //     StateStore::put(&provider, access_token, state.to_vec(), state.expires_at)
     //         .await
     //         .expect("state exists");
 
@@ -612,7 +612,7 @@ mod tests {
     //     });
 
     //     // token state should remain unchanged
-    //     assert_let!(Ok(buf), StateManager::get(&provider, access_token).await);
+    //     assert_let!(Ok(buf), StateStore::get(&provider, access_token).await);
     //     let state = State::try_from(buf).expect("state is valid");
     //     assert_snapshot!("ci-state", state, {
     //         ".expires_at" => "[expires_at]",

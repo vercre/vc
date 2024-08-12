@@ -18,7 +18,7 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    GrantType, Provider, ServerMetadata, StateManager, TokenRequest, TokenResponse, TokenType,
+    GrantType, Provider, ServerMetadata, StateStore, TokenRequest, TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
 
@@ -35,7 +35,7 @@ use crate::state::{Expire, State, Token};
 pub async fn token(provider: impl Provider, request: &TokenRequest) -> Result<TokenResponse> {
     // restore state
     // RFC 6749 requires a particular error here
-    let Ok(buf) = StateManager::get(&provider, &auth_state_key(request)?).await else {
+    let Ok(buf) = StateStore::get(&provider, &auth_state_key(request)?).await else {
         return Err(Error::InvalidGrant("the authorization code is invalid".into()));
     };
     let Ok(state) = State::try_from(buf.as_slice()) else {
@@ -117,7 +117,7 @@ async fn process(
     tracing::debug!("Context::process");
 
     // prevent auth code reuse
-    StateManager::purge(&provider, &auth_state_key(request)?)
+    StateStore::purge(&provider, &auth_state_key(request)?)
         .await
         .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
 
@@ -140,7 +140,7 @@ async fn process(
             .build()
             .map_err(|e| Error::ServerError(format!("issue building token state: {e}")))?,
     );
-    StateManager::put(&provider, &token, state.to_vec(), state.expires_at)
+    StateStore::put(&provider, &token, state.to_vec(), state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -209,7 +209,7 @@ mod tests {
             ..Default::default()
         });
 
-        StateManager::put(&provider, pre_auth_code, state.to_vec(), state.expires_at)
+        StateStore::put(&provider, pre_auth_code, state.to_vec(), state.expires_at)
             .await
             .expect("state exists");
 
@@ -231,10 +231,10 @@ mod tests {
         });
 
         // auth state should be removed
-        assert!(StateManager::get(&provider, pre_auth_code).await.is_err());
+        assert!(StateStore::get(&provider, pre_auth_code).await.is_err());
 
         // should be able to retrieve state using access token
-        let buf = StateManager::get(&provider, &response.access_token).await.expect("state exists");
+        let buf = StateStore::get(&provider, &response.access_token).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
 
         // compare response with saved state
@@ -287,7 +287,7 @@ mod tests {
             ..Default::default()
         });
 
-        StateManager::put(&provider, auth_code, state.to_vec(), state.expires_at)
+        StateStore::put(&provider, auth_code, state.to_vec(), state.expires_at)
             .await
             .expect("state exists");
 
@@ -310,10 +310,10 @@ mod tests {
         });
 
         // auth state should be removed
-        assert!(StateManager::get(&provider, auth_code).await.is_err());
+        assert!(StateStore::get(&provider, auth_code).await.is_err());
 
         // should be able to retrieve state using access token
-        let buf = StateManager::get(&provider, &response.access_token).await.expect("state exists");
+        let buf = StateStore::get(&provider, &response.access_token).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
 
         // compare response with saved state

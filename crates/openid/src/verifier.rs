@@ -19,7 +19,29 @@ use vercre_w3c_vc::model::VerifiablePresentation;
 
 pub use super::CredentialFormat;
 pub use crate::oauth::{OAuthClient, OAuthServer};
-pub use crate::provider::{self, Result, StateManager};
+pub use crate::provider::{self, Result, StateStore};
+
+/// Verifier Provider trait.
+pub trait Provider: VerifierMetadata + WalletMetadata + StateStore + DataSec + Clone {}
+
+/// The `VerifierMetadata` trait is used by implementers to provide `Verifier` (client)
+/// metadata to the library.
+#[allow(clippy::module_name_repetitions)]
+pub trait VerifierMetadata: Send + Sync {
+    /// Returns client metadata for the specified client.
+    fn metadata(&self, verifier_id: &str) -> impl Future<Output = Result<Verifier>> + Send;
+
+    /// Used by OAuth 2.0 clients to dynamically register with the authorization
+    /// server.
+    fn register(&self, verifier: &Verifier) -> impl Future<Output = Result<Verifier>> + Send;
+}
+
+/// The `WalletMetadata` trait is used by implementers to provide Wallet
+/// (Authorization Server) metadata.
+pub trait WalletMetadata: Send + Sync {
+    /// Returns the Authorization Server's metadata.
+    fn metadata(&self, wallet_id: &str) -> impl Future<Output = Result<Wallet>> + Send;
+}
 
 /// The Request Object Request is created by the Verifier to generate an
 /// Authorization Request Object.
@@ -639,26 +661,4 @@ pub struct Wallet {
     /// A list of key value pairs, where the key identifies a Credential format
     /// supported by the Wallet.
     pub vp_formats_supported: Option<HashMap<String, VpFormat>>,
-}
-
-/// Issuer Provider trait.
-pub trait Provider: VerifierMetadata + WalletMetadata + StateManager + DataSec + Clone {}
-
-/// The `VerifierMetadata` trait is used by implementers to provide `Verifier` (client)
-/// metadata to the library.
-#[allow(clippy::module_name_repetitions)]
-pub trait VerifierMetadata: Send + Sync {
-    /// Returns client metadata for the specified client.
-    fn metadata(&self, verifier_id: &str) -> impl Future<Output = Result<Verifier>> + Send;
-
-    /// Used by OAuth 2.0 clients to dynamically register with the authorization
-    /// server.
-    fn register(&self, verifier: &Verifier) -> impl Future<Output = Result<Verifier>> + Send;
-}
-
-/// The `WalletMetadata` trait is used by implementers to provide Wallet
-/// (Authorization Server) metadata.
-pub trait WalletMetadata: Send + Sync {
-    /// Returns the Authorization Server's metadata.
-    fn metadata(&self, wallet_id: &str) -> impl Future<Output = Result<Wallet>> + Send;
 }

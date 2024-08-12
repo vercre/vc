@@ -11,7 +11,7 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use futures::lock::Mutex;
 use vercre_holder::provider::{
-    Algorithm, Binding, DidResolver, Document, HolderProvider, Result, Signer, StateManager,
+    Algorithm, Binding, DidResolver, Document, HolderProvider, Result, Signer, StateStore,
 };
 use vercre_test_utils::store::keystore::HolderKeystore;
 use vercre_test_utils::store::resolver;
@@ -36,7 +36,7 @@ impl Provider {
 
 impl HolderProvider for Provider {}
 
-impl StateManager for Provider {
+impl StateStore for Provider {
     async fn put(&self, key: &str, state: Vec<u8>, _: DateTime<Utc>) -> Result<()> {
         self.state_store.lock().await.insert(key.to_string(), state);
         Ok(())

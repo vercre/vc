@@ -25,7 +25,7 @@ use serde_json_path::JsonPath;
 use tracing::instrument;
 use vercre_core::Kind;
 use vercre_openid::verifier::{
-    DataSec, PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, StateManager,
+    DataSec, PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, StateStore,
 };
 use vercre_openid::{Error, Result};
 use vercre_w3c_vc::model::VerifiableCredential;
@@ -62,7 +62,7 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
     let Some(state_key) = &request.state else {
         return Err(Error::InvalidRequest("client state not found".into()));
     };
-    let Ok(buf) = StateManager::get(&provider, state_key).await else {
+    let Ok(buf) = StateStore::get(&provider, state_key).await else {
         return Err(Error::InvalidRequest("state not found".into()));
     };
     let state = State::try_from(buf)?;
@@ -211,7 +211,7 @@ async fn process(provider: impl Provider, request: &ResponseRequest) -> Result<R
     let Some(state_key) = &request.state else {
         return Err(Error::InvalidRequest("client state not found".into()));
     };
-    StateManager::purge(&provider, state_key)
+    StateStore::purge(&provider, state_key)
         .await
         .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
 
@@ -266,7 +266,7 @@ mod tests {
 
         // set up state
         let state = State::builder().request_object(req_obj).build().expect("should build state");
-        StateManager::put(&provider, &state_key, state.to_vec(), state.expires_at)
+        StateStore::put(&provider, &state_key, state.to_vec(), state.expires_at)
             .await
             .expect("state exists");
 

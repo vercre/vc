@@ -3,7 +3,7 @@ use vercre_test_utils::store::keystore::VerifierKeystore;
 use vercre_test_utils::store::{presentation, resolver, state};
 use vercre_verifier::provider::{
     Algorithm, Binding, DataSec, Decryptor, DidResolver, Document, Encryptor, Result, Signer,
-    StateManager, Verifier, VerifierMetadata, Wallet, WalletMetadata,
+    StateStore, Verifier, VerifierMetadata, Wallet, WalletMetadata,
 };
 
 #[derive(Default, Clone, Debug)]
@@ -40,7 +40,7 @@ impl WalletMetadata for Provider {
     }
 }
 
-impl StateManager for Provider {
+impl StateStore for Provider {
     async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
         self.state.put(key, state, dt)
     }
