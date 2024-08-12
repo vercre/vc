@@ -17,7 +17,7 @@ use vercre_w3c_vc::verify_key;
 
 use super::{Presentation, Status};
 use crate::credential::Credential;
-use crate::provider::{CredentialStorer, DidResolver, HolderProvider, VerifierClient};
+use crate::provider::{CredentialStorer, DidResolver, HolderProvider, Verifier};
 
 /// `RequestResponse` is the response from the `request` endpoint. It contains enough information
 /// for the holder to authorize (or reject) the presentation request.
@@ -65,9 +65,7 @@ pub async fn request(
         }
     } else {
         let req_obj_response =
-            match VerifierClient::get_request_object(&provider, &presentation.id, &request_str)
-                .await
-            {
+            match Verifier::get_request_object(&provider, &presentation.id, &request_str).await {
                 Ok(req_obj_response) => req_obj_response,
                 Err(e) => {
                     tracing::error!(target: "Endpoint::request", ?e);

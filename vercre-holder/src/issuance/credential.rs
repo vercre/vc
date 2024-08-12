@@ -14,7 +14,7 @@ use vercre_w3c_vc::proof::{Payload, Verify};
 
 use super::{Issuance, Status};
 use crate::credential::Credential;
-use crate::provider::{CredentialStorer, DidResolver, HolderProvider, IssuerClient, StateStore};
+use crate::provider::{CredentialStorer, DidResolver, HolderProvider, Issuer, StateStore};
 
 /// Progresses the issuance flow by getting an access token then using that to get the
 /// credentials contained in the offer.
@@ -34,7 +34,7 @@ pub async fn get_credentials(
 
     // Request an access token from the issuer.
     let token_request = token_request(&issuance);
-    issuance.token = match IssuerClient::get_token(&provider, &issuance.id, &token_request).await {
+    issuance.token = match Issuer::get_token(&provider, &issuance.id, &token_request).await {
         Ok(token) => token,
         Err(e) => {
             tracing::error!(target: "Endpoint::get_credentials", ?e);
@@ -66,7 +66,7 @@ pub async fn get_credentials(
 
         let request = credential_request(&issuance, id, cfg, &proof);
 
-        let cred_res = match IssuerClient::get_credential(&provider, &issuance.id, &request).await {
+        let cred_res = match Issuer::get_credential(&provider, &issuance.id, &request).await {
             Ok(cred_res) => cred_res,
             Err(e) => {
                 tracing::error!(target: "Endpoint::get_credentials", ?e);
@@ -94,7 +94,7 @@ pub async fn get_credentials(
             // TODO: Locale?
             if let Some(logo_info) = &display[0].logo {
                 if let Some(uri) = &logo_info.uri {
-                    if let Ok(logo) = IssuerClient::get_logo(&provider, &issuance.id, uri).await {
+                    if let Ok(logo) = Issuer::get_logo(&provider, &issuance.id, uri).await {
                         credential.logo = Some(logo);
                     }
                 }

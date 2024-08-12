@@ -1,10 +1,10 @@
 use http::header::{ACCEPT, CONTENT_TYPE};
-use vercre_holder::provider::VerifierClient;
+use vercre_holder::provider::Verifier;
 use vercre_holder::{RequestObjectResponse, ResponseRequest, ResponseResponse};
 
 use super::Provider;
 
-impl VerifierClient for Provider {
+impl Verifier for Provider {
     /// Get a request object. If an error is returned, the wallet will cancel the presentation flow.
     async fn get_request_object(
         &self, _flow_id: &str, req: &str,

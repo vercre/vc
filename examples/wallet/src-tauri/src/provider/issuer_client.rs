@@ -1,6 +1,6 @@
 use base64ct::{Base64, Encoding};
 use http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
-use vercre_holder::provider::IssuerClient;
+use vercre_holder::provider::Issuer;
 use vercre_holder::{
     CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse, TokenRequest,
     TokenResponse,
@@ -8,7 +8,7 @@ use vercre_holder::{
 
 use super::Provider;
 
-impl IssuerClient for Provider {
+impl Issuer for Provider {
     /// Get issuer metadata.
     async fn get_metadata(
         &self, _flow_id: &str, req: &MetadataRequest,

@@ -24,7 +24,7 @@ use crate::credential::{Credential, Logo};
 /// by holder clients.
 #[allow(clippy::module_name_repetitions)]
 pub trait HolderProvider:
-    IssuerClient + VerifierClient + CredentialStorer + StateStore + Signer + DidResolver + Clone
+    Issuer + Verifier + CredentialStorer + StateStore + Signer + DidResolver + Clone
 {
 }
 
@@ -32,7 +32,7 @@ pub trait HolderProvider:
 /// OpenID for VC Issuance. While the specification is oriented towards HTTP, the trait allows the
 /// wallet (and issuance services) to be transport layer agnostic.
 #[allow(clippy::module_name_repetitions)]
-pub trait IssuerClient {
+pub trait Issuer {
     /// Get issuer metadata. If an error is returned, the wallet will cancel the issuance flow.
     fn get_metadata(
         &self, flow_id: &str, req: &MetadataRequest,
@@ -58,7 +58,7 @@ pub trait IssuerClient {
 /// This provider allows the wallet to interact with a verifier's services that are compliant with
 /// OpenID for Verifiable Presentations. While the specification is oriented towards HTTP, the trait
 /// allows the wallet (and verifier's services) to be transport layer agnostic.
-pub trait VerifierClient {
+pub trait Verifier {
     /// Get a request object. If an error is returned, the wallet will cancel the presentation flow.
     fn get_request_object(
         &self, flow_id: &str, req: &str,

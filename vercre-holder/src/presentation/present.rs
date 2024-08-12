@@ -13,7 +13,7 @@ use vercre_w3c_vc::model::vp::VerifiablePresentation;
 use vercre_w3c_vc::proof::{self, Format, Payload};
 
 use super::{Presentation, Status};
-use crate::provider::{HolderProvider, Signer, VerifierClient};
+use crate::provider::{HolderProvider, Signer, Verifier};
 
 /// Creates a presentation submission, signs it and sends it to the verifier. The `request`
 /// parameter is the presentation flow ID of an authorized presentation request created in
@@ -79,7 +79,7 @@ pub async fn present(
     let res_uri =
         presentation.request.response_uri.map(|uri| uri.trim_end_matches('/').to_string());
     let response =
-        match VerifierClient::present(&provider, &presentation.id, res_uri.as_deref(), &res_req)
+        match Verifier::present(&provider, &presentation.id, res_uri.as_deref(), &res_req)
             .await
         {
             Ok(response) => response,
