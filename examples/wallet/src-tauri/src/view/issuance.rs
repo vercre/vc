@@ -4,8 +4,9 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use vercre_holder::{Issuance, Status, TxCode};
+use vercre_holder::TxCode;
 
+use crate::app::IssuanceState;
 use crate::view::credential::CredentialDisplay;
 
 /// Status of the issuance flow
@@ -37,16 +38,16 @@ pub enum IssuanceStatus {
 }
 
 /// Convert from `vercre_holder::issuance::Status` to `IssuanceStatus`
-impl From<Status> for IssuanceStatus {
-    fn from(status: Status) -> Self {
+impl From<vercre_holder::IssuanceStatus> for IssuanceStatus {
+    fn from(status: vercre_holder::IssuanceStatus) -> Self {
         match status {
-            Status::Inactive => Self::Inactive,
-            Status::Offered => Self::Offered,
-            Status::Ready => Self::Ready,
-            Status::PendingPin => Self::PendingPin,
-            Status::Accepted => Self::Accepted,
-            Status::Requested => Self::Requested,
-            Status::Failed(_) => Self::Failed,
+            vercre_holder::IssuanceStatus::Inactive => Self::Inactive,
+            vercre_holder::IssuanceStatus::Offered => Self::Offered,
+            vercre_holder::IssuanceStatus::Ready => Self::Ready,
+            vercre_holder::IssuanceStatus::PendingPin => Self::PendingPin,
+            vercre_holder::IssuanceStatus::Accepted => Self::Accepted,
+            vercre_holder::IssuanceStatus::Requested => Self::Requested,
+            vercre_holder::IssuanceStatus::Failed(_) => Self::Failed,
         }
     }
 }
@@ -67,22 +68,15 @@ pub struct IssuanceView {
 }
 
 /// Convert the underlying issuance flow state to a view model of the same
-impl From<Issuance> for IssuanceView {
-    fn from(state: Issuance) -> Self {
+impl From<IssuanceState> for IssuanceView {
+    fn from(state: IssuanceState) -> Self {
         let mut creds: HashMap<String, CredentialDisplay> = HashMap::new();
         for (id, offered) in &state.offered {
             let mut cred: CredentialDisplay = offered.into();
-            cred.issuer = Some(state.offer.credential_issuer.clone());
+            cred.issuer = Some(state.issuer.clone());
             creds.insert(id.clone(), cred);
         }
-        let mut schema = None;
-        if let Some(grants) = state.offer.grants {
-            if let Some(pre_authorized_code) = grants.pre_authorized_code {
-                if let Some(tx_code) = pre_authorized_code.tx_code {
-                    schema = Some(tx_code.into());
-                }
-            }
-        }
+        let schema = state.tx_code.clone().map(Into::into);
         Self {
             status: state.status.into(),
             credentials: creds,

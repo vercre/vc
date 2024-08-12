@@ -6,7 +6,7 @@
 use anyhow::anyhow;
 use tracing::instrument;
 
-use super::{Presentation, Status};
+use super::Status;
 use crate::provider::HolderProvider;
 
 /// Updates the status of the flow as authorized. The request is the presentation flow ID
@@ -14,7 +14,7 @@ use crate::provider::HolderProvider;
 #[instrument(level = "debug", skip(provider))]
 pub async fn authorize(
     provider: impl HolderProvider, request: String,
-) -> anyhow::Result<Presentation> {
+) -> anyhow::Result<Status> {
     tracing::debug!("Endpoint::authorize");
 
     let Ok(mut presentation) = super::get_presentation(provider.clone(), &request).await else {
@@ -33,5 +33,5 @@ pub async fn authorize(
         tracing::error!(target: "Endpoint::authorize", ?e);
         return Err(e);
     }
-    Ok(presentation)
+    Ok(presentation.status)
 }
