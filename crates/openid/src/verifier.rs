@@ -12,14 +12,14 @@ use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
-use vercre_core::Kind;
+use vercre_core::{stringify, Kind};
 pub use vercre_datasec::DataSec;
 use vercre_dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 use vercre_w3c_vc::model::VerifiablePresentation;
 
 pub use super::CredentialFormat;
+pub use crate::oauth::{OAuthClient, OAuthServer};
 pub use crate::provider::{self, Result, StateManager};
-use crate::stringify;
 
 /// The Request Object Request is created by the Verifier to generate an
 /// Authorization Request Object.
@@ -604,7 +604,7 @@ pub struct VpFormat {
 pub struct Verifier {
     /// OAuth 2.0 Client
     #[serde(flatten)]
-    pub oauth: super::OAuthClient,
+    pub oauth: OAuthClient,
 
     /// An object defining the formats and proof types of Verifiable Presentations
     /// and Verifiable Credentials that a Verifier supports. For specific values that
@@ -629,7 +629,7 @@ pub struct Verifier {
 pub struct Wallet {
     /// OAuth 2.0 Server
     #[serde(flatten)]
-    pub oauth: super::OAuthServer,
+    pub oauth: OAuthServer,
 
     /// Specifies whether the Wallet supports the transfer of
     /// `presentation_definition` by reference, with true indicating support.

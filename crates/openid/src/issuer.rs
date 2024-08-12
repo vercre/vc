@@ -10,14 +10,14 @@ use base64ct::{Base64, Encoding};
 use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use vercre_core::Kind;
+use vercre_core::{stringify, Kind};
 use vercre_datasec::jose::jwk::PublicKeyJwk;
 pub use vercre_datasec::DataSec;
 use vercre_w3c_vc::model::VerifiableCredential;
 
-pub use super::{CredentialFormat, OAuthClient, OAuthServer};
+pub use super::CredentialFormat;
+pub use crate::oauth::{OAuthClient, OAuthServer};
 pub use crate::provider::{self, Result, StateManager};
-use crate::stringify;
 
 // TODO: find a home for these shared types
 // TODO: move sample data to test-utils

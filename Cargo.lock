@@ -5632,6 +5632,7 @@ dependencies = [
  "base64ct",
  "fastrand",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
