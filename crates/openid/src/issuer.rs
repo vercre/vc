@@ -27,22 +27,22 @@ pub trait Provider: Metadata + Subject + StateStore + DataSec + Clone {}
 /// The `Metadata` trait is used by implementers to provide `Client`, `Issuer`, and
 /// `Server` metadata to the library.
 pub trait Metadata: Send + Sync {
-    /// Client metadata for the specified client.
+    /// Client (wallet) metadata for the specified issuance client.
     fn client(&self, client_id: &str) -> impl Future<Output = provider::Result<Client>> + Send;
 
-    /// Credential Issuer metadata for the specified credential issuer.
+    /// Credential Issuer metadata for the specified issuer.
     fn issuer(&self, issuer_id: &str) -> impl Future<Output = provider::Result<Issuer>> + Send;
 
-    /// Authorization Server metadata for the specified server.
+    /// Authorization Server metadata for the specified issuer/server.
     fn server(&self, server_id: &str) -> impl Future<Output = provider::Result<Server>> + Send;
 
-    /// Used by OAuth 2.0 clients to dynamically register with the authorization
+    /// Used by OAuth 2.0 clients to dynamically register clients with the authorization
     /// server.
     fn register(&self, client: &Client) -> impl Future<Output = provider::Result<Client>> + Send;
 }
 
-/// The Subject trait specifies how the library expects user information to be
-/// provided by implementers.
+/// The Subject trait specifies how the library expects issuance subject (user)
+/// information to be provided by implementers.
 pub trait Subject: Send + Sync {
     /// Authorize issuance of the credential specified by `credential_configuration_id`.
     /// Returns `true` if the subject (holder) is authorized.
