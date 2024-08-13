@@ -128,7 +128,7 @@ impl State {
     pub fn to_vec(&self) -> Result<Vec<u8>> {
         match serde_json::to_vec(self) {
             Ok(res) => Ok(res),
-            Err(e) => return Err(Error::InvalidRequest(format!("Failed to serialize state: {e}"))),
+            Err(e) => Err(Error::InvalidRequest(format!("Failed to serialize state: {e}"))),
         }
     }
 
