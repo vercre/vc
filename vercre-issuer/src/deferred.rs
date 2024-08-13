@@ -34,7 +34,7 @@ pub async fn deferred(
 async fn process(
     provider: impl Provider, request: &DeferredCredentialRequest,
 ) -> Result<DeferredCredentialResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("deferred::process");
 
     // retrieve deferred credential request from state
     let Ok(buf) = StateStore::get(&provider, &request.transaction_id).await else {
@@ -72,7 +72,6 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use vercre_datasec::jose::jws::{self, Type};
-    use vercre_did::DidSec;
     use vercre_openid::issuer::{CredentialRequest, ProofClaims};
     use vercre_test_utils::holder;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -136,7 +135,9 @@ mod tests {
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             ..Default::default()
         });
-        StateStore::put(&provider, access_token, state.to_vec(), state.expires_at)
+
+        let ser = state.to_vec().expect("should serialize");
+        StateStore::put(&provider, access_token, ser, state.expires_at)
             .await
             .expect("state exists");
 
@@ -146,7 +147,9 @@ mod tests {
             transaction_id: transaction_id.into(),
             credential_request: cred_req.clone(),
         });
-        StateStore::put(&provider, transaction_id, state.to_vec(), state.expires_at)
+
+        let ser = state.to_vec().expect("should serialize");
+        StateStore::put(&provider, transaction_id, ser, state.expires_at)
             .await
             .expect("state exists");
 
@@ -171,9 +174,7 @@ mod tests {
             panic!("VC is not base64 encoded string");
         };
 
-        let resolver =
-            DidSec::resolver(&provider, &request.credential_issuer).expect("should get resolver");
-        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &resolver)
+        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &provider)
             .await
             .expect("should decode")
         else {

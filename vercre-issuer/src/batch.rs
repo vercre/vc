@@ -14,8 +14,7 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
-use vercre_datasec::DataSec;
-use vercre_did::DidSec;
+use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
     CredentialRequest, CredentialResponse, CredentialType, Issuer, Metadata, ProofClaims,
@@ -69,7 +68,7 @@ struct Context {
 async fn verify(
     context: &mut Context, provider: impl Provider, request: &BatchCredentialRequest,
 ) -> Result<()> {
-    tracing::debug!("Context::verify");
+    tracing::debug!("batch::verify");
 
     let Some(token_state) = &context.state.token else {
         return Err(Error::AccessDenied("invalid access token state".into()));
@@ -133,12 +132,9 @@ async fn verify(
                 });
             };
 
-            let resolver = &DidSec::resolver(&provider, &request.credential_issuer)
-                .map_err(|e| Error::ServerError(format!("issue  resolving verifier: {e}")))?;
-
             // TODO: check proof is signed with supported algorithm (from proof_type)
             let jwt: jws::Jwt<ProofClaims> =
-                match jws::decode(proof_jwt, verify_key!(resolver)).await {
+                match jws::decode(proof_jwt, verify_key!(&provider)).await {
                     Ok(jwt) => jwt,
                     Err(e) => {
                         let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
@@ -200,7 +196,7 @@ async fn verify(
 async fn process(
     context: &Context, provider: impl Provider, request: &BatchCredentialRequest,
 ) -> Result<BatchCredentialResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("batch::process");
 
     // process credential requests
     let mut responses = Vec::<CredentialResponse>::new();
@@ -240,7 +236,7 @@ async fn process(
 async fn create_response(
     context: &Context, provider: impl Provider, request: &CredentialRequest,
 ) -> Result<CredentialResponse> {
-    tracing::debug!("Context::create_response");
+    tracing::trace!("batch::create_response");
 
     // Try to create a VC. If None, then return a deferred issuance response.
     let Some(vc) = create_vc(context, provider.clone(), request).await? else {
@@ -273,7 +269,7 @@ async fn create_response(
     };
 
     // sign credential (jwt = enveloping proof)
-    let signer = DataSec::signer(&provider, &request.credential_issuer)
+    let signer = SecOps::signer(&provider, &request.credential_issuer)
         .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
     let jwt = vercre_w3c_vc::proof::create(Format::JwtVcJson, Payload::Vc(vc), signer)
         .await
@@ -293,7 +289,7 @@ async fn create_response(
 async fn create_vc(
     context: &Context, provider: impl Provider, request: &CredentialRequest,
 ) -> Result<Option<VerifiableCredential>> {
-    tracing::debug!("Context::create_vc");
+    tracing::debug!("batch::create_vc");
 
     // get credential identifier and configuration
     let (identifier, config) = credential_configuration(context, request)?;
@@ -327,7 +323,7 @@ async fn create_vc(
 
     let credential_issuer = &context.issuer_config.credential_issuer;
 
-    // HACK: fix this
+    // HACK: fix this (AW: why is this a hack?)
     let Some(types) = definition.type_ else {
         return Err(Error::ServerError("Credential type not set".into()));
     };
@@ -393,7 +389,7 @@ async fn err_nonce(context: &Context, provider: &impl Provider) -> Result<(Strin
     token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
     state.token = Some(token_state.clone());
 
-    StateStore::put(provider, &token_state.access_token, state.to_vec(), state.expires_at)
+    StateStore::put(provider, &token_state.access_token, state.to_vec()?, state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -404,7 +400,7 @@ async fn err_nonce(context: &Context, provider: &impl Provider) -> Result<(Strin
 fn credential_definition(
     request: &CredentialRequest, config: &CredentialConfiguration,
 ) -> CredentialDefinition {
-    tracing::debug!("Context::credential_definition");
+    tracing::debug!("batch::credential_definition");
 
     let mut definition =
         request.credential_definition.clone().unwrap_or_else(|| CredentialDefinition {
@@ -459,7 +455,8 @@ mod tests {
             ..Default::default()
         });
 
-        StateStore::put(&provider, access_token, state.to_vec(), state.expires_at)
+        let ser = state.to_vec().expect("should serialize");
+        StateStore::put(&provider, access_token, ser, state.expires_at)
             .await
             .expect("state exists");
 
@@ -506,9 +503,7 @@ mod tests {
             panic!("credential is missing");
         };
 
-        let resolver =
-            DidSec::resolver(&provider, &request.credential_issuer).expect("should get verifier");
-        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &resolver)
+        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &provider)
             .await
             .expect("should decode")
         else {

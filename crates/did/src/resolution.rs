@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::document::{Document, DocumentMetadata, VerificationMethod};
+use crate::document::{Document, DocumentMetadata, Service, VerificationMethod};
 use crate::error::Error;
 use crate::{key, web, DidResolver};
 
@@ -170,9 +170,11 @@ pub struct Parameters {
     pub additional: Option<HashMap<String, Value>>,
 }
 
+/// Returned by `resolve` DID methods.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Resolved {
+    /// The DID resolution context.
     #[serde(rename = "@context")]
     pub context: String,
 
@@ -188,6 +190,7 @@ pub struct Resolved {
     pub document_metadata: Option<DocumentMetadata>,
 }
 
+/// `Dereferenced` contains the result of dereferencing a DID URL.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Dereferenced {
@@ -206,9 +209,18 @@ pub struct Dereferenced {
     pub content_metadata: Option<ContentMetadata>,
 }
 
+/// Resource represents the DID document resource returned as a result of DID
+/// dereferencing. The resource is a DID document or a subset of a DID document.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum Resource {
+    ///  DID `Document` resource.
+    Document(Document),
+
+    /// `VerificationMethod` resource.
     VerificationMethod(VerificationMethod),
+
+    /// `Service` resource.
+    Service(Service),
 }
 
 impl Default for Resource {
@@ -217,6 +229,7 @@ impl Default for Resource {
     }
 }
 
+/// DID document metadata.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Metadata {
@@ -242,12 +255,14 @@ pub struct Metadata {
 /// The Media Type of the returned resource.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub enum ContentType {
+    /// JSON-LD representation of a DID document.
     #[default]
     #[serde(rename = "application/did+ld+json")]
     DidLdJson,
-
-    #[serde(rename = "application/ld+json")]
-    LdJson,
+    //
+    // /// The JSON-LD Media Type.
+    // #[serde(rename = "application/ld+json")]
+    // LdJson,
 }
 
 /// Metadata about the `content_stream`. If `content_stream` is a DID document,
@@ -268,11 +283,10 @@ mod test {
     use insta::assert_json_snapshot as assert_snapshot;
 
     use super::*;
-    use crate::Binding;
 
     struct MockResolver;
     impl DidResolver for MockResolver {
-        async fn resolve(&self, _binding: Binding) -> anyhow::Result<Document> {
+        async fn resolve(&self, _url: &str) -> anyhow::Result<Document> {
             serde_json::from_slice(include_bytes!("web/did-ecdsa.json"))
                 .map_err(|e| anyhow!("issue deserializing document: {e}"))
         }

@@ -6,7 +6,7 @@ use chrono::Utc;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::Map;
 use vercre_core::{Kind, Quota};
-use vercre_datasec::DataSec;
+use vercre_datasec::SecOps;
 use vercre_dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use vercre_holder::credential::Credential;
 use vercre_holder::presentation::Status;
@@ -73,7 +73,7 @@ async fn sample_credential() -> Credential {
     };
 
     let provider = VERIFIER_PROVIDER.clone();
-    let signer = DataSec::signer(&provider, VERIFIER_ID).expect("should get verifier");
+    let signer = SecOps::signer(&provider, VERIFIER_ID).expect("should get verifier");
 
     let payload = Payload::Vc(vc.clone());
     let jwt = proof::create(Format::JwtVcJson, payload, signer).await.expect("should encode");

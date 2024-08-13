@@ -27,7 +27,6 @@ impl DidWeb {
     // HACK: generate a key pair
     #[allow(dead_code)]
     pub fn generate() -> Vec<u8> {
-        // TODO: pass in public key
         let mut csprng = OsRng;
         let signing_key: SigningKey = SigningKey::generate(&mut csprng);
         let secret = Base64UrlUnpadded::encode_string(signing_key.as_bytes());

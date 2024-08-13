@@ -1,3 +1,5 @@
+// TODO: implement Notification endpoint
+
 //! # Notification Endpoint
 //!
 //! This endpoint is used by the Wallet to notify the Credential Issuer of certain
@@ -21,54 +23,34 @@
 //! Credential Issuer will receive a notification within a certain time period or at
 //! all.
 
-use core_utils::{Callback, Client, Issuer, Result, Server, Signer, StateStore, Subject};
-use openid::issuance::{MetadataRequest, MetadataResponse};
 use tracing::instrument;
+use vercre_openid::issuance::{MetadataRequest, MetadataResponse, Provider};
+use vercre_openid::{Error, Result};
 
-use super::Endpoint;
-
-/// Metadata request handler.
-impl<P> Endpoint<P>
-where
-    P: Client + Issuer + Server + Subject + StateStore + Signer + Callback + Clone,
-{
-    /// Request Issuer metadata.
-    ///
-    /// # Errors
-    ///
-    /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
-    /// not available.
-    #[instrument(level = "debug", skip(self))]
-    pub async fn notification(
-        &self, request: impl Into<MetadataRequest>,
-    ) -> Result<MetadataResponse> {
-        let request = request.into();
-        self.handle_request(request, Context {}).await
-    }
+/// Notification request handler.
+///
+/// # Errors
+///
+/// Returns an `OpenID4VP` error if the request is invalid or if the provider is
+/// not available.
+#[instrument(level = "debug", skip(self))]
+pub async fn notification(
+    provider: impl Provider, request: &NotificationRequest,
+) -> Result<NotificationResponse> {
+    let request = request.into();
+    self.handle_request(request, Context {}).await
 }
 
 #[derive(Debug)]
 struct Context;
 
-impl super::Context for Context {
-    type Request = MetadataRequest;
-    type Response = MetadataResponse;
+async fn process<P>(
+    provider: impl Provider, request: &NotificationRequest,
+) -> Result<NotificationResponse> {
+    tracing::debug!("notification::process");
 
-    // TODO: get callback_id from state
-    fn callback_id(&self) -> Option<String> {
-        None
-    }
-
-    async fn process<P>(&self, provider: &P, request: &Self::Request) -> Result<Self::Response>
-    where
-        P: Client + Issuer + Server + Subject + StateStore + Signer + Callback + Clone,
-    {
-        tracing::debug!("Context::process");
-
-        // TODO: add languages to request
-        let credential_issuer = Issuer::metadata(provider, &request.credential_issuer).await?;
-        Ok(MetadataResponse { credential_issuer })
-    }
+    let credential_issuer = Issuer::metadata(provider, &request.credential_issuer).await?;
+    Ok(NotificationResponse { credential_issuer })
 }
 
 #[cfg(test)]
@@ -79,7 +61,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn metadata_ok() {
+    async fn notification_ok() {
         test_utils::init_tracer();
 
         let provider = Provider::new();

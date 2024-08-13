@@ -93,7 +93,7 @@ pub async fn create_request(
 
 #[allow(clippy::unused_async)]
 async fn verify(request: &CreateRequestRequest) -> Result<()> {
-    tracing::debug!("Context::verify");
+    tracing::debug!("create_request::verify");
 
     if request.input_descriptors.is_empty() {
         return Err(Error::InvalidRequest("no credentials specified".into()));
@@ -104,7 +104,7 @@ async fn verify(request: &CreateRequestRequest) -> Result<()> {
 async fn process(
     provider: impl Provider, request: &CreateRequestRequest,
 ) -> Result<CreateRequestResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("create_request::process");
 
     // TODO: build dynamically...
     let fmt = ClaimFormat {

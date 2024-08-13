@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use vercre_issuer::provider::{
-    Algorithm, Binding, Claims, Client, DataSec, Decryptor, DidResolver, DidSec, Document,
-    Encryptor, Issuer, Metadata, Result, Server, Signer, StateStore, Subject,
+    Algorithm, Claims, Client, Decryptor, DidResolver, Document, Encryptor, Issuer, Metadata,
+    Result, SecOps, Server, Signer, StateStore, Subject,
 };
 use vercre_test_utils::store::keystore::IssuerKeystore;
 use vercre_test_utils::store::{issuance, resolver, state};
@@ -73,9 +73,15 @@ impl StateStore for Provider {
     }
 }
 
+impl DidResolver for Provider {
+    async fn resolve(&self, url: &str) -> anyhow::Result<Document> {
+        resolver::resolve_did(url).await
+    }
+}
+
 struct IssuerSec(IssuerKeystore);
 
-impl DataSec for Provider {
+impl SecOps for Provider {
     fn signer(&self, _identifier: &str) -> anyhow::Result<impl Signer> {
         Ok(IssuerSec(IssuerKeystore {}))
     }
@@ -85,12 +91,6 @@ impl DataSec for Provider {
     }
 
     fn decryptor(&self, _identifier: &str) -> anyhow::Result<impl Decryptor> {
-        Ok(IssuerSec(IssuerKeystore {}))
-    }
-}
-
-impl DidSec for Provider {
-    fn resolver(&self, _identifier: &str) -> anyhow::Result<impl DidResolver> {
         Ok(IssuerSec(IssuerKeystore {}))
     }
 }
@@ -106,12 +106,6 @@ impl Signer for IssuerSec {
 
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
         self.0.try_sign(msg)
-    }
-}
-
-impl DidResolver for IssuerSec {
-    async fn resolve(&self, binding: Binding) -> Result<Document> {
-        resolver::resolve_did(binding).await
     }
 }
 

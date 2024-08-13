@@ -91,7 +91,7 @@ pub enum Payload {
 /// Create a proof from a proof provider.
 ///
 /// # Errors
-/// TODO: Add errors
+/// TODO: document errors
 pub async fn create(
     format: Format, payload: Payload, signer: impl Signer,
 ) -> anyhow::Result<String> {
@@ -140,7 +140,7 @@ pub enum Verify<'a> {
 /// Verify a proof.
 ///
 /// # Errors
-/// TODO: Add errors
+/// TODO: document errors
 #[allow(clippy::unused_async)]
 pub async fn verify(proof: Verify<'_>, resolver: &impl DidResolver) -> anyhow::Result<Payload> {
     match proof {

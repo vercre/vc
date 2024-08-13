@@ -24,7 +24,6 @@ use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
 use vercre_core::Kind;
-use vercre_did::DidSec;
 use vercre_openid::verifier::{
     PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, StateStore,
 };
@@ -49,15 +48,14 @@ pub async fn response(
     process(provider, request).await
 }
 
-// TODO:
-// Validate the integrity, authenticity, and holder binding of each Verifiable
-// Presentation in the VP Token according to the rules of the respective
-// Presentation format.
+// TODO: validate  Verifiable Presentation by format
+// Check integrity, authenticity, and holder binding of each Presentation 
+// in the VP Token according to the rules for the Presentation's format.
 
 // Verfiy the vp_token and presentation subm
 #[allow(clippy::too_many_lines)]
 async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()> {
-    tracing::debug!("Context::verify");
+    tracing::debug!("response::verify");
 
     // get state by client state key
     let Some(state_key) = &request.state else {
@@ -69,19 +67,15 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
     let state = State::try_from(buf)?;
     let saved_req = &state.request_object;
 
-    let resolver = DidSec::resolver(&provider, &saved_req.client_id)
-        .map_err(|e| Error::ServerError(format!("issue getting resolver: {e}")))?;
-
-    // TODO: no token == error response, we should have already checked for an error
     let Some(vp_token) = request.vp_token.clone() else {
-        return Err(Error::InvalidRequest("client state not found".into()));
+        return Err(Error::InvalidRequest("vp_token not founnd".into()));
     };
 
     let mut vps = vec![];
 
     // check nonce matches
     for vp_val in &vp_token {
-        let (vp, nonce) = match vercre_w3c_vc::proof::verify(Verify::Vp(vp_val), &resolver).await {
+        let (vp, nonce) = match vercre_w3c_vc::proof::verify(Verify::Vp(vp_val), &provider).await {
             Ok(Payload::Vp { vp, nonce, .. }) => (vp, nonce),
             Ok(_) => return Err(Error::InvalidRequest("proof payload is invalid".into())),
             Err(e) => return Err(Error::ServerError(format!("issue verifying VP proof: {e}"))),
@@ -169,7 +163,7 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
         };
 
         let Payload::Vc(vc) =
-            vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &resolver)
+            vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider)
                 .await
                 .map_err(|e| Error::InvalidRequest(format!("invalid VC proof: {e}")))?
         else {
@@ -196,17 +190,16 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
         // }
     }
 
-    // TODO:
-    // Perform the checks required by the Verifier's policy based on the set of
-    // trust requirements such as trust frameworks it belongs to (i.e.,
-    // revocation checks), if applicable.
+    // TODO: perform Verifier policy checks
+    // Checks based on the set of trust requirements such as trust frameworks
+    // it belongs to (i.e., revocation checks), if applicable.
 
     Ok(())
 }
 
 // Process the authorization request
 async fn process(provider: impl Provider, request: &ResponseRequest) -> Result<ResponseResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("response::process");
 
     // clear state
     let Some(state_key) = &request.state else {
@@ -216,7 +209,6 @@ async fn process(provider: impl Provider, request: &ResponseRequest) -> Result<R
         .await
         .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
 
-    // TODO: use callback to advise client of result
     Ok(ResponseResponse {
         // TODO: add response to state using `response_code` so Wallet can fetch full response
         // TODO: align redirct_uri to spec

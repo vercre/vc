@@ -22,7 +22,7 @@ pub async fn register(
 }
 
 async fn verify(provider: impl Provider, request: &RegistrationRequest) -> Result<()> {
-    tracing::debug!("Context::verify");
+    tracing::debug!("register::verify");
 
     // verify state is still accessible (has not expired)
     let buf = match StateStore::get(&provider, &request.access_token).await {
@@ -37,7 +37,7 @@ async fn verify(provider: impl Provider, request: &RegistrationRequest) -> Resul
 async fn process(
     provider: impl Provider, request: &RegistrationRequest,
 ) -> Result<RegistrationResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("register::process");
 
     let Ok(client_meta) = provider.register(&request.client_metadata).await else {
         return Err(Error::ServerError("Registration failed".into()));
@@ -78,9 +78,8 @@ mod tests {
             ..Default::default()
         });
 
-        StateStore::put(&provider, access_token, state.to_vec(), state.expires_at)
-            .await
-            .expect("state saved");
+        let ser = state.to_vec().expect("should serialize");
+        StateStore::put(&provider, access_token, ser, state.expires_at).await.expect("state saved");
 
         let body = json!({
             "client_id": CLIENT_ID,

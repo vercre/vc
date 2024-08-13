@@ -31,9 +31,9 @@ Project maintainers are encouraged to write a post-mortem for the Vercre blog, d
 the vulnerability and steps being taken to identify and prevent similar vulnerabilities
 in the future.
 
-## Publishing DataSec Updates
+## Publishing SecOps Updates
 
-DataSec notifications will be distributed via the following methods.
+SecOps notifications will be distributed via the following methods.
 
 - Zulip: <https://vercre.zulipchat.com/#channels/440231/security-updates/>
 - Email: TODO: add mailing list information...

@@ -91,7 +91,7 @@ pub async fn create_offer(
 }
 
 async fn verify(provider: impl Provider, request: &CreateOfferRequest) -> Result<()> {
-    tracing::debug!("Context::verify");
+    tracing::debug!("create_offer::verify");
 
     let issuer_meta = Metadata::issuer(&provider, &request.credential_issuer)
         .await
@@ -128,7 +128,7 @@ async fn verify(provider: impl Provider, request: &CreateOfferRequest) -> Result
 async fn process(
     provider: impl Provider, request: &CreateOfferRequest,
 ) -> Result<CreateOfferResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("create_offer::process");
 
     let mut state = State::builder()
         .credential_issuer(request.credential_issuer.clone())
@@ -174,7 +174,7 @@ async fn process(
             .build()
             .map_err(|e| Error::ServerError(format!("issue building auth state: {e}")))?;
         state.auth = Some(auth_state);
-        StateStore::put(&provider, &pre_auth_code, state.to_vec(), state.expires_at)
+        StateStore::put(&provider, &pre_auth_code, state.to_vec()?, state.expires_at)
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
     } else {
@@ -187,7 +187,7 @@ async fn process(
             issuer_state: Some(issuer_state.clone()),
             authorization_server: None,
         });
-        StateStore::put(&provider, &issuer_state, state.to_vec(), state.expires_at)
+        StateStore::put(&provider, &issuer_state, state.to_vec()?, state.expires_at)
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
     }

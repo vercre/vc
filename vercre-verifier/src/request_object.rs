@@ -16,7 +16,7 @@
 use tracing::instrument;
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_openid::verifier::{
-    DataSec, Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, StateStore,
+    Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, SecOps, StateStore,
 };
 use vercre_openid::{Error, Result};
 
@@ -39,7 +39,7 @@ pub async fn request_object(
 async fn process(
     provider: impl Provider, request: &RequestObjectRequest,
 ) -> Result<RequestObjectResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("request_object::process");
 
     // retrieve request object from state
     let buf = StateStore::get(&provider, &request.state)
@@ -54,7 +54,7 @@ async fn process(
         return Err(Error::InvalidRequest("client ID mismatch".into()));
     }
 
-    let signer = DataSec::signer(&provider, &request.client_id)
+    let signer = SecOps::signer(&provider, &request.client_id)
         .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
     let jwt = jws::encode(Type::Request, &req_obj, signer)
         .await
@@ -68,7 +68,6 @@ async fn process(
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use vercre_did::DidSec;
     use vercre_dif_exch::PresentationDefinition;
     use vercre_openid::verifier::{
         ClientIdScheme, ClientMetadataType, PresentationDefinitionType, RequestObject, ResponseType,
@@ -99,7 +98,7 @@ mod tests {
             client_id_scheme: Some(ClientIdScheme::RedirectUri),
             client_metadata: ClientMetadataType::Object(Default::default()),
 
-            // TODO: populate these
+            // TODO: populate missing RequestObject attributes
             redirect_uri: None,
             scope: None,
         };
@@ -119,12 +118,8 @@ mod tests {
             panic!("no JWT found in response");
         };
 
-        let resolver = &DidSec::resolver(&provider, VERIFIER_ID).expect("should get resolver");
-
-        let callback = verify_key!(resolver);
-
         let jwt: jws::Jwt<RequestObject> =
-            jws::decode(&jwt_enc, callback).await.expect("jwt is valid");
+            jws::decode(&jwt_enc, verify_key!(&provider)).await.expect("jwt is valid");
         assert_snapshot!("response", jwt);
 
         // request state should not exist

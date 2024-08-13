@@ -68,7 +68,7 @@ pub async fn credential(
 async fn process(
     provider: impl Provider, request: &CredentialRequest,
 ) -> Result<CredentialResponse> {
-    tracing::debug!("Context::process");
+    tracing::debug!("credential::process");
 
     let request = BatchCredentialRequest {
         credential_issuer: request.credential_issuer.clone(),
@@ -93,7 +93,6 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use vercre_datasec::jose::jws::{self, Type};
-    use vercre_did::DidSec;
     use vercre_openid::issuer::ProofClaims;
     use vercre_openid::provider::StateStore;
     use vercre_test_utils::holder;
@@ -129,9 +128,8 @@ mod tests {
             ..Default::default()
         });
 
-        StateStore::put(&provider, access_token, state.to_vec(), state.expires_at)
-            .await
-            .expect("state saved");
+        let ser = state.to_vec().expect("should serialize");
+        StateStore::put(&provider, access_token, ser, state.expires_at).await.expect("state saved");
 
         // create CredentialRequest to 'send' to the app
         let claims = ProofClaims {
@@ -173,9 +171,7 @@ mod tests {
             panic!("VC is not base64 encoded string");
         };
 
-        let resolver =
-            DidSec::resolver(&provider, &request.credential_issuer).expect("should get resolver");
-        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &resolver)
+        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &provider)
             .await
             .expect("should decode")
         else {

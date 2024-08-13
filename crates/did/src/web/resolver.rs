@@ -16,7 +16,7 @@ use serde_json::json;
 use super::DidWeb;
 use crate::error::Error;
 use crate::resolution::{ContentType, Metadata, Options, Resolved};
-use crate::{Binding, DidResolver};
+use crate::DidResolver;
 
 static DID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new("^did:web:(?<identifier>[a-zA-Z1-9.-:%]+)$").expect("should compile")
@@ -52,8 +52,8 @@ impl DidWeb {
 
         // 6. Perform an HTTP GET request to the URL using an agent that can successfully
         //    negotiate a secure HTTPS connection, which enforces the security requirements
-        //    as described in 2.6 DataSec and privacy considerations.
-        let document = resolver.resolve(Binding::Https(url)).await.map_err(Error::Other)?;
+        //    as described in 2.6 SecOps and privacy considerations.
+        let document = resolver.resolve(&url).await.map_err(Error::Other)?;
 
         // TODO: implement security requirement:
         // 7. When performing the DNS resolution during the HTTP GET request, the client
@@ -93,11 +93,10 @@ mod test {
 
     use super::*;
     use crate::document::Document;
-    use crate::Binding;
 
     struct MockResolver;
     impl DidResolver for MockResolver {
-        async fn resolve(&self, _binding: Binding) -> anyhow::Result<Document> {
+        async fn resolve(&self, _url: &str) -> anyhow::Result<Document> {
             serde_json::from_slice(include_bytes!("did-ecdsa.json"))
                 .map_err(|e| anyhow!("issue deserializing document: {e}"))
         }

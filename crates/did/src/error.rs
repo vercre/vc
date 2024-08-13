@@ -15,6 +15,8 @@ pub enum Error {
     #[error("notFound")]
     NotFound(String),
 
+    /// The representation requested via the accept input metadata property is not
+    /// supported by the DID method and/or DID resolver.
     #[error("representationNotSupported")]
     RepresentationNotSupported(String),
 
@@ -36,16 +38,19 @@ pub enum Error {
     #[error("unsupportedPublicKeyType")]
     UnsupportedPublicKeyType(String),
 
+    /// Other, unspecified errors.
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
 
 impl Error {
+    /// Returns the error code.
     #[must_use]
     pub fn code(&self) -> String {
         self.to_string()
     }
 
+    /// Returns the associated error message.
     #[must_use]
     pub fn message(&self) -> String {
         match self {
