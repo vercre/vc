@@ -426,8 +426,7 @@ mod tests {
             "code_challenge_method": "S256",
             "authorization_details": auth_dets,
             "subject_id": NORMAL_USER,
-            "wallet_issuer": CREDENTIAL_ISSUER,
-            "callback_id": "1234"
+            "wallet_issuer": CREDENTIAL_ISSUER
         });
         let mut request =
             serde_json::from_value::<AuthorizationRequest>(body).expect("should deserialize");
@@ -466,8 +465,7 @@ mod tests {
             "code_challenge_method": "S256",
             "scope": "EmployeeIDCredential",
             "subject_id": NORMAL_USER,
-            "wallet_issuer": CREDENTIAL_ISSUER,
-            "callback_id": "1234"
+            "wallet_issuer": CREDENTIAL_ISSUER
         });
         let mut request =
             serde_json::from_value::<AuthorizationRequest>(body).expect("should deserialize");

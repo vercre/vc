@@ -13,6 +13,7 @@
 
 // TODO: test `credential_configuration_id` in `authorization_details`
 // TODO: analyse `credential_identifiers` use in `authorization_details`
+// TODO: verify `client_assertion` JWT, when set
 
 use std::fmt::Debug;
 
@@ -38,7 +39,7 @@ use crate::state::{Expire, State, Token};
 pub async fn token(provider: impl Provider, request: &TokenRequest) -> Result<TokenResponse> {
     // restore state
     // RFC 6749 requires a particular error here
-    let Ok(buf) = StateStore::get(&provider, &auth_state_key(request)?).await else {
+    let Ok(buf) = StateStore::get(&provider, &auth_state_key(request)).await else {
         return Err(Error::InvalidGrant("the authorization code is invalid".into()));
     };
     let Ok(state) = State::try_from(buf.as_slice()) else {
@@ -69,7 +70,7 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
 
     // grant_type
     match &request.grant_type {
-        TokenGrantType::AuthorizationCode { .. } => {
+        TokenGrantType::AuthorizationCode { code_verifier, .. } => {
             // client_id is the same as the one used to obtain the authorization code
             if Some(&request.client_id) != context.state.client_id.as_ref() {
                 return Err(Error::InvalidGrant("client_id differs from authorized one".into()));
@@ -82,7 +83,7 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
             }
 
             // code_verifier
-            let Some(verifier) = &request.code_verifier else {
+            let Some(verifier) = &code_verifier else {
                 return Err(Error::AccessDenied("code_verifier is missing".into()));
             };
 
@@ -119,7 +120,7 @@ async fn process(
     tracing::debug!("token::process");
 
     // prevent auth code reuse
-    StateStore::purge(&provider, &auth_state_key(request)?)
+    StateStore::purge(&provider, &auth_state_key(request))
         .await
         .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
 
@@ -160,14 +161,14 @@ async fn process(
 // Helper to get correct authorization state key from request.
 // Authorization state is stored by either 'code' or 'pre_authorized_code',
 // depending on grant_type.
-fn auth_state_key(request: &TokenRequest) -> Result<String> {
+fn auth_state_key(request: &TokenRequest) -> String {
     let state_key = match &request.grant_type {
-        TokenGrantType::AuthorizationCode { code } => code,
+        TokenGrantType::AuthorizationCode { code, .. } => code,
         TokenGrantType::PreAuthorizedCode {
             pre_authorized_code, ..
         } => pre_authorized_code,
     };
-    Ok(state_key.to_string())
+    state_key.to_string()
 }
 
 #[cfg(test)]
@@ -226,6 +227,9 @@ mod tests {
         let mut request =
             serde_json::from_value::<TokenRequest>(body).expect("request should deserialize");
         request.credential_issuer = CREDENTIAL_ISSUER.to_string();
+
+        println!("request: {:#?}", request);
+
         let response = token(provider.clone(), &request).await.expect("response is valid");
         assert_snapshot!("simpl-token", &response, {
             ".access_token" => "[access_token]",

@@ -211,6 +211,7 @@ pub struct Dereferenced {
 
 /// Resource represents the DID document resource returned as a result of DID
 /// dereferencing. The resource is a DID document or a subset of a DID document.
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum Resource {
     ///  DID `Document` resource.

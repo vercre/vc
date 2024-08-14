@@ -17,7 +17,7 @@ use vercre_did::DidResolver;
 use vercre_w3c_vc::model::VerifiableCredential;
 
 pub use super::CredentialFormat;
-pub use crate::oauth::{OAuthClient, OAuthServer};
+pub use crate::oauth::{GrantType, OAuthClient, OAuthServer};
 pub use crate::provider::{self, Result, StateStore};
 
 // TODO: find a home for shared types
@@ -37,8 +37,7 @@ pub trait Metadata: Send + Sync {
     /// Authorization Server metadata for the specified issuer/server.
     fn server(&self, server_id: &str) -> impl Future<Output = provider::Result<Server>> + Send;
 
-    /// Used by OAuth 2.0 clients to dynamically register clients with the authorization
-    /// server.
+    /// Used to dynamically register OAuth 2.0 clients with the authorization server.
     fn register(&self, client: &Client) -> impl Future<Output = provider::Result<Client>> + Send;
 }
 
@@ -67,19 +66,6 @@ pub struct Claims {
     /// Specifies whether user information required for the credential subject
     /// is pending.
     pub pending: bool,
-}
-
-/// Grant Types supported by the Authorization Server.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub enum GrantType {
-    /// The OAuth 2.0 Grant Type for Authorization Code Flow.
-    #[serde(rename = "authorization_code")]
-    AuthorizationCode,
-
-    /// The OAuth 2.0 Grant Type for Pre-Authorized Code Flow.
-    #[default]
-    #[serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")]
-    PreAuthorizedCode,
 }
 
 /// Request a Credential Offer for a Credential Issuer.
@@ -115,10 +101,6 @@ pub struct CreateOfferRequest {
     /// authorize credential issuance.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subject_id: Option<String>,
-
-    /// An ID that the client application wants to be included in callback
-    /// payloads. If no ID is provided, callbacks will not be made.
-    pub callback_id: Option<String>,
 }
 
 /// The response to a Credential Offer request.
@@ -541,16 +523,17 @@ pub struct TokenRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redirect_uri: Option<String>,
 
-    /// PKCE code verifier provided by the Wallet when using the Authorization
-    /// Code Flow. MUST be able to verify the `code_challenge` provided in
-    /// the authorization request. Only set when `grant_type` is
-    /// "`authorization_code`".
+    /// Authorization Details is used to convey the details about the Credentials
+    /// the Wallet wants to obtain. If type is "`openid_credential`", credential
+    /// identifiers MUST be set in the `locations` attribute.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub code_verifier: Option<String>,
+    #[serde(with = "stringify::option")]
+    pub authorization_details: Option<Vec<AuthorizationDetail>>,
 
-    // client_assertion_type
-    // client_assertion
-    // authorization_details
+    /// Client identity assertion using JWT instead of credentials to authenticate.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(flatten)]
+    pub client_assertion: Option<ClientAssertion>,
     //scope
 }
 
@@ -564,6 +547,12 @@ pub enum TokenGrantType {
         /// The authorization code received from the authorization server when the
         /// Wallet use the Authorization Code Flow.
         code: String,
+
+        /// PKCE code verifier provided by the Wallet when using the Authorization
+        /// Code Flow. MUST be able to verify the `code_challenge` provided in
+        /// the authorization request.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        code_verifier: Option<String>,
     },
 
     /// Attributes required for the Pre-Authorized Code grant type
@@ -583,8 +572,23 @@ pub enum TokenGrantType {
 
 impl Default for TokenGrantType {
     fn default() -> Self {
-        Self::AuthorizationCode { code: String::new() }
+        Self::AuthorizationCode {
+            code: String::new(),
+            code_verifier: None,
+        }
     }
+}
+
+/// Client identity assertion.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(tag = "client_assertion_type")]
+pub enum ClientAssertion {
+    /// OAuth 2.0 Client Assertion using JWT Bearer Token.
+    #[serde(rename = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")]
+    JwtBearer {
+        /// The client's JWT assertion.
+        client_assertion: String,
+    },
 }
 
 /// Token Response as defined in [RFC6749].

@@ -19,8 +19,7 @@ static OFFER_REQUEST: LazyLock<CreateOfferRequest> = LazyLock::new(|| CreateOffe
     credential_configuration_ids: vec!["EmployeeID_JWT".into()],
     subject_id: Some(NORMAL_USER.into()),
     pre_authorize: true,
-    tx_code_required: true,
-    callback_id: Some("1234".into()),
+    tx_code_required: true
 });
 
 #[tokio::test]

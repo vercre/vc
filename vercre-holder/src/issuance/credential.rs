@@ -130,9 +130,6 @@ fn token_request(issuance: &Issuance) -> TokenRequest {
             pre_authorized_code: pre_auth_code.pre_authorized_code.clone(),
             tx_code: issuance.pin.clone(),
         },
-        // grant_type: GrantType::PreAuthorizedCode,
-        // pre_authorized_code: Some(pre_auth_code.pre_authorized_code.clone()),
-        // tx_code: issuance.pin.clone(),
         ..Default::default()
     }
 }

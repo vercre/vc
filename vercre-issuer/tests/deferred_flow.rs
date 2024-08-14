@@ -48,8 +48,7 @@ async fn get_offer() -> vercre_openid::Result<CreateOfferResponse> {
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": PENDING_USER,
         "pre-authorize": true,
-        "tx_code_required": true,
-        "callback_id": "1234"
+        "tx_code_required": true
     });
 
     let mut request =
