@@ -21,7 +21,7 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    GrantType, Metadata, Provider, StateStore, TokenRequest, TokenResponse, TokenType,
+    Metadata, Provider, StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
 
@@ -68,8 +68,8 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
     };
 
     // grant_type
-    match request.grant_type {
-        GrantType::AuthorizationCode => {
+    match &request.grant_type {
+        TokenGrantType::AuthorizationCode { .. } => {
             // client_id is the same as the one used to obtain the authorization code
             if Some(&request.client_id) != context.state.client_id.as_ref() {
                 return Err(Error::InvalidGrant("client_id differs from authorized one".into()));
@@ -94,7 +94,7 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
                 return Err(Error::AccessDenied("code_verifier is invalid".into()));
             }
         }
-        GrantType::PreAuthorizedCode => {
+        TokenGrantType::PreAuthorizedCode { tx_code, .. } => {
             // anonymous access allowed?
             if request.client_id.is_empty()
                 && !server_meta.pre_authorized_grant_anonymous_access_supported
@@ -102,7 +102,7 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
                 return Err(Error::InvalidClient("anonymous access is not supported".into()));
             }
             // user_code
-            if request.user_code != auth_state.user_code {
+            if tx_code != &auth_state.user_code {
                 return Err(Error::InvalidGrant("invalid user_code provided".into()));
             }
         }
@@ -161,12 +161,11 @@ async fn process(
 // Authorization state is stored by either 'code' or 'pre_authorized_code',
 // depending on grant_type.
 fn auth_state_key(request: &TokenRequest) -> Result<String> {
-    let state_key = match request.grant_type {
-        GrantType::AuthorizationCode => request.code.as_ref(),
-        GrantType::PreAuthorizedCode => request.pre_authorized_code.as_ref(),
-    };
-    let Some(state_key) = state_key else {
-        return Err(Error::InvalidRequest("missing state key".into()));
+    let state_key = match &request.grant_type {
+        TokenGrantType::AuthorizationCode { code } => code,
+        TokenGrantType::PreAuthorizedCode {
+            pre_authorized_code, ..
+        } => pre_authorized_code,
     };
     Ok(state_key.to_string())
 }
@@ -188,7 +187,7 @@ mod tests {
     use crate::state::Auth;
 
     #[tokio::test]
-    async fn simple_tossken() {
+    async fn simple_token() {
         vercre_test_utils::init_tracer();
 
         let provider = Provider::new();
@@ -221,7 +220,7 @@ mod tests {
             "client_id": CLIENT_ID,
             "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
             "pre-authorized_code": pre_auth_code,
-            "user_code": "1234"
+            "tx_code": "1234"
         });
 
         let mut request =

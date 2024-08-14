@@ -529,15 +529,19 @@ pub struct TokenRequest {
     /// code.
     pub client_id: String,
 
-    /// The authorization grant type. One of `PreAuthorizedCode` or `AuthorizationCode`.
-    pub grant_type: GrantType,
+    /// Authorization grant type.
+    #[serde(flatten)]
+    pub grant_type: TokenGrantType,
 
-    /// The authorization code received from the authorization server when the
-    /// Wallet use the Authorization Code Flow.
-    ///
-    /// REQUIRED if `grant_type` is "`authorization_code`".
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub code: Option<String>,
+    /// The authorization grant type. One of `PreAuthorizedCode` or `AuthorizationCode`.
+    // pub grant_type: GrantType,
+
+    // /// The authorization code received from the authorization server when the
+    // /// Wallet use the Authorization Code Flow.
+    // ///
+    // /// REQUIRED if `grant_type` is "`authorization_code`".
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub code: Option<String>,
 
     /// The client's redirection endpoint if `redirect_uri` was included in the
     /// authorization request. Only used when `grant_type` is "`authorization_code`".
@@ -553,20 +557,52 @@ pub struct TokenRequest {
     /// "`authorization_code`".
     #[serde(skip_serializing_if = "Option::is_none")]
     pub code_verifier: Option<String>,
+    // /// The pre-authorized code provided to the Wallet in a Credential Offer.
+    // ///
+    // /// REQUIRED if `grant_type` is "`urn:ietf:params:oauth:grant-type:pre-authorized_code`".
+    // #[serde(rename = "pre-authorized_code")]
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub pre_authorized_code: Option<String>,
 
-    /// The pre-authorized code provided to the Wallet in a Credential Offer.
-    ///
-    /// REQUIRED if `grant_type` is "`urn:ietf:params:oauth:grant-type:pre-authorized_code`".
-    #[serde(rename = "pre-authorized_code")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub pre_authorized_code: Option<String>,
+    // /// The Transaction Code provided to the user during the Credential Offer
+    // /// process. Must be present if `tx_code` was set to true in the Credential
+    // /// Offer. Only set when `grant_type` is
+    // /// "`urn:ietf:params:oauth:grant-type:pre-authorized_code`".
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub tx_code: Option<String>,
+}
 
-    /// The user PIN provided during the Credential Offer process. Must be
-    /// present if `tx_code` was set to true in the Credential
-    /// Offer. Only set when `grant_type` is
-    /// "`urn:ietf:params:oauth:grant-type:pre-authorized_code`".
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub user_code: Option<String>,
+/// Token authorization grant types.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(tag = "grant_type")]
+pub enum TokenGrantType {
+    /// Attributes required for the Authorization Code grant type.
+    #[serde(rename = "authorization_code")]
+    AuthorizationCode {
+        /// The authorization code received from the authorization server when the
+        /// Wallet use the Authorization Code Flow.
+        code: String,
+    },
+
+    /// Attributes required for the Pre-Authorized Code grant type
+    #[serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")]
+    PreAuthorizedCode {
+        /// The pre-authorized code provided to the Wallet in a Credential Offer.
+        #[serde(rename = "pre-authorized_code")]
+        pre_authorized_code: String,
+
+        /// The Transaction Code provided to the user during the Credential Offer
+        /// process. Must be present if `tx_code` was set to true in the Credential
+        /// Offer.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        tx_code: Option<String>,
+    },
+}
+
+impl Default for TokenGrantType {
+    fn default() -> Self {
+        Self::AuthorizationCode { code: String::new() }
+    }
 }
 
 /// Token Response as defined in [RFC6749].

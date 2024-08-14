@@ -7,8 +7,8 @@ use tracing::instrument;
 use vercre_core::Kind;
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_openid::issuer::{
-    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, GrantType,
-    Proof, ProofClaims, ProofType, TokenRequest,
+    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, Proof,
+    ProofClaims, ProofType, TokenGrantType, TokenRequest,
 };
 use vercre_w3c_vc::proof::{Payload, Verify};
 
@@ -126,9 +126,13 @@ fn token_request(issuance: &Issuance) -> TokenRequest {
     TokenRequest {
         credential_issuer: issuance.offer.credential_issuer.clone(),
         client_id: issuance.client_id.clone(),
-        grant_type: GrantType::PreAuthorizedCode,
-        pre_authorized_code: Some(pre_auth_code.pre_authorized_code.clone()),
-        user_code: issuance.pin.clone(),
+        grant_type: TokenGrantType::PreAuthorizedCode {
+            pre_authorized_code: pre_auth_code.pre_authorized_code.clone(),
+            tx_code: issuance.pin.clone(),
+        },
+        // grant_type: GrantType::PreAuthorizedCode,
+        // pre_authorized_code: Some(pre_auth_code.pre_authorized_code.clone()),
+        // tx_code: issuance.pin.clone(),
         ..Default::default()
     }
 }
