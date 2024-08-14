@@ -88,24 +88,6 @@ pub enum Error {
     /// Verifiable Credential Issuance
     /// ------------------------------
 
-    /// Token Endpoint:
-
-    /// Returned if the Authorization Server is waiting for an End-User interaction
-    /// or downstream process to complete. The Wallet SHOULD repeat the access token
-    /// request to the token endpoint (a process known as polling). Before each new
-    /// request, the Wallet MUST wait at least the number of seconds specified by the
-    /// interval claim of the Credential Offer or the authorization response, or 5
-    /// seconds if none was provided, and respect any increase in the polling interval
-    /// required by the "`slow_down`" error.
-    #[error(r#"{{"error": "authorization_pending", "error_description": "{0}"}}"#)]
-    AuthorizationPending(String),
-
-    /// A variant of `authorization_pending` error code, the authorization request is
-    /// still pending and polling should continue, but the interval MUST be increased
-    /// by 5 seconds for this and all subsequent requests.
-    #[error(r#"{{"error": "slow_down", "error_description": "{0}"}}"#)]
-    SlowDown(String),
-
     /// Credential Endpoint:
 
     /// The Credential Request is missing a required parameter, includes an unsupported

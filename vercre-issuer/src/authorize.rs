@@ -126,7 +126,7 @@ async fn verify(
     // 'authorization_code' grant_type allowed (client and server)?
     let client_grant_types = client_config.oauth.grant_types.unwrap_or_default();
     if !client_grant_types.contains(&GrantType::AuthorizationCode) {
-        return Err(Error::InvalidRequest(
+        return Err(Error::InvalidGrant(
             "authorization_code grant not supported for client".into(),
         ));
     }
@@ -139,7 +139,7 @@ async fn verify(
 
     // is holder identified (authenticated)?
     if request.subject_id.is_empty() {
-        return Err(Error::AuthorizationPending("missing holder subject".into()));
+        return Err(Error::InvalidRequest("missing holder subject".into()));
     }
 
     // has a credential been requested?
