@@ -178,8 +178,8 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use vercre_openid::issuer::{
-        AuthorizationDetail, AuthorizationDetailType, CredentialDefinition, CredentialType,
-        TokenAuthorizationDetail,
+        AuthorizationDetail, AuthorizationDetailCredential, AuthorizationDetailType,
+        CredentialDefinition, TokenAuthorizationDetail,
     };
     use vercre_openid::CredentialFormat;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -277,7 +277,9 @@ mod tests {
             authorization_details: Some(vec![TokenAuthorizationDetail {
                 authorization_detail: AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,
-                    credential_type: CredentialType::Format(CredentialFormat::JwtVcJson),
+                    credential_identifier: AuthorizationDetailCredential::Format(
+                        CredentialFormat::JwtVcJson,
+                    ),
                     credential_definition: Some(CredentialDefinition {
                         type_: Some(vec![
                             "VerifiableCredential".into(),

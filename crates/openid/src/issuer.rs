@@ -435,7 +435,7 @@ pub struct AuthorizationDetail {
     /// Identifies Credentials requested using either `credential_identifier` or
     /// supported credential `format`.
     #[serde(flatten)]
-    pub credential_type: CredentialType,
+    pub credential_identifier: AuthorizationDetailCredential,
 
     /// Contains the type values the Wallet requests authorization for at the Credential
     /// Issuer.
@@ -470,6 +470,28 @@ pub struct AuthorizationDetail {
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
     pub locations: Option<Vec<String>>,
+}
+
+/// Means used to identifiy a Credential type when requesting a Credential.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum AuthorizationDetailCredential {
+    /// Specifies the unique identifier of the Credential being described in the
+    /// `credential_configurations_supported` map in the Credential Issuer Metadata.
+    #[serde(rename = "credential_configuration_id")]
+    ConfigurationId(String),
+
+    /// Determines the format of the Credential to be issued, which may determine
+    /// the type and other information related to the Credential to be issued. REQUIRED
+    /// when `credential_identifiers` was not returned from the Token Response. MUST
+    /// NOT be used otherwise.
+    #[serde(rename = "format")]
+    Format(CredentialFormat),
+}
+
+impl Default for AuthorizationDetailCredential {
+    fn default() -> Self {
+        Self::ConfigurationId(String::new())
+    }
 }
 
 /// Authorization Response as defined in [RFC6749].
@@ -584,6 +606,7 @@ impl Default for TokenGrantType {
 #[serde(tag = "client_assertion_type")]
 pub enum ClientAssertion {
     /// OAuth 2.0 Client Assertion using JWT Bearer Token.
+    /// See <https://blog.logto.io/client-assertion-in-client-authn>
     #[serde(rename = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")]
     JwtBearer {
         /// The client's JWT assertion.
@@ -1414,7 +1437,9 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                credential_type: CredentialType::Format(CredentialFormat::JwtVcJson),
+                credential_identifier: AuthorizationDetailCredential::Format(
+                    CredentialFormat::JwtVcJson,
+                ),
                 credential_definition: Some(CredentialDefinition {
                     context: Some(vec![
                         "https://www.w3.org/2018/credentials/v1".into(),

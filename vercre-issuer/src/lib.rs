@@ -101,9 +101,10 @@ pub mod provider {
     pub use vercre_datasec::jose::jwk::PublicKeyJwk;
     pub use vercre_datasec::{Algorithm, Decryptor, Encryptor, SecOps, Signer};
     pub use vercre_did::{DidResolver, Document};
-    pub use vercre_openid::issuer::{ClaimDefinition, Client, GrantType, Issuer, Server};
-    #[allow(clippy::module_name_repetitions)]
-    pub use vercre_openid::issuer::{Claims, Metadata, Provider, Result, StateStore, Subject};
+    pub use vercre_openid::issuer::{
+        ClaimDefinition, Claims, Client, GrantType, Issuer, Metadata, Provider, Result, Server,
+        StateStore, Subject,
+    };
 }
 
 // use std::future::Future;
@@ -117,13 +118,13 @@ pub use metadata::metadata;
 pub use register::register;
 pub use token::token;
 pub use vercre_openid::issuer::{
-    AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
-    AuthorizationResponse, BatchCredentialRequest, BatchCredentialResponse, CreateOfferRequest,
-    CreateOfferResponse, CredentialConfiguration, CredentialOffer, CredentialOfferType,
-    CredentialRequest, CredentialResponse, CredentialType, DeferredCredentialRequest,
-    DeferredCredentialResponse, Grants, MetadataRequest, MetadataResponse, PreAuthorizedCodeGrant,
-    ProofClaims, ProofType, RegistrationRequest, RegistrationResponse, TokenAuthorizationDetail,
-    TokenRequest, TokenResponse, TxCode,
+    AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailCredential,
+    AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse, BatchCredentialRequest,
+    BatchCredentialResponse, CreateOfferRequest, CreateOfferResponse, CredentialConfiguration,
+    CredentialOffer, CredentialOfferType, CredentialRequest, CredentialResponse, CredentialType,
+    DeferredCredentialRequest, DeferredCredentialResponse, Grants, MetadataRequest,
+    MetadataResponse, PreAuthorizedCodeGrant, ProofClaims, ProofType, RegistrationRequest,
+    RegistrationResponse, TokenAuthorizationDetail, TokenRequest, TokenResponse, TxCode,
 };
 pub use vercre_openid::Result;
 
