@@ -18,7 +18,7 @@ use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
     BatchCredentialRequest, BatchCredentialResponse, CredentialConfiguration, CredentialDefinition,
     CredentialRequest, CredentialResponse, CredentialType, Issuer, Metadata, ProofClaims,
-    ProofType, Provider, StateStore, Subject,
+    ProofOption, ProofType, ProofsType, Provider, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
@@ -114,23 +114,40 @@ async fn verify(
         };
 
         // TODO: refactor into separate function.
-        if let Some(proof_types) = supported_proofs {
+        if let Some(supported_types) = supported_proofs {
             let Some(proof) = &request.proof else {
                 return Err(Error::InvalidCredentialRequest("proof not set".into()));
             };
 
-            let _proof_type = proof_types.get(&proof.proof_type).ok_or_else(|| {
-                Error::InvalidCredentialRequest("proof type not supported".into())
-            })?;
-
-            let ProofType::Jwt(proof_jwt) = &proof.proof else {
-                let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
-                return Err(Error::InvalidProof {
-                    hint: "Proof not JWT".into(),
-                    c_nonce,
-                    c_nonce_expires_in,
-                });
+            // TODO: cater for non-JWT proofs
+            let proof_jwt = match proof {
+                ProofOption::Proof { proof_type } => match proof_type {
+                    ProofType::Jwt { jwt } => {
+                        let _proof_type = supported_types.get("jwt").ok_or_else(|| {
+                            Error::InvalidCredentialRequest("proof type not supported".into())
+                        })?;
+                        jwt
+                    }
+                },
+                ProofOption::Proofs(proofs_type) => match proofs_type {
+                    ProofsType::Jwt(proof_jwts) => {
+                        let _proof_type = supported_types.get("jwt").ok_or_else(|| {
+                            Error::InvalidCredentialRequest("proof type not supported".into())
+                        })?;
+                        &proof_jwts[0]
+                    }
+                },
             };
+
+
+            // let ProofType::Jwt(proof_jwt) = &proof.proof else {
+            //     let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
+            //     return Err(Error::InvalidProof {
+            //         hint: "Proof not JWT".into(),
+            //         c_nonce,
+            //         c_nonce_expires_in,
+            //     });
+            // };
 
             // TODO: check proof is signed with supported algorithm (from proof_type)
             let jwt: jws::Jwt<ProofClaims> =

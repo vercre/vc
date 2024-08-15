@@ -740,7 +740,8 @@ pub struct CredentialRequest {
     /// the `credential_configurations_supported` parameter of the Issuer metadata for
     /// the requested Credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub proof: Option<Proof>,
+    #[serde(flatten)]
+    pub proof: Option<ProofOption>,
 
     /// If present, specifies how the Credential Response should be encrypted. If not
     /// present.
@@ -772,33 +773,63 @@ impl Default for CredentialType {
 
 /// Wallet's proof of possession of the key material the issued Credential is to
 /// be bound to.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Proof {
-    /// Proof type claim denotes the concrete proof type which determines the
-    /// further claims in the proof object and associated processing rules.
-    /// MUST be one of "`jwt`", "`cwt`" or "`ldp_vp`".
-    pub proof_type: String,
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ProofOption {
+    /// A single proof of possession of the cryptographic key material to which
+    /// the issued Credential instance will be bound to.
+    Proof {
+        /// Specifies the key proof type. This parameter determines the additional
+        /// parameters in the key proof object and their corresponding processing
+        /// rules.
+        #[serde(flatten)]
+        proof_type: ProofType,
+    },
 
-    /// The JWT containing the Wallet's proof of possession of key material.
-    #[serde(flatten)]
-    pub proof: ProofType,
+    /// One or more proof of possessions of the cryptographic key material to which
+    /// the issued Credential instances will be bound to.
+    Proofs(ProofsType),
 }
 
-/// The type of proof the Wallet uses to prove possession of key material.
+impl Default for ProofOption {
+    fn default() -> Self {
+        Self::Proof {
+            proof_type: ProofType::default(),
+        }
+    }
+}
+
+/// A single proof of possession of the cryptographic key material provided by the
+/// Wallet to which the issued Credential instance will be bound.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(tag = "proof_type")]
 pub enum ProofType {
     /// The JWT containing the Wallet's proof of possession of key material.
     #[serde(rename = "jwt")]
-    Jwt(String),
-
-    /// The CWT containing the Wallet's proof of possession of key material.
-    #[serde(rename = "cwt")]
-    Cwt(String),
+    Jwt {
+        /// The JWT containing the Wallet's proof of possession of key material.
+        jwt: String,
+    },
 }
 
 impl Default for ProofType {
     fn default() -> Self {
-        Self::Jwt(String::new())
+        Self::Jwt { jwt: String::new() }
+    }
+}
+
+/// A a single proof of possession of the cryptographic key material provided by the
+/// Wallet to which the issued Credential instance will be bound.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum ProofsType {
+    /// The JWT containing the Wallet's proof of possession of key material.
+    #[serde(rename = "jwt")]
+    Jwt(Vec<String>),
+}
+
+impl Default for ProofsType {
+    fn default() -> Self {
+        Self::Jwt(vec![String::new()])
     }
 }
 
@@ -1437,7 +1468,7 @@ mod tests {
     #[test]
     fn authorization_request() {
         let auth_req = AuthorizationRequest {
-            credential_issuer: String::new(),
+            credential_issuer: "https://example.com".into(),
             response_type: "code".into(),
             client_id: "1234".into(),
             redirect_uri: Some("http://localhost:3000/callback".into()),
@@ -1473,5 +1504,68 @@ mod tests {
         let auth_req_new = serde_qs::from_str::<AuthorizationRequest>(&auth_req_str)
             .expect("should deserialize from string");
         assert_eq!(auth_req, auth_req_new);
+    }
+
+    #[test]
+    fn single_proof() {
+        let json = serde_json::json!({
+          "credential_issuer": "https://example.com",
+          "access_token": "1234",
+          "credential_identifier": "UniversityDegree_JWT",
+          "proof": {
+            "proof_type": "jwt",
+            "jwt": "SomeJWT"
+          }
+        });
+
+        let _request: CredentialRequest =
+            serde_json::from_value(json).expect("should deserialize from json");
+
+        let request = CredentialRequest {
+            credential_issuer: "https://example.com".into(),
+            access_token: "1234".into(),
+            credential_type: CredentialType::Identifier("UniversityDegree_JWT".into()),
+            proof: Some(ProofOption::Proof {
+                proof_type: ProofType::Jwt {
+                    jwt: "SomeJWT".into(),
+                },
+            }),
+            ..CredentialRequest::default()
+        };
+
+        let json = serde_json::to_string_pretty(&request).expect("should serialize to string");
+        println!("{}", json);
+    }
+
+    #[test]
+    fn multiple_proofs() {
+        let json = serde_json::json!({
+          "credential_issuer": "https://example.com",
+          "access_token": "1234",
+          "credential_identifier": "UniversityDegree_JWT",
+          "proofs": {
+            "jwt": [
+              "SomeJWT1",
+              "SomeJWT2"
+            ]
+          }
+        });
+
+        let _request: CredentialRequest =
+            serde_json::from_value(json).expect("should deserialize from json");
+
+        let request = CredentialRequest {
+            credential_issuer: "https://example.com".into(),
+            access_token: "1234".into(),
+            credential_type: CredentialType::Identifier("UniversityDegree_JWT".into()),
+            proof: Some(ProofOption::Proofs(ProofsType::Jwt(vec![
+                "SomeJWT1".into(),
+                "SomeJWT2".into(),
+            ]))),
+            ..CredentialRequest::default()
+        };
+
+        let json = serde_json::to_string_pretty(&request).expect("should serialize to string");
+        println!("{}", json);
     }
 }

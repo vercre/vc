@@ -7,8 +7,8 @@ use tracing::instrument;
 use vercre_core::Kind;
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_openid::issuer::{
-    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, Proof,
-    ProofClaims, ProofType, TokenGrantType, TokenRequest,
+    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, ProofClaims,
+    ProofOption, ProofType, TokenGrantType, TokenRequest,
 };
 use vercre_w3c_vc::proof::{Payload, Verify};
 
@@ -59,9 +59,8 @@ pub async fn get_credentials(
                 return Err(e);
             }
         };
-        let proof = Proof {
-            proof_type: "jwt".into(),
-            proof: ProofType::Jwt(jwt),
+        let proof = ProofOption::Proof {
+            proof_type: ProofType::Jwt { jwt },
         };
 
         let request = credential_request(&issuance, id, cfg, &proof);
@@ -136,7 +135,7 @@ fn token_request(issuance: &Issuance) -> TokenRequest {
 
 /// Construct a credential request from an offered credential configuration.
 fn credential_request(
-    issuance: &Issuance, _id: &str, cfg: &CredentialConfiguration, proof: &Proof,
+    issuance: &Issuance, _id: &str, cfg: &CredentialConfiguration, proof: &ProofOption,
 ) -> CredentialRequest {
     CredentialRequest {
         credential_issuer: issuance.offer.credential_issuer.clone(),
