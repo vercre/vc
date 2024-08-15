@@ -113,7 +113,7 @@ async fn verify(
             }
         };
 
-        // TODO: refactor into separate function
+        // TODO: refactor into separate function, test
         if let Some(proof_types) = supported_proofs {
             let Some(proof) = &request.proof else {
                 return Err(Error::InvalidCredentialRequest("proof not set".into()));
