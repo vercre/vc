@@ -547,17 +547,25 @@ pub struct TokenRequest {
     pub redirect_uri: Option<String>,
 
     /// Authorization Details is used to convey the details about the Credentials
-    /// the Wallet wants to obtain. If type is "`openid_credential`", credential
-    /// identifiers MUST be set in the `locations` attribute.
+    /// the Wallet wants to obtain.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
+
+    // TODO: add support for `scope` parameter
+    /// Credential Issuers MAY support requesting authorization to issue a
+    /// credential using OAuth 2.0 scope values.
+    /// A scope value and its mapping to a credential type is defined by the
+    /// Issuer. A description of scope value semantics or machine readable
+    /// definitions could be defined in Issuer metadata. For example,
+    /// mapping a scope value to an authorization details object.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scope: Option<String>,
 
     /// Client identity assertion using JWT instead of credentials to authenticate.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(flatten)]
     pub client_assertion: Option<ClientAssertion>,
-    //scope
 }
 
 /// Token authorization grant types.
