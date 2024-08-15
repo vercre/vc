@@ -365,8 +365,8 @@ pub struct AuthorizationRequest {
     /// PKCE code challenge method. Must be "S256".
     pub code_challenge_method: String,
 
-    /// Authorization Details is used to convey the details about the
-    /// Credentials the Wallet wants to obtain.
+    /// Authorization Details may used to convey the details about credentials
+    /// the Wallet wants to obtain.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
@@ -426,6 +426,7 @@ pub enum AuthorizationDetailType {
 
 /// Authorization Details is used to convey the details about the Credentials
 /// the Wallet wants to obtain.
+/// See <https://www.rfc-editor.org/rfc/rfc9396.html>
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AuthorizationDetail {
     /// Type determines the authorization details type. MUST be "`openid_credential`".
@@ -435,7 +436,7 @@ pub struct AuthorizationDetail {
     /// Identifies Credentials requested using either `credential_identifier` or
     /// supported credential `format`.
     #[serde(flatten)]
-    pub credential_identifier: AuthorizationDetailCredential,
+    pub credential_identifier: AuthorizationCredential,
 
     /// Contains the type values the Wallet requests authorization for at the Credential
     /// Issuer.
@@ -456,7 +457,7 @@ pub struct AuthorizationDetail {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_definition: Option<CredentialDefinition>,
 
-    // LATER: integrate locations
+    // TODO: integrate locations
     /// If the Credential Issuer metadata contains an `authorization_servers` parameter,
     /// the authorization detail's locations field MUST be set to the Credential Issuer
     /// Identifier.
@@ -474,7 +475,7 @@ pub struct AuthorizationDetail {
 
 /// Means used to identifiy a Credential type when requesting a Credential.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum AuthorizationDetailCredential {
+pub enum AuthorizationCredential {
     /// Specifies the unique identifier of the Credential being described in the
     /// `credential_configurations_supported` map in the Credential Issuer Metadata.
     #[serde(rename = "credential_configuration_id")]
@@ -488,7 +489,7 @@ pub enum AuthorizationDetailCredential {
     Format(CredentialFormat),
 }
 
-impl Default for AuthorizationDetailCredential {
+impl Default for AuthorizationCredential {
     fn default() -> Self {
         Self::ConfigurationId(String::new())
     }
@@ -1437,9 +1438,7 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                credential_identifier: AuthorizationDetailCredential::Format(
-                    CredentialFormat::JwtVcJson,
-                ),
+                credential_identifier: AuthorizationCredential::Format(CredentialFormat::JwtVcJson),
                 credential_definition: Some(CredentialDefinition {
                     context: Some(vec![
                         "https://www.w3.org/2018/credentials/v1".into(),

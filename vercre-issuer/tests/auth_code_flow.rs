@@ -8,7 +8,7 @@ use serde_json::json;
 use sha2::{Digest, Sha256};
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_issuer::{
-    AuthorizationDetailCredential, AuthorizationRequest, AuthorizationResponse, CredentialRequest,
+    AuthorizationCredential, AuthorizationRequest, AuthorizationResponse, CredentialRequest,
     CredentialResponse, ProofClaims, TokenRequest, TokenResponse,
 };
 use vercre_test_utils::holder;
@@ -139,7 +139,7 @@ async fn get_credential(input: TokenResponse) -> vercre_openid::Result<Credentia
     let auth_det = auth_dets[0].authorization_detail.clone();
 
     // TODO: get identifier from token
-    let AuthorizationDetailCredential::Format(format) = auth_det.credential_identifier.clone()
+    let AuthorizationCredential::Format(format) = auth_det.credential_identifier.clone()
     else {
         panic!("unexpected credential type");
     };

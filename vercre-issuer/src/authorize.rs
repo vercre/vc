@@ -76,7 +76,7 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationDetail, AuthorizationDetailCredential, AuthorizationDetailType,
+    AuthorizationDetail, AuthorizationCredential, AuthorizationDetailType,
     AuthorizationRequest, AuthorizationResponse, GrantType, Issuer, Metadata, Provider, StateStore,
     Subject, TokenAuthorizationDetail,
 };
@@ -311,7 +311,7 @@ fn verify_authorization_details(
         // verify requested credentials are supported
         // N.B. only one of `credential_configuration_id` or `format` is allowed
         match &auth_det.credential_identifier {
-            AuthorizationDetailCredential::ConfigurationId(identifier) => {
+            AuthorizationCredential::ConfigurationId(identifier) => {
                 // is `credential_configuration_id` supported?
                 if !context
                     .issuer_config
@@ -327,7 +327,7 @@ fn verify_authorization_details(
                 context.auth_dets.insert(identifier.clone(), auth_det.clone());
                 continue 'verify_details;
             }
-            AuthorizationDetailCredential::Format(format) => {
+            AuthorizationCredential::Format(format) => {
                 //  are `format` and `type` supported?
                 let Some(cred_def) = auth_det.credential_definition.as_ref() else {
                     return Err(Error::InvalidRequest(
