@@ -139,8 +139,7 @@ async fn get_credential(input: TokenResponse) -> vercre_openid::Result<Credentia
     let auth_det = auth_dets[0].authorization_detail.clone();
 
     // TODO: get identifier from token
-    let AuthorizationCredential::Format(format) = auth_det.credential_identifier.clone()
-    else {
+    let AuthorizationCredential::Format(format) = auth_det.credential_identifier.clone() else {
         panic!("unexpected credential type");
     };
 

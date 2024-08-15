@@ -142,7 +142,7 @@ fn credential_request(
         access_token: issuance.token.access_token.clone(),
         credential_type: CredentialType::Format(cfg.format.clone()),
         credential_definition: Some(cfg.credential_definition.clone()),
-        proof: Some(proof.clone()),
+        proof_option: Some(proof.clone()),
         credential_response_encryption: None,
     }
 }

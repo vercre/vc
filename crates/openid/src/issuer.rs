@@ -735,13 +735,12 @@ pub struct CredentialRequest {
 
     /// Wallet's proof of possession of cryptographic key material the issued Credential
     /// will be bound to.
-    ///
     /// REQUIRED if the `proof_types_supported` parameter is non-empty and present in
     /// the `credential_configurations_supported` parameter of the Issuer metadata for
     /// the requested Credential.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(flatten)]
-    pub proof: Option<ProofOption>,
+    pub proof_option: Option<ProofOption>,
 
     /// If present, specifies how the Credential Response should be encrypted. If not
     /// present.
@@ -1518,14 +1517,15 @@ mod tests {
           }
         });
 
-        let _request: CredentialRequest =
-            serde_json::from_value(json).expect("should deserialize from json");
+        let deserialized: CredentialRequest =
+            serde_json::from_value(json.clone()).expect("should deserialize from json");
+        assert_snapshot!("single-proof", &deserialized);
 
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
             credential_type: CredentialType::Identifier("UniversityDegree_JWT".into()),
-            proof: Some(ProofOption::Proof {
+            proof_option: Some(ProofOption::Proof {
                 proof_type: ProofType::Jwt {
                     jwt: "SomeJWT".into(),
                 },
@@ -1533,8 +1533,8 @@ mod tests {
             ..CredentialRequest::default()
         };
 
-        let json = serde_json::to_string_pretty(&request).expect("should serialize to string");
-        println!("{}", json);
+        let serialized = serde_json::to_value(&request).expect("should serialize to string");
+        assert_eq!(json, serialized);
     }
 
     #[test]
@@ -1551,21 +1551,22 @@ mod tests {
           }
         });
 
-        let _request: CredentialRequest =
-            serde_json::from_value(json).expect("should deserialize from json");
+        let deserialized: CredentialRequest =
+            serde_json::from_value(json.clone()).expect("should deserialize from json");
+        assert_snapshot!("multiple-proof", &deserialized);
 
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
             credential_type: CredentialType::Identifier("UniversityDegree_JWT".into()),
-            proof: Some(ProofOption::Proofs(ProofsType::Jwt(vec![
+            proof_option: Some(ProofOption::Proofs(ProofsType::Jwt(vec![
                 "SomeJWT1".into(),
                 "SomeJWT2".into(),
             ]))),
             ..CredentialRequest::default()
         };
 
-        let json = serde_json::to_string_pretty(&request).expect("should serialize to string");
-        println!("{}", json);
+        let serialized = serde_json::to_value(&request).expect("should serialize to string");
+        assert_eq!(json, serialized);
     }
 }

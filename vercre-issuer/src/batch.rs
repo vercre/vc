@@ -115,95 +115,85 @@ async fn verify(
 
         // TODO: refactor into separate function.
         if let Some(supported_types) = supported_proofs {
-            let Some(proof) = &request.proof else {
+            let Some(proof_option) = &request.proof_option else {
                 return Err(Error::InvalidCredentialRequest("proof not set".into()));
             };
 
             // TODO: cater for non-JWT proofs
-            let proof_jwt = match proof {
+            let _ = supported_types.get("jwt").ok_or_else(|| {
+                Error::InvalidCredentialRequest("proof type not supported".into())
+            })?;
+
+            // extract proof JWT(s) from request
+            let proof_jwts = match proof_option {
                 ProofOption::Proof { proof_type } => match proof_type {
-                    ProofType::Jwt { jwt } => {
-                        let _proof_type = supported_types.get("jwt").ok_or_else(|| {
-                            Error::InvalidCredentialRequest("proof type not supported".into())
-                        })?;
-                        jwt
-                    }
+                    ProofType::Jwt { jwt } => &vec![jwt.clone()],
                 },
                 ProofOption::Proofs(proofs_type) => match proofs_type {
-                    ProofsType::Jwt(proof_jwts) => {
-                        let _proof_type = supported_types.get("jwt").ok_or_else(|| {
-                            Error::InvalidCredentialRequest("proof type not supported".into())
-                        })?;
-                        &proof_jwts[0]
-                    }
+                    ProofsType::Jwt(proof_jwts) => proof_jwts,
                 },
             };
 
+            for proof_jwt in proof_jwts {
+                // TODO: check proof is signed with supported algorithm (from proof_type)
+                let jwt: jws::Jwt<ProofClaims> =
+                    match jws::decode(proof_jwt, verify_key!(&provider)).await {
+                        Ok(jwt) => jwt,
+                        Err(e) => {
+                            let (c_nonce, c_nonce_expires_in) =
+                                err_nonce(context, &provider).await?;
+                            return Err(Error::InvalidProof {
+                                hint: format!("issue decoding JWT: {e}"),
+                                c_nonce,
+                                c_nonce_expires_in,
+                            });
+                        }
+                    };
+                // proof type
+                if jwt.header.typ != Type::Proof {
+                    let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
+                    return Err(Error::InvalidProof {
+                        hint: format!("Proof JWT 'typ' is not {}", Type::Proof),
+                        c_nonce,
+                        c_nonce_expires_in,
+                    });
+                }
 
-            // let ProofType::Jwt(proof_jwt) = &proof.proof else {
-            //     let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
-            //     return Err(Error::InvalidProof {
-            //         hint: "Proof not JWT".into(),
-            //         c_nonce,
-            //         c_nonce_expires_in,
-            //     });
-            // };
+                // previously issued c_nonce
+                if jwt.claims.nonce.as_ref() != Some(&token_state.c_nonce) {
+                    let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
+                    return Err(Error::InvalidProof {
+                        hint: "Proof JWT nonce claim is invalid".into(),
+                        c_nonce,
+                        c_nonce_expires_in,
+                    });
+                }
 
-            // TODO: check proof is signed with supported algorithm (from proof_type)
-            let jwt: jws::Jwt<ProofClaims> =
-                match jws::decode(proof_jwt, verify_key!(&provider)).await {
-                    Ok(jwt) => jwt,
-                    Err(e) => {
-                        let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
-                        return Err(Error::InvalidProof {
-                            hint: format!("issue decoding JWT: {e}"),
-                            c_nonce,
-                            c_nonce_expires_in,
-                        });
-                    }
+                // TODO: use `decode` method in w3c-vc
+                // Key ID
+                let KeyType::KeyId(kid) = &jwt.header.key else {
+                    let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
+
+                    return Err(Error::InvalidProof {
+                        hint: "Proof JWT 'kid' is missing".into(),
+                        c_nonce,
+                        c_nonce_expires_in,
+                    });
                 };
-            // proof type
-            if jwt.header.typ != Type::Proof {
-                let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
-                return Err(Error::InvalidProof {
-                    hint: format!("Proof JWT 'typ' is not {}", Type::Proof),
-                    c_nonce,
-                    c_nonce_expires_in,
-                });
+                // HACK: save extracted DID for later use when issuing credential
+                let Some(did) = kid.split('#').next() else {
+                    let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
+
+                    return Err(Error::InvalidProof {
+                        hint: "Proof JWT DID is invalid".into(),
+                        c_nonce,
+                        c_nonce_expires_in,
+                    });
+                };
+
+                // TODO: support multiple DID bindings
+                context.holder_did = did.into();
             }
-
-            // previously issued c_nonce
-            if jwt.claims.nonce.as_ref() != Some(&token_state.c_nonce) {
-                let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
-                return Err(Error::InvalidProof {
-                    hint: "Proof JWT nonce claim is invalid".into(),
-                    c_nonce,
-                    c_nonce_expires_in,
-                });
-            }
-
-            // TODO: use `decode` method in w3c-vc
-            // Key ID
-            let KeyType::KeyId(kid) = &jwt.header.key else {
-                let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
-
-                return Err(Error::InvalidProof {
-                    hint: "Proof JWT 'kid' is missing".into(),
-                    c_nonce,
-                    c_nonce_expires_in,
-                });
-            };
-            // HACK: save extracted DID for later use when issuing credential
-            let Some(did) = kid.split('#').next() else {
-                let (c_nonce, c_nonce_expires_in) = err_nonce(context, &provider).await?;
-
-                return Err(Error::InvalidProof {
-                    hint: "Proof JWT DID is invalid".into(),
-                    c_nonce,
-                    c_nonce_expires_in,
-                });
-            };
-            context.holder_did = did.into();
         }
     }
 

@@ -118,10 +118,10 @@ pub use metadata::metadata;
 pub use register::register;
 pub use token::token;
 pub use vercre_openid::issuer::{
-    AuthorizationCodeGrant, AuthorizationDetail, AuthorizationCredential,
-    AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse, BatchCredentialRequest,
-    BatchCredentialResponse, CreateOfferRequest, CreateOfferResponse, CredentialConfiguration,
-    CredentialOffer, CredentialOfferType, CredentialRequest, CredentialResponse, CredentialType,
+    AuthorizationCodeGrant, AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType,
+    AuthorizationRequest, AuthorizationResponse, BatchCredentialRequest, BatchCredentialResponse,
+    CreateOfferRequest, CreateOfferResponse, CredentialConfiguration, CredentialOffer,
+    CredentialOfferType, CredentialRequest, CredentialResponse, CredentialType,
     DeferredCredentialRequest, DeferredCredentialResponse, Grants, MetadataRequest,
     MetadataResponse, PreAuthorizedCodeGrant, ProofClaims, ProofType, RegistrationRequest,
     RegistrationResponse, TokenAuthorizationDetail, TokenRequest, TokenResponse, TxCode,

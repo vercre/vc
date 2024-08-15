@@ -76,9 +76,9 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationDetail, AuthorizationCredential, AuthorizationDetailType,
-    AuthorizationRequest, AuthorizationResponse, GrantType, Issuer, Metadata, Provider, StateStore,
-    Subject, TokenAuthorizationDetail,
+    AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
+    AuthorizationResponse, GrantType, Issuer, Metadata, Provider, StateStore, Subject,
+    TokenAuthorizationDetail,
 };
 use vercre_openid::{Error, Result};
 
