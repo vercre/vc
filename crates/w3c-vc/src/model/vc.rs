@@ -447,10 +447,6 @@ mod tests {
         init_tracer();
 
         let vc = sample_vc();
-        let json_vc = serde_json::to_value(&vc).expect("should serialize to json");
-        println!("{}", json_vc);
-
-        // serialize
         let vc_json = serde_json::to_value(&vc).expect("should serialize to json");
 
         assert_eq!(

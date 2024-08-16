@@ -80,8 +80,6 @@ mod test {
     #[test]
     fn error_code() {
         let err = Error::MethodNotSupported("Method not supported".into());
-
-        println!("err: {:?}", err.to_string());
         assert_eq!(err.message(), "Method not supported");
     }
 }
