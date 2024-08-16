@@ -132,6 +132,18 @@ impl State {
         }
     }
 
+    pub fn from_slice(value: &[u8]) -> Result<Self> {
+        match serde_json::from_slice::<Self>(value) {
+            Ok(res) => {
+                if res.expired() {
+                    return Err(Error::InvalidRequest("state has expired".into()));
+                }
+                Ok(res)
+            }
+            Err(e) => Err(Error::ServerError(format!("failed to deserialize state: {e}"))),
+        }
+    }
+
     /// Determines whether state has expired or not.
     pub fn expired(&self) -> bool {
         self.expires_at.signed_duration_since(Utc::now()).num_seconds() < 0
@@ -142,15 +154,7 @@ impl TryFrom<&[u8]> for State {
     type Error = vercre_openid::Error;
 
     fn try_from(value: &[u8]) -> Result<Self> {
-        match serde_json::from_slice::<Self>(value) {
-            Ok(res) => {
-                if res.expired() {
-                    return Err(Error::InvalidRequest("state has expired".into()));
-                }
-                Ok(res)
-            }
-            Err(e) => Err(Error::ServerError(format!("Failed to deserialize state: {e}"))),
-        }
+        Self::from_slice(value)
     }
 }
 

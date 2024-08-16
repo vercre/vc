@@ -24,9 +24,7 @@ use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
 use vercre_core::Kind;
-use vercre_openid::verifier::{
-    PresentationDefinitionType, Provider, ResponseRequest, ResponseResponse, StateStore,
-};
+use vercre_openid::verifier::{Provider, ResponseRequest, ResponseResponse, StateStore};
 use vercre_openid::{Error, Result};
 use vercre_w3c_vc::model::VerifiableCredential;
 use vercre_w3c_vc::proof::{Payload, Verify};
@@ -94,8 +92,8 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
         return Err(Error::InvalidRequest("no presentation_submission".into()));
     };
     let def = match &saved_req.presentation_definition {
-        PresentationDefinitionType::Object(def) => def,
-        PresentationDefinitionType::Uri(_) => {
+        Kind::Object(def) => def,
+        Kind::String(_) => {
             return Err(Error::InvalidRequest("presentation_definition_uri is unsupported".into()));
         }
     };
@@ -225,7 +223,7 @@ mod tests {
     use serde_json::json;
     use vercre_dif_exch::PresentationDefinition;
     use vercre_openid::verifier::{
-        ClientIdScheme, ClientMetadataType, RequestObject, ResponseRequest, ResponseType,
+        ClientIdScheme, RequestObject, ResponseRequest, ResponseType, Verifier,
     };
     use vercre_test_utils::verifier::Provider;
 
@@ -252,16 +250,15 @@ mod tests {
             nonce: nonce.clone(),
             response_mode: Some("direct_post.jwt".into()),
             response_uri: Some(format!("{CLIENT_ID}/direct_post.jwt")),
-            presentation_definition: PresentationDefinitionType::Object(pres_def.clone()),
+            presentation_definition: Kind::Object(pres_def.clone()),
             client_id_scheme: Some(ClientIdScheme::Did),
-            client_metadata: ClientMetadataType::Object(Default::default()),
+            client_metadata: Verifier::default(),
         };
 
         // set up state
         let state = State::builder().request_object(req_obj).build().expect("should build state");
-        StateStore::put(&provider, &state_key, state.to_vec(), state.expires_at)
-            .await
-            .expect("state exists");
+        let buf = state.to_vec().expect("should serialize state");
+        StateStore::put(&provider, &state_key, buf, state.expires_at).await.expect("state exists");
 
         // replace placeholders with actual values
         let mut vp_token = VP_TOKEN.to_owned();

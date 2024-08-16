@@ -8,11 +8,10 @@ use anyhow::{anyhow, bail};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
+use vercre_core::Kind;
 use vercre_datasec::jose::jws;
 use vercre_dif_exch::Constraints;
-use vercre_openid::verifier::{
-    PresentationDefinitionType, RequestObject, RequestObjectResponse, RequestObjectType,
-};
+use vercre_openid::verifier::{RequestObject, RequestObjectResponse, RequestObjectType};
 use vercre_w3c_vc::verify_key;
 
 use super::{Presentation, Status};
@@ -56,11 +55,11 @@ pub async fn request(
 
     // Parse or get-then-parse the presentation request
     let req_obj = if request.contains("&presentation_definition") {
-        match parse_presentation_definition(request) {
+        match serde_qs::from_str::<RequestObject>(request) {
             Ok(req_obj) => req_obj,
             Err(e) => {
                 tracing::error!(target: "Endpoint::request", ?e);
-                return Err(e);
+                return Err(anyhow!("issue parsing RequestObject: {e}"));
             }
         }
     } else {
@@ -111,12 +110,6 @@ pub async fn request(
     Ok(response)
 }
 
-/// Extract a presentation request from a query string parameter.
-fn parse_presentation_definition(request: &str) -> anyhow::Result<RequestObject> {
-    let req_obj = serde_qs::from_str::<RequestObject>(request)?;
-    Ok(req_obj)
-}
-
 /// Extract a presentation `RequestObject` from a `RequestObjectResponse`.
 async fn parse_request_object_response(
     res: &RequestObjectResponse, resolver: &impl DidResolver,
@@ -137,8 +130,8 @@ async fn parse_request_object_response(
 // TODO: How to handle multiple input descriptors?
 fn build_filter(request: &RequestObject) -> anyhow::Result<Constraints> {
     let pd = match &request.presentation_definition {
-        PresentationDefinitionType::Object(pd) => pd,
-        PresentationDefinitionType::Uri(_) => bail!("presentation_definition_uri is unsupported"),
+        Kind::Object(pd) => pd,
+        Kind::String(_) => bail!("presentation_definition_uri is unsupported"),
     };
     if pd.input_descriptors.is_empty() {
         bail!("no input descriptors found");

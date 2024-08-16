@@ -155,6 +155,14 @@ pub enum Error {
         r#"{{"error": "invalid_presentation_definition_reference", "error_description": "{0}"}}"#
     )]
     InvalidPresentationDefinitionReference(String),
+
+    /// The Wallet appears to be unavailable and therefore unable to respond to the
+    /// request.
+    /// Use when the User Agent cannot invoke the Wallet and another component
+    /// receives the request while the End-User wishes to continue the journey on
+    /// the Verifier website.
+    #[error(r#"{{"error": "wallet_unavailable", "error_description": "{0}"}}"#)]
+    WalletUnavailable(String),
 }
 
 /// Error response for `OpenID` for Verifiable Credentials.

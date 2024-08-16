@@ -44,12 +44,12 @@ use std::collections::HashMap;
 
 use tracing::instrument;
 use uuid::Uuid;
-use vercre_core::gen;
+use vercre_core::{gen, Kind};
 use vercre_datasec::Algorithm;
 use vercre_dif_exch::{ClaimFormat, PresentationDefinition};
 use vercre_openid::verifier::{
-    ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
-    Metadata, PresentationDefinitionType, Provider, RequestObject, ResponseType, StateStore,
+    ClientIdScheme, CreateRequestRequest, CreateRequestResponse, DeviceFlow, Metadata, Provider,
+    RequestObject, ResponseType, StateStore,
 };
 use vercre_openid::{Error, Result};
 
@@ -130,8 +130,8 @@ async fn process(
         response_type: ResponseType::VpToken,
         state: Some(state_key.clone()),
         nonce: gen::nonce(),
-        presentation_definition: PresentationDefinitionType::Object(pres_def),
-        client_metadata: ClientMetadataType::Object(verifier_meta),
+        presentation_definition: Kind::Object(pres_def),
+        client_metadata: verifier_meta,
         client_id_scheme: Some(ClientIdScheme::RedirectUri),
         ..Default::default()
     };
@@ -155,7 +155,8 @@ async fn process(
         .request_object(req_obj)
         .build()
         .map_err(|e| Error::ServerError(format!("issue building state: {e}")))?;
-    StateStore::put(&provider, &state_key, state.to_vec(), state.expires_at)
+
+    StateStore::put(&provider, &state_key, state.to_vec()?, state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -203,18 +204,7 @@ mod tests {
         assert_eq!(response.request_uri, None);
         assert_let!(Some(req_obj), &response.request_object);
 
-        // check redacted fields are present
-        let md = match req_obj.client_metadata {
-            ClientMetadataType::Object(_) => true,
-            _ => false,
-        };
-        assert!(md);
-
-        let pd = match req_obj.presentation_definition {
-            PresentationDefinitionType::Object(_) => true,
-            _ => false,
-        };
-        assert!(pd);
+        assert!(req_obj.presentation_definition.is_object());
 
         // compare response with saved state
         let state_key = req_obj.state.as_ref().expect("has state");
