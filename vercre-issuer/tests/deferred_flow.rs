@@ -48,8 +48,7 @@ async fn get_offer() -> vercre_openid::Result<CreateOfferResponse> {
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": PENDING_USER,
         "pre-authorize": true,
-        "tx_code_required": true,
-        "callback_id": "1234"
+        "tx_code_required": true
     });
 
     let mut request =
@@ -72,7 +71,7 @@ async fn get_token(input: CreateOfferResponse) -> vercre_openid::Result<TokenRes
         "client_id": CLIENT_ID,
         "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
         "pre-authorized_code": &pre_authorized_code.pre_authorized_code,
-        "user_code": input.user_code.unwrap_or_default(),
+        "tx_code": input.user_code.unwrap_or_default(),
     });
 
     let mut request = serde_json::from_value::<TokenRequest>(body).expect("should deserialize");

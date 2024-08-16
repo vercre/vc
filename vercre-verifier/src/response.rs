@@ -49,7 +49,7 @@ pub async fn response(
 }
 
 // TODO: validate  Verifiable Presentation by format
-// Check integrity, authenticity, and holder binding of each Presentation 
+// Check integrity, authenticity, and holder binding of each Presentation
 // in the VP Token according to the rules for the Presentation's format.
 
 // Verfiy the vp_token and presentation subm

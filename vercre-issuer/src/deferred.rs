@@ -71,11 +71,12 @@ mod tests {
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
+    use vercre_core::Quota;
     use vercre_datasec::jose::jws::{self, Type};
     use vercre_openid::issuer::{CredentialRequest, ProofClaims};
     use vercre_test_utils::holder;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-    use vercre_w3c_vc::proof::{Payload, Verify};
+    use vercre_w3c_vc::proof::{self, Payload, Verify};
 
     use super::*;
     use crate::state::{Deferred, Expire, Token};
@@ -170,13 +171,13 @@ mod tests {
         let cred_resp = response.credential_response;
 
         // verify credential
-        let Some(vc_kind) = &cred_resp.credential else {
-            panic!("VC is not base64 encoded string");
+        let vc_quota = cred_resp.credential.expect("credential is present");
+        let Quota::One(vc_kind) = vc_quota else {
+            panic!("expected one credential")
         };
 
-        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &provider)
-            .await
-            .expect("should decode")
+        let Payload::Vc(vc) =
+            proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
         else {
             panic!("should be VC");
         };

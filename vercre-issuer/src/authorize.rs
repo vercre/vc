@@ -76,8 +76,8 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    CredentialType, GrantType, Issuer, Metadata, Provider, StateStore, Subject,
+    AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
+    AuthorizationResponse, GrantType, Issuer, Metadata, Provider, StateStore, Subject,
     TokenAuthorizationDetail,
 };
 use vercre_openid::{Error, Result};
@@ -126,7 +126,7 @@ async fn verify(
     // 'authorization_code' grant_type allowed (client and server)?
     let client_grant_types = client_config.oauth.grant_types.unwrap_or_default();
     if !client_grant_types.contains(&GrantType::AuthorizationCode) {
-        return Err(Error::InvalidRequest(
+        return Err(Error::InvalidGrant(
             "authorization_code grant not supported for client".into(),
         ));
     }
@@ -139,7 +139,7 @@ async fn verify(
 
     // is holder identified (authenticated)?
     if request.subject_id.is_empty() {
-        return Err(Error::AuthorizationPending("missing holder subject".into()));
+        return Err(Error::InvalidRequest("missing holder subject".into()));
     }
 
     // has a credential been requested?
@@ -310,8 +310,8 @@ fn verify_authorization_details(
 
         // verify requested credentials are supported
         // N.B. only one of `credential_configuration_id` or `format` is allowed
-        match &auth_det.credential_type {
-            CredentialType::Identifier(identifier) => {
+        match &auth_det.credential_identifier {
+            AuthorizationCredential::ConfigurationId(identifier) => {
                 // is `credential_configuration_id` supported?
                 if !context
                     .issuer_config
@@ -327,7 +327,7 @@ fn verify_authorization_details(
                 context.auth_dets.insert(identifier.clone(), auth_det.clone());
                 continue 'verify_details;
             }
-            CredentialType::Format(format) => {
+            AuthorizationCredential::Format(format) => {
                 //  are `format` and `type` supported?
                 let Some(cred_def) = auth_det.credential_definition.as_ref() else {
                     return Err(Error::InvalidRequest(
@@ -426,8 +426,7 @@ mod tests {
             "code_challenge_method": "S256",
             "authorization_details": auth_dets,
             "subject_id": NORMAL_USER,
-            "wallet_issuer": CREDENTIAL_ISSUER,
-            "callback_id": "1234"
+            "wallet_issuer": CREDENTIAL_ISSUER
         });
         let mut request =
             serde_json::from_value::<AuthorizationRequest>(body).expect("should deserialize");
@@ -466,8 +465,7 @@ mod tests {
             "code_challenge_method": "S256",
             "scope": "EmployeeIDCredential",
             "subject_id": NORMAL_USER,
-            "wallet_issuer": CREDENTIAL_ISSUER,
-            "callback_id": "1234"
+            "wallet_issuer": CREDENTIAL_ISSUER
         });
         let mut request =
             serde_json::from_value::<AuthorizationRequest>(body).expect("should deserialize");

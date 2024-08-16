@@ -62,10 +62,6 @@ pub struct CreateRequestRequest {
 
     /// The Client ID
     pub client_id_scheme: String,
-
-    /// An ID that the client application wants to be included in callback
-    /// payloads. If no ID is provided, callbacks will not be made.
-    pub callback_id: Option<String>,
 }
 
 /// Used to specify whether Authorization Requests and Responses are to be passed

@@ -13,6 +13,7 @@
 
 // TODO: test `credential_configuration_id` in `authorization_details`
 // TODO: analyse `credential_identifiers` use in `authorization_details`
+// TODO: verify `client_assertion` JWT, when set
 
 use std::fmt::Debug;
 
@@ -21,7 +22,7 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    GrantType, Metadata, Provider, StateStore, TokenRequest, TokenResponse, TokenType,
+    Metadata, Provider, StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
 
@@ -38,7 +39,7 @@ use crate::state::{Expire, State, Token};
 pub async fn token(provider: impl Provider, request: &TokenRequest) -> Result<TokenResponse> {
     // restore state
     // RFC 6749 requires a particular error here
-    let Ok(buf) = StateStore::get(&provider, &auth_state_key(request)?).await else {
+    let Ok(buf) = StateStore::get(&provider, &auth_state_key(request)).await else {
         return Err(Error::InvalidGrant("the authorization code is invalid".into()));
     };
     let Ok(state) = State::try_from(buf.as_slice()) else {
@@ -68,8 +69,8 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
     };
 
     // grant_type
-    match request.grant_type {
-        GrantType::AuthorizationCode => {
+    match &request.grant_type {
+        TokenGrantType::AuthorizationCode { code_verifier, .. } => {
             // client_id is the same as the one used to obtain the authorization code
             if Some(&request.client_id) != context.state.client_id.as_ref() {
                 return Err(Error::InvalidGrant("client_id differs from authorized one".into()));
@@ -82,7 +83,7 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
             }
 
             // code_verifier
-            let Some(verifier) = &request.code_verifier else {
+            let Some(verifier) = &code_verifier else {
                 return Err(Error::AccessDenied("code_verifier is missing".into()));
             };
 
@@ -94,7 +95,7 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
                 return Err(Error::AccessDenied("code_verifier is invalid".into()));
             }
         }
-        GrantType::PreAuthorizedCode => {
+        TokenGrantType::PreAuthorizedCode { tx_code, .. } => {
             // anonymous access allowed?
             if request.client_id.is_empty()
                 && !server_meta.pre_authorized_grant_anonymous_access_supported
@@ -102,7 +103,7 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
                 return Err(Error::InvalidClient("anonymous access is not supported".into()));
             }
             // user_code
-            if request.user_code != auth_state.user_code {
+            if tx_code != &auth_state.user_code {
                 return Err(Error::InvalidGrant("invalid user_code provided".into()));
             }
         }
@@ -119,7 +120,7 @@ async fn process(
     tracing::debug!("token::process");
 
     // prevent auth code reuse
-    StateStore::purge(&provider, &auth_state_key(request)?)
+    StateStore::purge(&provider, &auth_state_key(request))
         .await
         .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
 
@@ -160,15 +161,14 @@ async fn process(
 // Helper to get correct authorization state key from request.
 // Authorization state is stored by either 'code' or 'pre_authorized_code',
 // depending on grant_type.
-fn auth_state_key(request: &TokenRequest) -> Result<String> {
-    let state_key = match request.grant_type {
-        GrantType::AuthorizationCode => request.code.as_ref(),
-        GrantType::PreAuthorizedCode => request.pre_authorized_code.as_ref(),
+fn auth_state_key(request: &TokenRequest) -> String {
+    let state_key = match &request.grant_type {
+        TokenGrantType::AuthorizationCode { code, .. } => code,
+        TokenGrantType::PreAuthorizedCode {
+            pre_authorized_code, ..
+        } => pre_authorized_code,
     };
-    let Some(state_key) = state_key else {
-        return Err(Error::InvalidRequest("missing state key".into()));
-    };
-    Ok(state_key.to_string())
+    state_key.to_string()
 }
 
 #[cfg(test)]
@@ -178,8 +178,8 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use vercre_openid::issuer::{
-        AuthorizationDetail, AuthorizationDetailType, CredentialDefinition, CredentialType,
-        TokenAuthorizationDetail,
+        AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType,
+        CredentialDefinition, TokenAuthorizationDetail,
     };
     use vercre_openid::CredentialFormat;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -188,7 +188,7 @@ mod tests {
     use crate::state::Auth;
 
     #[tokio::test]
-    async fn simple_tossken() {
+    async fn simple_token() {
         vercre_test_utils::init_tracer();
 
         let provider = Provider::new();
@@ -221,12 +221,15 @@ mod tests {
             "client_id": CLIENT_ID,
             "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
             "pre-authorized_code": pre_auth_code,
-            "user_code": "1234"
+            "tx_code": "1234"
         });
 
         let mut request =
             serde_json::from_value::<TokenRequest>(body).expect("request should deserialize");
         request.credential_issuer = CREDENTIAL_ISSUER.to_string();
+
+        println!("request: {:#?}", request);
+
         let response = token(provider.clone(), &request).await.expect("response is valid");
         assert_snapshot!("simpl-token", &response, {
             ".access_token" => "[access_token]",
@@ -274,7 +277,9 @@ mod tests {
             authorization_details: Some(vec![TokenAuthorizationDetail {
                 authorization_detail: AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,
-                    credential_type: CredentialType::Format(CredentialFormat::JwtVcJson),
+                    credential_identifier: AuthorizationCredential::Format(
+                        CredentialFormat::JwtVcJson,
+                    ),
                     credential_definition: Some(CredentialDefinition {
                         type_: Some(vec![
                             "VerifiableCredential".into(),

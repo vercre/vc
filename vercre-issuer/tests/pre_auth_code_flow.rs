@@ -5,6 +5,7 @@ use chrono::Utc;
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
+use vercre_core::Quota;
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_issuer::{
     CreateOfferRequest, CreateOfferResponse, CredentialOfferType, CredentialRequest,
@@ -24,13 +25,14 @@ async fn pre_auth_flow() {
     // go through the pre-auth code flow
     let resp = get_offer().and_then(get_token).and_then(get_credential).await.expect("Ok");
 
-    let Some(vc_kind) = &resp.credential else {
-        panic!("VC is not present");
+    let vc_quota = resp.credential.expect("no credential in response");
+    let Quota::One(vc_kind) = vc_quota else {
+        panic!("expected one credential");
     };
 
     let provider = ISSUER_PROVIDER.clone();
     let Payload::Vc(vc) =
-        vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &provider).await.expect("should decode")
+        vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
     else {
         panic!("should be VC");
     };
@@ -49,8 +51,7 @@ async fn get_offer() -> vercre_openid::Result<CreateOfferResponse> {
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": NORMAL_USER,
         "pre-authorize": true,
-        "tx_code_required": true,
-        "callback_id": "1234"
+        "tx_code_required": true
     });
 
     let mut request =
@@ -72,7 +73,7 @@ async fn get_token(input: CreateOfferResponse) -> vercre_openid::Result<TokenRes
         "client_id": CLIENT_ID,
         "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
         "pre-authorized_code": &pre_authorized_code.pre_authorized_code,
-        "user_code": input.user_code.as_ref().expect("user pin should be set"),
+        "tx_code": input.user_code.as_ref().expect("user pin should be set"),
     });
 
     let mut request = serde_json::from_value::<TokenRequest>(body).expect("should deserialize");

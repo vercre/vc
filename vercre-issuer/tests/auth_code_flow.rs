@@ -6,10 +6,11 @@ use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use sha2::{Digest, Sha256};
+use vercre_core::Quota;
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_issuer::{
-    AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse,
-    CredentialType, ProofClaims, TokenRequest, TokenResponse,
+    AuthorizationCredential, AuthorizationRequest, AuthorizationResponse, CredentialRequest,
+    CredentialResponse, ProofClaims, TokenRequest, TokenResponse,
 };
 use vercre_test_utils::holder;
 use vercre_test_utils::issuer::{self, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -25,13 +26,14 @@ async fn auth_code_flow() {
     // go through the auth code flow
     let resp = authorize().and_then(get_token).and_then(get_credential).await.expect("Ok");
 
-    let Some(vc_kind) = &resp.credential else {
-        panic!("VC is not present");
+    let vc_quota = resp.credential.expect("no credential in response");
+    let Quota::One(vc_kind) = vc_quota else {
+        panic!("expected one credential");
     };
 
     let provider = ISSUER_PROVIDER.clone();
     let Payload::Vc(vc) =
-        vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &provider).await.expect("should decode")
+        vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
     else {
         panic!("should be VC");
     };
@@ -80,8 +82,7 @@ async fn authorize() -> vercre_openid::Result<AuthorizationResponse> {
         "code_challenge_method": "S256",
         "authorization_details": auth_dets,
         "subject_id": NORMAL_USER,
-        "wallet_issuer": CREDENTIAL_ISSUER,
-        "callback_id": "1234"
+        "wallet_issuer": CREDENTIAL_ISSUER
     });
     let mut request =
         serde_json::from_value::<AuthorizationRequest>(body).expect("should deserialize");
@@ -140,7 +141,7 @@ async fn get_credential(input: TokenResponse) -> vercre_openid::Result<Credentia
     let auth_det = auth_dets[0].authorization_detail.clone();
 
     // TODO: get identifier from token
-    let CredentialType::Format(format) = auth_det.credential_type.clone() else {
+    let AuthorizationCredential::Format(format) = auth_det.credential_identifier.clone() else {
         panic!("unexpected credential type");
     };
 

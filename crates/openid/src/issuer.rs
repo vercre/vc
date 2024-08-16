@@ -10,14 +10,14 @@ use base64ct::{Base64, Encoding};
 use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use vercre_core::{stringify, Kind};
+use vercre_core::{stringify, Kind, Quota};
 use vercre_datasec::jose::jwk::PublicKeyJwk;
 use vercre_datasec::SecOps;
 use vercre_did::DidResolver;
 use vercre_w3c_vc::model::VerifiableCredential;
 
 pub use super::CredentialFormat;
-pub use crate::oauth::{OAuthClient, OAuthServer};
+pub use crate::oauth::{GrantType, OAuthClient, OAuthServer};
 pub use crate::provider::{self, Result, StateStore};
 
 // TODO: find a home for shared types
@@ -37,8 +37,7 @@ pub trait Metadata: Send + Sync {
     /// Authorization Server metadata for the specified issuer/server.
     fn server(&self, server_id: &str) -> impl Future<Output = provider::Result<Server>> + Send;
 
-    /// Used by OAuth 2.0 clients to dynamically register clients with the authorization
-    /// server.
+    /// Used to dynamically register OAuth 2.0 clients with the authorization server.
     fn register(&self, client: &Client) -> impl Future<Output = provider::Result<Client>> + Send;
 }
 
@@ -67,19 +66,6 @@ pub struct Claims {
     /// Specifies whether user information required for the credential subject
     /// is pending.
     pub pending: bool,
-}
-
-/// Grant Types supported by the Authorization Server.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub enum GrantType {
-    /// The OAuth 2.0 Grant Type for Authorization Code Flow.
-    #[serde(rename = "authorization_code")]
-    AuthorizationCode,
-
-    /// The OAuth 2.0 Grant Type for Pre-Authorized Code Flow.
-    #[default]
-    #[serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")]
-    PreAuthorizedCode,
 }
 
 /// Request a Credential Offer for a Credential Issuer.
@@ -115,10 +101,6 @@ pub struct CreateOfferRequest {
     /// authorize credential issuance.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subject_id: Option<String>,
-
-    /// An ID that the client application wants to be included in callback
-    /// payloads. If no ID is provided, callbacks will not be made.
-    pub callback_id: Option<String>,
 }
 
 /// The response to a Credential Offer request.
@@ -383,8 +365,8 @@ pub struct AuthorizationRequest {
     /// PKCE code challenge method. Must be "S256".
     pub code_challenge_method: String,
 
-    /// Authorization Details is used to convey the details about the
-    /// Credentials the Wallet wants to obtain.
+    /// Authorization Details may used to convey the details about credentials
+    /// the Wallet wants to obtain.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
@@ -444,6 +426,7 @@ pub enum AuthorizationDetailType {
 
 /// Authorization Details is used to convey the details about the Credentials
 /// the Wallet wants to obtain.
+/// See <https://www.rfc-editor.org/rfc/rfc9396.html>
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AuthorizationDetail {
     /// Type determines the authorization details type. MUST be "`openid_credential`".
@@ -453,7 +436,7 @@ pub struct AuthorizationDetail {
     /// Identifies Credentials requested using either `credential_identifier` or
     /// supported credential `format`.
     #[serde(flatten)]
-    pub credential_type: CredentialType,
+    pub credential_identifier: AuthorizationCredential,
 
     /// Contains the type values the Wallet requests authorization for at the Credential
     /// Issuer.
@@ -474,7 +457,7 @@ pub struct AuthorizationDetail {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_definition: Option<CredentialDefinition>,
 
-    // LATER: integrate locations
+    // TODO: integrate locations
     /// If the Credential Issuer metadata contains an `authorization_servers` parameter,
     /// the authorization detail's locations field MUST be set to the Credential Issuer
     /// Identifier.
@@ -488,6 +471,28 @@ pub struct AuthorizationDetail {
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
     pub locations: Option<Vec<String>>,
+}
+
+/// Means used to identifiy a Credential type when requesting a Credential.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum AuthorizationCredential {
+    /// Specifies the unique identifier of the Credential being described in the
+    /// `credential_configurations_supported` map in the Credential Issuer Metadata.
+    #[serde(rename = "credential_configuration_id")]
+    ConfigurationId(String),
+
+    /// Determines the format of the Credential to be issued, which may determine
+    /// the type and other information related to the Credential to be issued. REQUIRED
+    /// when `credential_identifiers` was not returned from the Token Response. MUST
+    /// NOT be used otherwise.
+    #[serde(rename = "format")]
+    Format(CredentialFormat),
+}
+
+impl Default for AuthorizationCredential {
+    fn default() -> Self {
+        Self::ConfigurationId(String::new())
+    }
 }
 
 /// Authorization Response as defined in [RFC6749].
@@ -529,44 +534,93 @@ pub struct TokenRequest {
     /// code.
     pub client_id: String,
 
-    /// The authorization grant type. One of `PreAuthorizedCode` or `AuthorizationCode`.
-    pub grant_type: GrantType,
-
-    /// The authorization code received from the authorization server when the
-    /// Wallet use the Authorization Code Flow.
-    ///
-    /// REQUIRED if `grant_type` is "`authorization_code`".
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub code: Option<String>,
+    /// Authorization grant type.
+    #[serde(flatten)]
+    pub grant_type: TokenGrantType,
 
     /// The client's redirection endpoint if `redirect_uri` was included in the
     /// authorization request. Only used when `grant_type` is "`authorization_code`".
     ///
     /// REQUIRED if the `redirect_uri` parameter was included in the authorization
-    /// request and values MUST be identical.
+    /// request; values MUST be identical.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redirect_uri: Option<String>,
 
-    /// PKCE code verifier provided by the Wallet when using the Authorization
-    /// Code Flow. MUST be able to verify the `code_challenge` provided in
-    /// the authorization request. Only set when `grant_type` is
-    /// "`authorization_code`".
+    /// Authorization Details is used to convey the details about the Credentials
+    /// the Wallet wants to obtain.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub code_verifier: Option<String>,
+    #[serde(with = "stringify::option")]
+    pub authorization_details: Option<Vec<AuthorizationDetail>>,
 
-    /// The pre-authorized code provided to the Wallet in a Credential Offer.
-    ///
-    /// REQUIRED if `grant_type` is "`urn:ietf:params:oauth:grant-type:pre-authorized_code`".
-    #[serde(rename = "pre-authorized_code")]
+    // TODO: add support for `scope` parameter
+    /// Credential Issuers MAY support requesting authorization to issue a
+    /// credential using OAuth 2.0 scope values.
+    /// A scope value and its mapping to a credential type is defined by the
+    /// Issuer. A description of scope value semantics or machine readable
+    /// definitions could be defined in Issuer metadata. For example,
+    /// mapping a scope value to an authorization details object.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub pre_authorized_code: Option<String>,
+    pub scope: Option<String>,
 
-    /// The user PIN provided during the Credential Offer process. Must be
-    /// present if `tx_code` was set to true in the Credential
-    /// Offer. Only set when `grant_type` is
-    /// "`urn:ietf:params:oauth:grant-type:pre-authorized_code`".
+    /// Client identity assertion using JWT instead of credentials to authenticate.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub user_code: Option<String>,
+    #[serde(flatten)]
+    pub client_assertion: Option<ClientAssertion>,
+}
+
+/// Token authorization grant types.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(tag = "grant_type")]
+pub enum TokenGrantType {
+    /// Attributes required for the Authorization Code grant type.
+    #[serde(rename = "authorization_code")]
+    AuthorizationCode {
+        /// The authorization code received from the authorization server when the
+        /// Wallet use the Authorization Code Flow.
+        code: String,
+
+        /// PKCE code verifier provided by the Wallet when using the Authorization
+        /// Code Flow. MUST be able to verify the `code_challenge` provided in
+        /// the authorization request.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        code_verifier: Option<String>,
+    },
+
+    /// Attributes required for the Pre-Authorized Code grant type
+    #[serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")]
+    PreAuthorizedCode {
+        /// The pre-authorized code provided to the Wallet in a Credential Offer.
+        #[serde(rename = "pre-authorized_code")]
+        pre_authorized_code: String,
+
+        /// The Transaction Code provided to the user during the Credential Offer
+        /// process. Must be present if `tx_code` was set to true in the Credential
+        /// Offer.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        tx_code: Option<String>,
+    },
+}
+
+impl Default for TokenGrantType {
+    fn default() -> Self {
+        Self::AuthorizationCode {
+            code: String::new(),
+            code_verifier: None,
+        }
+    }
+}
+
+/// Client identity assertion.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(tag = "client_assertion_type")]
+pub enum ClientAssertion {
+    /// OAuth 2.0 Client Assertion using JWT Bearer Token.
+    /// See <https://blog.logto.io/client-assertion-in-client-authn>
+    #[serde(rename = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer")]
+    JwtBearer {
+        /// The client's JWT assertion.
+        client_assertion: String,
+    },
 }
 
 /// Token Response as defined in [RFC6749].
@@ -681,12 +735,12 @@ pub struct CredentialRequest {
 
     /// Wallet's proof of possession of cryptographic key material the issued Credential
     /// will be bound to.
-    ///
     /// REQUIRED if the `proof_types_supported` parameter is non-empty and present in
     /// the `credential_configurations_supported` parameter of the Issuer metadata for
     /// the requested Credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub proof: Option<Proof>,
+    #[serde(flatten)]
+    pub proof_option: Option<ProofOption>,
 
     /// If present, specifies how the Credential Response should be encrypted. If not
     /// present.
@@ -718,33 +772,63 @@ impl Default for CredentialType {
 
 /// Wallet's proof of possession of the key material the issued Credential is to
 /// be bound to.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Proof {
-    /// Proof type claim denotes the concrete proof type which determines the
-    /// further claims in the proof object and associated processing rules.
-    /// MUST be one of "`jwt`", "`cwt`" or "`ldp_vp`".
-    pub proof_type: String,
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ProofOption {
+    /// A single proof of possession of the cryptographic key material to which
+    /// the issued Credential instance will be bound to.
+    Proof {
+        /// Specifies the key proof type. This parameter determines the additional
+        /// parameters in the key proof object and their corresponding processing
+        /// rules.
+        #[serde(flatten)]
+        proof_type: ProofType,
+    },
 
-    /// The JWT containing the Wallet's proof of possession of key material.
-    #[serde(flatten)]
-    pub proof: ProofType,
+    /// One or more proof of possessions of the cryptographic key material to which
+    /// the issued Credential instances will be bound to.
+    Proofs(ProofsType),
 }
 
-/// The type of proof the Wallet uses to prove possession of key material.
+impl Default for ProofOption {
+    fn default() -> Self {
+        Self::Proof {
+            proof_type: ProofType::default(),
+        }
+    }
+}
+
+/// A single proof of possession of the cryptographic key material provided by the
+/// Wallet to which the issued Credential instance will be bound.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(tag = "proof_type")]
 pub enum ProofType {
     /// The JWT containing the Wallet's proof of possession of key material.
     #[serde(rename = "jwt")]
-    Jwt(String),
-
-    /// The CWT containing the Wallet's proof of possession of key material.
-    #[serde(rename = "cwt")]
-    Cwt(String),
+    Jwt {
+        /// The JWT containing the Wallet's proof of possession of key material.
+        jwt: String,
+    },
 }
 
 impl Default for ProofType {
     fn default() -> Self {
-        Self::Jwt(String::new())
+        Self::Jwt { jwt: String::new() }
+    }
+}
+
+/// A a single proof of possession of the cryptographic key material provided by the
+/// Wallet to which the issued Credential instance will be bound.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum ProofsType {
+    /// The JWT containing the Wallet's proof of possession of key material.
+    #[serde(rename = "jwt")]
+    Jwt(Vec<String>),
+}
+
+impl Default for ProofsType {
+    fn default() -> Self {
+        Self::Jwt(vec![String::new()])
     }
 }
 
@@ -771,8 +855,7 @@ pub struct ProofClaims {
 }
 
 /// `CredentialResponseEncryption` contains information about whether the Credential
-/// Issuer supports encryption of the Credential and Batch Credential Response on
-/// top of TLS.
+/// Issuer supports encryption of the Credential Response on top of TLS.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredentialResponseEncryption {
     /// The public key used for encrypting the Credential Response.
@@ -801,7 +884,7 @@ pub struct CredentialResponse {
     /// The issued Credential. MUST be present when `transaction_id` is not
     /// returned.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential: Option<Kind<VerifiableCredential>>,
+    pub credential: Option<Quota<Kind<VerifiableCredential>>>,
 
     /// Identifies a Deferred Issuance transaction. This property is set if the
     /// Credential Issuer was unable to immediately issue the credential. The value
@@ -811,59 +894,6 @@ pub struct CredentialResponse {
     /// obtained by the Wallet.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub transaction_id: Option<String>,
-
-    /// A nonce to be used to create a proof of possession of key material when
-    /// requesting a Credential. When received, the Wallet MUST use this
-    /// value for its subsequent credential requests until the Credential
-    /// Issuer provides a fresh nonce.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub c_nonce: Option<String>,
-
-    /// The lifetime in seconds of the `c_nonce` parameter.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub c_nonce_expires_in: Option<i64>,
-}
-
-// /// The type of Credential Offer returned in a `CreateOfferResponse`: either an object
-// /// or a URI.
-// #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-// pub enum CredentialValue {
-//     /// A Credential Offer object that can be sent to a Wallet as an HTTP GET request.
-//     Object(VerifiableCredential),
-
-//     /// A URI pointing to the Credential Offer Endpoint where a `CredentialOffer` object
-//     /// can be retrieved.
-//     Jwt(String),
-// }
-
-/// The Batch Credential Endpoint allows a client to send multiple Credential
-/// Request objects to request the issuance of multiple credential at the same
-/// time.
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct BatchCredentialRequest {
-    /// The URL of the Credential Issuer the Wallet can use obtain offered
-    /// Credentials.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub credential_issuer: String,
-
-    /// A previously issued Access Token, as extracted from the Authorization
-    /// header of the Batch Credential Request.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub access_token: String,
-
-    /// An array of Credential Request objects.
-    pub credential_requests: Vec<CredentialRequest>,
-}
-
-/// The Batch Credential Response is a JSON object that contains an array of
-/// Credential Response objects.
-#[derive(Debug, Deserialize, Serialize)]
-pub struct BatchCredentialResponse {
-    /// An array of Credential Response and/or Deferred Credential Response
-    /// objects. Each entry corresponds to the Credential Request object at
-    /// the same array index in the `credential_requests` parameter of the
-    /// Batch Credential Request.
-    pub credential_responses: Vec<CredentialResponse>,
 
     /// A nonce to be used to create a proof of possession of key material when
     /// requesting a Credential. When received, the Wallet MUST use this
@@ -1383,7 +1413,7 @@ mod tests {
     #[test]
     fn authorization_request() {
         let auth_req = AuthorizationRequest {
-            credential_issuer: String::new(),
+            credential_issuer: "https://example.com".into(),
             response_type: "code".into(),
             client_id: "1234".into(),
             redirect_uri: Some("http://localhost:3000/callback".into()),
@@ -1392,7 +1422,7 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                credential_type: CredentialType::Format(CredentialFormat::JwtVcJson),
+                credential_identifier: AuthorizationCredential::Format(CredentialFormat::JwtVcJson),
                 credential_definition: Some(CredentialDefinition {
                     context: Some(vec![
                         "https://www.w3.org/2018/credentials/v1".into(),
@@ -1419,5 +1449,70 @@ mod tests {
         let auth_req_new = serde_qs::from_str::<AuthorizationRequest>(&auth_req_str)
             .expect("should deserialize from string");
         assert_eq!(auth_req, auth_req_new);
+    }
+
+    #[test]
+    fn single_proof() {
+        let json = serde_json::json!({
+          "credential_issuer": "https://example.com",
+          "access_token": "1234",
+          "credential_identifier": "UniversityDegree_JWT",
+          "proof": {
+            "proof_type": "jwt",
+            "jwt": "SomeJWT"
+          }
+        });
+
+        let deserialized: CredentialRequest =
+            serde_json::from_value(json.clone()).expect("should deserialize from json");
+        assert_snapshot!("single-proof", &deserialized);
+
+        let request = CredentialRequest {
+            credential_issuer: "https://example.com".into(),
+            access_token: "1234".into(),
+            credential_type: CredentialType::Identifier("UniversityDegree_JWT".into()),
+            proof_option: Some(ProofOption::Proof {
+                proof_type: ProofType::Jwt {
+                    jwt: "SomeJWT".into(),
+                },
+            }),
+            ..CredentialRequest::default()
+        };
+
+        let serialized = serde_json::to_value(&request).expect("should serialize to string");
+        assert_eq!(json, serialized);
+    }
+
+    #[test]
+    fn multiple_proofs() {
+        let json = serde_json::json!({
+          "credential_issuer": "https://example.com",
+          "access_token": "1234",
+          "credential_identifier": "UniversityDegree_JWT",
+          "proofs": {
+            "jwt": [
+              "SomeJWT1",
+              "SomeJWT2"
+            ]
+          }
+        });
+
+        let deserialized: CredentialRequest =
+            serde_json::from_value(json.clone()).expect("should deserialize from json");
+        assert_snapshot!("multiple-proof", &deserialized);
+
+        let request = CredentialRequest {
+            credential_issuer: "https://example.com".into(),
+            access_token: "1234".into(),
+            credential_type: CredentialType::Identifier("UniversityDegree_JWT".into()),
+            proof_option: Some(ProofOption::Proofs(ProofsType::Jwt(vec![
+                "SomeJWT1".into(),
+                "SomeJWT2".into(),
+            ]))),
+            ..CredentialRequest::default()
+        };
+
+        let serialized = serde_json::to_value(&request).expect("should serialize to string");
+        assert_eq!(json, serialized);
     }
 }

@@ -31,8 +31,7 @@ RESP=$(curl --json '{
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": "normal_user",
         "pre-authorize": true,
-        "tx_code_required": true,
-        "callback_id": "1234"
+        "tx_code_required": true
     }' \
     http://localhost:8080/create_offer)
 
@@ -101,8 +100,7 @@ RESP=$(curl --json '{
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": "normal_user",
         "pre-authorize": true,
-        "tx_code_required": true,
-        "callback_id": "1234"
+        "tx_code_required": true
     }' \
     http://localhost:8080/create_offer)
 

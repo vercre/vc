@@ -4,11 +4,11 @@
 
 use anyhow::{anyhow, bail};
 use tracing::instrument;
-use vercre_core::Kind;
+use vercre_core::{Kind, Quota};
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_openid::issuer::{
-    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, GrantType,
-    Proof, ProofClaims, ProofType, TokenRequest,
+    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, ProofClaims,
+    ProofOption, ProofType, TokenGrantType, TokenRequest,
 };
 use vercre_w3c_vc::proof::{Payload, Verify};
 
@@ -59,9 +59,8 @@ pub async fn get_credentials(
                 return Err(e);
             }
         };
-        let proof = Proof {
-            proof_type: "jwt".into(),
-            proof: ProofType::Jwt(jwt),
+        let proof = ProofOption::Proof {
+            proof_type: ProofType::Jwt { jwt },
         };
 
         let request = credential_request(&issuance, id, cfg, &proof);
@@ -126,37 +125,42 @@ fn token_request(issuance: &Issuance) -> TokenRequest {
     TokenRequest {
         credential_issuer: issuance.offer.credential_issuer.clone(),
         client_id: issuance.client_id.clone(),
-        grant_type: GrantType::PreAuthorizedCode,
-        pre_authorized_code: Some(pre_auth_code.pre_authorized_code.clone()),
-        user_code: issuance.pin.clone(),
+        grant_type: TokenGrantType::PreAuthorizedCode {
+            pre_authorized_code: pre_auth_code.pre_authorized_code.clone(),
+            tx_code: issuance.pin.clone(),
+        },
         ..Default::default()
     }
 }
 
 /// Construct a credential request from an offered credential configuration.
 fn credential_request(
-    issuance: &Issuance, _id: &str, cfg: &CredentialConfiguration, proof: &Proof,
+    issuance: &Issuance, _id: &str, cfg: &CredentialConfiguration, proof: &ProofOption,
 ) -> CredentialRequest {
     CredentialRequest {
         credential_issuer: issuance.offer.credential_issuer.clone(),
         access_token: issuance.token.access_token.clone(),
         credential_type: CredentialType::Format(cfg.format.clone()),
         credential_definition: Some(cfg.credential_definition.clone()),
-        proof: Some(proof.clone()),
+        proof_option: Some(proof.clone()),
         credential_response_encryption: None,
     }
 }
 
 /// Construct a credential from a credential response.
 async fn credential(
-    credential_configuration: &CredentialConfiguration, res: &CredentialResponse,
+    credential_configuration: &CredentialConfiguration, resp: &CredentialResponse,
     resolver: &impl DidResolver,
 ) -> anyhow::Result<Credential> {
-    let Some(value) = res.credential.as_ref() else {
-        bail!("no credential in response");
+    let vc_quota = resp.credential.as_ref().expect("no credential in response");
+    let vc_kind = match vc_quota {
+        Quota::One(vc_kind) => vc_kind,
+        Quota::Many(_) => bail!("expected one credential"),
     };
 
-    let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(value), resolver)
+    // TODO: support multiple credentials in response
+
+    let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), resolver)
         .await
         .map_err(|e| anyhow!("issue parsing credential: {e}"))?
     else {
@@ -169,7 +173,7 @@ async fn credential(
     };
 
     // TODO: add support embedded proof
-    let Kind::String(token) = value else {
+    let Kind::String(token) = vc_kind else {
         bail!("credential is not a JWT");
     };
 

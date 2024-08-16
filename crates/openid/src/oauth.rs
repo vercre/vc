@@ -8,7 +8,6 @@ use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 
 use crate::error;
-use crate::issuer::GrantType;
 
 /// OAuth 2 client metadata used for registering clients of the issuance and
 /// vercre-wallet authorization servers.
@@ -269,4 +268,17 @@ pub struct OAuthServer {
     /// authorization server as a bundle.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub signed_metadata: Option<String>,
+}
+
+/// Grant Types supported by the Authorization Server.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub enum GrantType {
+    /// The OAuth 2.0 Grant Type for Authorization Code Flow.
+    #[serde(rename = "authorization_code")]
+    AuthorizationCode,
+
+    /// The OAuth 2.0 Grant Type for Pre-Authorized Code Flow.
+    #[default]
+    #[serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")]
+    PreAuthorizedCode,
 }

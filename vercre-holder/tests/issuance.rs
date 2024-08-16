@@ -20,7 +20,6 @@ static OFFER_REQUEST: LazyLock<CreateOfferRequest> = LazyLock::new(|| CreateOffe
     subject_id: Some(NORMAL_USER.into()),
     pre_authorize: true,
     tx_code_required: true,
-    callback_id: Some("1234".into()),
 });
 
 #[tokio::test]
