@@ -234,30 +234,26 @@ async fn process(
     let state_key: String;
 
     // if no VC is returned, issuance is deferred
-    match create_vc(context, provider.clone(), request).await? {
-        Some(credential) => {
-            // sign credential (as jwt)
-            let signer = SecOps::signer(&provider, &request.credential_issuer)
-                .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
-            let jwt =
-                vercre_w3c_vc::proof::create(Format::JwtVcJson, Payload::Vc(credential), signer)
-                    .await
-                    .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
+    if let Some(credential) = create_vc(context, provider.clone(), request).await? {
+        // sign credential (as jwt)
+        let signer = SecOps::signer(&provider, &request.credential_issuer)
+            .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
+        let jwt = vercre_w3c_vc::proof::create(Format::JwtVcJson, Payload::Vc(credential), signer)
+            .await
+            .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
 
-            state_key = token_state.access_token;
-            response.credential = Some(Quota::One(Kind::String(jwt)));
-        }
-        None => {
-            let txn_id = gen::transaction_id();
-            state.deferred = Some(Deferred {
-                transaction_id: txn_id.clone(),
-                credential_request: request.clone(),
-            });
+        state_key = token_state.access_token;
+        response.credential = Some(Quota::One(Kind::String(jwt)));
+    } else {
+        let txn_id = gen::transaction_id();
+        state.deferred = Some(Deferred {
+            transaction_id: txn_id.clone(),
+            credential_request: request.clone(),
+        });
 
-            state_key = txn_id.clone();
-            response.transaction_id = Some(txn_id);
-        }
-    };
+        state_key = txn_id.clone();
+        response.transaction_id = Some(txn_id);
+    }
 
     // update state
     StateStore::put(&provider, &state_key, state.to_vec()?, state.expires_at)
