@@ -39,11 +39,10 @@ impl State {
     }
 
     /// Serializes this [`State`] object into a byte array.
-    pub fn to_vec(&self) -> Vec<u8> {
-        // TODO: return Result instead of panicking
+    pub fn to_vec(&self) -> Result<Vec<u8>> {
         match serde_json::to_vec(self) {
-            Ok(res) => res,
-            Err(e) => panic!("Failed to serialize state: {e}"),
+            Ok(res) => Ok(res),
+            Err(e) => Err(Error::ServerError(format!("issue serializing state: {e}"))),
         }
     }
 
@@ -55,7 +54,7 @@ impl State {
                 }
                 Ok(res)
             }
-            Err(e) => Err(Error::ServerError(format!("Failed to deserialize state: {e}"))),
+            Err(e) => Err(Error::ServerError(format!("failed to deserialize state: {e}"))),
         }
     }
 

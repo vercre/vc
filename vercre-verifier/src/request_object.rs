@@ -68,10 +68,9 @@ async fn process(
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use vercre_core::Kind;
     use vercre_dif_exch::PresentationDefinition;
-    use vercre_openid::verifier::{
-        ClientIdScheme, ClientMetadataType, PresentationDefinitionType, RequestObject, ResponseType,
-    };
+    use vercre_openid::verifier::{ClientIdScheme, RequestObject, ResponseType, Verifier};
     use vercre_test_utils::verifier::{Provider, VERIFIER_ID};
     use vercre_w3c_vc::verify_key;
 
@@ -92,11 +91,9 @@ mod tests {
             nonce: nonce.to_string(),
             response_mode: Some("direct_post".into()),
             response_uri: Some(format!("{VERIFIER_ID}/post")),
-            presentation_definition: PresentationDefinitionType::Object(
-                PresentationDefinition::default(),
-            ),
+            presentation_definition: Kind::Object(PresentationDefinition::default()),
             client_id_scheme: Some(ClientIdScheme::RedirectUri),
-            client_metadata: ClientMetadataType::Object(Default::default()),
+            client_metadata: Verifier::default(),
 
             // TODO: populate missing RequestObject attributes
             redirect_uri: None,
@@ -104,9 +101,8 @@ mod tests {
         };
 
         let state = State::builder().request_object(req_obj).build().expect("should build state");
-        StateStore::put(&provider, &state_key, state.to_vec(), state.expires_at)
-            .await
-            .expect("state exists");
+        let buf = state.to_vec().expect("should serialize state");
+        StateStore::put(&provider, &state_key, buf, state.expires_at).await.expect("state exists");
 
         let request = RequestObjectRequest {
             client_id: VERIFIER_ID.to_string(),

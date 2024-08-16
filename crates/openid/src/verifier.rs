@@ -193,8 +193,7 @@ pub struct RequestObject {
     pub state: Option<String>,
 
     /// The Presentation Definition
-    #[serde(flatten)]
-    pub presentation_definition: PresentationDefinitionType,
+    pub presentation_definition: Kind<PresentationDefinition>,
 
     /// The `client_id_scheme` is used to specify how the Wallet should to obtain and
     /// validate Verifier metadata. The following values indicate how the Wallet
@@ -211,10 +210,9 @@ pub struct RequestObject {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub client_id_scheme: Option<ClientIdScheme>,
 
-    /// Client Metadata contains Verifier metadata values. It MUST NOT be set if
-    /// the `client_metadata_uri` parameter is set.
-    #[serde(flatten)]
-    pub client_metadata: ClientMetadataType,
+    /// Client Metadata contains Verifier metadata values.
+    #[serde(with = "stringify")]
+    pub client_metadata: Verifier,
 }
 
 /// The type of response expected from the Wallet (as Authorization Server).
@@ -241,7 +239,7 @@ pub enum ClientIdScheme {
     /// The Client Identifier is the redirect URI (or response URI).
     /// The Authorization Request MUST NOT be signed, the Verifier MAY omit the
     /// `redirect_uri` parameter, and all Verifier metadata parameters MUST be passed
-    /// using the `client_metadata` or `client_metadata_uri` parameter.
+    /// using the `client_metadata` parameter.
     /// If used in conjunction with the Response Mode "`direct_post`", and the
     /// `response_uri` parameter is present, the `client_id` value MUST be equal to
     /// the `response_uri` value.
@@ -257,8 +255,7 @@ pub enum ClientIdScheme {
     /// request in question MUST be identified by the `kid` in the JOSE Header.
     /// To obtain the DID Document, the Wallet MUST use DID  Resolution defined
     /// by the DID method used by the Verifier. All Verifier metadata other than
-    /// the public key MUST be obtained from the `client_metadata` or the
-    /// `client_metadata_uri` parameter.
+    /// the public key MUST be obtained from the `client_metadata` parameter.
     #[serde(rename = "did")]
     Did,
     // ---------------------------------------------------------------------
@@ -277,7 +274,7 @@ pub enum ClientIdScheme {
     // /// adds a `redirect_uris` claim to the attestation, the Wallet MUST ensure the
     // /// `redirect_uri` request parameter value exactly matches one of the `redirect_uris`
     // /// claim entries. All Verifier metadata other than the public key MUST be
-    // /// obtained from the `client_metadata` or the `client_metadata_uri` parameter.
+    // /// obtained from the `client_metadata`.
     // #[serde(rename = "verifier_attestation")]
     // VerifierAttestation,
 
@@ -293,7 +290,7 @@ pub enum ClientIdScheme {
     // /// OpenID.Federation processing rules are followed, OpenID.Federation automatic
     // /// registration is used, the request may contain a `trust_chain` parameter, the
     // /// Wallet only obtains Verifier metadata from Entity Statement(s),
-    // /// `client_metadata` or `client_metadata_uri` are not set.
+    // /// `client_metadata`.
     // #[serde(rename = "entity_id")]
     // EntityId,
 
@@ -310,50 +307,28 @@ pub enum ClientIdScheme {
     // X509SanUri,
 }
 
-/// The type of Presentation Definition returned by the `RequestObject`: either an object
-/// or a URI.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[allow(clippy::module_name_repetitions)]
-pub enum PresentationDefinitionType {
-    /// A Presentation Definition object embedded in the `RequestObject`.
-    #[serde(rename = "presentation_definition")]
-    Object(PresentationDefinition),
+// /// The type of Presentation Definition returned by the `RequestObject`: either an object
+// /// or a URI.
+// #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+// #[allow(clippy::module_name_repetitions)]
+// pub enum PresentationDefinitionType {
+//     /// A Presentation Definition object embedded in the `RequestObject`.
+//     #[serde(rename = "presentation_definition")]
+//     Object(PresentationDefinition),
 
-    /// A URI pointing to where a Presentation Definition object can be
-    /// retrieved. This parameter MUST be set when neither
-    /// `presentation_definition` nor a Presentation Definition scope value
-    /// are set.
-    #[serde(rename = "presentation_definition_uri")]
-    Uri(String),
-}
+//     /// A URI pointing to where a Presentation Definition object can be
+//     /// retrieved. This parameter MUST be set when neither
+//     /// `presentation_definition` nor a Presentation Definition scope value
+//     /// are set.
+//     #[serde(rename = "presentation_definition_uri")]
+//     Uri(String),
+// }
 
-impl Default for PresentationDefinitionType {
-    fn default() -> Self {
-        Self::Object(PresentationDefinition::default())
-    }
-}
-
-/// The type of Client Metadata returned in the `RequestObject`: either an object
-/// or a URI.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[allow(clippy::large_enum_variant)]
-pub enum ClientMetadataType {
-    /// A Client Metadata object embedded in the `RequestObject`.
-    #[serde(rename = "client_metadata")]
-    #[serde(with = "stringify")]
-    Object(Verifier),
-
-    /// A URI pointing to where a Client Metadata object can be
-    /// retrieved.
-    #[serde(rename = "client_metadata_uri")]
-    Uri(String),
-}
-
-impl Default for ClientMetadataType {
-    fn default() -> Self {
-        Self::Object(Verifier::default())
-    }
-}
+// impl Default for PresentationDefinitionType {
+//     fn default() -> Self {
+//         Self::Object(PresentationDefinition::default())
+//     }
+// }
 
 impl RequestObject {
     /// Generate qrcode for Request Object.

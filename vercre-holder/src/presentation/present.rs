@@ -8,7 +8,7 @@ use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::Kind;
 use vercre_dif_exch::{DescriptorMap, FilterValue, PathNested, PresentationSubmission};
-use vercre_openid::verifier::{PresentationDefinitionType, ResponseRequest, ResponseResponse};
+use vercre_openid::verifier::{ResponseRequest, ResponseResponse};
 use vercre_w3c_vc::model::vp::VerifiablePresentation;
 use vercre_w3c_vc::proof::{self, Format, Payload};
 
@@ -94,8 +94,8 @@ pub async fn present(
 fn create_submission(presentation: &Presentation) -> anyhow::Result<PresentationSubmission> {
     let request = presentation.request.clone();
     let pd = match &request.presentation_definition {
-        PresentationDefinitionType::Object(pd) => pd,
-        PresentationDefinitionType::Uri(_) => bail!("presentation_definition_uri is unsupported"),
+        Kind::Object(pd) => pd,
+        Kind::String(_) => bail!("presentation_definition_uri is unsupported"),
     };
 
     let mut desc_map: Vec<DescriptorMap> = vec![];
@@ -131,8 +131,8 @@ fn create_vp(
         .holder(holder_did);
 
     let pd = match &presentation.request.presentation_definition {
-        PresentationDefinitionType::Object(pd) => pd,
-        PresentationDefinitionType::Uri(_) => bail!("presentation_definition_uri is unsupported"),
+        Kind::Object(pd) => pd,
+        Kind::String(_) => bail!("presentation_definition_uri is unsupported"),
     };
 
     for input in &pd.input_descriptors {

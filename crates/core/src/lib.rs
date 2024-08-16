@@ -31,6 +31,24 @@ impl<T: Default> Default for Kind<T> {
     }
 }
 
+impl<T: Default> Kind<T> {
+    /// Returns `true` if the quota is a single object.
+    pub const fn is_string(&self) -> bool {
+        match self {
+            Self::String(_) => true,
+            Self::Object(_) => false,
+        }
+    }
+
+    /// Returns `true` if the quota contains an array of objects.
+    pub const fn is_object(&self) -> bool {
+        match self {
+            Self::String(_) => false,
+            Self::Object(_) => true,
+        }
+    }
+}
+
 /// `Quota` allows serde to serialize/deserialize a single object or a set of objects.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]

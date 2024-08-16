@@ -228,8 +228,6 @@ mod tests {
             serde_json::from_value::<TokenRequest>(body).expect("request should deserialize");
         request.credential_issuer = CREDENTIAL_ISSUER.to_string();
 
-        println!("request: {:#?}", request);
-
         let response = token(provider.clone(), &request).await.expect("response is valid");
         assert_snapshot!("simpl-token", &response, {
             ".access_token" => "[access_token]",

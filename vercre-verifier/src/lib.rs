@@ -181,7 +181,7 @@ pub use request_object::request_object;
 pub use response::response;
 pub use vercre_dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 pub use vercre_openid::verifier::{
-    ClientIdScheme, ClientMetadataType, CreateRequestRequest, CreateRequestResponse, DeviceFlow,
-    MetadataRequest, MetadataResponse, PresentationDefinitionType, RequestObject,
-    RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse, ResponseType,
+    ClientIdScheme, CreateRequestRequest, CreateRequestResponse, DeviceFlow, MetadataRequest,
+    MetadataResponse, RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest,
+    ResponseResponse, ResponseType,
 };
