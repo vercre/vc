@@ -5,7 +5,6 @@ expression: response
 ---
 credential_issuer: "http://vercre.io"
 credential_endpoint: "http://vercre.io/credential"
-batch_credential_endpoint: "http://vercre.io/batch"
 deferred_credential_endpoint: "http://vercre.io/deferred"
 display:
   name: Vercre

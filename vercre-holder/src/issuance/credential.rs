@@ -4,7 +4,7 @@
 
 use anyhow::{anyhow, bail};
 use tracing::instrument;
-use vercre_core::Kind;
+use vercre_core::{Kind, Quota};
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_openid::issuer::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, ProofClaims,
@@ -149,14 +149,18 @@ fn credential_request(
 
 /// Construct a credential from a credential response.
 async fn credential(
-    credential_configuration: &CredentialConfiguration, res: &CredentialResponse,
+    credential_configuration: &CredentialConfiguration, resp: &CredentialResponse,
     resolver: &impl DidResolver,
 ) -> anyhow::Result<Credential> {
-    let Some(value) = res.credential.as_ref() else {
-        bail!("no credential in response");
+    let vc_quota = resp.credential.as_ref().expect("no credential in response");
+    let vc_kind = match vc_quota {
+        Quota::One(vc_kind) => vc_kind,
+        Quota::Many(_) => bail!("expected one credential"),
     };
 
-    let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(value), resolver)
+    // TODO: support multiple credentials in response
+
+    let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), resolver)
         .await
         .map_err(|e| anyhow!("issue parsing credential: {e}"))?
     else {
@@ -169,7 +173,7 @@ async fn credential(
     };
 
     // TODO: add support embedded proof
-    let Kind::String(token) = value else {
+    let Kind::String(token) = vc_kind else {
         bail!("credential is not a JWT");
     };
 

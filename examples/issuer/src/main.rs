@@ -26,9 +26,9 @@ use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 use vercre_issuer::{
-    AuthorizationRequest, BatchCredentialRequest, BatchCredentialResponse, CreateOfferRequest,
-    CreateOfferResponse, CredentialRequest, CredentialResponse, DeferredCredentialRequest,
-    DeferredCredentialResponse, MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,
+    AuthorizationRequest, CreateOfferRequest, CreateOfferResponse, CredentialRequest,
+    CredentialResponse, DeferredCredentialRequest, DeferredCredentialResponse, MetadataRequest,
+    MetadataResponse, TokenRequest, TokenResponse,
 };
 
 use crate::provider::Provider;
@@ -50,7 +50,6 @@ async fn main() {
         .route("/login", post(login))
         .route("/token", post(token))
         .route("/credential", post(credential))
-        .route("/batch_credential", post(batch_credential))
         .route("/deferred_credential", post(deferred_credential))
         .layer(TraceLayer::new_for_http())
         .layer(cors)
@@ -226,18 +225,6 @@ async fn deferred_credential(
     req.credential_issuer = format!("http://{host}");
     req.access_token = auth.0.token().to_string();
     vercre_issuer::deferred(provider.clone(), &req).await.into()
-}
-
-// Batch endpoint
-#[axum::debug_handler]
-async fn batch_credential(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
-    TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
-    Json(mut req): Json<BatchCredentialRequest>,
-) -> AxResult<BatchCredentialResponse> {
-    req.credential_issuer = format!("http://{host}");
-    req.access_token = auth.0.token().to_string();
-    vercre_issuer::batch(provider.clone(), &req).await.into()
 }
 
 // ----------------------------------------------------------------------------

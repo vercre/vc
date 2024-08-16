@@ -87,7 +87,6 @@
 //! [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
 
 mod authorize;
-mod batch;
 mod create_offer;
 mod credential;
 mod deferred;
@@ -110,7 +109,6 @@ pub mod provider {
 // use std::future::Future;
 
 pub use authorize::authorize;
-pub use batch::batch;
 pub use create_offer::create_offer;
 pub use credential::credential;
 pub use deferred::deferred;
@@ -119,12 +117,12 @@ pub use register::register;
 pub use token::token;
 pub use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType,
-    AuthorizationRequest, AuthorizationResponse, BatchCredentialRequest, BatchCredentialResponse,
-    CreateOfferRequest, CreateOfferResponse, CredentialConfiguration, CredentialOffer,
-    CredentialOfferType, CredentialRequest, CredentialResponse, CredentialType,
-    DeferredCredentialRequest, DeferredCredentialResponse, Grants, MetadataRequest,
-    MetadataResponse, PreAuthorizedCodeGrant, ProofClaims, ProofType, RegistrationRequest,
-    RegistrationResponse, TokenAuthorizationDetail, TokenRequest, TokenResponse, TxCode,
+    AuthorizationRequest, AuthorizationResponse, CreateOfferRequest, CreateOfferResponse,
+    CredentialConfiguration, CredentialOffer, CredentialOfferType, CredentialRequest,
+    CredentialResponse, CredentialType, DeferredCredentialRequest, DeferredCredentialResponse,
+    Grants, MetadataRequest, MetadataResponse, PreAuthorizedCodeGrant, ProofClaims, ProofType,
+    RegistrationRequest, RegistrationResponse, TokenAuthorizationDetail, TokenRequest,
+    TokenResponse, TxCode,
 };
 pub use vercre_openid::Result;
 

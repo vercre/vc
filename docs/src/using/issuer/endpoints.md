@@ -7,7 +7,6 @@ called in sequence to issue a Credential. The primary endpoints are:
 - `Authorization` — OAuth 2.0 Authorization endpoint
 - `Token` — OAuth 2.0 Token endpoint
 - `Credential` — issues requested Credential
-- `Batch Credential` — issuances multiple Credentials in a single batch
 - `Deferred Credential` — issues Credential when issuance has been 'deferred'
 - `Metadata` — Issuer and Credential metadata
 - `Notification` — used by the Wallet to notify of events about issued Credentials
@@ -154,12 +153,6 @@ The Wallet sends the Access Token obtained at the Token Endpoint to this endpoin
 Wallet MAY use the same Access Token to send multiple Credential Requests to request
 issuance of multiple Credentials of different types bound to the same proof, or multiple
 Credentials of the same type bound to different proofs.
-
-### Batch Credential
-
-The `Batch Credential` endpoint is used by the Wallet to request issuance of multiple Credentials
-in a single batch. Other than batched Credential requests and responses, this endpoint is the same
-as the Credential endpoint.
 
 ### Deferred Credential
 

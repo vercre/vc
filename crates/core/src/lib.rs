@@ -47,3 +47,21 @@ impl<T: Default> Default for Quota<T> {
         Self::One(T::default())
     }
 }
+
+impl<T: Default> Quota<T> {
+    /// Returns `true` if the quota is a single object.
+    pub const fn is_one(&self) -> bool {
+        match self {
+            Self::One(_) => true,
+            Self::Many(_) => false,
+        }
+    }
+
+    /// Returns `true` if the quota contains an array of objects.
+    pub const fn is_many(&self) -> bool {
+        match self {
+            Self::One(_) => false,
+            Self::Many(_) => true,
+        }
+    }
+}

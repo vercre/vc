@@ -10,7 +10,7 @@ use base64ct::{Base64, Encoding};
 use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use vercre_core::{stringify, Kind};
+use vercre_core::{stringify, Kind, Quota};
 use vercre_datasec::jose::jwk::PublicKeyJwk;
 use vercre_datasec::SecOps;
 use vercre_did::DidResolver;
@@ -855,8 +855,7 @@ pub struct ProofClaims {
 }
 
 /// `CredentialResponseEncryption` contains information about whether the Credential
-/// Issuer supports encryption of the Credential and Batch Credential Response on
-/// top of TLS.
+/// Issuer supports encryption of the Credential Response on top of TLS.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredentialResponseEncryption {
     /// The public key used for encrypting the Credential Response.
@@ -885,7 +884,7 @@ pub struct CredentialResponse {
     /// The issued Credential. MUST be present when `transaction_id` is not
     /// returned.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential: Option<Kind<VerifiableCredential>>,
+    pub credential: Option<Quota<Kind<VerifiableCredential>>>,
 
     /// Identifies a Deferred Issuance transaction. This property is set if the
     /// Credential Issuer was unable to immediately issue the credential. The value
@@ -895,59 +894,6 @@ pub struct CredentialResponse {
     /// obtained by the Wallet.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub transaction_id: Option<String>,
-
-    /// A nonce to be used to create a proof of possession of key material when
-    /// requesting a Credential. When received, the Wallet MUST use this
-    /// value for its subsequent credential requests until the Credential
-    /// Issuer provides a fresh nonce.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub c_nonce: Option<String>,
-
-    /// The lifetime in seconds of the `c_nonce` parameter.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub c_nonce_expires_in: Option<i64>,
-}
-
-// /// The type of Credential Offer returned in a `CreateOfferResponse`: either an object
-// /// or a URI.
-// #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-// pub enum CredentialValue {
-//     /// A Credential Offer object that can be sent to a Wallet as an HTTP GET request.
-//     Object(VerifiableCredential),
-
-//     /// A URI pointing to the Credential Offer Endpoint where a `CredentialOffer` object
-//     /// can be retrieved.
-//     Jwt(String),
-// }
-
-/// The Batch Credential Endpoint allows a client to send multiple Credential
-/// Request objects to request the issuance of multiple credential at the same
-/// time.
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct BatchCredentialRequest {
-    /// The URL of the Credential Issuer the Wallet can use obtain offered
-    /// Credentials.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub credential_issuer: String,
-
-    /// A previously issued Access Token, as extracted from the Authorization
-    /// header of the Batch Credential Request.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub access_token: String,
-
-    /// An array of Credential Request objects.
-    pub credential_requests: Vec<CredentialRequest>,
-}
-
-/// The Batch Credential Response is a JSON object that contains an array of
-/// Credential Response objects.
-#[derive(Debug, Deserialize, Serialize)]
-pub struct BatchCredentialResponse {
-    /// An array of Credential Response and/or Deferred Credential Response
-    /// objects. Each entry corresponds to the Credential Request object at
-    /// the same array index in the `credential_requests` parameter of the
-    /// Batch Credential Request.
-    pub credential_responses: Vec<CredentialResponse>,
 
     /// A nonce to be used to create a proof of possession of key material when
     /// requesting a Credential. When received, the Wallet MUST use this

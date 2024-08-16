@@ -5,6 +5,7 @@ use chrono::Utc;
 use futures::future::TryFutureExt;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
+use vercre_core::Quota;
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_issuer::{
     CreateOfferRequest, CreateOfferResponse, CredentialOfferType, CredentialRequest,
@@ -24,13 +25,14 @@ async fn pre_auth_flow() {
     // go through the pre-auth code flow
     let resp = get_offer().and_then(get_token).and_then(get_credential).await.expect("Ok");
 
-    let Some(vc_kind) = &resp.credential else {
-        panic!("VC is not present");
+    let vc_quota = resp.credential.expect("no credential in response");
+    let Quota::One(vc_kind) = vc_quota else {
+        panic!("expected one credential");
     };
 
     let provider = ISSUER_PROVIDER.clone();
     let Payload::Vc(vc) =
-        vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), &provider).await.expect("should decode")
+        vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
     else {
         panic!("should be VC");
     };
