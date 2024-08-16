@@ -21,7 +21,7 @@ static PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::ne
 
 // Run through entire authorization code flow.
 #[tokio::test]
-async fn auth_code_flow() {
+async fn authorization_flow() {
     vercre_test_utils::init_tracer();
 
     // go through the auth code flow
