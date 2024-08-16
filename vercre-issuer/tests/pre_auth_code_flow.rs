@@ -15,7 +15,7 @@ use vercre_test_utils::holder;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_w3c_vc::proof::{Payload, Verify};
 
-static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
+static PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
 
 // Run through entire pre-authorized code flow.
 #[tokio::test]
@@ -30,7 +30,7 @@ async fn pre_auth_flow() {
         panic!("expected one credential");
     };
 
-    let provider = ISSUER_PROVIDER.clone();
+    let provider = PROVIDER.clone();
     let Payload::Vc(vc) =
         vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
     else {
@@ -58,7 +58,7 @@ async fn get_offer() -> vercre_openid::Result<CreateOfferResponse> {
         serde_json::from_value::<CreateOfferRequest>(body).expect("should deserialize");
     request.credential_issuer = CREDENTIAL_ISSUER.into();
 
-    vercre_issuer::create_offer(ISSUER_PROVIDER.clone(), &request).await
+    vercre_issuer::create_offer(PROVIDER.clone(), &request).await
 }
 
 // Simulate Wallet request to '/token' endpoint with pre-authorized code to get
@@ -79,7 +79,7 @@ async fn get_token(input: CreateOfferResponse) -> vercre_openid::Result<TokenRes
     let mut request = serde_json::from_value::<TokenRequest>(body).expect("should deserialize");
     request.credential_issuer = CREDENTIAL_ISSUER.into();
 
-    vercre_issuer::token(ISSUER_PROVIDER.clone(), &request).await
+    vercre_issuer::token(PROVIDER.clone(), &request).await
 }
 
 // Simulate Wallet request to '/credential' endpoint with access token to get credential.
@@ -111,5 +111,5 @@ async fn get_credential(input: TokenResponse) -> vercre_openid::Result<Credentia
     request.credential_issuer = CREDENTIAL_ISSUER.into();
     request.access_token = input.access_token;
 
-    vercre_issuer::credential(ISSUER_PROVIDER.clone(), &request).await
+    vercre_issuer::credential(PROVIDER.clone(), &request).await
 }

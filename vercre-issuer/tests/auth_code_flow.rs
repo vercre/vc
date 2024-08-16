@@ -12,11 +12,12 @@ use vercre_issuer::{
     AuthorizationCredential, AuthorizationRequest, AuthorizationResponse, CredentialRequest,
     CredentialResponse, ProofClaims, TokenRequest, TokenResponse,
 };
+use vercre_openid::Result;
 use vercre_test_utils::holder;
-use vercre_test_utils::issuer::{self, CREDENTIAL_ISSUER, NORMAL_USER};
-use vercre_w3c_vc::proof::{Payload, Verify};
+use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+use vercre_w3c_vc::proof::{self, Payload, Verify};
 
-static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
+static PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provider::new);
 
 // Run through entire authorization code flow.
 #[tokio::test]
@@ -31,9 +32,9 @@ async fn auth_code_flow() {
         panic!("expected one credential");
     };
 
-    let provider = ISSUER_PROVIDER.clone();
+    let provider = PROVIDER.clone();
     let Payload::Vc(vc) =
-        vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
+        proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
     else {
         panic!("should be VC");
     };
@@ -47,40 +48,34 @@ async fn auth_code_flow() {
 
 // Simulate Issuer request to '/create_offer' endpoint to get credential offer to use to
 // make credential offer to Wallet.
-async fn authorize() -> vercre_openid::Result<AuthorizationResponse> {
-    // authorize request
-    let auth_dets = json!([{
-        "type": "openid_credential",
-        "format": "jwt_vc_json",
-        "credential_definition": {
-            "context": [
-                "https://www.w3.org/2018/credentials/v1",
-                "https://www.w3.org/2018/credentials/examples/v1"
-            ],
-            "type": [
-                "VerifiableCredential",
-                "EmployeeIDCredential"
-            ],
-            "credentialSubject": {
-                "givenName": {},
-                "familyName": {},
-                "email": {}
-            }
-        }
-    }])
-    .to_string();
-
-    let verifier_hash = Sha256::digest("ABCDEF12345");
-
+async fn authorize() -> Result<AuthorizationResponse> {
     // create request
     let body = json!({
         "response_type": "code",
-        "client_id": issuer::CLIENT_ID,
+        "client_id": CLIENT_ID,
         "redirect_uri": "http://localhost:3000/callback",
         "state": "1234",
-        "code_challenge": Base64UrlUnpadded::encode_string(&verifier_hash),
+        "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
         "code_challenge_method": "S256",
-        "authorization_details": auth_dets,
+        "authorization_details": json!([{
+            "type": "openid_credential",
+            "format": "jwt_vc_json",
+            "credential_definition": {
+                "context": [
+                    "https://www.w3.org/2018/credentials/v1",
+                    "https://www.w3.org/2018/credentials/examples/v1"
+                ],
+                "type": [
+                    "VerifiableCredential",
+                    "EmployeeIDCredential"
+                ],
+                "credentialSubject": {
+                    "givenName": {},
+                    "familyName": {},
+                    "email": {}
+                }
+            }
+        }]).to_string(),
         "subject_id": NORMAL_USER,
         "wallet_issuer": CREDENTIAL_ISSUER
     });
@@ -88,15 +83,15 @@ async fn authorize() -> vercre_openid::Result<AuthorizationResponse> {
         serde_json::from_value::<AuthorizationRequest>(body).expect("should deserialize");
     request.credential_issuer = CREDENTIAL_ISSUER.to_string();
 
-    vercre_issuer::authorize(ISSUER_PROVIDER.clone(), &request).await
+    vercre_issuer::authorize(PROVIDER.clone(), &request).await
 }
 
 // Simulate Wallet request to '/token' endpoint with pre-authorized code to get
 // access token
-async fn get_token(input: AuthorizationResponse) -> vercre_openid::Result<TokenResponse> {
+async fn get_token(input: AuthorizationResponse) -> Result<TokenResponse> {
     // create TokenRequest to 'send' to the app
     let body = json!({
-        "client_id": issuer::CLIENT_ID,
+        "client_id": CLIENT_ID,
         "grant_type": "authorization_code",
         "code": &input.code,
         "code_verifier": "ABCDEF12345",
@@ -107,7 +102,7 @@ async fn get_token(input: AuthorizationResponse) -> vercre_openid::Result<TokenR
     request.credential_issuer = CREDENTIAL_ISSUER.to_string();
 
     let response =
-        vercre_issuer::token(ISSUER_PROVIDER.clone(), &request).await.expect("should get token");
+        vercre_issuer::token(PROVIDER.clone(), &request).await.expect("should get token");
 
     assert_snapshot!("token", &response, {
         ".access_token" => "[access_token]",
@@ -120,30 +115,25 @@ async fn get_token(input: AuthorizationResponse) -> vercre_openid::Result<TokenR
 }
 
 // Simulate Wallet request to '/credential' endpoint with access token to get credential.
-async fn get_credential(input: TokenResponse) -> vercre_openid::Result<CredentialResponse> {
-    // create CredentialRequest to 'send' to the app
-    let claims = ProofClaims {
-        iss: Some(issuer::CLIENT_ID.into()),
-        aud: CREDENTIAL_ISSUER.to_string(),
-        iat: Utc::now().timestamp(),
-        nonce: input.c_nonce,
-    };
-    let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
-
+async fn get_credential(input: TokenResponse) -> Result<CredentialResponse> {
     // HACK: get credential identifier
     let Some(auth_dets) = input.authorization_details else {
         panic!("No authorization details");
     };
-    // let Some(identifiers) = &auth_dets[0].credential_identifiers else {
-    //     panic!("No credential identifiers");
-    // };
-
     let auth_det = auth_dets[0].authorization_detail.clone();
 
     // TODO: get identifier from token
     let AuthorizationCredential::Format(format) = auth_det.credential_identifier.clone() else {
         panic!("unexpected credential type");
     };
+
+    let claims = ProofClaims {
+        iss: Some(CLIENT_ID.into()),
+        aud: CREDENTIAL_ISSUER.to_string(),
+        iat: Utc::now().timestamp(),
+        nonce: input.c_nonce,
+    };
+    let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
 
     let body = json!({
         "format": format,
@@ -159,5 +149,5 @@ async fn get_credential(input: TokenResponse) -> vercre_openid::Result<Credentia
     request.credential_issuer = CREDENTIAL_ISSUER.to_string();
     request.access_token = input.access_token;
 
-    vercre_issuer::credential(ISSUER_PROVIDER.clone(), &request).await
+    vercre_issuer::credential(PROVIDER.clone(), &request).await
 }
