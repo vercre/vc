@@ -1,0 +1,8 @@
+---
+source: vercre-issuer/tests/wallet.rs
+assertion_line: 141
+expression: "&response"
+---
+transaction_id: "[transaction_id]"
+c_nonce: "[c_nonce]"
+c_nonce_expires_in: "[c_nonce_expires_in]"

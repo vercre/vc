@@ -289,13 +289,14 @@ async fn create_vc(
         return Ok(None);
     }
 
+    // TODO: need to check authorized claims (claims in credential offer or authorization request)
     // retain ONLY requested (and mandatory) claims
-    let def_cred_subj = &definition.credential_subject.unwrap_or_default();
+    let cred_subj_def = &definition.credential_subject.unwrap_or_default();
     if let Some(req_cred_def) = &request.credential_definition {
         if let Some(req_cred_subj) = &req_cred_def.credential_subject {
             let mut claims = claims_resp.claims;
             claims.retain(|key, _| {
-                req_cred_subj.get(key).is_some() || def_cred_subj.get(key).is_some()
+                req_cred_subj.get(key).is_some() || cred_subj_def.get(key).is_some()
             });
             claims_resp.claims = claims;
         }

@@ -70,7 +70,11 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
 
     // grant_type
     match &request.grant_type {
-        TokenGrantType::AuthorizationCode { code_verifier, .. } => {
+        TokenGrantType::AuthorizationCode {
+            redirect_uri,
+            code_verifier,
+            ..
+        } => {
             // client_id is the same as the one used to obtain the authorization code
             if Some(&request.client_id) != context.state.client_id.as_ref() {
                 return Err(Error::InvalidGrant("client_id differs from authorized one".into()));
@@ -78,7 +82,7 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
 
             // redirect_uri is the same as the one provided in authorization request
             // i.e. either 'None' or 'Some(redirect_uri)'
-            if request.redirect_uri != auth_state.redirect_uri {
+            if redirect_uri != &auth_state.redirect_uri {
                 return Err(Error::InvalidGrant("redirect_uri differs from authorized one".into()));
             }
 

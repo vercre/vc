@@ -8,7 +8,6 @@ use vercre_test_utils::issuer::{self, CREDENTIAL_ISSUER, NORMAL_USER};
 #[tokio::test]
 async fn pre_authorized() {
     vercre_test_utils::init_tracer();
-
     let provider = issuer::Provider::new();
 
     // create offer
@@ -24,13 +23,15 @@ async fn pre_authorized() {
         vercre_issuer::create_offer(provider.clone(), &request).await.expect("should create offer");
 
     // send offer to wallet
-    let CredentialOfferType::Object(offer) = &response.credential_offer else {
+    let CredentialOfferType::Object(offer) = response.credential_offer else {
         panic!("offer should be an object");
     };
 
     let wallet = wallet::Wallet {
+        snapshot: "pre_authorized".to_string(),
         provider: provider.clone(),
         tx_code: response.tx_code,
     };
-    wallet.credential_offer(&offer).await.expect("should get credential");
+
+    wallet.issuer_initiated(offer).await.expect("should get credential");
 }

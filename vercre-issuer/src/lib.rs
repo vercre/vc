@@ -121,8 +121,8 @@ pub use vercre_openid::issuer::{
     CredentialConfiguration, CredentialOffer, CredentialOfferType, CredentialRequest,
     CredentialResponse, CredentialType, DeferredCredentialRequest, DeferredCredentialResponse,
     Grants, MetadataRequest, MetadataResponse, PreAuthorizedCodeGrant, ProofClaims, ProofType,
-    RegistrationRequest, RegistrationResponse, TokenAuthorizationDetail, TokenRequest,
-    TokenResponse, TxCode,
+    RegistrationRequest, RegistrationResponse, TokenAuthorizationDetail, TokenGrantType,
+    TokenRequest, TokenResponse, TxCode,
 };
 pub use vercre_openid::Result;
 

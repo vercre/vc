@@ -112,7 +112,7 @@ pub struct CreateOfferResponse {
     #[serde(flatten)]
     pub credential_offer: CredentialOfferType,
 
-    /// A transaction code to be provided by the End-User in order to complete 
+    /// A transaction code to be provided by the End-User in order to complete
     /// a credential request.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tx_code: Option<String>,
@@ -538,14 +538,6 @@ pub struct TokenRequest {
     #[serde(flatten)]
     pub grant_type: TokenGrantType,
 
-    /// The client's redirection endpoint if `redirect_uri` was included in the
-    /// authorization request. Only used when `grant_type` is "`authorization_code`".
-    ///
-    /// REQUIRED if the `redirect_uri` parameter was included in the authorization
-    /// request; values MUST be identical.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub redirect_uri: Option<String>,
-
     /// Authorization Details is used to convey the details about the Credentials
     /// the Wallet wants to obtain.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -579,6 +571,13 @@ pub enum TokenGrantType {
         /// Wallet use the Authorization Code Flow.
         code: String,
 
+        /// The client's redirection endpoint if `redirect_uri` was included in the
+        /// authorization request.
+        /// REQUIRED if the `redirect_uri` parameter was included in the authorization
+        /// request; values MUST be identical.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        redirect_uri: Option<String>,
+
         /// PKCE code verifier provided by the Wallet when using the Authorization
         /// Code Flow. MUST be able to verify the `code_challenge` provided in
         /// the authorization request.
@@ -605,6 +604,7 @@ impl Default for TokenGrantType {
     fn default() -> Self {
         Self::AuthorizationCode {
             code: String::new(),
+            redirect_uri: None,
             code_verifier: None,
         }
     }
