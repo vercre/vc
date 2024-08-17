@@ -84,7 +84,7 @@ pub struct Auth {
     pub scope: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub user_code: Option<String>,
+    pub tx_code: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub authorization_details: Option<Vec<TokenAuthorizationDetail>>,

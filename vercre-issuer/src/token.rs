@@ -102,9 +102,9 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
             {
                 return Err(Error::InvalidClient("anonymous access is not supported".into()));
             }
-            // user_code
-            if tx_code != &auth_state.user_code {
-                return Err(Error::InvalidGrant("invalid user_code provided".into()));
+            // tx_code
+            if tx_code != &auth_state.tx_code {
+                return Err(Error::InvalidGrant("invalid tx_code provided".into()));
             }
         }
     }
@@ -207,7 +207,7 @@ mod tests {
         let pre_auth_code = "ABCDEF";
 
         state.auth = Some(Auth {
-            user_code: Some("1234".into()),
+            tx_code: Some("1234".into()),
             ..Default::default()
         });
 

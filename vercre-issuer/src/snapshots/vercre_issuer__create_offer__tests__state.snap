@@ -9,4 +9,4 @@ credential_identifiers:
   - EmployeeID_JWT
 subject_id: normal_user
 auth:
-  user_code: "[user_code]"
+  tx_code: "[tx_code]"

@@ -140,7 +140,7 @@ async fn process(
 
     let mut pre_auth_grant = None;
     let mut auth_grant = None;
-    let mut user_code = None;
+    let mut tx_code = None;
 
     if request.pre_authorize {
         // -------------------------
@@ -148,7 +148,7 @@ async fn process(
         // -------------------------
         let pre_auth_code = gen::auth_code();
 
-        let tx_code = if request.tx_code_required {
+        let tx_code_def = if request.tx_code_required {
             Some(TxCode {
                 input_mode: Some("numeric".into()),
                 length: Some(6),
@@ -160,17 +160,17 @@ async fn process(
 
         pre_auth_grant = Some(PreAuthorizedCodeGrant {
             pre_authorized_code: pre_auth_code.clone(),
-            tx_code,
+            tx_code: tx_code_def,
             ..PreAuthorizedCodeGrant::default()
         });
 
         if request.tx_code_required {
-            user_code = Some(gen::user_code());
+            tx_code = Some(gen::tx_code());
         }
 
         // save state by pre-auth_code
         let auth_state = Auth::builder()
-            .user_code(user_code.clone())
+            .tx_code(tx_code.clone())
             .build()
             .map_err(|e| Error::ServerError(format!("issue building auth state: {e}")))?;
         state.auth = Some(auth_state);
@@ -203,7 +203,7 @@ async fn process(
                 pre_authorized_code: pre_auth_grant,
             }),
         }),
-        user_code,
+        tx_code,
     })
 }
 
@@ -237,7 +237,7 @@ mod tests {
         assert_snapshot!("create_offer", &response, {
             ".credential_offer.grants.authorization_code.issuer_state" => "[state]",
             ".credential_offer.grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
-            ".user_code" => "[user_code]"
+            ".tx_code" => "[tx_code]"
         });
 
         // check redacted fields
@@ -257,10 +257,10 @@ mod tests {
             ".expires_at" => "[expires_at]",
             ".auth.code"=>"[code]",
             ".auth.issuer_state" => "[issuer_state]",
-            ".auth.user_code" => "[user_code]"
+            ".auth.tx_code" => "[tx_code]"
         });
 
         assert_let!(Some(auth_state), &state.auth);
-        assert_eq!(auth_state.user_code, response.user_code);
+        assert_eq!(auth_state.tx_code, response.tx_code);
     }
 }

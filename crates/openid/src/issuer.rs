@@ -112,10 +112,10 @@ pub struct CreateOfferResponse {
     #[serde(flatten)]
     pub credential_offer: CredentialOfferType,
 
-    /// A user PIN that must be provided by the Wallet in order to complete a
-    /// credential request.
+    /// A transaction code to be provided by the End-User in order to complete 
+    /// a credential request.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub user_code: Option<String>,
+    pub tx_code: Option<String>,
 }
 
 /// The type of Credential Offer returned in a `CreateOfferResponse`: either an object

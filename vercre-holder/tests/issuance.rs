@@ -56,7 +56,7 @@ async fn e2e_issuance() {
     // Enter PIN
     let pin_req = PinRequest {
         id: issuance.issuance_id.clone(),
-        pin: offer_resp.user_code.expect("should have user code"),
+        pin: offer_resp.tx_code.expect("should have user code"),
     };
     let status =
         vercre_holder::pin(HOLDER_PROVIDER.clone(), &pin_req).await.expect("should apply pin");

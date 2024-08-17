@@ -14,4 +14,4 @@ credential_offer:
         input_mode: numeric
         length: 6
         description: Please provide the one-time code received
-user_code: "[user_code]"
+tx_code: "[tx_code]"
