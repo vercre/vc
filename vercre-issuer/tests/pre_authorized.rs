@@ -10,21 +10,18 @@ use vercre_issuer::CredentialOfferType;
 use vercre_openid::CredentialFormat;
 use vercre_test_utils::issuer::{self, Provider, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER};
 
-#[fixture]
-fn provider() -> issuer::Provider {
-    issuer::Provider::new()
-}
-
 macro_rules! snapshot{
     ($($expr:expr),*) => {
         let mut settings = insta::Settings::clone_current();
-
         settings.set_snapshot_suffix(format!($($expr,)*));
-        settings.set_sort_maps(true);
         settings.set_prepend_module_to_snapshot(false);
-
         let _guard = settings.bind_to_scope();
     }
+}
+
+#[fixture]
+fn provider() -> issuer::Provider {
+    issuer::Provider::new()
 }
 
 /// Test immediate and deferred issuance variants
@@ -60,7 +57,7 @@ async fn issuance(provider: Provider, #[case] issue: Issuance) {
 
     let wallet = wallet::Wallet {
         snapshot: "pre_authorized".to_string(),
-        provider: provider.clone(),
+        provider,
         tx_code: response.tx_code,
         format: CredentialFormat::JwtVcJson,
     };

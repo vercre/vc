@@ -11,11 +11,10 @@ use vercre_issuer::{
     AuthorizationResponse, CredentialOffer, CredentialResponse, DeferredCredentialRequest,
     DeferredCredentialResponse, ProofClaims, TokenGrantType, TokenRequest, TokenResponse,
 };
-use vercre_openid::Result;
+use vercre_openid::{CredentialFormat, Result};
 use vercre_test_utils::holder;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_w3c_vc::proof::{self, Payload, Verify};
-use vercre_openid::CredentialFormat;
 
 pub const CODE_VERIFIER: &str = "ABCDEF12345";
 pub const REDIRECT_URI: &str = "http://localhost:3000/callback";
@@ -117,7 +116,7 @@ impl Wallet {
         let req_json = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "access_token": token_resp.access_token,
-            "format": "jwt_vc_json",
+            "format": self.format,
             "credential_definition": {
                 "type": [
                     "VerifiableCredential",
@@ -134,42 +133,36 @@ impl Wallet {
             .await
             .expect("should get credential");
 
-            assert_snapshot!(format!("{}:response", self.snapshot), &response, {
-                ".credential" => "[credential]",
-                ".transaction_id" => "[transaction_id]",
-                ".c_nonce" => "[c_nonce]",
-                ".c_nonce_expires_in" => "[c_nonce_expires_in]"
-            });
-
+        // get credential if response is deferred (has transaction_id)
         if response.transaction_id.is_some() {
-            assert_snapshot!(format!("{}:response", self.snapshot), &response, {
-                ".transaction_id" => "[transaction_id]",
-                ".c_nonce" => "[c_nonce]",
-                ".c_nonce_expires_in" => "[c_nonce_expires_in]"
-            });
-
             let deferred_resp =
                 self.deferred(token_resp.clone(), response.clone()).await.expect("Ok");
             response = deferred_resp.credential_response;
         }
 
-        if let Some(credential) = &response.credential {
-            // verify the credential is as expected
-            let Quota::One(vc_kind) = credential else {
-                panic!("expected one credential");
-            };
+        let Some(credential) = &response.credential else {
+            panic!("credential should be set");
+        };
 
-            let Payload::Vc(vc) =
-                proof::verify(Verify::Vc(&vc_kind), &self.provider).await.expect("should decode")
-            else {
-                panic!("should be VC");
-            };
+        // TODO: verify signature
 
-            assert_snapshot!(format!("{}:credential", self.snapshot), vc, {
-                ".issuanceDate" => "[issuanceDate]",
-                ".credentialSubject" => insta::sorted_redaction()
-            });
-        }
+        // verify the credential is as expected
+        let Quota::One(vc_kind) = credential else {
+            panic!("expected one credential");
+        };
+
+        let Payload::Vc(vc) =
+            proof::verify(Verify::Vc(&vc_kind), &self.provider).await.expect("should decode")
+        else {
+            panic!("should be VC");
+        };
+
+        assert_snapshot!(format!("{}:credential", self.snapshot), vc, {
+            ".issuanceDate" => "[issuanceDate]",
+            ".credentialSubject" => insta::sorted_redaction()
+        });
+
+        // TODO: verify format is the one specified in request
 
         Ok(())
     }

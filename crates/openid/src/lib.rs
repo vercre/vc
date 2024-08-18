@@ -88,7 +88,7 @@ impl Display for CredentialFormat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CredentialFormat::JwtVcJson => write!(f, "jwt_vc_json"),
-            CredentialFormat::LdpVc => write!(f, "ldp-vc"),
+            CredentialFormat::LdpVc => write!(f, "ldp_vc"),
             CredentialFormat::JwtVcJsonLd => write!(f, "jwt_vc_json-ld"),
             CredentialFormat::MsoDoc => write!(f, "mso_mdoc"),
             CredentialFormat::VcSdJwt => write!(f, "vc+sd-jwt"),
