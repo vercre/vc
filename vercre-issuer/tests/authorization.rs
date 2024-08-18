@@ -1,18 +1,21 @@
+//! Authorization Code Flow Tests
+
+mod utils;
 mod wallet;
 
-use vercre_test_utils::issuer;
+use rstest::rstest;
 use vercre_openid::CredentialFormat;
+use vercre_test_utils::issuer;
 
-// Run through entire authorization code flow.
-#[tokio::test]
+#[rstest]
 async fn authorization() {
     vercre_test_utils::init_tracer();
+    snapshot!("authorization");
 
     let wallet = wallet::Wallet {
-        snapshot: "authorization".to_string(),
         provider: issuer::Provider::new(),
-        tx_code: None,
         format: CredentialFormat::JwtVcJson,
+        ..Default::default()
     };
 
     wallet.self_initiated().await.expect("should get credential");

@@ -19,11 +19,11 @@ use vercre_w3c_vc::proof::{self, Payload, Verify};
 pub const CODE_VERIFIER: &str = "ABCDEF12345";
 pub const REDIRECT_URI: &str = "http://localhost:3000/callback";
 
+#[derive(Default)]
 pub struct Wallet {
-    pub snapshot: String,
     pub provider: issuer::Provider,
-    pub tx_code: Option<String>,
     pub format: CredentialFormat,
+    pub tx_code: Option<String>,
 }
 
 impl Wallet {
@@ -157,7 +157,7 @@ impl Wallet {
             panic!("should be VC");
         };
 
-        assert_snapshot!(format!("{}:credential", self.snapshot), vc, {
+        assert_snapshot!("credential", vc, {
             ".issuanceDate" => "[issuanceDate]",
             ".credentialSubject" => insta::sorted_redaction()
         });
@@ -168,11 +168,11 @@ impl Wallet {
     }
 
     async fn deferred(
-        &self, tkn: TokenResponse, cred_resp: CredentialResponse,
+        &self, tkn_resp: TokenResponse, cred_resp: CredentialResponse,
     ) -> Result<DeferredCredentialResponse> {
         let request = DeferredCredentialRequest {
             credential_issuer: CREDENTIAL_ISSUER.into(),
-            access_token: tkn.access_token,
+            access_token: tkn_resp.access_token,
             transaction_id: cred_resp.transaction_id.expect("should have transaction_id"),
         };
         vercre_issuer::deferred(self.provider.clone(), &request).await
