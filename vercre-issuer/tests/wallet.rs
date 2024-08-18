@@ -8,14 +8,14 @@ use sha2::{Digest, Sha256};
 use vercre_core::Quota;
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_issuer::{
-    AuthorizationRequest, AuthorizationResponse, CredentialOffer, CredentialResponse,
-    DeferredCredentialRequest, DeferredCredentialResponse, ProofClaims, TokenGrantType,
-    TokenRequest, TokenResponse,
+    AuthorizationResponse, CredentialOffer, CredentialResponse, DeferredCredentialRequest,
+    DeferredCredentialResponse, ProofClaims, TokenGrantType, TokenRequest, TokenResponse,
 };
 use vercre_openid::Result;
 use vercre_test_utils::holder;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_w3c_vc::proof::{self, Payload, Verify};
+use vercre_openid::CredentialFormat;
 
 pub const CODE_VERIFIER: &str = "ABCDEF12345";
 pub const REDIRECT_URI: &str = "http://localhost:3000/callback";
@@ -24,6 +24,7 @@ pub struct Wallet {
     pub snapshot: String,
     pub provider: issuer::Provider,
     pub tx_code: Option<String>,
+    pub format: CredentialFormat,
 }
 
 impl Wallet {
@@ -59,8 +60,8 @@ impl Wallet {
     // Simulate Issuer request to '/create_offer' endpoint to get credential offer to use to
     // make credential offer to Wallet.
     pub async fn authorize(&self) -> Result<AuthorizationResponse> {
-        // create request
-        let body = json!({
+        let req_json = json!({
+            "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
             "redirect_uri": "http://localhost:3000/callback",
@@ -89,10 +90,7 @@ impl Wallet {
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
         });
-        let mut request =
-            serde_json::from_value::<AuthorizationRequest>(body).expect("should deserialize");
-        request.credential_issuer = CREDENTIAL_ISSUER.to_string();
-
+        let request = serde_json::from_value(req_json).expect("should deserialize");
         vercre_issuer::authorize(self.provider.clone(), &request).await
     }
 
@@ -108,7 +106,6 @@ impl Wallet {
     }
 
     async fn credential(&self, token_resp: TokenResponse) -> Result<()> {
-        // credential request
         let claims = ProofClaims {
             iss: Some(CLIENT_ID.into()),
             aud: CREDENTIAL_ISSUER.into(),
@@ -117,7 +114,7 @@ impl Wallet {
         };
         let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
 
-        let body = json!({
+        let req_json = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "access_token": token_resp.access_token,
             "format": "jwt_vc_json",
@@ -132,10 +129,17 @@ impl Wallet {
                 "jwt": jwt
             }
         });
-        let request = serde_json::from_value(body).expect("should deserialize");
+        let request = serde_json::from_value(req_json).expect("should deserialize");
         let mut response = vercre_issuer::credential(self.provider.clone(), &request)
             .await
             .expect("should get credential");
+
+            assert_snapshot!(format!("{}:response", self.snapshot), &response, {
+                ".credential" => "[credential]",
+                ".transaction_id" => "[transaction_id]",
+                ".c_nonce" => "[c_nonce]",
+                ".c_nonce_expires_in" => "[c_nonce_expires_in]"
+            });
 
         if response.transaction_id.is_some() {
             assert_snapshot!(format!("{}:response", self.snapshot), &response, {

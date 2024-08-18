@@ -13,6 +13,8 @@ pub mod oauth;
 pub mod provider;
 pub mod verifier;
 
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 pub use self::error::Error;
@@ -80,4 +82,17 @@ pub enum CredentialFormat {
     /// W3C Verifiable Credential.
     #[serde(rename = "jwt_vp_json")]
     JwtVpJson,
+}
+
+impl Display for CredentialFormat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CredentialFormat::JwtVcJson => write!(f, "jwt_vc_json"),
+            CredentialFormat::LdpVc => write!(f, "ldp-vc"),
+            CredentialFormat::JwtVcJsonLd => write!(f, "jwt_vc_json-ld"),
+            CredentialFormat::MsoDoc => write!(f, "mso_mdoc"),
+            CredentialFormat::VcSdJwt => write!(f, "vc+sd-jwt"),
+            CredentialFormat::JwtVpJson => write!(f, "jwt_vp_json"),
+        }
+    }
 }

@@ -1,6 +1,7 @@
 mod wallet;
 
 use vercre_test_utils::issuer;
+use vercre_openid::CredentialFormat;
 
 // Run through entire authorization code flow.
 #[tokio::test]
@@ -11,6 +12,7 @@ async fn authorization() {
         snapshot: "authorization".to_string(),
         provider: issuer::Provider::new(),
         tx_code: None,
+        format: CredentialFormat::JwtVcJson,
     };
 
     wallet.self_initiated().await.expect("should get credential");

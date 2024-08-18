@@ -1,7 +1,7 @@
 ---
-source: vercre-issuer/tests/deferred_flow.rs
-assertion_line: 39
-expression: deferred_resp
+source: vercre-issuer/tests/wallet.rs
+assertion_line: 135
+expression: "&response"
 ---
 credential: "[credential]"
 c_nonce: "[c_nonce]"

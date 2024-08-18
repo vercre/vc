@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/tests/wallet.rs
-assertion_line: 141
+assertion_line: 136
 expression: "&response"
 ---
 transaction_id: "[transaction_id]"
