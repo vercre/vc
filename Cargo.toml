@@ -49,7 +49,7 @@ insta = { version = "1.39.0", features = ["redactions", "yaml"] }
 serde = { version = "1.0.208", features = ["derive"] }
 serde_json = { version = "1.0.125", features = ["alloc"] }
 serde_qs = "0.13.0"
-tokio = { version = "1.39.2", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.39.3", features = ["macros", "rt-multi-thread"] }
 tower-http = { version = "0.5.2", features = ["cors", "set-header", "trace"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
