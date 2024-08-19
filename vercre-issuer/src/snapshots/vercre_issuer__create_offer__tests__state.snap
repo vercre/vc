@@ -1,13 +1,12 @@
 ---
 source: vercre-issuer/src/create_offer.rs
-assertion_line: 254
+assertion_line: 263
 expression: "&state"
 ---
 expires_at: "[expires_at]"
-credential_issuer: "http://vercre.io"
 credential_identifiers:
   - EmployeeID_JWT
 subject_id: normal_user
-flow:
-  auth_code:
+current_step:
+  pre_authorized:
     tx_code: "[tx_code]"

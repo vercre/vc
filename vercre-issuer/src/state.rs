@@ -3,11 +3,11 @@
 
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
-use vercre_openid::issuer::{CredentialRequest, TokenAuthorizationDetail};
+use vercre_openid::issuer::{CredentialOffer, CredentialRequest, TokenAuthorizationDetail};
 use vercre_openid::{Error, Result};
 
 pub enum Expire {
-    AuthCode,
+    Authorized,
     Access,
     Nonce,
 }
@@ -15,7 +15,7 @@ pub enum Expire {
 impl Expire {
     pub fn duration(&self) -> TimeDelta {
         match self {
-            Self::AuthCode => TimeDelta::try_minutes(5).unwrap_or_default(),
+            Self::Authorized => TimeDelta::try_minutes(5).unwrap_or_default(),
             Self::Access => TimeDelta::try_minutes(15).unwrap_or_default(),
             Self::Nonce => TimeDelta::try_minutes(10).unwrap_or_default(),
         }
@@ -29,12 +29,9 @@ pub struct State {
     /// Time state should expire.
     pub expires_at: DateTime<Utc>,
 
-    /// URL of the Credential Issuer.
-    pub credential_issuer: String,
-
-    /// The `client_id` of the Wallet requesting issuance.
+    /// Credential offer when offer is `credential_offer_uri`.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub client_id: Option<String>,
+    pub credential_offer: Option<CredentialOffer>,
 
     /// Identifiers of credentials offered to/requested by the Wallet.
     pub credential_identifiers: Vec<String>,
@@ -43,18 +40,22 @@ pub struct State {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subject_id: Option<String>,
 
-    /// Flow-specific issuance state.
-    pub flow: Flow,
+    /// Step-specific issuance state.
+    pub current_step: Step,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum Flow {
+#[allow(clippy::large_enum_variant)]
+pub enum Step {
     #[default]
     Unauthorized,
 
+    /// Pre-authorized state.
+    PreAuthorized(PreAuthorized),
+
     /// Authorization state.
-    AuthCode(AuthCode),
+    Authorization(Authorization),
 
     /// Token state.
     Token(Token),
@@ -65,7 +66,17 @@ pub enum Flow {
 
 /// `Auth` is used to store authorization state.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct AuthCode {
+pub struct PreAuthorized {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tx_code: Option<String>,
+}
+
+/// `Auth` is used to store authorization state.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Authorization {
+    /// The `client_id` of the Wallet requesting issuance.
+    pub client_id: String,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redirect_uri: Option<String>,
 
@@ -78,9 +89,7 @@ pub struct AuthCode {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scope: Option<String>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tx_code: Option<String>,
-
+    #[allow(clippy::struct_field_names)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub authorization_details: Option<Vec<TokenAuthorizationDetail>>,
 }
@@ -92,21 +101,17 @@ pub struct Token {
     #[allow(clippy::struct_field_names)]
     pub access_token: String,
 
-    /// The type of token issued (should be "Bearer")
-    #[allow(clippy::struct_field_names)]
-    pub token_type: String,
-
-    /// The refresh token, issued
-    #[allow(clippy::struct_field_names)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub refresh_token: Option<String>,
-
     /// The nonce to be used by the Wallet when creating a proof of possession of
     /// the key proof.
     pub c_nonce: String,
 
     /// Number denoting the lifetime in seconds of the `c_nonce`.
     pub c_nonce_expires_at: DateTime<Utc>,
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub scope: Option<String>,
+
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub authorization_details: Option<Vec<TokenAuthorizationDetail>>,
 }
 
 /// `Token` is used to store token state.

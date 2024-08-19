@@ -5,7 +5,7 @@ use std::sync::LazyLock;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::provider::CredentialStorer;
 use vercre_holder::{IssuanceStatus, OfferRequest, PinRequest};
-use vercre_issuer::{CreateOfferRequest, CredentialOfferType};
+use vercre_issuer::{CreateOfferRequest, CredentialOfferType, SendOffer};
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
 use crate::provider as holder;
@@ -20,6 +20,7 @@ static OFFER_REQUEST: LazyLock<CreateOfferRequest> = LazyLock::new(|| CreateOffe
     subject_id: Some(NORMAL_USER.into()),
     pre_authorize: true,
     tx_code_required: true,
+    send_offer: SendOffer::ByValue,
 });
 
 #[tokio::test]
@@ -75,7 +76,7 @@ async fn e2e_issuance() {
         .expect("should retrieve all credentials");
 
     assert_eq!(credentials.len(), 1);
-    
+
     assert_snapshot!("credentials", credentials, {
         "[0].vc.issuanceDate" => "[issuanceDate]",
         "[0].vc" => insta::sorted_redaction(),

@@ -30,8 +30,8 @@
 //! The endpoints are designed to be used with Rust-based HTTP servers, such as
 //! [axum](https://docs.rs/axum/latest/axum/).
 //!
-//! Endpoints can be combined to implement both the [OpenID4VCI] Authorization Code Flow
-//! and Pre-Authorized Code Flow.
+//! Endpoints can be combined to implement both the [OpenID4VCI] Authorization Code Step
+//! and Pre-Authorized Code Step.
 //!
 //! **Running**
 //!
@@ -121,7 +121,7 @@ pub use vercre_openid::issuer::{
     CredentialConfiguration, CredentialOffer, CredentialOfferType, CredentialRequest,
     CredentialResponse, CredentialType, DeferredCredentialRequest, DeferredCredentialResponse,
     Grants, MetadataRequest, MetadataResponse, PreAuthorizedCodeGrant, ProofClaims, ProofType,
-    RegistrationRequest, RegistrationResponse, TokenAuthorizationDetail, TokenGrantType,
+    RegistrationRequest, RegistrationResponse, SendOffer, TokenAuthorizationDetail, TokenGrantType,
     TokenRequest, TokenResponse, TxCode,
 };
 pub use vercre_openid::Result;

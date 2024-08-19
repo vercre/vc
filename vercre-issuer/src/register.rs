@@ -56,7 +56,7 @@ mod tests {
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER};
 
     use super::*;
-    use crate::state::{Expire, Flow, Token};
+    use crate::state::{Expire, Step, Token};
 
     #[tokio::test]
     async fn registration_ok() {
@@ -67,15 +67,13 @@ mod tests {
 
         // set up state
         let mut state = State {
-            credential_issuer: CREDENTIAL_ISSUER.to_string(),
-            expires_at: Utc::now() + Expire::AuthCode.duration(),
+            expires_at: Utc::now() + Expire::Authorized.duration(),
             ..State::default()
         };
 
-        state.flow = Flow::Token(Token {
+        state.current_step = Step::Token(Token {
             access_token: access_token.to_string(),
-            token_type: "Bearer".into(),
-            ..Default::default()
+            ..Token::default()
         });
 
         let ser = state.to_vec().expect("should serialize");

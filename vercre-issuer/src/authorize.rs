@@ -83,7 +83,7 @@ use vercre_openid::issuer::{
 use vercre_openid::{Error, Result};
 
 // use crate::shell;
-use crate::state::{AuthCode, Expire, Flow, State};
+use crate::state::{Authorization, Expire, State, Step};
 
 /// Authorization request handler.
 ///
@@ -258,21 +258,19 @@ async fn process(
 
     // save authorization state
     let mut state = State {
-        expires_at: Utc::now() + Expire::AuthCode.duration(),
-        credential_issuer: request.credential_issuer.clone(),
-        client_id: Some(request.client_id.clone()),
+        expires_at: Utc::now() + Expire::Authorized.duration(),
         credential_identifiers: authzd_identifiers,
         subject_id: Some(request.subject_id.clone()),
         ..State::default()
     };
 
-    state.flow = Flow::AuthCode(AuthCode {
+    state.current_step = Step::Authorization(Authorization {
+        client_id: request.client_id.clone(),
         redirect_uri: request.redirect_uri.clone(),
         code_challenge: Some(request.code_challenge.clone()),
         code_challenge_method: Some(request.code_challenge_method.clone()),
         authorization_details,
         scope,
-        ..AuthCode::default()
     });
 
     let code = gen::auth_code();

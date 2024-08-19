@@ -101,6 +101,23 @@ pub struct CreateOfferRequest {
     /// authorize credential issuance.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subject_id: Option<String>,
+
+    /// The Issuer can specify whether Credential Offer is an object or a URI.
+    pub send_offer: SendOffer,
+}
+
+/// Determines how the Credential Offer is sent to the Wallet.
+#[derive(Clone, Default, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SendOffer {
+    /// The Credential Offer is sent to the Wallet by value — as an object containing
+    /// the Credential Offer parameters.
+    #[default]
+    ByValue,
+
+    /// The Credential Offer is sent to the Wallet by reference — as a string containing
+    /// a URL pointing to a location where the offer can be retrieved.
+    ByReference,
 }
 
 /// The response to a Credential Offer request.

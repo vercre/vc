@@ -28,7 +28,7 @@ use vercre_openid::issuer::{
 use vercre_openid::{Error, Result};
 
 // use crate::shell;
-use crate::state::{Expire, Flow, State, Token};
+use crate::state::{Authorization, Expire, State, Step, Token};
 
 /// Token request handler.
 ///
@@ -39,8 +39,15 @@ use crate::state::{Expire, Flow, State, Token};
 #[instrument(level = "debug", skip(provider))]
 pub async fn token(provider: impl Provider, request: &TokenRequest) -> Result<TokenResponse> {
     // restore state
+    let state_key = match &request.grant_type {
+        TokenGrantType::AuthorizationCode { code, .. } => code,
+        TokenGrantType::PreAuthorizedCode {
+            pre_authorized_code, ..
+        } => pre_authorized_code,
+    };
+
     // RFC 6749 requires a particular error here
-    let Ok(buf) = StateStore::get(&provider, &auth_state_key(request)).await else {
+    let Ok(buf) = StateStore::get(&provider, state_key).await else {
         return Err(Error::InvalidGrant("the authorization code is invalid".into()));
     };
     let Ok(state) = State::try_from(buf.as_slice()) else {
@@ -65,9 +72,6 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
     let Ok(server_meta) = Metadata::server(&provider, &request.credential_issuer).await else {
         return Err(Error::InvalidRequest("unknown authorization server".into()));
     };
-    let Flow::AuthCode(auth_state) = &context.state.flow else {
-        return Err(Error::ServerError("authorization state not set".into()));
-    };
 
     // grant_type
     match &request.grant_type {
@@ -76,8 +80,12 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
             code_verifier,
             ..
         } => {
+            let Step::Authorization(auth_state) = &context.state.current_step else {
+                return Err(Error::ServerError("authorization state not set".into()));
+            };
+
             // client_id is the same as the one used to obtain the authorization code
-            if Some(&request.client_id) != context.state.client_id.as_ref() {
+            if request.client_id != auth_state.client_id {
                 return Err(Error::InvalidGrant("client_id differs from authorized one".into()));
             }
 
@@ -101,6 +109,10 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
             }
         }
         TokenGrantType::PreAuthorizedCode { tx_code, .. } => {
+            let Step::PreAuthorized(auth_state) = &context.state.current_step else {
+                return Err(Error::ServerError("pre-authorized state not set".into()));
+            };
+
             // anonymous access allowed?
             if request.client_id.is_empty()
                 && !server_meta.pre_authorized_grant_anonymous_access_supported
@@ -117,34 +129,45 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
     Ok(())
 }
 
-/// Exchange auth_code code (authorization or pre-authorized) for access token,
+/// Exchange `auth_code` code (authorization or pre-authorized) for access token,
 /// updating state along the way.
 async fn process(
     context: &Context, provider: impl Provider, request: &TokenRequest,
 ) -> Result<TokenResponse> {
     tracing::debug!("token::process");
 
-    // prevent auth_code code reuse
-    StateStore::purge(&provider, &auth_state_key(request))
+    // prevent `auth_code` code reuse
+    let state_key = match &request.grant_type {
+        TokenGrantType::AuthorizationCode { code, .. } => code,
+        TokenGrantType::PreAuthorizedCode {
+            pre_authorized_code, ..
+        } => pre_authorized_code,
+    };
+
+    StateStore::purge(&provider, state_key)
         .await
         .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
 
     // copy existing state for token state
     let mut state = context.state.clone();
 
-    // get auth_code state to return `authorization_details` and `scope`
-    let Flow::AuthCode(auth_state) = state.flow else {
-        return Err(Error::ServerError("AuthCode state not set".into()));
+    // get auth state to return `authorization_details` and `scope`
+    // let Step::Authorization(auth_state) = state.current_step else {
+    //     return Err(Error::ServerError("Authorization state not set".into()));
+    // };
+    let auth_state = if let Step::Authorization(auth_state) = state.current_step {
+        auth_state
+    } else {
+        Authorization::default()
     };
 
     let access_token = gen::token();
     let c_nonce = gen::nonce();
 
-    state.flow = Flow::Token(Token {
+    state.current_step = Step::Token(Token {
         access_token: access_token.clone(),
         c_nonce: c_nonce.clone(),
         c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
-        ..Token::default()
     });
     StateStore::put(&provider, &access_token, state.to_vec()?, state.expires_at)
         .await
@@ -161,19 +184,6 @@ async fn process(
     })
 }
 
-// Helper to get correct authorization state key from request.
-// Authorization state is stored by either 'code' or 'pre_authorized_code',
-// depending on grant_type.
-fn auth_state_key(request: &TokenRequest) -> String {
-    let state_key = match &request.grant_type {
-        TokenGrantType::AuthorizationCode { code, .. } => code,
-        TokenGrantType::PreAuthorizedCode {
-            pre_authorized_code, ..
-        } => pre_authorized_code,
-    };
-    state_key.to_string()
-}
-
 #[cfg(test)]
 mod tests {
     use assert_let_bind::assert_let;
@@ -188,7 +198,7 @@ mod tests {
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
     use super::*;
-    use crate::state::AuthCode;
+    use crate::state::{Authorization, PreAuthorized};
 
     #[tokio::test]
     async fn simple_token() {
@@ -200,8 +210,7 @@ mod tests {
         let credentials = vec!["EmployeeID_JWT".into()];
 
         let mut state = State {
-            credential_issuer: CREDENTIAL_ISSUER.to_string(),
-            expires_at: Utc::now() + Expire::AuthCode.duration(),
+            expires_at: Utc::now() + Expire::Authorized.duration(),
             credential_identifiers: credentials,
             subject_id: Some(NORMAL_USER.into()),
             ..State::default()
@@ -209,9 +218,8 @@ mod tests {
 
         let pre_auth_code = "ABCDEF";
 
-        state.flow = Flow::AuthCode(AuthCode {
+        state.current_step = Step::PreAuthorized(PreAuthorized {
             tx_code: Some("1234".into()),
-            ..Default::default()
         });
 
         let ser = state.to_vec().expect("should serialize");
@@ -245,7 +253,7 @@ mod tests {
         let state = State::try_from(buf).expect("state is valid");
 
         // compare response with saved state
-        assert_let!(Flow::Token(token_state), &state.flow);
+        assert_let!(Step::Token(token_state), &state.current_step);
         assert_eq!(token_state.c_nonce, token_resp.c_nonce.unwrap_or_default());
     }
 
@@ -259,9 +267,7 @@ mod tests {
         let credentials = vec!["EmployeeID_JWT".into()];
 
         let mut state = State {
-            credential_issuer: CREDENTIAL_ISSUER.to_string(),
-            client_id: Some(CLIENT_ID.into()),
-            expires_at: Utc::now() + Expire::AuthCode.duration(),
+            expires_at: Utc::now() + Expire::Authorized.duration(),
             credential_identifiers: credentials,
             subject_id: Some(NORMAL_USER.into()),
             ..State::default()
@@ -271,7 +277,8 @@ mod tests {
         let verifier = "ABCDEF12345";
         let verifier_hash = Sha256::digest(verifier);
 
-        state.flow = Flow::AuthCode(AuthCode {
+        state.current_step = Step::Authorization(Authorization {
+            client_id: CLIENT_ID.into(),
             redirect_uri: Some("https://example.com".into()),
             code_challenge: Some(Base64UrlUnpadded::encode_string(&verifier_hash)),
             code_challenge_method: Some("S256".into()),
@@ -325,7 +332,7 @@ mod tests {
         let state = State::try_from(buf).expect("state is valid");
 
         // compare response with saved state
-        assert_let!(Flow::Token(token_state), &state.flow);
+        assert_let!(Step::Token(token_state), &state.current_step);
         assert_eq!(token_state.c_nonce, response.c_nonce.unwrap_or_default());
     }
 }

@@ -16,7 +16,7 @@ use vercre_openid::{Error, Result};
 
 use crate::credential::credential;
 // use crate::shell;
-use crate::state::{Flow, State};
+use crate::state::{State, Step};
 
 /// Deferred credential request handler.
 ///
@@ -44,7 +44,7 @@ async fn process(
         return Err(Error::InvalidTransactionId("deferred state is expired or corrupted".into()));
     };
 
-    let Flow::Deferred(deferred_state) = state.flow else {
+    let Step::Deferred(deferred_state) = state.current_step else {
         return Err(Error::ServerError("Deferred state not found.".into()));
     };
 
@@ -120,20 +120,17 @@ mod tests {
 
         // set up state
         let mut state = State {
-            credential_issuer: CREDENTIAL_ISSUER.to_string(),
-            expires_at: Utc::now() + Expire::AuthCode.duration(),
+            expires_at: Utc::now() + Expire::Authorized.duration(),
             credential_identifiers: credentials,
             subject_id: Some(NORMAL_USER.into()),
             ..State::default()
         };
 
         // state entry 1: token state keyed by access_token
-        state.flow = Flow::Token(Token {
+        state.current_step = Step::Token(Token {
             access_token: access_token.into(),
-            token_type: "Bearer".into(),
             c_nonce,
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
-            ..Default::default()
         });
 
         let ser = state.to_vec().expect("should serialize");
@@ -142,7 +139,7 @@ mod tests {
             .expect("state exists");
 
         // state entry 2: deferred state keyed by transaction_id
-        state.flow = Flow::Deferred(Deferred {
+        state.current_step = Step::Deferred(Deferred {
             transaction_id: transaction_id.into(),
             credential_request: cred_req.clone(),
         });
@@ -190,8 +187,8 @@ mod tests {
         let state = State::try_from(buf).expect("token state is valid");
         assert_snapshot!("state", state, {
             ".expires_at" => "[expires_at]",
-            ".flow.c_nonce"=>"[c_nonce]",
-            ".flow.c_nonce_expires_at" => "[c_nonce_expires_at]"
+            ".current_step.c_nonce"=>"[c_nonce]",
+            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]"
         });
 
         // deferred state should not exist

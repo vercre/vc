@@ -1,16 +1,14 @@
 ---
 source: vercre-issuer/src/deferred.rs
-assertion_line: 191
+assertion_line: 188
 expression: state
 ---
 expires_at: "[expires_at]"
-credential_issuer: "http://vercre.io"
 credential_identifiers:
   - EmployeeID_JWT
 subject_id: normal_user
-flow:
+current_step:
   token:
     access_token: tkn-ABCDEF
-    token_type: Bearer
     c_nonce: "[c_nonce]"
     c_nonce_expires_at: "[c_nonce_expires_at]"

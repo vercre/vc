@@ -41,7 +41,7 @@
 //! as an HTTP GET request, an HTTP redirect, or a QR code.
 //!
 //! Below is a non-normative example of a Credential Offer Object for a Pre-Authorized
-//! Code Flow (with a credential type reference):
+//! Code Step (with a credential type reference):
 //!
 //! ```json
 //! {
@@ -73,7 +73,7 @@ use vercre_openid::issuer::{
 };
 use vercre_openid::{Error, Result};
 
-use crate::state::{AuthCode, Expire, Flow, State};
+use crate::state::{Expire, PreAuthorized, State, Step};
 
 /// Invoke request handler generates and returns a Credential Offer.
 ///
@@ -130,8 +130,7 @@ async fn process(
     tracing::debug!("create_offer::process");
 
     let mut state = State {
-        credential_issuer: request.credential_issuer.clone(),
-        expires_at: Utc::now() + Expire::AuthCode.duration(),
+        expires_at: Utc::now() + Expire::Authorized.duration(),
         credential_identifiers: request.credential_configuration_ids.clone(),
         subject_id: request.subject_id.clone(),
         ..State::default()
@@ -168,9 +167,8 @@ async fn process(
         }
 
         // save state by pre-auth_code
-        state.flow = Flow::AuthCode(AuthCode {
+        state.current_step = Step::PreAuthorized(PreAuthorized {
             tx_code: tx_code.clone(),
-            ..AuthCode::default()
         });
 
         StateStore::put(&provider, &pre_auth_code, state.to_vec()?, state.expires_at)
@@ -190,6 +188,16 @@ async fn process(
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
     }
+
+    // if request.device_flow == DeviceFlow::CrossDevice {
+    //     req_obj.response_mode = Some("direct_post".into());
+    //     req_obj.client_id = format!("{}/post", request.client_id);
+    //     req_obj.response_uri = Some(format!("{}/post", request.client_id));
+    //     response.request_uri = Some(format!("{}/request/{state_key}", request.client_id));
+    // } else {
+    //     req_obj.client_id = format!("{}/callback", request.client_id);
+    //     response.request_object = Some(req_obj.clone());
+    // }
 
     // TODO: add support for `credential_offer_uri`
     Ok(CreateOfferResponse {
@@ -217,7 +225,7 @@ mod tests {
     #[tokio::test]
     async fn pre_authorize() {
         vercre_test_utils::init_tracer();
-        
+
         let provider = Provider::new();
 
         // create offer to 'send' to the app
@@ -225,7 +233,8 @@ mod tests {
             "credential_configuration_ids": ["EmployeeID_JWT"],
             "subject_id": NORMAL_USER,
             "pre-authorize": true,
-            "tx_code_required": true
+            "tx_code_required": true,
+            "send_offer": "by_value"
         });
 
         let mut request =
@@ -247,17 +256,16 @@ mod tests {
         assert!(grants.pre_authorized_code.is_some());
 
         // compare response with saved state
-        let state_key = &pre_auth_code.pre_authorized_code; //as_ref().expect("has state");
-        let buf = StateStore::get(&provider, state_key).await.expect("state exists");
+        let pre_auth_code = &pre_auth_code.pre_authorized_code; //as_ref().expect("has state");
+        let buf = StateStore::get(&provider, pre_auth_code).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
 
         assert_snapshot!("state", &state, {
             ".expires_at" => "[expires_at]",
-            ".flow.issuer_state" => "[issuer_state]",
-            ".flow.tx_code" => "[tx_code]"
+            ".current_step.tx_code" => "[tx_code]"
         });
 
-        assert_let!(Flow::AuthCode(auth_state), &state.flow);
+        assert_let!(Step::PreAuthorized(auth_state), &state.current_step);
         assert_eq!(auth_state.tx_code, response.tx_code);
     }
 }

@@ -25,7 +25,7 @@ use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{Format, Payload};
 use vercre_w3c_vc::verify_key;
 
-use crate::state::{Deferred, Expire, Flow, State};
+use crate::state::{Deferred, Expire, State, Step};
 
 /// Credential request handler.
 ///
@@ -69,7 +69,7 @@ async fn verify(
 ) -> Result<()> {
     tracing::debug!("credential::verify");
 
-    let Flow::Token(token_state) = &context.state.flow else {
+    let Step::Token(token_state) = &context.state.current_step else {
         return Err(Error::AccessDenied("invalid access token state".into()));
     };
 
@@ -219,12 +219,12 @@ async fn process(
 
     // generate new nonce
     let mut state = context.state.clone();
-    let Flow::Token(mut token_state) = state.flow else {
+    let Step::Token(mut token_state) = state.current_step else {
         return Err(Error::ServerError("Invalid token state".into()));
     };
     token_state.c_nonce = gen::nonce();
     token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
-    state.flow = Flow::Token(token_state.clone());
+    state.current_step = Step::Token(token_state.clone());
 
     let mut response = CredentialResponse {
         c_nonce: Some(token_state.c_nonce.clone()),
@@ -246,7 +246,7 @@ async fn process(
         response.credential = Some(Quota::One(Kind::String(jwt)));
     } else {
         let txn_id = gen::transaction_id();
-        state.flow = Flow::Deferred(Deferred {
+        state.current_step = Step::Deferred(Deferred {
             transaction_id: txn_id.clone(),
             credential_request: request.clone(),
         });
@@ -361,14 +361,14 @@ fn credential_configuration(
 async fn err_nonce(context: &Context, provider: &impl Provider) -> Result<(String, i64)> {
     // generate nonce and update state
     let mut state = context.state.clone();
-    let Flow::Token(mut token_state) = state.flow else {
+    let Step::Token(mut token_state) = state.current_step else {
         return Err(Error::ServerError("token state not set".into()));
     };
 
     let c_nonce = gen::nonce();
     token_state.c_nonce.clone_from(&c_nonce);
     token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
-    state.flow = Flow::Token(token_state.clone());
+    state.current_step = Step::Token(token_state.clone());
 
     StateStore::put(provider, &token_state.access_token, state.to_vec()?, state.expires_at)
         .await
@@ -421,19 +421,16 @@ mod tests {
 
         // set up state
         let mut state = State {
-            credential_issuer: CREDENTIAL_ISSUER.to_string(),
-            expires_at: Utc::now() + Expire::AuthCode.duration(),
+            expires_at: Utc::now() + Expire::Authorized.duration(),
             credential_identifiers: credentials,
             subject_id: Some(NORMAL_USER.into()),
             ..State::default()
         };
 
-        state.flow = Flow::Token(Token {
+        state.current_step = Step::Token(Token {
             access_token: access_token.into(),
-            token_type: "Bearer".into(),
             c_nonce: c_nonce.into(),
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
-            ..Default::default()
         });
 
         let ser = state.to_vec().expect("should serialize");
@@ -497,8 +494,8 @@ mod tests {
         let state = State::try_from(buf).expect("state is valid");
         assert_snapshot!("state", state, {
             ".expires_at" => "[expires_at]",
-            ".flow.c_nonce"=>"[c_nonce]",
-            ".flow.c_nonce_expires_at" => "[c_nonce_expires_at]"
+            ".current_step.c_nonce"=>"[c_nonce]",
+            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]"
         });
     }
 
@@ -513,19 +510,16 @@ mod tests {
 
         // set up state
         let mut state = State {
-            credential_issuer: CREDENTIAL_ISSUER.to_string(),
-            expires_at: Utc::now() + Expire::AuthCode.duration(),
+            expires_at: Utc::now() + Expire::Authorized.duration(),
             credential_identifiers: credentials,
             subject_id: Some(NORMAL_USER.into()),
             ..State::default()
         };
 
-        state.flow = Flow::Token(Token {
+        state.current_step = Step::Token(Token {
             access_token: access_token.into(),
-            token_type: "Bearer".into(),
             c_nonce: c_nonce.into(),
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
-            ..Default::default()
         });
 
         let ser = state.to_vec().expect("should serialize");
@@ -591,8 +585,8 @@ mod tests {
         let state = State::try_from(buf).expect("state is valid");
         assert_snapshot!("ad-state", state, {
             ".expires_at" => "[expires_at]",
-            ".flow.c_nonce"=>"[c_nonce]",
-            ".flow.c_nonce_expires_at" => "[c_nonce_expires_at]"
+            ".current_step.c_nonce"=>"[c_nonce]",
+            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]"
         });
     }
 
@@ -608,7 +602,7 @@ mod tests {
     //     // set up state
     //     let mut state = State::builder()
     //         .credential_issuer(CREDENTIAL_ISSUER.into())
-    //         .expires_at(Utc::now() + Expire::AuthCode.duration())
+    //         .expires_at(Utc::now() + Expire::Authorized.duration())
     //         .subject_id(Some(NORMAL_USER.into()))
     //         .build()
     //         .expect("should build state");
