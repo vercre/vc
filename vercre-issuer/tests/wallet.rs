@@ -28,10 +28,10 @@ pub struct Wallet {
 
 impl Wallet {
     pub async fn self_initiated(&self) -> Result<()> {
-        let authzn = self.authorize().await.expect("should authorize");
+        let auth = self.authorize(None).await.expect("should authorize");
 
         let grant_type = TokenGrantType::AuthorizationCode {
-            code: authzn.code,
+            code: auth.code,
             code_verifier: Some(CODE_VERIFIER.to_string()),
             redirect_uri: Some(REDIRECT_URI.into()),
         };
@@ -41,43 +41,24 @@ impl Wallet {
     }
 
     pub async fn issuer_initiated(&self, offer: CredentialOffer) -> Result<()> {
+        let grants = &offer.grants.unwrap_or_default();
 
-        // if offer has grants
-        //    if offer has pre_authorized_code
-        //        grant_type = pre_authorized_code
-        //    else if offer has authorization_code
-        //        grant_type = authorization_code
-        //    else
-        //        grant_type = authorization_code
-        // else
-        //    grant_type = authorization_code
-        
-
-        let grant_type = if let Some(grants) = &offer.grants {
-            if let Some(authzd_grant) = &grants.pre_authorized_code {
-                TokenGrantType::PreAuthorizedCode {
-                    pre_authorized_code: authzd_grant.pre_authorized_code.clone(),
-                    tx_code: self.tx_code.clone(),
-                }
-            } else {
-                let authzn = if let Some(authzn_grant) = &grants.authorization_code {
-                    let issuer_state = authzn_grant.issuer_state.clone().unwrap_or_default();
-                    self.internal_authorize(issuer_state).await.expect("should authorize")
-                } else {
-                    self.authorize().await.expect("should authorize")
-                };
-
-                TokenGrantType::AuthorizationCode {
-                    code: authzn.code,
-                    redirect_uri: Some(authzn.redirect_uri),
-                    code_verifier: Some(CODE_VERIFIER.to_string()),
-                }
+        let grant_type = if let Some(grant) = &grants.pre_authorized_code {
+            TokenGrantType::PreAuthorizedCode {
+                pre_authorized_code: grant.pre_authorized_code.clone(),
+                tx_code: self.tx_code.clone(),
             }
         } else {
-            let authzn = self.authorize().await.expect("should authorize");
+            let issuer_state = if let Some(grant) = &grants.authorization_code {
+                grant.issuer_state.clone()
+            } else {
+                None
+            };
+            let auth = self.authorize(issuer_state).await.expect("should authorize");
+
             TokenGrantType::AuthorizationCode {
-                code: authzn.code,
-                redirect_uri: Some(authzn.redirect_uri),
+                code: auth.code,
+                redirect_uri: Some(auth.redirect_uri),
                 code_verifier: Some(CODE_VERIFIER.to_string()),
             }
         };
@@ -88,48 +69,13 @@ impl Wallet {
 
     // Simulate Issuer request to '/create_offer' endpoint to get credential offer to use to
     // make credential offer to Wallet.
-    pub async fn authorize(&self) -> Result<AuthorizationResponse> {
+    pub async fn authorize(&self, state: Option<String>) -> Result<AuthorizationResponse> {
         let req_json = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
             "redirect_uri": "http://localhost:3000/callback",
-            "state": "1234",
-            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
-            "code_challenge_method": "S256",
-            "authorization_details": json!([{
-                "type": "openid_credential",
-                "format": "jwt_vc_json",
-                "credential_definition": {
-                    "context": [
-                        "https://www.w3.org/2018/credentials/v1",
-                        "https://www.w3.org/2018/credentials/examples/v1"
-                    ],
-                    "type": [
-                        "VerifiableCredential",
-                        "EmployeeIDCredential"
-                    ],
-                    "credentialSubject": {
-                        "givenName": {},
-                        "familyName": {},
-                        "email": {}
-                    }
-                }
-            }]).to_string(),
-            "subject_id": NORMAL_USER,
-            "wallet_issuer": CREDENTIAL_ISSUER
-        });
-        let request = serde_json::from_value(req_json).expect("should deserialize");
-        vercre_issuer::authorize(self.provider.clone(), &request).await
-    }
-
-    async fn internal_authorize(&self, state: String) -> Result<AuthorizationResponse> {
-        let req_json = json!({
-            "credential_issuer": CREDENTIAL_ISSUER,
-            "response_type": "code",
-            "client_id": CLIENT_ID,
-            "redirect_uri": "http://localhost:3000/callback",
-            "state": state,
+            "state": state.unwrap_or("1234".to_string()),
             "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
             "code_challenge_method": "S256",
             "authorization_details": json!([{
