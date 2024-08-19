@@ -8,6 +8,7 @@ credential_issuer: "http://vercre.io"
 client_id: 96bfb9cb-0513-7d64-5532-bed74c48f9ab
 credential_identifiers:
   - EmployeeID_JWT
+subject_id: normal_user
 flow:
   auth_code:
     redirect_uri: "http://localhost:3000/callback"
@@ -21,4 +22,3 @@ flow:
             - VerifiableCredential
             - EmployeeIDCredential
           credentialSubject: {}
-subject_id: normal_user

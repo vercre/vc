@@ -39,12 +39,12 @@ pub struct State {
     /// Identifiers of credentials offered to/requested by the Wallet.
     pub credential_identifiers: Vec<String>,
 
-    /// Flow-specific issuance state.
-    pub flow: Flow,
-
     /// The subject the credential is to be issued for.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subject_id: Option<String>,
+
+    /// Flow-specific issuance state.
+    pub flow: Flow,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
