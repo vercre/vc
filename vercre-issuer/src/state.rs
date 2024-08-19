@@ -2,7 +2,6 @@
 //! in the issuance process.
 
 use chrono::{DateTime, TimeDelta, Utc};
-use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 use vercre_openid::issuer::{CredentialRequest, TokenAuthorizationDetail};
 use vercre_openid::{Error, Result};
@@ -25,59 +24,55 @@ impl Expire {
 
 /// State is used to persist request information between issuance steps
 /// for the Credential Issuer.
-#[derive(Builder, Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct State {
-    /// The time this state item should expire.
-    #[builder(default = "Utc::now() + Expire::Access.duration()")]
+    /// Time state should expire.
     pub expires_at: DateTime<Utc>,
 
-    /// The URL of the Credential Issuer.
+    /// URL of the Credential Issuer.
     pub credential_issuer: String,
 
     /// The `client_id` of the Wallet requesting issuance.
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(setter(into, strip_option), default)]
     pub client_id: Option<String>,
 
     /// Identifiers of credentials offered to/requested by the Wallet.
-    #[builder(default)]
     pub credential_identifiers: Vec<String>,
 
-    /// The subject of the credential Holder.
+    /// Flow-specific issuance state.
+    pub flow: Flow,
+
+    /// The subject the credential is to be issued for.
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(default)]
     pub subject_id: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum Flow {
+    #[default]
+    Unauthorized,
 
     /// Authorization state.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(default)]
-    pub auth: Option<Auth>,
+    AuthCode(AuthCode),
 
     /// Token state.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(default)]
-    pub token: Option<Token>,
+    Token(Token),
 
-    /// Deferred step state.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(default)]
-    pub deferred: Option<Deferred>,
+    /// Deferred issuance state.
+    Deferred(Deferred),
 }
 
 /// `Auth` is used to store authorization state.
-#[derive(Builder, Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-#[builder(default)]
-pub struct Auth {
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct AuthCode {
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(setter(into, strip_option))]
     pub redirect_uri: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(setter(into, strip_option))]
     pub code_challenge: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(setter(into, strip_option))]
     pub code_challenge_method: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -91,7 +86,7 @@ pub struct Auth {
 }
 
 /// `Token` is used to store token state.
-#[derive(Builder, Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Token {
     /// The access token.
     #[allow(clippy::struct_field_names)]
@@ -99,13 +94,11 @@ pub struct Token {
 
     /// The type of token issued (should be "Bearer")
     #[allow(clippy::struct_field_names)]
-    #[builder(setter(into), default = "String::from(\"Bearer\")")]
     pub token_type: String,
 
     /// The refresh token, issued
     #[allow(clippy::struct_field_names)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(default)]
     pub refresh_token: Option<String>,
 
     /// The nonce to be used by the Wallet when creating a proof of possession of
@@ -113,17 +106,21 @@ pub struct Token {
     pub c_nonce: String,
 
     /// Number denoting the lifetime in seconds of the `c_nonce`.
-    #[builder(default = "Utc::now() + Expire::Nonce.duration()")]
     pub c_nonce_expires_at: DateTime<Utc>,
 }
 
-impl State {
-    /// Returns a new [`StateBuilder`], which can be used to build a [State]
-    #[must_use]
-    pub fn builder() -> StateBuilder {
-        StateBuilder::default()
-    }
+/// `Token` is used to store token state.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Deferred {
+    /// Used to identify a Deferred Issuance transaction. Is used as the
+    /// state persistence key.
+    pub transaction_id: String,
 
+    /// Save the Credential request when issuance is deferred.
+    pub credential_request: CredentialRequest,
+}
+
+impl State {
     /// Serializes this [`State`] object into a byte array.
     pub fn to_vec(&self) -> Result<Vec<u8>> {
         match serde_json::to_vec(self) {
@@ -173,32 +170,5 @@ impl Token {
 
     pub fn c_nonce_expired(&self) -> bool {
         self.c_nonce_expires_in() < 0
-    }
-}
-
-/// `Token` is used to store token state.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Deferred {
-    /// Used to identify a Deferred Issuance transaction. Is used as the
-    /// state persistence key.
-    pub transaction_id: String,
-
-    /// Save the Credential request when issuance is deferred.
-    pub credential_request: CredentialRequest,
-}
-
-impl Auth {
-    /// Returns a new [`AuthBuilder`], which can be used to build a [`State`]
-    #[must_use]
-    pub fn builder() -> AuthBuilder {
-        AuthBuilder::default()
-    }
-}
-
-impl Token {
-    /// Returns a new [`TokenBuilder`], which can be used to build a [`Token`]
-    #[must_use]
-    pub fn builder() -> TokenBuilder {
-        TokenBuilder::default()
     }
 }

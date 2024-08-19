@@ -16,7 +16,7 @@ use vercre_openid::{Error, Result};
 
 use crate::credential::credential;
 // use crate::shell;
-use crate::state::State;
+use crate::state::{Flow, State};
 
 /// Deferred credential request handler.
 ///
@@ -44,7 +44,7 @@ async fn process(
         return Err(Error::InvalidTransactionId("deferred state is expired or corrupted".into()));
     };
 
-    let Some(deferred_state) = state.deferred else {
+    let Flow::Deferred(deferred_state) = state.flow else {
         return Err(Error::ServerError("Deferred state not found.".into()));
     };
 
@@ -101,6 +101,8 @@ mod tests {
         let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
 
         let body = json!({
+            "credential_issuer": CREDENTIAL_ISSUER,
+            "access_token": access_token,
             "format": "jwt_vc_json",
             "credential_definition": {
                 "type": [
@@ -113,23 +115,20 @@ mod tests {
                 "jwt": jwt
             }
         });
-
-        let mut cred_req =
+        let cred_req =
             serde_json::from_value::<CredentialRequest>(body).expect("request should deserialize");
-        cred_req.credential_issuer = CREDENTIAL_ISSUER.into();
-        cred_req.access_token = access_token.into();
 
         // set up state
-        let mut state = State::builder()
-            .credential_issuer(CREDENTIAL_ISSUER.into())
-            .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credential_identifiers(credentials)
-            .subject_id(Some(NORMAL_USER.into()))
-            .build()
-            .expect("should build state");
+        let mut state = State {
+            credential_issuer: CREDENTIAL_ISSUER.to_string(),
+            expires_at: Utc::now() + Expire::AuthCode.duration(),
+            credential_identifiers: credentials,
+            subject_id: Some(NORMAL_USER.into()),
+            ..State::default()
+        };
 
         // state entry 1: token state keyed by access_token
-        state.token = Some(Token {
+        state.flow = Flow::Token(Token {
             access_token: access_token.into(),
             token_type: "Bearer".into(),
             c_nonce,
@@ -143,8 +142,7 @@ mod tests {
             .expect("state exists");
 
         // state entry 2: deferred state keyed by transaction_id
-        state.token = None;
-        state.deferred = Some(Deferred {
+        state.flow = Flow::Deferred(Deferred {
             transaction_id: transaction_id.into(),
             credential_request: cred_req.clone(),
         });
@@ -192,8 +190,8 @@ mod tests {
         let state = State::try_from(buf).expect("token state is valid");
         assert_snapshot!("state", state, {
             ".expires_at" => "[expires_at]",
-            ".token.c_nonce"=>"[c_nonce]",
-            ".token.c_nonce_expires_at" => "[c_nonce_expires_at]"
+            ".flow.c_nonce"=>"[c_nonce]",
+            ".flow.c_nonce_expires_at" => "[c_nonce_expires_at]"
         });
 
         // deferred state should not exist

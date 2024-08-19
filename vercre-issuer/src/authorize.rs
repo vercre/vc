@@ -83,7 +83,7 @@ use vercre_openid::issuer::{
 use vercre_openid::{Error, Result};
 
 // use crate::shell;
-use crate::state::{Auth, Expire, State};
+use crate::state::{AuthCode, Expire, Flow, State};
 
 /// Authorization request handler.
 ///
@@ -266,15 +266,14 @@ async fn process(
         ..State::default()
     };
 
-    let auth_state = Auth {
+    state.flow = Flow::AuthCode(AuthCode {
         redirect_uri: request.redirect_uri.clone(),
         code_challenge: Some(request.code_challenge.clone()),
         code_challenge_method: Some(request.code_challenge_method.clone()),
         authorization_details,
         scope,
-        ..Auth::default()
-    };
-    state.auth = Some(auth_state);
+        ..AuthCode::default()
+    });
 
     let code = gen::auth_code();
     StateStore::put(provider, &code, state.to_vec()?, state.expires_at)
@@ -443,8 +442,6 @@ mod tests {
         let state = State::try_from(buf).expect("state is valid");
         assert_snapshot!("authzn-state", state, {
             ".expires_at" => "[expires_at]",
-            ".auth.code" => "[code]",
-            ".auth.code_challenge" => "[code_challenge]",
         });
     }
 
@@ -481,8 +478,6 @@ mod tests {
         let state = State::try_from(buf).expect("state is valid");
         assert_snapshot!("scope-state", state, {
             ".expires_at" => "[expires_at]",
-            ".auth.code" => "[code]",
-            ".auth.code_challenge" => "[code_challenge]",
         });
     }
 }

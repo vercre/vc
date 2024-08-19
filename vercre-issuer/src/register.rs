@@ -56,7 +56,7 @@ mod tests {
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER};
 
     use super::*;
-    use crate::state::{Expire, Token};
+    use crate::state::{Expire, Flow, Token};
 
     #[tokio::test]
     async fn registration_ok() {
@@ -66,13 +66,13 @@ mod tests {
         let access_token = "ABCDEF";
 
         // set up state
-        let mut state = State::builder()
-            .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credential_issuer(CREDENTIAL_ISSUER.to_string())
-            .build()
-            .expect("should build state");
+        let mut state = State {
+            credential_issuer: CREDENTIAL_ISSUER.to_string(),
+            expires_at: Utc::now() + Expire::AuthCode.duration(),
+            ..State::default()
+        };
 
-        state.token = Some(Token {
+        state.flow = Flow::Token(Token {
             access_token: access_token.to_string(),
             token_type: "Bearer".into(),
             ..Default::default()

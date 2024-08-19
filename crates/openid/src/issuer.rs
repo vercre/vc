@@ -388,10 +388,11 @@ pub struct AuthorizationRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub resource: Option<String>,
 
+    // TODO: replace `subject_id` with support for authentication
+    // <https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest>
     /// A Holder identifier provided by the Wallet. It must have meaning to the
     /// Credential Issuer in order that credentialSubject claims can be
     /// populated.
-    // TODO: align this with spec
     pub subject_id: String,
 
     /// The Wallet's `OpenID` Connect issuer URL. The Credential Issuer can use

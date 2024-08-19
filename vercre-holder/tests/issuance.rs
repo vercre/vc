@@ -42,6 +42,7 @@ async fn e2e_issuance() {
     let issuance = vercre_holder::offer(HOLDER_PROVIDER.clone(), &offer_req)
         .await
         .expect("should process offer");
+
     assert_snapshot!("issuance_created", issuance, {
         ".issuance_id" => "[issuance_id]",
         ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
@@ -51,6 +52,7 @@ async fn e2e_issuance() {
     let status = vercre_holder::accept(HOLDER_PROVIDER.clone(), issuance.issuance_id.clone())
         .await
         .expect("should accept offer");
+
     assert_eq!(status, IssuanceStatus::PendingPin);
 
     // Enter PIN
@@ -60,6 +62,7 @@ async fn e2e_issuance() {
     };
     let status =
         vercre_holder::pin(HOLDER_PROVIDER.clone(), &pin_req).await.expect("should apply pin");
+
     assert_eq!(status, IssuanceStatus::Accepted);
 
     // Get (and store) credentials
@@ -72,6 +75,7 @@ async fn e2e_issuance() {
         .expect("should retrieve all credentials");
 
     assert_eq!(credentials.len(), 1);
+    
     assert_snapshot!("credentials", credentials, {
         "[0].vc.issuanceDate" => "[issuanceDate]",
         "[0].vc" => insta::sorted_redaction(),

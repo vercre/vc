@@ -18,6 +18,7 @@
 use std::fmt::Debug;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
+use chrono::Utc;
 use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
@@ -27,7 +28,7 @@ use vercre_openid::issuer::{
 use vercre_openid::{Error, Result};
 
 // use crate::shell;
-use crate::state::{Expire, State, Token};
+use crate::state::{Expire, Flow, State, Token};
 
 /// Token request handler.
 ///
@@ -64,7 +65,7 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
     let Ok(server_meta) = Metadata::server(&provider, &request.credential_issuer).await else {
         return Err(Error::InvalidRequest("unknown authorization server".into()));
     };
-    let Some(auth_state) = &context.state.auth else {
+    let Flow::AuthCode(auth_state) = &context.state.flow else {
         return Err(Error::ServerError("authorization state not set".into()));
     };
 
@@ -116,14 +117,14 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
     Ok(())
 }
 
-/// Exchange auth code (authorization or pre-authorized) for access token,
+/// Exchange auth_code code (authorization or pre-authorized) for access token,
 /// updating state along the way.
 async fn process(
     context: &Context, provider: impl Provider, request: &TokenRequest,
 ) -> Result<TokenResponse> {
     tracing::debug!("token::process");
 
-    // prevent auth code reuse
+    // prevent auth_code code reuse
     StateStore::purge(&provider, &auth_state_key(request))
         .await
         .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
@@ -131,28 +132,26 @@ async fn process(
     // copy existing state for token state
     let mut state = context.state.clone();
 
-    // get auth state to return `authorization_details` and `scope`
-    let Some(auth_state) = state.auth else {
-        return Err(Error::ServerError("Auth state not set".into()));
+    // get auth_code state to return `authorization_details` and `scope`
+    let Flow::AuthCode(auth_state) = state.flow else {
+        return Err(Error::ServerError("AuthCode state not set".into()));
     };
-    state.auth = None;
 
-    let token = gen::token();
+    let access_token = gen::token();
     let c_nonce = gen::nonce();
 
-    state.token = Some(
-        Token::builder()
-            .access_token(token.clone())
-            .c_nonce(c_nonce.clone())
-            .build()
-            .map_err(|e| Error::ServerError(format!("issue building token state: {e}")))?,
-    );
-    StateStore::put(&provider, &token, state.to_vec()?, state.expires_at)
+    state.flow = Flow::Token(Token {
+        access_token: access_token.clone(),
+        c_nonce: c_nonce.clone(),
+        c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
+        ..Token::default()
+    });
+    StateStore::put(&provider, &access_token, state.to_vec()?, state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
     Ok(TokenResponse {
-        access_token: token,
+        access_token,
         token_type: TokenType::Bearer,
         expires_in: Expire::Access.duration().num_seconds(),
         c_nonce: Some(c_nonce),
@@ -189,7 +188,7 @@ mod tests {
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
     use super::*;
-    use crate::state::Auth;
+    use crate::state::AuthCode;
 
     #[tokio::test]
     async fn simple_token() {
@@ -200,17 +199,17 @@ mod tests {
         // set up state
         let credentials = vec!["EmployeeID_JWT".into()];
 
-        let mut state = State::builder()
-            .credential_issuer(CREDENTIAL_ISSUER.to_string())
-            .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credential_identifiers(credentials)
-            .subject_id(Some(NORMAL_USER.to_string()))
-            .build()
-            .expect("should build state");
+        let mut state = State {
+            credential_issuer: CREDENTIAL_ISSUER.to_string(),
+            expires_at: Utc::now() + Expire::AuthCode.duration(),
+            credential_identifiers: credentials,
+            subject_id: Some(NORMAL_USER.into()),
+            ..State::default()
+        };
 
         let pre_auth_code = "ABCDEF";
 
-        state.auth = Some(Auth {
+        state.flow = Flow::AuthCode(AuthCode {
             tx_code: Some("1234".into()),
             ..Default::default()
         });
@@ -232,22 +231,22 @@ mod tests {
             serde_json::from_value::<TokenRequest>(body).expect("request should deserialize");
         request.credential_issuer = CREDENTIAL_ISSUER.to_string();
 
-        let response = token(provider.clone(), &request).await.expect("response is valid");
-        assert_snapshot!("simpl-token", &response, {
+        let token_resp = token(provider.clone(), &request).await.expect("response is valid");
+        assert_snapshot!("simple-token", &token_resp, {
             ".access_token" => "[access_token]",
             ".c_nonce" => "[c_nonce]"
         });
 
-        // auth state should be removed
+        // auth_code state should be removed
         assert!(StateStore::get(&provider, pre_auth_code).await.is_err());
 
         // should be able to retrieve state using access token
-        let buf = StateStore::get(&provider, &response.access_token).await.expect("state exists");
+        let buf = StateStore::get(&provider, &token_resp.access_token).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
 
         // compare response with saved state
-        assert_let!(Some(token_state), &state.token);
-        assert_eq!(token_state.c_nonce, response.c_nonce.unwrap_or_default());
+        assert_let!(Flow::Token(token_state), &state.flow);
+        assert_eq!(token_state.c_nonce, token_resp.c_nonce.unwrap_or_default());
     }
 
     #[tokio::test]
@@ -259,20 +258,20 @@ mod tests {
         // set up state
         let credentials = vec!["EmployeeID_JWT".into()];
 
-        let mut state = State::builder()
-            .credential_issuer(CREDENTIAL_ISSUER.to_string())
-            .client_id(CLIENT_ID)
-            .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credential_identifiers(credentials)
-            .subject_id(Some(NORMAL_USER.to_string()))
-            .build()
-            .expect("should build state");
+        let mut state = State {
+            credential_issuer: CREDENTIAL_ISSUER.to_string(),
+            client_id: Some(CLIENT_ID.into()),
+            expires_at: Utc::now() + Expire::AuthCode.duration(),
+            credential_identifiers: credentials,
+            subject_id: Some(NORMAL_USER.into()),
+            ..State::default()
+        };
 
         let auth_code = "ABCDEF";
         let verifier = "ABCDEF12345";
         let verifier_hash = Sha256::digest(verifier);
 
-        state.auth = Some(Auth {
+        state.flow = Flow::AuthCode(AuthCode {
             redirect_uri: Some("https://example.com".into()),
             code_challenge: Some(Base64UrlUnpadded::encode_string(&verifier_hash)),
             code_challenge_method: Some("S256".into()),
@@ -318,7 +317,7 @@ mod tests {
             ".c_nonce" => "[c_nonce]"
         });
 
-        // auth state should be removed
+        // auth_code state should be removed
         assert!(StateStore::get(&provider, auth_code).await.is_err());
 
         // should be able to retrieve state using access token
@@ -326,7 +325,7 @@ mod tests {
         let state = State::try_from(buf).expect("state is valid");
 
         // compare response with saved state
-        assert_let!(Some(token_state), &state.token);
+        assert_let!(Flow::Token(token_state), &state.flow);
         assert_eq!(token_state.c_nonce, response.c_nonce.unwrap_or_default());
     }
 }

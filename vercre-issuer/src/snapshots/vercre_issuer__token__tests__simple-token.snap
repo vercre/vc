@@ -1,7 +1,7 @@
 ---
 source: vercre-issuer/src/token.rs
-assertion_line: 260
-expression: "&response"
+assertion_line: 233
+expression: "&token_resp"
 ---
 access_token: "[access_token]"
 token_type: Bearer

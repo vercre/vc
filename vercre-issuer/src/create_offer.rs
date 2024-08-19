@@ -73,8 +73,7 @@ use vercre_openid::issuer::{
 };
 use vercre_openid::{Error, Result};
 
-// use crate::shell;
-use crate::state::{Auth, Expire, State};
+use crate::state::{AuthCode, Expire, Flow, State};
 
 /// Invoke request handler generates and returns a Credential Offer.
 ///
@@ -130,13 +129,13 @@ async fn process(
 ) -> Result<CreateOfferResponse> {
     tracing::debug!("create_offer::process");
 
-    let mut state = State::builder()
-        .credential_issuer(request.credential_issuer.clone())
-        .expires_at(Utc::now() + Expire::AuthCode.duration())
-        .credential_identifiers(request.credential_configuration_ids.clone())
-        .subject_id(request.subject_id.clone())
-        .build()
-        .map_err(|e| Error::ServerError(format!("issue creating state: {e}")))?;
+    let mut state = State {
+        credential_issuer: request.credential_issuer.clone(),
+        expires_at: Utc::now() + Expire::AuthCode.duration(),
+        credential_identifiers: request.credential_configuration_ids.clone(),
+        subject_id: request.subject_id.clone(),
+        ..State::default()
+    };
 
     let mut pre_auth_grant = None;
     let mut auth_grant = None;
@@ -169,11 +168,11 @@ async fn process(
         }
 
         // save state by pre-auth_code
-        let auth_state = Auth::builder()
-            .tx_code(tx_code.clone())
-            .build()
-            .map_err(|e| Error::ServerError(format!("issue building auth state: {e}")))?;
-        state.auth = Some(auth_state);
+        state.flow = Flow::AuthCode(AuthCode {
+            tx_code: tx_code.clone(),
+            ..AuthCode::default()
+        });
+
         StateStore::put(&provider, &pre_auth_code, state.to_vec()?, state.expires_at)
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
@@ -192,7 +191,6 @@ async fn process(
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
     }
 
-    // return response
     // TODO: add support for `credential_offer_uri`
     Ok(CreateOfferResponse {
         credential_offer: CredentialOfferType::Object(CredentialOffer {
@@ -219,7 +217,7 @@ mod tests {
     #[tokio::test]
     async fn pre_authorize() {
         vercre_test_utils::init_tracer();
-
+        
         let provider = Provider::new();
 
         // create offer to 'send' to the app
@@ -255,12 +253,11 @@ mod tests {
 
         assert_snapshot!("state", &state, {
             ".expires_at" => "[expires_at]",
-            ".auth.code"=>"[code]",
-            ".auth.issuer_state" => "[issuer_state]",
-            ".auth.tx_code" => "[tx_code]"
+            ".flow.issuer_state" => "[issuer_state]",
+            ".flow.tx_code" => "[tx_code]"
         });
 
-        assert_let!(Some(auth_state), &state.auth);
+        assert_let!(Flow::AuthCode(auth_state), &state.flow);
         assert_eq!(auth_state.tx_code, response.tx_code);
     }
 }
