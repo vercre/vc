@@ -104,7 +104,7 @@ async fn verify(context: &Context, provider: impl Provider, request: &TokenReque
             let hash = Sha256::digest(verifier);
             let challenge = Base64UrlUnpadded::encode_string(&hash);
 
-            if Some(&challenge) != auth_state.code_challenge.as_ref() {
+            if challenge != auth_state.code_challenge {
                 return Err(Error::AccessDenied("code_verifier is invalid".into()));
             }
         }
@@ -280,8 +280,8 @@ mod tests {
         state.current_step = Step::Authorization(Authorization {
             client_id: CLIENT_ID.into(),
             redirect_uri: Some("https://example.com".into()),
-            code_challenge: Some(Base64UrlUnpadded::encode_string(&verifier_hash)),
-            code_challenge_method: Some("S256".into()),
+            code_challenge: Base64UrlUnpadded::encode_string(&verifier_hash),
+            code_challenge_method: "S256".into(),
             authorization_details: Some(vec![TokenAuthorizationDetail {
                 authorization_detail: AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,

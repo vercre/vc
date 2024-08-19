@@ -80,11 +80,11 @@ pub struct Authorization {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redirect_uri: Option<String>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub code_challenge: Option<String>,
+    /// PKCE code challenge from the Authorization Request.
+    pub code_challenge: String,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub code_challenge_method: Option<String>,
+    /// PKCE code challenge method from the Authorization Request.
+    pub code_challenge_method: String,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scope: Option<String>,
