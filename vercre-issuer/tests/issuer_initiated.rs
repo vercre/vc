@@ -1,19 +1,13 @@
-//! Pre-Authorized Code Flow Tests
+//! Issuer-initiated Tests
 
 mod utils;
 mod wallet;
 
-use std::fmt::Display;
-
-use rstest::{fixture, rstest};
+use rstest::rstest;
+use utils::{provider, Issuance};
 use vercre_issuer::{CreateOfferRequest, CredentialOfferType};
 use vercre_openid::CredentialFormat;
-use vercre_test_utils::issuer::{self, Provider, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER};
-
-#[fixture]
-fn provider() -> issuer::Provider {
-    issuer::Provider::new()
-}
+use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER};
 
 /// Immediate and deferred issuance variants
 #[rstest]
@@ -21,7 +15,7 @@ fn provider() -> issuer::Provider {
 #[case(Issuance::Deferred)]
 async fn issuance(provider: Provider, #[case] issue: Issuance) {
     vercre_test_utils::init_tracer();
-    snapshot!("pre-authorized:{issue}");
+    snapshot!("issuer:{issue}");
 
     let subject_id = match issue {
         Issuance::Immediate => NORMAL_USER,
@@ -56,7 +50,7 @@ async fn issuance(provider: Provider, #[case] issue: Issuance) {
 #[case(CredentialFormat::JwtVcJson)]
 async fn format(provider: Provider, #[case] credential_format: CredentialFormat) {
     vercre_test_utils::init_tracer();
-    snapshot!("pre-authorized:{credential_format}");
+    snapshot!("issuer:{credential_format}");
 
     let request = CreateOfferRequest {
         credential_issuer: CREDENTIAL_ISSUER.to_string(),
@@ -82,9 +76,9 @@ async fn format(provider: Provider, #[case] credential_format: CredentialFormat)
 }
 
 #[rstest]
-async fn initiated(provider: Provider) {
+async fn authorization(provider: Provider) {
     vercre_test_utils::init_tracer();
-    snapshot!("authorization:issuer-initiated");
+    snapshot!("issuer:authorization");
 
     let request = CreateOfferRequest {
         credential_issuer: CREDENTIAL_ISSUER.to_string(),
@@ -107,19 +101,4 @@ async fn initiated(provider: Provider) {
     };
 
     wallet.issuer_initiated(offer).await.expect("should get credential");
-}
-
-/// Issuance variants
-enum Issuance {
-    Immediate,
-    Deferred,
-}
-
-impl Display for Issuance {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Issuance::Immediate => write!(f, "immediate"),
-            Issuance::Deferred => write!(f, "deferred"),
-        }
-    }
 }
