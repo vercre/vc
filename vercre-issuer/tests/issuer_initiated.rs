@@ -69,6 +69,7 @@ async fn format(provider: Provider, #[case] credential_format: CredentialFormat)
     wallet.issuer_initiated(response.offer_type).await.expect("should get credential");
 }
 
+// Authorization Code flow
 #[rstest]
 async fn authorization(provider: Provider) {
     vercre_test_utils::init_tracer();
