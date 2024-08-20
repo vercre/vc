@@ -34,6 +34,5 @@ tracing.workspace = true
 x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
 
 [dev-dependencies]
-insta = { version = "1.39.0", features = ["filters", "json", "redactions", "yaml"] }
 signature = "2.2.0"
 tokio.workspace = true

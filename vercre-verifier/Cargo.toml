@@ -19,6 +19,7 @@ version.workspace = true
 workspace = true
 
 [dependencies]
+anyhow.workspace = true
 chrono.workspace = true
 derive_builder.workspace = true
 serde.workspace = true
@@ -34,7 +35,6 @@ vercre-openid.workspace = true
 vercre-w3c-vc.workspace = true
 
 [dev-dependencies]
-anyhow.workspace = true
 assert_let_bind.workspace = true
 insta.workspace = true
 tokio.workspace = true
