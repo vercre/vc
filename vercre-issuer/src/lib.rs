@@ -89,6 +89,7 @@
 mod authorize;
 mod create_offer;
 mod credential;
+mod credential_offer;
 mod deferred;
 mod metadata;
 mod register;
@@ -111,6 +112,7 @@ pub mod provider {
 pub use authorize::authorize;
 pub use create_offer::create_offer;
 pub use credential::credential;
+pub use credential_offer::credential_offer;
 pub use deferred::deferred;
 pub use metadata::metadata;
 pub use register::register;
@@ -118,11 +120,11 @@ pub use token::token;
 pub use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType,
     AuthorizationRequest, AuthorizationResponse, CreateOfferRequest, CreateOfferResponse,
-    CredentialConfiguration, CredentialOffer, OfferType, CredentialRequest,
-    CredentialResponse, CredentialType, DeferredCredentialRequest, DeferredCredentialResponse,
-    Grants, MetadataRequest, MetadataResponse, PreAuthorizedCodeGrant, ProofClaims, ProofType,
-    RegistrationRequest, RegistrationResponse, SendOfferType, TokenAuthorizationDetail,
-    TokenGrantType, TokenRequest, TokenResponse, TxCode,
+    CredentialConfiguration, CredentialOffer, CredentialOfferRequest, CredentialOfferResponse,
+    CredentialRequest, CredentialResponse, CredentialType, DeferredCredentialRequest,
+    DeferredCredentialResponse, Grants, MetadataRequest, MetadataResponse, OfferType,
+    PreAuthorizedCodeGrant, ProofClaims, ProofType, RegistrationRequest, RegistrationResponse,
+    SendType, TokenAuthorizationDetail, TokenGrantType, TokenRequest, TokenResponse, TxCode,
 };
 pub use vercre_openid::Result;
 

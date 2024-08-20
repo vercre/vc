@@ -5,7 +5,7 @@ use std::sync::LazyLock;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::provider::CredentialStorer;
 use vercre_holder::{IssuanceStatus, OfferRequest, PinRequest};
-use vercre_issuer::{CreateOfferRequest, OfferType, SendOfferType};
+use vercre_issuer::{CreateOfferRequest, OfferType, SendType};
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
 use crate::provider as holder;
@@ -20,7 +20,7 @@ static OFFER_REQUEST: LazyLock<CreateOfferRequest> = LazyLock::new(|| CreateOffe
     subject_id: Some(NORMAL_USER.into()),
     pre_authorize: true,
     tx_code_required: true,
-    send_type: SendOfferType::ByValue,
+    send_type: SendType::ByVal,
 });
 
 #[tokio::test]

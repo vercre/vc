@@ -75,7 +75,7 @@ impl Verifier for Provider {
         }
         let request = RequestObjectRequest {
             client_id: parts[2].into(),
-            state: parts[0].into(),
+            id: parts[0].into(),
         };
         Ok(vercre_verifier::request_object(self.verifier.clone().unwrap(), &request).await?)
     }

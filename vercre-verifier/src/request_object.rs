@@ -42,7 +42,7 @@ async fn process(
     tracing::debug!("request_object::process");
 
     // retrieve request object from state
-    let buf = StateStore::get(&provider, &request.state)
+    let buf = StateStore::get(&provider, &request.id)
         .await
         .map_err(|e| Error::ServerError(format!("issue fetching state: {e}")))?;
     let state = State::from_slice(&buf)
@@ -106,7 +106,7 @@ mod tests {
 
         let request = RequestObjectRequest {
             client_id: VERIFIER_ID.to_string(),
-            state: state_key.to_string(),
+            id: state_key.to_string(),
         };
         let response = request_object(provider.clone(), &request).await.expect("response is valid");
 

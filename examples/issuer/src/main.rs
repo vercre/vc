@@ -7,7 +7,7 @@ mod provider;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
-use axum::extract::State;
+use axum::extract::{Path, State};
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
@@ -26,9 +26,9 @@ use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 use vercre_issuer::{
-    AuthorizationRequest, CreateOfferRequest, CreateOfferResponse, CredentialRequest,
-    CredentialResponse, DeferredCredentialRequest, DeferredCredentialResponse, MetadataRequest,
-    MetadataResponse, TokenRequest, TokenResponse,
+    AuthorizationRequest, CreateOfferRequest, CreateOfferResponse, CredentialOfferRequest,
+    CredentialOfferResponse, CredentialRequest, CredentialResponse, DeferredCredentialRequest,
+    DeferredCredentialResponse, MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,
 };
 
 use crate::provider::Provider;
@@ -45,6 +45,7 @@ async fn main() {
 
     let router = Router::new()
         .route("/create_offer", post(create_offer))
+        .route("/credential_offer/:offer_id", get(credential_offer))
         .route("/.well-known/openid-credential-issuer", get(metadata))
         .route("/auth", get(authorize))
         .route("/login", post(login))
@@ -73,6 +74,19 @@ async fn create_offer(
     req.credential_issuer = format!("http://{host}");
 
     vercre_issuer::create_offer(provider, &req).await.into()
+}
+
+// Retrieve Authorization Request Object endpoint
+#[axum::debug_handler]
+async fn credential_offer(
+    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    Path(offer_id): Path<String>,
+) -> AxResult<CredentialOfferResponse> {
+    let request = CredentialOfferRequest {
+        credential_issuer: format!("http://{host}"),
+        id: offer_id,
+    };
+    vercre_issuer::credential_offer(provider, &request).await.into()
 }
 
 // Metadata endpoint

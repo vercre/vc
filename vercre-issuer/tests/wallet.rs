@@ -8,10 +8,11 @@ use sha2::{Digest, Sha256};
 use vercre_core::Quota;
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_issuer::{
-    AuthorizationResponse, CredentialOffer, CredentialResponse, DeferredCredentialRequest,
-    DeferredCredentialResponse, ProofClaims, TokenGrantType, TokenRequest, TokenResponse,
+    AuthorizationResponse, CredentialOfferRequest, CredentialResponse, DeferredCredentialRequest,
+    DeferredCredentialResponse, OfferType, ProofClaims, TokenGrantType, TokenRequest,
+    TokenResponse,
 };
-use vercre_openid::{CredentialFormat, Result};
+use vercre_openid::{CredentialFormat, Error, Result};
 use vercre_test_utils::holder;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_w3c_vc::proof::{self, Payload, Verify};
@@ -28,7 +29,7 @@ pub struct Wallet {
 
 impl Wallet {
     pub async fn self_initiated(&self) -> Result<()> {
-        let auth = self.authorize(None).await.expect("should authorize");
+        let auth = self.authorize(None).await?;
 
         let grant_type = TokenGrantType::AuthorizationCode {
             code: auth.code,
@@ -36,11 +37,29 @@ impl Wallet {
             redirect_uri: Some(REDIRECT_URI.into()),
         };
 
-        let token = self.token(grant_type).await.expect("should get token");
+        let token = self.token(grant_type).await?;
         self.credential(token).await
     }
 
-    pub async fn issuer_initiated(&self, offer: CredentialOffer) -> Result<()> {
+    pub async fn issuer_initiated(&self, offer_type: OfferType) -> Result<()> {
+        let offer = match offer_type {
+            OfferType::Object(offer) => offer,
+            OfferType::Uri(uri) => {
+                let path = format!("{CREDENTIAL_ISSUER}/credential_offer/");
+                let Some(id) = uri.strip_prefix(&path) else {
+                    panic!("should have prefix");
+                };
+                let request = CredentialOfferRequest {
+                    credential_issuer: CREDENTIAL_ISSUER.into(),
+                    id: id.to_string(),
+                };
+
+                let offer_resp =
+                    vercre_issuer::credential_offer(self.provider.clone(), &request).await?;
+                offer_resp.credential_offer
+            }
+        };
+
         let grants = &offer.grants.unwrap_or_default();
 
         let grant_type = if let Some(grant) = &grants.pre_authorized_code {
@@ -54,7 +73,7 @@ impl Wallet {
             } else {
                 None
             };
-            let auth = self.authorize(issuer_state).await.expect("should authorize");
+            let auth = self.authorize(issuer_state).await?;
 
             TokenGrantType::AuthorizationCode {
                 code: auth.code,
@@ -63,7 +82,7 @@ impl Wallet {
             }
         };
 
-        let token = self.token(grant_type).await.expect("should get token");
+        let token = self.token(grant_type).await?;
         self.credential(token).await
     }
 
@@ -100,7 +119,8 @@ impl Wallet {
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
         });
-        let request = serde_json::from_value(req_json).expect("should deserialize");
+        let request =
+            serde_json::from_value(req_json).map_err(|e| Error::ServerError(format!("{e}")))?;
         vercre_issuer::authorize(self.provider.clone(), &request).await
     }
 
@@ -122,7 +142,9 @@ impl Wallet {
             iat: Utc::now().timestamp(),
             nonce: token_resp.c_nonce.clone(),
         };
-        let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
+        let jwt = jws::encode(Type::Proof, &claims, holder::Provider)
+            .await
+            .map_err(|e| Error::ServerError(format!("{e}")))?;
 
         let req_json = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
@@ -139,15 +161,13 @@ impl Wallet {
                 "jwt": jwt
             }
         });
-        let request = serde_json::from_value(req_json).expect("should deserialize");
-        let mut response = vercre_issuer::credential(self.provider.clone(), &request)
-            .await
-            .expect("should get credential");
+        let request =
+            serde_json::from_value(req_json).map_err(|e| Error::ServerError(format!("{e}")))?;
+        let mut response = vercre_issuer::credential(self.provider.clone(), &request).await?;
 
         // get credential if response is deferred (has transaction_id)
         if response.transaction_id.is_some() {
-            let deferred_resp =
-                self.deferred(token_resp.clone(), response.clone()).await.expect("Ok");
+            let deferred_resp = self.deferred(token_resp.clone(), response.clone()).await?;
             response = deferred_resp.credential_response;
         }
 
@@ -162,9 +182,7 @@ impl Wallet {
             panic!("expected one credential");
         };
 
-        let Payload::Vc(vc) =
-            proof::verify(Verify::Vc(&vc_kind), &self.provider).await.expect("should decode")
-        else {
+        let Ok(Payload::Vc(vc)) = proof::verify(Verify::Vc(&vc_kind), &self.provider).await else {
             panic!("should be VC");
         };
 

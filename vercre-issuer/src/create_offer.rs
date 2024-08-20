@@ -69,7 +69,7 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer, Grants,
-    Metadata, OfferType, PreAuthorizedCodeGrant, Provider, SendOfferType, StateStore, TxCode,
+    Metadata, OfferType, PreAuthorizedCodeGrant, Provider, SendType, StateStore, TxCode,
 };
 use vercre_openid::{Error, Result};
 
@@ -195,7 +195,7 @@ async fn process(
         }),
     };
 
-    let offer_type = if request.send_type == SendOfferType::ByReference {
+    let offer_type = if request.send_type == SendType::ByRef {
         state.credential_offer = Some(credential_offer);
         OfferType::Uri(format!("{}/credential_offer/{state_key}", request.credential_issuer))
     } else {
@@ -231,7 +231,7 @@ mod tests {
             "subject_id": NORMAL_USER,
             "pre-authorize": true,
             "tx_code_required": true,
-            "send_type": "by_value"
+            "send_type": SendType::ByVal,
         });
 
         let mut request =
