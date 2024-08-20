@@ -29,7 +29,7 @@ pub struct State {
     /// Time state should expire.
     pub expires_at: DateTime<Utc>,
 
-    /// Credential offer when offer is `credential_offer_uri`.
+    /// Credential Offer when offer made by reference.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_offer: Option<CredentialOffer>,
 

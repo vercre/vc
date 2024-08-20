@@ -5,7 +5,7 @@ mod wallet;
 
 use rstest::rstest;
 use utils::{provider, Issuance};
-use vercre_issuer::{CreateOfferRequest, CredentialOfferType, SendOffer};
+use vercre_issuer::{CreateOfferRequest, OfferType, SendOfferType};
 use vercre_openid::CredentialFormat;
 use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER};
 
@@ -28,12 +28,12 @@ async fn issuance(provider: Provider, #[case] issue: Issuance) {
         subject_id: Some(subject_id.to_string()),
         pre_authorize: true,
         tx_code_required: true,
-        send_offer: SendOffer::ByValue,
+        send_type: SendOfferType::ByValue,
     };
     let response =
         vercre_issuer::create_offer(provider.clone(), &request).await.expect("should create offer");
 
-    let CredentialOfferType::Object(offer) = response.credential_offer else {
+    let OfferType::Object(offer) = response.offer_type else {
         panic!("offer should be an object");
     };
 
@@ -59,12 +59,12 @@ async fn format(provider: Provider, #[case] credential_format: CredentialFormat)
         subject_id: Some(NORMAL_USER.to_string()),
         pre_authorize: true,
         tx_code_required: true,
-        send_offer: SendOffer::ByValue,
+        send_type: SendOfferType::ByValue,
     };
     let response =
         vercre_issuer::create_offer(provider.clone(), &request).await.expect("should create offer");
 
-    let CredentialOfferType::Object(offer) = response.credential_offer else {
+    let OfferType::Object(offer) = response.offer_type else {
         panic!("offer should be an object");
     };
 
@@ -88,12 +88,12 @@ async fn authorization(provider: Provider) {
         subject_id: Some(NORMAL_USER.to_string()),
         pre_authorize: false,
         tx_code_required: true,
-        send_offer: SendOffer::ByValue,
+        send_type: SendOfferType::ByValue,
     };
     let response =
         vercre_issuer::create_offer(provider.clone(), &request).await.expect("should create offer");
 
-    let CredentialOfferType::Object(offer) = response.credential_offer else {
+    let OfferType::Object(offer) = response.offer_type else {
         panic!("offer should be an object");
     };
 

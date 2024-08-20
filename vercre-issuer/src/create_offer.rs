@@ -68,8 +68,8 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer,
-    CredentialOfferType, Grants, Metadata, PreAuthorizedCodeGrant, Provider, StateStore, TxCode,
+    AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer, Grants,
+    Metadata, OfferType, PreAuthorizedCodeGrant, Provider, SendOfferType, StateStore, TxCode,
 };
 use vercre_openid::{Error, Result};
 
@@ -133,18 +133,21 @@ async fn process(
         expires_at: Utc::now() + Expire::Authorized.duration(),
         credential_identifiers: request.credential_configuration_ids.clone(),
         subject_id: request.subject_id.clone(),
+
         ..State::default()
     };
 
     let mut pre_auth_grant = None;
     let mut auth_grant = None;
     let mut tx_code = None;
+    let state_key: String;
 
     if request.pre_authorize {
         // -------------------------
         // Pre-authorized Code Grant
         // -------------------------
         let pre_auth_code = gen::auth_code();
+        state_key = pre_auth_code.clone();
 
         let tx_code_def = if request.tx_code_required {
             Some(TxCode {
@@ -157,7 +160,7 @@ async fn process(
         };
 
         pre_auth_grant = Some(PreAuthorizedCodeGrant {
-            pre_authorized_code: pre_auth_code.clone(),
+            pre_authorized_code: pre_auth_code,
             tx_code: tx_code_def,
             ..PreAuthorizedCodeGrant::default()
         });
@@ -170,47 +173,41 @@ async fn process(
         state.current_step = Step::PreAuthorized(PreAuthorized {
             tx_code: tx_code.clone(),
         });
-
-        StateStore::put(&provider, &pre_auth_code, state.to_vec()?, state.expires_at)
-            .await
-            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
     } else {
         // -------------------------
         // Authorization Code Grant
         // -------------------------
         let issuer_state = gen::state_key();
+        state_key = issuer_state.clone();
 
         auth_grant = Some(AuthorizationCodeGrant {
-            issuer_state: Some(issuer_state.clone()),
+            issuer_state: Some(issuer_state),
             authorization_server: None,
         });
-        StateStore::put(&provider, &issuer_state, state.to_vec()?, state.expires_at)
-            .await
-            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
     }
 
-    // if request.device_flow == DeviceFlow::CrossDevice {
-    //     req_obj.response_mode = Some("direct_post".into());
-    //     req_obj.client_id = format!("{}/post", request.client_id);
-    //     req_obj.response_uri = Some(format!("{}/post", request.client_id));
-    //     response.request_uri = Some(format!("{}/request/{state_key}", request.client_id));
-    // } else {
-    //     req_obj.client_id = format!("{}/callback", request.client_id);
-    //     response.request_object = Some(req_obj.clone());
-    // }
+    let credential_offer = CredentialOffer {
+        credential_issuer: request.credential_issuer.clone(),
+        credential_configuration_ids: request.credential_configuration_ids.clone(),
+        grants: Some(Grants {
+            authorization_code: auth_grant,
+            pre_authorized_code: pre_auth_grant,
+        }),
+    };
+
+    let offer_type = if request.send_type == SendOfferType::ByReference {
+        state.credential_offer = Some(credential_offer);
+        OfferType::Uri(format!("{}/credential_offer/{state_key}", request.credential_issuer))
+    } else {
+        OfferType::Object(credential_offer)
+    };
+
+    StateStore::put(&provider, &state_key, state.to_vec()?, state.expires_at)
+        .await
+        .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
     // TODO: add support for `credential_offer_uri`
-    Ok(CreateOfferResponse {
-        credential_offer: CredentialOfferType::Object(CredentialOffer {
-            credential_issuer: request.credential_issuer.clone(),
-            credential_configuration_ids: request.credential_configuration_ids.clone(),
-            grants: Some(Grants {
-                authorization_code: auth_grant,
-                pre_authorized_code: pre_auth_grant,
-            }),
-        }),
-        tx_code,
-    })
+    Ok(CreateOfferResponse { offer_type, tx_code })
 }
 
 #[cfg(test)]
@@ -234,7 +231,7 @@ mod tests {
             "subject_id": NORMAL_USER,
             "pre-authorize": true,
             "tx_code_required": true,
-            "send_offer": "by_value"
+            "send_type": "by_value"
         });
 
         let mut request =
@@ -248,7 +245,7 @@ mod tests {
         });
 
         // check redacted fields
-        let CredentialOfferType::Object(offer) = response.credential_offer else {
+        let OfferType::Object(offer) = response.offer_type else {
             panic!("expected CredentialOfferType::Object");
         };
         assert_let!(Some(grants), &offer.grants);

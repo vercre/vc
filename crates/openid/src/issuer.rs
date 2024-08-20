@@ -103,13 +103,13 @@ pub struct CreateOfferRequest {
     pub subject_id: Option<String>,
 
     /// The Issuer can specify whether Credential Offer is an object or a URI.
-    pub send_offer: SendOffer,
+    pub send_type: SendOfferType,
 }
 
 /// Determines how the Credential Offer is sent to the Wallet.
-#[derive(Clone, Default, Debug, Deserialize, Serialize)]
+#[derive(Clone, Default, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum SendOffer {
+pub enum SendOfferType {
     /// The Credential Offer is sent to the Wallet by value — as an object containing
     /// the Credential Offer parameters.
     #[default]
@@ -127,7 +127,7 @@ pub struct CreateOfferResponse {
     /// The offer can be an object or URL pointing to the Credential Offer Endpoint
     /// where A `CredentialOffer` object can be retrieved.
     #[serde(flatten)]
-    pub credential_offer: CredentialOfferType,
+    pub offer_type: OfferType,
 
     /// A transaction code to be provided by the End-User in order to complete
     /// a credential request.
@@ -138,7 +138,7 @@ pub struct CreateOfferResponse {
 /// The type of Credential Offer returned in a `CreateOfferResponse`: either an object
 /// or a URI.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum CredentialOfferType {
+pub enum OfferType {
     /// A Credential Offer object that can be sent to a Wallet as an HTTP GET request.
     #[serde(rename = "credential_offer")]
     Object(CredentialOffer),
