@@ -386,6 +386,7 @@ impl Context {
 mod tests {
     use base64ct::{Base64UrlUnpadded, Encoding};
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use rstest::rstest;
     use serde_json::json;
     use sha2::{Digest, Sha256};
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -393,15 +394,37 @@ mod tests {
 
     use super::*;
 
-    #[tokio::test]
-    async fn configuration_id() {
+    #[rstest]
+    #[case("configuration_id", configuration_id)]
+    #[case("format", format)]
+    #[case("scope", scope)]
+    async fn request(#[case] name: &str, #[case] f: fn() -> serde_json::Value) {
         vercre_test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();
+        let value = f();
 
         // create request
-        let value = json!({
+        let request =
+            serde_json::from_value::<AuthorizationRequest>(value).expect("should deserialize");
+        let response = authorize(provider.clone(), &request).await.expect("response is ok");
+
+        assert_snapshot!("authorize:configuration_id:response", &response, {
+            ".code" => "[code]",
+        });
+
+        // compare response with saved state
+        let buf = StateStore::get(&provider, &response.code).await.expect("state exists");
+        let state = State::try_from(buf).expect("state is valid");
+
+        assert_snapshot!(format!("authorize:{name}:state"), state, {
+            ".expires_at" => "[expires_at]",
+        });
+    }
+
+    fn configuration_id() -> serde_json::Value {
+        json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
@@ -415,34 +438,11 @@ mod tests {
             }]).to_string(),
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
-        });
-
-        let request =
-            serde_json::from_value::<AuthorizationRequest>(value).expect("should deserialize");
-        let response = authorize(provider.clone(), &request).await.expect("response is ok");
-
-        assert_snapshot!("authorize:configuration_id:response", &response, {
-            ".code" => "[code]",
-        });
-
-        // compare response with saved state
-        let buf = StateStore::get(&provider, &response.code).await.expect("state exists");
-        let state = State::try_from(buf).expect("state is valid");
-
-        assert_snapshot!("authorize:configuration_id:state", state, {
-            ".expires_at" => "[expires_at]",
-        });
+        })
     }
 
-    #[tokio::test]
-    async fn format() {
-        vercre_test_utils::init_tracer();
-        snapshot!("");
-
-        let provider = Provider::new();
-
-        // create request
-        let value = json!({
+    fn format() -> serde_json::Value {
+        json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
@@ -468,61 +468,21 @@ mod tests {
             .to_string(),
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
-        });
-
-        let request =
-            serde_json::from_value::<AuthorizationRequest>(value).expect("should deserialize");
-        let response = authorize(provider.clone(), &request).await.expect("response is ok");
-
-        assert_snapshot!("authorize:format:response", &response, {
-            ".code" => "[code]",
-        });
-
-        // compare response with saved state
-        let buf = StateStore::get(&provider, &response.code).await.expect("state exists");
-        let state = State::try_from(buf).expect("state is valid");
-
-        assert_snapshot!("authorize:format:state", state, {
-            ".expires_at" => "[expires_at]",
-        });
+        })
     }
 
-    #[tokio::test]
-    async fn scope() {
-        vercre_test_utils::init_tracer();
-        snapshot!("");
-
-        let provider = Provider::new();
-        let verifier_hash = Sha256::digest("ABCDEF12345");
-
-        // create request
-        let value = json!({
+    fn scope() -> serde_json::Value {
+        json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
             "redirect_uri": "http://localhost:3000/callback",
             "state": "1234",
-            "code_challenge": Base64UrlUnpadded::encode_string(&verifier_hash),
+            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
             "code_challenge_method": "S256",
             "scope": "EmployeeIDCredential",
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
-        });
-
-        let  request =
-            serde_json::from_value::<AuthorizationRequest>(value).expect("should deserialize");
-        let response = authorize(provider.clone(), &request).await.expect("response is ok");
-
-        assert_snapshot!("authorize:scope:response", &response, {
-            ".code" => "[code]",
-        });
-
-        // compare response with saved state
-        let buf = StateStore::get(&provider, &response.code).await.expect("state exists");
-        let state = State::try_from(buf).expect("state is valid");
-        
-        assert_snapshot!("authorize:scope:state", state, {
-            ".expires_at" => "[expires_at]",
-        });
+        })
     }
 }
