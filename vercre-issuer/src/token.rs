@@ -187,7 +187,6 @@ async fn process(
 
 #[cfg(test)]
 mod tests {
-    use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
@@ -197,13 +196,15 @@ mod tests {
     };
     use vercre_openid::CredentialFormat;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+    use vercre_test_utils::snapshot;
 
     use super::*;
     use crate::state::{Authorization, PreAuthorized};
 
     #[tokio::test]
-    async fn simple_token() {
+    async fn pre_authorized() {
         vercre_test_utils::init_tracer();
+        snapshot!("");
 
         let provider = Provider::new();
 
@@ -234,38 +235,111 @@ mod tests {
             .expect("state exists");
 
         // create TokenRequest to 'send' to the app
-        let body = json!({
+        let value = json!({
+            "credential_issuer": CREDENTIAL_ISSUER,
             "client_id": CLIENT_ID,
             "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
             "pre-authorized_code": pre_auth_code,
             "tx_code": "1234"
         });
 
-        let mut request =
-            serde_json::from_value::<TokenRequest>(body).expect("request should deserialize");
-        request.credential_issuer = CREDENTIAL_ISSUER.to_string();
-
+        let request =
+            serde_json::from_value::<TokenRequest>(value).expect("request should deserialize");
         let token_resp = token(provider.clone(), &request).await.expect("response is valid");
-        assert_snapshot!("simple-token", &token_resp, {
+
+        assert_snapshot!("token:pre_authorized:response", &token_resp, {
             ".access_token" => "[access_token]",
             ".c_nonce" => "[c_nonce]"
         });
 
-        // auth_code state should be removed
+        // pre-authorized state should be removed
         assert!(StateStore::get(&provider, pre_auth_code).await.is_err());
 
         // should be able to retrieve state using access token
         let buf = StateStore::get(&provider, &token_resp.access_token).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
 
-        // compare response with saved state
-        assert_let!(Step::Token(token_state), &state.current_step);
-        assert_eq!(token_state.c_nonce, token_resp.c_nonce.unwrap_or_default());
+        assert_snapshot!("token:pre_authorized:state", state, {
+            ".expires_at" => "[expires_at]",
+            ".current_step.access_token" => "[access_token]",
+            ".current_step.c_nonce" => "[c_nonce]",
+            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]",
+        });
     }
 
     #[tokio::test]
-    async fn authzn_token() {
+    async fn authorization() {
         vercre_test_utils::init_tracer();
+        snapshot!("");
+
+        let provider = Provider::new();
+
+        // set up state
+        let mut state = State {
+            expires_at: Utc::now() + Expire::Authorized.duration(),
+            ..State::default()
+        };
+
+        let code = "ABCDEF";
+        let verifier = "ABCDEF12345";
+
+        state.current_step = Step::Authorization(Authorization {
+            code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
+            code_challenge_method: "S256".into(),
+
+            subject_id: NORMAL_USER.into(),
+            authorized: Some(vec![Authorized {
+                authorization_detail: AuthorizationDetail {
+                    type_: AuthorizationDetailType::OpenIdCredential,
+                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
+                    ..AuthorizationDetail::default()
+                },
+                credential_identifiers: vec!["PHLEmployeeID".into()],
+            }]),
+            client_id: CLIENT_ID.into(),
+            ..Authorization::default()
+        });
+
+        let ser = state.to_vec().expect("should serialize");
+        StateStore::put(&provider, code, ser, state.expires_at).await.expect("state exists");
+
+        // create TokenRequest to 'send' to the app
+        let value = json!({
+            "credential_issuer": CREDENTIAL_ISSUER,
+            "client_id": CLIENT_ID,
+            "grant_type": "authorization_code",
+            "code": code,
+            "code_verifier": verifier,
+        });
+
+        let request =
+            serde_json::from_value::<TokenRequest>(value).expect("request should deserialize");
+        let token_resp = token(provider.clone(), &request).await.expect("response is valid");
+
+        assert_snapshot!("token:authorization:response", &token_resp, {
+            ".access_token" => "[access_token]",
+            ".c_nonce" => "[c_nonce]"
+        });
+
+        // authorization state should be removed
+        assert!(StateStore::get(&provider, code).await.is_err());
+
+        // should be able to retrieve state using access token
+        let buf = StateStore::get(&provider, &token_resp.access_token).await.expect("state exists");
+        let state = State::try_from(buf).expect("state is valid");
+
+        assert_snapshot!("token:authorization:state", state, {
+            ".expires_at" => "[expires_at]",
+            ".current_step.access_token" => "[access_token]",
+            ".current_step.c_nonce" => "[c_nonce]",
+            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]",
+        });
+    }
+
+    #[tokio::test]
+    async fn authorization_details() {
+        vercre_test_utils::init_tracer();
+        snapshot!("");
 
         let provider = Provider::new();
 
@@ -277,12 +351,11 @@ mod tests {
 
         let auth_code = "ABCDEF";
         let verifier = "ABCDEF12345";
-        let verifier_hash = Sha256::digest(verifier);
 
         state.current_step = Step::Authorization(Authorization {
             client_id: CLIENT_ID.into(),
             redirect_uri: Some("https://example.com".into()),
-            code_challenge: Base64UrlUnpadded::encode_string(&verifier_hash),
+            code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
             code_challenge_method: "S256".into(),
             subject_id: NORMAL_USER.into(),
             authorized: Some(vec![Authorized {
@@ -308,7 +381,8 @@ mod tests {
         StateStore::put(&provider, auth_code, ser, state.expires_at).await.expect("state exists");
 
         // create TokenRequest to 'send' to the app
-        let body = json!({
+        let value = json!({
+            "credential_issuer": CREDENTIAL_ISSUER,
             "client_id": CLIENT_ID,
             "grant_type": "authorization_code",
             "code": auth_code,
@@ -316,11 +390,11 @@ mod tests {
             "redirect_uri": "https://example.com",
         });
 
-        let mut request =
-            serde_json::from_value::<TokenRequest>(body).expect("request should deserialize");
-        request.credential_issuer = CREDENTIAL_ISSUER.to_string();
+        let request =
+            serde_json::from_value::<TokenRequest>(value).expect("request should deserialize");
         let response = token(provider.clone(), &request).await.expect("response is valid");
-        assert_snapshot!("authzn-token", &response, {
+
+        assert_snapshot!("token:authorization_details:response", &response, {
             ".access_token" => "[access_token]",
             ".c_nonce" => "[c_nonce]"
         });
@@ -332,8 +406,11 @@ mod tests {
         let buf = StateStore::get(&provider, &response.access_token).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
 
-        // compare response with saved state
-        assert_let!(Step::Token(token_state), &state.current_step);
-        assert_eq!(token_state.c_nonce, response.c_nonce.unwrap_or_default());
+        assert_snapshot!("token:authorization_details:state", state, {
+            ".expires_at" => "[expires_at]",
+            ".current_step.access_token" => "[access_token]",
+            ".current_step.c_nonce" => "[c_nonce]",
+            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]",
+        });
     }
 }

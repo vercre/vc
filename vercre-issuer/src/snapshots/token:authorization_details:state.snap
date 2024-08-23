@@ -1,0 +1,21 @@
+---
+source: vercre-issuer/src/token.rs
+assertion_line: 342
+expression: state
+---
+expires_at: "[expires_at]"
+current_step:
+  token:
+    access_token: "[access_token]"
+    c_nonce: "[c_nonce]"
+    c_nonce_expires_at: "[c_nonce_expires_at]"
+    subject_id: normal_user
+    authorized:
+      - type: openid_credential
+        format: jwt_vc_json
+        credential_definition:
+          type:
+            - VerifiableCredential
+            - EmployeeIDCredential
+        credential_identifiers:
+          - EmployeeID_JWT
