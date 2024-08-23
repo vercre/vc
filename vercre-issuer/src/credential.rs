@@ -16,8 +16,8 @@ use vercre_core::{gen, Kind, Quota};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
-    CredentialConfiguration, CredentialDefinition, CredentialRequest, CredentialResponse,
-    CredentialType, Issuer, Metadata, ProofClaims, ProofOption, ProofType, ProofsType, Provider,
+    CredentialConfiguration, CredentialDefinition, CredentialRequest, CredentialResponse, Issuer,
+    Metadata, ProofClaims, ProofOption, ProofType, ProofsType, Provider, RequestedCredential,
     StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
@@ -83,21 +83,23 @@ async fn verify(
     // TODO: add support for `credential_identifier`
 
     // format and type request
-    if let CredentialType::Format(format) = &request.credential_type {
+    if let RequestedCredential::Format(format) = &request.requested_credential {
         let Some(definition) = &request.credential_definition else {
             return Err(Error::InvalidCredentialRequest("credential definition not set".into()));
         };
 
         // check request has been authorized:
         //   - match format + type against authorized items in state
-        let mut authorized = false;
+        let authorized = false;
 
-        for (identifier, config) in &context.issuer_config.credential_configurations_supported {
+        for (_identifier, config) in &context.issuer_config.credential_configurations_supported {
             if (&config.format == format)
                 && (config.credential_definition.type_ == definition.type_)
             {
                 supported_proofs = config.proof_types_supported.as_ref();
-                authorized = context.state.credential_identifiers.contains(identifier);
+
+                // FIXME: get credential identifiers from current_step
+                // authorized = context.state.credential_identifiers.contains(identifier);
                 break;
             }
         }
@@ -329,8 +331,8 @@ async fn create_vc(
 fn credential_configuration(
     context: &Context, request: &CredentialRequest,
 ) -> Result<(String, CredentialConfiguration)> {
-    match &request.credential_type {
-        CredentialType::Identifier(identifier) => {
+    match &request.requested_credential {
+        RequestedCredential::Identifier(identifier) => {
             let Some(config) =
                 context.issuer_config.credential_configurations_supported.get(identifier)
             else {
@@ -338,7 +340,7 @@ fn credential_configuration(
             };
             Ok((identifier.clone(), config.clone()))
         }
-        CredentialType::Format(format) => {
+        RequestedCredential::Format(format) => {
             let Some(definition) = &request.credential_definition else {
                 return Err(Error::InvalidCredentialRequest(
                     "credential definition not set".into(),
@@ -403,6 +405,9 @@ mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
+    use vercre_openid::issuer::{
+        AuthorizationDetail, AuthorizationDetailType, AuthorizedDetail, CredentialType,
+    };
     use vercre_test_utils::holder;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_w3c_vc::proof::Verify;
@@ -417,13 +422,21 @@ mod tests {
         let provider = Provider::new();
         let access_token = "ABCDEF";
         let c_nonce = "1234ABCD";
-        let credentials = vec!["EmployeeID_JWT".into()];
 
         // set up state
         let mut state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
-            credential_identifiers: credentials,
+            // FIXME: use authorization_details to hold credential identifiers
+            // credential_identifiers: credentials,
             subject_id: Some(NORMAL_USER.into()),
+            authorized_details: Some(vec![AuthorizedDetail {
+                authorization_detail: AuthorizationDetail {
+                    type_: AuthorizationDetailType::OpenIdCredential,
+                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
+                    ..AuthorizationDetail::default()
+                },
+                credential_identifiers: vec!["EmployeeID2023".into()],
+            }]),
             ..State::default()
         };
 
@@ -506,13 +519,23 @@ mod tests {
         let provider = Provider::new();
         let access_token = "ABCDEF";
         let c_nonce = "1234ABCD";
-        let credentials = vec!["EmployeeID_JWT".into()];
+        // let credentials = vec!["EmployeeID_JWT".into()];
 
         // set up state
         let mut state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
-            credential_identifiers: credentials,
+
+            // FIXME: use authorization_details to hold credential identifiers
+            // credential_identifiers: credentials,
             subject_id: Some(NORMAL_USER.into()),
+            authorized_details: Some(vec![AuthorizedDetail {
+                authorization_detail: AuthorizationDetail {
+                    type_: AuthorizationDetailType::OpenIdCredential,
+                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
+                    ..AuthorizationDetail::default()
+                },
+                credential_identifiers: vec!["EmployeeID2023".into()],
+            }]),
             ..State::default()
         };
 
@@ -589,96 +612,4 @@ mod tests {
             ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]"
         });
     }
-
-    // #[tokio::test]
-    // async fn credential_identifiers() {
-    //     test_utils::init_tracer();
-
-    //     let provider = Provider::new();
-    //     let access_token = "ABCDEF";
-    //     let c_nonce = "1234ABCD";
-    //     let identifiers = vec!["EmployeeID_JWT".into()];
-
-    //     // set up state
-    //     let mut state = State::builder()
-    //         .credential_issuer(CREDENTIAL_ISSUER.into())
-    //         .expires_at(Utc::now() + Expire::Authorized.duration())
-    //         .subject_id(Some(NORMAL_USER.into()))
-    //         .build()
-    //         .expect("should build state");
-
-    //     state.token = Some(Token {
-    //         access_token: access_token.into(),
-    //         token_type: "Bearer".into(),
-    //         c_nonce: c_nonce.into(),
-    //         c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
-    //         ..Default::default()
-    //     });
-
-    //     StateStore::put(&provider, access_token, state.to_vec(), state.expires_at)
-    //         .await
-    //         .expect("state exists");
-
-    //     // create CredentialRequest to 'send' to the app
-
-    //     let claims = ProofClaims {
-    //         iss: holder_provider::CLIENT_ID,
-    //         aud: CREDENTIAL_ISSUER.into(),
-    //         iat: Utc::now().timestamp(),
-    //         nonce: c_nonce.into(),
-    //     };
-    //  let jwt = jose::encode(jose::Payload::Proof, &claims, holder_provider::Provider::new())
-    //         .await
-    //         .expect("should encode");
-
-    //     let body = json!({
-    //         "credential_requests":[{
-    //             "credential_identifier": "EmployeeID_JWT",
-    //             "proof":{
-    //                 "proof_type": "jwt",
-    //                 "jwt": signed_jwt
-    //             }
-    //         }]
-    //     });
-
-    //     let mut request = serde_json::from_value::<CredentialRequest>(body)
-    //         .expect("request should deserialize");
-    //     request.credential_issuer = CREDENTIAL_ISSUER.into();
-    //     request.access_token = access_token.into();
-
-    //     let response =
-    //         Endpoint::new(provider.clone()).batch(&request).await.expect("response is valid");
-    //     assert_snapshot!("ci-response", response, {
-    //         ".credential_responses[0]" => "[credential]",
-    //         ".c_nonce" => "[c_nonce]",
-    //         ".c_nonce_expires_in" => "[c_nonce_expires_in]"
-    //     });
-
-    //     // verify credential
-    //     assert!(response.credential_responses.len() == 1);
-    //     let credential = response.credential_responses[0].credential.clone();
-
-    //     let vc_val = credential.expect("VC is present");
-    //     let token = serde_json::from_value::<String>(vc_val).expect("base64 encoded string");
-    //     let Payload::Vc(vc) = proof::verify(&token, Verify::Vc).await.expect("should decode")
-    //     else {
-    //         panic!("should be VC");
-    //     };
-
-    //     assert_snapshot!("ci-vc_jwt", vc_jwt, {
-    //         ".claims.iat" => "[iat]",
-    //         ".claims.nbf" => "[nbf]",
-    //         ".claims.vc.issuanceDate" => "[issuanceDate]",
-    //         ".claims.vc.credentialSubject" => insta::sorted_redaction()
-    //     });
-
-    //     // token state should remain unchanged
-    //     assert_let!(Ok(buf), StateStore::get(&provider, access_token).await);
-    //     let state = State::try_from(buf).expect("state is valid");
-    //     assert_snapshot!("ci-state", state, {
-    //         ".expires_at" => "[expires_at]",
-    //         ".token.c_nonce"=>"[c_nonce]",
-    //         ".token.c_nonce_expires_at" => "[c_nonce_expires_at]"
-    //     });
-    // }
 }

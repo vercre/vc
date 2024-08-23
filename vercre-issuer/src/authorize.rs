@@ -76,9 +76,8 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
-    AuthorizationResponse, GrantType, Issuer, Metadata, Provider, StateStore, Subject,
-    TokenAuthorizationDetail,
+    AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
+    AuthorizedDetail, CredentialType, GrantType, Issuer, Metadata, Provider, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 
@@ -211,8 +210,8 @@ impl Context {
 
             // verify requested credentials are supported
             // N.B. only one of `credential_configuration_id` or `format` is allowed
-            match &auth_det.credential_identifier {
-                AuthorizationCredential::ConfigurationId(identifier) => {
+            match &auth_det.credential_type {
+                CredentialType::ConfigurationId(identifier) => {
                     // is `credential_configuration_id` supported?
                     if !self
                         .issuer_config
@@ -228,7 +227,7 @@ impl Context {
                     self.auth_dets.insert(identifier.clone(), auth_det.clone());
                     continue 'verify_details;
                 }
-                AuthorizationCredential::Format(format) => {
+                CredentialType::Format(format) => {
                     //  are `format` and `type` supported?
                     let Some(cred_def) = auth_det.credential_definition.as_ref() else {
                         return Err(Error::InvalidRequest(
@@ -295,7 +294,6 @@ impl Context {
         // - check whether holder is authorized by calling `Subject` provider with
         // `subject_id` and `credential_identifier`
         let mut authzd_auth_detail = vec![];
-        let mut authzd_identifiers = vec![];
 
         for (credential_identifier, authorization_detail) in &self.auth_dets {
             let authorized =
@@ -305,16 +303,15 @@ impl Context {
 
             // subject is authorized to receive the requested credential
             if authorized {
-                authzd_identifiers.push(credential_identifier.clone());
-                authzd_auth_detail.push(TokenAuthorizationDetail {
+                authzd_auth_detail.push(AuthorizedDetail {
                     authorization_detail: authorization_detail.clone(),
-                    // TODO: why not add `credential_identifier` here?
-                    credential_identifiers: None,
+                    // TODO: cater for potentially multiple identifiers
+                    credential_identifiers: vec![credential_identifier.clone()],
                 });
             }
         }
 
-        let authorization_details = if authzd_auth_detail.is_empty() {
+        let authorized_details = if authzd_auth_detail.is_empty() {
             None
         } else {
             Some(authzd_auth_detail)
@@ -329,7 +326,6 @@ impl Context {
                 .await
                 .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
             if auth {
-                authzd_identifiers.push(credential_identifier.clone());
                 authzd_scope_items.push(scope_item.clone());
             }
         }
@@ -340,7 +336,7 @@ impl Context {
         };
 
         // return an error if holder is not authorized for any requested credentials
-        if authorization_details.is_none() && scope.is_none() {
+        if authorized_details.is_none() && scope.is_none() {
             return Err(Error::AccessDenied(
                 "holder is not authorized for requested credentials".into(),
             ));
@@ -349,15 +345,13 @@ impl Context {
         // save authorization state
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
-            credential_identifiers: authzd_identifiers,
             subject_id: Some(request.subject_id.clone()),
+            authorized_details,
             current_step: Step::Authorization(Authorization {
                 client_id: request.client_id.clone(),
                 redirect_uri: request.redirect_uri.clone(),
                 code_challenge: request.code_challenge.clone(),
                 code_challenge_method: request.code_challenge_method.clone(),
-                authorization_details,
-                scope,
             }),
 
             ..State::default()

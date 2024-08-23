@@ -3,7 +3,7 @@
 
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
-use vercre_openid::issuer::{CredentialOffer, CredentialRequest, TokenAuthorizationDetail};
+use vercre_openid::issuer::{AuthorizedDetail, CredentialOffer, CredentialRequest};
 use vercre_openid::{Error, Result};
 
 pub enum Expire {
@@ -33,12 +33,17 @@ pub struct State {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_offer: Option<CredentialOffer>,
 
-    /// Identifiers of credentials offered to/requested by the Wallet.
-    pub credential_identifiers: Vec<String>,
-
     /// The subject the credential is to be issued for.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subject_id: Option<String>,
+
+    /// Lists credential identifiers that the Wallet is authorized to request.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub authorized_details: Option<Vec<AuthorizedDetail>>,
+
+    /// Lists credentials (as scope items) that the Wallet is authorized to request.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scope: Option<String>,
 
     /// Step-specific issuance state.
     pub current_step: Step,
@@ -67,6 +72,9 @@ pub enum Step {
 /// `Auth` is used to store authorization state.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PreAuthorized {
+    /// Identifiers of credentials offered to/requested by the Wallet.
+    pub credential_identifiers: Vec<String>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tx_code: Option<String>,
 }
@@ -85,13 +93,6 @@ pub struct Authorization {
 
     /// PKCE code challenge method from the Authorization Request.
     pub code_challenge_method: String,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub scope: Option<String>,
-
-    #[allow(clippy::struct_field_names)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub authorization_details: Option<Vec<TokenAuthorizationDetail>>,
 }
 
 /// `Token` is used to store token state.
@@ -107,11 +108,6 @@ pub struct Token {
 
     /// Number denoting the lifetime in seconds of the `c_nonce`.
     pub c_nonce_expires_at: DateTime<Utc>,
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub scope: Option<String>,
-
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub authorization_details: Option<Vec<TokenAuthorizationDetail>>,
 }
 
 /// `Token` is used to store token state.

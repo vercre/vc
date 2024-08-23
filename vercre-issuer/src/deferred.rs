@@ -73,7 +73,10 @@ mod tests {
     use serde_json::json;
     use vercre_core::Quota;
     use vercre_datasec::jose::jws::{self, Type};
-    use vercre_openid::issuer::{CredentialRequest, ProofClaims};
+    use vercre_openid::issuer::{
+        AuthorizationDetail, AuthorizationDetailType, AuthorizedDetail, CredentialRequest,
+        CredentialType, ProofClaims,
+    };
     use vercre_test_utils::holder;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_w3c_vc::proof::{self, Payload, Verify};
@@ -89,7 +92,7 @@ mod tests {
         let access_token = "tkn-ABCDEF";
         let c_nonce = "1234ABCD".to_string();
         let transaction_id = "txn-ABCDEF";
-        let credentials = vec!["EmployeeID_JWT".into()];
+        // let credentials = vec!["EmployeeID_JWT".into()];
 
         // create CredentialRequest to 'send' to the app
         let claims = ProofClaims {
@@ -121,8 +124,17 @@ mod tests {
         // set up state
         let mut state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
-            credential_identifiers: credentials,
+            // FIXME: use authorization_details to hold credential identifiers
+            // credential_identifiers: credentials,
             subject_id: Some(NORMAL_USER.into()),
+            authorized_details: Some(vec![AuthorizedDetail {
+                authorization_detail: AuthorizationDetail {
+                    type_: AuthorizationDetailType::OpenIdCredential,
+                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
+                    ..AuthorizationDetail::default()
+                },
+                credential_identifiers: vec!["EmployeeID2023".into()],
+            }]),
             ..State::default()
         };
 

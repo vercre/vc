@@ -131,7 +131,6 @@ async fn process(
 
     let mut state = State {
         expires_at: Utc::now() + Expire::Authorized.duration(),
-        credential_identifiers: request.credential_configuration_ids.clone(),
         subject_id: request.subject_id.clone(),
 
         ..State::default()
@@ -171,6 +170,7 @@ async fn process(
 
         // save state by pre-auth_code
         state.current_step = Step::PreAuthorized(PreAuthorized {
+            credential_identifiers: request.credential_configuration_ids.clone(),
             tx_code: tx_code.clone(),
         });
     } else {

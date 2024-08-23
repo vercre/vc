@@ -85,6 +85,9 @@ pub struct CreateOfferRequest {
     /// the Authorization Request.
     pub credential_configuration_ids: Vec<String>,
 
+    // TODO: add support for `authorization_details` parameter
+    // pub authorization_details: Vec<AuthorizedDetail>,
+    //
     /// Whether the Issuer should provide a pre-authorized offer or not. If not
     /// pre-authorized, the Wallet must request authorization to fulfill the
     /// offer.
@@ -477,7 +480,7 @@ pub struct AuthorizationDetail {
     /// Identifies Credentials requested using either `credential_identifier` or
     /// supported credential `format`.
     #[serde(flatten)]
-    pub credential_identifier: AuthorizationCredential,
+    pub credential_type: CredentialType,
 
     /// Contains the type values the Wallet requests authorization for at the Credential
     /// Issuer.
@@ -516,7 +519,7 @@ pub struct AuthorizationDetail {
 
 /// Means used to identifiy a Credential type when requesting a Credential.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum AuthorizationCredential {
+pub enum CredentialType {
     /// Specifies the unique identifier of the Credential being described in the
     /// `credential_configurations_supported` map in the Credential Issuer Metadata.
     #[serde(rename = "credential_configuration_id")]
@@ -530,7 +533,7 @@ pub enum AuthorizationCredential {
     Format(CredentialFormat),
 }
 
-impl Default for AuthorizationCredential {
+impl Default for CredentialType {
     fn default() -> Self {
         Self::ConfigurationId(String::new())
     }
@@ -694,7 +697,7 @@ pub struct TokenResponse {
     /// The Authorization Details `credential_identifiers` parameter may be populated
     /// for use in subsequent Credential Requests.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub authorization_details: Option<Vec<TokenAuthorizationDetail>>,
+    pub authorization_details: Option<Vec<AuthorizedDetail>>,
 
     /// OPTIONAL if identical to the requested scope, otherwise REQUIRED.
     ///
@@ -715,35 +718,22 @@ pub enum TokenType {
     Bearer,
 }
 
-/// Authorization Details object specifically for use in successful Access Token
+/// Authorization Detail object specifically for use in successful Access Token
 /// responses ([`TokenResponse`]). It wraps the `AuthorizationDetail` struct and adds
 /// `credential_identifiers` parameter for use in Credential requests.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
-pub struct TokenAuthorizationDetail {
+pub struct AuthorizedDetail {
     /// Reuse (and flatten) the existing [`AuthorizationDetail`] object used in
     /// authorization requests.
     #[serde(flatten)]
     pub authorization_detail: AuthorizationDetail,
 
-    /// Uniquely identify Credentials that can be issued using the Access Token.
-    /// Each Credential is described using the same entry in the
-    /// `credential_configurations_supported` Credential Issuer metadata, but can
-    /// contain different claim values or different subset of claims within the
-    /// Credential type claimset. This parameter can be used to simplify the Credential
-    /// Request as it can be used to replaces Credential Request format-specific
-    /// parameters. When received, the Wallet MUST use these values together with an
-    /// Access Token in the subsequent Credential Request(s).
-    ///
-    /// # Example
-    ///
-    /// ```json
-    /// "credential_identifiers": [
-    ///     "CivilEngineeringDegree-2023",
-    ///     "ElectricalEngineeringDegree-2023"
-    /// ]
-    /// ```
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_identifiers: Option<Vec<String>>,
+    /// Credential Identifiers uniquely identify Credential Datasets that can
+    /// be issued. Each Dataset corresponds to a Credential Configuration in the
+    /// `credential_configurations_supported` parameter of the Credential Issuer
+    /// metadata.
+    /// The Wallet MUST use these identifiers in Credential Requests.
+    pub credential_identifiers: Vec<String>,
 }
 
 /// `CredentialRequest` is used by the Client to make a Credential Request to the
@@ -766,7 +756,7 @@ pub struct CredentialRequest {
     /// If `credential_identifiers` were returned in the Token Response, they MUST be
     ///used here. Otherwise, they MUST NOT be used.
     #[serde(flatten)]
-    pub credential_type: CredentialType,
+    pub requested_credential: RequestedCredential,
 
     /// Definition of the credential type requested.
     ///
@@ -791,7 +781,7 @@ pub struct CredentialRequest {
 
 /// Means used to identifiy a Credential type when requesting a Credential.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum CredentialType {
+pub enum RequestedCredential {
     /// Specifies the unique identifier of the Credential being described in the
     /// `credential_configurations_supported` map in the Credential Issuer Metadata.
     #[serde(rename = "credential_identifier")]
@@ -805,7 +795,7 @@ pub enum CredentialType {
     Format(CredentialFormat),
 }
 
-impl Default for CredentialType {
+impl Default for RequestedCredential {
     fn default() -> Self {
         Self::Identifier(String::new())
     }
@@ -1463,7 +1453,7 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                credential_identifier: AuthorizationCredential::Format(CredentialFormat::JwtVcJson),
+                credential_type: CredentialType::Format(CredentialFormat::JwtVcJson),
                 credential_definition: Some(CredentialDefinition {
                     context: Some(vec![
                         "https://www.w3.org/2018/credentials/v1".into(),
@@ -1497,7 +1487,7 @@ mod tests {
         let json = serde_json::json!({
           "credential_issuer": "https://example.com",
           "access_token": "1234",
-          "credential_identifier": "UniversityDegree_JWT",
+          "credential_identifier": "EngineeringDegree2023",
           "proof": {
             "proof_type": "jwt",
             "jwt": "SomeJWT"
@@ -1511,7 +1501,7 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            credential_type: CredentialType::Identifier("UniversityDegree_JWT".into()),
+            requested_credential: RequestedCredential::Identifier("EngineeringDegree2023".into()),
             proof_option: Some(ProofOption::Proof {
                 proof_type: ProofType::Jwt {
                     jwt: "SomeJWT".into(),
@@ -1529,7 +1519,7 @@ mod tests {
         let json = serde_json::json!({
           "credential_issuer": "https://example.com",
           "access_token": "1234",
-          "credential_identifier": "UniversityDegree_JWT",
+          "credential_identifier": "EngineeringDegree2023",
           "proofs": {
             "jwt": [
               "SomeJWT1",
@@ -1545,7 +1535,7 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            credential_type: CredentialType::Identifier("UniversityDegree_JWT".into()),
+            requested_credential: RequestedCredential::Identifier("EngineeringDegree2023".into()),
             proof_option: Some(ProofOption::Proofs(ProofsType::Jwt(vec![
                 "SomeJWT1".into(),
                 "SomeJWT2".into(),
