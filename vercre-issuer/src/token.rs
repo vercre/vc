@@ -208,26 +208,25 @@ mod tests {
 
         let provider = Provider::new();
 
-        // set up state
-        let mut state = State {
+        // set up PreAuthorized state
+        let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
+            current_step: Step::PreAuthorized(PreAuthorized {
+                subject_id: NORMAL_USER.into(),
+                authorized: vec![Authorized {
+                    authorization_detail: AuthorizationDetail {
+                        type_: AuthorizationDetailType::OpenIdCredential,
+                        credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
+                        ..AuthorizationDetail::default()
+                    },
+                    credential_identifiers: vec!["PHLEmployeeID".into()],
+                }],
+                tx_code: Some("1234".into()),
+            }),
             ..State::default()
         };
 
         let pre_auth_code = "ABCDEF";
-
-        state.current_step = Step::PreAuthorized(PreAuthorized {
-            subject_id: NORMAL_USER.into(),
-            authorized: vec![Authorized {
-                authorization_detail: AuthorizationDetail {
-                    type_: AuthorizationDetailType::OpenIdCredential,
-                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
-                    ..AuthorizationDetail::default()
-                },
-                credential_identifiers: vec!["PHLEmployeeID".into()],
-            }],
-            tx_code: Some("1234".into()),
-        });
 
         let ser = state.to_vec().expect("should serialize");
         StateStore::put(&provider, pre_auth_code, ser, state.expires_at)
@@ -273,32 +272,31 @@ mod tests {
         snapshot!("");
 
         let provider = Provider::new();
+        let verifier = "ABCDEF12345";
 
-        // set up state
-        let mut state = State {
+        // set up Authorization state
+        let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
+            current_step: Step::Authorization(Authorization {
+                code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
+                code_challenge_method: "S256".into(),
+
+                subject_id: NORMAL_USER.into(),
+                authorized: Some(vec![Authorized {
+                    authorization_detail: AuthorizationDetail {
+                        type_: AuthorizationDetailType::OpenIdCredential,
+                        credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
+                        ..AuthorizationDetail::default()
+                    },
+                    credential_identifiers: vec!["PHLEmployeeID".into()],
+                }]),
+                client_id: CLIENT_ID.into(),
+                ..Authorization::default()
+            }),
             ..State::default()
         };
 
         let code = "ABCDEF";
-        let verifier = "ABCDEF12345";
-
-        state.current_step = Step::Authorization(Authorization {
-            code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
-            code_challenge_method: "S256".into(),
-
-            subject_id: NORMAL_USER.into(),
-            authorized: Some(vec![Authorized {
-                authorization_detail: AuthorizationDetail {
-                    type_: AuthorizationDetailType::OpenIdCredential,
-                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
-                    ..AuthorizationDetail::default()
-                },
-                credential_identifiers: vec!["PHLEmployeeID".into()],
-            }]),
-            client_id: CLIENT_ID.into(),
-            ..Authorization::default()
-        });
 
         let ser = state.to_vec().expect("should serialize");
         StateStore::put(&provider, code, ser, state.expires_at).await.expect("state exists");
@@ -342,50 +340,49 @@ mod tests {
         snapshot!("");
 
         let provider = Provider::new();
+        let verifier = "ABCDEF12345";
 
-        // set up state
-        let mut state = State {
+        // set up Authorization state
+        let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
+            current_step: Step::Authorization(Authorization {
+                client_id: CLIENT_ID.into(),
+                redirect_uri: Some("https://example.com".into()),
+                code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
+                code_challenge_method: "S256".into(),
+                subject_id: NORMAL_USER.into(),
+                authorized: Some(vec![Authorized {
+                    authorization_detail: AuthorizationDetail {
+                        type_: AuthorizationDetailType::OpenIdCredential,
+                        credential_type: CredentialType::Format(CredentialFormat::JwtVcJson),
+                        credential_definition: Some(CredentialDefinition {
+                            type_: Some(vec![
+                                "VerifiableCredential".into(),
+                                "EmployeeIDCredential".into(),
+                            ]),
+                            credential_subject: None,
+                            ..CredentialDefinition::default()
+                        }),
+                        ..AuthorizationDetail::default()
+                    },
+                    credential_identifiers: vec!["EmployeeID_JWT".into()],
+                }]),
+                ..Authorization::default()
+            }),
             ..State::default()
         };
 
-        let auth_code = "ABCDEF";
-        let verifier = "ABCDEF12345";
-
-        state.current_step = Step::Authorization(Authorization {
-            client_id: CLIENT_ID.into(),
-            redirect_uri: Some("https://example.com".into()),
-            code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
-            code_challenge_method: "S256".into(),
-            subject_id: NORMAL_USER.into(),
-            authorized: Some(vec![Authorized {
-                authorization_detail: AuthorizationDetail {
-                    type_: AuthorizationDetailType::OpenIdCredential,
-                    credential_type: CredentialType::Format(CredentialFormat::JwtVcJson),
-                    credential_definition: Some(CredentialDefinition {
-                        type_: Some(vec![
-                            "VerifiableCredential".into(),
-                            "EmployeeIDCredential".into(),
-                        ]),
-                        credential_subject: None,
-                        ..CredentialDefinition::default()
-                    }),
-                    ..AuthorizationDetail::default()
-                },
-                credential_identifiers: vec!["EmployeeID_JWT".into()],
-            }]),
-            ..Authorization::default()
-        });
+        let code = "ABCDEF";
 
         let ser = state.to_vec().expect("should serialize");
-        StateStore::put(&provider, auth_code, ser, state.expires_at).await.expect("state exists");
+        StateStore::put(&provider, code, ser, state.expires_at).await.expect("state exists");
 
         // create TokenRequest to 'send' to the app
         let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "client_id": CLIENT_ID,
             "grant_type": "authorization_code",
-            "code": auth_code,
+            "code": code,
             "code_verifier": verifier,
             "redirect_uri": "https://example.com",
         });
@@ -400,7 +397,7 @@ mod tests {
         });
 
         // auth_code state should be removed
-        assert!(StateStore::get(&provider, auth_code).await.is_err());
+        assert!(StateStore::get(&provider, code).await.is_err());
 
         // should be able to retrieve state using access token
         let buf = StateStore::get(&provider, &response.access_token).await.expect("state exists");
