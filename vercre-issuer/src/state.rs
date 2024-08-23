@@ -3,7 +3,7 @@
 
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
-use vercre_openid::issuer::{AuthorizedDetail, CredentialOffer, CredentialRequest};
+use vercre_openid::issuer::{Authorized, CredentialOffer, CredentialRequest};
 use vercre_openid::{Error, Result};
 
 pub enum Expire {
@@ -33,18 +33,6 @@ pub struct State {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_offer: Option<CredentialOffer>,
 
-    /// The subject the credential is to be issued for.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub subject_id: Option<String>,
-
-    /// Lists credential identifiers that the Wallet is authorized to request.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub authorized_details: Option<Vec<AuthorizedDetail>>,
-
-    /// Lists credentials (as scope items) that the Wallet is authorized to request.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub scope: Option<String>,
-
     /// Step-specific issuance state.
     pub current_step: Step,
 }
@@ -72,8 +60,12 @@ pub enum Step {
 /// `Auth` is used to store authorization state.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PreAuthorized {
-    /// Identifiers of credentials offered to/requested by the Wallet.
-    pub credential_identifiers: Vec<String>,
+    /// Identifies the (previously authenticated) Holder in order that Issuer can
+    /// authorize credential issuance.
+    pub subject_id: String,
+
+    /// Lists credential identifiers that the Wallet is authorized to request.
+    pub authorized: Vec<Authorized>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tx_code: Option<String>,
@@ -82,17 +74,30 @@ pub struct PreAuthorized {
 /// `Auth` is used to store authorization state.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Authorization {
-    /// The `client_id` of the Wallet requesting issuance.
-    pub client_id: String,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub redirect_uri: Option<String>,
-
     /// PKCE code challenge from the Authorization Request.
     pub code_challenge: String,
 
     /// PKCE code challenge method from the Authorization Request.
     pub code_challenge_method: String,
+
+    /// Identifies the (previously authenticated) Holder in order that Issuer can
+    /// authorize credential issuance.
+    pub subject_id: String,
+
+    /// Lists credential identifiers that the Wallet is authorized to request.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub authorized: Option<Vec<Authorized>>,
+
+    /// Lists credentials (as scope items) that the Wallet is authorized to request.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scope: Option<String>,
+
+    // FIXME: Shouldn's client_id be optional?
+    /// The `client_id` of the Wallet requesting issuance.
+    pub client_id: String,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub redirect_uri: Option<String>,
 }
 
 /// `Token` is used to store token state.
@@ -108,6 +113,18 @@ pub struct Token {
 
     /// Number denoting the lifetime in seconds of the `c_nonce`.
     pub c_nonce_expires_at: DateTime<Utc>,
+
+    /// Identifies the (previously authenticated) Holder in order that Issuer can
+    /// authorize credential issuance.
+    pub subject_id: String,
+
+    /// Lists credential identifiers that the Wallet is authorized to request.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub authorized: Option<Vec<Authorized>>,
+
+    /// Lists credentials (as scope items) that the Wallet is authorized to request.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scope: Option<String>,
 }
 
 /// `Token` is used to store token state.

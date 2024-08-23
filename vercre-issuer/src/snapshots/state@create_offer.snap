@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/create_offer.rs
-assertion_line: 282
+assertion_line: 284
 expression: "&state"
 ---
 expires_at: "[expires_at]"

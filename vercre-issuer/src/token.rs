@@ -23,13 +23,12 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationDetail, AuthorizationDetailType, AuthorizedDetail, CredentialType, Metadata,
-    Provider, StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
+    Metadata, Provider, StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
 
 // use crate::shell;
-use crate::state::{Expire, State, Step, Token};
+use crate::state::{self, Expire, State, Step, Token};
 
 /// Token request handler.
 ///
@@ -152,31 +151,24 @@ async fn process(
     // copy existing state for token state
     let mut state = context.state.clone();
 
-    // get auth state to return `authorization_details` and `scope`
-    // let Step::Authorization(auth_state) = state.current_step else {
-    //     return Err(Error::ServerError("Authorization state not set".into()));
-    // };
-    // let auth_state = if let Step::Authorization(auth_state) = state.current_step {
-    //     auth_state
-    // } else {
-    //     Authorization::default()
-    // };
-
     let access_token = gen::token();
     let c_nonce = gen::nonce();
 
-    state.authorized_details = Some(vec![AuthorizedDetail {
-        authorization_detail: AuthorizationDetail {
-            type_: AuthorizationDetailType::OpenIdCredential,
-            credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
-            ..AuthorizationDetail::default()
-        },
-        credential_identifiers: vec!["EmployeeID2023".into()],
-    }]);
+    // get auth state to return `authorization_details` and `scope`
+    let auth_state = if let Step::Authorization(auth_state) = state.current_step {
+        auth_state
+    } else {
+        state::Authorization::default()
+    };
+
+    // FIXME: remove hard-coded values below
     state.current_step = Step::Token(Token {
         access_token: access_token.clone(),
         c_nonce: c_nonce.clone(),
         c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
+        subject_id: auth_state.subject_id.clone(),
+        authorized: auth_state.authorized.clone(),
+        scope: auth_state.scope.clone(),
     });
     StateStore::put(&provider, &access_token, state.to_vec()?, state.expires_at)
         .await
@@ -188,8 +180,8 @@ async fn process(
         expires_in: Expire::Access.duration().num_seconds(),
         c_nonce: Some(c_nonce),
         c_nonce_expires_in: Some(Expire::Nonce.duration().num_seconds()),
-        authorization_details: state.authorized_details.clone(),
-        scope: state.scope.clone(),
+        authorization_details: auth_state.authorized.clone(),
+        scope: auth_state.scope.clone(),
     })
 }
 
@@ -200,7 +192,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use vercre_openid::issuer::{
-        AuthorizationDetail, AuthorizationDetailType, AuthorizedDetail, CredentialDefinition,
+        AuthorizationDetail, AuthorizationDetailType, Authorized, CredentialDefinition,
         CredentialType,
     };
     use vercre_openid::CredentialFormat;
@@ -216,20 +208,23 @@ mod tests {
         let provider = Provider::new();
 
         // set up state
-        // FIXME: create credential identifiers (this is a credential_configuration_id)
-        let credentials = vec!["EmployeeID_JWT".into()];
-
         let mut state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
-
-            subject_id: Some(NORMAL_USER.into()),
             ..State::default()
         };
 
         let pre_auth_code = "ABCDEF";
 
         state.current_step = Step::PreAuthorized(PreAuthorized {
-            credential_identifiers: credentials,
+            subject_id: NORMAL_USER.into(),
+            authorized: vec![Authorized {
+                authorization_detail: AuthorizationDetail {
+                    type_: AuthorizationDetailType::OpenIdCredential,
+                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
+                    ..AuthorizationDetail::default()
+                },
+                credential_identifiers: vec!["PHLEmployeeID".into()],
+            }],
             tx_code: Some("1234".into()),
         });
 
@@ -277,24 +272,6 @@ mod tests {
         // set up state
         let mut state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
-            subject_id: Some(NORMAL_USER.into()),
-            authorized_details: Some(vec![AuthorizedDetail {
-                authorization_detail: AuthorizationDetail {
-                    type_: AuthorizationDetailType::OpenIdCredential,
-                    credential_type: CredentialType::Format(CredentialFormat::JwtVcJson),
-                    credential_definition: Some(CredentialDefinition {
-                        type_: Some(vec![
-                            "VerifiableCredential".into(),
-                            "EmployeeIDCredential".into(),
-                        ]),
-                        credential_subject: None,
-                        ..Default::default()
-                    }),
-
-                    ..Default::default()
-                },
-                credential_identifiers: vec!["EmployeeID_JWT".into()],
-            }]),
             ..State::default()
         };
 
@@ -307,7 +284,24 @@ mod tests {
             redirect_uri: Some("https://example.com".into()),
             code_challenge: Base64UrlUnpadded::encode_string(&verifier_hash),
             code_challenge_method: "S256".into(),
-            ..Default::default()
+            subject_id: NORMAL_USER.into(),
+            authorized: Some(vec![Authorized {
+                authorization_detail: AuthorizationDetail {
+                    type_: AuthorizationDetailType::OpenIdCredential,
+                    credential_type: CredentialType::Format(CredentialFormat::JwtVcJson),
+                    credential_definition: Some(CredentialDefinition {
+                        type_: Some(vec![
+                            "VerifiableCredential".into(),
+                            "EmployeeIDCredential".into(),
+                        ]),
+                        credential_subject: None,
+                        ..CredentialDefinition::default()
+                    }),
+                    ..AuthorizationDetail::default()
+                },
+                credential_identifiers: vec!["EmployeeID_JWT".into()],
+            }]),
+            ..Authorization::default()
         });
 
         let ser = state.to_vec().expect("should serialize");

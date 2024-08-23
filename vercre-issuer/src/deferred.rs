@@ -74,7 +74,7 @@ mod tests {
     use vercre_core::Quota;
     use vercre_datasec::jose::jws::{self, Type};
     use vercre_openid::issuer::{
-        AuthorizationDetail, AuthorizationDetailType, AuthorizedDetail, CredentialRequest,
+        AuthorizationDetail, AuthorizationDetailType, Authorized, CredentialRequest,
         CredentialType, ProofClaims,
     };
     use vercre_test_utils::holder;
@@ -124,17 +124,6 @@ mod tests {
         // set up state
         let mut state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
-            // FIXME: use authorization_details to hold credential identifiers
-            // credential_identifiers: credentials,
-            subject_id: Some(NORMAL_USER.into()),
-            authorized_details: Some(vec![AuthorizedDetail {
-                authorization_detail: AuthorizationDetail {
-                    type_: AuthorizationDetailType::OpenIdCredential,
-                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
-                    ..AuthorizationDetail::default()
-                },
-                credential_identifiers: vec!["EmployeeID2023".into()],
-            }]),
             ..State::default()
         };
 
@@ -143,6 +132,18 @@ mod tests {
             access_token: access_token.into(),
             c_nonce,
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
+            // FIXME: use authorization_details to hold credential identifiers
+            // credential_identifiers: credentials,
+            subject_id: NORMAL_USER.into(),
+            authorized: Some(vec![Authorized {
+                authorization_detail: AuthorizationDetail {
+                    type_: AuthorizationDetailType::OpenIdCredential,
+                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
+                    ..AuthorizationDetail::default()
+                },
+                credential_identifiers: vec!["EmployeeID2023".into()],
+            }]),
+            scope: None,
         });
 
         let ser = state.to_vec().expect("should serialize");

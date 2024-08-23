@@ -8,6 +8,7 @@ use utils::{provider, Issuance};
 use vercre_issuer::{CreateOfferRequest, SendType};
 use vercre_openid::CredentialFormat;
 use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER};
+use vercre_test_utils::snapshot;
 
 /// Immediate and deferred issuance variants
 #[rstest]

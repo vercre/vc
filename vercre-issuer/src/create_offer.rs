@@ -68,8 +68,9 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer, Grants,
-    Metadata, OfferType, PreAuthorizedCodeGrant, Provider, SendType, StateStore, TxCode,
+    AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, Authorized,
+    CreateOfferRequest, CreateOfferResponse, CredentialOffer, CredentialType, Grants, Metadata,
+    OfferType, PreAuthorizedCodeGrant, Provider, SendType, StateStore, Subject, TxCode,
 };
 use vercre_openid::{Error, Result};
 
@@ -131,8 +132,6 @@ async fn process(
 
     let mut state = State {
         expires_at: Utc::now() + Expire::Authorized.duration(),
-        subject_id: request.subject_id.clone(),
-
         ..State::default()
     };
 
@@ -166,9 +165,36 @@ async fn process(
             tx_code = Some(gen::tx_code());
         }
 
+        let Some(subject_id) = &request.subject_id else {
+            return Err(Error::InvalidRequest(
+                "subject_id must be set for pre-authorized offers".into(),
+            ));
+        };
+
+        let mut authorized = vec![];
+        for config_id in &request.credential_configuration_ids {
+            let identifiers = Subject::authorize(&provider, &subject_id, &config_id)
+                .await
+                .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
+
+            // subject is authorized to receive the requested credential
+
+            if !identifiers.is_empty() {
+                authorized.push(Authorized {
+                    authorization_detail: AuthorizationDetail {
+                        type_: AuthorizationDetailType::OpenIdCredential,
+                        credential_type: CredentialType::ConfigurationId(config_id.clone()),
+                        ..AuthorizationDetail::default()
+                    },
+                    credential_identifiers: identifiers,
+                });
+            }
+        }
+
         // save state by pre-auth_code
         state.current_step = Step::PreAuthorized(PreAuthorized {
-            credential_identifiers: request.credential_configuration_ids.clone(),
+            subject_id: subject_id.clone(),
+            authorized,
             tx_code: tx_code.clone(),
         });
     } else {
@@ -212,12 +238,14 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    use vercre_test_utils::snapshot;
 
     use super::*;
 
     #[tokio::test]
     async fn pre_authorize() {
         vercre_test_utils::init_tracer();
+        snapshot!("create_offer");
 
         let provider = Provider::new();
 
@@ -234,7 +262,7 @@ mod tests {
             serde_json::from_value::<CreateOfferRequest>(body).expect("request should deserialize");
         request.credential_issuer = CREDENTIAL_ISSUER.to_string();
         let response = create_offer(provider.clone(), &request).await.expect("response is ok");
-        assert_snapshot!("create_offer", &response, {
+        assert_snapshot!("response", &response, {
             ".credential_offer.grants.authorization_code.issuer_state" => "[state]",
             ".credential_offer.grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
             ".tx_code" => "[tx_code]"

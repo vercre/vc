@@ -277,12 +277,12 @@ async fn create_vc(
     let (identifier, config) = credential_configuration(context, request)?;
     let definition = credential_definition(request, &config);
 
-    let Some(subject_id) = &context.state.subject_id else {
-        return Err(Error::AccessDenied("holder not found".into()));
+    let Step::Token(token_state) = &context.state.current_step else {
+        return Err(Error::AccessDenied("invalid access token state".into()));
     };
 
     // get ALL claims for holder/credential
-    let mut claims_resp = Subject::claims(&provider, subject_id, &identifier)
+    let mut claims_resp = Subject::claims(&provider, &token_state.subject_id, &identifier)
         .await
         .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
 
@@ -406,7 +406,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use vercre_openid::issuer::{
-        AuthorizationDetail, AuthorizationDetailType, AuthorizedDetail, CredentialType,
+        AuthorizationDetail, AuthorizationDetailType, Authorized, CredentialType,
     };
     use vercre_test_utils::holder;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -426,17 +426,6 @@ mod tests {
         // set up state
         let mut state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
-            // FIXME: use authorization_details to hold credential identifiers
-            // credential_identifiers: credentials,
-            subject_id: Some(NORMAL_USER.into()),
-            authorized_details: Some(vec![AuthorizedDetail {
-                authorization_detail: AuthorizationDetail {
-                    type_: AuthorizationDetailType::OpenIdCredential,
-                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
-                    ..AuthorizationDetail::default()
-                },
-                credential_identifiers: vec!["EmployeeID2023".into()],
-            }]),
             ..State::default()
         };
 
@@ -444,6 +433,18 @@ mod tests {
             access_token: access_token.into(),
             c_nonce: c_nonce.into(),
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
+            // FIXME: use authorization_details to hold credential identifiers
+            // credential_identifiers: credentials,
+            subject_id: NORMAL_USER.into(),
+            authorized: Some(vec![Authorized {
+                authorization_detail: AuthorizationDetail {
+                    type_: AuthorizationDetailType::OpenIdCredential,
+                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
+                    ..AuthorizationDetail::default()
+                },
+                credential_identifiers: vec!["EmployeeID2023".into()],
+            }]),
+            scope: None,
         });
 
         let ser = state.to_vec().expect("should serialize");
@@ -524,18 +525,6 @@ mod tests {
         // set up state
         let mut state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
-
-            // FIXME: use authorization_details to hold credential identifiers
-            // credential_identifiers: credentials,
-            subject_id: Some(NORMAL_USER.into()),
-            authorized_details: Some(vec![AuthorizedDetail {
-                authorization_detail: AuthorizationDetail {
-                    type_: AuthorizationDetailType::OpenIdCredential,
-                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
-                    ..AuthorizationDetail::default()
-                },
-                credential_identifiers: vec!["EmployeeID2023".into()],
-            }]),
             ..State::default()
         };
 
@@ -543,6 +532,19 @@ mod tests {
             access_token: access_token.into(),
             c_nonce: c_nonce.into(),
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
+
+            // FIXME: use authorization_details to hold credential identifiers
+            // credential_identifiers: credentials,
+            subject_id: NORMAL_USER.into(),
+            authorized: Some(vec![Authorized {
+                authorization_detail: AuthorizationDetail {
+                    type_: AuthorizationDetailType::OpenIdCredential,
+                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
+                    ..AuthorizationDetail::default()
+                },
+                credential_identifiers: vec!["EmployeeID2023".into()],
+            }]),
+            scope: None,
         });
 
         let ser = state.to_vec().expect("should serialize");

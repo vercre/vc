@@ -119,7 +119,7 @@ pub use register::register;
 pub use token::token;
 pub use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
-    AuthorizationResponse, AuthorizedDetail, CreateOfferRequest, CreateOfferResponse,
+    AuthorizationResponse, Authorized, CreateOfferRequest, CreateOfferResponse,
     CredentialConfiguration, CredentialOffer, CredentialOfferRequest, CredentialOfferResponse,
     CredentialRequest, CredentialResponse, CredentialType, DeferredCredentialRequest,
     DeferredCredentialResponse, Grants, MetadataRequest, MetadataResponse, OfferType,

@@ -45,7 +45,7 @@ pub trait Metadata: Send + Sync {
 /// information to be provided by implementers.
 pub trait Subject: Send + Sync {
     /// Authorize issuance of the credential specified by `credential_configuration_id`.
-    /// Returns a one or more `credential_identifier`s the subject (holder) is 
+    /// Returns a one or more `credential_identifier`s the subject (holder) is
     /// authorized to request.
     fn authorize(
         &self, holder_subject: &str, credential_configuration_id: &str,
@@ -77,6 +77,11 @@ pub struct CreateOfferRequest {
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub credential_issuer: String,
 
+    /// Identifies the (previously authenticated) Holder in order that Issuer can
+    /// authorize credential issuance.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subject_id: Option<String>,
+
     /// A list of credentials (as identified by their metadata ids) to include in the
     /// offer to the Wallet. Each id identifies one of the keys in the name/value
     /// pairs stored in the `credential_configurations_supported` Credential Issuer
@@ -87,7 +92,7 @@ pub struct CreateOfferRequest {
     pub credential_configuration_ids: Vec<String>,
 
     // TODO: add support for `authorization_details` parameter
-    // pub authorization_details: Vec<AuthorizedDetail>,
+    // pub authorization_details: Vec<Authorized>,
     //
     /// Whether the Issuer should provide a pre-authorized offer or not. If not
     /// pre-authorized, the Wallet must request authorization to fulfill the
@@ -100,11 +105,6 @@ pub struct CreateOfferRequest {
     /// Specifies whether a Transaction Code (PIN) is required by the `token` endpoint
     /// during the Pre-Authorized Code Flow.
     pub tx_code_required: bool,
-
-    /// Identifies the (previously authenticated) Holder in order that Issuer can
-    /// authorize credential issuance.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub subject_id: Option<String>,
 
     /// The Issuer can specify whether Credential Offer is an object or a URI.
     pub send_type: SendType,
@@ -299,13 +299,6 @@ pub struct PreAuthorizedCodeGrant {
     /// It is RECOMMENDED to send the Transaction Code via a separate channel.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tx_code: Option<TxCode>,
-
-    /// The minimum amount of time in seconds that the Wallet SHOULD wait between
-    /// polling requests to the token endpoint (in case the Authorization Server
-    /// responds with error code `authorization_pending`). If no value is provided,
-    /// Wallets MUST use 5 as the default.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub interval: Option<i32>,
 
     /// To be used by the Wallet to identify the Authorization Server to use with
     /// this grant type when `authorization_servers` parameter in the Credential Issuer
@@ -698,7 +691,7 @@ pub struct TokenResponse {
     /// The Authorization Details `credential_identifiers` parameter may be populated
     /// for use in subsequent Credential Requests.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub authorization_details: Option<Vec<AuthorizedDetail>>,
+    pub authorization_details: Option<Vec<Authorized>>,
 
     /// OPTIONAL if identical to the requested scope, otherwise REQUIRED.
     ///
@@ -723,7 +716,7 @@ pub enum TokenType {
 /// responses ([`TokenResponse`]). It wraps the `AuthorizationDetail` struct and adds
 /// `credential_identifiers` parameter for use in Credential requests.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
-pub struct AuthorizedDetail {
+pub struct Authorized {
     /// Reuse (and flatten) the existing [`AuthorizationDetail`] object used in
     /// authorization requests.
     #[serde(flatten)]

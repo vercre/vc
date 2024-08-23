@@ -7,6 +7,7 @@ use rstest::rstest;
 use utils::{provider, Issuance};
 use vercre_openid::CredentialFormat;
 use vercre_test_utils::issuer::Provider;
+use vercre_test_utils::snapshot;
 
 #[rstest]
 #[case(Issuance::Immediate)]

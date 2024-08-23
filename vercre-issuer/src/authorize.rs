@@ -77,7 +77,7 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    AuthorizedDetail, CredentialType, GrantType, Issuer, Metadata, Provider, StateStore, Subject,
+    Authorized, CredentialType, GrantType, Issuer, Metadata, Provider, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 
@@ -295,16 +295,15 @@ impl Context {
         // `subject_id` and `credential_identifier`
         let mut authzd_auth_detail = vec![];
 
-        for (credential_identifier, authorization_detail) in &self.auth_dets {
-            let identifiers =
-                Subject::authorize(provider, &request.subject_id, credential_identifier)
-                    .await
-                    .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
+        for (config_id, authorization_detail) in &self.auth_dets {
+            let identifiers = Subject::authorize(provider, &request.subject_id, config_id)
+                .await
+                .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
 
             // subject is authorized to receive the requested credential
             // FIXIME: add credential_identifiers returned above
             if !identifiers.is_empty() {
-                authzd_auth_detail.push(AuthorizedDetail {
+                authzd_auth_detail.push(Authorized {
                     authorization_detail: authorization_detail.clone(),
                     // TODO: cater for potentially multiple identifiers
                     credential_identifiers: identifiers,
@@ -312,7 +311,7 @@ impl Context {
             }
         }
 
-        let authorized_details = if authzd_auth_detail.is_empty() {
+        let authorized = if authzd_auth_detail.is_empty() {
             None
         } else {
             Some(authzd_auth_detail)
@@ -340,7 +339,7 @@ impl Context {
         };
 
         // return an error if holder is not authorized for any requested credentials
-        if authorized_details.is_none() && scope.is_none() {
+        if authorized.is_none() && scope.is_none() {
             return Err(Error::AccessDenied(
                 "holder is not authorized for requested credentials".into(),
             ));
@@ -349,13 +348,15 @@ impl Context {
         // save authorization state
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
-            subject_id: Some(request.subject_id.clone()),
-            authorized_details,
+
             current_step: Step::Authorization(Authorization {
-                client_id: request.client_id.clone(),
-                redirect_uri: request.redirect_uri.clone(),
                 code_challenge: request.code_challenge.clone(),
                 code_challenge_method: request.code_challenge_method.clone(),
+                subject_id: request.subject_id.clone(),
+                authorized,
+                scope,
+                client_id: request.client_id.clone(),
+                redirect_uri: request.redirect_uri.clone(),
             }),
 
             ..State::default()
