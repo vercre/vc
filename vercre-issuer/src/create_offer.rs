@@ -142,9 +142,7 @@ async fn process(
     let state_key: String;
 
     if request.pre_authorize {
-        // -------------------------
         // Pre-authorized Code Grant
-        // -------------------------
         let pre_auth_code = gen::auth_code();
         state_key = pre_auth_code.clone();
 
@@ -174,9 +172,7 @@ async fn process(
             tx_code: tx_code.clone(),
         });
     } else {
-        // -------------------------
         // Authorization Code Grant
-        // -------------------------
         let issuer_state = gen::state_key();
         state_key = issuer_state.clone();
 

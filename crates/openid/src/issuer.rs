@@ -45,10 +45,11 @@ pub trait Metadata: Send + Sync {
 /// information to be provided by implementers.
 pub trait Subject: Send + Sync {
     /// Authorize issuance of the credential specified by `credential_configuration_id`.
-    /// Returns `true` if the subject (holder) is authorized.
+    /// Returns a one or more `credential_identifier`s the subject (holder) is 
+    /// authorized to request.
     fn authorize(
-        &self, holder_subject: &str, credential_identifier: &str,
-    ) -> impl Future<Output = provider::Result<bool>> + Send;
+        &self, holder_subject: &str, credential_configuration_id: &str,
+    ) -> impl Future<Output = provider::Result<Vec<String>>> + Send;
 
     /// Returns a populated `Claims` object for the given subject (holder) and
     /// credential definition.

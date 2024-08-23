@@ -296,17 +296,18 @@ impl Context {
         let mut authzd_auth_detail = vec![];
 
         for (credential_identifier, authorization_detail) in &self.auth_dets {
-            let authorized =
+            let identifiers =
                 Subject::authorize(provider, &request.subject_id, credential_identifier)
                     .await
                     .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
 
             // subject is authorized to receive the requested credential
-            if authorized {
+            // FIXIME: add credential_identifiers returned above
+            if !identifiers.is_empty() {
                 authzd_auth_detail.push(AuthorizedDetail {
                     authorization_detail: authorization_detail.clone(),
                     // TODO: cater for potentially multiple identifiers
-                    credential_identifiers: vec![credential_identifier.clone()],
+                    credential_identifiers: identifiers,
                 });
             }
         }
@@ -322,10 +323,13 @@ impl Context {
         let mut authzd_scope_items = vec![];
 
         for (credential_identifier, scope_item) in &self.scope_items {
-            let auth = Subject::authorize(provider, &request.subject_id, credential_identifier)
-                .await
-                .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
-            if auth {
+            let identifiers =
+                Subject::authorize(provider, &request.subject_id, credential_identifier)
+                    .await
+                    .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
+
+            // FIXME: add credential_identifiers returned above
+            if !identifiers.is_empty() {
                 authzd_scope_items.push(scope_item.clone());
             }
         }

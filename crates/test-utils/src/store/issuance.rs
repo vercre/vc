@@ -109,6 +109,7 @@ impl ClientStore {
 
 #[derive(Default, Clone, Debug, Deserialize)]
 struct Credential {
+    configuration_id: String,
     claims: Map<String, Value>,
     pending: bool,
 }
@@ -129,11 +130,26 @@ impl SubjectStore {
         }
     }
 
-    pub fn authorize(&self, holder_subject: &str, _credential_identifier: &str) -> Result<bool> {
-        if self.subjects.lock().expect("should lock").get(holder_subject).is_none() {
+    pub fn authorize(
+        &self, holder_subject: &str, credential_configuration_id: &str,
+    ) -> Result<Vec<String>> {
+        // get subject's datasets
+        let subjects = self.subjects.lock().expect("should lock");
+        let Some(datasets) = subjects.get(holder_subject) else {
             return Err(anyhow!("no matching holder_subject"));
         };
-        Ok(true)
+
+        // find identifier(s) for dataset(s) belonging to the credential
+        // identified by `credential_configuration_id`
+        let mut identifiers = vec![];
+        for (k, v) in datasets.iter() {
+            if v.configuration_id != credential_configuration_id {
+                continue;
+            }
+            identifiers.push(k.clone());
+        }
+
+        Ok(identifiers)
     }
 
     pub fn claims(&self, holder_subject: &str, credential_identifier: &str) -> Result<Claims> {

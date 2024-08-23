@@ -1,6 +1,7 @@
 {
     "normal_user": {
-        "EmployeeID_JWT": {
+        "PHLEmployeeID": {
+            "configuration_id": "EmployeeID_JWT",
             "claims": {
                 "givenName": "Normal",
                 "familyName": "Person",
@@ -11,7 +12,8 @@
         }
     },
     "pending_user": {
-        "EmployeeID_JWT": {
+        "PHLEmployeeID": {
+            "configuration_id": "EmployeeID_JWT",
             "claims": {
                 "givenName": "Pending",
                 "familyName": "Person",

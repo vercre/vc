@@ -50,8 +50,10 @@ impl Metadata for Provider {
 
 impl Subject for Provider {
     /// Authorize issuance of the specified credential for the holder.
-    async fn authorize(&self, holder_subject: &str, credential_identifier: &str) -> Result<bool> {
-        self.subject.authorize(holder_subject, credential_identifier)
+    async fn authorize(
+        &self, holder_subject: &str, credential_configuration_id: &str,
+    ) -> Result<Vec<String>> {
+        self.subject.authorize(holder_subject, credential_configuration_id)
     }
 
     async fn claims(&self, holder_subject: &str, credential_identifier: &str) -> Result<Claims> {
