@@ -28,7 +28,7 @@ use vercre_openid::issuer::{
 use vercre_openid::{Error, Result};
 
 // use crate::shell;
-use crate::state::{self, Expire, State, Step, Token};
+use crate::state::{Expire, State, Step, Token};
 
 /// Token request handler.
 ///
@@ -56,8 +56,8 @@ pub async fn token(provider: impl Provider, request: &TokenRequest) -> Result<To
 
     let ctx = Context { state };
 
-    verify(&ctx, provider.clone(), request).await?;
-    process(&ctx, provider, request).await
+    ctx.verify(&provider, request).await?;
+    ctx.process(&provider, request).await
 }
 
 #[derive(Debug)]
@@ -65,124 +65,140 @@ struct Context {
     state: State,
 }
 
-// Verify the token request.
-async fn verify(context: &Context, provider: impl Provider, request: &TokenRequest) -> Result<()> {
-    tracing::debug!("token::verify");
+impl Context {
+    // Verify the token request.
+    async fn verify(&self, provider: &impl Provider, request: &TokenRequest) -> Result<()> {
+        tracing::debug!("token::verify");
 
-    let Ok(server_meta) = Metadata::server(&provider, &request.credential_issuer).await else {
-        return Err(Error::InvalidRequest("unknown authorization server".into()));
-    };
+        let Ok(server_meta) = Metadata::server(provider, &request.credential_issuer).await else {
+            return Err(Error::InvalidRequest("unknown authorization server".into()));
+        };
 
-    // grant_type
-    match &request.grant_type {
-        TokenGrantType::AuthorizationCode {
-            redirect_uri,
-            code_verifier,
-            ..
-        } => {
-            let Step::Authorization(auth_state) = &context.state.current_step else {
-                return Err(Error::ServerError("authorization state not set".into()));
-            };
+        // grant_type
+        match &request.grant_type {
+            TokenGrantType::AuthorizationCode {
+                redirect_uri,
+                code_verifier,
+                ..
+            } => {
+                let Step::Authorization(auth_state) = &self.state.current_step else {
+                    return Err(Error::ServerError("authorization state not set".into()));
+                };
 
-            // client_id is the same as the one used to obtain the authorization code
-            if request.client_id != auth_state.client_id {
-                return Err(Error::InvalidGrant("client_id differs from authorized one".into()));
+                // client_id is the same as the one used to obtain the authorization code
+                if request.client_id != auth_state.client_id {
+                    return Err(Error::InvalidGrant(
+                        "client_id differs from authorized one".into(),
+                    ));
+                }
+
+                // redirect_uri is the same as the one provided in authorization request
+                // i.e. either 'None' or 'Some(redirect_uri)'
+                if redirect_uri != &auth_state.redirect_uri {
+                    return Err(Error::InvalidGrant(
+                        "redirect_uri differs from authorized one".into(),
+                    ));
+                }
+
+                // code_verifier
+                let Some(verifier) = &code_verifier else {
+                    return Err(Error::AccessDenied("code_verifier is missing".into()));
+                };
+
+                // code_verifier matches code_challenge
+                let hash = Sha256::digest(verifier);
+                let challenge = Base64UrlUnpadded::encode_string(&hash);
+
+                if challenge != auth_state.code_challenge {
+                    return Err(Error::AccessDenied("code_verifier is invalid".into()));
+                }
             }
+            TokenGrantType::PreAuthorizedCode { tx_code, .. } => {
+                let Step::PreAuthorized(auth_state) = &self.state.current_step else {
+                    return Err(Error::ServerError("pre-authorized state not set".into()));
+                };
 
-            // redirect_uri is the same as the one provided in authorization request
-            // i.e. either 'None' or 'Some(redirect_uri)'
-            if redirect_uri != &auth_state.redirect_uri {
-                return Err(Error::InvalidGrant("redirect_uri differs from authorized one".into()));
-            }
-
-            // code_verifier
-            let Some(verifier) = &code_verifier else {
-                return Err(Error::AccessDenied("code_verifier is missing".into()));
-            };
-
-            // code_verifier matches code_challenge
-            let hash = Sha256::digest(verifier);
-            let challenge = Base64UrlUnpadded::encode_string(&hash);
-
-            if challenge != auth_state.code_challenge {
-                return Err(Error::AccessDenied("code_verifier is invalid".into()));
+                // anonymous access allowed?
+                if request.client_id.is_empty()
+                    && !server_meta.pre_authorized_grant_anonymous_access_supported
+                {
+                    return Err(Error::InvalidClient("anonymous access is not supported".into()));
+                }
+                // tx_code
+                if tx_code != &auth_state.tx_code {
+                    return Err(Error::InvalidGrant("invalid tx_code provided".into()));
+                }
             }
         }
-        TokenGrantType::PreAuthorizedCode { tx_code, .. } => {
-            let Step::PreAuthorized(auth_state) = &context.state.current_step else {
-                return Err(Error::ServerError("pre-authorized state not set".into()));
-            };
 
-            // anonymous access allowed?
-            if request.client_id.is_empty()
-                && !server_meta.pre_authorized_grant_anonymous_access_supported
-            {
-                return Err(Error::InvalidClient("anonymous access is not supported".into()));
-            }
-            // tx_code
-            if tx_code != &auth_state.tx_code {
-                return Err(Error::InvalidGrant("invalid tx_code provided".into()));
-            }
-        }
+        Ok(())
     }
 
-    Ok(())
-}
+    /// Exchange `auth_code` code (authorization or pre-authorized) for access token,
+    /// updating state along the way.
+    async fn process(
+        &self, provider: &impl Provider, request: &TokenRequest,
+    ) -> Result<TokenResponse> {
+        tracing::debug!("token::process");
 
-/// Exchange `auth_code` code (authorization or pre-authorized) for access token,
-/// updating state along the way.
-async fn process(
-    context: &Context, provider: impl Provider, request: &TokenRequest,
-) -> Result<TokenResponse> {
-    tracing::debug!("token::process");
+        let (subject_id, authorized, scope, state_key) = match &request.grant_type {
+            TokenGrantType::AuthorizationCode { code, .. } => {
+                let Step::Authorization(auth_state) = &self.state.current_step else {
+                    return Err(Error::ServerError("authorization state not set".into()));
+                };
+                (
+                    auth_state.subject_id.clone(),
+                    auth_state.authorized.clone(),
+                    auth_state.scope.clone(),
+                    code,
+                )
+            }
+            TokenGrantType::PreAuthorizedCode {
+                pre_authorized_code, ..
+            } => {
+                let Step::PreAuthorized(auth_state) = &self.state.current_step else {
+                    return Err(Error::ServerError("pre-authorized state not set".into()));
+                };
+                (
+                    auth_state.subject_id.clone(),
+                    Some(auth_state.authorized.clone()),
+                    None,
+                    pre_authorized_code,
+                )
+            }
+        };
 
-    // prevent `auth_code` code reuse
-    let state_key = match &request.grant_type {
-        TokenGrantType::AuthorizationCode { code, .. } => code,
-        TokenGrantType::PreAuthorizedCode {
-            pre_authorized_code, ..
-        } => pre_authorized_code,
-    };
+        // prevent `auth_code` code reuse
+        StateStore::purge(provider, state_key)
+            .await
+            .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
 
-    StateStore::purge(&provider, state_key)
-        .await
-        .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
+        let access_token = gen::token();
+        let c_nonce = gen::nonce();
 
-    // copy existing state for token state
-    let mut state = context.state.clone();
+        let mut state = self.state.clone();
+        state.current_step = Step::Token(Token {
+            access_token: access_token.clone(),
+            c_nonce: c_nonce.clone(),
+            c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
+            subject_id,
+            authorized: authorized.clone(),
+            scope: scope.clone(),
+        });
+        StateStore::put(provider, &access_token, state.to_vec()?, state.expires_at)
+            .await
+            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
-    let access_token = gen::token();
-    let c_nonce = gen::nonce();
-
-    // get auth state to return `authorization_details` and `scope`
-    let auth_state = if let Step::Authorization(auth_state) = state.current_step {
-        auth_state
-    } else {
-        state::Authorization::default()
-    };
-
-    // FIXME: remove hard-coded values below
-    state.current_step = Step::Token(Token {
-        access_token: access_token.clone(),
-        c_nonce: c_nonce.clone(),
-        c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
-        subject_id: auth_state.subject_id.clone(),
-        authorized: auth_state.authorized.clone(),
-        scope: auth_state.scope.clone(),
-    });
-    StateStore::put(&provider, &access_token, state.to_vec()?, state.expires_at)
-        .await
-        .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
-
-    Ok(TokenResponse {
-        access_token,
-        token_type: TokenType::Bearer,
-        expires_in: Expire::Access.duration().num_seconds(),
-        c_nonce: Some(c_nonce),
-        c_nonce_expires_in: Some(Expire::Nonce.duration().num_seconds()),
-        authorization_details: auth_state.authorized.clone(),
-        scope: auth_state.scope.clone(),
-    })
+        Ok(TokenResponse {
+            access_token,
+            token_type: TokenType::Bearer,
+            expires_in: Expire::Access.duration().num_seconds(),
+            c_nonce: Some(c_nonce),
+            c_nonce_expires_in: Some(Expire::Nonce.duration().num_seconds()),
+            authorization_details: authorized,
+            scope,
+        })
+    }
 }
 
 #[cfg(test)]

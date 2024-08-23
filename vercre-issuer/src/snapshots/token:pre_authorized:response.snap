@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/token.rs
-assertion_line: 251
+assertion_line: 265
 expression: "&token_resp"
 ---
 access_token: "[access_token]"
@@ -8,3 +8,8 @@ token_type: Bearer
 expires_in: 900
 c_nonce: "[c_nonce]"
 c_nonce_expires_in: 600
+authorization_details:
+  - type: openid_credential
+    credential_configuration_id: EmployeeID_JWT
+    credential_identifiers:
+      - PHLEmployeeID
