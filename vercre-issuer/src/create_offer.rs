@@ -173,7 +173,7 @@ async fn process(
 
         let mut authorized = vec![];
         for config_id in &request.credential_configuration_ids {
-            let identifiers = Subject::authorize(&provider, &subject_id, &config_id)
+            let identifiers = Subject::authorize(&provider, subject_id, config_id)
                 .await
                 .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
 

@@ -92,7 +92,7 @@ async fn verify(
         //   - match format + type against authorized items in state
         let authorized = false;
 
-        for (_identifier, config) in &context.issuer_config.credential_configurations_supported {
+        for config in context.issuer_config.credential_configurations_supported.values() {
             if (&config.format == format)
                 && (config.credential_definition.type_ == definition.type_)
             {
