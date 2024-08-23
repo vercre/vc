@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/authorize.rs
-assertion_line: 467
+assertion_line: 497
 expression: "&response"
 ---
 code: "[code]"

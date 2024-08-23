@@ -243,14 +243,15 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn pre_authorize() {
+    async fn pre_authorized() {
         vercre_test_utils::init_tracer();
-        snapshot!("create_offer");
+        snapshot!("");
 
         let provider = Provider::new();
 
         // create offer to 'send' to the app
-        let body = json!({
+        let value = json!({
+            "credential_issuer": CREDENTIAL_ISSUER,
             "credential_configuration_ids": ["EmployeeID_JWT"],
             "subject_id": NORMAL_USER,
             "pre-authorize": true,
@@ -258,11 +259,11 @@ mod tests {
             "send_type": SendType::ByVal,
         });
 
-        let mut request =
-            serde_json::from_value::<CreateOfferRequest>(body).expect("request should deserialize");
-        request.credential_issuer = CREDENTIAL_ISSUER.to_string();
+        let request = serde_json::from_value::<CreateOfferRequest>(value)
+            .expect("request should deserialize");
         let response = create_offer(provider.clone(), &request).await.expect("response is ok");
-        assert_snapshot!("response", &response, {
+
+        assert_snapshot!("create_offer:pre-authorized:response", &response, {
             ".credential_offer.grants.authorization_code.issuer_state" => "[state]",
             ".credential_offer.grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
             ".tx_code" => "[tx_code]"
@@ -281,7 +282,7 @@ mod tests {
         let buf = StateStore::get(&provider, pre_auth_code).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
 
-        assert_snapshot!("state", &state, {
+        assert_snapshot!("create_offer:pre-authorized:state", &state, {
             ".expires_at" => "[expires_at]",
             ".current_step.tx_code" => "[tx_code]"
         });

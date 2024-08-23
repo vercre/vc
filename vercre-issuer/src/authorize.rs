@@ -389,60 +389,100 @@ mod tests {
     use serde_json::json;
     use sha2::{Digest, Sha256};
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+    use vercre_test_utils::snapshot;
 
     use super::*;
 
     #[tokio::test]
-    async fn authzn_details() {
+    async fn configuration_id() {
         vercre_test_utils::init_tracer();
+        snapshot!("");
 
         let provider = Provider::new();
 
-        let auth_dets = json!([{
-            "type": "openid_credential",
-            "format": "jwt_vc_json",
-            "credential_definition": {
-                "context": [
-                    "https://www.w3.org/2018/credentials/v1",
-                    "https://www.w3.org/2018/credentials/examples/v1"
-                ],
-                "type": [
-                    "VerifiableCredential",
-                    "EmployeeIDCredential"
-                ],
-                "credentialSubject": {}
-            }
-        }])
-        .to_string();
-
-        let verifier_hash = Sha256::digest("ABCDEF12345");
-
         // create request
-        let body = json!({
+        let value = json!({
+            "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
             "redirect_uri": "http://localhost:3000/callback",
             "state": "1234",
-            "code_challenge": Base64UrlUnpadded::encode_string(&verifier_hash),
+            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
             "code_challenge_method": "S256",
-            "authorization_details": auth_dets,
+            "authorization_details": json!([{
+                "type": "openid_credential",
+                "credential_configuration_id": "EmployeeID_JWT"
+            }]).to_string(),
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
         });
-        let mut request =
-            serde_json::from_value::<AuthorizationRequest>(body).expect("should deserialize");
-        request.credential_issuer = CREDENTIAL_ISSUER.to_string();
 
+        let request =
+            serde_json::from_value::<AuthorizationRequest>(value).expect("should deserialize");
         let response = authorize(provider.clone(), &request).await.expect("response is ok");
 
-        assert_snapshot!("authzn-ok", &response, {
+        assert_snapshot!("authorize:configuration_id:response", &response, {
             ".code" => "[code]",
         });
 
         // compare response with saved state
         let buf = StateStore::get(&provider, &response.code).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
-        assert_snapshot!("authzn-state", state, {
+
+        assert_snapshot!("authorize:configuration_id:state", state, {
+            ".expires_at" => "[expires_at]",
+        });
+    }
+
+    #[tokio::test]
+    async fn format() {
+        vercre_test_utils::init_tracer();
+        snapshot!("");
+
+        let provider = Provider::new();
+
+        // create request
+        let value = json!({
+            "credential_issuer": CREDENTIAL_ISSUER,
+            "response_type": "code",
+            "client_id": CLIENT_ID,
+            "redirect_uri": "http://localhost:3000/callback",
+            "state": "1234",
+            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+            "code_challenge_method": "S256",
+            "authorization_details": json!([{
+                "type": "openid_credential",
+                "format": "jwt_vc_json",
+                "credential_definition": {
+                    "context": [
+                        "https://www.w3.org/2018/credentials/v1",
+                        "https://www.w3.org/2018/credentials/examples/v1"
+                    ],
+                    "type": [
+                        "VerifiableCredential",
+                        "EmployeeIDCredential"
+                    ],
+                    "credentialSubject": {}
+                }
+            }])
+            .to_string(),
+            "subject_id": NORMAL_USER,
+            "wallet_issuer": CREDENTIAL_ISSUER
+        });
+
+        let request =
+            serde_json::from_value::<AuthorizationRequest>(value).expect("should deserialize");
+        let response = authorize(provider.clone(), &request).await.expect("response is ok");
+
+        assert_snapshot!("authorize:format:response", &response, {
+            ".code" => "[code]",
+        });
+
+        // compare response with saved state
+        let buf = StateStore::get(&provider, &response.code).await.expect("state exists");
+        let state = State::try_from(buf).expect("state is valid");
+
+        assert_snapshot!("authorize:format:state", state, {
             ".expires_at" => "[expires_at]",
         });
     }
@@ -450,12 +490,14 @@ mod tests {
     #[tokio::test]
     async fn scope() {
         vercre_test_utils::init_tracer();
+        snapshot!("");
 
         let provider = Provider::new();
         let verifier_hash = Sha256::digest("ABCDEF12345");
 
         // create request
-        let body = json!({
+        let value = json!({
+            "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
             "redirect_uri": "http://localhost:3000/callback",
@@ -466,19 +508,20 @@ mod tests {
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
         });
-        let mut request =
-            serde_json::from_value::<AuthorizationRequest>(body).expect("should deserialize");
-        request.credential_issuer = CREDENTIAL_ISSUER.to_string();
 
+        let  request =
+            serde_json::from_value::<AuthorizationRequest>(value).expect("should deserialize");
         let response = authorize(provider.clone(), &request).await.expect("response is ok");
-        assert_snapshot!("scope-ok", &response, {
+
+        assert_snapshot!("authorize:scope:response", &response, {
             ".code" => "[code]",
         });
 
         // compare response with saved state
         let buf = StateStore::get(&provider, &response.code).await.expect("state exists");
         let state = State::try_from(buf).expect("state is valid");
-        assert_snapshot!("scope-state", state, {
+        
+        assert_snapshot!("authorize:scope:state", state, {
             ".expires_at" => "[expires_at]",
         });
     }
