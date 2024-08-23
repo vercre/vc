@@ -134,8 +134,10 @@ impl Context {
         Ok(())
     }
 
-    /// Exchange `auth_code` code (authorization or pre-authorized) for access token,
-    /// updating state along the way.
+    // FIXME: process authorization_details/scope request parameters
+    // TODO: add `client_assertion` JWT verification
+
+    // Exchange authorization/pre-authorized code for access token.
     async fn process(
         &self, provider: &impl Provider, request: &TokenRequest,
     ) -> Result<TokenResponse> {
