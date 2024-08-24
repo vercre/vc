@@ -1,4 +1,6 @@
 use chrono::{DateTime, Utc};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use vercre_issuer::provider::{
     Algorithm, Claims, Client, Decryptor, DidResolver, Document, Encryptor, Issuer, Metadata,
     Result, SecOps, Server, Signer, StateStore, Subject,
@@ -62,11 +64,11 @@ impl Subject for Provider {
 }
 
 impl StateStore for Provider {
-    async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
+    async fn put(&self, key: &str, state: impl Serialize, dt: DateTime<Utc>) -> Result<()> {
         self.state.put(key, state, dt)
     }
 
-    async fn get(&self, key: &str) -> Result<Vec<u8>> {
+    async fn get<T: DeserializeOwned>(&self, key: &str) -> Result<T> {
         self.state.get(key)
     }
 

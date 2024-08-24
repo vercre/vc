@@ -35,4 +35,3 @@ impl State {
         self.expires_at.signed_duration_since(Utc::now()).num_seconds() < 0
     }
 }
-

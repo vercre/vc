@@ -3,6 +3,8 @@ use std::str;
 use std::sync::{Arc, Mutex};
 
 use chrono::{DateTime, Utc};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 // TODO: remove this import
 use vercre_dif_exch::Constraints;
 use vercre_holder::provider::{
@@ -124,11 +126,11 @@ impl CredentialStorer for Provider {
 }
 
 impl StateStore for Provider {
-    async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
+    async fn put(&self, key: &str, state: impl Serialize, dt: DateTime<Utc>) -> Result<()> {
         self.state.put(key, state, dt)
     }
 
-    async fn get(&self, key: &str) -> Result<Vec<u8>> {
+    async fn get<T: DeserializeOwned>(&self, key: &str) -> Result<T> {
         self.state.get(key)
     }
 

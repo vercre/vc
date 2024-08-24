@@ -167,7 +167,6 @@ mod tests {
         assert_snapshot!("response", &response, {
             ".credential" => "[credential]",
             ".c_nonce" => "[c_nonce]",
-            ".c_nonce_expires_in" => "[c_nonce_expires_in]"
         });
 
         // extract credential response

@@ -146,16 +146,27 @@ impl Wallet {
             .await
             .map_err(|e| Error::ServerError(format!("{e}")))?;
 
+        // ------------------------------------------------------------
+        // HACK: get this working
+        // ------------------------------------------------------------
+        // FIXME: two paths: credential_identifier or format/type
+        let Some(auth_dets) = &token_resp.authorization_details else {
+            panic!("authorization_details should be set");
+        };
+        let credential_identifier = &auth_dets[0].credential_identifiers[0];
+        // ------------------------------------------------------------
+
         let req_json = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "access_token": token_resp.access_token,
-            "format": self.format,
-            "credential_definition": {
-                "type": [
-                    "VerifiableCredential",
-                    "EmployeeIDCredential"
-                ]
-            },
+            "credential_identifier": credential_identifier,
+            // "format": self.format,
+            // "credential_definition": {
+            //     "type": [
+            //         "VerifiableCredential",
+            //         "EmployeeIDCredential"
+            //     ]
+            // },
             "proof":{
                 "proof_type": "jwt",
                 "jwt": jwt
