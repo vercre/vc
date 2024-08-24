@@ -457,6 +457,98 @@ mod tests {
     use crate::state::Token;
 
     #[tokio::test]
+    async fn identifier() {
+        vercre_test_utils::init_tracer();
+        snapshot!("");
+
+        let provider = Provider::new();
+        let access_token = "ABCDEF";
+        let c_nonce = "1234ABCD";
+        // let credentials = vec!["EmployeeID_JWT".into()];
+
+        // set up state
+        let mut state = State {
+            expires_at: Utc::now() + Expire::Authorized.duration(),
+            ..State::default()
+        };
+
+        state.current_step = Step::Token(Token {
+            access_token: access_token.into(),
+            c_nonce: c_nonce.into(),
+            c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
+            subject_id: NORMAL_USER.into(),
+            authorized: Some(vec![Authorized {
+                authorization_detail: AuthorizationDetail {
+                    type_: AuthorizationDetailType::OpenIdCredential,
+                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
+                    ..AuthorizationDetail::default()
+                },
+                credential_identifiers: vec!["PHLEmployeeID".into()],
+            }]),
+            scope: None,
+        });
+
+        StateStore::put(&provider, access_token, &state, state.expires_at)
+            .await
+            .expect("state exists");
+
+        let claims = ProofClaims {
+            iss: Some(CLIENT_ID.into()),
+            aud: CREDENTIAL_ISSUER.into(),
+            iat: Utc::now().timestamp(),
+            nonce: Some(c_nonce.into()),
+        };
+        let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
+
+        let value = json!({
+            "credential_issuer": CREDENTIAL_ISSUER,
+            "access_token": access_token,
+            "credential_identifier": "PHLEmployeeID",
+            "proof":{
+                "proof_type": "jwt",
+                "jwt": jwt
+            }
+        });
+
+        let mut request =
+            serde_json::from_value::<CredentialRequest>(value).expect("request should deserialize");
+        request.credential_issuer = CREDENTIAL_ISSUER.into();
+        request.access_token = access_token.into();
+
+        let response = credential(provider.clone(), &request).await.expect("response is valid");
+        assert_snapshot!("credential:identifier:response", &response, {
+            ".credential" => "[credential]",
+            ".c_nonce" => "[c_nonce]",
+        });
+
+        // verify credential
+        let vc_quota = response.credential.expect("credential is present");
+        let Quota::One(vc_kind) = vc_quota else {
+            panic!("expected one credential")
+        };
+
+        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider)
+            .await
+            .expect("should decode")
+        else {
+            panic!("should be VC");
+        };
+
+        assert_snapshot!("credential:identifier:vc", vc, {
+            ".issuanceDate" => "[issuanceDate]",
+            ".credentialSubject" => insta::sorted_redaction()
+        });
+
+        // token state should remain unchanged
+        assert_let!(Ok(state), StateStore::get::<State>(&provider, access_token).await);
+        assert_snapshot!("credential:identifier:state", state, {
+            ".expires_at" => "[expires_at]",
+            ".current_step.c_nonce"=>"[c_nonce]",
+            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]"
+        });
+    }
+
+    #[tokio::test]
     async fn format() {
         vercre_test_utils::init_tracer();
         snapshot!("");
@@ -548,98 +640,6 @@ mod tests {
         // token state should remain unchanged
         assert_let!(Ok(state), StateStore::get::<State>(&provider, access_token).await);
         assert_snapshot!("credential:format:state", state, {
-            ".expires_at" => "[expires_at]",
-            ".current_step.c_nonce"=>"[c_nonce]",
-            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]"
-        });
-    }
-
-    #[tokio::test]
-    async fn identifier() {
-        vercre_test_utils::init_tracer();
-        snapshot!("");
-
-        let provider = Provider::new();
-        let access_token = "ABCDEF";
-        let c_nonce = "1234ABCD";
-        // let credentials = vec!["EmployeeID_JWT".into()];
-
-        // set up state
-        let mut state = State {
-            expires_at: Utc::now() + Expire::Authorized.duration(),
-            ..State::default()
-        };
-
-        state.current_step = Step::Token(Token {
-            access_token: access_token.into(),
-            c_nonce: c_nonce.into(),
-            c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
-            subject_id: NORMAL_USER.into(),
-            authorized: Some(vec![Authorized {
-                authorization_detail: AuthorizationDetail {
-                    type_: AuthorizationDetailType::OpenIdCredential,
-                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
-                    ..AuthorizationDetail::default()
-                },
-                credential_identifiers: vec!["PHLEmployeeID".into()],
-            }]),
-            scope: None,
-        });
-
-        StateStore::put(&provider, access_token, &state, state.expires_at)
-            .await
-            .expect("state exists");
-
-        let claims = ProofClaims {
-            iss: Some(CLIENT_ID.into()),
-            aud: CREDENTIAL_ISSUER.into(),
-            iat: Utc::now().timestamp(),
-            nonce: Some(c_nonce.into()),
-        };
-        let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
-
-        let value = json!({
-            "credential_issuer": CREDENTIAL_ISSUER,
-            "access_token": access_token,
-            "credential_identifier": "PHLEmployeeID",
-            "proof":{
-                "proof_type": "jwt",
-                "jwt": jwt
-            }
-        });
-
-        let mut request =
-            serde_json::from_value::<CredentialRequest>(value).expect("request should deserialize");
-        request.credential_issuer = CREDENTIAL_ISSUER.into();
-        request.access_token = access_token.into();
-
-        let response = credential(provider.clone(), &request).await.expect("response is valid");
-        assert_snapshot!("credential:identifier:response", &response, {
-            ".credential" => "[credential]",
-            ".c_nonce" => "[c_nonce]",
-        });
-
-        // verify credential
-        let vc_quota = response.credential.expect("credential is present");
-        let Quota::One(vc_kind) = vc_quota else {
-            panic!("expected one credential")
-        };
-
-        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider)
-            .await
-            .expect("should decode")
-        else {
-            panic!("should be VC");
-        };
-
-        assert_snapshot!("credential:identifier:vc", vc, {
-            ".issuanceDate" => "[issuanceDate]",
-            ".credentialSubject" => insta::sorted_redaction()
-        });
-
-        // token state should remain unchanged
-        assert_let!(Ok(state), StateStore::get::<State>(&provider, access_token).await);
-        assert_snapshot!("credential:identifier:state", state, {
             ".expires_at" => "[expires_at]",
             ".current_step.c_nonce"=>"[c_nonce]",
             ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]"
