@@ -25,13 +25,10 @@ async fn verify(provider: impl Provider, request: &RegistrationRequest) -> Resul
     tracing::debug!("register::verify");
 
     // verify state is still accessible (has not expired)
-    let buf = match StateStore::get(&provider, &request.access_token).await {
-        Ok(buf) => buf,
-        Err(e) => return Err(Error::ServerError(format!("State not found: {e}"))),
-    };
-    let _ = State::try_from(buf)?;
-
-    Ok(())
+    match StateStore::get::<State>(&provider, &request.access_token).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(Error::ServerError(format!("State not found: {e}"))),
+    }
 }
 
 async fn process(
@@ -76,8 +73,9 @@ mod tests {
             ..Token::default()
         });
 
-        let ser = state.to_vec().expect("should serialize");
-        StateStore::put(&provider, access_token, ser, state.expires_at).await.expect("state saved");
+        StateStore::put(&provider, access_token, &state, state.expires_at)
+            .await
+            .expect("state saved");
 
         let body = json!({
             "client_id": CLIENT_ID,

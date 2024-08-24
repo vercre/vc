@@ -363,7 +363,7 @@ impl Context {
         };
 
         let code = gen::auth_code();
-        StateStore::put(provider, &code, state.to_vec()?, state.expires_at)
+        StateStore::put(provider, &code, &state, state.expires_at)
             .await
             .map_err(|e| Error::ServerError(format!("state issue: {e}")))?;
 
@@ -415,8 +415,8 @@ mod tests {
         });
 
         // compare response with saved state
-        let buf = StateStore::get(&provider, &response.code).await.expect("state exists");
-        let state = State::try_from(buf).expect("state is valid");
+        let state =
+            StateStore::get::<State>(&provider, &response.code).await.expect("state exists");
 
         assert_snapshot!(format!("authorize:{name}:state"), state, {
             ".expires_at" => "[expires_at]",

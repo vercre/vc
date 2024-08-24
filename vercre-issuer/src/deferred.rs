@@ -37,11 +37,8 @@ async fn process(
     tracing::debug!("deferred::process");
 
     // retrieve deferred credential request from state
-    let Ok(buf) = StateStore::get(&provider, &request.transaction_id).await else {
+    let Ok(state) = StateStore::get::<State>(&provider, &request.transaction_id).await else {
         return Err(Error::InvalidTransactionId("deferred state not found".into()));
-    };
-    let Ok(state) = State::try_from(buf) else {
-        return Err(Error::InvalidTransactionId("deferred state is expired or corrupted".into()));
     };
 
     let Step::Deferred(deferred_state) = state.current_step else {
@@ -146,8 +143,7 @@ mod tests {
             scope: None,
         });
 
-        let ser = state.to_vec().expect("should serialize");
-        StateStore::put(&provider, access_token, ser, state.expires_at)
+        StateStore::put(&provider, access_token, &state, state.expires_at)
             .await
             .expect("state exists");
 
@@ -157,8 +153,7 @@ mod tests {
             credential_request: cred_req.clone(),
         });
 
-        let ser = state.to_vec().expect("should serialize");
-        StateStore::put(&provider, transaction_id, ser, state.expires_at)
+        StateStore::put(&provider, transaction_id, &state, state.expires_at)
             .await
             .expect("state exists");
 
@@ -196,8 +191,7 @@ mod tests {
         });
 
         // token state should remain unchanged
-        assert_let!(Ok(buf), StateStore::get(&provider, access_token).await);
-        let state = State::try_from(buf).expect("token state is valid");
+        assert_let!(Ok(state), StateStore::get::<State>(&provider, access_token).await);
         assert_snapshot!("state", state, {
             ".expires_at" => "[expires_at]",
             ".current_step.c_nonce"=>"[c_nonce]",
@@ -205,6 +199,6 @@ mod tests {
         });
 
         // deferred state should not exist
-        assert!(StateStore::get(&provider, transaction_id).await.is_err());
+        assert!(StateStore::get::<State>(&provider, transaction_id).await.is_err());
     }
 }

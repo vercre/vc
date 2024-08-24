@@ -224,7 +224,7 @@ async fn process(
         OfferType::Object(credential_offer)
     };
 
-    StateStore::put(&provider, &state_key, state.to_vec()?, state.expires_at)
+    StateStore::put(&provider, &state_key, &state, state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -279,8 +279,7 @@ mod tests {
 
         // compare response with saved state
         let pre_auth_code = &pre_auth_code.pre_authorized_code; //as_ref().expect("has state");
-        let buf = StateStore::get(&provider, pre_auth_code).await.expect("state exists");
-        let state = State::try_from(buf).expect("state is valid");
+        let state = StateStore::get::<State>(&provider, pre_auth_code).await.expect("state exists");
 
         assert_snapshot!("create_offer:pre-authorized:state", &state, {
             ".expires_at" => "[expires_at]",

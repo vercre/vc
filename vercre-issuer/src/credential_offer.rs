@@ -41,11 +41,9 @@ async fn process(
     tracing::debug!("credential_offer::process");
 
     // retrieve Credential Offer from state
-    let buf = StateStore::get(&provider, &request.id)
+    let state = StateStore::get::<State>(&provider, &request.id)
         .await
         .map_err(|e| Error::ServerError(format!("issue fetching state: {e}")))?;
-    let state = State::try_from(buf)
-        .map_err(|e| Error::ServerError(format!("issue deserializing state: {e}")))?;
 
     let Some(credential_offer) = state.credential_offer else {
         return Err(Error::InvalidRequest("no credential offer found".into()));

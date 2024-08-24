@@ -47,11 +47,8 @@ pub async fn token(provider: impl Provider, request: &TokenRequest) -> Result<To
     };
 
     // RFC 6749 requires a particular error here
-    let Ok(buf) = StateStore::get(&provider, state_key).await else {
+    let Ok(state) = StateStore::get(&provider, state_key).await else {
         return Err(Error::InvalidGrant("the authorization code is invalid".into()));
-    };
-    let Ok(state) = State::try_from(buf.as_slice()) else {
-        return Err(Error::InvalidGrant("the authorization code has expired".into()));
     };
 
     let ctx = Context { state };
@@ -187,7 +184,7 @@ impl Context {
             authorized: authorized.clone(),
             scope: scope.clone(),
         });
-        StateStore::put(provider, &access_token, state.to_vec()?, state.expires_at)
+        StateStore::put(provider, &access_token, &state, state.expires_at)
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -246,8 +243,7 @@ mod tests {
 
         let pre_auth_code = "ABCDEF";
 
-        let ser = state.to_vec().expect("should serialize");
-        StateStore::put(&provider, pre_auth_code, ser, state.expires_at)
+        StateStore::put(&provider, pre_auth_code, &state, state.expires_at)
             .await
             .expect("state exists");
 
@@ -270,11 +266,12 @@ mod tests {
         });
 
         // pre-authorized state should be removed
-        assert!(StateStore::get(&provider, pre_auth_code).await.is_err());
+        assert!(StateStore::get::<State>(&provider, pre_auth_code).await.is_err());
 
         // should be able to retrieve state using access token
-        let buf = StateStore::get(&provider, &token_resp.access_token).await.expect("state exists");
-        let state = State::try_from(buf).expect("state is valid");
+        let state = StateStore::get::<State>(&provider, &token_resp.access_token)
+            .await
+            .expect("state exists");
 
         assert_snapshot!("token:pre_authorized:state", state, {
             ".expires_at" => "[expires_at]",
@@ -316,8 +313,7 @@ mod tests {
 
         let code = "ABCDEF";
 
-        let ser = state.to_vec().expect("should serialize");
-        StateStore::put(&provider, code, ser, state.expires_at).await.expect("state exists");
+        StateStore::put(&provider, code, &state, state.expires_at).await.expect("state exists");
 
         // create TokenRequest to 'send' to the app
         let value = json!({
@@ -338,11 +334,12 @@ mod tests {
         });
 
         // authorization state should be removed
-        assert!(StateStore::get(&provider, code).await.is_err());
+        assert!(StateStore::get::<State>(&provider, code).await.is_err());
 
         // should be able to retrieve state using access token
-        let buf = StateStore::get(&provider, &token_resp.access_token).await.expect("state exists");
-        let state = State::try_from(buf).expect("state is valid");
+        let state = StateStore::get::<State>(&provider, &token_resp.access_token)
+            .await
+            .expect("state exists");
 
         assert_snapshot!("token:authorization:state", state, {
             ".expires_at" => "[expires_at]",
@@ -392,8 +389,7 @@ mod tests {
 
         let code = "ABCDEF";
 
-        let ser = state.to_vec().expect("should serialize");
-        StateStore::put(&provider, code, ser, state.expires_at).await.expect("state exists");
+        StateStore::put(&provider, code, &state, state.expires_at).await.expect("state exists");
 
         // create TokenRequest to 'send' to the app
         let value = json!({
@@ -415,11 +411,12 @@ mod tests {
         });
 
         // auth_code state should be removed
-        assert!(StateStore::get(&provider, code).await.is_err());
+        assert!(StateStore::get::<State>(&provider, code).await.is_err());
 
         // should be able to retrieve state using access token
-        let buf = StateStore::get(&provider, &response.access_token).await.expect("state exists");
-        let state = State::try_from(buf).expect("state is valid");
+        let state = StateStore::get::<State>(&provider, &response.access_token)
+            .await
+            .expect("state exists");
 
         assert_snapshot!("token:authorization_details:state", state, {
             ".expires_at" => "[expires_at]",

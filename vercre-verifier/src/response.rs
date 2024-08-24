@@ -59,10 +59,9 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
     let Some(state_key) = &request.state else {
         return Err(Error::InvalidRequest("client state not found".into()));
     };
-    let Ok(buf) = StateStore::get(&provider, state_key).await else {
+    let Ok(state) = StateStore::get::<State>(&provider, state_key).await else {
         return Err(Error::InvalidRequest("state not found".into()));
     };
-    let state = State::try_from(buf)?;
     let saved_req = &state.request_object;
 
     let Some(vp_token) = request.vp_token.clone() else {
@@ -220,6 +219,7 @@ async fn process(provider: impl Provider, request: &ResponseRequest) -> Result<R
 mod tests {
     use std::sync::LazyLock;
 
+    use chrono::Utc;
     use serde_json::json;
     use vercre_dif_exch::PresentationDefinition;
     use vercre_openid::verifier::{
@@ -228,6 +228,7 @@ mod tests {
     use vercre_test_utils::verifier::Provider;
 
     use super::*;
+    use crate::state::Expire;
 
     const CLIENT_ID: &str = "http://vercre.io";
 
@@ -256,9 +257,13 @@ mod tests {
         };
 
         // set up state
-        let state = State::builder().request_object(req_obj).build().expect("should build state");
-        let buf = state.to_vec().expect("should serialize state");
-        StateStore::put(&provider, &state_key, buf, state.expires_at).await.expect("state exists");
+        let state = State {
+            expires_at: Utc::now() + Expire::Request.duration(),
+            request_object: req_obj,
+        };
+        StateStore::put(&provider, &state_key, &state, state.expires_at)
+            .await
+            .expect("state exists");
 
         // replace placeholders with actual values
         let mut vp_token = VP_TOKEN.to_owned();

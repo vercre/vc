@@ -4,7 +4,6 @@
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 use vercre_openid::issuer::{Authorized, CredentialOffer, CredentialRequest};
-use vercre_openid::{Error, Result};
 
 pub enum Expire {
     Authorized,
@@ -139,45 +138,9 @@ pub struct Deferred {
 }
 
 impl State {
-    /// Serializes this [`State`] object into a byte array.
-    pub fn to_vec(&self) -> Result<Vec<u8>> {
-        match serde_json::to_vec(self) {
-            Ok(res) => Ok(res),
-            Err(e) => Err(Error::ServerError(format!("issue serializing state: {e}"))),
-        }
-    }
-
-    pub fn from_slice(value: &[u8]) -> Result<Self> {
-        match serde_json::from_slice::<Self>(value) {
-            Ok(res) => {
-                if res.expired() {
-                    return Err(Error::InvalidRequest("state has expired".into()));
-                }
-                Ok(res)
-            }
-            Err(e) => Err(Error::ServerError(format!("failed to deserialize state: {e}"))),
-        }
-    }
-
     /// Determines whether state has expired or not.
     pub fn expired(&self) -> bool {
         self.expires_at.signed_duration_since(Utc::now()).num_seconds() < 0
-    }
-}
-
-impl TryFrom<&[u8]> for State {
-    type Error = vercre_openid::Error;
-
-    fn try_from(value: &[u8]) -> Result<Self> {
-        Self::from_slice(value)
-    }
-}
-
-impl TryFrom<Vec<u8>> for State {
-    type Error = vercre_openid::Error;
-
-    fn try_from(value: Vec<u8>) -> Result<Self> {
-        Self::try_from(value.as_slice())
     }
 }
 

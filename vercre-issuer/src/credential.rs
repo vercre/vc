@@ -37,11 +37,8 @@ use crate::state::{Deferred, Expire, State, Step};
 pub async fn credential(
     provider: impl Provider, request: &CredentialRequest,
 ) -> Result<CredentialResponse> {
-    let Ok(buf) = StateStore::get(&provider, &request.access_token).await else {
+    let Ok(state) = StateStore::get(&provider, &request.access_token).await else {
         return Err(Error::AccessDenied("invalid access token".into()));
-    };
-    let Ok(state) = State::try_from(buf) else {
-        return Err(Error::AccessDenied("invalid state for access token".into()));
     };
 
     let mut ctx = Context {
@@ -228,7 +225,7 @@ impl Context {
         token_state.c_nonce = gen::nonce();
         token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
         state.current_step = Step::Token(token_state.clone());
-        StateStore::put(&provider, &token_state.access_token, state.to_vec()?, state.expires_at)
+        StateStore::put(&provider, &token_state.access_token, &state, state.expires_at)
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -260,7 +257,7 @@ impl Context {
                 transaction_id: txn_id.clone(),
                 credential_request: request.clone(),
             });
-            StateStore::put(&provider, &txn_id.clone(), state.to_vec()?, state.expires_at)
+            StateStore::put(&provider, &txn_id.clone(), &state, state.expires_at)
                 .await
                 .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -381,7 +378,7 @@ impl Context {
         token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
         state.current_step = Step::Token(token_state.clone());
 
-        StateStore::put(provider, &token_state.access_token, state.to_vec()?, state.expires_at)
+        StateStore::put(provider, &token_state.access_token, &state, state.expires_at)
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -457,8 +454,7 @@ mod tests {
             scope: None,
         });
 
-        let ser = state.to_vec().expect("should serialize");
-        StateStore::put(&provider, access_token, ser, state.expires_at).await.expect("state saved");
+        StateStore::put(&provider, access_token, &state, state.expires_at).await.expect("state saved");
 
         // create CredentialRequest to 'send' to the app
         let claims = ProofClaims {
@@ -514,8 +510,7 @@ mod tests {
         });
 
         // token state should remain unchanged
-        assert_let!(Ok(buf), StateStore::get(&provider, access_token).await);
-        let state = State::try_from(buf).expect("state is valid");
+        assert_let!(Ok(state), StateStore::get::<State>(&provider, access_token).await);
         assert_snapshot!("state", state, {
             ".expires_at" => "[expires_at]",
             ".current_step.c_nonce"=>"[c_nonce]",
@@ -557,8 +552,7 @@ mod tests {
             scope: None,
         });
 
-        let ser = state.to_vec().expect("should serialize");
-        StateStore::put(&provider, access_token, ser, state.expires_at)
+        StateStore::put(&provider, access_token, &state, state.expires_at)
             .await
             .expect("state exists");
 
@@ -616,8 +610,7 @@ mod tests {
         });
 
         // token state should remain unchanged
-        assert_let!(Ok(buf), StateStore::get(&provider, access_token).await);
-        let state = State::try_from(buf).expect("state is valid");
+        assert_let!(Ok(state), StateStore::get::<State>(&provider, access_token).await);
         assert_snapshot!("ad-state", state, {
             ".expires_at" => "[expires_at]",
             ".current_step.c_nonce"=>"[c_nonce]",
