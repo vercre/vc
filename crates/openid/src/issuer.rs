@@ -48,19 +48,19 @@ pub trait Subject: Send + Sync {
     /// Returns a one or more `credential_identifier`s the subject (holder) is
     /// authorized to request.
     fn authorize(
-        &self, holder_subject: &str, credential_configuration_id: &str,
+        &self, subject_id: &str, credential_configuration_id: &str,
     ) -> impl Future<Output = provider::Result<Vec<String>>> + Send;
 
-    /// Returns a populated `Claims` object for the given subject (holder) and
+    /// Returns a populated `Dataset` object for the given subject (holder) and
     /// credential definition.
-    fn claims(
-        &self, holder_subject: &str, credential_identifier: &str,
-    ) -> impl Future<Output = provider::Result<Claims>> + Send;
+    fn dataset(
+        &self, subject_id: &str, credential_identifier: &str,
+    ) -> impl Future<Output = provider::Result<Dataset>> + Send;
 }
 
 /// The user information returned by the Subject trait.
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct Claims {
+pub struct Dataset {
     /// The credential subject populated for the user.
     pub claims: Map<String, Value>,
 

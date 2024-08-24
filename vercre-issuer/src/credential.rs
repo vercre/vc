@@ -287,12 +287,12 @@ impl Context {
         let definition = credential_definition(request, &config);
 
         // get ALL claims for holder/credential
-        let mut claims_resp = Subject::claims(&provider, &self.state.subject_id, &identifier)
+        let mut dataset = Subject::dataset(&provider, &self.state.subject_id, &identifier)
             .await
             .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
 
         // defer issuance if claims are pending (approval?),
-        if claims_resp.pending {
+        if dataset.pending {
             return Ok(None);
         }
 
@@ -301,11 +301,11 @@ impl Context {
         let cred_subj_def = &definition.credential_subject.unwrap_or_default();
         if let Some(req_cred_def) = &request.credential_definition {
             if let Some(req_cred_subj) = &req_cred_def.credential_subject {
-                let mut claims = claims_resp.claims;
+                let mut claims = dataset.claims;
                 claims.retain(|key, _| {
                     req_cred_subj.get(key).is_some() || cred_subj_def.get(key).is_some()
                 });
-                claims_resp.claims = claims;
+                dataset.claims = claims;
             }
         }
 
@@ -326,7 +326,7 @@ impl Context {
             .add_subject(CredentialSubject {
                 // FIXME: holder_did is not populated
                 id: Some(self.holder_did.clone()),
-                claims: claims_resp.claims,
+                claims: dataset.claims,
             })
             .build()
             .map_err(|e| Error::ServerError(format!("issue building VC: {e}")))?;

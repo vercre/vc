@@ -29,9 +29,9 @@ pub struct State {
     pub request_object: RequestObject,
 }
 
-impl State {
-    /// Determines whether state has expired or not.
-    pub fn expired(&self) -> bool {
-        self.expires_at.signed_duration_since(Utc::now()).num_seconds() < 0
-    }
-}
+// impl State {
+//     /// Determines whether state has expired or not.
+//     pub fn expired(&self) -> bool {
+//         self.expires_at.signed_duration_since(Utc::now()).num_seconds() < 0
+//     }
+// }

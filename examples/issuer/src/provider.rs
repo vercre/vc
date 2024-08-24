@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use vercre_issuer::provider::{
-    Algorithm, Claims, Client, Decryptor, DidResolver, Document, Encryptor, Issuer, Metadata,
+    Algorithm, Client, Dataset, Decryptor, DidResolver, Document, Encryptor, Issuer, Metadata,
     Result, SecOps, Server, Signer, StateStore, Subject,
 };
 use vercre_test_utils::store::keystore::IssuerKeystore;
@@ -13,7 +13,7 @@ pub struct Provider {
     pub client: issuance::ClientStore,
     pub issuer: issuance::IssuerStore,
     pub server: issuance::ServerStore,
-    pub subject: issuance::SubjectStore,
+    pub subject: issuance::DatasetStore,
     pub state: state::Store,
 }
 
@@ -24,7 +24,7 @@ impl Provider {
             client: issuance::ClientStore::new(),
             issuer: issuance::IssuerStore::new(),
             server: issuance::ServerStore::new(),
-            subject: issuance::SubjectStore::new(),
+            subject: issuance::DatasetStore::new(),
             state: state::Store::new(),
         }
     }
@@ -53,13 +53,13 @@ impl Metadata for Provider {
 impl Subject for Provider {
     /// Authorize issuance of the specified credential for the holder.
     async fn authorize(
-        &self, holder_subject: &str, credential_configuration_id: &str,
+        &self, subject_id: &str, credential_configuration_id: &str,
     ) -> Result<Vec<String>> {
-        self.subject.authorize(holder_subject, credential_configuration_id)
+        self.subject.authorize(subject_id, credential_configuration_id)
     }
 
-    async fn claims(&self, holder_subject: &str, credential_identifier: &str) -> Result<Claims> {
-        self.subject.claims(holder_subject, credential_identifier)
+    async fn dataset(&self, subject_id: &str, credential_identifier: &str) -> Result<Dataset> {
+        self.subject.dataset(subject_id, credential_identifier)
     }
 }
 

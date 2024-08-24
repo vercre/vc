@@ -36,6 +36,13 @@ pub struct State {
     pub current_step: Step,
 }
 
+// impl State {
+//     /// Determines whether state has expired or not.
+//     pub fn expired(&self) -> bool {
+//         self.expires_at.signed_duration_since(Utc::now()).num_seconds() < 0
+//     }
+// }
+
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 #[allow(clippy::large_enum_variant)]
@@ -126,6 +133,16 @@ pub struct Token {
     pub scope: Option<String>,
 }
 
+impl Token {
+    pub fn c_nonce_expires_in(&self) -> i64 {
+        self.c_nonce_expires_at.signed_duration_since(Utc::now()).num_seconds()
+    }
+
+    pub fn c_nonce_expired(&self) -> bool {
+        self.c_nonce_expires_in() < 0
+    }
+}
+
 /// `Token` is used to store token state.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Deferred {
@@ -135,21 +152,4 @@ pub struct Deferred {
 
     /// Save the Credential request when issuance is deferred.
     pub credential_request: CredentialRequest,
-}
-
-impl State {
-    /// Determines whether state has expired or not.
-    pub fn expired(&self) -> bool {
-        self.expires_at.signed_duration_since(Utc::now()).num_seconds() < 0
-    }
-}
-
-impl Token {
-    pub fn c_nonce_expires_in(&self) -> i64 {
-        self.c_nonce_expires_at.signed_duration_since(Utc::now()).num_seconds()
-    }
-
-    pub fn c_nonce_expired(&self) -> bool {
-        self.c_nonce_expires_in() < 0
-    }
 }
