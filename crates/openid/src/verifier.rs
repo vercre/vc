@@ -309,7 +309,7 @@ pub enum ClientIdScheme {
 
 // /// The type of Presentation Definition returned by the `RequestObject`: either an object
 // /// or a URI.
-// #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+// #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 // #[allow(clippy::module_name_repetitions)]
 // pub enum PresentationDefinitionType {
 //     /// A Presentation Definition object embedded in the `RequestObject`.

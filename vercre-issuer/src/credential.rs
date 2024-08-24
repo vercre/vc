@@ -16,9 +16,9 @@ use vercre_core::{gen, Kind, Quota};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
-    CredentialConfiguration, CredentialDefinition, CredentialRequest, CredentialResponse,
-    CredentialType, Issuer, Metadata, ProofClaims, ProofOption, ProofType, ProofsType, Provider,
-    RequestedCredential, StateStore, Subject,
+    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, Issuer,
+    Metadata, ProofClaims, ProofOption, ProofType, ProofsType, Provider, RequestedType, StateStore,
+    Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
@@ -74,40 +74,76 @@ impl Context {
             return Err(Error::AccessDenied("c_nonce has expired".into()));
         }
 
-        let mut supported_proofs = None;
+        let mut credential_config = &CredentialConfiguration::default();
 
-        // TODO: add support for `credential_identifier`
+        match &request.credential_type {
+            RequestedType::Identifier {
+                credential_identifier,
+            } => {
+                // check request has been authorized
+                let token_state = self.state.authorized.as_ref().ok_or_else(|| {
+                    Error::InvalidCredentialRequest("credential has not been authorized".into())
+                })?;
 
-        // format and type request
-        if let RequestedCredential::Format(format) = &request.requested_credential {
-            let Some(definition) = &request.credential_definition else {
-                return Err(Error::InvalidCredentialRequest(
-                    "credential definition not set".into(),
-                ));
-            };
+                let mut authorized = false;
+                for auth in token_state {
+                    if auth.credential_identifiers.contains(credential_identifier) {
+                        let CredentialType::ConfigurationId(config_id) =
+                            &auth.authorization_detail.credential_type
+                        else {
+                            return Err(Error::InvalidCredentialRequest(
+                                "credential configuration not found".into(),
+                            ));
+                        };
+                        let Some(config) =
+                            self.issuer_config.credential_configurations_supported.get(config_id)
+                        else {
+                            return Err(Error::InvalidCredentialRequest(
+                                "credential configuration not found".into(),
+                            ));
+                        };
 
-            // check request has been authorized:
-            //   - match format + type against authorized items in state
-            let authorized = false;
+                        credential_config = config;
+                        authorized = true;
+                        break;
+                    }
+                }
 
-            for config in self.issuer_config.credential_configurations_supported.values() {
-                if (&config.format == format)
-                    && (config.credential_definition.type_ == definition.type_)
-                {
-                    supported_proofs = config.proof_types_supported.as_ref();
-
-                    // FIXME: get credential identifiers from current_step
-                    // authorized = self.state.credential_identifiers.contains(identifier);
-                    break;
+                if !authorized {
+                    return Err(Error::InvalidCredentialRequest(
+                        "requested credential has not been authorized".into(),
+                    ));
                 }
             }
+            RequestedType::Definition {
+                format,
+                credential_definition,
+            } => {
+                // check request has been authorized:
+                //   - match format + type against authorized items in state
+                let authorized = false;
 
-            if !authorized {
-                //     return Err(Error::InvalidCredentialRequest(
-                //         "requested credential has not been authorized".into(),
-                //     ));
+                for config in self.issuer_config.credential_configurations_supported.values() {
+                    if (&config.format == format)
+                        && (config.credential_definition.type_ == credential_definition.type_)
+                    {
+                        credential_config = config;
+
+                        // FIXME: get credential identifiers from current_step
+                        // authorized =
+                        break;
+                    }
+                }
+
+                if !authorized {
+                    return Err(Error::InvalidCredentialRequest(
+                        "requested credential has not been authorized".into(),
+                    ));
+                }
             }
         };
+
+        let supported_proofs = credential_config.proof_types_supported.as_ref();
 
         // TODO: refactor into separate function.
         if let Some(supported_types) = supported_proofs {
@@ -284,10 +320,9 @@ impl Context {
 
         // get credential identifier and configuration
         let (identifier, config) = self.configuration(request)?;
-        let definition = credential_definition(request, &config);
 
         // get ALL claims for holder/credential
-        let mut dataset = Subject::dataset(&provider, &self.state.subject_id, &identifier)
+        let dataset = Subject::dataset(&provider, &self.state.subject_id, &identifier)
             .await
             .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
 
@@ -296,25 +331,29 @@ impl Context {
             return Ok(None);
         }
 
+        // FIXME: add support for RequestedType::Definition
         // TODO: need to check authorized claims (claims in credential offer or authorization request)
+
+        // let definition = credential_definition(request, &config);
+
         // retain ONLY requested (and mandatory) claims
-        let cred_subj_def = &definition.credential_subject.unwrap_or_default();
-        if let Some(req_cred_def) = &request.credential_definition {
-            if let Some(req_cred_subj) = &req_cred_def.credential_subject {
-                let mut claims = dataset.claims;
-                claims.retain(|key, _| {
-                    req_cred_subj.get(key).is_some() || cred_subj_def.get(key).is_some()
-                });
-                dataset.claims = claims;
-            }
-        }
+        // let cred_subj = &definition.credential_subject.unwrap_or_default();
+        // if let Some(req_cred_def) = &request.credential_definition {
+        //     if let Some(req_cred_subj) = &req_cred_def.credential_subject {
+        //         let mut claims = dataset.claims;
+        //         claims.retain(|key, _| {
+        //             req_cred_subj.get(key).is_some() || cred_subj.get(key).is_some()
+        //         });
+        //         dataset.claims = claims;
+        //     }
+        // }
 
         let credential_issuer = &self.issuer_config.credential_issuer;
-
-        // HACK: fix this (AW: why is this a hack?)
+        let definition = config.credential_definition;
         let Some(types) = definition.type_ else {
             return Err(Error::ServerError("Credential type not set".into()));
         };
+
         let vc_id = format!("{credential_issuer}/credentials/{}", types[1].clone());
 
         let vc = VerifiableCredential::builder()
@@ -339,8 +378,10 @@ impl Context {
     ) -> Result<(String, CredentialConfiguration)> {
         // get credential configuration from request
 
-        match &request.requested_credential {
-            RequestedCredential::Identifier(identifier) => {
+        match &request.credential_type {
+            RequestedType::Identifier {
+                credential_identifier,
+            } => {
                 // look up credential_identifier in state::Authorized
                 let all_authorized = self.state.authorized.as_ref().ok_or_else(|| {
                     Error::InvalidCredentialRequest("credential is not authorized".into())
@@ -349,7 +390,7 @@ impl Context {
                 // find match
                 let Some(authorized) = all_authorized
                     .iter()
-                    .find(|auth| auth.credential_identifiers.contains(identifier))
+                    .find(|auth| auth.credential_identifiers.contains(credential_identifier))
                 else {
                     return Err(Error::InvalidCredentialRequest(
                         "credential is not authorized".into(),
@@ -374,17 +415,16 @@ impl Context {
                     ));
                 };
 
-                Ok((identifier.clone(), config.clone()))
+                Ok((credential_identifier.clone(), config.clone()))
             }
-            RequestedCredential::Format(format) => {
-                let Some(definition) = &request.credential_definition else {
-                    return Err(Error::InvalidCredentialRequest(
-                        "credential definition not set".into(),
-                    ));
-                };
+            RequestedType::Definition {
+                format,
+                credential_definition,
+            } => {
                 let Some(id_config) =
                     self.issuer_config.credential_configurations_supported.iter().find(|(_, v)| {
-                        &v.format == format && v.credential_definition.type_ == definition.type_
+                        &v.format == format
+                            && v.credential_definition.type_ == credential_definition.type_
                     })
                 else {
                     return Err(Error::InvalidCredentialRequest(
@@ -420,26 +460,6 @@ impl Context {
     }
 }
 
-// Get the request's credential definition. If it does not exist, create it.
-fn credential_definition(
-    request: &CredentialRequest, config: &CredentialConfiguration,
-) -> CredentialDefinition {
-    tracing::debug!("credential::credential_definition");
-
-    let mut definition =
-        request.credential_definition.clone().unwrap_or_else(|| CredentialDefinition {
-            context: None,
-            type_: config.credential_definition.type_.clone(),
-            credential_subject: config.credential_definition.credential_subject.clone(),
-        });
-
-    // add credential subject when not present
-    if definition.credential_subject.is_none() {
-        definition.credential_subject.clone_from(&config.credential_definition.credential_subject);
-    };
-
-    definition
-}
 
 #[cfg(test)]
 mod tests {
@@ -464,7 +484,6 @@ mod tests {
         let provider = Provider::new();
         let access_token = "ABCDEF";
         let c_nonce = "1234ABCD";
-        // let credentials = vec!["EmployeeID_JWT".into()];
 
         // set up state
         let mut state = State {

@@ -141,7 +141,7 @@ pub struct CreateOfferResponse {
 
 /// The type of Credential Offer returned in a `CreateOfferResponse`: either an object
 /// or a URI.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub enum OfferType {
     /// A Credential Offer object that can be sent to a Wallet as an HTTP GET request.
     #[serde(rename = "credential_offer")]
@@ -512,7 +512,7 @@ pub struct AuthorizationDetail {
 }
 
 /// Means used to identifiy a Credential type when requesting a Credential.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub enum CredentialType {
     /// Specifies the unique identifier of the Credential being described in the
     /// `credential_configurations_supported` map in the Credential Issuer Metadata.
@@ -750,13 +750,7 @@ pub struct CredentialRequest {
     /// If `credential_identifiers` were returned in the Token Response, they MUST be
     ///used here. Otherwise, they MUST NOT be used.
     #[serde(flatten)]
-    pub requested_credential: RequestedCredential,
-
-    /// Definition of the credential type requested.
-    ///
-    /// REQUIRED when `format` is "`jwt_vc_json`", "`jwt_vc_json`-ld", or "`ldp_vc`".
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_definition: Option<CredentialDefinition>,
+    pub credential_type: RequestedType,
 
     /// Wallet's proof of possession of cryptographic key material the issued Credential
     /// will be bound to.
@@ -773,31 +767,44 @@ pub struct CredentialRequest {
     pub credential_response_encryption: Option<CredentialResponseEncryption>,
 }
 
-/// Means used to identifiy a Credential type when requesting a Credential.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub enum RequestedCredential {
-    /// Specifies the unique identifier of the Credential being described in the
-    /// `credential_configurations_supported` map in the Credential Issuer Metadata.
-    #[serde(rename = "credential_identifier")]
-    Identifier(String),
+/// Means used to identifiy Credential type and format when requesting a Credential.
+#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
+#[serde(untagged)]
+pub enum RequestedType {
+    /// Credential is requested by `credential_identifier`.
+    ///  REQUIRED when an Authorization Details of type `openid_credential` was
+    /// returned from the Token Response.
+    Identifier {
+        /// Specifies the unique identifier of the Credential being described in the
+        /// `credential_configurations_supported` map in the Credential Issuer Metadata.
+        credential_identifier: String,
+    },
 
-    /// Determines the format of the Credential to be issued, which may determine
-    /// the type and other information related to the Credential to be issued. REQUIRED
-    /// when `credential_identifiers` was not returned from the Token Response. MUST
-    /// NOT be used otherwise.
-    #[serde(rename = "format")]
-    Format(CredentialFormat),
+    /// Defines the format and type of of the Credential to be issued.  REQUIRED
+    /// when `credential_identifiers` was not returned from the Token Response.
+    Definition {
+        /// Determines the format of the Credential to be issued, which may determine
+        /// the type and other information related to the Credential to be issued.
+        format: CredentialFormat,
+
+        /// Contains the detailed description of the Credential type.
+        /// REQUIRED when the format parameter is present in the Credential Request.
+        /// It MUST NOT be used otherwise.
+        credential_definition: CredentialDefinition,
+    },
 }
 
-impl Default for RequestedCredential {
+impl Default for RequestedType {
     fn default() -> Self {
-        Self::Identifier(String::new())
+        Self::Identifier {
+            credential_identifier: String::new(),
+        }
     }
 }
 
 /// Wallet's proof of possession of the key material the issued Credential is to
 /// be bound to.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum ProofOption {
     /// A single proof of possession of the cryptographic key material to which
@@ -825,7 +832,7 @@ impl Default for ProofOption {
 
 /// A single proof of possession of the cryptographic key material provided by the
 /// Wallet to which the issued Credential instance will be bound.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(tag = "proof_type")]
 pub enum ProofType {
     /// The JWT containing the Wallet's proof of possession of key material.
@@ -844,7 +851,7 @@ impl Default for ProofType {
 
 /// A a single proof of possession of the cryptographic key material provided by the
 /// Wallet to which the issued Credential instance will be bound.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub enum ProofsType {
     /// The JWT containing the Wallet's proof of possession of key material.
     #[serde(rename = "jwt")]
@@ -1296,6 +1303,8 @@ pub struct Image {
     pub alt_text: Option<String>,
 }
 
+// FIXME: split into 2 types or use enum for variations based on format
+
 /// `CredentialDefinition` defines a Supported Credential that may requested by
 /// Wallets.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
@@ -1477,7 +1486,7 @@ mod tests {
     }
 
     #[test]
-    fn single_proof() {
+    fn credential_request() {
         let json = serde_json::json!({
           "credential_issuer": "https://example.com",
           "access_token": "1234",
@@ -1495,7 +1504,9 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            requested_credential: RequestedCredential::Identifier("EngineeringDegree2023".into()),
+            credential_type: RequestedType::Identifier {
+                credential_identifier: "EngineeringDegree2023".into(),
+            },
             proof_option: Some(ProofOption::Proof {
                 proof_type: ProofType::Jwt {
                     jwt: "SomeJWT".into(),
@@ -1529,11 +1540,57 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            requested_credential: RequestedCredential::Identifier("EngineeringDegree2023".into()),
+            credential_type: RequestedType::Identifier {
+                credential_identifier: "EngineeringDegree2023".into(),
+            },
             proof_option: Some(ProofOption::Proofs(ProofsType::Jwt(vec![
                 "SomeJWT1".into(),
                 "SomeJWT2".into(),
             ]))),
+            ..CredentialRequest::default()
+        };
+
+        let serialized = serde_json::to_value(&request).expect("should serialize to string");
+        assert_eq!(json, serialized);
+    }
+
+    #[test]
+    fn credential_definition() {
+        let json = serde_json::json!({
+          "credential_issuer": "https://example.com",
+          "access_token": "1234",
+          "format": "jwt_vc_json",
+          "credential_definition": {
+            "type": [
+              "VerifiableCredential",
+              "EmployeeIDCredential"
+            ],
+          },
+          "proof": {
+            "proof_type": "jwt",
+            "jwt": "SomeJWT"
+          }
+        });
+
+        let deserialized: CredentialRequest =
+            serde_json::from_value(json.clone()).expect("should deserialize from json");
+        assert_snapshot!("credential_definition", &deserialized);
+
+        let request = CredentialRequest {
+            credential_issuer: "https://example.com".into(),
+            access_token: "1234".into(),
+            credential_type: RequestedType::Definition {
+                format: CredentialFormat::JwtVcJson,
+                credential_definition: CredentialDefinition {
+                    type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
+                    ..CredentialDefinition::default()
+                },
+            },
+            proof_option: Some(ProofOption::Proof {
+                proof_type: ProofType::Jwt {
+                    jwt: "SomeJWT".into(),
+                },
+            }),
             ..CredentialRequest::default()
         };
 
