@@ -64,7 +64,7 @@ impl Subject for Provider {
 }
 
 impl StateStore for Provider {
-    async fn put(&self, key: &str, state: impl Serialize, dt: DateTime<Utc>) -> Result<()> {
+    async fn put(&self, key: &str, state: impl Serialize + Send, dt: DateTime<Utc>) -> Result<()> {
         self.state.put(key, state, dt)
     }
 

@@ -745,12 +745,12 @@ pub struct CredentialRequest {
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub access_token: String,
 
-    /// Identifies the Credential requested using either a `credential_identifier` or a
-    /// supported credential `format`.
+    /// Specifies the Credential requested using either a `credential_identifier` or a
+    /// combination of supported format and type.
     /// If `credential_identifiers` were returned in the Token Response, they MUST be
-    ///used here. Otherwise, they MUST NOT be used.
+    /// used here. Otherwise, they MUST NOT be used.
     #[serde(flatten)]
-    pub credential_type: RequestedType,
+    pub credential_specification: Specification,
 
     /// Wallet's proof of possession of cryptographic key material the issued Credential
     /// will be bound to.
@@ -770,7 +770,7 @@ pub struct CredentialRequest {
 /// Means used to identifiy Credential type and format when requesting a Credential.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(untagged)]
-pub enum RequestedType {
+pub enum Specification {
     /// Credential is requested by `credential_identifier`.
     ///  REQUIRED when an Authorization Details of type `openid_credential` was
     /// returned from the Token Response.
@@ -794,7 +794,7 @@ pub enum RequestedType {
     },
 }
 
-impl Default for RequestedType {
+impl Default for Specification {
     fn default() -> Self {
         Self::Identifier {
             credential_identifier: String::new(),
@@ -1504,7 +1504,7 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            credential_type: RequestedType::Identifier {
+            credential_specification: Specification::Identifier {
                 credential_identifier: "EngineeringDegree2023".into(),
             },
             proof_option: Some(ProofOption::Proof {
@@ -1540,7 +1540,7 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            credential_type: RequestedType::Identifier {
+            credential_specification: Specification::Identifier {
                 credential_identifier: "EngineeringDegree2023".into(),
             },
             proof_option: Some(ProofOption::Proofs(ProofsType::Jwt(vec![
@@ -1579,7 +1579,7 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            credential_type: RequestedType::Definition {
+            credential_specification: Specification::Definition {
                 format: CredentialFormat::JwtVcJson,
                 credential_definition: CredentialDefinition {
                     type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),

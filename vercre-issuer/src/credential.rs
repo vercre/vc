@@ -17,7 +17,7 @@ use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, Issuer,
-    Metadata, ProofClaims, ProofOption, ProofType, ProofsType, Provider, RequestedType, StateStore,
+    Metadata, ProofClaims, ProofOption, ProofType, ProofsType, Provider, Specification, StateStore,
     Subject,
 };
 use vercre_openid::{Error, Result};
@@ -76,8 +76,8 @@ impl Context {
 
         let mut credential_config = &CredentialConfiguration::default();
 
-        match &request.credential_type {
-            RequestedType::Identifier {
+        match &request.credential_specification {
+            Specification::Identifier {
                 credential_identifier,
             } => {
                 // check request has been authorized
@@ -115,7 +115,7 @@ impl Context {
                     ));
                 }
             }
-            RequestedType::Definition {
+            Specification::Definition {
                 format,
                 credential_definition,
             } => {
@@ -331,7 +331,7 @@ impl Context {
             return Ok(None);
         }
 
-        // FIXME: add support for RequestedType::Definition
+        // FIXME: add support for Specification::Definition
         // TODO: need to check authorized claims (claims in credential offer or authorization request)
 
         // let definition = credential_definition(request, &config);
@@ -378,8 +378,8 @@ impl Context {
     ) -> Result<(String, CredentialConfiguration)> {
         // get credential configuration from request
 
-        match &request.credential_type {
-            RequestedType::Identifier {
+        match &request.credential_specification {
+            Specification::Identifier {
                 credential_identifier,
             } => {
                 // look up credential_identifier in state::Authorized
@@ -417,7 +417,7 @@ impl Context {
 
                 Ok((credential_identifier.clone(), config.clone()))
             }
-            RequestedType::Definition {
+            Specification::Definition {
                 format,
                 credential_definition,
             } => {
@@ -459,7 +459,6 @@ impl Context {
         Ok((c_nonce, Expire::Nonce.duration().num_seconds()))
     }
 }
-
 
 #[cfg(test)]
 mod tests {

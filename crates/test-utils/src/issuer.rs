@@ -4,7 +4,7 @@ use serde::Serialize;
 use vercre_datasec::{Algorithm, Decryptor, Encryptor, SecOps, Signer};
 use vercre_did::{DidResolver, Document};
 use vercre_openid::issuer::{
-    Dataset, Client, Issuer, Metadata, Result, Server, StateStore, Subject,
+    Client, Dataset, Issuer, Metadata, Result, Server, StateStore, Subject,
 };
 
 use crate::store::keystore::IssuerKeystore;

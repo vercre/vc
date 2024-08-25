@@ -39,7 +39,7 @@ impl Provider {
 impl HolderProvider for Provider {}
 
 impl StateStore for Provider {
-    async fn put(&self, key: &str, state: impl Serialize, _: DateTime<Utc>) -> Result<()> {
+    async fn put(&self, key: &str, state: impl Serialize + Send, _: DateTime<Utc>) -> Result<()> {
         let state = serde_json::to_vec(&state)?;
         self.state_store.lock().await.insert(key.to_string(), state);
         Ok(())
