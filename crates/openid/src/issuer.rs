@@ -759,7 +759,7 @@ pub struct CredentialRequest {
     /// the requested Credential.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(flatten)]
-    pub proof: Option<ProofOption>,
+    pub proof: Option<Proof>,
 
     /// If present, specifies how the Credential Response should be encrypted. If not
     /// present.
@@ -811,7 +811,7 @@ impl Default for CredentialSpec {
 /// Wallet's proof of possession of the key material the issued Credential is to
 /// be bound to.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
-pub enum ProofOption {
+pub enum Proof {
     /// A single proof of possession of the cryptographic key material to which
     /// the issued Credential instance will be bound to.
     #[serde(rename = "proof")]
@@ -827,7 +827,7 @@ pub enum ProofOption {
     Multiple(MultipleProofs),
 }
 
-impl Default for ProofOption {
+impl Default for Proof {
     fn default() -> Self {
         Self::Single {
             proof_type: SingleProof::default(),
@@ -1512,7 +1512,7 @@ mod tests {
             specification: CredentialSpec::Identifier {
                 credential_identifier: "EngineeringDegree2023".into(),
             },
-            proof: Some(ProofOption::Single {
+            proof: Some(Proof::Single {
                 proof_type: SingleProof::Jwt {
                     jwt: "SomeJWT".into(),
                 },
@@ -1548,7 +1548,7 @@ mod tests {
             specification: CredentialSpec::Identifier {
                 credential_identifier: "EngineeringDegree2023".into(),
             },
-            proof: Some(ProofOption::Multiple(MultipleProofs::Jwt(vec![
+            proof: Some(Proof::Multiple(MultipleProofs::Jwt(vec![
                 "SomeJWT1".into(),
                 "SomeJWT2".into(),
             ]))),
@@ -1591,7 +1591,7 @@ mod tests {
                     ..CredentialDefinition::default()
                 },
             },
-            proof: Some(ProofOption::Single {
+            proof: Some(Proof::Single {
                 proof_type: SingleProof::Jwt {
                     jwt: "SomeJWT".into(),
                 },

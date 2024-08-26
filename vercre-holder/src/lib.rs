@@ -51,8 +51,8 @@ pub use vercre_core::Quota;
 pub use vercre_dif_exch::Constraints;
 pub use vercre_openid::issuer::{
     CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse, GrantType,
-    Issuer, MetadataRequest, MetadataResponse, ProofClaims, ProofOption, TokenRequest,
-    TokenResponse, TxCode,
+    Issuer, MetadataRequest, MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
+    TxCode,
 };
 pub use vercre_openid::verifier::{
     RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
