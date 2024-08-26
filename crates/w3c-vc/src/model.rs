@@ -9,7 +9,7 @@
 //! When Verifiable Credentials are serialized in JSON, it is important to trust that
 //! the structure of a Credential may be interpreted in a consistent manner by all
 //! participants in the verifiable credential ecosystem. The Verifiable Credentials
-//! [JSON Schema] Specification defines how JSON schema can be used for that purpose.
+//! [JSON Schema] CredentialSpec defines how JSON schema can be used for that purpose.
 //!
 //! [Data Model v2.0]: https://www.w3.org/TR/vc-data-model-2.0
 //! [JSON Schema]: https://www.w3.org/TR/vc-json-schema/

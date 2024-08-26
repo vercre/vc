@@ -16,9 +16,9 @@ use vercre_core::{gen, Kind, Quota};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
-    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, Issuer,
-    Metadata, ProofClaims, ProofOption, ProofType, ProofsType, Provider, Specification, StateStore,
-    Subject,
+    AuthorizationSpec, CredentialConfiguration, CredentialRequest, CredentialResponse,
+    CredentialSpec, Issuer, Metadata, ProofClaims, ProofOption, ProofType, ProofsType, Provider,
+    StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
@@ -76,8 +76,8 @@ impl Context {
 
         let mut credential_config = &CredentialConfiguration::default();
 
-        match &request.credential_specification {
-            Specification::Identifier {
+        match &request.specification {
+            CredentialSpec::Identifier {
                 credential_identifier,
             } => {
                 // check request has been authorized
@@ -88,7 +88,7 @@ impl Context {
                 let mut authorized = false;
                 for authzd in auth_details {
                     if authzd.credential_identifiers.contains(credential_identifier) {
-                        let CredentialType::ConfigurationId(config_id) =
+                        let AuthorizationSpec::ConfigurationId(config_id) =
                             &authzd.authorization_detail.credential_type
                         else {
                             return Err(Error::InvalidCredentialRequest(
@@ -115,7 +115,7 @@ impl Context {
                     ));
                 }
             }
-            Specification::Definition {
+            CredentialSpec::Definition {
                 format,
                 credential_definition,
             } => {
@@ -147,7 +147,7 @@ impl Context {
 
         // TODO: refactor into separate function.
         if let Some(supported_types) = supported_proofs {
-            let Some(proof_option) = &request.proof_option else {
+            let Some(proof) = &request.proof else {
                 return Err(Error::InvalidCredentialRequest("proof not set".into()));
             };
 
@@ -170,11 +170,11 @@ impl Context {
             })?;
 
             // extract proof JWT(s) from request
-            let proof_jwts = match proof_option {
-                ProofOption::Proof { proof_type } => match proof_type {
+            let proof_jwts = match proof {
+                ProofOption::Single { proof_type } => match proof_type {
                     ProofType::Jwt { jwt } => &vec![jwt.clone()],
                 },
-                ProofOption::Proofs(proofs_type) => match proofs_type {
+                ProofOption::Multiple(proofs_type) => match proofs_type {
                     ProofsType::Jwt(proof_jwts) => proof_jwts,
                 },
             };
@@ -326,7 +326,7 @@ impl Context {
             return Ok(None);
         }
 
-        // FIXME: add support for Specification::Definition
+        // FIXME: add support for CredentialSpec::Definition
         // TODO: need to check authorized claims (claims in credential offer or authorization request)
 
         // let definition = credential_definition(request, &config);
@@ -373,8 +373,8 @@ impl Context {
     ) -> Result<(String, CredentialConfiguration)> {
         // get credential configuration from request
 
-        match &request.credential_specification {
-            Specification::Identifier {
+        match &request.specification {
+            CredentialSpec::Identifier {
                 credential_identifier,
             } => {
                 // look up credential_identifier in state::Authorized
@@ -393,7 +393,7 @@ impl Context {
                 };
 
                 // get `credential_configuration_id` from `authorization_detail`
-                let CredentialType::ConfigurationId(config_id) =
+                let AuthorizationSpec::ConfigurationId(config_id) =
                     &authorized.authorization_detail.credential_type
                 else {
                     return Err(Error::InvalidCredentialRequest(
@@ -412,7 +412,7 @@ impl Context {
 
                 Ok((credential_identifier.clone(), config.clone()))
             }
-            Specification::Definition {
+            CredentialSpec::Definition {
                 format,
                 credential_definition,
             } => {
@@ -461,7 +461,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use vercre_openid::issuer::{
-        AuthorizationDetail, AuthorizationDetailType, Authorized, CredentialType,
+        AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec, Authorized,
     };
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::{holder, snapshot};
@@ -493,7 +493,7 @@ mod tests {
             authorized: Some(vec![Authorized {
                 authorization_detail: AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,
-                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
+                    credential_type: AuthorizationSpec::ConfigurationId("EmployeeID_JWT".into()),
                     ..AuthorizationDetail::default()
                 },
                 credential_identifiers: vec!["PHLEmployeeID".into()],
@@ -586,7 +586,7 @@ mod tests {
             authorized: Some(vec![Authorized {
                 authorization_detail: AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,
-                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
+                    credential_type: AuthorizationSpec::ConfigurationId("EmployeeID_JWT".into()),
                     ..AuthorizationDetail::default()
                 },
                 credential_identifiers: vec!["PHLEmployeeID".into()],

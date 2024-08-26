@@ -207,7 +207,7 @@ mod tests {
     use serde_json::json;
     use vercre_openid::issuer::{
         AuthorizationDetail, AuthorizationDetailType, Authorized, CredentialDefinition,
-        CredentialType,
+        AuthorizationSpec,
     };
     use vercre_openid::CredentialFormat;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -231,7 +231,7 @@ mod tests {
                 authorized: vec![Authorized {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
-                        credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
+                        credential_type: AuthorizationSpec::ConfigurationId("EmployeeID_JWT".into()),
                         ..AuthorizationDetail::default()
                     },
                     credential_identifiers: vec!["PHLEmployeeID".into()],
@@ -300,7 +300,7 @@ mod tests {
                 authorized: Some(vec![Authorized {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
-                        credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
+                        credential_type: AuthorizationSpec::ConfigurationId("EmployeeID_JWT".into()),
                         ..AuthorizationDetail::default()
                     },
                     credential_identifiers: vec!["PHLEmployeeID".into()],
@@ -369,7 +369,7 @@ mod tests {
                 authorized: Some(vec![Authorized {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
-                        credential_type: CredentialType::Format(CredentialFormat::JwtVcJson),
+                        credential_type: AuthorizationSpec::Format(CredentialFormat::JwtVcJson),
                         credential_definition: Some(CredentialDefinition {
                             type_: Some(vec![
                                 "VerifiableCredential".into(),

@@ -71,8 +71,8 @@ mod tests {
     use vercre_core::Quota;
     use vercre_datasec::jose::jws::{self, Type};
     use vercre_openid::issuer::{
-        AuthorizationDetail, AuthorizationDetailType, Authorized, CredentialRequest,
-        CredentialType, ProofClaims,
+        AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec, Authorized,
+        CredentialRequest, ProofClaims,
     };
     use vercre_test_utils::holder;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -135,7 +135,7 @@ mod tests {
             authorized: Some(vec![Authorized {
                 authorization_detail: AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,
-                    credential_type: CredentialType::ConfigurationId("EmployeeID_JWT".into()),
+                    credential_type: AuthorizationSpec::ConfigurationId("EmployeeID_JWT".into()),
                     ..AuthorizationDetail::default()
                 },
                 credential_identifiers: vec!["EmployeeID2023".into()],

@@ -474,7 +474,7 @@ pub struct AuthorizationDetail {
     /// Identifies Credentials requested using either `credential_identifier` or
     /// supported credential `format`.
     #[serde(flatten)]
-    pub credential_type: CredentialType,
+    pub credential_type: AuthorizationSpec,
 
     /// The detailed description of the credential type requested. At a minimum,
     /// the Credential Definition 'type' field MUST be set.
@@ -513,7 +513,7 @@ pub struct AuthorizationDetail {
 
 /// Means used to identifiy a Credential's type when requesting a Credential.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
-pub enum CredentialType {
+pub enum AuthorizationSpec {
     /// Specifies the unique identifier of the Credential being described in the
     /// `credential_configurations_supported` map in the Credential Issuer Metadata.
     #[serde(rename = "credential_configuration_id")]
@@ -527,7 +527,7 @@ pub enum CredentialType {
     Format(CredentialFormat),
 }
 
-impl Default for CredentialType {
+impl Default for AuthorizationSpec {
     fn default() -> Self {
         Self::ConfigurationId(String::new())
     }
@@ -750,7 +750,7 @@ pub struct CredentialRequest {
     /// If `credential_identifiers` were returned in the Token Response, they MUST be
     /// used here. Otherwise, they MUST NOT be used.
     #[serde(flatten)]
-    pub credential_specification: Specification,
+    pub specification: CredentialSpec,
 
     /// Wallet's proof of possession of cryptographic key material the issued Credential
     /// will be bound to.
@@ -759,7 +759,7 @@ pub struct CredentialRequest {
     /// the requested Credential.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(flatten)]
-    pub proof_option: Option<ProofOption>,
+    pub proof: Option<ProofOption>,
 
     /// If present, specifies how the Credential Response should be encrypted. If not
     /// present.
@@ -770,7 +770,7 @@ pub struct CredentialRequest {
 /// Means used to identifiy Credential type and format when requesting a Credential.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(untagged)]
-pub enum Specification {
+pub enum CredentialSpec {
     /// Credential is requested by `credential_identifier`.
     ///  REQUIRED when an Authorization Details of type `openid_credential` was
     /// returned from the Token Response.
@@ -794,7 +794,7 @@ pub enum Specification {
     },
 }
 
-impl Default for Specification {
+impl Default for CredentialSpec {
     fn default() -> Self {
         Self::Identifier {
             credential_identifier: String::new(),
@@ -805,26 +805,25 @@ impl Default for Specification {
 /// Wallet's proof of possession of the key material the issued Credential is to
 /// be bound to.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
-#[serde(rename_all = "snake_case")]
 pub enum ProofOption {
     /// A single proof of possession of the cryptographic key material to which
     /// the issued Credential instance will be bound to.
-    Proof {
-        /// Specifies the key proof type. This parameter determines the additional
-        /// parameters in the key proof object and their corresponding processing
-        /// rules.
+    #[serde(rename = "proof")]
+    Single {
+        #[allow(missing_docs)]
         #[serde(flatten)]
         proof_type: ProofType,
     },
 
     /// One or more proof of possessions of the cryptographic key material to which
     /// the issued Credential instances will be bound to.
-    Proofs(ProofsType),
+    #[serde(rename = "proofs")]
+    Multiple(ProofsType),
 }
 
 impl Default for ProofOption {
     fn default() -> Self {
-        Self::Proof {
+        Self::Single {
             proof_type: ProofType::default(),
         }
     }
@@ -1162,14 +1161,14 @@ pub struct CredentialConfiguration {
     /// [DID-Core], but without a ":" and method-specific-id. For example, support for
     /// the DID method with a method-name "example" would be represented by
     /// "did:example". Support for all DID methods listed in Section 13 of
-    /// [DID Specification Registries] is indicated by sending a DID without any
+    /// [DID CredentialSpec Registries] is indicated by sending a DID without any
     /// method-name.
     ///
     /// [RFC7517]: (https://www.rfc-editor.org/rfc/rfc7517)
     /// [RFC8152]: (https://www.rfc-editor.org/rfc/rfc8152)
     /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
     /// [DID-Core]: (https://www.w3.org/TR/did-core/)
-    /// [DID Specification Registries]: (https://www.w3.org/TR/did-spec-registries/)
+    /// [DID CredentialSpec Registries]: (https://www.w3.org/TR/did-spec-registries/)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cryptographic_binding_methods_supported: Option<Vec<String>>,
 
@@ -1456,7 +1455,7 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                credential_type: CredentialType::Format(CredentialFormat::JwtVcJson),
+                credential_type: AuthorizationSpec::Format(CredentialFormat::JwtVcJson),
                 credential_definition: Some(CredentialDefinition {
                     context: Some(vec![
                         "https://www.w3.org/2018/credentials/v1".into(),
@@ -1488,13 +1487,13 @@ mod tests {
     #[test]
     fn credential_request() {
         let json = serde_json::json!({
-          "credential_issuer": "https://example.com",
-          "access_token": "1234",
-          "credential_identifier": "EngineeringDegree2023",
-          "proof": {
-            "proof_type": "jwt",
-            "jwt": "SomeJWT"
-          }
+            "credential_issuer": "https://example.com",
+            "access_token": "1234",
+            "credential_identifier": "EngineeringDegree2023",
+            "proof": {
+                "proof_type": "jwt",
+                "jwt": "SomeJWT"
+            }
         });
 
         let deserialized: CredentialRequest =
@@ -1504,10 +1503,10 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            credential_specification: Specification::Identifier {
+            specification: CredentialSpec::Identifier {
                 credential_identifier: "EngineeringDegree2023".into(),
             },
-            proof_option: Some(ProofOption::Proof {
+            proof: Some(ProofOption::Single {
                 proof_type: ProofType::Jwt {
                     jwt: "SomeJWT".into(),
                 },
@@ -1522,15 +1521,15 @@ mod tests {
     #[test]
     fn multiple_proofs() {
         let json = serde_json::json!({
-          "credential_issuer": "https://example.com",
-          "access_token": "1234",
-          "credential_identifier": "EngineeringDegree2023",
-          "proofs": {
-            "jwt": [
-              "SomeJWT1",
-              "SomeJWT2"
-            ]
-          }
+            "credential_issuer": "https://example.com",
+            "access_token": "1234",
+            "credential_identifier": "EngineeringDegree2023",
+            "proofs": {
+                "jwt": [
+                    "SomeJWT1",
+                    "SomeJWT2"
+                ]
+            }
         });
 
         let deserialized: CredentialRequest =
@@ -1540,10 +1539,10 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            credential_specification: Specification::Identifier {
+            specification: CredentialSpec::Identifier {
                 credential_identifier: "EngineeringDegree2023".into(),
             },
-            proof_option: Some(ProofOption::Proofs(ProofsType::Jwt(vec![
+            proof: Some(ProofOption::Multiple(ProofsType::Jwt(vec![
                 "SomeJWT1".into(),
                 "SomeJWT2".into(),
             ]))),
@@ -1579,14 +1578,14 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            credential_specification: Specification::Definition {
+            specification: CredentialSpec::Definition {
                 format: CredentialFormat::JwtVcJson,
                 credential_definition: CredentialDefinition {
                     type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
                     ..CredentialDefinition::default()
                 },
             },
-            proof_option: Some(ProofOption::Proof {
+            proof: Some(ProofOption::Single {
                 proof_type: ProofType::Jwt {
                     jwt: "SomeJWT".into(),
                 },

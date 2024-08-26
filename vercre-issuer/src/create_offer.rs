@@ -69,7 +69,7 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, Authorized,
-    CreateOfferRequest, CreateOfferResponse, CredentialOffer, CredentialType, Grants, Metadata,
+    CreateOfferRequest, CreateOfferResponse, CredentialOffer, AuthorizationSpec, Grants, Metadata,
     OfferType, PreAuthorizedCodeGrant, Provider, SendType, StateStore, Subject, TxCode,
 };
 use vercre_openid::{Error, Result};
@@ -183,7 +183,7 @@ async fn process(
                 authorized.push(Authorized {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
-                        credential_type: CredentialType::ConfigurationId(config_id.clone()),
+                        credential_type: AuthorizationSpec::ConfigurationId(config_id.clone()),
                         ..AuthorizationDetail::default()
                     },
                     credential_identifiers: identifiers,
