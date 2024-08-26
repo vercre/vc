@@ -81,15 +81,15 @@ impl Context {
                 credential_identifier,
             } => {
                 // check request has been authorized
-                let token_state = self.state.authorized.as_ref().ok_or_else(|| {
-                    Error::InvalidCredentialRequest("credential has not been authorized".into())
+                let auth_details = self.state.authorized.as_ref().ok_or_else(|| {
+                    Error::InvalidCredentialRequest("request not authorized".into())
                 })?;
 
                 let mut authorized = false;
-                for auth in token_state {
-                    if auth.credential_identifiers.contains(credential_identifier) {
+                for authzd in auth_details {
+                    if authzd.credential_identifiers.contains(credential_identifier) {
                         let CredentialType::ConfigurationId(config_id) =
-                            &auth.authorization_detail.credential_type
+                            &authzd.authorization_detail.credential_type
                         else {
                             return Err(Error::InvalidCredentialRequest(
                                 "credential configuration not found".into(),
@@ -153,21 +153,16 @@ impl Context {
 
             // TODO: recheck this list for compliance
             // To validate a key proof, ensure that:
-            //   - all required claims for that proof type are contained as defined
-            //     in Section 7.2.1
-            //   - the key proof is explicitly typed using header parameters as
-            //     defined for that proof type
-            //   - the header parameter indicates a registered asymmetric digital
-            //     signature algorithm, alg parameter value is not none, is supported
-            //     by the application, and is acceptable per local policy
-            //   - the signature on the key proof verifies with the public key
-            //     contained in the header parameter
+            //   - all required claims for that proof type are contained as defined in Section 7.2.1
+            //   - the key proof is explicitly typed using header parameters as defined for that proof type
+            //   - the header parameter indicates a registered asymmetric digital signature algorithm, alg
+            //     parameter value is not none, is supported by the application, and is acceptable per local policy
+            //   - the signature on the key proof verifies with the public key contained in the header parameter
             //   - the header parameter does not contain a private key
-            //   - the nonce claim (or Claim Key 10) matches the server-provided
-            //     c_nonce value, if the server had previously provided a c_nonce
-            //   - the creation time of the JWT, as determined by either the issuance
-            //      time, or a server managed timestamp via the nonce claim, is within
-            //      an acceptable window (see Section 11.5).
+            //   - the nonce claim (or Claim Key 10) matches the server-provided c_nonce value, if the server
+            //     had previously provided a c_nonce
+            //   - the creation time of the JWT, as determined by either the issuance time, or a server managed
+            //     timestamp via the nonce claim, is within an acceptable window (see Section 11.5).
 
             // TODO: cater for non-JWT proofs
             let _ = supported_types.get("jwt").ok_or_else(|| {

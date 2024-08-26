@@ -476,6 +476,13 @@ pub struct AuthorizationDetail {
     #[serde(flatten)]
     pub credential_type: CredentialType,
 
+    /// The detailed description of the credential type requested. At a minimum,
+    /// the Credential Definition 'type' field MUST be set.
+    /// REQUIRED when 'format' is "`jwt_vc_json`", "`jwt_vc_json`-ld", or "`ldp_vc`"
+    /// AND `format` parameter is set. OPTIONAL otherwise.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_definition: Option<CredentialDefinition>,
+
     /// Contains the type values the Wallet requests authorization for at the Credential
     /// Issuer.
     /// REQUIRED if format is "`vc+sd-jwt`", otherwise, it MUST not be set.
@@ -487,13 +494,6 @@ pub struct AuthorizationDetail {
     /// OPTIONAL when format is "`vc+sd-jwt`", otherwise, it MUST not be set.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub claims: Option<HashMap<String, ClaimDefinition>>,
-
-    /// The detailed description of the credential type requested. At a minimum,
-    /// the Credential Definition 'type' field MUST be set.
-    /// REQUIRED when 'format' is "`jwt_vc_json`", "`jwt_vc_json`-ld", or "`ldp_vc`"
-    /// AND `format` parameter is set. OPTIONAL otherwise.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_definition: Option<CredentialDefinition>,
 
     // TODO: integrate locations
     /// If the Credential Issuer metadata contains an `authorization_servers` parameter,
@@ -511,7 +511,7 @@ pub struct AuthorizationDetail {
     pub locations: Option<Vec<String>>,
 }
 
-/// Means used to identifiy a Credential type when requesting a Credential.
+/// Means used to identifiy a Credential's type when requesting a Credential.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub enum CredentialType {
     /// Specifies the unique identifier of the Credential being described in the
