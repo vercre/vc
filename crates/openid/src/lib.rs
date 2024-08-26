@@ -96,3 +96,90 @@ impl Display for CredentialFormat {
         }
     }
 }
+
+use crate::issuer::CredentialDefinition;
+
+/// The `OpenID4VCI` specification defines commonly used [Credential Format Profiles]
+/// to support.  The profiles define Credential format specific parameters or claims
+/// used to support a particular format.
+///
+///
+/// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(tag = "format")]
+pub enum CredentialFormat2 {
+    /// A W3C Verifiable Credential.
+    ///
+    /// When this format is specified, Credential Offer, Authorization Details,
+    /// Credential Request, and Credential Issuer metadata, including
+    /// `credential_definition` object, MUST NOT be processed using JSON-LD rules.
+    #[serde(rename = "jwt_vc_json")]
+    JwtVcJson {
+        /// Credential Definition is used to define the Credential.
+        credential_definition: CredentialDefinition,
+    },
+
+    /// A W3C Verifiable Credential.
+    ///
+    /// When using this format, data MUST NOT be processed using JSON-LD rules.
+    ///
+    /// N.B. The `@context` value in the `credential_definition` object can be used by
+    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
+    /// could apply JSON-LD processing to the Credential issued.
+    #[serde(rename = "ldp-vc")]
+    LdpVc,
+
+    /// A W3C Verifiable Credential.
+    ///
+    /// When using this format, data MUST NOT be processed using JSON-LD rules.
+    ///
+    /// N.B. The `@context` value in the `credential_definition` object can be used by
+    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
+    /// could apply JSON-LD processing to the Credential issued.
+    #[serde(rename = "jwt_vc_json-ld")]
+    JwtVcJsonLd,
+
+    /// ISO mDL.
+    ///
+    /// A Credential Format Profile for Credentials complying with [ISO.18013-5] —
+    /// ISO-compliant driving licence specification.
+    ///
+    /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
+    #[serde(rename = "mso_mdoc")]
+    MsoDoc,
+
+    /// IETF SD-JWT VC.
+    ///
+    /// A Credential Format Profile for Credentials complying with
+    /// [I-D.ietf-oauth-sd-jwt-vc] — SD-JWT-based Verifiable Credentials for
+    /// selective disclosure.
+    ///
+    /// [I-D.ietf-oauth-sd-jwt-vc]: (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-01)
+    #[serde(rename = "vc+sd-jwt")]
+    VcSdJwt,
+
+    /// W3C Verifiable Credential.
+    #[serde(rename = "jwt_vp_json")]
+    JwtVpJson,
+}
+
+impl Default for CredentialFormat2 {
+    fn default() -> Self {
+        Self::JwtVcJson {
+            credential_definition: Default::default(),
+        }
+    }
+}
+
+impl Display for CredentialFormat2 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::JwtVcJson { .. } => write!(f, "jwt_vc_json"),
+            Self::LdpVc => write!(f, "ldp_vc"),
+            Self::JwtVcJsonLd => write!(f, "jwt_vc_json-ld"),
+            Self::MsoDoc => write!(f, "mso_mdoc"),
+            Self::VcSdJwt => write!(f, "vc+sd-jwt"),
+            Self::JwtVpJson => write!(f, "jwt_vp_json"),
+        }
+    }
+}

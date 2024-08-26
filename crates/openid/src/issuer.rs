@@ -767,6 +767,8 @@ pub struct CredentialRequest {
     pub credential_response_encryption: Option<CredentialResponseEncryption>,
 }
 
+use crate::CredentialFormat2;
+
 /// Means used to identifiy Credential type and format when requesting a Credential.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(untagged)]
@@ -782,7 +784,7 @@ pub enum CredentialSpec {
 
     /// Defines the format and type of of the Credential to be issued.  REQUIRED
     /// when `credential_identifiers` was not returned from the Token Response.
-    Definition {
+    Format {
         /// Determines the format of the Credential to be issued, which may determine
         /// the type and other information related to the Credential to be issued.
         format: CredentialFormat,
@@ -792,6 +794,10 @@ pub enum CredentialSpec {
         /// It MUST NOT be used otherwise.
         credential_definition: CredentialDefinition,
     },
+
+    /// Defines the format and type of of the Credential to be issued.  REQUIRED
+    /// when `credential_identifiers` was not returned from the Token Response.
+    Format2(CredentialFormat2),
 }
 
 impl Default for CredentialSpec {
@@ -1578,7 +1584,7 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            specification: CredentialSpec::Definition {
+            specification: CredentialSpec::Format {
                 format: CredentialFormat::JwtVcJson,
                 credential_definition: CredentialDefinition {
                     type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
@@ -1596,4 +1602,21 @@ mod tests {
         let serialized = serde_json::to_value(&request).expect("should serialize to string");
         assert_eq!(json, serialized);
     }
+}
+
+#[test]
+fn test_format() {
+    let request = CredentialRequest {
+        // specification: CredentialSpec::Identifier("EngineeringDegree2023".into()),
+        specification: CredentialSpec::Format2(CredentialFormat2::JwtVcJson {
+            credential_definition: CredentialDefinition {
+                type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
+                ..CredentialDefinition::default()
+            },
+        }),
+        ..CredentialRequest::default()
+    };
+
+    let serialized = serde_json::to_string_pretty(&request).expect("should serialize to string");
+    println!("{}", serialized);
 }

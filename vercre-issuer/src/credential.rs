@@ -115,7 +115,7 @@ impl Context {
                     ));
                 }
             }
-            CredentialSpec::Definition {
+            CredentialSpec::Format {
                 format,
                 credential_definition,
             } => {
@@ -141,6 +141,7 @@ impl Context {
                     ));
                 }
             }
+            CredentialSpec::Format2(_) => unimplemented!("CredentialSpec::Format2"),
         };
 
         let supported_proofs = credential_config.proof_types_supported.as_ref();
@@ -412,7 +413,7 @@ impl Context {
 
                 Ok((credential_identifier.clone(), config.clone()))
             }
-            CredentialSpec::Definition {
+            CredentialSpec::Format {
                 format,
                 credential_definition,
             } => {
@@ -428,6 +429,7 @@ impl Context {
                 };
                 Ok((id_config.0.clone(), id_config.1.clone()))
             }
+            CredentialSpec::Format2(_) => unimplemented!("CredentialSpec::Format"),
         }
     }
 

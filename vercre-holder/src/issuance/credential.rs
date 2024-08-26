@@ -140,7 +140,7 @@ fn credential_request(
     CredentialRequest {
         credential_issuer: issuance.offer.credential_issuer.clone(),
         access_token: issuance.token.access_token.clone(),
-        specification: CredentialSpec::Definition {
+        specification: CredentialSpec::Format {
             format: cfg.format.clone(),
             credential_definition: cfg.credential_definition.clone(),
         },
