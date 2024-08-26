@@ -810,21 +810,21 @@ pub enum ProofOption {
     /// the issued Credential instance will be bound to.
     #[serde(rename = "proof")]
     Single {
-        #[allow(missing_docs)]
+        /// The proof type used by the wallet
         #[serde(flatten)]
-        proof_type: ProofType,
+        proof_type: SingleProof,
     },
 
     /// One or more proof of possessions of the cryptographic key material to which
     /// the issued Credential instances will be bound to.
     #[serde(rename = "proofs")]
-    Multiple(ProofsType),
+    Multiple(MultipleProofs),
 }
 
 impl Default for ProofOption {
     fn default() -> Self {
         Self::Single {
-            proof_type: ProofType::default(),
+            proof_type: SingleProof::default(),
         }
     }
 }
@@ -833,7 +833,7 @@ impl Default for ProofOption {
 /// Wallet to which the issued Credential instance will be bound.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(tag = "proof_type")]
-pub enum ProofType {
+pub enum SingleProof {
     /// The JWT containing the Wallet's proof of possession of key material.
     #[serde(rename = "jwt")]
     Jwt {
@@ -842,7 +842,7 @@ pub enum ProofType {
     },
 }
 
-impl Default for ProofType {
+impl Default for SingleProof {
     fn default() -> Self {
         Self::Jwt { jwt: String::new() }
     }
@@ -851,13 +851,13 @@ impl Default for ProofType {
 /// A a single proof of possession of the cryptographic key material provided by the
 /// Wallet to which the issued Credential instance will be bound.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
-pub enum ProofsType {
+pub enum MultipleProofs {
     /// The JWT containing the Wallet's proof of possession of key material.
     #[serde(rename = "jwt")]
     Jwt(Vec<String>),
 }
 
-impl Default for ProofsType {
+impl Default for MultipleProofs {
     fn default() -> Self {
         Self::Jwt(vec![String::new()])
     }
@@ -1507,7 +1507,7 @@ mod tests {
                 credential_identifier: "EngineeringDegree2023".into(),
             },
             proof: Some(ProofOption::Single {
-                proof_type: ProofType::Jwt {
+                proof_type: SingleProof::Jwt {
                     jwt: "SomeJWT".into(),
                 },
             }),
@@ -1542,7 +1542,7 @@ mod tests {
             specification: CredentialSpec::Identifier {
                 credential_identifier: "EngineeringDegree2023".into(),
             },
-            proof: Some(ProofOption::Multiple(ProofsType::Jwt(vec![
+            proof: Some(ProofOption::Multiple(MultipleProofs::Jwt(vec![
                 "SomeJWT1".into(),
                 "SomeJWT2".into(),
             ]))),
@@ -1586,7 +1586,7 @@ mod tests {
                 },
             },
             proof: Some(ProofOption::Single {
-                proof_type: ProofType::Jwt {
+                proof_type: SingleProof::Jwt {
                     jwt: "SomeJWT".into(),
                 },
             }),

@@ -8,7 +8,7 @@ use vercre_core::{Kind, Quota};
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_openid::issuer::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialSpec, ProofClaims,
-    ProofOption, ProofType, TokenGrantType, TokenRequest,
+    ProofOption, SingleProof, TokenGrantType, TokenRequest,
 };
 use vercre_w3c_vc::proof::{Payload, Verify};
 
@@ -60,7 +60,7 @@ pub async fn get_credentials(
             }
         };
         let proof = ProofOption::Single {
-            proof_type: ProofType::Jwt { jwt },
+            proof_type: SingleProof::Jwt { jwt },
         };
 
         let request = credential_request(&issuance, id, cfg, &proof);

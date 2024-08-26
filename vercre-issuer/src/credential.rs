@@ -17,8 +17,8 @@ use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
     AuthorizationSpec, CredentialConfiguration, CredentialRequest, CredentialResponse,
-    CredentialSpec, Issuer, Metadata, ProofClaims, ProofOption, ProofType, ProofsType, Provider,
-    StateStore, Subject,
+    CredentialSpec, Issuer, Metadata, MultipleProofs, ProofClaims, ProofOption, Provider,
+    SingleProof, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
@@ -172,10 +172,10 @@ impl Context {
             // extract proof JWT(s) from request
             let proof_jwts = match proof {
                 ProofOption::Single { proof_type } => match proof_type {
-                    ProofType::Jwt { jwt } => &vec![jwt.clone()],
+                    SingleProof::Jwt { jwt } => &vec![jwt.clone()],
                 },
                 ProofOption::Multiple(proofs_type) => match proofs_type {
-                    ProofsType::Jwt(proof_jwts) => proof_jwts,
+                    MultipleProofs::Jwt(proof_jwts) => proof_jwts,
                 },
             };
 
