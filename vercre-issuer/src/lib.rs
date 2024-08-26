@@ -115,6 +115,7 @@ pub use deferred::deferred;
 pub use metadata::metadata;
 pub use register::register;
 pub use token::token;
+pub use vercre_core::{Kind, Quota};
 pub use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType,
     AuthorizationRequest, AuthorizationResponse, CreateOfferRequest, CreateOfferResponse,
