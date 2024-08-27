@@ -12,9 +12,7 @@ pub mod stringify;
 
 use serde::{Deserialize, Serialize};
 
-/// Wrap the @context property to support serialization/deserialization of an ordered
-/// set composed of any combination of URLs and/or objects, each processable as a
-/// [JSON-LD Context](https://www.w3.org/TR/json-ld11/#the-context).
+/// `Kind` allows serde to serialize/deserialize a string or an object.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Kind<T> {

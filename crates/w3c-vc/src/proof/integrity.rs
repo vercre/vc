@@ -50,8 +50,9 @@ use serde::{Deserialize, Serialize};
 use vercre_core::Quota;
 
 /// To be verifiable, a credential must contain at least one proof mechanism,
-/// and details necessary to evaluate that proof. A proof may be external — an
-/// enveloping proof — or internal — an embedded proof.
+/// and details necessary to evaluate that proof.
+/// 
+/// A proof may be external (an enveloping proof) or internal (an embedded proof).
 ///
 /// Enveloping proofs are implemented using JOSE and COSE, while embedded proofs
 /// are implemented using the `Proof` object described here.
