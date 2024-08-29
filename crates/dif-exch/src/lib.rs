@@ -16,7 +16,9 @@ use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 
 /// Used to provide `serde`-compatible set of Claims  serialized as JSON (as
-/// [`serde_json::Value`]). Per the Presentation Exchange specification, this trait
+/// [`serde_json::Value`]).
+/// 
+/// Per the Presentation Exchange specification, this trait
 /// can be implemented for a variety of `Claim` formats.
 pub trait Claims {
     /// Serialize Claims as a JSON object.
@@ -102,6 +104,7 @@ pub struct InputDescriptor {
 
 /// A registered Claim Format Designation object (e.g., `jwt`, `jwt_vc`, `jwt_vp`,
 /// etc.) used to inform the Holder of a Claim format the Verifier can process.
+/// 
 /// A Format object MUST include one of the format-specific properties (i.e.,
 /// `alg`, `proof_type`) that specify which algorithms the Verifier supports for the
 /// format.

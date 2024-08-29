@@ -311,6 +311,7 @@ pub struct PreAuthorizedCodeGrant {
 
 /// Specifies whether the Authorization Server expects presentation of a Transaction
 /// Code by the End-User along with the Token Request in a Pre-Authorized Code Flow.
+/// 
 /// If the Authorization Server does not expect a Transaction Code, this object is
 /// absent; this is the default.
 ///
@@ -879,9 +880,11 @@ pub enum TokenType {
     Bearer,
 }
 
-/// Authorization Detail object specifically for use in successful Access Token
-/// responses ([`TokenResponse`]). It wraps the `AuthorizationDetail` struct and adds
-/// `credential_identifiers` parameter for use in Credential requests.
+/// Authorization Details object specifically for use in successful Access Token
+/// responses ([`TokenResponse`]).
+/// 
+/// It wraps the `AuthorizationDetail` struct and adds `credential_identifiers`
+/// parameter for use in Credential requests.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Authorized {
     /// Reuse (and flatten) the existing [`AuthorizationDetail`] object used in
@@ -1063,11 +1066,12 @@ pub struct CredentialResponseEncryption {
     pub enc: String,
 }
 
-/// The Credential Response can be Synchronous or Deferred. The Credential
-/// Issuer MAY be able to immediately issue a requested Credential. In other
-/// cases, the Credential Issuer MAY NOT be able to immediately issue a
-/// requested Credential and will instead return an `transaction_id` to be
-/// used later to retrieve a Credential when it is ready.
+/// The Credential Response can be Synchronous or Deferred.
+/// 
+/// The Credential Issuer MAY be able to immediately issue a requested
+/// Credential. In other cases, the Credential Issuer MAY NOT be able to
+/// immediately issue a requested Credential and will instead return a
+/// `transaction_id` to be used later to retrieve a Credential when it is ready.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredentialResponse {
     /// The issued Credential. MUST be present when `transaction_id` is not
@@ -1388,8 +1392,10 @@ pub struct CredentialConfiguration {
 }
 
 /// `ProofTypesSupported` describes specifics of the key proof(s) that the Credential
-/// Issuer supports. This object contains a list of name/value pairs, where each name
-/// is a unique identifier of the supported proof type(s). Valid values are defined in
+/// Issuer supports.
+/// 
+/// This object contains a list of name/value pairs, where each name is a unique
+/// identifier of the supported proof type(s). Valid values are defined in
 /// Section 7.2.1, other values MAY be used. This identifier is also used by the Wallet
 /// in the Credential Request as defined in Section 7.2. The value in the name/value
 /// pair is an object that contains metadata about the key proof.

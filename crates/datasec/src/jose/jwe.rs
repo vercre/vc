@@ -188,10 +188,11 @@ pub async fn decrypt<T: DeserializeOwned>(
 }
 
 /// In JWE JSON serialization, one or more of the JWE Protected Header, JWE Shared
-/// Unprotected Header, and JWE Per-Recipient Unprotected Header MUST be present. In
-/// this case, the members of the JOSE Header are the union of the members of the JWE
-/// Protected Header, JWE Shared Unprotected Header, and JWE Per-Recipient Unprotected
-/// Header values that are present.
+/// Unprotected Header, and JWE Per-Recipient Unprotected Header MUST be present.
+/// 
+/// In this case, the members of the JOSE Header are the union of the members of
+/// the JWE Protected Header, JWE Shared Unprotected Header, and JWE
+/// Per-Recipient Unprotected Header values that are present.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Jwe {
     /// JWE protected header.
