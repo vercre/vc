@@ -170,7 +170,7 @@ pub use vercre_openid::Result;
 pub mod provider {
     pub use vercre_datasec::{Algorithm, Decryptor, Encryptor, PublicKeyJwk, SecOps, Signer};
     pub use vercre_did::{DidResolver, Document};
-    pub use vercre_openid::issuer::{Client, CredentialFormat, Server};
+    pub use vercre_openid::issuer::{Client, FormatProfile, Server};
     pub use vercre_openid::verifier::VpFormat;
     #[allow(clippy::module_name_repetitions)]
     pub use vercre_openid::verifier::{Metadata, Provider, Result, StateStore, Verifier, Wallet};

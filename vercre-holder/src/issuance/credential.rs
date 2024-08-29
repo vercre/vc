@@ -7,7 +7,7 @@ use tracing::instrument;
 use vercre_core::{Kind, Quota};
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_openid::issuer::{
-    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialSpec, Proof,
+    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialSpec, Format, Proof,
     ProofClaims, SingleProof, TokenGrantType, TokenRequest,
 };
 use vercre_w3c_vc::proof::{Payload, Verify};
@@ -140,10 +140,9 @@ fn credential_request(
     CredentialRequest {
         credential_issuer: issuance.offer.credential_issuer.clone(),
         access_token: issuance.token.access_token.clone(),
-        specification: CredentialSpec::Format {
-            format: cfg.format.clone(),
+        specification: CredentialSpec::Format(Format::JwtVcJson {
             credential_definition: cfg.credential_definition.clone(),
-        },
+        }),
         proof: Some(proof.clone()),
         credential_response_encryption: None,
     }

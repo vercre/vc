@@ -206,10 +206,9 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use vercre_openid::issuer::{
-        AuthorizationDetail, AuthorizationDetailType, Authorized, CredentialDefinition,
-        AuthorizationSpec,
+        AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec, Authorized,
+        ConfigurationId, CredentialDefinition, Format,
     };
-    use vercre_openid::CredentialFormat;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
 
@@ -231,7 +230,12 @@ mod tests {
                 authorized: vec![Authorized {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
-                        credential_type: AuthorizationSpec::ConfigurationId("EmployeeID_JWT".into()),
+                        specification: AuthorizationSpec::ConfigurationId(
+                            ConfigurationId::Definition {
+                                credential_configuration_id: "EmployeeID_JWT".into(),
+                                credential_definition: None,
+                            },
+                        ),
                         ..AuthorizationDetail::default()
                     },
                     credential_identifiers: vec!["PHLEmployeeID".into()],
@@ -300,7 +304,12 @@ mod tests {
                 authorized: Some(vec![Authorized {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
-                        credential_type: AuthorizationSpec::ConfigurationId("EmployeeID_JWT".into()),
+                        specification: AuthorizationSpec::ConfigurationId(
+                            ConfigurationId::Definition {
+                                credential_configuration_id: "EmployeeID_JWT".into(),
+                                credential_definition: None,
+                            },
+                        ),
                         ..AuthorizationDetail::default()
                     },
                     credential_identifiers: vec!["PHLEmployeeID".into()],
@@ -369,14 +378,14 @@ mod tests {
                 authorized: Some(vec![Authorized {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
-                        credential_type: AuthorizationSpec::Format(CredentialFormat::JwtVcJson),
-                        credential_definition: Some(CredentialDefinition {
-                            type_: Some(vec![
-                                "VerifiableCredential".into(),
-                                "EmployeeIDCredential".into(),
-                            ]),
-                            credential_subject: None,
-                            ..CredentialDefinition::default()
+                        specification: AuthorizationSpec::Format(Format::JwtVcJson {
+                            credential_definition: CredentialDefinition {
+                                type_: Some(vec![
+                                    "VerifiableCredential".into(),
+                                    "EmployeeIDCredential".into(),
+                                ]),
+                                ..CredentialDefinition::default()
+                            },
                         }),
                         ..AuthorizationDetail::default()
                     },

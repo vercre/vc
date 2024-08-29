@@ -68,9 +68,9 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, Authorized,
-    CreateOfferRequest, CreateOfferResponse, CredentialOffer, AuthorizationSpec, Grants, Metadata,
-    OfferType, PreAuthorizedCodeGrant, Provider, SendType, StateStore, Subject, TxCode,
+    AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec,
+    Authorized, ConfigurationId, CreateOfferRequest, CreateOfferResponse, CredentialOffer, Grants,
+    Metadata, OfferType, PreAuthorizedCodeGrant, Provider, SendType, StateStore, Subject, TxCode,
 };
 use vercre_openid::{Error, Result};
 
@@ -178,12 +178,16 @@ async fn process(
                 .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
 
             // subject is authorized to receive the requested credential
-
             if !identifiers.is_empty() {
                 authorized.push(Authorized {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
-                        credential_type: AuthorizationSpec::ConfigurationId(config_id.clone()),
+                        specification: AuthorizationSpec::ConfigurationId(
+                            ConfigurationId::Definition {
+                                credential_configuration_id: config_id.clone(),
+                                credential_definition: None,
+                            },
+                        ),
                         ..AuthorizationDetail::default()
                     },
                     credential_identifiers: identifiers,

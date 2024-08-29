@@ -16,13 +16,13 @@ use vercre_core::{gen, Kind, Quota};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
-    AuthorizationSpec, CredentialConfiguration, CredentialRequest, CredentialResponse,
-    CredentialSpec, Issuer, Metadata, MultipleProofs, ProofClaims, Proof, Provider,
-    SingleProof, StateStore, Subject,
+    AuthorizationSpec, ConfigurationId, CredentialConfiguration, CredentialRequest,
+    CredentialResponse, CredentialSpec, Format, FormatProfile, Issuer, Metadata, MultipleProofs,
+    Proof, ProofClaims, Provider, SingleProof, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
-use vercre_w3c_vc::proof::{Format, Payload};
+use vercre_w3c_vc::proof::{self, Payload};
 use vercre_w3c_vc::verify_key;
 
 use crate::state::{Deferred, Expire, State, Step, Token};
@@ -88,22 +88,31 @@ impl Context {
                 let mut authorized = false;
                 for authzd in auth_details {
                     if authzd.credential_identifiers.contains(credential_identifier) {
-                        let AuthorizationSpec::ConfigurationId(config_id) =
-                            &authzd.authorization_detail.credential_type
-                        else {
-                            return Err(Error::InvalidCredentialRequest(
-                                "credential configuration not found".into(),
-                            ));
-                        };
-                        let Some(config) =
-                            self.issuer_config.credential_configurations_supported.get(config_id)
-                        else {
-                            return Err(Error::InvalidCredentialRequest(
-                                "credential configuration not found".into(),
-                            ));
+                        credential_config = match &authzd.authorization_detail.specification {
+                            AuthorizationSpec::ConfigurationId(ConfigurationId::Definition {
+                                credential_configuration_id,
+                                ..
+                            }) => {
+                                let Some(config) = self
+                                    .issuer_config
+                                    .credential_configurations_supported
+                                    .get(credential_configuration_id)
+                                else {
+                                    return Err(Error::InvalidCredentialRequest(
+                                        "credential configuration not found".into(),
+                                    ));
+                                };
+
+                                config
+                            }
+
+                            _ => {
+                                return Err(Error::InvalidCredentialRequest(
+                                    "credential configuration not found".into(),
+                                ));
+                            }
                         };
 
-                        credential_config = config;
                         authorized = true;
                         break;
                     }
@@ -115,16 +124,15 @@ impl Context {
                     ));
                 }
             }
-            CredentialSpec::Format {
-                format,
+            CredentialSpec::Format(Format::JwtVcJson {
                 credential_definition,
-            } => {
+            }) => {
                 // check request has been authorized:
                 //   - match format + type against authorized items in state
                 let authorized = false;
 
                 for config in self.issuer_config.credential_configurations_supported.values() {
-                    if (&config.format == format)
+                    if (config.format == FormatProfile::JwtVcJson)
                         && (config.credential_definition.type_ == credential_definition.type_)
                     {
                         credential_config = config;
@@ -141,7 +149,7 @@ impl Context {
                     ));
                 }
             }
-            CredentialSpec::Format2(_) => unimplemented!("CredentialSpec::Format2"),
+            CredentialSpec::Format(_) => unimplemented!("CredentialSpec::Format2"),
         };
 
         let supported_proofs = credential_config.proof_types_supported.as_ref();
@@ -279,9 +287,10 @@ impl Context {
                 .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
 
             // FIXME: add supprt for other formats
-            let jwt = vercre_w3c_vc::proof::create(Format::JwtVcJson, Payload::Vc(vc), signer)
-                .await
-                .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
+            let jwt =
+                vercre_w3c_vc::proof::create(proof::Format::JwtVcJson, Payload::Vc(vc), signer)
+                    .await
+                    .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
 
             response.credential = Some(Quota::One(Kind::String(jwt)));
         } else {
@@ -395,7 +404,7 @@ impl Context {
 
                 // get `credential_configuration_id` from `authorization_detail`
                 let AuthorizationSpec::ConfigurationId(config_id) =
-                    &authorized.authorization_detail.credential_type
+                    &authorized.authorization_detail.specification
                 else {
                     return Err(Error::InvalidCredentialRequest(
                         "no matching `credential_configuration_id`".into(),
@@ -404,7 +413,7 @@ impl Context {
 
                 // get credential configuration
                 let Some(config) =
-                    self.issuer_config.credential_configurations_supported.get(config_id)
+                    self.issuer_config.credential_configurations_supported.get(config_id.id())
                 else {
                     return Err(Error::InvalidCredentialRequest(
                         "credential is not supported".into(),
@@ -413,13 +422,13 @@ impl Context {
 
                 Ok((credential_identifier.clone(), config.clone()))
             }
-            CredentialSpec::Format {
-                format,
+
+            CredentialSpec::Format(Format::JwtVcJson {
                 credential_definition,
-            } => {
+            }) => {
                 let Some(id_config) =
                     self.issuer_config.credential_configurations_supported.iter().find(|(_, v)| {
-                        &v.format == format
+                        v.format == FormatProfile::JwtVcJson
                             && v.credential_definition.type_ == credential_definition.type_
                     })
                 else {
@@ -429,7 +438,19 @@ impl Context {
                 };
                 Ok((id_config.0.clone(), id_config.1.clone()))
             }
-            CredentialSpec::Format2(_) => unimplemented!("CredentialSpec::Format"),
+
+            CredentialSpec::Format(Format::LdpVc { .. }) => {
+                todo!("Format::LdpVc");
+            }
+            CredentialSpec::Format(Format::JwtVcJsonLd { .. }) => {
+                todo!("Format::JwtVcJsonLd");
+            }
+            CredentialSpec::Format(Format::MsoDoc { .. }) => {
+                todo!("Format::MsoDoc");
+            }
+            CredentialSpec::Format(Format::VcSdJwt { .. }) => {
+                todo!("Format::VcSdJwt");
+            }
         }
     }
 
@@ -495,7 +516,12 @@ mod tests {
             authorized: Some(vec![Authorized {
                 authorization_detail: AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,
-                    credential_type: AuthorizationSpec::ConfigurationId("EmployeeID_JWT".into()),
+                    specification: AuthorizationSpec::ConfigurationId(
+                        ConfigurationId::Definition {
+                            credential_configuration_id: "EmployeeID_JWT".into(),
+                            credential_definition: None,
+                        },
+                    ),
                     ..AuthorizationDetail::default()
                 },
                 credential_identifiers: vec!["PHLEmployeeID".into()],
@@ -588,7 +614,12 @@ mod tests {
             authorized: Some(vec![Authorized {
                 authorization_detail: AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,
-                    credential_type: AuthorizationSpec::ConfigurationId("EmployeeID_JWT".into()),
+                    specification: AuthorizationSpec::ConfigurationId(
+                        ConfigurationId::Definition {
+                            credential_configuration_id: "EmployeeID_JWT".into(),
+                            credential_definition: None,
+                        },
+                    ),
                     ..AuthorizationDetail::default()
                 },
                 credential_identifiers: vec!["PHLEmployeeID".into()],

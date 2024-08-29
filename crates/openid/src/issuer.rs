@@ -517,19 +517,19 @@ pub struct AuthorizationDetail {
 pub enum AuthorizationSpec {
     /// Specifies the unique identifier of the Credential being described in the
     /// `credential_configurations_supported` map in the Credential Issuer Metadata.
-    ConfigurationId(CredentialConfigurationId),
+    ConfigurationId(ConfigurationId),
 
     /// Determines the format of the Credential to be issued, which may determine
     /// the type and other information related to the Credential to be issued. REQUIRED
     /// when `credential_identifiers` was not returned from the Token Response. MUST
     /// NOT be used otherwise.
     #[serde(rename = "format")]
-    Format(CredentialFormat),
+    Format(Format),
 }
 
 impl Default for AuthorizationSpec {
     fn default() -> Self {
-        Self::ConfigurationId(CredentialConfigurationId::default())
+        Self::ConfigurationId(ConfigurationId::default())
     }
 }
 
@@ -539,7 +539,7 @@ impl Default for AuthorizationSpec {
 ///
 /// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub enum CredentialConfigurationId {
+pub enum ConfigurationId {
     /// Requested Credential is specified by `credential_configuration_id` and
     /// optionally, `CredentialDefinition`.
     Definition {
@@ -569,7 +569,23 @@ pub enum CredentialConfigurationId {
     },
 }
 
-impl Default for CredentialConfigurationId {
+impl ConfigurationId {
+    /// Returns the Credential Configuration ID.
+    pub fn id(&self) -> &str {
+        match self {
+            Self::Definition {
+                credential_configuration_id,
+                ..
+            } => credential_configuration_id,
+            Self::Claims {
+                credential_configuration_id,
+                ..
+            } => credential_configuration_id,
+        }
+    }
+}
+
+impl Default for ConfigurationId {
     fn default() -> Self {
         Self::Definition {
             credential_configuration_id: Default::default(),
@@ -586,7 +602,7 @@ impl Default for CredentialConfigurationId {
 /// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "format")]
-pub enum CredentialFormat {
+pub enum Format {
     /// A W3C Verifiable Credential.
     ///
     /// When this format is specified, Credential Offer, Authorization Details,
@@ -664,7 +680,7 @@ pub enum CredentialFormat {
     },
 }
 
-impl Default for CredentialFormat {
+impl Default for Format {
     fn default() -> Self {
         Self::JwtVcJson {
             credential_definition: Default::default(),
@@ -672,7 +688,7 @@ impl Default for CredentialFormat {
     }
 }
 
-impl fmt::Display for CredentialFormat {
+impl fmt::Display for Format {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::JwtVcJson { .. } => write!(f, "jwt_vc_json"),
@@ -933,7 +949,7 @@ pub enum CredentialSpec {
 
     /// Defines the format and type of of the Credential to be issued.  REQUIRED
     /// when `credential_identifiers` was not returned from the Token Response.
-    Format(CredentialFormat),
+    Format(Format),
 }
 
 impl Default for CredentialSpec {
@@ -1478,13 +1494,29 @@ pub struct CredentialDefinition {
     /// of issuing for this particular Credential (data minimization).
     #[serde(rename = "credentialSubject")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_subject: Option<HashMap<String, ClaimDefinition>>,
+    pub credential_subject: Option<HashMap<String, ClaimEntry>>,
+}
+
+/// Determines whether a claim entry is a claim or a nested set of claims.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum ClaimEntry {
+    /// A single claim
+    Claim(ClaimDefinition),
+
+    /// A set of nested claims.
+    Nested(HashMap<String, ClaimEntry>),
+}
+
+impl Default for ClaimEntry {
+    fn default() -> Self {
+        Self::Claim(ClaimDefinition::default())
+    }
 }
 
 /// Claim is used to hold language-based display properties for a
 /// credentialSubject field.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(default)]
 pub struct ClaimDefinition {
     /// When true, indicates that the Credential Issuer will always include this claim
     /// in the issued Credential. When false, the claim is not included in the issued
@@ -1506,11 +1538,11 @@ pub struct ClaimDefinition {
     /// Language-based display properties of the field.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display: Option<Vec<Display>>,
-
-    /// A list nested claims.
-    #[serde(flatten)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub claim_nested: Option<HashMap<String, Box<ClaimDefinition>>>,
+    //
+    // /// A list nested claims.
+    // #[serde(flatten)]
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub claim_nested: Option<HashMap<String, Box<ClaimDefinition>>>,
 }
 
 /// `ValueType` is used to define a claim's value type.
@@ -1598,19 +1630,23 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                specification: AuthorizationSpec::ConfigurationId(
-                    CredentialConfigurationId::Definition {
-                        credential_configuration_id: "EmployeeID_JWT".into(),
-                        credential_definition: Some(CredentialDefinition {
-                            credential_subject: Some(HashMap::from([
-                                ("given_name".to_string(), ClaimDefinition::default()),
-                                ("family_name".to_string(), ClaimDefinition::default()),
-                                ("email".to_string(), ClaimDefinition::default()),
-                            ])),
-                            ..CredentialDefinition::default()
-                        }),
-                    },
-                ),
+                specification: AuthorizationSpec::ConfigurationId(ConfigurationId::Definition {
+                    credential_configuration_id: "EmployeeID_JWT".into(),
+                    credential_definition: Some(CredentialDefinition {
+                        credential_subject: Some(HashMap::from([
+                            (
+                                "given_name".to_string(),
+                                ClaimEntry::Claim(ClaimDefinition::default()),
+                            ),
+                            (
+                                "family_name".to_string(),
+                                ClaimEntry::Claim(ClaimDefinition::default()),
+                            ),
+                            ("email".to_string(), ClaimEntry::Claim(ClaimDefinition::default())),
+                        ])),
+                        ..CredentialDefinition::default()
+                    }),
+                }),
                 ..AuthorizationDetail::default()
             }]),
             subject_id: "1234".into(),
@@ -1642,17 +1678,13 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                specification: AuthorizationSpec::Format(CredentialFormat::JwtVcJson {
+                specification: AuthorizationSpec::Format(Format::JwtVcJson {
                     credential_definition: CredentialDefinition {
-                        context: Some(vec![
-                            "https://www.w3.org/2018/credentials/v1".into(),
-                            "https://www.w3.org/2018/credentials/examples/v1".into(),
-                        ]),
                         type_: Some(vec![
                             "VerifiableCredential".into(),
                             "EmployeeIDCredential".into(),
                         ]),
-                        credential_subject: None,
+                        ..CredentialDefinition::default()
                     },
                 }),
 
@@ -1688,7 +1720,7 @@ mod tests {
 
         let deserialized: CredentialRequest =
             serde_json::from_value(json.clone()).expect("should deserialize from json");
-        assert_snapshot!("single-proof", &deserialized);
+        assert_snapshot!("credential_identifier", &deserialized);
 
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
@@ -1728,12 +1760,12 @@ mod tests {
 
         let deserialized: CredentialRequest =
             serde_json::from_value(json.clone()).expect("should deserialize from json");
-        assert_snapshot!("credential_definition", &deserialized);
+        assert_snapshot!("credential_format", &deserialized);
 
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            specification: CredentialSpec::Format(CredentialFormat::JwtVcJson {
+            specification: CredentialSpec::Format(Format::JwtVcJson {
                 credential_definition: CredentialDefinition {
                     type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
                     ..CredentialDefinition::default()
@@ -1767,7 +1799,7 @@ mod tests {
 
         let deserialized: CredentialRequest =
             serde_json::from_value(json.clone()).expect("should deserialize from json");
-        assert_snapshot!("multiple-proofs", &deserialized);
+        assert_snapshot!("multiple_proofs", &deserialized);
 
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
@@ -1784,23 +1816,5 @@ mod tests {
 
         let serialized = serde_json::to_value(&request).expect("should serialize to string");
         assert_eq!(json, serialized);
-    }
-
-    #[test]
-    fn test_format() {
-        let request = CredentialRequest {
-            // specification: CredentialSpec::Identifier("EngineeringDegree2023".into()),
-            specification: CredentialSpec::Format(CredentialFormat::JwtVcJson {
-                credential_definition: CredentialDefinition {
-                    type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
-                    ..CredentialDefinition::default()
-                },
-            }),
-            ..CredentialRequest::default()
-        };
-
-        let serialized =
-            serde_json::to_string_pretty(&request).expect("should serialize to string");
-        println!("{}", serialized);
     }
 }
