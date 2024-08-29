@@ -62,19 +62,21 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use vercre_openid::issuer::{CreateOfferRequest, OfferType, SendType};
     use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    use vercre_test_utils::snapshot;
 
     use super::*;
 
     #[tokio::test]
     async fn request_jwt() {
         vercre_test_utils::init_tracer();
+        snapshot!("");
 
         let provider = Provider::new();
         let create_req = CreateOfferRequest {
             credential_issuer: CREDENTIAL_ISSUER.to_string(),
             credential_configuration_ids: vec!["EmployeeID_JWT".to_string()],
             subject_id: Some(NORMAL_USER.to_string()),
-            pre_authorize: false,
+            pre_authorize: true,
             tx_code_required: true,
             send_type: SendType::ByRef,
         };
@@ -95,8 +97,9 @@ mod tests {
         let offer_resp =
             credential_offer(provider.clone(), &offer_req).await.expect("response is valid");
 
-        assert_snapshot!("offer", offer_resp,  {
-            ".credential_offer.grants.authorization_code.issuer_state" => "[issuer_state]",
+        assert_snapshot!("credential_offer:request_jwt:response", offer_resp,  {
+            // ".credential_offer.grants.authorization_code.issuer_state" => "[issuer_state]",
+            r#".**["pre-authorized_code"]"# => "[pre-authorized_code]",
         });
     }
 }

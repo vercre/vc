@@ -346,9 +346,9 @@ pub struct TxCode {
 }
 
 /// The Credential Offer Request is used by the Wallet to retrieve a previously
-/// generated Credential Offer. 
-/// 
-/// The Wallet is sent a `credential_offer_uri` containing a unique URL pointing 
+/// generated Credential Offer.
+///
+/// The Wallet is sent a `credential_offer_uri` containing a unique URL pointing
 /// to the Offer. The URI has the form `credential_issuer/credential_offer/id`.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CredentialOfferRequest {
@@ -541,6 +541,7 @@ impl Default for AuthorizationSpec {
 ///
 /// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(untagged)]
 pub enum ConfigurationId {
     /// Requested Credential is specified by `credential_configuration_id` and
     /// optionally, `CredentialDefinition`.

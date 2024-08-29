@@ -78,7 +78,7 @@ async fn put_issuance(provider: impl HolderProvider, issuance: &Issuance) -> any
     StateStore::put(
         &provider,
         &issuance.id,
-        serde_json::to_vec(&issuance)?,
+       &issuance,
         DateTime::<Utc>::MAX_UTC,
     )
     .await

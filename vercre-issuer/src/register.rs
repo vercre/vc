@@ -51,6 +51,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER};
+    use vercre_test_utils::snapshot;
 
     use super::*;
     use crate::state::{Expire, Step, Token};
@@ -58,6 +59,7 @@ mod tests {
     #[tokio::test]
     async fn registration_ok() {
         vercre_test_utils::init_tracer();
+        snapshot!("");
 
         let provider = Provider::new();
         let access_token = "ABCDEF";
@@ -99,7 +101,7 @@ mod tests {
         request.access_token = access_token.to_string();
 
         let response = register(provider, &request).await.expect("response is ok");
-        assert_snapshot!("response", response, {
+        assert_snapshot!("register:registration_ok:response", response, {
             ".client_id" => "[client_id]",
         });
     }

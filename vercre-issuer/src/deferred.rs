@@ -74,8 +74,8 @@ mod tests {
         AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec, Authorized,
         ConfigurationId, CredentialRequest, ProofClaims,
     };
-    use vercre_test_utils::holder;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+    use vercre_test_utils::{holder, snapshot};
     use vercre_w3c_vc::proof::{self, Payload, Verify};
 
     use super::*;
@@ -84,12 +84,12 @@ mod tests {
     #[tokio::test]
     async fn deferred_ok() {
         vercre_test_utils::init_tracer();
+        snapshot!("");
 
         let provider = Provider::new();
         let access_token = "tkn-ABCDEF";
         let c_nonce = "1234ABCD".to_string();
         let transaction_id = "txn-ABCDEF";
-        // let credentials = vec!["EmployeeID_JWT".into()];
 
         // create CredentialRequest to 'send' to the app
         let claims = ProofClaims {
@@ -103,13 +103,7 @@ mod tests {
         let body = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "access_token": access_token,
-            "format": "jwt_vc_json",
-            "credential_definition": {
-                "type": [
-                    "VerifiableCredential",
-                    "EmployeeIDCredential"
-                ]
-            },
+            "credential_identifier": "PHLEmployeeID",
             "proof":{
                 "proof_type": "jwt",
                 "jwt": jwt
@@ -129,8 +123,6 @@ mod tests {
             access_token: access_token.into(),
             c_nonce,
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
-            // FIXME: use authorization_details to hold credential identifiers
-            // credential_identifiers: credentials,
             subject_id: NORMAL_USER.into(),
             authorized: Some(vec![Authorized {
                 authorization_detail: AuthorizationDetail {
@@ -143,11 +135,10 @@ mod tests {
                     ),
                     ..AuthorizationDetail::default()
                 },
-                credential_identifiers: vec!["EmployeeID2023".into()],
+                credential_identifiers: vec!["PHLEmployeeID".into()],
             }]),
             scope: None,
         });
-
         StateStore::put(&provider, access_token, &state, state.expires_at)
             .await
             .expect("state exists");
@@ -157,7 +148,6 @@ mod tests {
             transaction_id: transaction_id.into(),
             credential_request: cred_req.clone(),
         });
-
         StateStore::put(&provider, transaction_id, &state, state.expires_at)
             .await
             .expect("state exists");
@@ -169,7 +159,8 @@ mod tests {
         };
 
         let response = deferred(provider.clone(), &request).await.expect("response is valid");
-        assert_snapshot!("response", &response, {
+        assert_snapshot!("deferred:deferred_ok:response", &response, {
+            ".transaction_id" => "[transaction_id]",
             ".credential" => "[credential]",
             ".c_nonce" => "[c_nonce]",
         });
@@ -189,14 +180,14 @@ mod tests {
             panic!("should be VC");
         };
 
-        assert_snapshot!("vc", vc, {
+        assert_snapshot!("deferred:deferred_ok:vc", vc, {
             ".issuanceDate" => "[issuanceDate]",
             ".credentialSubject" => insta::sorted_redaction()
         });
 
         // token state should remain unchanged
         assert_let!(Ok(state), StateStore::get::<State>(&provider, access_token).await);
-        assert_snapshot!("state", state, {
+        assert_snapshot!("deferred:deferred_ok:state", state, {
             ".expires_at" => "[expires_at]",
             ".current_step.c_nonce"=>"[c_nonce]",
             ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]"

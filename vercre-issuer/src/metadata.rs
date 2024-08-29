@@ -56,12 +56,14 @@ async fn process(provider: impl Provider, request: &MetadataRequest) -> Result<M
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER};
+    use vercre_test_utils::snapshot;
 
     use super::*;
 
     #[tokio::test]
     async fn metadata_ok() {
         vercre_test_utils::init_tracer();
+        snapshot!("");
 
         let provider = Provider::new();
 
@@ -70,7 +72,7 @@ mod tests {
             languages: None,
         };
         let response = metadata(provider, &request).await.expect("response is ok");
-        assert_snapshot!("response", response, {
+        assert_snapshot!("metadata:metadata_ok:response", response, {
             ".credential_configurations_supported" => insta::sorted_redaction(),
             ".credential_configurations_supported.*.credential_definition.credentialSubject" => insta::sorted_redaction()
         });

@@ -7,7 +7,7 @@ use tracing::instrument;
 use vercre_core::{Kind, Quota};
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_openid::issuer::{
-    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialSpec, Format, Proof,
+    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialSpec, Proof,
     ProofClaims, SingleProof, TokenGrantType, TokenRequest,
 };
 use vercre_w3c_vc::proof::{Payload, Verify};
@@ -42,9 +42,14 @@ pub async fn get_credentials(
         }
     };
 
+    let Some(authorized) = &issuance.token.authorization_details else {
+        bail!("no authorization details in token response");
+    };
+    let auth = authorized[0].clone();
+
     // Request each credential offered.
     // TODO: concurrent requests. Would that be possible if wallet is WASM/WASI?
-    for (id, cfg) in &issuance.offered {
+    for (_id, cfg) in &issuance.offered {
         // Construct a proof to be used in credential requests.
         let claims = ProofClaims {
             iss: Some(issuance.client_id.clone()),
@@ -63,7 +68,15 @@ pub async fn get_credentials(
             proof_type: SingleProof::Jwt { jwt },
         };
 
-        let request = credential_request(&issuance, id, cfg, &proof);
+        let request = CredentialRequest {
+            credential_issuer: issuance.offer.credential_issuer.clone(),
+            access_token: issuance.token.access_token.clone(),
+            specification: CredentialSpec::Identifier {
+                credential_identifier: auth.credential_identifiers[0].clone(),
+            },
+            proof: Some(proof.clone()),
+            credential_response_encryption: None,
+        };
 
         let cred_res = match Issuer::get_credential(&provider, &issuance.id, &request).await {
             Ok(cred_res) => cred_res,
@@ -129,22 +142,7 @@ fn token_request(issuance: &Issuance) -> TokenRequest {
             pre_authorized_code: pre_auth_code.pre_authorized_code.clone(),
             tx_code: issuance.pin.clone(),
         },
-        ..Default::default()
-    }
-}
-
-/// Construct a credential request from an offered credential configuration.
-fn credential_request(
-    issuance: &Issuance, _id: &str, cfg: &CredentialConfiguration, proof: &Proof,
-) -> CredentialRequest {
-    CredentialRequest {
-        credential_issuer: issuance.offer.credential_issuer.clone(),
-        access_token: issuance.token.access_token.clone(),
-        specification: CredentialSpec::Format(Format::JwtVcJson {
-            credential_definition: cfg.credential_definition.clone(),
-        }),
-        proof: Some(proof.clone()),
-        credential_response_encryption: None,
+        ..TokenRequest::default()
     }
 }
 
