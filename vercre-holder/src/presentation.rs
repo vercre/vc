@@ -98,12 +98,6 @@ async fn get_presentation(provider: impl HolderProvider, id: &str) -> anyhow::Re
 async fn put_presentation(
     provider: impl HolderProvider, presentation: &Presentation,
 ) -> anyhow::Result<()> {
-    StateStore::put(
-        &provider,
-        &presentation.id,
-        serde_json::to_vec(&presentation)?,
-        DateTime::<Utc>::MAX_UTC,
-    )
-    .await?;
+    StateStore::put(&provider, &presentation.id, &presentation, DateTime::<Utc>::MAX_UTC).await?;
     Ok(())
 }

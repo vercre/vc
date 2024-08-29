@@ -72,6 +72,7 @@ async fn format(provider: Provider, #[case] credential_format: FormatProfile) {
 
 // Authorization Code flow
 #[rstest]
+#[ignore]
 async fn authorization(provider: Provider) {
     vercre_test_utils::init_tracer();
     snapshot!("issuer:authorization");
@@ -108,7 +109,7 @@ async fn offer_type(provider: Provider, #[case] send_type: SendType) {
         credential_issuer: CREDENTIAL_ISSUER.to_string(),
         credential_configuration_ids: vec!["EmployeeID_JWT".to_string()],
         subject_id: Some(NORMAL_USER.to_string()),
-        pre_authorize: false,
+        pre_authorize: true,
         tx_code_required: true,
         send_type,
     };

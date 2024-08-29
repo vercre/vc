@@ -257,27 +257,6 @@ impl Context {
     ) -> Result<CredentialResponse> {
         tracing::debug!("credential::process");
 
-        // update token state
-        let mut token_state = self.state.clone();
-        token_state.c_nonce = gen::nonce();
-        token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
-
-        let state = State {
-            expires_at: Utc::now() + Expire::Access.duration(),
-            current_step: Step::Token(token_state.clone()),
-            ..State::default()
-        };
-        StateStore::put(&provider, &token_state.access_token, &state, state.expires_at)
-            .await
-            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
-
-        // generate response
-        let mut response = CredentialResponse {
-            c_nonce: Some(token_state.c_nonce.clone()),
-            c_nonce_expires_in: Some(token_state.c_nonce_expires_in()),
-            ..CredentialResponse::default()
-        };
-
         // attempt to generate VC
         let maybe_vc = self.generate_vc(provider.clone(), request).await?;
 
@@ -292,7 +271,26 @@ impl Context {
                     .await
                     .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
 
-            response.credential = Some(Quota::One(Kind::String(jwt)));
+            // update token state
+            let mut token_state = self.state.clone();
+            token_state.c_nonce = gen::nonce();
+            token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
+
+            let state = State {
+                expires_at: Utc::now() + Expire::Access.duration(),
+                current_step: Step::Token(token_state.clone()),
+                ..State::default()
+            };
+            StateStore::put(&provider, &token_state.access_token, &state, state.expires_at)
+                .await
+                .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
+
+            return Ok(CredentialResponse {
+                credential: Some(Quota::One(Kind::String(jwt))),
+                c_nonce: Some(token_state.c_nonce.clone()),
+                c_nonce_expires_in: Some(token_state.c_nonce_expires_in()),
+                ..CredentialResponse::default()
+            });
         } else {
             // if no VC, defer issuance
             let txn_id = gen::transaction_id();
@@ -309,10 +307,11 @@ impl Context {
                 .await
                 .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
-            response.transaction_id = Some(txn_id);
+            return Ok(CredentialResponse {
+                transaction_id: Some(txn_id),
+                ..CredentialResponse::default()
+            });
         }
-
-        Ok(response)
     }
 
     // Attempt to generate a Verifiable Credential from information provided in the Credential
