@@ -126,7 +126,7 @@ pub struct Service {
     /// A URI unique to the service.
     pub id: String,
 
-    /// The service type. SHOULD be registered in the DID CredentialSpec Registries.
+    /// The service type. SHOULD be registered in the DID Specification Registries.
     #[serde(rename = "type")]
     pub type_: String,
 
@@ -146,7 +146,7 @@ pub struct Service {
 ///
 /// MAY include additional properties which can be determined from the verification
 /// method as registered in the
-/// [DID CredentialSpec Registries](https://www.w3.org/TR/did-spec-registries/).
+/// [DID Specification Registries](https://www.w3.org/TR/did-spec-registries/).
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct VerificationMethod {
@@ -162,13 +162,13 @@ pub struct VerificationMethod {
     /// The DID of the controller of the verification method.
     pub controller: String,
 
-    /// The verification method type. SHOULD be a registered type (in DID CredentialSpec
+    /// The verification method type. SHOULD be a registered type (in DID Specification
     /// Registries).
     #[serde(flatten)]
     pub method_type: MethodType,
 }
 
-/// Verification method types. SHOULD be registered in the [DID CredentialSpec
+/// Verification method types. SHOULD be registered in the [DID Specification
 /// Registries](https://www.w3.org/TR/did-spec-registries).
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(tag = "type")]
@@ -254,7 +254,7 @@ impl MethodType {
     }
 }
 
-/// Verification method types. SHOULD be registered in the [DID CredentialSpec
+/// Verification method types. SHOULD be registered in the [DID Specification
 /// Registries](https://www.w3.org/TR/did-spec-registries).
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub enum PublicKeyFormat {

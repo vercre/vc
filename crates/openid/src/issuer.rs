@@ -311,7 +311,7 @@ pub struct PreAuthorizedCodeGrant {
 
 /// Specifies whether the Authorization Server expects presentation of a Transaction
 /// Code by the End-User along with the Token Request in a Pre-Authorized Code Flow.
-/// 
+///
 /// If the Authorization Server does not expect a Transaction Code, this object is
 /// absent; this is the default.
 ///
@@ -346,9 +346,10 @@ pub struct TxCode {
 }
 
 /// The Credential Offer Request is used by the Wallet to retrieve a previously
-/// generated Credential Offer. The Wallet is sent a `credential_offer_uri`
-/// containing a unique URL pointing to the Offer. The URI has the form
-/// `credential_issuer/credential_offer/id`.
+/// generated Credential Offer. 
+/// 
+/// The Wallet is sent a `credential_offer_uri` containing a unique URL pointing 
+/// to the Offer. The URI has the form `credential_issuer/credential_offer/id`.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CredentialOfferRequest {
     /// The URL of the Credential Issuer the Wallet can use obtain the
@@ -572,13 +573,14 @@ pub enum ConfigurationId {
 
 impl ConfigurationId {
     /// Returns the Credential Configuration ID.
+    #[must_use]
     pub fn id(&self) -> &str {
         match self {
             Self::Definition {
                 credential_configuration_id,
                 ..
-            } => credential_configuration_id,
-            Self::Claims {
+            }
+            | Self::Claims {
                 credential_configuration_id,
                 ..
             } => credential_configuration_id,
@@ -589,8 +591,8 @@ impl ConfigurationId {
 impl Default for ConfigurationId {
     fn default() -> Self {
         Self::Definition {
-            credential_configuration_id: Default::default(),
-            credential_definition: Default::default(),
+            credential_configuration_id: String::default(),
+            credential_definition: Option::default(),
         }
     }
 }
@@ -684,7 +686,7 @@ pub enum Format {
 impl Default for Format {
     fn default() -> Self {
         Self::JwtVcJson {
-            credential_definition: Default::default(),
+            credential_definition: CredentialDefinition::default(),
         }
     }
 }
@@ -882,7 +884,7 @@ pub enum TokenType {
 
 /// Authorization Details object specifically for use in successful Access Token
 /// responses ([`TokenResponse`]).
-/// 
+///
 /// It wraps the `AuthorizationDetail` struct and adds `credential_identifiers`
 /// parameter for use in Credential requests.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
@@ -1067,7 +1069,7 @@ pub struct CredentialResponseEncryption {
 }
 
 /// The Credential Response can be Synchronous or Deferred.
-/// 
+///
 /// The Credential Issuer MAY be able to immediately issue a requested
 /// Credential. In other cases, the Credential Issuer MAY NOT be able to
 /// immediately issue a requested Credential and will instead return a
@@ -1323,14 +1325,14 @@ pub struct CredentialConfiguration {
     /// [DID-Core], but without a ":" and method-specific-id. For example, support for
     /// the DID method with a method-name "example" would be represented by
     /// "did:example". Support for all DID methods listed in Section 13 of
-    /// [DID CredentialSpec Registries] is indicated by sending a DID without any
+    /// [DID Specification Registries] is indicated by sending a DID without any
     /// method-name.
     ///
     /// [RFC7517]: (https://www.rfc-editor.org/rfc/rfc7517)
     /// [RFC8152]: (https://www.rfc-editor.org/rfc/rfc8152)
     /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
     /// [DID-Core]: (https://www.w3.org/TR/did-core/)
-    /// [DID CredentialSpec Registries]: (https://www.w3.org/TR/did-spec-registries/)
+    /// [DID Specification Registries]: (https://www.w3.org/TR/did-spec-registries/)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cryptographic_binding_methods_supported: Option<Vec<String>>,
 
@@ -1393,7 +1395,7 @@ pub struct CredentialConfiguration {
 
 /// `ProofTypesSupported` describes specifics of the key proof(s) that the Credential
 /// Issuer supports.
-/// 
+///
 /// This object contains a list of name/value pairs, where each name is a unique
 /// identifier of the supported proof type(s). Valid values are defined in
 /// Section 7.2.1, other values MAY be used. This identifier is also used by the Wallet

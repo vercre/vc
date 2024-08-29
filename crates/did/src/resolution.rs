@@ -105,7 +105,7 @@ pub async fn dereference(
 }
 
 /// Used to pass addtional values to a `resolve` and `dereference` methods. Any
-/// properties used should be registered in the DID CredentialSpec Registries.
+/// properties used should be registered in the DID Specification Registries.
 ///
 /// The `accept` property is common to all resolver implementations. It is used by
 /// users to specify the Media Type when calling the `resolve_representation` method.
@@ -238,7 +238,7 @@ pub struct Metadata {
     pub content_type: ContentType,
 
     /// The error code from the dereferencing process, if applicable.
-    /// Values of this field SHOULD be registered in the DID CredentialSpec Registries.
+    /// Values of this field SHOULD be registered in the DID Specification Registries.
     /// Common values are `invalid_did_url` and `not_found`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
