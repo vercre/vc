@@ -10,7 +10,7 @@ use base64ct::{Base64, Encoding};
 use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use vercre_core::{stringify, Kind, Quota};
+use vercre_core::{stringify, Kind};
 use vercre_datasec::jose::jwk::PublicKeyJwk;
 use vercre_datasec::SecOps;
 use vercre_did::DidResolver;
@@ -1082,19 +1082,9 @@ pub struct CredentialResponseEncryption {
 /// `transaction_id` to be used later to retrieve a Credential when it is ready.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredentialResponse {
-    /// The issued Credential. MUST be present when `transaction_id` is not
-    /// returned.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential: Option<Quota<Kind<VerifiableCredential>>>,
-
-    /// Identifies a Deferred Issuance transaction. This property is set if the
-    /// Credential Issuer was unable to immediately issue the credential. The value
-    /// can subsequently be used to obtain the respective Credential with the Deferred
-    /// Credential Endpoint. It MUST be present when the credential is not returned.
-    /// It MUST be invalidated after the credential for which it was meant has been
-    /// obtained by the Wallet.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub transaction_id: Option<String>,
+    /// The Credential Response can be Synchronous or Deferred.
+    #[serde(flatten)]
+    pub response: CredentialResponseType,
 
     /// A nonce to be used to create a proof of possession of key material when
     /// requesting a Credential. When received, the Wallet MUST use this
@@ -1106,6 +1096,31 @@ pub struct CredentialResponse {
     /// The lifetime in seconds of the `c_nonce` parameter.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub c_nonce_expires_in: Option<i64>,
+}
+
+/// The Credential Response can be Synchronous or Deferred.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum CredentialResponseType {
+    /// Contains issued Credential.It MAY be a string or an object, depending
+    /// on the Credential Format.
+    Credential(Kind<VerifiableCredential>),
+
+    /// Contains an array of issued Credentials. The values in the array MAY be a
+    /// string or an object, depending on the Credential Format.
+    Credentials(Kind<VerifiableCredential>),
+
+    /// String identifying a Deferred Issuance transaction. This claim is contained
+    /// in the response if the Credential Issuer cannot immediately issue the
+    /// Credential. The value is subsequently used to obtain the respective
+    /// Credential with the Deferred Credential Endpoint.
+    TransactionId(String),
+}
+
+impl Default for CredentialResponseType {
+    fn default() -> Self {
+        Self::Credential(Kind::default())
+    }
 }
 
 /// An HTTP POST request, which accepts an `acceptance_token` as the only

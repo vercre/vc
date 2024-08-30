@@ -12,13 +12,13 @@ use std::fmt::Debug;
 
 use chrono::Utc;
 use tracing::instrument;
-use vercre_core::{gen, Kind, Quota};
+use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
     AuthorizationSpec, CredentialConfiguration, CredentialRequest, CredentialResponse,
-    CredentialSpec, Format, Issuer, Metadata, MultipleProofs, Proof, ProofClaims, Provider,
-    SingleProof, StateStore, Subject,
+    CredentialResponseType, CredentialSpec, Format, Issuer, Metadata, MultipleProofs, Proof,
+    ProofClaims, Provider, SingleProof, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
@@ -210,10 +210,9 @@ impl Context {
                 .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
             return Ok(CredentialResponse {
-                credential: Some(Quota::One(Kind::String(jwt))),
+                response: CredentialResponseType::Credential(Kind::String(jwt)),
                 c_nonce: Some(token_state.c_nonce.clone()),
                 c_nonce_expires_in: Some(token_state.c_nonce_expires_in()),
-                ..CredentialResponse::default()
             });
         }
 
@@ -233,7 +232,8 @@ impl Context {
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
         Ok(CredentialResponse {
-            transaction_id: Some(txn_id),
+            // transaction_id: Some(txn_id),
+            response: CredentialResponseType::TransactionId(txn_id),
             ..CredentialResponse::default()
         })
     }
@@ -465,11 +465,9 @@ mod tests {
         });
 
         // verify credential
-        let vc_quota = response.credential.expect("credential is present");
-        let Quota::One(vc_kind) = vc_quota else {
-            panic!("expected one credential")
+        let CredentialResponseType::Credential(vc_kind) = &response.response else {
+            panic!("expected a single credential");
         };
-
         let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider)
             .await
             .expect("should decode")
@@ -567,11 +565,9 @@ mod tests {
         });
 
         // verify credential
-        let vc_quota = response.credential.expect("credential is present");
-        let Quota::One(vc_kind) = vc_quota else {
-            panic!("expected one credential")
+        let CredentialResponseType::Credential(vc_kind) = &response.response else {
+            panic!("expected a single credential");
         };
-
         let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider)
             .await
             .expect("should decode")

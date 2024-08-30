@@ -68,11 +68,10 @@ mod tests {
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
-    use vercre_core::Quota;
     use vercre_datasec::jose::jws::{self, Type};
     use vercre_openid::issuer::{
         AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec, Authorized,
-        ConfigurationId, CredentialRequest, ProofClaims,
+        ConfigurationId, CredentialRequest, CredentialResponseType, ProofClaims,
     };
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::{holder, snapshot};
@@ -169,11 +168,9 @@ mod tests {
         let cred_resp = response.credential_response;
 
         // verify credential
-        let vc_quota = cred_resp.credential.expect("credential is present");
-        let Quota::One(vc_kind) = vc_quota else {
-            panic!("expected one credential")
+        let CredentialResponseType::Credential(vc_kind) = &cred_resp.response else {
+            panic!("expected a single credential");
         };
-
         let Payload::Vc(vc) =
             proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
         else {

@@ -4,11 +4,11 @@
 
 use anyhow::{anyhow, bail};
 use tracing::instrument;
-use vercre_core::{Kind, Quota};
+use vercre_core::Kind;
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_openid::issuer::{
-    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialSpec, Proof,
-    ProofClaims, SingleProof, TokenGrantType, TokenRequest,
+    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialResponseType,
+    CredentialSpec, Proof, ProofClaims, SingleProof, TokenGrantType, TokenRequest,
 };
 use vercre_w3c_vc::proof::{Payload, Verify};
 
@@ -151,13 +151,14 @@ async fn credential(
     credential_configuration: &CredentialConfiguration, resp: &CredentialResponse,
     resolver: &impl DidResolver,
 ) -> anyhow::Result<Credential> {
-    let vc_quota = resp.credential.as_ref().expect("no credential in response");
-    let vc_kind = match vc_quota {
-        Quota::One(vc_kind) => vc_kind,
-        Quota::Many(_) => bail!("expected one credential"),
-    };
+    // get the credential from the response
+    let CredentialResponseType::Credential(vc_kind) = &resp.response else {
+        // FIXME: handle other reponse types
+        // CredentialResponseType::Credentials(_) => (),
+        // CredentialResponseType::TransactionId(_) => (),
 
-    // TODO: support multiple credentials in response
+        bail!("expected credential in response");
+    };
 
     let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), resolver)
         .await

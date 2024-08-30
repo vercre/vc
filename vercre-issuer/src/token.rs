@@ -116,7 +116,7 @@ impl Context {
                 };
 
                 // anonymous access allowed?
-                if request.client_id.as_ref().is_none_or(|id| id.is_empty())
+                if request.client_id.as_ref().is_none_or(String::is_empty)
                     && !server_meta.pre_authorized_grant_anonymous_access_supported
                 {
                     return Err(Error::InvalidClient("anonymous access is not supported".into()));

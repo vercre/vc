@@ -5,12 +5,11 @@ use chrono::Utc;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use sha2::{Digest, Sha256};
-use vercre_core::Quota;
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_issuer::{
-    AuthorizationResponse, CredentialOfferRequest, CredentialResponse, DeferredCredentialRequest,
-    DeferredCredentialResponse, OfferType, ProofClaims, TokenGrantType, TokenRequest,
-    TokenResponse,
+    AuthorizationResponse, CredentialOfferRequest, CredentialResponseType,
+    DeferredCredentialRequest, DeferredCredentialResponse, OfferType, ProofClaims, TokenGrantType,
+    TokenRequest, TokenResponse,
 };
 use vercre_openid::{Error, FormatProfile, Result};
 use vercre_test_utils::holder;
@@ -177,23 +176,20 @@ impl Wallet {
         let mut response = vercre_issuer::credential(self.provider.clone(), &request).await?;
 
         // get credential if response is deferred (has transaction_id)
-        if response.transaction_id.is_some() {
-            let deferred_resp = self.deferred(token_resp.clone(), response.clone()).await?;
+        if let CredentialResponseType::TransactionId(transaction_id) = &response.response {
+            let deferred_resp = self.deferred(token_resp.clone(), transaction_id.clone()).await?;
             response = deferred_resp.credential_response;
         }
 
-        let Some(credential) = &response.credential else {
-            panic!("credential should be set");
+        let CredentialResponseType::Credential(credential) = &response.response else {
+            panic!("expected single credential");
         };
 
         // TODO: verify signature
 
         // verify the credential is as expected
-        let Quota::One(vc_kind) = credential else {
-            panic!("expected one credential");
-        };
-
-        let Ok(Payload::Vc(vc)) = proof::verify(Verify::Vc(&vc_kind), &self.provider).await else {
+        let Ok(Payload::Vc(vc)) = proof::verify(Verify::Vc(credential), &self.provider).await
+        else {
             panic!("should be VC");
         };
 
@@ -208,12 +204,12 @@ impl Wallet {
     }
 
     async fn deferred(
-        &self, tkn_resp: TokenResponse, cred_resp: CredentialResponse,
+        &self, tkn_resp: TokenResponse, transaction_id: String,
     ) -> Result<DeferredCredentialResponse> {
         let request = DeferredCredentialRequest {
             credential_issuer: CREDENTIAL_ISSUER.into(),
             access_token: tkn_resp.access_token,
-            transaction_id: cred_resp.transaction_id.expect("should have transaction_id"),
+            transaction_id,
         };
         vercre_issuer::deferred(self.provider.clone(), &request).await
     }
