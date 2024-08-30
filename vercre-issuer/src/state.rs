@@ -98,7 +98,6 @@ pub struct Authorization {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scope: Option<String>,
 
-    // FIXME: Shouldn's client_id be optional?
     /// The `client_id` of the Wallet requesting issuance.
     pub client_id: String,
 

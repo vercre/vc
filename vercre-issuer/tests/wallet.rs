@@ -127,7 +127,7 @@ impl Wallet {
     async fn token(&self, grant_type: TokenGrantType) -> Result<TokenResponse> {
         let token_req = TokenRequest {
             credential_issuer: CREDENTIAL_ISSUER.into(),
-            client_id: CLIENT_ID.into(),
+            client_id: Some(CLIENT_ID.into()),
             grant_type,
             ..TokenRequest::default()
         };

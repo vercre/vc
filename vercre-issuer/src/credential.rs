@@ -67,7 +67,20 @@ struct Context {
 }
 
 impl Context {
-    #[allow(clippy::too_many_lines)]
+    // TODO: check this list for compliance
+    // To validate a key proof, ensure that:
+    //   - all required claims for that proof type are contained as defined in Section 7.2.1
+    //   - the key proof is explicitly typed using header parameters as defined for that proof type
+    //   - the header parameter indicates a registered asymmetric digital signature algorithm, alg
+    //     parameter value is not none, is supported by the application, and is acceptable per local policy
+    //   - the signature on the key proof verifies with the public key contained in the header parameter
+    //   - the header parameter does not contain a private key
+    //   - the nonce claim (or Claim Key 10) matches the server-provided c_nonce value, if the server
+    //     had previously provided a c_nonce
+    //   - the creation time of the JWT, as determined by either the issuance time, or a server managed
+    //     timestamp via the nonce claim, is within an acceptable window (see Section 11.5).
+
+    // Verify the credential request
     async fn verify(&mut self, provider: impl Provider, request: &CredentialRequest) -> Result<()> {
         tracing::debug!("credential::verify");
 
@@ -82,20 +95,7 @@ impl Context {
                 return Err(Error::InvalidCredentialRequest("proof not set".into()));
             };
 
-            // TODO: recheck this list for compliance
-            // To validate a key proof, ensure that:
-            //   - all required claims for that proof type are contained as defined in Section 7.2.1
-            //   - the key proof is explicitly typed using header parameters as defined for that proof type
-            //   - the header parameter indicates a registered asymmetric digital signature algorithm, alg
-            //     parameter value is not none, is supported by the application, and is acceptable per local policy
-            //   - the signature on the key proof verifies with the public key contained in the header parameter
-            //   - the header parameter does not contain a private key
-            //   - the nonce claim (or Claim Key 10) matches the server-provided c_nonce value, if the server
-            //     had previously provided a c_nonce
-            //   - the creation time of the JWT, as determined by either the issuance time, or a server managed
-            //     timestamp via the nonce claim, is within an acceptable window (see Section 11.5).
-
-            // TODO: cater for non-JWT proofs
+            // TODO: cater for non-JWT proofs - use w3c-vc::decode method
             let _ = supported_types.get("jwt").ok_or_else(|| {
                 Error::InvalidCredentialRequest("proof type not supported".into())
             })?;
@@ -145,7 +145,6 @@ impl Context {
                     });
                 }
 
-                // TODO: use `decode` method in w3c-vc
                 // Key ID
                 let KeyType::KeyId(kid) = &jwt.header.key else {
                     let (c_nonce, c_nonce_expires_in) = self.err_nonce(&provider).await?;
@@ -176,6 +175,7 @@ impl Context {
         Ok(())
     }
 
+    // Process the credential request.
     async fn process(
         &self, provider: impl Provider, request: &CredentialRequest,
     ) -> Result<CredentialResponse> {
@@ -184,12 +184,12 @@ impl Context {
         // attempt to generate VC
         let maybe_vc = self.generate_vc(provider.clone(), request).await?;
 
-        // sign and return VC **OR** defer issuance
+        // sign and return VC (**OR** defer issuance)
         if let Some(vc) = maybe_vc {
             let signer = SecOps::signer(&provider, &request.credential_issuer)
                 .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
 
-            // FIXME: add supprt for other formats
+            // TODO: add supprt for other formats
             let jwt =
                 vercre_w3c_vc::proof::create(proof::Format::JwtVcJson, Payload::Vc(vc), signer)
                     .await
@@ -217,7 +217,7 @@ impl Context {
             });
         }
 
-        // if no VC, defer issuance
+        // defer issuance
         let txn_id = gen::transaction_id();
 
         let state = State {
@@ -238,9 +238,11 @@ impl Context {
         })
     }
 
-    // Attempt to generate a Verifiable Credential from information provided in the Credential
-    // Request. May return `None` if the credential is not ready to be issued because the request
-    // for Subject is pending.
+    // Attempt to generate a Verifiable Credential from information provided in
+    // the Credential Request. May return `None` if the credential is not ready
+    // to be issued because the request for Subject is pending.
+    //
+    // TODO: add support for CredentialSpec::Format
     async fn generate_vc(
         &self, provider: impl Provider, request: &CredentialRequest,
     ) -> Result<Option<VerifiableCredential>> {
@@ -254,49 +256,34 @@ impl Context {
             return Err(Error::InvalidCredentialRequest("invalid credential request".into()));
         };
 
-        // get ALL claims for holder/credential
+        // get claims dataset for `credential_identifier`
         let dataset = Subject::dataset(&provider, &self.state.subject_id, credential_identifier)
             .await
             .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
 
-        // defer issuance if claims are pending (approval?),
+        // defer issuance if claims are pending (approval),
         if dataset.pending {
             return Ok(None);
         }
 
-        // FIXME: add support for CredentialSpec::Definition
-        // TODO: need to check authorized claims (claims in credential offer or authorization request)
-
-        // let definition = credential_definition(request, &config);
-
-        // retain ONLY requested (and mandatory) claims
-        // let cred_subj = &definition.credential_subject.unwrap_or_default();
-        // if let Some(req_cred_def) = &request.credential_definition {
-        //     if let Some(req_cred_subj) = &req_cred_def.credential_subject {
-        //         let mut claims = dataset.claims;
-        //         claims.retain(|key, _| {
-        //             req_cred_subj.get(key).is_some() || cred_subj.get(key).is_some()
-        //         });
-        //         dataset.claims = claims;
-        //     }
-        // }
-
         let credential_issuer = &self.issuer.credential_issuer;
+
+        // TODO: improve `types` handling
         let definition = &self.credential_config.credential_definition;
         let Some(types) = &definition.type_ else {
             return Err(Error::ServerError("Credential type not set".into()));
         };
-
-        let vc_id = format!("{credential_issuer}/credentials/{}", types[1].clone());
+        let Some(credential_type) = types.get(1) else {
+            return Err(Error::ServerError("Credential type not set".into()));
+        };
 
         let vc = VerifiableCredential::builder()
             .add_context(Kind::String(credential_issuer.clone() + "/credentials/v1"))
             // TODO: generate credential id
-            .id(vc_id)
-            .add_type(types[1].clone())
+            .id(format!("{credential_issuer}/credentials/{credential_type}"))
+            .add_type(credential_type)
             .issuer(credential_issuer.clone())
             .add_subject(CredentialSubject {
-                // FIXME: holder_did is not populated
                 id: Some(self.holder_did.clone()),
                 claims: dataset.claims,
             })
@@ -524,8 +511,6 @@ mod tests {
             access_token: access_token.into(),
             c_nonce: c_nonce.into(),
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
-            // FIXME: use authorization_details to hold credential identifiers
-            // credential_identifiers: credentials,
             subject_id: NORMAL_USER.into(),
             authorized: Some(vec![Authorized {
                 authorization_detail: AuthorizationDetail {

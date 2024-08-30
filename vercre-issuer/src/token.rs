@@ -83,7 +83,7 @@ impl Context {
                 };
 
                 // client_id is the same as the one used to obtain the authorization code
-                if request.client_id != auth_state.client_id {
+                if request.client_id.as_ref() != Some(&auth_state.client_id) {
                     return Err(Error::InvalidGrant(
                         "client_id differs from authorized one".into(),
                     ));
@@ -116,7 +116,7 @@ impl Context {
                 };
 
                 // anonymous access allowed?
-                if request.client_id.is_empty()
+                if request.client_id.as_ref().is_none_or(|id| id.is_empty())
                     && !server_meta.pre_authorized_grant_anonymous_access_supported
                 {
                     return Err(Error::InvalidClient("anonymous access is not supported".into()));

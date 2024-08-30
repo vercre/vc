@@ -137,7 +137,7 @@ fn token_request(issuance: &Issuance) -> TokenRequest {
 
     TokenRequest {
         credential_issuer: issuance.offer.credential_issuer.clone(),
-        client_id: issuance.client_id.clone(),
+        client_id: Some(issuance.client_id.clone()),
         grant_type: TokenGrantType::PreAuthorizedCode {
             pre_authorized_code: pre_auth_code.pre_authorized_code.clone(),
             tx_code: issuance.pin.clone(),

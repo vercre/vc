@@ -741,7 +741,12 @@ pub struct TokenRequest {
     /// inadvertently accepting a code intended for a client with a different
     /// `client_id`.  This protects the client from substitution of the authentication
     /// code.
-    pub client_id: String,
+    ///
+    /// For the Pre-Authorized Code Grant Type, authentication of the Client is OPTIONAL,
+    /// as described in Section 3.2.1 of OAuth 2.0 [RFC6749], and, consequently, the
+    /// `client_id` parameter is only needed when a form of Client Authentication that
+    /// relies on this parameter is used.
+    pub client_id: Option<String>,
 
     /// Authorization grant type.
     #[serde(flatten)]
@@ -1469,7 +1474,7 @@ pub struct Image {
     pub alt_text: Option<String>,
 }
 
-// FIXME: split into 2 types or use enum for variations based on format
+// TODO: split into 2 types or use enum for variations based on format
 
 /// `CredentialDefinition` defines a Supported Credential that may requested by
 /// Wallets.
