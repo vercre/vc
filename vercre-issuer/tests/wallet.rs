@@ -159,13 +159,6 @@ impl Wallet {
             "credential_issuer": CREDENTIAL_ISSUER,
             "access_token": token_resp.access_token,
             "credential_identifier": credential_identifier,
-            // "format": self.format,
-            // "credential_definition": {
-            //     "type": [
-            //         "VerifiableCredential",
-            //         "EmployeeIDCredential"
-            //     ]
-            // },
             "proof":{
                 "proof_type": "jwt",
                 "jwt": jwt
@@ -175,7 +168,7 @@ impl Wallet {
             serde_json::from_value(req_json).map_err(|e| Error::ServerError(format!("{e}")))?;
         let mut response = vercre_issuer::credential(self.provider.clone(), &request).await?;
 
-        // get credential if response is deferred (has transaction_id)
+        // fetch credential if response is deferred
         if let CredentialResponseType::TransactionId(transaction_id) = &response.response {
             let deferred_resp = self.deferred(token_resp.clone(), transaction_id.clone()).await?;
             response = deferred_resp.credential_response;
