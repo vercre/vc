@@ -173,7 +173,7 @@ pub struct CredentialStatus {
 
 /// `CredentialSchema` defines the structure of the credential and the datatypes
 /// of each property contained.
-/// 
+///
 /// It can be used to verify if credential data is syntatically correct. The
 /// precise contents of each data schema is determined by the specific type
 /// definition.
@@ -204,7 +204,7 @@ pub struct RefreshService {
 }
 
 /// Term is a single term used in defining the issuers terms of use.
-/// 
+///
 /// In aggregate, the termsOfUse property tells the verifier what actions it is
 /// required to perform (an obligation), not allowed to perform (a prohibition),
 /// or allowed to perform (a permission) if it is to accept the verifiable
@@ -256,7 +256,7 @@ pub struct Policy {
 
 /// Evidence can be included by an issuer to provide the verifier with
 /// additional supporting information in a credential.
-/// 
+///
 /// This could be used by the verifier to establish the confidence with which it
 /// relies on credential claims.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]

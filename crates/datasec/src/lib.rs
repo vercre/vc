@@ -15,7 +15,7 @@ pub use crate::jose::jwt::Jwt;
 
 /// The `SecOps` trait is used to provide methods needed for signing, encrypting,
 /// verifying, and decrypting data.
-/// 
+///
 /// Implementers of this trait are expected to provide the necessary
 /// cryptographic functionality to support Verifiable Credential issuance and
 /// Verifiable Presentation submissions.

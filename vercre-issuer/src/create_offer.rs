@@ -135,8 +135,7 @@ async fn process(
         ..State::default()
     };
 
-    let mut pre_auth_grant = None;
-    let mut auth_grant = None;
+    let mut grants = Grants::default();
     let mut tx_code = None;
     let state_key: String;
 
@@ -155,7 +154,7 @@ async fn process(
             None
         };
 
-        pre_auth_grant = Some(PreAuthorizedCodeGrant {
+        grants.pre_authorized_code = Some(PreAuthorizedCodeGrant {
             pre_authorized_code: pre_auth_code,
             tx_code: tx_code_def,
             ..PreAuthorizedCodeGrant::default()
@@ -206,7 +205,7 @@ async fn process(
         let issuer_state = gen::state_key();
         state_key = issuer_state.clone();
 
-        auth_grant = Some(AuthorizationCodeGrant {
+        grants.authorization_code = Some(AuthorizationCodeGrant {
             issuer_state: Some(issuer_state),
             authorization_server: None,
         });
@@ -215,10 +214,7 @@ async fn process(
     let credential_offer = CredentialOffer {
         credential_issuer: request.credential_issuer.clone(),
         credential_configuration_ids: request.credential_configuration_ids.clone(),
-        grants: Some(Grants {
-            authorization_code: auth_grant,
-            pre_authorized_code: pre_auth_grant,
-        }),
+        grants: Some(grants),
     };
 
     let offer_type = if request.send_type == SendType::ByRef {

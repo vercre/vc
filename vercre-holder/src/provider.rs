@@ -31,7 +31,7 @@ pub trait HolderProvider:
 
 /// This provider allows the wallet to interact with an issuer's services that are compliant with
 /// OpenID for VC Issuance.
-/// 
+///
 /// While the specification is oriented towards HTTP, the trait allows the
 /// wallet (and issuance services) to be transport layer agnostic.
 #[allow(clippy::module_name_repetitions)]
@@ -60,7 +60,7 @@ pub trait Issuer {
 
 /// Allows the wallet to interact with a verifier's services that are compliant with
 /// OpenID for Verifiable Presentations.
-/// 
+///
 /// While the specification is oriented towards HTTP, the trait
 /// allows the wallet (and verifier's services) to be transport layer agnostic.
 pub trait Verifier {

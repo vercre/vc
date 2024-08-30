@@ -75,11 +75,5 @@ async fn get_issuance(provider: impl HolderProvider, id: &str) -> anyhow::Result
 }
 
 async fn put_issuance(provider: impl HolderProvider, issuance: &Issuance) -> anyhow::Result<()> {
-    StateStore::put(
-        &provider,
-        &issuance.id,
-       &issuance,
-        DateTime::<Utc>::MAX_UTC,
-    )
-    .await
+    StateStore::put(&provider, &issuance.id, &issuance, DateTime::<Utc>::MAX_UTC).await
 }

@@ -49,7 +49,7 @@ pub async fn get_credentials(
 
     // Request each credential offered.
     // TODO: concurrent requests. Would that be possible if wallet is WASM/WASI?
-    for (_id, cfg) in &issuance.offered {
+    for cfg in issuance.offered.values() {
         // Construct a proof to be used in credential requests.
         let claims = ProofClaims {
             iss: Some(issuance.client_id.clone()),

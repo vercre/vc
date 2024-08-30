@@ -108,7 +108,7 @@ pub struct CreateRequestResponse {
 }
 
 /// The Authorization Request follows the definition given in [RFC6749].
-/// 
+///
 /// The Verifier may send an Authorization Request as Request Object by value or
 /// by reference as defined in JWT-Secured Authorization Request (JAR) [RFC9101].
 ///
@@ -378,7 +378,7 @@ impl RequestObject {
 
 /// The Request Object Request is used (indirectly) by the Wallet to retrieve a previously
 /// generated Authorization Request Object.
-/// 
+///
 /// The Wallet is sent a `request_uri` containing a unique URL pointing to the
 /// Request Object. The URI has the form `client_id/request/state_key`.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -568,7 +568,7 @@ pub struct MetadataResponse {
 
 /// Used to define the format and proof types of Verifiable Presentations and
 /// Verifiable Credentials that a Verifier supports.
-/// 
+///
 /// Deployments can extend the formats supported, provided Issuers, Holders and
 /// Verifiers all understand the new format.
 /// See <https://openid.net/specs/openid-4-verifiable-presentations-1_0.html#alternative_credential_formats>
