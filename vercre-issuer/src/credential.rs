@@ -193,15 +193,13 @@ impl Context {
             let Step::Token(mut token_state) = self.state.current_step.clone() else {
                 return Err(Error::AccessDenied("invalid access token state".into()));
             };
-
             token_state.c_nonce = gen::nonce();
             token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
 
-            let state = State {
-                expires_at: Utc::now() + Expire::Access.duration(),
-                current_step: Step::Token(token_state.clone()),
-                ..State::default()
-            };
+            let mut state = self.state.clone();
+            state.expires_at = Utc::now() + Expire::Access.duration();
+            state.current_step = Step::Token(token_state.clone());
+
             StateStore::put(&provider, &token_state.access_token, &state, state.expires_at)
                 .await
                 .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
@@ -253,10 +251,10 @@ impl Context {
         };
 
         // get claims dataset for `credential_identifier`
-        let Step::Token(token_state) = &self.state.current_step else {
-            return Err(Error::AccessDenied("invalid access token state".into()));
+        let Some(subject_id) = &self.state.subject_id else {
+            return Err(Error::AccessDenied("invalid subject id".into()));
         };
-        let dataset = Subject::dataset(&provider, &token_state.subject_id, credential_identifier)
+        let dataset = Subject::dataset(&provider, subject_id, credential_identifier)
             .await
             .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
 
@@ -365,10 +363,6 @@ mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
-    use vercre_openid::issuer::{
-        AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec, Authorized,
-        ConfigurationId,
-    };
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::{holder, snapshot};
     use vercre_w3c_vc::proof::{self, Verify};
@@ -386,32 +380,17 @@ mod tests {
         let c_nonce = "1234ABCD";
 
         // set up state
-        let mut state = State {
+        let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
+            subject_id: Some(NORMAL_USER.into()),
             credentials: Some(HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())])),
+            current_step: Step::Token(Token {
+                access_token: access_token.into(),
+                c_nonce: c_nonce.into(),
+                c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
+            }),
             ..State::default()
         };
-
-        state.current_step = Step::Token(Token {
-            access_token: access_token.into(),
-            c_nonce: c_nonce.into(),
-            c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
-            subject_id: NORMAL_USER.into(),
-            authorized: Some(vec![Authorized {
-                authorization_detail: AuthorizationDetail {
-                    type_: AuthorizationDetailType::OpenIdCredential,
-                    specification: AuthorizationSpec::ConfigurationId(
-                        ConfigurationId::Definition {
-                            credential_configuration_id: "EmployeeID_JWT".into(),
-                            credential_definition: None,
-                        },
-                    ),
-                    ..AuthorizationDetail::default()
-                },
-                credential_identifiers: vec!["PHLEmployeeID".into()],
-            }]),
-            scope: None,
-        });
 
         StateStore::put(&provider, access_token, &state, state.expires_at)
             .await
@@ -481,31 +460,17 @@ mod tests {
         let c_nonce = "1234ABCD";
 
         // set up state
-        let mut state = State {
+        let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
+            subject_id: Some(NORMAL_USER.into()),
+            credentials: Some(HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())])),
+            current_step: Step::Token(Token {
+                access_token: access_token.into(),
+                c_nonce: c_nonce.into(),
+                c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
+            }),
             ..State::default()
         };
-
-        state.current_step = Step::Token(Token {
-            access_token: access_token.into(),
-            c_nonce: c_nonce.into(),
-            c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
-            subject_id: NORMAL_USER.into(),
-            authorized: Some(vec![Authorized {
-                authorization_detail: AuthorizationDetail {
-                    type_: AuthorizationDetailType::OpenIdCredential,
-                    specification: AuthorizationSpec::ConfigurationId(
-                        ConfigurationId::Definition {
-                            credential_configuration_id: "EmployeeID_JWT".into(),
-                            credential_definition: None,
-                        },
-                    ),
-                    ..AuthorizationDetail::default()
-                },
-                credential_identifiers: vec!["PHLEmployeeID".into()],
-            }]),
-            scope: None,
-        });
 
         StateStore::put(&provider, access_token, &state, state.expires_at)
             .await

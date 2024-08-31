@@ -204,8 +204,8 @@ async fn process(
         }
 
         state.credentials = Some(credentials);
+        state.subject_id = Some(subject_id.clone());
         state.current_step = Step::PreAuthorized(PreAuthorized {
-            subject_id: subject_id.clone(),
             authorized,
             tx_code: tx_code.clone(),
         });

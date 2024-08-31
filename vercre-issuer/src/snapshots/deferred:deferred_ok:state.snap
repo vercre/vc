@@ -1,17 +1,14 @@
 ---
 source: vercre-issuer/src/deferred.rs
-assertion_line: 190
+assertion_line: 172
 expression: state
 ---
 expires_at: "[expires_at]"
+subject_id: normal_user
+credentials:
+  PHLEmployeeID: EmployeeID_JWT
 current_step:
   token:
     access_token: tkn-ABCDEF
     c_nonce: "[c_nonce]"
     c_nonce_expires_at: "[c_nonce_expires_at]"
-    subject_id: normal_user
-    authorized:
-      - type: openid_credential
-        credential_configuration_id: EmployeeID_JWT
-        credential_identifiers:
-          - PHLEmployeeID

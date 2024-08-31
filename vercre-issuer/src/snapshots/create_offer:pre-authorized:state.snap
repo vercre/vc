@@ -4,14 +4,14 @@ assertion_line: 293
 expression: "&state"
 ---
 expires_at: "[expires_at]"
+subject_id: normal_user
+credentials:
+  PHLEmployeeID: EmployeeID_JWT
 current_step:
   pre_authorized:
-    subject_id: normal_user
     authorized:
       - type: openid_credential
         credential_configuration_id: EmployeeID_JWT
         credential_identifiers:
           - PHLEmployeeID
     tx_code: "[tx_code]"
-credentials:
-  PHLEmployeeID: EmployeeID_JWT

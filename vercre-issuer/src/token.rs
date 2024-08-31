@@ -140,17 +140,12 @@ impl Context {
     ) -> Result<TokenResponse> {
         tracing::debug!("token::process");
 
-        let (subject_id, authorized, scope, state_key) = match &request.grant_type {
+        let (authorized, scope, state_key) = match &request.grant_type {
             TokenGrantType::AuthorizationCode { code, .. } => {
                 let Step::Authorization(auth_state) = &self.state.current_step else {
                     return Err(Error::ServerError("authorization state not set".into()));
                 };
-                (
-                    auth_state.subject_id.clone(),
-                    auth_state.authorized.clone(),
-                    auth_state.scope.clone(),
-                    code,
-                )
+                (auth_state.authorized.clone(), auth_state.scope.clone(), code)
             }
             TokenGrantType::PreAuthorizedCode {
                 pre_authorized_code, ..
@@ -158,12 +153,7 @@ impl Context {
                 let Step::PreAuthorized(auth_state) = &self.state.current_step else {
                     return Err(Error::ServerError("pre-authorized state not set".into()));
                 };
-                (
-                    auth_state.subject_id.clone(),
-                    Some(auth_state.authorized.clone()),
-                    None,
-                    pre_authorized_code,
-                )
+                (Some(auth_state.authorized.clone()), None, pre_authorized_code)
             }
         };
 
@@ -180,9 +170,6 @@ impl Context {
             access_token: access_token.clone(),
             c_nonce: c_nonce.clone(),
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
-            subject_id,
-            authorized: authorized.clone(),
-            scope: scope.clone(),
         });
         StateStore::put(provider, &access_token, &state, state.expires_at)
             .await
@@ -225,8 +212,8 @@ mod tests {
         // set up PreAuthorized state
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
+            subject_id: Some(NORMAL_USER.into()),
             current_step: Step::PreAuthorized(PreAuthorized {
-                subject_id: NORMAL_USER.into(),
                 authorized: vec![Authorized {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
@@ -296,11 +283,10 @@ mod tests {
         // set up Authorization state
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
+            subject_id: Some(NORMAL_USER.into()),
             current_step: Step::Authorization(Authorization {
                 code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
                 code_challenge_method: "S256".into(),
-
-                subject_id: NORMAL_USER.into(),
                 authorized: Some(vec![Authorized {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
@@ -369,12 +355,12 @@ mod tests {
         // set up Authorization state
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
+            subject_id: Some(NORMAL_USER.into()),
             current_step: Step::Authorization(Authorization {
                 client_id: CLIENT_ID.into(),
                 redirect_uri: Some("https://example.com".into()),
                 code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
                 code_challenge_method: "S256".into(),
-                subject_id: NORMAL_USER.into(),
                 authorized: Some(vec![Authorized {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,

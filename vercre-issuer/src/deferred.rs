@@ -71,10 +71,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use vercre_datasec::jose::jws::{self, Type};
-    use vercre_openid::issuer::{
-        AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec, Authorized,
-        ConfigurationId, CredentialRequest, CredentialResponseType, ProofClaims,
-    };
+    use vercre_openid::issuer::{CredentialRequest, CredentialResponseType, ProofClaims};
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::{holder, snapshot};
     use vercre_w3c_vc::proof::{self, Payload, Verify};
@@ -116,31 +113,16 @@ mod tests {
         // set up state
         let mut state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
+            subject_id: Some(NORMAL_USER.into()),
             credentials: Some(HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())])),
+            current_step: Step::Token(Token {
+                access_token: access_token.into(),
+                c_nonce: c_nonce.into(),
+                c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
+            }),
             ..State::default()
         };
 
-        // state entry 1: token state keyed by access_token
-        state.current_step = Step::Token(Token {
-            access_token: access_token.into(),
-            c_nonce,
-            c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
-            subject_id: NORMAL_USER.into(),
-            authorized: Some(vec![Authorized {
-                authorization_detail: AuthorizationDetail {
-                    type_: AuthorizationDetailType::OpenIdCredential,
-                    specification: AuthorizationSpec::ConfigurationId(
-                        ConfigurationId::Definition {
-                            credential_configuration_id: "EmployeeID_JWT".into(),
-                            credential_definition: None,
-                        },
-                    ),
-                    ..AuthorizationDetail::default()
-                },
-                credential_identifiers: vec!["PHLEmployeeID".into()],
-            }]),
-            scope: None,
-        });
         StateStore::put(&provider, access_token, &state, state.expires_at)
             .await
             .expect("state exists");

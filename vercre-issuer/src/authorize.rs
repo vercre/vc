@@ -357,10 +357,10 @@ impl Context {
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
             credentials: Some(credentials),
+            subject_id: Some(request.subject_id.clone()),
             current_step: Step::Authorization(Authorization {
                 code_challenge: request.code_challenge.clone(),
                 code_challenge_method: request.code_challenge_method.clone(),
-                subject_id: request.subject_id.clone(),
                 authorized,
                 scope,
                 client_id: request.client_id.clone(),
