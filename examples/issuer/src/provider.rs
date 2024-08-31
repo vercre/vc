@@ -54,7 +54,7 @@ impl Subject for Provider {
     /// Authorize issuance of the specified credential for the holder.
     async fn authorize(
         &self, subject_id: &str, credential_configuration_id: &str,
-    ) -> Result<Vec<String>> {
+    ) -> Result<Option<Vec<String>>> {
         self.subject.authorize(subject_id, credential_configuration_id)
     }
 

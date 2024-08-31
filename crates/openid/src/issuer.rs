@@ -49,7 +49,7 @@ pub trait Subject: Send + Sync {
     /// authorized to request.
     fn authorize(
         &self, subject_id: &str, credential_configuration_id: &str,
-    ) -> impl Future<Output = provider::Result<Vec<String>>> + Send;
+    ) -> impl Future<Output = provider::Result<Option<Vec<String>>>> + Send;
 
     /// Returns a populated `Dataset` object for the given subject (holder) and
     /// credential definition.
@@ -1567,11 +1567,6 @@ pub struct ClaimDefinition {
     /// Language-based display properties of the field.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display: Option<Vec<Display>>,
-    //
-    // /// A list nested claims.
-    // #[serde(flatten)]
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub claim_nested: Option<HashMap<String, Box<ClaimDefinition>>>,
 }
 
 /// `ValueType` is used to define a claim's value type.

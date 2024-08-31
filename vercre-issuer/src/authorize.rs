@@ -95,14 +95,22 @@ use crate::state::{Authorization, Expire, State, Step};
 pub async fn authorize(
     provider: impl Provider, request: &AuthorizationRequest,
 ) -> Result<AuthorizationResponse> {
-    let mut ctx = Context::default();
+    // get issuer metadata
+    let Ok(issuer) = Metadata::issuer(&provider, &request.credential_issuer).await else {
+        return Err(Error::InvalidClient("invalid `credential_issuer`".into()));
+    };
+
+    let mut ctx = Context {
+        issuer,
+        ..Context::default()
+    };
     ctx.verify(&provider, request).await?;
     ctx.process(&provider, request).await
 }
 
 #[derive(Debug, Default)]
 struct Context {
-    issuer_config: Issuer,
+    issuer: Issuer,
     auth_dets: HashMap<String, AuthorizationDetail>,
     scope_items: HashMap<String, String>,
 }
@@ -113,25 +121,22 @@ impl Context {
     ) -> Result<()> {
         tracing::debug!("authorize::verify");
 
-        let Ok(client_config) = Metadata::client(provider, &request.client_id).await else {
-            return Err(Error::InvalidClient("invalid client_id".into()));
+        // client and server metadata
+        let Ok(client) = Metadata::client(provider, &request.client_id).await else {
+            return Err(Error::InvalidClient("invalid `client_id`".into()));
         };
-        let server_config = Metadata::server(provider, &request.credential_issuer)
-            .await
-            .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
-
-        self.issuer_config = Metadata::issuer(provider, &request.credential_issuer)
-            .await
-            .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
+        let Ok(server) = Metadata::server(provider, &request.credential_issuer).await else {
+            return Err(Error::ServerError("invalid `credential_issuer`".into()));
+        };
 
         // 'authorization_code' grant_type allowed (client and server)?
-        let client_grant_types = client_config.oauth.grant_types.unwrap_or_default();
+        let client_grant_types = client.oauth.grant_types.unwrap_or_default();
         if !client_grant_types.contains(&GrantType::AuthorizationCode) {
             return Err(Error::InvalidGrant(
                 "authorization_code grant not supported for client".into(),
             ));
         }
-        let server_grant_types = server_config.oauth.grant_types_supported.unwrap_or_default();
+        let server_grant_types = server.oauth.grant_types_supported.unwrap_or_default();
         if !server_grant_types.contains(&GrantType::AuthorizationCode) {
             return Err(Error::InvalidRequest(
                 "authorization_code grant not supported by server".into(),
@@ -161,7 +166,7 @@ impl Context {
         let Some(redirect_uri) = &request.redirect_uri else {
             return Err(Error::InvalidRequest("no redirect_uri specified".into()));
         };
-        let Some(redirect_uris) = client_config.oauth.redirect_uris else {
+        let Some(redirect_uris) = client.oauth.redirect_uris else {
             return Err(Error::InvalidRequest("no redirect_uris specified for client".into()));
         };
         if !redirect_uris.contains(redirect_uri) {
@@ -169,13 +174,12 @@ impl Context {
         }
 
         // response_type
-        if !client_config.oauth.response_types.unwrap_or_default().contains(&request.response_type)
-        {
+        if !client.oauth.response_types.unwrap_or_default().contains(&request.response_type) {
             return Err(Error::UnsupportedResponseType(
                 "the response_type not supported by client".into(),
             ));
         }
-        if !server_config.oauth.response_types_supported.contains(&request.response_type) {
+        if !server.oauth.response_types_supported.contains(&request.response_type) {
             return Err(Error::UnsupportedResponseType(
                 "response_type not supported by server".into(),
             ));
@@ -183,8 +187,7 @@ impl Context {
 
         // code_challenge
         // N.B. while optional in the spec, we require it
-        let challenge_methods =
-            server_config.oauth.code_challenge_methods_supported.unwrap_or_default();
+        let challenge_methods = server.oauth.code_challenge_methods_supported.unwrap_or_default();
         if !challenge_methods.contains(&request.code_challenge_method) {
             return Err(Error::InvalidRequest("unsupported code_challenge_method".into()));
         }
@@ -203,24 +206,22 @@ impl Context {
     fn verify_authorization_details(
         &mut self, authorization_details: &[AuthorizationDetail],
     ) -> Result<()> {
-        'verify_details: for auth_det in authorization_details {
+        let supported = &self.issuer.credential_configurations_supported;
+
+        // check each credential requested is supported by the issuer
+        for auth_det in authorization_details {
             if auth_det.type_ != AuthorizationDetailType::OpenIdCredential {
                 return Err(Error::InvalidRequest("invalid authorization_details type".into()));
             }
 
             // verify requested credentials are supported
-            // N.B. only one of `credential_configuration_id` or `format` is allowed
             match &auth_det.specification {
                 AuthorizationSpec::ConfigurationId(ConfigurationId::Definition {
                     credential_configuration_id,
                     ..
                 }) => {
-                    // is `credential_configuration_id` supported?
-                    if !self
-                        .issuer_config
-                        .credential_configurations_supported
-                        .contains_key(credential_configuration_id)
-                    {
+                    //  find supported credential by `credential_configuration_id`
+                    if !supported.contains_key(credential_configuration_id) {
                         return Err(Error::InvalidRequest(
                             "unsupported credential_configuration_id".into(),
                         ));
@@ -228,30 +229,24 @@ impl Context {
 
                     // save auth_det by `credential_configuration_id` for later use
                     self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
-                    continue 'verify_details;
                 }
                 AuthorizationSpec::Format(Format::JwtVcJson {
                     credential_definition,
                 }) => {
-                    //  are `format` and `type` supported?
+                    //  find supported credential by `format` and `type`
+                    let Some((config_id, _)) = supported.iter().find(|(_, v)| {
+                        v.format == FormatProfile::JwtVcJson
+                            && v.credential_definition.type_ == credential_definition.type_
+                    }) else {
+                        return Err(Error::InvalidRequest(
+                            "unsupported credential `format` or `type`".into(),
+                        ));
+                    };
 
-                    // find matching `CredentialConfiguration`
-                    for (config_id, config) in
-                        &self.issuer_config.credential_configurations_supported
-                    {
-                        if config.format == FormatProfile::JwtVcJson
-                            && config.credential_definition.type_ == credential_definition.type_
-                        {
-                            // save auth_det by `credential_configuration_id` for later use
-                            self.auth_dets.insert(config_id.to_string(), auth_det.clone());
-                            continue 'verify_details;
-                        }
-                    }
+                    
 
-                    // no matching credential_configuration
-                    return Err(Error::InvalidRequest(
-                        "unsupported credential `format` or `type`".into(),
-                    ));
+                    // save auth_det by `credential_configuration_id` for later use
+                    self.auth_dets.insert(config_id.to_string(), auth_det.clone());
                 }
                 AuthorizationSpec::ConfigurationId(ConfigurationId::Claims { .. }) => {
                     todo!("ConfigurationId::Claims");
@@ -278,7 +273,7 @@ impl Context {
     // N.B. has side effect of saving valid scope items into context for later use.
     fn verify_scope(&mut self, scope: &str) -> Result<()> {
         'verify_scope: for item in scope.split_whitespace() {
-            for (cfg_id, cred_cfg) in &self.issuer_config.credential_configurations_supported {
+            for (cfg_id, cred_cfg) in &self.issuer.credential_configurations_supported {
                 // `authorization_details` credential request  takes precedence `scope` request
                 if self.auth_dets.contains_key(cfg_id) {
                     continue;
@@ -305,52 +300,52 @@ impl Context {
     ) -> Result<AuthorizationResponse> {
         tracing::debug!("authorize::process");
 
-        // *** For Credentials requested using `authorization_detail` parameter entries ***
-        // - check whether holder is authorized by calling `Subject` provider with
-        // `subject_id` and `credential_identifier`
-        let mut authzd_auth_detail = vec![];
-
-        for (config_id, authorization_detail) in &self.auth_dets {
-            let identifiers = Subject::authorize(provider, &request.subject_id, config_id)
+        // for Credentials requested using `authorization_detail`
+        let mut authzd_detail = vec![];
+        for (config_id, _auth_detail) in &self.auth_dets {
+            if let Some(identifiers) = Subject::authorize(provider, &request.subject_id, config_id)
                 .await
-                .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
-
-            // subject is authorized to receive the requested credential
-            // FIXIME: add credential_identifiers returned above
-            if !identifiers.is_empty() {
-                authzd_auth_detail.push(Authorized {
-                    authorization_detail: authorization_detail.clone(),
-                    // TODO: cater for potentially multiple identifiers
+                .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?
+            {
+                authzd_detail.push(Authorized {
+                    authorization_detail: AuthorizationDetail {
+                        type_: AuthorizationDetailType::OpenIdCredential,
+                        specification: AuthorizationSpec::ConfigurationId(
+                            ConfigurationId::Definition {
+                                credential_configuration_id: config_id.clone(),
+                                credential_definition: None,
+                            },
+                        ),
+                        ..AuthorizationDetail::default()
+                    },
                     credential_identifiers: identifiers,
                 });
-            }
+            };
         }
 
-        let authorized = if authzd_auth_detail.is_empty() {
-            None
-        } else {
-            Some(authzd_auth_detail)
-        };
-
-        // *** For Credentials requested using `scope` parameter ***
-        // - follow the same process as above
-        let mut authzd_scope_items = vec![];
-
+        // for Credentials requested using `scope`
+        // FIXME: add `credential_identifiers` to Authorized state
+        let mut authzd_scope = vec![];
         for (credential_identifier, scope_item) in &self.scope_items {
-            let identifiers =
+            if let Some(_identifiers) =
                 Subject::authorize(provider, &request.subject_id, credential_identifier)
                     .await
-                    .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
-
-            // FIXME: add credential_identifiers returned above
-            if !identifiers.is_empty() {
-                authzd_scope_items.push(scope_item.clone());
-            }
+                    .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?
+            {
+                authzd_scope.push(scope_item.clone());
+            };
         }
-        let scope = if authzd_scope_items.is_empty() {
+
+        let authorized = if authzd_detail.is_empty() {
             None
         } else {
-            Some(authzd_scope_items.join(" "))
+            Some(authzd_detail)
+        };
+
+        let scope = if authzd_scope.is_empty() {
+            None
+        } else {
+            Some(authzd_scope.join(" "))
         };
 
         // return an error if holder is not authorized for any requested credentials
@@ -363,7 +358,6 @@ impl Context {
         // save authorization state
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
-
             current_step: Step::Authorization(Authorization {
                 code_challenge: request.code_challenge.clone(),
                 code_challenge_method: request.code_challenge_method.clone(),

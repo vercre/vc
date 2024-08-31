@@ -172,26 +172,27 @@ async fn process(
 
         let mut authorized = vec![];
         for config_id in &request.credential_configuration_ids {
-            let identifiers = Subject::authorize(&provider, subject_id, config_id)
+            let Some(identifiers) = Subject::authorize(&provider, subject_id, config_id)
                 .await
-                .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
+                .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?
+            else {
+                continue;
+            };
 
             // subject is authorized to receive the requested credential
-            if !identifiers.is_empty() {
-                authorized.push(Authorized {
-                    authorization_detail: AuthorizationDetail {
-                        type_: AuthorizationDetailType::OpenIdCredential,
-                        specification: AuthorizationSpec::ConfigurationId(
-                            ConfigurationId::Definition {
-                                credential_configuration_id: config_id.clone(),
-                                credential_definition: None,
-                            },
-                        ),
-                        ..AuthorizationDetail::default()
-                    },
-                    credential_identifiers: identifiers,
-                });
-            }
+            authorized.push(Authorized {
+                authorization_detail: AuthorizationDetail {
+                    type_: AuthorizationDetailType::OpenIdCredential,
+                    specification: AuthorizationSpec::ConfigurationId(
+                        ConfigurationId::Definition {
+                            credential_configuration_id: config_id.clone(),
+                            credential_definition: None,
+                        },
+                    ),
+                    ..AuthorizationDetail::default()
+                },
+                credential_identifiers: identifiers,
+            });
         }
 
         // save state by pre-auth_code

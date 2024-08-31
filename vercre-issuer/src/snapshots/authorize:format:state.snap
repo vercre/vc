@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/authorize.rs
-assertion_line: 504
+assertion_line: 430
 expression: state
 ---
 expires_at: "[expires_at]"
@@ -11,12 +11,7 @@ current_step:
     subject_id: normal_user
     authorized:
       - type: openid_credential
-        format: jwt_vc_json
-        credential_definition:
-          type:
-            - VerifiableCredential
-            - EmployeeIDCredential
-          credentialSubject: {}
+        credential_configuration_id: EmployeeID_JWT
         credential_identifiers:
           - PHLEmployeeID
     client_id: 96bfb9cb-0513-7d64-5532-bed74c48f9ab

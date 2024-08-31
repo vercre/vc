@@ -52,7 +52,7 @@ pub async fn credential(
             .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?,
         ..Context::default()
     };
-    ctx.credential_config = ctx.configuration(request)?;
+    ctx.credential_config = ctx.configuration(&request.specification)?;
 
     ctx.verify(provider.clone(), request).await?;
     ctx.process(provider, request).await
@@ -285,26 +285,24 @@ impl Context {
         Ok(Some(vc))
     }
 
-    // Get requested credential's configuration from metadata
-    fn configuration(&self, request: &CredentialRequest) -> Result<CredentialConfiguration> {
-        match &request.specification {
+    // Get configuration metadata for requested credential
+    fn configuration(&self, specification: &CredentialSpec) -> Result<CredentialConfiguration> {
+        match specification {
             CredentialSpec::Identifier {
                 credential_identifier,
             } => {
-                // look up `credential_identifier` in state
+                // find `credential_identifier` in state
                 let Some(all_authorized) = &self.state.authorized else {
                     return Err(Error::InvalidCredentialRequest(
-                        "requested credential is not authorized".into(),
+                        "token's authorization_details parameter is missing".into(),
                     ));
                 };
-
-                // find match
                 let Some(authorized) = all_authorized
                     .iter()
                     .find(|auth| auth.credential_identifiers.contains(credential_identifier))
                 else {
                     return Err(Error::InvalidCredentialRequest(
-                        "credential is not authorized".into(),
+                        "requested credential has not been authorized".into(),
                     ));
                 };
 
@@ -322,7 +320,7 @@ impl Context {
                     self.issuer.credential_configurations_supported.get(config_id.id())
                 else {
                     return Err(Error::InvalidCredentialRequest(
-                        "credential is not supported".into(),
+                        "requested credential is not supported".into(),
                     ));
                 };
 
@@ -382,7 +380,7 @@ mod tests {
     };
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::{holder, snapshot};
-    use vercre_w3c_vc::proof::Verify;
+    use vercre_w3c_vc::proof::{self, Verify};
 
     use super::*;
     use crate::state::Token;
@@ -460,9 +458,8 @@ mod tests {
         let CredentialResponseType::Credential(vc_kind) = &response.response else {
             panic!("expected a single credential");
         };
-        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider)
-            .await
-            .expect("should decode")
+        let Payload::Vc(vc) =
+            proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
         else {
             panic!("should be VC");
         };

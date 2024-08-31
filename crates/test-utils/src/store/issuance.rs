@@ -132,7 +132,7 @@ impl DatasetStore {
 
     pub fn authorize(
         &self, subject_id: &str, credential_configuration_id: &str,
-    ) -> Result<Vec<String>> {
+    ) -> Result<Option<Vec<String>>> {
         // get subject's datasets
         let subjects = self.datasets.lock().expect("should lock");
         let Some(datasets) = subjects.get(subject_id) else {
@@ -149,7 +149,11 @@ impl DatasetStore {
             identifiers.push(k.clone());
         }
 
-        Ok(identifiers)
+        if identifiers.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(identifiers))
+        }
     }
 
     pub fn dataset(&self, subject_id: &str, credential_identifier: &str) -> Result<Dataset> {
