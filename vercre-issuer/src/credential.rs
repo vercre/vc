@@ -74,6 +74,10 @@ impl Context {
     async fn verify(&mut self, provider: impl Provider, request: &CredentialRequest) -> Result<()> {
         tracing::debug!("credential::verify");
 
+        if self.state.is_expired() {
+            return Err(Error::InvalidRequest("state expired".into()));
+        }
+
         let Step::Token(token_state) = &self.state.current_step else {
             return Err(Error::AccessDenied("invalid access token state".into()));
         };

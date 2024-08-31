@@ -67,6 +67,10 @@ impl Context {
     async fn verify(&self, provider: &impl Provider, request: &TokenRequest) -> Result<()> {
         tracing::debug!("token::verify");
 
+        if self.state.is_expired() {
+            return Err(Error::InvalidRequest("state expired".into()));
+        }
+        
         let Ok(server_meta) = Metadata::server(provider, &request.credential_issuer).await else {
             return Err(Error::InvalidRequest("unknown authorization server".into()));
         };

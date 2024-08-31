@@ -134,6 +134,7 @@ async fn process(
 
     let mut state = State {
         expires_at: Utc::now() + Expire::Authorized.duration(),
+        subject_id: request.subject_id.clone(),
         ..State::default()
     };
 
@@ -159,7 +160,7 @@ async fn process(
         grants.pre_authorized_code = Some(PreAuthorizedCodeGrant {
             pre_authorized_code: pre_auth_code,
             tx_code: tx_code_def,
-            ..PreAuthorizedCodeGrant::default()
+            authorization_server: None,
         });
 
         if request.tx_code_required {
@@ -168,7 +169,7 @@ async fn process(
 
         let Some(subject_id) = &request.subject_id else {
             return Err(Error::InvalidRequest(
-                "subject_id must be set for pre-authorized offers".into(),
+                "`subject_id` must be set for pre-authorized offers".into(),
             ));
         };
 
@@ -204,7 +205,6 @@ async fn process(
         }
 
         state.credentials = Some(credentials);
-        state.subject_id = Some(subject_id.clone());
         state.current_step = Step::PreAuthorized(PreAuthorized {
             authorized,
             tx_code: tx_code.clone(),

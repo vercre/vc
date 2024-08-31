@@ -45,6 +45,10 @@ async fn process(
         .await
         .map_err(|e| Error::ServerError(format!("issue fetching state: {e}")))?;
 
+    if state.is_expired() {
+        return Err(Error::InvalidRequest("state expired".into()));
+    }
+
     let Some(credential_offer) = state.credential_offer else {
         return Err(Error::InvalidRequest("no credential offer found".into()));
     };

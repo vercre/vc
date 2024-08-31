@@ -148,6 +148,23 @@ impl Context {
             return Err(Error::InvalidRequest("missing holder subject".into()));
         }
 
+        // does offer `subject_id`  match request `subject_id`?
+        if let Some(issuer_state) = &request.issuer_state {
+            let state: State = StateStore::get(provider, issuer_state)
+                .await
+                .map_err(|e| Error::ServerError(format!("state issue: {e}")))?;
+
+            if state.is_expired() {
+                return Err(Error::InvalidRequest("issuer state expired".into()));
+            }
+
+            if state.subject_id.as_ref() != Some(&request.subject_id) {
+                return Err(Error::InvalidRequest(
+                    "request `subject_id` does not match offer".into(),
+                ));
+            }
+        }
+
         // has a credential been requested?
         if request.authorization_details.is_none() && request.scope.is_none() {
             return Err(Error::InvalidRequest("no credentials requested".into()));

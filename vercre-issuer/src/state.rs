@@ -47,12 +47,12 @@ pub struct State {
     pub current_step: Step,
 }
 
-// impl State {
-//     /// Determines whether state has expired or not.
-//     pub fn expired(&self) -> bool {
-//         self.expires_at.signed_duration_since(Utc::now()).num_seconds() < 0
-//     }
-// }
+impl State {
+    /// Determines whether state has expired or not.
+    pub fn is_expired(&self) -> bool {
+        self.expires_at.signed_duration_since(Utc::now()).num_seconds() < 0
+    }
+}
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]

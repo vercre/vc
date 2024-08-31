@@ -41,6 +41,10 @@ async fn process(
         return Err(Error::InvalidTransactionId("deferred state not found".into()));
     };
 
+    if state.is_expired() {
+        return Err(Error::InvalidRequest("state expired".into()));
+    }
+
     let Step::Deferred(deferred_state) = state.current_step else {
         return Err(Error::ServerError("Deferred state not found.".into()));
     };
