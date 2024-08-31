@@ -64,6 +64,8 @@
 //!
 //! See <https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-offer-endpoint>
 
+use std::collections::HashMap;
+
 use chrono::Utc;
 use tracing::instrument;
 use vercre_core::gen;
@@ -171,6 +173,8 @@ async fn process(
         };
 
         let mut authorized = vec![];
+        let mut credentials = HashMap::new();
+
         for config_id in &request.credential_configuration_ids {
             let Some(identifiers) = Subject::authorize(&provider, subject_id, config_id)
                 .await
@@ -178,6 +182,10 @@ async fn process(
             else {
                 continue;
             };
+
+            for identifier in &identifiers {
+                credentials.insert(identifier.clone(), config_id.clone());
+            }
 
             // subject is authorized to receive the requested credential
             authorized.push(Authorized {
@@ -191,11 +199,11 @@ async fn process(
                     ),
                     ..AuthorizationDetail::default()
                 },
-                credential_identifiers: identifiers,
+                credential_identifiers: identifiers.clone(),
             });
         }
 
-        // save state by pre-auth_code
+        state.credentials = Some(credentials);
         state.current_step = Step::PreAuthorized(PreAuthorized {
             subject_id: subject_id.clone(),
             authorized,

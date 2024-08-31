@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/create_offer.rs
-assertion_line: 284
+assertion_line: 293
 expression: "&state"
 ---
 expires_at: "[expires_at]"
@@ -13,3 +13,5 @@ current_step:
         credential_identifiers:
           - PHLEmployeeID
     tx_code: "[tx_code]"
+credentials:
+  PHLEmployeeID: EmployeeID_JWT

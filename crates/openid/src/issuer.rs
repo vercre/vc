@@ -950,11 +950,12 @@ pub struct CredentialRequest {
 #[serde(untagged)]
 pub enum CredentialSpec {
     /// Credential is requested by `credential_identifier`.
-    ///  REQUIRED when an Authorization Details of type `openid_credential` was
+    /// REQUIRED when an Authorization Details of type `openid_credential` was
     /// returned from the Token Response.
     Identifier {
-        /// Specifies the unique identifier of the Credential being described in the
-        /// `credential_configurations_supported` map in the Credential Issuer Metadata.
+        /// Identifies a Credential in the `credential_configurations_supported`
+        /// Credential Issuer metadata, but containing different claim values or
+        /// different subset of the Credential's claims.
         credential_identifier: String,
     },
 

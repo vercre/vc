@@ -111,7 +111,7 @@ pub async fn authorize(
 #[derive(Debug, Default)]
 struct Context {
     issuer: Issuer,
-    config_ids: Vec<String>,
+    auth_dets: HashMap<String, AuthorizationDetail>,
     scope_items: HashMap<String, String>,
 }
 
@@ -228,7 +228,7 @@ impl Context {
                     }
 
                     // save `credential_configuration_id` for later use
-                    self.config_ids.push(credential_configuration_id.clone());
+                    self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
                 }
                 AuthorizationSpec::Format(Format::JwtVcJson {
                     credential_definition,
@@ -244,7 +244,7 @@ impl Context {
                     };
 
                     // save `credential_configuration_id` for later use
-                    self.config_ids.push(config_id.to_string());
+                    self.auth_dets.insert(config_id.clone(), auth_det.clone());
                 }
                 AuthorizationSpec::ConfigurationId(ConfigurationId::Claims { .. }) => {
                     todo!("ConfigurationId::Claims");
@@ -271,15 +271,15 @@ impl Context {
     // N.B. has side effect of saving valid scope items into context for later use.
     fn verify_scope(&mut self, scope: &str) -> Result<()> {
         'verify_scope: for item in scope.split_whitespace() {
-            for (cfg_id, cred_cfg) in &self.issuer.credential_configurations_supported {
+            for (config_id, cred_cfg) in &self.issuer.credential_configurations_supported {
                 // `authorization_details` credential request  takes precedence `scope` request
-                if self.config_ids.contains(cfg_id) {
+                if self.auth_dets.contains_key(config_id) {
                     continue;
                 }
 
                 if cred_cfg.scope == Some(item.to_string()) {
                     // save scope item by `credential_configuration_id` for later use
-                    self.scope_items.insert(cfg_id.to_string(), item.to_string());
+                    self.scope_items.insert(config_id.to_string(), item.to_string());
                     continue 'verify_scope;
                 }
             }
@@ -300,37 +300,37 @@ impl Context {
 
         // for Credentials requested using `authorization_detail`
         let mut authzd_detail = vec![];
-        for config_id in &self.config_ids {
+        let mut credentials = HashMap::new();
+
+        for (config_id, auth_det) in &self.auth_dets {
             if let Some(identifiers) = Subject::authorize(provider, &request.subject_id, config_id)
                 .await
                 .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?
             {
                 authzd_detail.push(Authorized {
-                    authorization_detail: AuthorizationDetail {
-                        type_: AuthorizationDetailType::OpenIdCredential,
-                        specification: AuthorizationSpec::ConfigurationId(
-                            ConfigurationId::Definition {
-                                credential_configuration_id: config_id.clone(),
-                                credential_definition: None,
-                            },
-                        ),
-                        ..AuthorizationDetail::default()
-                    },
-                    credential_identifiers: identifiers,
+                    authorization_detail: auth_det.clone(),
+                    credential_identifiers: identifiers.clone(),
                 });
+
+                for identifier in &identifiers {
+                    credentials.insert(identifier.clone(), config_id.clone());
+                }
             };
         }
 
         // for Credentials requested using `scope`
         // FIXME: add `credential_identifiers` to Authorized state
         let mut authzd_scope = vec![];
-        for (credential_identifier, scope_item) in &self.scope_items {
-            if let Some(_identifiers) =
-                Subject::authorize(provider, &request.subject_id, credential_identifier)
-                    .await
-                    .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?
+        for (config_id, scope_item) in &self.scope_items {
+            if let Some(identifiers) = Subject::authorize(provider, &request.subject_id, config_id)
+                .await
+                .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?
             {
                 authzd_scope.push(scope_item.clone());
+
+                for identifier in &identifiers {
+                    credentials.insert(identifier.clone(), config_id.clone());
+                }
             };
         }
 
@@ -356,6 +356,7 @@ impl Context {
         // save authorization state
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
+            credentials: Some(credentials),
             current_step: Step::Authorization(Authorization {
                 code_challenge: request.code_challenge.clone(),
                 code_challenge_method: request.code_challenge_method.clone(),
@@ -365,7 +366,6 @@ impl Context {
                 client_id: request.client_id.clone(),
                 redirect_uri: request.redirect_uri.clone(),
             }),
-
             ..State::default()
         };
 

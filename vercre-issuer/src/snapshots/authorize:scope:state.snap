@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/authorize.rs
-assertion_line: 524
+assertion_line: 428
 expression: state
 ---
 expires_at: "[expires_at]"
@@ -12,3 +12,5 @@ current_step:
     scope: EmployeeIDCredential
     client_id: 96bfb9cb-0513-7d64-5532-bed74c48f9ab
     redirect_uri: "http://localhost:3000/callback"
+credentials:
+  PHLEmployeeID: EmployeeID_JWT

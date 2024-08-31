@@ -1,6 +1,8 @@
 //! State is used by the library to persist request information between steps
 //! in the issuance process.
 
+use std::collections::HashMap;
+
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 use vercre_openid::issuer::{Authorized, CredentialOffer, CredentialRequest};
@@ -34,6 +36,10 @@ pub struct State {
 
     /// Step-specific issuance state.
     pub current_step: Step,
+
+    // Authorized credentials (configuration id and identifier).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credentials: Option<HashMap<String, String>>,
 }
 
 // impl State {
@@ -41,6 +47,12 @@ pub struct State {
 //     pub fn expired(&self) -> bool {
 //         self.expires_at.signed_duration_since(Utc::now()).num_seconds() < 0
 //     }
+// }
+
+// #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+// pub struct Credential {
+//     pub credential_configuration_id: String,
+//     pub credential_identifier: String,
 // }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]

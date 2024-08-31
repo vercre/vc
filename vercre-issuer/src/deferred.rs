@@ -64,6 +64,8 @@ async fn process(
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
@@ -114,6 +116,7 @@ mod tests {
         // set up state
         let mut state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
+            credentials: Some(HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())])),
             ..State::default()
         };
 

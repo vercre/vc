@@ -16,16 +16,16 @@ use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
-    AuthorizationSpec, CredentialConfiguration, CredentialRequest, CredentialResponse,
-    CredentialResponseType, CredentialSpec, Format, Issuer, Metadata, MultipleProofs, Proof,
-    ProofClaims, Provider, SingleProof, StateStore, Subject,
+    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialResponseType,
+    CredentialSpec, Format, Issuer, Metadata, MultipleProofs, Proof, ProofClaims, Provider,
+    SingleProof, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{self, Payload};
 use vercre_w3c_vc::verify_key;
 
-use crate::state::{Deferred, Expire, State, Step, Token};
+use crate::state::{Deferred, Expire, State, Step};
 
 /// Credential request handler.
 ///
@@ -41,12 +41,9 @@ pub async fn credential(
     let Ok(state) = StateStore::get::<State>(&provider, &request.access_token).await else {
         return Err(Error::AccessDenied("invalid access token".into()));
     };
-    let Step::Token(token_state) = state.current_step else {
-        return Err(Error::AccessDenied("invalid access token state".into()));
-    };
 
     let mut ctx = Context {
-        state: token_state,
+        state,
         issuer: Metadata::issuer(&provider, &request.credential_issuer)
             .await
             .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?,
@@ -62,7 +59,7 @@ pub async fn credential(
 struct Context {
     issuer: Issuer,
     credential_config: CredentialConfiguration,
-    state: Token,
+    state: State,
     holder_did: String,
 }
 
@@ -77,8 +74,12 @@ impl Context {
     async fn verify(&mut self, provider: impl Provider, request: &CredentialRequest) -> Result<()> {
         tracing::debug!("credential::verify");
 
+        let Step::Token(token_state) = &self.state.current_step else {
+            return Err(Error::AccessDenied("invalid access token state".into()));
+        };
+
         // c_nonce expiry
-        if self.state.c_nonce_expired() {
+        if token_state.c_nonce_expired() {
             return Err(Error::AccessDenied("c_nonce has expired".into()));
         }
 
@@ -129,7 +130,7 @@ impl Context {
                 }
 
                 // previously issued c_nonce
-                if jwt.claims.nonce.as_ref() != Some(&self.state.c_nonce) {
+                if jwt.claims.nonce.as_ref() != Some(&token_state.c_nonce) {
                     let (c_nonce, c_nonce_expires_in) = self.err_nonce(&provider).await?;
                     return Err(Error::InvalidProof {
                         hint: "Proof JWT nonce claim is invalid".into(),
@@ -189,7 +190,10 @@ impl Context {
                     .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
 
             // update token state
-            let mut token_state = self.state.clone();
+            let Step::Token(mut token_state) = self.state.current_step.clone() else {
+                return Err(Error::AccessDenied("invalid access token state".into()));
+            };
+
             token_state.c_nonce = gen::nonce();
             token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
 
@@ -249,7 +253,10 @@ impl Context {
         };
 
         // get claims dataset for `credential_identifier`
-        let dataset = Subject::dataset(&provider, &self.state.subject_id, credential_identifier)
+        let Step::Token(token_state) = &self.state.current_step else {
+            return Err(Error::AccessDenied("invalid access token state".into()));
+        };
+        let dataset = Subject::dataset(&provider, &token_state.subject_id, credential_identifier)
             .await
             .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
 
@@ -291,40 +298,20 @@ impl Context {
             CredentialSpec::Identifier {
                 credential_identifier,
             } => {
-                // find `credential_identifier` in state
-                let Some(all_authorized) = &self.state.authorized else {
+                let Some(credentials) = &self.state.credentials else {
                     return Err(Error::InvalidCredentialRequest(
-                        "token's authorization_details parameter is missing".into(),
+                        "no authorized credentials".into(),
                     ));
                 };
-                let Some(authorized) = all_authorized
-                    .iter()
-                    .find(|auth| auth.credential_identifiers.contains(credential_identifier))
-                else {
+                let Some(config_id) = credentials.get(credential_identifier) else {
                     return Err(Error::InvalidCredentialRequest(
-                        "requested credential has not been authorized".into(),
+                        "unauthorized credential requested".into(),
                     ));
                 };
 
-                // get `credential_configuration_id` from `authorization_detail`
-                let AuthorizationSpec::ConfigurationId(config_id) =
-                    &authorized.authorization_detail.specification
-                else {
-                    return Err(Error::InvalidCredentialRequest(
-                        "no matching `credential_configuration_id`".into(),
-                    ));
-                };
-
-                // get credential configuration
-                let Some(config) =
-                    self.issuer.credential_configurations_supported.get(config_id.id())
-                else {
-                    return Err(Error::InvalidCredentialRequest(
-                        "requested credential is not supported".into(),
-                    ));
-                };
-
-                Ok(config.clone())
+                self.issuer.credential_configurations_supported.get(config_id).cloned().ok_or_else(
+                    || Error::InvalidCredentialRequest("unsupported credential requested".into()),
+                )
             }
 
             CredentialSpec::Format(Format::JwtVcJson { .. }) => {
@@ -351,7 +338,9 @@ impl Context {
         // generate nonce and update state
         let c_nonce = gen::nonce();
 
-        let mut token_state = self.state.clone();
+        let Step::Token(mut token_state) = self.state.current_step.clone() else {
+            return Err(Error::AccessDenied("invalid access token state".into()));
+        };
         token_state.c_nonce.clone_from(&c_nonce);
         token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
 
@@ -371,6 +360,8 @@ impl Context {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
@@ -397,6 +388,7 @@ mod tests {
         // set up state
         let mut state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
+            credentials: Some(HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())])),
             ..State::default()
         };
 
