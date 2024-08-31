@@ -48,7 +48,7 @@ pub trait Issuer {
 
     /// Get a credential. If an error is returned, the wallet will cancel the issuance flow.
     fn get_credential(
-        &self, flow_id: &str, req: &CredentialRequest,
+        &self, flow_id: &str, req: CredentialRequest,
     ) -> impl Future<Output = anyhow::Result<CredentialResponse>> + Send;
 
     /// Get a base64 encoded form of the credential logo. If an error is returned the wallet

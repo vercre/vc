@@ -56,7 +56,7 @@ impl Issuer for Provider {
     }
 
     async fn get_credential(
-        &self, _flow_id: &str, req: &CredentialRequest,
+        &self, _flow_id: &str, req: CredentialRequest,
     ) -> anyhow::Result<CredentialResponse> {
         let response = vercre_issuer::credential(self.issuer.clone().unwrap(), req).await?;
         Ok(response)

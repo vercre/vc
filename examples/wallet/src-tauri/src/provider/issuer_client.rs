@@ -43,7 +43,7 @@ impl Issuer for Provider {
 
     /// Get a credential.
     async fn get_credential(
-        &self, _flow_id: &str, req: &CredentialRequest,
+        &self, _flow_id: &str, req: CredentialRequest,
     ) -> anyhow::Result<CredentialResponse> {
         let client = reqwest::Client::new();
         let url = format!("{}/credential", req.credential_issuer);

@@ -59,7 +59,7 @@ async fn process(
     cred_req.credential_issuer.clone_from(&request.credential_issuer);
     cred_req.access_token.clone_from(&request.access_token);
 
-    let response = credential(provider.clone(), &cred_req).await?;
+    let response = credential(provider.clone(), cred_req).await?;
 
     Ok(DeferredCredentialResponse {
         credential_response: response,

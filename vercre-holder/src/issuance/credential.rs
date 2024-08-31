@@ -78,7 +78,7 @@ pub async fn get_credentials(
             credential_response_encryption: None,
         };
 
-        let cred_res = match Issuer::get_credential(&provider, &issuance.id, &request).await {
+        let cred_res = match Issuer::get_credential(&provider, &issuance.id, request).await {
             Ok(cred_res) => cred_res,
             Err(e) => {
                 tracing::error!(target: "Endpoint::get_credentials", ?e);

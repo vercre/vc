@@ -35,7 +35,7 @@ use crate::state::{Deferred, Expire, State, Step};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn credential(
-    provider: impl Provider, request: &CredentialRequest,
+    provider: impl Provider, request: CredentialRequest,
 ) -> Result<CredentialResponse> {
     // get token state
     let Ok(state) = StateStore::get::<State>(&provider, &request.access_token).await else {
@@ -51,8 +51,8 @@ pub async fn credential(
     };
     ctx.credential_config = ctx.configuration(&request.specification)?;
 
-    ctx.verify(provider.clone(), request).await?;
-    ctx.process(provider, request).await
+    ctx.verify(&provider, &request).await?;
+    ctx.process(&provider, request).await
 }
 
 #[derive(Debug, Default)]
@@ -71,7 +71,9 @@ impl Context {
     //     timestamp via the nonce claim, is within an acceptable window (see Section 11.5).
 
     // Verify the credential request
-    async fn verify(&mut self, provider: impl Provider, request: &CredentialRequest) -> Result<()> {
+    async fn verify(
+        &mut self, provider: &impl Provider, request: &CredentialRequest,
+    ) -> Result<()> {
         tracing::debug!("credential::verify");
 
         if self.state.is_expired() {
@@ -111,10 +113,10 @@ impl Context {
             for proof_jwt in proof_jwts {
                 // TODO: check proof is signed with supported algorithm (from proof_type)
                 let jwt: jws::Jwt<ProofClaims> =
-                    match jws::decode(proof_jwt, verify_key!(&provider)).await {
+                    match jws::decode(proof_jwt, verify_key!(provider)).await {
                         Ok(jwt) => jwt,
                         Err(e) => {
-                            let (c_nonce, c_nonce_expires_in) = self.err_nonce(&provider).await?;
+                            let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
                             return Err(Error::InvalidProof {
                                 hint: format!("issue decoding JWT: {e}"),
                                 c_nonce,
@@ -125,7 +127,7 @@ impl Context {
 
                 // proof type
                 if jwt.header.typ != Type::Proof {
-                    let (c_nonce, c_nonce_expires_in) = self.err_nonce(&provider).await?;
+                    let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
                     return Err(Error::InvalidProof {
                         hint: format!("Proof JWT 'typ' is not {}", Type::Proof),
                         c_nonce,
@@ -135,7 +137,7 @@ impl Context {
 
                 // previously issued c_nonce
                 if jwt.claims.nonce.as_ref() != Some(&token_state.c_nonce) {
-                    let (c_nonce, c_nonce_expires_in) = self.err_nonce(&provider).await?;
+                    let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
                     return Err(Error::InvalidProof {
                         hint: "Proof JWT nonce claim is invalid".into(),
                         c_nonce,
@@ -145,7 +147,7 @@ impl Context {
 
                 // Key ID
                 let KeyType::KeyId(kid) = &jwt.header.key else {
-                    let (c_nonce, c_nonce_expires_in) = self.err_nonce(&provider).await?;
+                    let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
 
                     return Err(Error::InvalidProof {
                         hint: "Proof JWT 'kid' is missing".into(),
@@ -156,7 +158,7 @@ impl Context {
 
                 // HACK: save extracted DID for later use when issuing credential
                 let Some(did) = kid.split('#').next() else {
-                    let (c_nonce, c_nonce_expires_in) = self.err_nonce(&provider).await?;
+                    let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
 
                     return Err(Error::InvalidProof {
                         hint: "Proof JWT DID is invalid".into(),
@@ -175,16 +177,16 @@ impl Context {
 
     // Process the credential request.
     async fn process(
-        &self, provider: impl Provider, request: &CredentialRequest,
+        &self, provider: &impl Provider, request: CredentialRequest,
     ) -> Result<CredentialResponse> {
         tracing::debug!("credential::process");
 
         // attempt to generate VC
-        let maybe_vc = self.generate_vc(provider.clone(), request).await?;
+        let maybe_vc = self.generate_vc(provider, &request).await?;
 
         // sign and return VC (**OR** defer issuance)
         if let Some(vc) = maybe_vc {
-            let signer = SecOps::signer(&provider, &request.credential_issuer)
+            let signer = SecOps::signer(provider, &request.credential_issuer)
                 .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
 
             // TODO: add support for other formats
@@ -193,18 +195,18 @@ impl Context {
                     .await
                     .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
 
-            // update token state
-            let Step::Token(mut token_state) = self.state.current_step.clone() else {
+            // update state
+            let mut state = self.state.clone();
+            state.expires_at = Utc::now() + Expire::Access.duration();
+
+            let Step::Token(mut token_state) = state.current_step else {
                 return Err(Error::AccessDenied("invalid access token state".into()));
             };
             token_state.c_nonce = gen::nonce();
             token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
-
-            let mut state = self.state.clone();
-            state.expires_at = Utc::now() + Expire::Access.duration();
             state.current_step = Step::Token(token_state.clone());
 
-            StateStore::put(&provider, &token_state.access_token, &state, state.expires_at)
+            StateStore::put(provider, &token_state.access_token, &state, state.expires_at)
                 .await
                 .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -222,11 +224,11 @@ impl Context {
             expires_at: Utc::now() + Expire::Access.duration(),
             current_step: Step::Deferred(Deferred {
                 transaction_id: txn_id.clone(),
-                credential_request: request.clone(),
+                credential_request: request,
             }),
             ..State::default()
         };
-        StateStore::put(&provider, &txn_id.clone(), &state, state.expires_at)
+        StateStore::put(provider, &txn_id, &state, state.expires_at)
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -239,10 +241,8 @@ impl Context {
     // Attempt to generate a Verifiable Credential from information provided in
     // the Credential Request. May return `None` if the credential is not ready
     // to be issued because the request for Subject is pending.
-    //
-    // TODO: add support for CredentialSpec::Format
     async fn generate_vc(
-        &self, provider: impl Provider, request: &CredentialRequest,
+        &self, provider: &impl Provider, request: &CredentialRequest,
     ) -> Result<Option<VerifiableCredential>> {
         tracing::debug!("credential::generate_vc");
 
@@ -258,7 +258,7 @@ impl Context {
         let Some(subject_id) = &self.state.subject_id else {
             return Err(Error::AccessDenied("invalid subject id".into()));
         };
-        let dataset = Subject::dataset(&provider, subject_id, credential_identifier)
+        let dataset = Subject::dataset(provider, subject_id, credential_identifier)
             .await
             .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
 
@@ -267,7 +267,7 @@ impl Context {
             return Ok(None);
         }
 
-        let credential_issuer = &self.issuer.credential_issuer;
+        let credential_issuer = &request.credential_issuer.clone();
 
         // TODO: improve `types` handling
         let definition = &self.credential_config.credential_definition;
@@ -279,11 +279,11 @@ impl Context {
         };
 
         let vc = VerifiableCredential::builder()
-            .add_context(Kind::String(credential_issuer.clone() + "/credentials/v1"))
+            .add_context(Kind::String(format!("{credential_issuer}/credentials/v1")))
             // TODO: generate credential id
             .id(format!("{credential_issuer}/credentials/{credential_type}"))
             .add_type(credential_type)
-            .issuer(credential_issuer.clone())
+            .issuer(credential_issuer)
             .add_subject(CredentialSubject {
                 id: Some(self.holder_did.clone()),
                 claims: dataset.claims,
@@ -340,17 +340,15 @@ impl Context {
         // generate nonce and update state
         let c_nonce = gen::nonce();
 
-        let Step::Token(mut token_state) = self.state.current_step.clone() else {
+        let mut state = self.state.clone();
+        state.expires_at = Utc::now() + Expire::Access.duration();
+
+        let Step::Token(mut token_state) = state.current_step else {
             return Err(Error::AccessDenied("invalid access token state".into()));
         };
         token_state.c_nonce.clone_from(&c_nonce);
         token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
-
-        let state = State {
-            expires_at: Utc::now() + Expire::Access.duration(),
-            current_step: Step::Token(token_state.clone()),
-            ..State::default()
-        };
+        state.current_step = Step::Token(token_state.clone());
 
         StateStore::put(provider, &token_state.access_token, &state, state.expires_at)
             .await
@@ -423,7 +421,7 @@ mod tests {
         request.credential_issuer = CREDENTIAL_ISSUER.into();
         request.access_token = access_token.into();
 
-        let response = credential(provider.clone(), &request).await.expect("response is valid");
+        let response = credential(provider.clone(), request).await.expect("response is valid");
         assert_snapshot!("credential:identifier:response", &response, {
             ".credential" => "[credential]",
             ".c_nonce" => "[c_nonce]",
@@ -507,7 +505,7 @@ mod tests {
 
         let request =
             serde_json::from_value::<CredentialRequest>(value).expect("request should deserialize");
-        let response = credential(provider.clone(), &request).await.expect("response is valid");
+        let response = credential(provider.clone(), request).await.expect("response is valid");
 
         assert_snapshot!("credential:format:response", &response, {
             ".credential" => "[credential]",

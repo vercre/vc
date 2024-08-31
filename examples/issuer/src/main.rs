@@ -226,7 +226,7 @@ async fn credential(
 ) -> AxResult<CredentialResponse> {
     req.credential_issuer = format!("http://{host}");
     req.access_token = auth.token().to_string();
-    vercre_issuer::credential(provider.clone(), &req).await.into()
+    vercre_issuer::credential(provider.clone(), req).await.into()
 }
 
 // Deferred endpoint

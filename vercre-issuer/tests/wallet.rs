@@ -165,7 +165,7 @@ impl Wallet {
         });
         let request =
             serde_json::from_value(req_json).map_err(|e| Error::ServerError(format!("{e}")))?;
-        let mut response = vercre_issuer::credential(self.provider.clone(), &request).await?;
+        let mut response = vercre_issuer::credential(self.provider.clone(), request).await?;
 
         // fetch credential if response is deferred
         if let CredentialResponseType::TransactionId(transaction_id) = &response.response {
