@@ -30,18 +30,18 @@ use crate::state::State;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn credential_offer(
-    provider: impl Provider, request: &CredentialOfferRequest,
+    provider: impl Provider, request: CredentialOfferRequest,
 ) -> Result<CredentialOfferResponse> {
-    process(provider, request).await
+    process(&provider, request).await
 }
 
 async fn process(
-    provider: impl Provider, request: &CredentialOfferRequest,
+    provider: &impl Provider, request: CredentialOfferRequest,
 ) -> Result<CredentialOfferResponse> {
     tracing::debug!("credential_offer::process");
 
     // retrieve Credential Offer from state
-    let state = StateStore::get::<State>(&provider, &request.id)
+    let state = StateStore::get::<State>(provider, &request.id)
         .await
         .map_err(|e| Error::ServerError(format!("issue fetching state: {e}")))?;
 
@@ -85,7 +85,7 @@ mod tests {
             send_type: SendType::ByRef,
         };
         let create_resp =
-            crate::create_offer(provider.clone(), &create_req).await.expect("should create offer");
+            crate::create_offer(provider.clone(), create_req).await.expect("should create offer");
 
         let OfferType::Uri(uri) = create_resp.offer_type else {
             panic!("no URI found in response");
@@ -98,8 +98,7 @@ mod tests {
             credential_issuer: CREDENTIAL_ISSUER.to_string(),
             id: id.to_string(),
         };
-        let offer_resp =
-            credential_offer(provider.clone(), &offer_req).await.expect("response is valid");
+        let offer_resp = credential_offer(provider, offer_req).await.expect("response is valid");
 
         assert_snapshot!("credential_offer:request_jwt:response", offer_resp,  {
             // ".credential_offer.grants.authorization_code.issuer_state" => "[issuer_state]",

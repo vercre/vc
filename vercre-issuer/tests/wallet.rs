@@ -54,21 +54,21 @@ impl Wallet {
                 };
 
                 let offer_resp =
-                    vercre_issuer::credential_offer(self.provider.clone(), &request).await?;
+                    vercre_issuer::credential_offer(self.provider.clone(), request).await?;
                 offer_resp.credential_offer
             }
         };
 
-        let grants = &offer.grants.unwrap_or_default();
+        let grants = offer.grants.unwrap_or_default();
 
-        let grant_type = if let Some(grant) = &grants.pre_authorized_code {
+        let grant_type = if let Some(grant) = grants.pre_authorized_code {
             TokenGrantType::PreAuthorizedCode {
-                pre_authorized_code: grant.pre_authorized_code.clone(),
+                pre_authorized_code: grant.pre_authorized_code,
                 tx_code: self.tx_code.clone(),
             }
         } else {
-            let issuer_state = if let Some(grant) = &grants.authorization_code {
-                grant.issuer_state.clone()
+            let issuer_state = if let Some(grant) = grants.authorization_code {
+                grant.issuer_state
             } else {
                 None
             };
@@ -120,7 +120,7 @@ impl Wallet {
         });
         let request =
             serde_json::from_value(req_json).map_err(|e| Error::ServerError(format!("{e}")))?;
-        vercre_issuer::authorize(self.provider.clone(), &request).await
+        vercre_issuer::authorize(self.provider.clone(), request).await
     }
 
     async fn token(&self, grant_type: TokenGrantType) -> Result<TokenResponse> {
@@ -131,7 +131,7 @@ impl Wallet {
             ..TokenRequest::default()
         };
 
-        vercre_issuer::token(self.provider.clone(), &token_req).await
+        vercre_issuer::token(self.provider.clone(), token_req).await
     }
 
     async fn credential(&self, token_resp: TokenResponse) -> Result<()> {
@@ -203,6 +203,6 @@ impl Wallet {
             access_token: tkn_resp.access_token,
             transaction_id,
         };
-        vercre_issuer::deferred(self.provider.clone(), &request).await
+        vercre_issuer::deferred(self.provider.clone(), request).await
     }
 }

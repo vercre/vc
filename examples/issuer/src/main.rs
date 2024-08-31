@@ -72,8 +72,7 @@ async fn create_offer(
     Json(mut req): Json<CreateOfferRequest>,
 ) -> AxResult<CreateOfferResponse> {
     req.credential_issuer = format!("http://{host}");
-
-    vercre_issuer::create_offer(provider, &req).await.into()
+    vercre_issuer::create_offer(provider, req).await.into()
 }
 
 // Retrieve Authorization Request Object endpoint
@@ -86,7 +85,7 @@ async fn credential_offer(
         credential_issuer: format!("http://{host}"),
         id: offer_id,
     };
-    vercre_issuer::credential_offer(provider, &request).await.into()
+    vercre_issuer::credential_offer(provider, request).await.into()
 }
 
 // Metadata endpoint
@@ -102,7 +101,7 @@ async fn metadata(
             .and_then(|v| v.to_str().ok())
             .map(ToString::to_string),
     };
-    vercre_issuer::metadata(provider.clone(), &req).await.into()
+    vercre_issuer::metadata(provider.clone(), req).await.into()
 }
 
 /// Authorize endpoint
@@ -152,7 +151,7 @@ async fn authorize(
             .into_response();
     };
 
-    match vercre_issuer::authorize(provider.clone(), &req).await {
+    match vercre_issuer::authorize(provider, req).await {
         Ok(v) => (StatusCode::FOUND, Redirect::to(&format!("{redirect_uri}?code={}", v.code)))
             .into_response(),
         Err(e) => {
@@ -215,7 +214,7 @@ async fn token(
     Form(mut req): Form<TokenRequest>,
 ) -> AxResult<TokenResponse> {
     req.credential_issuer = format!("http://{host}");
-    vercre_issuer::token(provider.clone(), &req).await.into()
+    vercre_issuer::token(provider.clone(), req).await.into()
 }
 
 // Credential endpoint
@@ -238,7 +237,7 @@ async fn deferred_credential(
 ) -> AxResult<DeferredCredentialResponse> {
     req.credential_issuer = format!("http://{host}");
     req.access_token = auth.0.token().to_string();
-    vercre_issuer::deferred(provider.clone(), &req).await.into()
+    vercre_issuer::deferred(provider.clone(), req).await.into()
 }
 
 // ----------------------------------------------------------------------------

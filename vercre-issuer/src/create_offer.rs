@@ -86,16 +86,16 @@ use crate::state::{Expire, PreAuthorized, State, Step};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn create_offer(
-    provider: impl Provider, request: &CreateOfferRequest,
+    provider: impl Provider, request: CreateOfferRequest,
 ) -> Result<CreateOfferResponse> {
-    verify(provider.clone(), request).await?;
-    process(provider, request).await
+    verify(&provider, &request).await?;
+    process(&provider, request).await
 }
 
-async fn verify(provider: impl Provider, request: &CreateOfferRequest) -> Result<()> {
+async fn verify(provider: &impl Provider, request: &CreateOfferRequest) -> Result<()> {
     tracing::debug!("create_offer::verify");
 
-    let issuer_meta = Metadata::issuer(&provider, &request.credential_issuer)
+    let issuer_meta = Metadata::issuer(provider, &request.credential_issuer)
         .await
         .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
 
@@ -128,7 +128,7 @@ async fn verify(provider: impl Provider, request: &CreateOfferRequest) -> Result
 
 // Process the request.
 async fn process(
-    provider: impl Provider, request: &CreateOfferRequest,
+    provider: &impl Provider, request: CreateOfferRequest,
 ) -> Result<CreateOfferResponse> {
     tracing::debug!("create_offer::process");
 
@@ -167,7 +167,7 @@ async fn process(
             tx_code = Some(gen::tx_code());
         }
 
-        let Some(subject_id) = &request.subject_id else {
+        let Some(subject_id) = request.subject_id else {
             return Err(Error::InvalidRequest(
                 "`subject_id` must be set for pre-authorized offers".into(),
             ));
@@ -176,8 +176,8 @@ async fn process(
         let mut authorized = vec![];
         let mut credentials = HashMap::new();
 
-        for config_id in &request.credential_configuration_ids {
-            let Some(identifiers) = Subject::authorize(&provider, subject_id, config_id)
+        for config_id in request.credential_configuration_ids.clone() {
+            let Some(identifiers) = Subject::authorize(provider, &subject_id, &config_id)
                 .await
                 .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?
             else {
@@ -194,13 +194,13 @@ async fn process(
                     type_: AuthorizationDetailType::OpenIdCredential,
                     specification: AuthorizationSpec::ConfigurationId(
                         ConfigurationId::Definition {
-                            credential_configuration_id: config_id.clone(),
+                            credential_configuration_id: config_id,
                             credential_definition: None,
                         },
                     ),
                     ..AuthorizationDetail::default()
                 },
-                credential_identifiers: identifiers.clone(),
+                credential_identifiers: identifiers,
             });
         }
 
@@ -222,7 +222,7 @@ async fn process(
 
     let credential_offer = CredentialOffer {
         credential_issuer: request.credential_issuer.clone(),
-        credential_configuration_ids: request.credential_configuration_ids.clone(),
+        credential_configuration_ids: request.credential_configuration_ids,
         grants: Some(grants),
     };
 
@@ -233,7 +233,7 @@ async fn process(
         OfferType::Object(credential_offer)
     };
 
-    StateStore::put(&provider, &state_key, &state, state.expires_at)
+    StateStore::put(provider, &state_key, &state, state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -270,7 +270,7 @@ mod tests {
 
         let request = serde_json::from_value::<CreateOfferRequest>(value)
             .expect("request should deserialize");
-        let response = create_offer(provider.clone(), &request).await.expect("response is ok");
+        let response = create_offer(provider.clone(), request).await.expect("response is ok");
 
         assert_snapshot!("create_offer:pre-authorized:response", &response, {
             ".credential_offer.grants.authorization_code.issuer_state" => "[state]",

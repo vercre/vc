@@ -15,24 +15,24 @@ use crate::state::State;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn register(
-    provider: impl Provider, request: &RegistrationRequest,
+    provider: impl Provider, request: RegistrationRequest,
 ) -> Result<RegistrationResponse> {
-    verify(provider.clone(), request).await?;
-    process(provider, request).await
+    verify(&provider, &request).await?;
+    process(&provider, request).await
 }
 
-async fn verify(provider: impl Provider, request: &RegistrationRequest) -> Result<()> {
+async fn verify(provider: &impl Provider, request: &RegistrationRequest) -> Result<()> {
     tracing::debug!("register::verify");
 
     // verify state is still accessible (has not expired)
-    match StateStore::get::<State>(&provider, &request.access_token).await {
+    match StateStore::get::<State>(provider, &request.access_token).await {
         Ok(_) => Ok(()),
         Err(e) => Err(Error::ServerError(format!("State not found: {e}"))),
     }
 }
 
 async fn process(
-    provider: impl Provider, request: &RegistrationRequest,
+    provider: &impl Provider, request: RegistrationRequest,
 ) -> Result<RegistrationResponse> {
     tracing::debug!("register::process");
 
@@ -100,7 +100,7 @@ mod tests {
         request.credential_issuer = CREDENTIAL_ISSUER.to_string();
         request.access_token = access_token.to_string();
 
-        let response = register(provider, &request).await.expect("response is ok");
+        let response = register(provider, request).await.expect("response is ok");
         assert_snapshot!("register:registration_ok:response", response, {
             ".client_id" => "[client_id]",
         });

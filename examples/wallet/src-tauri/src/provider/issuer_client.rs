@@ -11,7 +11,7 @@ use super::Provider;
 impl Issuer for Provider {
     /// Get issuer metadata.
     async fn get_metadata(
-        &self, _flow_id: &str, req: &MetadataRequest,
+        &self, _flow_id: &str, req: MetadataRequest,
     ) -> anyhow::Result<MetadataResponse> {
         let client = reqwest::Client::new();
         let url = format!("{}/.well-known/openid-credential-issuer", req.credential_issuer);
@@ -27,14 +27,14 @@ impl Issuer for Provider {
     }
 
     /// Get an access token.
-    async fn get_token(&self, _flow_id: &str, req: &TokenRequest) -> anyhow::Result<TokenResponse> {
+    async fn get_token(&self, _flow_id: &str, req: TokenRequest) -> anyhow::Result<TokenResponse> {
         let client = reqwest::Client::new();
         let url = format!("{}/token", req.credential_issuer);
         let result = client
             .post(&url)
             .header(CONTENT_TYPE, "multipart/form-data")
             .header(ACCEPT, "application/json")
-            .form(req)
+            .form(&req)
             .send()
             .await?;
         let token = result.json::<TokenResponse>().await?;

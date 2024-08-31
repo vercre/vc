@@ -95,7 +95,7 @@ pub async fn offer(
     };
 
     // The wallet client's provider makes the metadata request to the issuer.
-    let md_response = match Issuer::get_metadata(&provider, &issuance.id, &md_request).await {
+    let md_response = match Issuer::get_metadata(&provider, &issuance.id, md_request).await {
         Ok(md) => md,
         Err(e) => {
             tracing::error!(target: "Endpoint::offer", ?e);

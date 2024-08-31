@@ -34,7 +34,7 @@ pub async fn get_credentials(
 
     // Request an access token from the issuer.
     let token_request = token_request(&issuance);
-    issuance.token = match Issuer::get_token(&provider, &issuance.id, &token_request).await {
+    issuance.token = match Issuer::get_token(&provider, &issuance.id, token_request).await {
         Ok(token) => token,
         Err(e) => {
             tracing::error!(target: "Endpoint::get_credentials", ?e);

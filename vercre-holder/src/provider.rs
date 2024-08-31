@@ -38,12 +38,12 @@ pub trait HolderProvider:
 pub trait Issuer {
     /// Get issuer metadata. If an error is returned, the wallet will cancel the issuance flow.
     fn get_metadata(
-        &self, flow_id: &str, req: &MetadataRequest,
+        &self, flow_id: &str, req: MetadataRequest,
     ) -> impl Future<Output = anyhow::Result<MetadataResponse>> + Send;
 
     /// Get an access token. If an error is returned, the wallet will cancel the issuance flow.
     fn get_token(
-        &self, flow_id: &str, req: &TokenRequest,
+        &self, flow_id: &str, req: TokenRequest,
     ) -> impl Future<Output = anyhow::Result<TokenResponse>> + Send;
 
     /// Get a credential. If an error is returned, the wallet will cancel the issuance flow.

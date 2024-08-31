@@ -26,18 +26,18 @@ use crate::state::{State, Step};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn deferred(
-    provider: impl Provider, request: &DeferredCredentialRequest,
+    provider: impl Provider, request: DeferredCredentialRequest,
 ) -> Result<DeferredCredentialResponse> {
-    process(provider, request).await
+    process(&provider, request).await
 }
 
 async fn process(
-    provider: impl Provider, request: &DeferredCredentialRequest,
+    provider: &impl Provider, request: DeferredCredentialRequest,
 ) -> Result<DeferredCredentialResponse> {
     tracing::debug!("deferred::process");
 
     // retrieve deferred credential request from state
-    let Ok(state) = StateStore::get::<State>(&provider, &request.transaction_id).await else {
+    let Ok(state) = StateStore::get::<State>(provider, &request.transaction_id).await else {
         return Err(Error::InvalidTransactionId("deferred state not found".into()));
     };
 
@@ -50,7 +50,7 @@ async fn process(
     };
 
     // remove deferred state item
-    StateStore::purge(&provider, &request.transaction_id)
+    StateStore::purge(provider, &request.transaction_id)
         .await
         .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
 
@@ -146,7 +146,7 @@ mod tests {
             transaction_id: transaction_id.into(),
         };
 
-        let response = deferred(provider.clone(), &request).await.expect("response is valid");
+        let response = deferred(provider.clone(), request).await.expect("response is valid");
         assert_snapshot!("deferred:deferred_ok:response", &response, {
             ".transaction_id" => "[transaction_id]",
             ".credential" => "[credential]",

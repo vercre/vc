@@ -44,13 +44,13 @@ impl HolderProvider for Provider {}
 
 impl Issuer for Provider {
     async fn get_metadata(
-        &self, _flow_id: &str, req: &MetadataRequest,
+        &self, _flow_id: &str, req: MetadataRequest,
     ) -> anyhow::Result<MetadataResponse> {
         let response = vercre_issuer::metadata(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 
-    async fn get_token(&self, _flow_id: &str, req: &TokenRequest) -> anyhow::Result<TokenResponse> {
+    async fn get_token(&self, _flow_id: &str, req: TokenRequest) -> anyhow::Result<TokenResponse> {
         let response = vercre_issuer::token(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }

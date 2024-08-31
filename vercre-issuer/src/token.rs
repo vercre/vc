@@ -37,7 +37,7 @@ use crate::state::{Expire, State, Step, Token};
 /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
 /// not available.
 #[instrument(level = "debug", skip(provider))]
-pub async fn token(provider: impl Provider, request: &TokenRequest) -> Result<TokenResponse> {
+pub async fn token(provider: impl Provider, request: TokenRequest) -> Result<TokenResponse> {
     // restore state
     let state_key = match &request.grant_type {
         TokenGrantType::AuthorizationCode { code, .. } => code,
@@ -53,7 +53,7 @@ pub async fn token(provider: impl Provider, request: &TokenRequest) -> Result<To
 
     let ctx = Context { state };
 
-    ctx.verify(&provider, request).await?;
+    ctx.verify(&provider, &request).await?;
     ctx.process(&provider, request).await
 }
 
@@ -70,7 +70,7 @@ impl Context {
         if self.state.is_expired() {
             return Err(Error::InvalidRequest("state expired".into()));
         }
-        
+
         let Ok(server_meta) = Metadata::server(provider, &request.credential_issuer).await else {
             return Err(Error::InvalidRequest("unknown authorization server".into()));
         };
@@ -140,7 +140,7 @@ impl Context {
 
     // Exchange authorization/pre-authorized code for access token.
     async fn process(
-        &self, provider: &impl Provider, request: &TokenRequest,
+        &self, provider: &impl Provider, request: TokenRequest,
     ) -> Result<TokenResponse> {
         tracing::debug!("token::process");
 
@@ -253,7 +253,7 @@ mod tests {
 
         let request =
             serde_json::from_value::<TokenRequest>(value).expect("request should deserialize");
-        let token_resp = token(provider.clone(), &request).await.expect("response is valid");
+        let token_resp = token(provider.clone(), request).await.expect("response is valid");
 
         assert_snapshot!("token:pre_authorized:response", &token_resp, {
             ".access_token" => "[access_token]",
@@ -325,7 +325,7 @@ mod tests {
 
         let request =
             serde_json::from_value::<TokenRequest>(value).expect("request should deserialize");
-        let token_resp = token(provider.clone(), &request).await.expect("response is valid");
+        let token_resp = token(provider.clone(), request).await.expect("response is valid");
 
         assert_snapshot!("token:authorization:response", &token_resp, {
             ".access_token" => "[access_token]",
@@ -402,7 +402,7 @@ mod tests {
 
         let request =
             serde_json::from_value::<TokenRequest>(value).expect("request should deserialize");
-        let response = token(provider.clone(), &request).await.expect("response is valid");
+        let response = token(provider.clone(), request).await.expect("response is valid");
 
         assert_snapshot!("token:authorization_details:response", &response, {
             ".access_token" => "[access_token]",

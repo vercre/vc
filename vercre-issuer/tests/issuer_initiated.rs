@@ -32,7 +32,7 @@ async fn issuance(provider: Provider, #[case] issue: Issuance) {
         send_type: SendType::ByVal,
     };
     let response =
-        vercre_issuer::create_offer(provider.clone(), &request).await.expect("should create offer");
+        vercre_issuer::create_offer(provider.clone(), request).await.expect("should create offer");
 
     let wallet = wallet::Wallet {
         provider,
@@ -59,7 +59,7 @@ async fn format(provider: Provider, #[case] credential_format: FormatProfile) {
         send_type: SendType::ByVal,
     };
     let response =
-        vercre_issuer::create_offer(provider.clone(), &request).await.expect("should create offer");
+        vercre_issuer::create_offer(provider.clone(), request).await.expect("should create offer");
 
     let wallet = wallet::Wallet {
         provider: provider.clone(),
@@ -85,7 +85,7 @@ async fn authorization(provider: Provider) {
         send_type: SendType::ByVal,
     };
     let response =
-        vercre_issuer::create_offer(provider.clone(), &request).await.expect("should create offer");
+        vercre_issuer::create_offer(provider.clone(), request).await.expect("should create offer");
 
     let wallet = wallet::Wallet {
         provider: provider.clone(),
@@ -113,7 +113,7 @@ async fn offer_type(provider: Provider, #[case] send_type: SendType) {
         send_type,
     };
     let response =
-        vercre_issuer::create_offer(provider.clone(), &request).await.expect("should create offer");
+        vercre_issuer::create_offer(provider.clone(), request).await.expect("should create offer");
 
     let wallet = wallet::Wallet {
         provider: provider.clone(),

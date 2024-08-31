@@ -93,7 +93,7 @@ use crate::state::{Authorization, Expire, State, Step};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn authorize(
-    provider: impl Provider, request: &AuthorizationRequest,
+    provider: impl Provider, request: AuthorizationRequest,
 ) -> Result<AuthorizationResponse> {
     // get issuer metadata
     let Ok(issuer) = Metadata::issuer(&provider, &request.credential_issuer).await else {
@@ -104,7 +104,7 @@ pub async fn authorize(
         issuer,
         ..Context::default()
     };
-    ctx.verify(&provider, request).await?;
+    ctx.verify(&provider, &request).await?;
     ctx.process(&provider, request).await
 }
 
@@ -311,7 +311,7 @@ impl Context {
     //   authorized for
     // - save related auth_dets/scope items in state
     async fn process(
-        &self, provider: &impl Provider, request: &AuthorizationRequest,
+        &self, provider: &impl Provider, request: AuthorizationRequest,
     ) -> Result<AuthorizationResponse> {
         tracing::debug!("authorize::process");
 
@@ -374,13 +374,13 @@ impl Context {
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
             credentials: Some(credentials),
-            subject_id: Some(request.subject_id.clone()),
+            subject_id: Some(request.subject_id),
             current_step: Step::Authorization(Authorization {
-                code_challenge: request.code_challenge.clone(),
-                code_challenge_method: request.code_challenge_method.clone(),
+                code_challenge: request.code_challenge,
+                code_challenge_method: request.code_challenge_method,
                 authorized,
                 scope,
-                client_id: request.client_id.clone(),
+                client_id: request.client_id,
                 redirect_uri: request.redirect_uri.clone(),
             }),
             ..State::default()
@@ -400,8 +400,8 @@ impl Context {
 
         Ok(AuthorizationResponse {
             code,
-            state: request.state.clone(),
-            redirect_uri: request.redirect_uri.clone().unwrap_or_default(),
+            state: request.state,
+            redirect_uri: request.redirect_uri.unwrap_or_default(),
         })
     }
 }
@@ -432,7 +432,7 @@ mod tests {
         // create request
         let request =
             serde_json::from_value::<AuthorizationRequest>(value).expect("should deserialize");
-        let response = authorize(provider.clone(), &request).await.expect("response is ok");
+        let response = authorize(provider.clone(), request).await.expect("response is ok");
 
         assert_snapshot!("authorize:configuration_id:response", &response, {
             ".code" => "[code]",
