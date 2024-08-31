@@ -1,10 +1,12 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use vercre_datasec::{Algorithm, Decryptor, Encryptor, SecOps, Signer};
 use vercre_did::{DidResolver, Document};
 use vercre_openid::issuer::{
-    Client, Dataset, Issuer, Metadata, Result, Server, StateStore, Subject,
+    ClaimEntry, Client, Dataset, Issuer, Metadata, Result, Server, StateStore, Subject,
 };
 
 use crate::store::keystore::IssuerKeystore;
@@ -61,8 +63,9 @@ impl Subject for Provider {
     /// Authorize issuance of the specified credential for the holder.
     async fn authorize(
         &self, subject_id: &str, credential_configuration_id: &str,
+        claims: Option<HashMap<String, ClaimEntry>>,
     ) -> Result<Option<Vec<String>>> {
-        self.subject.authorize(subject_id, credential_configuration_id)
+        self.subject.authorize(subject_id, credential_configuration_id,claims)
     }
 
     async fn dataset(&self, subject_id: &str, credential_identifier: &str) -> Result<Dataset> {

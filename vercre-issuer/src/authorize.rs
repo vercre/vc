@@ -320,9 +320,10 @@ impl Context {
         let mut credentials = HashMap::new();
 
         for (config_id, auth_det) in &self.auth_dets {
-            if let Some(identifiers) = Subject::authorize(provider, &request.subject_id, config_id)
-                .await
-                .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?
+            if let Some(identifiers) =
+                Subject::authorize(provider, &request.subject_id, config_id, None)
+                    .await
+                    .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?
             {
                 authzd_detail.push(Authorized {
                     authorization_detail: auth_det.clone(),
@@ -339,9 +340,10 @@ impl Context {
         // FIXME: add `credential_identifiers` to Authorized state
         let mut authzd_scope = vec![];
         for (config_id, scope_item) in &self.scope_items {
-            if let Some(identifiers) = Subject::authorize(provider, &request.subject_id, config_id)
-                .await
-                .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?
+            if let Some(identifiers) =
+                Subject::authorize(provider, &request.subject_id, config_id, None)
+                    .await
+                    .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?
             {
                 authzd_scope.push(scope_item.clone());
 

@@ -5,7 +5,7 @@ use anyhow::anyhow;
 use serde::Deserialize;
 use serde_json::{Map, Value};
 use uuid::Uuid;
-use vercre_openid::issuer::{Client, Dataset, Issuer, Server};
+use vercre_openid::issuer::{ClaimEntry, Client, Dataset, Issuer, Server};
 use vercre_openid::provider::Result;
 
 // pub const NORMAL_USER: &str = "normal_user";
@@ -132,6 +132,7 @@ impl DatasetStore {
 
     pub fn authorize(
         &self, subject_id: &str, credential_configuration_id: &str,
+        _claims: Option<HashMap<String, ClaimEntry>>,
     ) -> Result<Option<Vec<String>>> {
         // get subject's datasets
         let subjects = self.datasets.lock().expect("should lock");

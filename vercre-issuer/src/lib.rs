@@ -103,7 +103,7 @@ pub mod provider {
     pub use vercre_did::{DidResolver, Document};
     pub use vercre_openid::issuer::{
         ClaimDefinition, Client, Dataset, GrantType, Issuer, Metadata, Provider, Result, Server,
-        StateStore, Subject,
+        StateStore, Subject,ClaimEntry
     };
 }
 

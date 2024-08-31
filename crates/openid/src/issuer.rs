@@ -49,6 +49,7 @@ pub trait Subject: Send + Sync {
     /// authorized to request.
     fn authorize(
         &self, subject_id: &str, credential_configuration_id: &str,
+        claims: Option<HashMap<String, ClaimEntry>>,
     ) -> impl Future<Output = provider::Result<Option<Vec<String>>>> + Send;
 
     /// Returns a populated `Dataset` object for the given subject (holder) and
