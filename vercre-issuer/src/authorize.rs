@@ -111,7 +111,7 @@ pub async fn authorize(
 #[derive(Debug, Default)]
 struct Context {
     issuer: Issuer,
-    auth_dets: HashMap<String, AuthorizationDetail>,
+    config_ids: Vec<String>,
     scope_items: HashMap<String, String>,
 }
 
@@ -227,8 +227,8 @@ impl Context {
                         ));
                     }
 
-                    // save auth_det by `credential_configuration_id` for later use
-                    self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
+                    // save `credential_configuration_id` for later use
+                    self.config_ids.push(credential_configuration_id.clone());
                 }
                 AuthorizationSpec::Format(Format::JwtVcJson {
                     credential_definition,
@@ -243,10 +243,8 @@ impl Context {
                         ));
                     };
 
-                    
-
-                    // save auth_det by `credential_configuration_id` for later use
-                    self.auth_dets.insert(config_id.to_string(), auth_det.clone());
+                    // save `credential_configuration_id` for later use
+                    self.config_ids.push(config_id.to_string());
                 }
                 AuthorizationSpec::ConfigurationId(ConfigurationId::Claims { .. }) => {
                     todo!("ConfigurationId::Claims");
@@ -275,7 +273,7 @@ impl Context {
         'verify_scope: for item in scope.split_whitespace() {
             for (cfg_id, cred_cfg) in &self.issuer.credential_configurations_supported {
                 // `authorization_details` credential request  takes precedence `scope` request
-                if self.auth_dets.contains_key(cfg_id) {
+                if self.config_ids.contains(cfg_id) {
                     continue;
                 }
 
@@ -302,7 +300,7 @@ impl Context {
 
         // for Credentials requested using `authorization_detail`
         let mut authzd_detail = vec![];
-        for (config_id, _auth_detail) in &self.auth_dets {
+        for config_id in &self.config_ids {
             if let Some(identifiers) = Subject::authorize(provider, &request.subject_id, config_id)
                 .await
                 .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?
