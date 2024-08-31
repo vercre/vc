@@ -77,9 +77,6 @@ pub enum Step {
 /// `Auth` is used to store authorization state.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PreAuthorized {
-    // /// Identifies the (previously authenticated) Holder in order that Issuer can
-    // /// authorize credential issuance.
-    // pub subject_id: String,
     /// Lists credential identifiers that the Wallet is authorized to request.
     pub authorized: Vec<Authorized>,
 
@@ -96,9 +93,6 @@ pub struct Authorization {
     /// PKCE code challenge method from the Authorization Request.
     pub code_challenge_method: String,
 
-    // /// Identifies the (previously authenticated) Holder in order that Issuer can
-    // /// authorize credential issuance.
-    // pub subject_id: String,
     /// Lists credential identifiers that the Wallet is authorized to request.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub authorized: Option<Vec<Authorized>>,
@@ -127,16 +121,6 @@ pub struct Token {
 
     /// Number denoting the lifetime in seconds of the `c_nonce`.
     pub c_nonce_expires_at: DateTime<Utc>,
-    // /// Identifies the (previously authenticated) Holder in order that Issuer can
-    // /// authorize credential issuance.
-    // pub subject_id: String,
-    // /// Lists credential identifiers that the Wallet is authorized to request.
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub authorized: Option<Vec<Authorized>>,
-
-    // /// Lists credentials (as scope items) that the Wallet is authorized to request.
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub scope: Option<String>,
 }
 
 impl Token {
