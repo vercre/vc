@@ -569,7 +569,7 @@ pub enum ConfigurationId {
         /// Used by the Wallet to indicate that it only accepts Credentials
         /// issued with claims specified.
         #[serde(skip_serializing_if = "Option::is_none")]
-        claims: Option<ClaimDefinition>,
+        claims: Option<HashMap<String, ClaimEntry>>,
     },
 }
 

@@ -1,3 +1,5 @@
+#![feature(let_chains)]
+
 //! An API for the issuance of Verifiable Credentials based on the
 //! [OpenID for Verifiable Credential Issuance] specification.
 //!
@@ -102,8 +104,8 @@ pub mod provider {
     pub use vercre_datasec::{Algorithm, Decryptor, Encryptor, SecOps, Signer};
     pub use vercre_did::{DidResolver, Document};
     pub use vercre_openid::issuer::{
-        ClaimDefinition, Client, Dataset, GrantType, Issuer, Metadata, Provider, Result, Server,
-        StateStore, Subject,ClaimEntry
+        ClaimDefinition, ClaimEntry, Client, Dataset, GrantType, Issuer, Metadata, Provider,
+        Result, Server, StateStore, Subject,
     };
 }
 

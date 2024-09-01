@@ -77,8 +77,8 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    AuthorizationSpec, Authorized, ConfigurationId, Format, FormatProfile, GrantType, Issuer,
-    Metadata, Provider, StateStore, Subject,
+    AuthorizationSpec, Authorized, ClaimEntry, ConfigurationId, Format, FormatProfile, GrantType,
+    Issuer, Metadata, Provider, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 
@@ -244,24 +244,14 @@ impl Context {
                         ));
                     }
 
-                    // --------------------------------------------------------
-                    // check credential_definition claims are supported
-                    if let Some(requested_cd) = credential_definition {
-                        if let Some(requested_subj) = &requested_cd.credential_subject {
-                            let supported_cd =
-                                &supported[credential_configuration_id].credential_definition;
-                            if let Some(supported_subj) = &supported_cd.credential_subject {
-                                for key in requested_subj.keys() {
-                                    if !supported_subj.contains_key(key) {
-                                        return Err(Error::InvalidRequest(
-                                            "unsupported credential_definition claim".into(),
-                                        ));
-                                    }
-                                }
-                            }
-                        }
+                    // verify requested claims are supported
+                    if let Some(requested_cd) = credential_definition
+                        && let Some(subject) = &requested_cd.credential_subject
+                    {
+                        let supported_cd =
+                            &supported[credential_configuration_id].credential_definition;
+                        self.verify_claims(&subject, &supported_cd.credential_subject)?;
                     }
-                    // --------------------------------------------------------
 
                     // save `credential_configuration_id` for later use
                     self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
@@ -278,6 +268,12 @@ impl Context {
                             "unsupported credential `format` or `type`".into(),
                         ));
                     };
+
+                    // verify requested claims are supported
+                    if let Some(subject) = &credential_definition.credential_subject {
+                        let supported_cd = &supported[config_id].credential_definition;
+                        self.verify_claims(&subject, &supported_cd.credential_subject)?;
+                    }
 
                     // save `credential_configuration_id` for later use
                     self.auth_dets.insert(config_id.clone(), auth_det.clone());
@@ -298,6 +294,23 @@ impl Context {
                     todo!("Format::VcSdJwt");
                 }
             };
+        }
+
+        Ok(())
+    }
+
+    fn verify_claims(
+        &self, requested: &HashMap<String, ClaimEntry>,
+        supported: &Option<HashMap<String, ClaimEntry>>,
+    ) -> Result<()> {
+        let Some(supp_claims) = &supported else {
+            return Ok(());
+        };
+
+        for key in requested.keys() {
+            if !supp_claims.contains_key(key) {
+                return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
+            }
         }
 
         Ok(())

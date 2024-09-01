@@ -109,8 +109,8 @@ impl Wallet {
                         "EmployeeIDCredential"
                     ],
                     "credentialSubject": {
-                        "givenName": {},
-                        "familyName": {},
+                        "given_name": {},
+                        "family_name": {},
                         "email": {}
                     }
                 }
