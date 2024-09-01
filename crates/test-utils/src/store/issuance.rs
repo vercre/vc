@@ -134,7 +134,7 @@ impl DatasetStore {
         &self, subject_id: &str, credential_configuration_id: &str,
         _claims: Option<HashMap<String, ClaimEntry>>,
     ) -> Result<Option<Vec<String>>> {
-        // get subject's datasets
+        // find subject's datasets
         let subjects = self.datasets.lock().expect("should lock");
         let Some(datasets) = subjects.get(subject_id) else {
             return Err(anyhow!("no matching subject_id"));

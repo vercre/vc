@@ -235,7 +235,7 @@ impl Context {
             match &auth_det.specification {
                 AuthorizationSpec::ConfigurationId(ConfigurationId::Definition {
                     credential_configuration_id,
-                    ..
+                    credential_definition,
                 }) => {
                     //  find supported credential by `credential_configuration_id`
                     if !supported.contains_key(credential_configuration_id) {
@@ -243,6 +243,25 @@ impl Context {
                             "unsupported credential_configuration_id".into(),
                         ));
                     }
+
+                    // --------------------------------------------------------
+                    // check credential_definition claims are supported
+                    if let Some(requested_cd) = credential_definition {
+                        if let Some(requested_subj) = &requested_cd.credential_subject {
+                            let supported_cd =
+                                &supported[credential_configuration_id].credential_definition;
+                            if let Some(supported_subj) = &supported_cd.credential_subject {
+                                for key in requested_subj.keys() {
+                                    if !supported_subj.contains_key(key) {
+                                        return Err(Error::InvalidRequest(
+                                            "unsupported credential_definition claim".into(),
+                                        ));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // --------------------------------------------------------
 
                     // save `credential_configuration_id` for later use
                     self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
@@ -422,6 +441,7 @@ mod tests {
 
     #[rstest]
     #[case("configuration_id", configuration_id)]
+    #[case("credential_definition", credential_definition)]
     #[case("format", format)]
     #[case("scope", scope)]
     async fn request(#[case] name: &str, #[case] f: fn() -> serde_json::Value) {
@@ -446,6 +466,7 @@ mod tests {
 
         assert_snapshot!(format!("authorize:{name}:state"), state, {
             ".expires_at" => "[expires_at]",
+            ".current_step.authorized.*.credential_definition.credentialSubject" => insta::sorted_redaction(),
         });
     }
 
@@ -461,6 +482,30 @@ mod tests {
             "authorization_details": json!([{
                 "type": "openid_credential",
                 "credential_configuration_id": "EmployeeID_JWT"
+            }]).to_string(),
+            "subject_id": NORMAL_USER,
+            "wallet_issuer": CREDENTIAL_ISSUER
+        })
+    }
+
+    fn credential_definition() -> serde_json::Value {
+        json!({
+            "credential_issuer": CREDENTIAL_ISSUER,
+            "response_type": "code",
+            "client_id": CLIENT_ID,
+            "redirect_uri": "http://localhost:3000/callback",
+            "state": "1234",
+            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+            "code_challenge_method": "S256",
+            "authorization_details": json!([{
+                "type": "openid_credential",
+                "credential_configuration_id": "EmployeeID_JWT",
+                "credential_definition": {
+                    "credentialSubject": {
+                        "given_name": {},
+                        "family_name": {},
+                    }
+                }
             }]).to_string(),
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER

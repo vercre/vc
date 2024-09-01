@@ -44,13 +44,13 @@ credential_configurations_supported:
         - VerifiableCredential
         - DeveloperCredential
       credentialSubject:
-        familyName:
+        family_name:
           mandatory: true
           value_type: string
           display:
             - name: Family name
               locale: en-NZ
-        givenName:
+        given_name:
           mandatory: true
           value_type: string
           display:
@@ -102,13 +102,13 @@ credential_configurations_supported:
           display:
             - name: Email
               locale: en-NZ
-        familyName:
+        family_name:
           mandatory: true
           value_type: string
           display:
             - name: Family name
               locale: en-NZ
-        givenName:
+        given_name:
           mandatory: true
           value_type: string
           display:
