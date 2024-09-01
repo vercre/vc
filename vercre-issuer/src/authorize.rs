@@ -251,7 +251,7 @@ impl Context {
                     {
                         let supported_cd =
                             &supported[credential_configuration_id].credential_definition;
-                        self.verify_claims(&claims, &supported_cd.credential_subject)?;
+                        Self::verify_claims(claims, &supported_cd.credential_subject)?;
                         self.claims = Some(claims.clone());
                     }
 
@@ -274,7 +274,7 @@ impl Context {
                     // verify requested claims are supported
                     if let Some(claims) = &credential_definition.credential_subject {
                         let supported_cd = &supported[config_id].credential_definition;
-                        self.verify_claims(&claims, &supported_cd.credential_subject)?;
+                        Self::verify_claims(claims, &supported_cd.credential_subject)?;
                         self.claims = Some(claims.clone());
                     }
 
@@ -303,7 +303,7 @@ impl Context {
     }
 
     fn verify_claims(
-        &self, requested: &HashMap<String, ClaimEntry>,
+        requested: &HashMap<String, ClaimEntry>,
         supported: &Option<HashMap<String, ClaimEntry>>,
     ) -> Result<()> {
         let Some(supp_claims) = &supported else {
