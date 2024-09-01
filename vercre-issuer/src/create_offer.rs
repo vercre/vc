@@ -177,12 +177,9 @@ async fn process(
         let mut credentials = HashMap::new();
 
         for config_id in request.credential_configuration_ids.clone() {
-            let Some(identifiers) = Subject::authorize(provider, &subject_id, &config_id, None)
+            let identifiers = Subject::authorize(provider, &subject_id, &config_id, None)
                 .await
-                .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?
-            else {
-                continue;
-            };
+                .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
 
             for identifier in &identifiers {
                 credentials.insert(identifier.clone(), config_id.clone());

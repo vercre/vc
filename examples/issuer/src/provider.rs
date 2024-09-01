@@ -57,7 +57,7 @@ impl Subject for Provider {
     async fn authorize(
         &self, subject_id: &str, credential_configuration_id: &str,
         claims: Option<HashMap<String, ClaimEntry>>,
-    ) -> Result<Option<Vec<String>>> {
+    ) -> Result<Vec<String>> {
         self.subject.authorize(subject_id, credential_configuration_id, claims)
     }
 

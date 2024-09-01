@@ -332,6 +332,7 @@ impl Context {
                     continue 'verify_scope;
                 }
             }
+
             return Err(Error::InvalidRequest("scope item {item} is unsupported".into()));
         }
 
@@ -352,37 +353,33 @@ impl Context {
         let mut credentials = HashMap::new();
 
         for (config_id, auth_det) in &self.auth_dets {
-            if let Some(identifiers) =
-                Subject::authorize(provider, &request.subject_id, config_id, None)
-                    .await
-                    .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?
-            {
-                authzd_detail.push(Authorized {
-                    authorization_detail: auth_det.clone(),
-                    credential_identifiers: identifiers.clone(),
-                });
+            let identifiers = Subject::authorize(provider, &request.subject_id, config_id, None)
+                .await
+                .map_err(|e| Error::ServerError(format!("issue authorizing subject: {e}")))?;
 
-                for identifier in &identifiers {
-                    credentials.insert(identifier.clone(), config_id.clone());
-                }
-            };
+            authzd_detail.push(Authorized {
+                authorization_detail: auth_det.clone(),
+                credential_identifiers: identifiers.clone(),
+            });
+
+            for identifier in &identifiers {
+                credentials.insert(identifier.clone(), config_id.clone());
+            }
         }
 
         // for Credentials requested using `scope`
         // FIXME: add `credential_identifiers` to Authorized state
         let mut authzd_scope = vec![];
         for (config_id, scope_item) in &self.scope_items {
-            if let Some(identifiers) =
-                Subject::authorize(provider, &request.subject_id, config_id, None)
-                    .await
-                    .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?
-            {
-                authzd_scope.push(scope_item.clone());
+            let identifiers = Subject::authorize(provider, &request.subject_id, config_id, None)
+                .await
+                .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
 
-                for identifier in &identifiers {
-                    credentials.insert(identifier.clone(), config_id.clone());
-                }
-            };
+            authzd_scope.push(scope_item.clone());
+
+            for identifier in &identifiers {
+                credentials.insert(identifier.clone(), config_id.clone());
+            }
         }
 
         let authorized = if authzd_detail.is_empty() {

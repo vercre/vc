@@ -132,29 +132,51 @@ impl DatasetStore {
 
     pub fn authorize(
         &self, subject_id: &str, credential_configuration_id: &str,
-        _claims: Option<HashMap<String, ClaimEntry>>,
-    ) -> Result<Option<Vec<String>>> {
-        // find subject's datasets
-        let subjects = self.datasets.lock().expect("should lock");
-        let Some(datasets) = subjects.get(subject_id) else {
+        claims: Option<HashMap<String, ClaimEntry>>,
+    ) -> Result<Vec<String>> {
+        // datasets for subject
+        let all_datasets = self.datasets.lock().expect("should lock");
+        let Some(subj_datasets) = all_datasets.get(subject_id) else {
             return Err(anyhow!("no matching subject_id"));
         };
 
-        // find identifier(s) for dataset(s) belonging to the credential
-        // identified by `credential_configuration_id`
+        // preset dataset identifiers for subject/credential
         let mut identifiers = vec![];
-        for (k, v) in datasets.iter() {
-            if v.configuration_id != credential_configuration_id {
+        for (k, credential) in subj_datasets.iter() {
+            if credential.configuration_id != credential_configuration_id {
                 continue;
             }
-            identifiers.push(k.clone());
+
+            // create new dataset for subject using provided claims
+            if let Some(requested_claims) = &claims {
+                let mut credential = Credential {
+                    configuration_id: credential_configuration_id.to_string(),
+                    claims: Map::new(),
+                    pending: true,
+                };
+
+                for (k, _claim_entry) in requested_claims {
+                    if let Some(claim) = credential.claims.get(k) {
+                        credential.claims.insert(k.clone(), claim.clone());
+                    }
+                }
+
+                let credential_identifier = Uuid::new_v4().to_string();
+                identifiers.push(credential_identifier.clone());
+
+                let mut subject = subj_datasets.clone();
+                subject.insert(credential_identifier, credential.clone());
+                self.datasets.lock().expect("should lock").insert(subject_id.to_string(), subject);
+            } else {
+                identifiers.push(k.clone());
+            }
         }
 
         if identifiers.is_empty() {
-            Ok(None)
-        } else {
-            Ok(Some(identifiers))
+            return Err(anyhow!("no matching dataset for subject/credential"));
         }
+
+        Ok(identifiers)
     }
 
     pub fn dataset(&self, subject_id: &str, credential_identifier: &str) -> Result<Dataset> {
