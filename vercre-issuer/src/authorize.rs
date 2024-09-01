@@ -113,6 +113,7 @@ struct Context {
     issuer: Issuer,
     auth_dets: HashMap<String, AuthorizationDetail>,
     scope_items: HashMap<String, String>,
+    claims: Option<HashMap<String, ClaimEntry>>,
 }
 
 impl Context {
@@ -246,11 +247,12 @@ impl Context {
 
                     // verify requested claims are supported
                     if let Some(requested_cd) = credential_definition
-                        && let Some(subject) = &requested_cd.credential_subject
+                        && let Some(claims) = &requested_cd.credential_subject
                     {
                         let supported_cd =
                             &supported[credential_configuration_id].credential_definition;
-                        self.verify_claims(&subject, &supported_cd.credential_subject)?;
+                        self.verify_claims(&claims, &supported_cd.credential_subject)?;
+                        self.claims = Some(claims.clone());
                     }
 
                     // save `credential_configuration_id` for later use
@@ -270,9 +272,10 @@ impl Context {
                     };
 
                     // verify requested claims are supported
-                    if let Some(subject) = &credential_definition.credential_subject {
+                    if let Some(claims) = &credential_definition.credential_subject {
                         let supported_cd = &supported[config_id].credential_definition;
-                        self.verify_claims(&subject, &supported_cd.credential_subject)?;
+                        self.verify_claims(&claims, &supported_cd.credential_subject)?;
+                        self.claims = Some(claims.clone());
                     }
 
                     // save `credential_configuration_id` for later use
@@ -353,9 +356,10 @@ impl Context {
         let mut credentials = HashMap::new();
 
         for (config_id, auth_det) in &self.auth_dets {
-            let identifiers = Subject::authorize(provider, &request.subject_id, config_id, None)
-                .await
-                .map_err(|e| Error::ServerError(format!("issue authorizing subject: {e}")))?;
+            let identifiers =
+                Subject::authorize(provider, &request.subject_id, config_id, self.claims.clone())
+                    .await
+                    .map_err(|e| Error::ServerError(format!("issue authorizing subject: {e}")))?;
 
             authzd_detail.push(Authorized {
                 authorization_detail: auth_det.clone(),

@@ -65,7 +65,7 @@ impl Subject for Provider {
         &self, subject_id: &str, credential_configuration_id: &str,
         claims: Option<HashMap<String, ClaimEntry>>,
     ) -> Result<Vec<String>> {
-        self.subject.authorize(subject_id, credential_configuration_id,claims)
+        self.subject.authorize(subject_id, credential_configuration_id, claims)
     }
 
     async fn dataset(&self, subject_id: &str, credential_identifier: &str) -> Result<Dataset> {

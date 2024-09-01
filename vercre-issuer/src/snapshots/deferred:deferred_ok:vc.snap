@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/deferred.rs
-assertion_line: 182
+assertion_line: 169
 expression: vc
 ---
 "@context":
@@ -14,7 +14,7 @@ issuer: "http://vercre.io"
 issuanceDate: "[issuanceDate]"
 credentialSubject:
   email: normal.user@example.com
-  familyName: Person
-  givenName: Normal
+  family_name: Person
+  given_name: Normal
   id: "did:key:z6Mkj8Jr1rg3YjVWWhg7ahEYJibqhjBgZt1pDCbT4Lv7D4HX"
   proficiency: "3"

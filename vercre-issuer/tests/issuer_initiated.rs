@@ -102,7 +102,7 @@ async fn authorization(provider: Provider) {
 #[case(SendType::ByVal)]
 async fn offer_type(provider: Provider, #[case] send_type: SendType) {
     vercre_test_utils::init_tracer();
-    snapshot!("issuer:authorization");
+    snapshot!("issuer:authorization:{send_type:?}");
 
     let request = CreateOfferRequest {
         credential_issuer: CREDENTIAL_ISSUER.to_string(),

@@ -134,11 +134,8 @@ impl DatasetStore {
         &self, subject_id: &str, credential_configuration_id: &str,
         claims: Option<HashMap<String, ClaimEntry>>,
     ) -> Result<Vec<String>> {
-        // datasets for subject
-        let all_datasets = self.datasets.lock().expect("should lock");
-        let Some(subj_datasets) = all_datasets.get(subject_id) else {
-            return Err(anyhow!("no matching subject_id"));
-        };
+        let subj_datasets =
+            self.datasets.lock().expect("should lock").get(subject_id).unwrap().clone();
 
         // preset dataset identifiers for subject/credential
         let mut identifiers = vec![];
@@ -149,24 +146,24 @@ impl DatasetStore {
 
             // create new dataset for subject using provided claims
             if let Some(requested_claims) = &claims {
-                let mut credential = Credential {
-                    configuration_id: credential_configuration_id.to_string(),
-                    claims: Map::new(),
-                    pending: true,
-                };
-
-                for (k, _claim_entry) in requested_claims {
+                // create a new credential dataset with the requested claims
+                let mut claims = Map::new();
+                for k in requested_claims.keys() {
                     if let Some(claim) = credential.claims.get(k) {
-                        credential.claims.insert(k.clone(), claim.clone());
+                        claims.insert(k.clone(), claim.clone());
                     }
                 }
+                let mut credential = credential.clone();
+                credential.claims = claims;
 
-                let credential_identifier = Uuid::new_v4().to_string();
+                let credential_identifier = format!("{k}-custom"); // Uuid::new_v4().to_string();
                 identifiers.push(credential_identifier.clone());
 
-                let mut subject = subj_datasets.clone();
-                subject.insert(credential_identifier, credential.clone());
-                self.datasets.lock().expect("should lock").insert(subject_id.to_string(), subject);
+                // add custom claims to 'database'
+                let mut datasets =
+                    self.datasets.lock().expect("should lock").get(subject_id).unwrap().clone();
+                datasets.insert(credential_identifier, credential);
+                self.datasets.lock().expect("should lock").insert(subject_id.to_string(), datasets);
             } else {
                 identifiers.push(k.clone());
             }
@@ -181,15 +178,15 @@ impl DatasetStore {
 
     pub fn dataset(&self, subject_id: &str, credential_identifier: &str) -> Result<Dataset> {
         // get claims for the given `subject_id` and `credential_identifier`
-        let mut subject =
+        let mut subj_datasets =
             self.datasets.lock().expect("should lock").get(subject_id).unwrap().clone();
-        let mut credential = subject.get(credential_identifier).unwrap().clone();
+        let mut credential = subj_datasets.get(credential_identifier).unwrap().clone();
 
         // update subject's pending state to make Deferred Issuance work
         let pending = credential.pending;
         credential.pending = false;
-        subject.insert(credential_identifier.to_string(), credential.clone());
-        self.datasets.lock().expect("should lock").insert(subject_id.to_string(), subject);
+        subj_datasets.insert(credential_identifier.to_string(), credential.clone());
+        self.datasets.lock().expect("should lock").insert(subject_id.to_string(), subj_datasets);
 
         Ok(Dataset {
             claims: credential.claims,

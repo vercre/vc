@@ -3,8 +3,8 @@
         "PHLEmployeeID": {
             "configuration_id": "EmployeeID_JWT",
             "claims": {
-                "givenName": "Normal",
-                "familyName": "Person",
+                "given_name": "Normal",
+                "family_name": "Person",
                 "email": "normal.user@example.com",
                 "proficiency": "3"
             },
@@ -15,8 +15,8 @@
         "PHLEmployeeID": {
             "configuration_id": "EmployeeID_JWT",
             "claims": {
-                "givenName": "Pending",
-                "familyName": "Person",
+                "given_name": "Pending",
+                "family_name": "Person",
                 "email": "pending.user@example.com",
                 "proficiency": "1"
             },
