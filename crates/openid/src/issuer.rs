@@ -759,16 +759,17 @@ pub struct TokenRequest {
     #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
 
-    // TODO: add support for `scope` parameter
-    /// Credential Issuers MAY support requesting authorization to issue a
-    /// credential using OAuth 2.0 scope values.
-    /// A scope value and its mapping to a credential type is defined by the
-    /// Issuer. A description of scope value semantics or machine readable
-    /// definitions could be defined in Issuer metadata. For example,
-    /// mapping a scope value to an authorization details object.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub scope: Option<String>,
-
+    // ---
+    // // TODO: add support for `scope` parameter
+    // /// Credential Issuers MAY support requesting authorization to issue a
+    // /// credential using OAuth 2.0 scope values.
+    // /// A scope value and its mapping to a credential type is defined by the
+    // /// Issuer. A description of scope value semantics or machine readable
+    // /// definitions could be defined in Issuer metadata. For example,
+    // /// mapping a scope value to an authorization details object.
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub scope: Option<String>,
+    // ---
     /// Client identity assertion using JWT instead of credentials to authenticate.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(flatten)]

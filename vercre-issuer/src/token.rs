@@ -11,8 +11,6 @@
 //! credentials, or other sensitive information, as well as the "Pragma" response
 //! header field [RFC2616](https://www.rfc-editor.org/rfc/rfc2616) with a value of "no-cache".
 
-// TODO: test `credential_configuration_id` in `authorization_details`
-// TODO: analyse `credential_identifiers` use in `authorization_details`
 // TODO: verify `client_assertion` JWT, when set
 
 use std::fmt::Debug;
@@ -23,11 +21,11 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    Metadata, Provider, StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
+    AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec, Authorized, ConfigurationId,
+    Format, Metadata, Provider, StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
 
-// use crate::shell;
 use crate::state::{Expire, State, Step, Token};
 
 /// Token request handler.
@@ -51,6 +49,11 @@ pub async fn token(provider: impl Provider, request: TokenRequest) -> Result<Tok
         return Err(Error::InvalidGrant("the authorization code is invalid".into()));
     };
 
+    // authorization code is one-time use
+    StateStore::purge(&provider, state_key)
+        .await
+        .map_err(|e| Error::ServerError(format!("issue purging authorizaiton state: {e}")))?;
+
     let ctx = Context { state };
 
     ctx.verify(&provider, &request).await?;
@@ -71,7 +74,7 @@ impl Context {
             return Err(Error::InvalidRequest("state expired".into()));
         }
 
-        let Ok(server_meta) = Metadata::server(provider, &request.credential_issuer).await else {
+        let Ok(server) = Metadata::server(provider, &request.credential_issuer).await else {
             return Err(Error::InvalidRequest("unknown authorization server".into()));
         };
 
@@ -121,7 +124,7 @@ impl Context {
 
                 // anonymous access allowed?
                 if request.client_id.as_ref().is_none_or(String::is_empty)
-                    && !server_meta.pre_authorized_grant_anonymous_access_supported
+                    && !server.pre_authorized_grant_anonymous_access_supported
                 {
                     return Err(Error::InvalidClient("anonymous access is not supported".into()));
                 }
@@ -144,27 +147,19 @@ impl Context {
     ) -> Result<TokenResponse> {
         tracing::debug!("token::process");
 
-        let (authorized, scope, state_key) = match &request.grant_type {
-            TokenGrantType::AuthorizationCode { code, .. } => {
-                let Step::Authorization(auth_state) = &self.state.current_step else {
-                    return Err(Error::ServerError("authorization state not set".into()));
-                };
-                (auth_state.authorized.clone(), auth_state.scope.clone(), code)
-            }
-            TokenGrantType::PreAuthorizedCode {
-                pre_authorized_code, ..
-            } => {
-                let Step::PreAuthorized(auth_state) = &self.state.current_step else {
-                    return Err(Error::ServerError("pre-authorized state not set".into()));
-                };
-                (Some(auth_state.authorized.clone()), None, pre_authorized_code)
-            }
+        // get authorization grants from state
+        let (mut authorized, scope) = match &self.state.current_step {
+            Step::Authorization(auth) => (auth.authorized.clone(), auth.scope.clone()),
+            Step::PreAuthorized(pre) => (Some(pre.authorized.clone()), None),
+            _ => return Err(Error::ServerError("could not get authorization state".into())),
         };
 
-        // prevent `auth_code` code reuse
-        StateStore::purge(provider, state_key)
-            .await
-            .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
+        // narrow token's authorization if requested by wallet
+        if let Some(auth_dets) = request.authorization_details
+            && let Some(authzd) = authorized
+        {
+            authorized = Some(reduce_auth(&authzd, &auth_dets));
+        };
 
         let access_token = gen::token();
         let c_nonce = gen::nonce();
@@ -189,6 +184,58 @@ impl Context {
             scope,
         })
     }
+}
+
+// Reduce previously authorized credentials to requested ones.
+fn reduce_auth(authorized: &[Authorized], requested: &[AuthorizationDetail]) -> Vec<Authorized> {
+    // filter authorized credentials to match requested ones
+    let subset: Vec<Authorized> = authorized
+        .iter()
+        .filter(|authzd| {
+            // find first matching requested credential
+            requested.iter().any(|reqd| {
+                // ignore non-OpenID authorization_detail entries
+                if reqd.type_ != AuthorizationDetailType::OpenIdCredential {
+                    return true;
+                }
+
+                match &reqd.specification {
+                    AuthorizationSpec::ConfigurationId(ConfigurationId::Definition {
+                        credential_configuration_id: requested_id,
+                        ..
+                    }) => {
+                        let AuthorizationSpec::ConfigurationId(ConfigurationId::Definition {
+                            credential_configuration_id,
+                            ..
+                        }) = &authzd.authorization_detail.specification
+                        else {
+                            return false;
+                        };
+
+                        requested_id == credential_configuration_id
+                    }
+
+                    AuthorizationSpec::Format(Format::JwtVcJson {
+                        credential_definition: requested_def,
+                    }) => {
+                        if let AuthorizationSpec::Format(Format::JwtVcJson {
+                            credential_definition: authorized_def,
+                        }) = &authzd.authorization_detail.specification
+                        {
+                            requested_def == authorized_def
+                        } else {
+                            false
+                        }
+                    }
+
+                    _ => todo!("remaining match arms"),
+                }
+            })
+        })
+        .cloned()
+        .collect();
+
+    subset
 }
 
 #[cfg(test)]
@@ -277,7 +324,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn authorization() {
+    async fn authorized() {
         vercre_test_utils::init_tracer();
         snapshot!("");
 
@@ -327,7 +374,7 @@ mod tests {
             serde_json::from_value::<TokenRequest>(value).expect("request should deserialize");
         let token_resp = token(provider.clone(), request).await.expect("response is valid");
 
-        assert_snapshot!("token:authorization:response", &token_resp, {
+        assert_snapshot!("token:authorized:response", &token_resp, {
             ".access_token" => "[access_token]",
             ".c_nonce" => "[c_nonce]"
         });
@@ -340,7 +387,7 @@ mod tests {
             .await
             .expect("state exists");
 
-        assert_snapshot!("token:authorization:state", state, {
+        assert_snapshot!("token:authorized:state", state, {
             ".expires_at" => "[expires_at]",
             ".current_step.access_token" => "[access_token]",
             ".current_step.c_nonce" => "[c_nonce]",
@@ -398,6 +445,20 @@ mod tests {
             "code": code,
             "code_verifier": verifier,
             "redirect_uri": "https://example.com",
+            // "authorization_details": json!([{
+            //     "type": "openid_credential",
+            //     "credential_configuration_id": "EmployeeID_JWT"
+            // }]).to_string(),
+            "authorization_details": json!([{
+                "type": "openid_credential",
+                "format": "jwt_vc_json",
+                "credential_definition": {
+                    "type": [
+                        "VerifiableCredential",
+                        "EmployeeIDCredential"
+                    ]
+                }
+            }]).to_string(),
         });
 
         let request =

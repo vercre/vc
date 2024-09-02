@@ -66,7 +66,6 @@
 // TODO: add support for "jwt_vc_json-ld" format
 // TODO: add support for "vc+sd-jwt" format
 // LATER: add support for "mso_mdoc" format
-// TODO: implement `Interval` and `SlowDown` checks/errors
 
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -303,8 +302,7 @@ impl Context {
     }
 
     fn verify_claims(
-        requested: &HashMap<String, ClaimEntry>,
-        supported: &Option<HashMap<String, ClaimEntry>>,
+        requested: &HashMap<String, ClaimEntry>, supported: &Option<HashMap<String, ClaimEntry>>,
     ) -> Result<()> {
         let Some(supp_claims) = &supported else {
             return Ok(());
