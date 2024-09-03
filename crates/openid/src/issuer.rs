@@ -479,25 +479,6 @@ pub struct AuthorizationDetail {
     #[serde(flatten)]
     pub specification: AuthorizationSpec,
 
-    // /// The detailed description of the credential type requested. At a minimum,
-    // /// the Credential Definition 'type' field MUST be set.
-    // /// REQUIRED when 'format' is "`jwt_vc_json`", "`jwt_vc_json`-ld", or "`ldp_vc`"
-    // /// AND `format` parameter is set. OPTIONAL otherwise.
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub credential_definition: Option<CredentialDefinition>,
-
-    // /// Contains the type values the Wallet requests authorization for at the Credential
-    // /// Issuer.
-    // /// REQUIRED if format is "`vc+sd-jwt`", otherwise, it MUST not be set.
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub vct: Option<String>,
-
-    // /// Used by the Wallet to indicate which claims it wants to be included in the
-    // /// issued Credential.
-    // /// OPTIONAL when format is "`vc+sd-jwt`", otherwise, it MUST not be set.
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub claims: Option<HashMap<String, ClaimDefinition>>,
-
     // TODO: integrate locations
     /// If the Credential Issuer metadata contains an `authorization_servers` parameter,
     /// the authorization detail's locations field MUST be set to the Credential Issuer

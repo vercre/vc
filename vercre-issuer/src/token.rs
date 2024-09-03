@@ -21,8 +21,8 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec, Authorized, ConfigurationId,
-    Format, Metadata, Provider, StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
+    AuthorizationDetail, AuthorizationSpec, Authorized, Format, Metadata, Provider, StateStore,
+    TokenGrantType, TokenRequest, TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
 
@@ -158,7 +158,11 @@ impl Context {
         if let Some(auth_dets) = request.authorization_details
             && let Some(authzd) = authorized
         {
-            authorized = Some(reduce_auth(&authzd, &auth_dets));
+            let reduced = reduce_auth(&authzd, &auth_dets);
+            if reduced.is_empty() {
+                return Err(Error::InvalidRequest("no matching authorization details".into()));
+            }
+            authorized = Some(reduced);
         };
 
         let access_token = gen::token();
@@ -186,56 +190,121 @@ impl Context {
     }
 }
 
+// // Reduce previously authorized credentials to requested ones.
+// fn reduce_auth(authorized: &[Authorized], requested: &[AuthorizationDetail]) -> Vec<Authorized> {
+//     // filter authorized credentials to match requested ones
+//     let subset: Vec<Authorized> = authorized
+//         .iter()
+//         .filter(|authzd| {
+//             // find first matching requested credential
+//             requested.iter().any(|reqd| {
+//                 // ignore non-OpenID authorization_detail entries
+//                 if reqd.type_ != AuthorizationDetailType::OpenIdCredential {
+//                     return true;
+//                 }
+
+//                 match &reqd.specification {
+//                     AuthorizationSpec::ConfigurationId(ConfigurationId::Definition {
+//                         credential_configuration_id: requested_id,
+//                         ..
+//                     }) => {
+//                         let AuthorizationSpec::ConfigurationId(ConfigurationId::Definition {
+//                             credential_configuration_id,
+//                             ..
+//                         }) = &authzd.authorization_detail.specification
+//                         else {
+//                             return false;
+//                         };
+
+//                         requested_id == credential_configuration_id
+//                     }
+//                     AuthorizationSpec::Format(Format::JwtVcJson {
+//                         credential_definition: requested_def,
+//                     }) => {
+//                         if let AuthorizationSpec::Format(Format::JwtVcJson {
+//                             credential_definition: authorized_def,
+//                         }) = &authzd.authorization_detail.specification
+//                         {
+//                             requested_def == authorized_def
+//                         } else {
+//                             false
+//                         }
+//                     }
+
+//                     _ => todo!("remaining match arms"),
+//                 }
+//             })
+//         })
+//         .cloned()
+//         .collect();
+
+//     subset
+// }
+
 // Reduce previously authorized credentials to requested ones.
 fn reduce_auth(authorized: &[Authorized], requested: &[AuthorizationDetail]) -> Vec<Authorized> {
-    // filter authorized credentials to match requested ones
-    let subset: Vec<Authorized> = authorized
-        .iter()
-        .filter(|authzd| {
-            // find first matching requested credential
-            requested.iter().any(|reqd| {
-                // ignore non-OpenID authorization_detail entries
-                if reqd.type_ != AuthorizationDetailType::OpenIdCredential {
-                    return true;
-                }
+    let mut subset = vec![];
 
-                match &reqd.specification {
-                    AuthorizationSpec::ConfigurationId(ConfigurationId::Definition {
-                        credential_configuration_id: requested_id,
-                        ..
-                    }) => {
-                        let AuthorizationSpec::ConfigurationId(ConfigurationId::Definition {
-                            credential_configuration_id,
-                            ..
-                        }) = &authzd.authorization_detail.specification
-                        else {
-                            return false;
-                        };
+    for reqd in requested {
+        // find `auth_det` in previously authorized
+        let Some(auth_det) =
+            authorized.iter().find(|authd| is_match(&authd.authorization_detail, reqd))
+        else {
+            continue;
+        };
 
-                        requested_id == credential_configuration_id
-                    }
-
-                    AuthorizationSpec::Format(Format::JwtVcJson {
-                        credential_definition: requested_def,
-                    }) => {
-                        if let AuthorizationSpec::Format(Format::JwtVcJson {
-                            credential_definition: authorized_def,
-                        }) = &authzd.authorization_detail.specification
-                        {
-                            requested_def == authorized_def
-                        } else {
-                            false
-                        }
-                    }
-
-                    _ => todo!("remaining match arms"),
-                }
-            })
-        })
-        .cloned()
-        .collect();
+        // add to subset
+        subset.push(auth_det.clone());
+    }
 
     subset
+}
+
+fn is_match(a: &AuthorizationDetail, b: &AuthorizationDetail) -> bool {
+    match &a.specification {
+        AuthorizationSpec::ConfigurationId(a_config) => {
+            let AuthorizationSpec::ConfigurationId(b_config) = &b.specification else {
+                return false;
+            };
+            a_config == b_config
+
+            // let a_id = match a_config {
+            //     ConfigurationId::Definition {
+            //         credential_configuration_id,
+            //         ..
+            //     }
+            //     | ConfigurationId::Claims {
+            //         credential_configuration_id,
+            //         ..
+            //     } => credential_configuration_id,
+            // };
+            // let b_id = match a_config {
+            //     ConfigurationId::Definition {
+            //         credential_configuration_id,
+            //         ..
+            //     }
+            //     | ConfigurationId::Claims {
+            //         credential_configuration_id,
+            //         ..
+            //     } => credential_configuration_id,
+            // };
+            // a_id == b_id
+        }
+
+        AuthorizationSpec::Format(Format::JwtVcJson {
+            credential_definition: a_def,
+        }) => {
+            let AuthorizationSpec::Format(Format::JwtVcJson {
+                credential_definition: b_def,
+            }) = &b.specification
+            else {
+                return false;
+            };
+            a_def == b_def
+        }
+
+        AuthorizationSpec::Format(_) => todo!("remaining match arms"),
+    }
 }
 
 #[cfg(test)]
