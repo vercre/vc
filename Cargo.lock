@@ -6271,9 +6271,21 @@ dependencies = [
  "vercre-core",
  "vercre-datasec",
  "vercre-did",
+ "vercre-macros",
  "vercre-openid",
  "vercre-test-utils",
  "vercre-w3c-vc",
+]
+
+[[package]]
+name = "vercre-macros"
+version = "0.1.0-alpha.6"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde_json",
+ "syn 2.0.77",
+ "vercre-openid",
 ]
 
 [[package]]
