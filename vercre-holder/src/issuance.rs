@@ -71,17 +71,9 @@ pub enum Status {
 
 /// Get and put issuance state information using the supplied provider.
 async fn get_issuance(provider: impl HolderProvider, id: &str) -> anyhow::Result<Issuance> {
-    let current_state = StateStore::get(&provider, id).await?;
-    let issuance = serde_json::from_slice::<Issuance>(&current_state)?;
-    Ok(issuance)
+    StateStore::get(&provider, id).await
 }
 
 async fn put_issuance(provider: impl HolderProvider, issuance: &Issuance) -> anyhow::Result<()> {
-    StateStore::put(
-        &provider,
-        &issuance.id,
-        serde_json::to_vec(&issuance)?,
-        DateTime::<Utc>::MAX_UTC,
-    )
-    .await
+    StateStore::put(&provider, &issuance.id, &issuance, DateTime::<Utc>::MAX_UTC).await
 }

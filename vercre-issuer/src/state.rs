@@ -1,14 +1,14 @@
 //! State is used by the library to persist request information between steps
 //! in the issuance process.
 
+use std::collections::HashMap;
+
 use chrono::{DateTime, TimeDelta, Utc};
-use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
-use vercre_openid::issuer::{CredentialRequest, TokenAuthorizationDetail};
-use vercre_openid::{Error, Result};
+use vercre_openid::issuer::{Authorized, CredentialOffer, CredentialRequest};
 
 pub enum Expire {
-    AuthCode,
+    Authorized,
     Access,
     Nonce,
 }
@@ -16,7 +16,7 @@ pub enum Expire {
 impl Expire {
     pub fn duration(&self) -> TimeDelta {
         match self {
-            Self::AuthCode => TimeDelta::try_minutes(5).unwrap_or_default(),
+            Self::Authorized => TimeDelta::try_minutes(5).unwrap_or_default(),
             Self::Access => TimeDelta::try_minutes(15).unwrap_or_default(),
             Self::Nonce => TimeDelta::try_minutes(10).unwrap_or_default(),
         }
@@ -25,145 +25,102 @@ impl Expire {
 
 /// State is used to persist request information between issuance steps
 /// for the Credential Issuer.
-#[derive(Builder, Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct State {
-    /// The time this state item should expire.
-    #[builder(default = "Utc::now() + Expire::Access.duration()")]
+    /// Time state should expire.
     pub expires_at: DateTime<Utc>,
 
-    /// The URL of the Credential Issuer.
-    pub credential_issuer: String,
-
-    /// The `client_id` of the Wallet requesting issuance.
+    /// Identifies the (previously authenticated) Holder in order that Issuer can
+    /// authorize credential issuance.
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(setter(into, strip_option), default)]
-    pub client_id: Option<String>,
-
-    /// Identifiers of credentials offered to/requested by the Wallet.
-    #[builder(default)]
-    pub credential_identifiers: Vec<String>,
-
-    /// The subject of the credential Holder.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(default)]
     pub subject_id: Option<String>,
 
-    /// Authorization state.
+    // Authorized credentials (configuration id and identifier).
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(default)]
-    pub auth: Option<Auth>,
+    pub credentials: Option<HashMap<String, String>>,
+
+    /// Credential Offer when offer made by reference.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_offer: Option<CredentialOffer>,
+
+    /// Step-specific issuance state.
+    pub current_step: Step,
+}
+
+impl State {
+    /// Determines whether state has expired or not.
+    pub fn is_expired(&self) -> bool {
+        self.expires_at.signed_duration_since(Utc::now()).num_seconds() < 0
+    }
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+#[allow(clippy::large_enum_variant)]
+pub enum Step {
+    #[default]
+    Unauthorized,
+
+    /// Pre-authorized state.
+    PreAuthorized(PreAuthorized),
+
+    /// Authorization state.
+    Authorization(Authorization),
 
     /// Token state.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(default)]
-    pub token: Option<Token>,
+    Token(Token),
 
-    /// Deferred step state.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(default)]
-    pub deferred: Option<Deferred>,
+    /// Deferred issuance state.
+    Deferred(Deferred),
 }
 
 /// `Auth` is used to store authorization state.
-#[derive(Builder, Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-#[builder(default)]
-pub struct Auth {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(setter(into, strip_option))]
-    pub redirect_uri: Option<String>,
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct PreAuthorized {
+    /// Lists credential identifiers that the Wallet is authorized to request.
+    pub authorized: Vec<Authorized>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(setter(into, strip_option))]
-    pub code_challenge: Option<String>,
+    pub tx_code: Option<String>,
+}
 
+/// `Auth` is used to store authorization state.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Authorization {
+    /// PKCE code challenge from the Authorization Request.
+    pub code_challenge: String,
+
+    /// PKCE code challenge method from the Authorization Request.
+    pub code_challenge_method: String,
+
+    /// Lists credential identifiers that the Wallet is authorized to request.
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(setter(into, strip_option))]
-    pub code_challenge_method: Option<String>,
+    pub authorized: Option<Vec<Authorized>>,
 
+    /// Lists credentials (as scope items) that the Wallet is authorized to request.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scope: Option<String>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub user_code: Option<String>,
+    /// The `client_id` of the Wallet requesting issuance.
+    pub client_id: String,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub authorization_details: Option<Vec<TokenAuthorizationDetail>>,
+    pub redirect_uri: Option<String>,
 }
 
 /// `Token` is used to store token state.
-#[derive(Builder, Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Token {
     /// The access token.
     #[allow(clippy::struct_field_names)]
     pub access_token: String,
-
-    /// The type of token issued (should be "Bearer")
-    #[allow(clippy::struct_field_names)]
-    #[builder(setter(into), default = "String::from(\"Bearer\")")]
-    pub token_type: String,
-
-    /// The refresh token, issued
-    #[allow(clippy::struct_field_names)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[builder(default)]
-    pub refresh_token: Option<String>,
 
     /// The nonce to be used by the Wallet when creating a proof of possession of
     /// the key proof.
     pub c_nonce: String,
 
     /// Number denoting the lifetime in seconds of the `c_nonce`.
-    #[builder(default = "Utc::now() + Expire::Nonce.duration()")]
     pub c_nonce_expires_at: DateTime<Utc>,
-}
-
-impl State {
-    /// Returns a new [`StateBuilder`], which can be used to build a [State]
-    #[must_use]
-    pub fn builder() -> StateBuilder {
-        StateBuilder::default()
-    }
-
-    /// Serializes this [`State`] object into a byte array.
-    pub fn to_vec(&self) -> Result<Vec<u8>> {
-        match serde_json::to_vec(self) {
-            Ok(res) => Ok(res),
-            Err(e) => Err(Error::ServerError(format!("issue serializing state: {e}"))),
-        }
-    }
-
-    pub fn from_slice(value: &[u8]) -> Result<Self> {
-        match serde_json::from_slice::<Self>(value) {
-            Ok(res) => {
-                if res.expired() {
-                    return Err(Error::InvalidRequest("state has expired".into()));
-                }
-                Ok(res)
-            }
-            Err(e) => Err(Error::ServerError(format!("failed to deserialize state: {e}"))),
-        }
-    }
-
-    /// Determines whether state has expired or not.
-    pub fn expired(&self) -> bool {
-        self.expires_at.signed_duration_since(Utc::now()).num_seconds() < 0
-    }
-}
-
-impl TryFrom<&[u8]> for State {
-    type Error = vercre_openid::Error;
-
-    fn try_from(value: &[u8]) -> Result<Self> {
-        Self::from_slice(value)
-    }
-}
-
-impl TryFrom<Vec<u8>> for State {
-    type Error = vercre_openid::Error;
-
-    fn try_from(value: Vec<u8>) -> Result<Self> {
-        Self::try_from(value.as_slice())
-    }
 }
 
 impl Token {
@@ -185,20 +142,4 @@ pub struct Deferred {
 
     /// Save the Credential request when issuance is deferred.
     pub credential_request: CredentialRequest,
-}
-
-impl Auth {
-    /// Returns a new [`AuthBuilder`], which can be used to build a [`State`]
-    #[must_use]
-    pub fn builder() -> AuthBuilder {
-        AuthBuilder::default()
-    }
-}
-
-impl Token {
-    /// Returns a new [`TokenBuilder`], which can be used to build a [`Token`]
-    #[must_use]
-    pub fn builder() -> TokenBuilder {
-        TokenBuilder::default()
-    }
 }

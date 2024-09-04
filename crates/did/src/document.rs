@@ -170,7 +170,7 @@ pub struct VerificationMethod {
 
 /// Verification method types. SHOULD be registered in the [DID Specification
 /// Registries](https://www.w3.org/TR/did-spec-registries).
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(tag = "type")]
 #[serde(rename_all_fields = "camelCase")]
 pub enum MethodType {
@@ -295,7 +295,7 @@ impl Display for PublicKeyFormat {
 }
 
 /// Cryptographic curve type.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub enum PublicKey {
     /// Public key encoded as a Multibase.
     #[serde(rename = "publicKeyMultibase")]

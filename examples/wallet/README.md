@@ -40,7 +40,7 @@ OFFER=$(echo $RESP | jq '.credential_offer' | jq -r @uri)
 open "openid-credential-offer://?credential_offer=$OFFER"
 
 # print user pin
-echo $RESP | jq '.user_code'
+echo $RESP | jq '.tx_code'
 ```
 
 The resultant link should look like:
@@ -108,7 +108,7 @@ RESP=$(curl --json '{
 echo $RESP | jq '.credential_offer'
 
 # print user pin
-echo $RESP | jq '.user_code'
+echo $RESP | jq '.tx_code'
 ```
 
 For presentation, run the presentation example service as above then

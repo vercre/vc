@@ -48,5 +48,4 @@ vercre-datasec.workspace = true
 
 [dev-dependencies]
 insta = { version = "1.39.0", features = ["filters", "json", "redactions", "yaml"] }
-reqwest = "0.12.5"
 tokio.workspace = true

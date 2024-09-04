@@ -102,7 +102,7 @@ pub enum Error {
 
     /// Requested credential format is not supported.
     #[error(r#"{{"error": "unsupported_credential_format", "error_description": "{0}"}}"#)]
-    UnsupportedCredentialFormat(String),
+    UnsupportedFormat(String),
 
     /// Credential Request did not contain a proof, or proof was invalid, i.e. it was
     /// not bound to a Credential Issuer provided `c_nonce`. The error response contains

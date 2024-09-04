@@ -1,0 +1,8 @@
+---
+source: vercre-issuer/src/authorize.rs
+assertion_line: 516
+expression: "&response"
+---
+code: "[code]"
+state: "1234"
+redirect_uri: "http://localhost:3000/callback"

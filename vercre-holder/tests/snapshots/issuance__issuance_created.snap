@@ -1,6 +1,6 @@
 ---
 source: vercre-holder/tests/issuance.rs
-assertion_line: 46
+assertion_line: 47
 expression: issuance
 ---
 issuance_id: "[issuance_id]"
@@ -47,13 +47,13 @@ offered:
           display:
             - name: Email
               locale: en-NZ
-        familyName:
+        family_name:
           mandatory: true
           value_type: string
           display:
             - name: Family name
               locale: en-NZ
-        givenName:
+        given_name:
           mandatory: true
           value_type: string
           display:

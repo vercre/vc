@@ -5,7 +5,7 @@ use std::sync::LazyLock;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::provider::CredentialStorer;
 use vercre_holder::{IssuanceStatus, OfferRequest, PinRequest};
-use vercre_issuer::{CreateOfferRequest, CredentialOfferType};
+use vercre_issuer::{CreateOfferRequest, OfferType, SendType};
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
 use crate::provider as holder;
@@ -20,17 +20,18 @@ static OFFER_REQUEST: LazyLock<CreateOfferRequest> = LazyLock::new(|| CreateOffe
     subject_id: Some(NORMAL_USER.into()),
     pre_authorize: true,
     tx_code_required: true,
+    send_type: SendType::ByVal,
 });
 
 #[tokio::test]
 async fn e2e_issuance() {
     // Use the issuance service endpoint to create a sample offer so we can get a valid
     // pre-auhorized code.
-    let offer_resp = vercre_issuer::create_offer(ISSUER_PROVIDER.clone(), &OFFER_REQUEST)
+    let offer_resp = vercre_issuer::create_offer(ISSUER_PROVIDER.clone(), OFFER_REQUEST.to_owned())
         .await
         .expect("should get offer");
 
-    let CredentialOfferType::Object(offer) = offer_resp.credential_offer else {
+    let OfferType::Object(offer) = offer_resp.offer_type else {
         panic!("expected CredentialOfferType::Object");
     };
 
@@ -42,6 +43,7 @@ async fn e2e_issuance() {
     let issuance = vercre_holder::offer(HOLDER_PROVIDER.clone(), &offer_req)
         .await
         .expect("should process offer");
+
     assert_snapshot!("issuance_created", issuance, {
         ".issuance_id" => "[issuance_id]",
         ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
@@ -51,15 +53,17 @@ async fn e2e_issuance() {
     let status = vercre_holder::accept(HOLDER_PROVIDER.clone(), issuance.issuance_id.clone())
         .await
         .expect("should accept offer");
+
     assert_eq!(status, IssuanceStatus::PendingPin);
 
     // Enter PIN
     let pin_req = PinRequest {
         id: issuance.issuance_id.clone(),
-        pin: offer_resp.user_code.expect("should have user code"),
+        pin: offer_resp.tx_code.expect("should have user code"),
     };
     let status =
         vercre_holder::pin(HOLDER_PROVIDER.clone(), &pin_req).await.expect("should apply pin");
+
     assert_eq!(status, IssuanceStatus::Accepted);
 
     // Get (and store) credentials
@@ -72,6 +76,7 @@ async fn e2e_issuance() {
         .expect("should retrieve all credentials");
 
     assert_eq!(credentials.len(), 1);
+
     assert_snapshot!("credentials", credentials, {
         "[0].vc.issuanceDate" => "[issuanceDate]",
         "[0].vc" => insta::sorted_redaction(),

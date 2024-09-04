@@ -53,7 +53,7 @@ pub fn state_key() -> String {
 
 /// Generates a use PIN code.
 #[must_use]
-pub fn user_code() -> String {
+pub fn tx_code() -> String {
     random_string(PIN_LEN, PIN_CHARS)
 }
 

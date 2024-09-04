@@ -14,6 +14,9 @@ pub mod proof;
 pub mod schema;
 pub mod status;
 
+pub use anyhow::anyhow;
+pub use vercre_did::{dereference, Resource};
+
 // TODO: move this macro to a more appropriate location (its own crate perhaps).
 // N.B. the current dependency tree is a little complex, so this is a temporary
 // solution that avoids cyclic dependencies.
@@ -33,18 +36,15 @@ pub mod status;
 #[macro_export]
 macro_rules! verify_key {
     ($resolver:expr) => {{
-        use anyhow::anyhow;
-        use vercre_did::Resource;
-
         // create local reference before moving into closure
         let resolver = $resolver;
 
         move |kid: String| async move {
-            let resp = vercre_did::dereference(&kid, None, resolver).await?;
-            let Some(Resource::VerificationMethod(vm)) = resp.content_stream else {
-                return Err(anyhow!("Verification method not found"));
+            let resp = $crate::dereference(&kid, None, resolver).await?;
+            let Some($crate::Resource::VerificationMethod(vm)) = resp.content_stream else {
+                return Err($crate::anyhow!("Verification method not found"));
             };
-            vm.method_type.jwk().map_err(|e| anyhow!("JWK not found: {e}"))
+            vm.method_type.jwk().map_err(|e| $crate::anyhow!("JWK not found: {e}"))
         }
     }};
 }

@@ -15,27 +15,24 @@ use crate::state::State;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn register(
-    provider: impl Provider, request: &RegistrationRequest,
+    provider: impl Provider, request: RegistrationRequest,
 ) -> Result<RegistrationResponse> {
-    verify(provider.clone(), request).await?;
-    process(provider, request).await
+    verify(&provider, &request).await?;
+    process(&provider, request).await
 }
 
-async fn verify(provider: impl Provider, request: &RegistrationRequest) -> Result<()> {
+async fn verify(provider: &impl Provider, request: &RegistrationRequest) -> Result<()> {
     tracing::debug!("register::verify");
 
     // verify state is still accessible (has not expired)
-    let buf = match StateStore::get(&provider, &request.access_token).await {
-        Ok(buf) => buf,
-        Err(e) => return Err(Error::ServerError(format!("State not found: {e}"))),
-    };
-    let _ = State::try_from(buf)?;
-
-    Ok(())
+    match StateStore::get::<State>(provider, &request.access_token).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(Error::ServerError(format!("State not found: {e}"))),
+    }
 }
 
 async fn process(
-    provider: impl Provider, request: &RegistrationRequest,
+    provider: &impl Provider, request: RegistrationRequest,
 ) -> Result<RegistrationResponse> {
     tracing::debug!("register::process");
 
@@ -54,32 +51,33 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER};
+    use vercre_test_utils::snapshot;
 
     use super::*;
-    use crate::state::{Expire, Token};
+    use crate::state::{Expire, Step, Token};
 
     #[tokio::test]
     async fn registration_ok() {
         vercre_test_utils::init_tracer();
+        snapshot!("");
 
         let provider = Provider::new();
         let access_token = "ABCDEF";
 
         // set up state
-        let mut state = State::builder()
-            .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credential_issuer(CREDENTIAL_ISSUER.to_string())
-            .build()
-            .expect("should build state");
+        let mut state = State {
+            expires_at: Utc::now() + Expire::Authorized.duration(),
+            ..State::default()
+        };
 
-        state.token = Some(Token {
+        state.current_step = Step::Token(Token {
             access_token: access_token.to_string(),
-            token_type: "Bearer".into(),
-            ..Default::default()
+            ..Token::default()
         });
 
-        let ser = state.to_vec().expect("should serialize");
-        StateStore::put(&provider, access_token, ser, state.expires_at).await.expect("state saved");
+        StateStore::put(&provider, access_token, &state, state.expires_at)
+            .await
+            .expect("state saved");
 
         let body = json!({
             "client_id": CLIENT_ID,
@@ -102,8 +100,8 @@ mod tests {
         request.credential_issuer = CREDENTIAL_ISSUER.to_string();
         request.access_token = access_token.to_string();
 
-        let response = register(provider, &request).await.expect("response is ok");
-        assert_snapshot!("response", response, {
+        let response = register(provider, request).await.expect("response is ok");
+        assert_snapshot!("register:registration_ok:response", response, {
             ".client_id" => "[client_id]",
         });
     }

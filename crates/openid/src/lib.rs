@@ -13,6 +13,8 @@ pub mod oauth;
 pub mod provider;
 pub mod verifier;
 
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 pub use self::error::Error;
@@ -28,7 +30,7 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 ///
 /// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq, Hash)]
-pub enum CredentialFormat {
+pub enum FormatProfile {
     /// A W3C Verifiable Credential.
     ///
     /// When this format is specified, Credential Offer, Authorization Details,
@@ -80,4 +82,17 @@ pub enum CredentialFormat {
     /// W3C Verifiable Credential.
     #[serde(rename = "jwt_vp_json")]
     JwtVpJson,
+}
+
+impl Display for FormatProfile {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::JwtVcJson => write!(f, "jwt_vc_json"),
+            Self::LdpVc => write!(f, "ldp_vc"),
+            Self::JwtVcJsonLd => write!(f, "jwt_vc_json-ld"),
+            Self::MsoDoc => write!(f, "mso_mdoc"),
+            Self::VcSdJwt => write!(f, "vc+sd-jwt"),
+            Self::JwtVpJson => write!(f, "jwt_vp_json"),
+        }
+    }
 }

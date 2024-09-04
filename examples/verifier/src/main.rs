@@ -36,7 +36,7 @@ async fn main() {
 
     let router = Router::new()
         .route("/create_request", post(create_request))
-        .route("/request/:client_state", get(request_object))
+        .route("/request/:object_id", get(request_object))
         .route("/callback", get(response))
         .route("/post", post(response))
         .layer(TraceLayer::new_for_http())
@@ -62,11 +62,11 @@ async fn create_request(
 #[axum::debug_handler]
 async fn request_object(
     State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
-    Path(client_state): Path<String>,
+    Path(object_id): Path<String>,
 ) -> AxResult<RequestObjectResponse> {
     let request = RequestObjectRequest {
         client_id: format!("http://{host}"),
-        state: client_state,
+        id: object_id,
     };
     vercre_verifier::request_object(provider, &request).await.into()
 }

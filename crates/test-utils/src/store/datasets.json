@@ -1,0 +1,26 @@
+{
+    "normal_user": {
+        "PHLEmployeeID": {
+            "configuration_id": "EmployeeID_JWT",
+            "claims": {
+                "given_name": "Normal",
+                "family_name": "Person",
+                "email": "normal.user@example.com",
+                "proficiency": "3"
+            },
+            "pending": false
+        }
+    },
+    "pending_user": {
+        "PHLEmployeeID": {
+            "configuration_id": "EmployeeID_JWT",
+            "claims": {
+                "given_name": "Pending",
+                "family_name": "Person",
+                "email": "pending.user@example.com",
+                "proficiency": "1"
+            },
+            "pending": true
+        }
+    }
+}

@@ -30,4 +30,3 @@ vercre-did.workspace = true
 vercre-openid.workspace = true
 
 [dev-dependencies]
-tokio.workspace = true
