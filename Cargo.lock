@@ -6301,6 +6301,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "vercre-status"
+version = "0.1.0-alpha.6"
+dependencies = [
+ "anyhow",
+ "vercre-core",
+ "vercre-w3c-vc",
+]
+
+[[package]]
 name = "vercre-test-utils"
 version = "0.1.0-alpha.6"
 dependencies = [
