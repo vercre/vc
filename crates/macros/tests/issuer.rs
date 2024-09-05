@@ -4,6 +4,13 @@ use vercre_openid::issuer::{CreateOfferRequest, SendType};
 #[test]
 fn test() {
     let x = create_offer!({
-        "input_1": "input1"
+        "credential_issuer": "http://vercre.io",
+        //"credential_configuration_ids": ["EmployeeID_JWT"],
+        "subject_id": "normal_user",
+        "pre-authorize": true,
+        "tx_code_required": true,
+        // "send_type": SendType::ByVal,
     });
+
+    println!("{:?}", x);
 }
