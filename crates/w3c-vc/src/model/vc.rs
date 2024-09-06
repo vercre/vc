@@ -7,7 +7,8 @@
 //! [Verifiable Credentials Data Model v1.1]: (https://www.w3.org/TR/vc-data-model)
 //! [implementation guidelines]: (https://model.github.io/vc-imp-guide)
 
-use std::clone::Clone;
+use std::fmt;
+use std::{clone::Clone, fmt::Display};
 use std::collections::HashMap;
 
 use anyhow::bail;
@@ -239,6 +240,16 @@ pub enum StatusPurpose {
     /// Used to convey an arbitrary message related to the status of the
     /// verifiable credential.
     Message,
+}
+
+impl Display for StatusPurpose {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Revocation => write!(f, "revocation"),
+            Self::Suspension => write!(f, "suspension"),
+            Self::Message => write!(f, "message"),
+        }
+    }
 }
 
 /// `StatusMessage` is used to convey an arbitrary status code and message

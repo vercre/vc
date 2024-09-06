@@ -6326,6 +6326,7 @@ dependencies = [
  "serde",
  "serde_json",
  "vercre-core",
+ "vercre-datasec",
  "vercre-w3c-vc",
 ]
 

@@ -7,12 +7,17 @@ use std::io::Write;
 
 use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded, Encoding};
-use bitvec::{bits, view::BitView};
+use bitvec::bits;
 use bitvec::order::Lsb0;
+use bitvec::view::BitView;
 use flate2::write::GzEncoder;
-use vercre_w3c_vc::model::StatusPurpose;
+use serde_json::{Map, Value};
+use vercre_datasec::Signer;
+use vercre_w3c_vc::model::{CredentialSubject, StatusPurpose, VcBuilder};
+use vercre_w3c_vc::proof::{self, Format, Payload};
 
-use crate::{config::ListConfig, log::StatusLogEntry};
+use crate::config::ListConfig;
+use crate::log::StatusLogEntry;
 
 // TODO: Configurable.
 // TODO: This is minimum length as per spec. May need to be configurable
@@ -24,6 +29,9 @@ use crate::{config::ListConfig, log::StatusLogEntry};
 // only support lists up to that length. Alternatively, we can re-use list
 // entries once a credential expires.
 const MAX_ENTRIES: usize = 131_072;
+
+/// Default time-to-live in milliseconds for a status list credential.
+pub const DEFAULT_TTL: u64 = 300_000;
 
 /// Generates a compressed, encoded bitstring representing the status list for
 /// the given issued credentials and the purpose implied by a list configuration.
@@ -48,9 +56,7 @@ const MAX_ENTRIES: usize = 131_072;
 /// credential issued or an update to the status of an existing one).
 //
 // TODO: Provide methods for updating the bitstring incrementally.
-pub fn generate_bitstring(
-    config: &ListConfig, issued: &[StatusLogEntry],
-) -> anyhow::Result<String> {
+pub fn bitstring(config: &ListConfig, issued: &[StatusLogEntry]) -> anyhow::Result<String> {
     let bits = bits![mut 0; MAX_ENTRIES];
     for entry in issued {
         for status in &entry.status {
@@ -85,4 +91,56 @@ pub fn generate_bitstring(
     let encoded = Base64UrlUnpadded::encode_string(&compressed);
 
     Ok(encoded)
+}
+
+/// Generates a bitstring status list credential for the given status type.
+///
+/// The credential is suitable for publishing on an endpoint for verifiers to
+/// check.
+///
+/// Requires the bitstring to be pre-generated. This allows for the implementer
+/// to use an efficient generation and/or maintenance method.
+/// 
+/// If `ttl` is not provided, a value of `DEFAULT_TTL` will be used.
+///
+/// Generates a credential in `jwt_vc_json` format with a `jwt` proof type.
+///
+/// # Errors
+///
+/// * verifiable credential building errors.
+/// * signing errors.
+pub async fn bitstring_credential(
+    credential_issuer: &str,
+    config: &ListConfig,
+    status_list_base_url: &str,
+    bitstring: &str,
+    ttl: Option<u64>,
+    signer: impl Signer,
+) -> anyhow::Result<String> {
+    let mut base_url = status_list_base_url.to_string();
+    if !base_url.ends_with('/') {
+        base_url.push('/');
+    }
+    let id = format!{"{base_url}/{}", config.list};
+
+    let mut claims = Map::new();
+    claims.insert("type".into(), Value::String("BitstringStatusList".into()));
+    claims.insert("purpose".into(), Value::String(config.purpose.to_string()));
+    claims.insert("encodedList".into(), Value::String(bitstring.into()));
+
+    let cache_time = ttl.unwrap_or(DEFAULT_TTL);
+    claims.insert("ttl".into(), Value::Number(cache_time.into()));
+
+    let vc = VcBuilder::new()
+        .id(id.clone())
+        .add_type("BitstringStatusListCredential")
+        .issuer(credential_issuer)
+        .add_subject(CredentialSubject {
+            id: Some(format!("{id}#list")),
+            claims,
+        })
+        .build()?;
+    let jwt = proof::create(Format::JwtVcJson, Payload::Vc(vc), signer).await?;
+
+    Ok(jwt)
 }

@@ -27,6 +27,7 @@ flate2 = "1.0.33"
 serde.workspace = true
 serde_json.workspace = true
 vercre-core.workspace = true
+vercre-datasec.workspace = true
 vercre-w3c-vc.workspace = true
 
 [dev-dependencies]
