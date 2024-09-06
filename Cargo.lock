@@ -6279,6 +6279,7 @@ dependencies = [
  "vercre-did",
  "vercre-macros",
  "vercre-openid",
+ "vercre-status",
  "vercre-test-utils",
  "vercre-w3c-vc",
 ]

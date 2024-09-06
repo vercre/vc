@@ -32,3 +32,13 @@ pub struct ListConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reference: Option<String>,
 }
+
+/// Configuration for the possible statuses a credential type can have.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct CredentialStatusConfig {
+    /// Credential type.
+    pub credential_type: String,
+
+    /// Configurations for the statuses this credential type can have.
+    pub status_list: Option<Vec<ListConfig>>,
+}
