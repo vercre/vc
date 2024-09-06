@@ -73,7 +73,7 @@ pub struct VerifiableCredential {
     /// Used to determine the status of the credential, such as whether it is
     /// suspended or revoked.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_status: Option<CredentialStatus>,
+    pub credential_status: Option<Quota<CredentialStatus>>,
 
     /// The credentialSchema defines the structure and datatypes of the
     /// credential. Consists of one or more schemas that can be used to
@@ -176,49 +176,54 @@ pub struct CredentialStatus {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "type")]
 pub enum CredentialStatusType {
-    /// A bit string credential status list method for checking credential
+    /// A bitstring credential status list method for checking credential
     /// status.
-    /// [Bitstring Status List v1.0](https://www.w3.org/TR/vc-bitstring-status-list/)
     #[serde(rename = "BitstringStatusListEntry", rename_all = "camelCase")]
-    Bitstring {
-        /// The purpose of the status declaration stored in the bitstring.
-        status_purpose: StatusPurpose,
-
-        /// The position of the status flag in the bitstring.
-        status_list_index: u64,
-
-        /// A URL to a verifiable credential. When dereferenced, the resulting
-        /// VC will have a type property that includes
-        /// `BitstringStatusListCredential`.
-        status_list_credential: String,
-
-        /// The size of the status entry in bits. If not present, the size is
-        /// assumed to be 1.
-        #[serde(skip_serializing_if = "Option::is_none")]
-        status_size: Option<u64>,
-
-        /// A list of arbitrary status codes and messages for the `Message`
-        /// status purpose.
-        #[serde(skip_serializing_if = "Option::is_none")]
-        status_message: Option<Vec<StatusMessage>>,
-
-        /// A URL to more information on the status method.
-        #[serde(skip_serializing_if = "Option::is_none")]
-        status_reference: Option<String>,
-    },
+    Bitstring(Bitstring),
 }
 
 impl Default for CredentialStatusType {
     fn default() -> Self {
-        Self::Bitstring {
+        Self::Bitstring(Bitstring {
             status_purpose: StatusPurpose::Revocation,
             status_list_index: 0,
             status_list_credential: String::new(),
             status_size: None,
             status_message: None,
             status_reference: None,
-        }
+        })
     }
+}
+
+/// `Bitstring` is a credential status method.
+///
+/// [Bitstring Status List v1.0](https://www.w3.org/TR/vc-bitstring-status-list/)
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Bitstring {
+    /// The purpose of the status declaration stored in the bitstring.
+    pub status_purpose: StatusPurpose,
+
+    /// The position of the status flag in the bitstring.
+    pub status_list_index: usize,
+
+    /// A URL to a verifiable credential. When dereferenced, the resulting
+    /// VC will have a type property that includes
+    /// `BitstringStatusListCredential`.
+    pub status_list_credential: String,
+
+    /// The size of the status entry in bits. If not present, the size is
+    /// assumed to be 1.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status_size: Option<usize>,
+
+    /// A list of arbitrary status codes and messages for the `Message`
+    /// status purpose.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status_message: Option<Vec<StatusMessage>>,
+
+    /// A URL to more information on the status method.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status_reference: Option<String>,
 }
 
 /// `StatusPurpose` defines the purpose of the issuer's credential status
