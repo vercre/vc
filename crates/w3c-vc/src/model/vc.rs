@@ -477,6 +477,13 @@ impl VcBuilder {
         self
     }
 
+    /// Sets the `credential_status` property.
+    #[must_use]
+    pub fn status(mut self, status: Option<Quota<CredentialStatus>>) -> Self {
+        self.vc.credential_status = status;
+        self
+    }
+
     /// Turns this builder into a [`VerifiableCredential`]
     ///
     /// # Errors

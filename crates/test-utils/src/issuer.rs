@@ -8,6 +8,7 @@ use vercre_did::{DidResolver, Document};
 use vercre_openid::issuer::{
     ClaimEntry, Client, Dataset, Issuer, Metadata, Result, Server, StateStore, Subject,
 };
+use vercre_status::Status;
 
 use crate::store::keystore::IssuerKeystore;
 use crate::store::{issuance, resolver, state};
@@ -138,3 +139,5 @@ impl Decryptor for IssuerSec {
         todo!()
     }
 }
+
+impl Status for Provider {}
