@@ -52,14 +52,13 @@ mod create_offer;
 macro_rules! create_offer_request {
     ({ $($json:tt)+ }) => {{
         let mut offer = $crate::issuer::CreateOfferRequest::default(); //serde_json::Map::new();
-        $crate::create_offer_internal!(@object offer () ($($json)+) ($($json)+));
+        $crate::internal_create_offer!(@object offer () ($($json)+) ($($json)+));
         offer
     }};
 }
 
 #[cfg(test)]
 mod tests {
-
     use crate::issuer::SendType;
 
     const CREDENTIAL_ISSUER: &str = "http://vercre.io";
