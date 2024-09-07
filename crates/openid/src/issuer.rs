@@ -114,7 +114,6 @@ pub struct CreateOfferRequest {
 
 /// Determines how the Credential Offer is sent to the Wallet.
 #[derive(Clone, Default, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
 pub enum SendType {
     /// The Credential Offer is sent to the Wallet by value — as an object containing
     /// the Credential Offer parameters.
@@ -124,6 +123,15 @@ pub enum SendType {
     /// The Credential Offer is sent to the Wallet by reference — as a string containing
     /// a URL pointing to a location where the offer can be retrieved.
     ByRef,
+}
+
+impl fmt::Display for SendType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ByVal => write!(f, "by_val"),
+            Self::ByRef => write!(f, "by_ref"),
+        }
+    }
 }
 
 /// The response to a Credential Offer request.

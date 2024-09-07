@@ -20,10 +20,11 @@ proc-macro = true
 workspace = true
 
 [dependencies]
-proc-macro2 = {version="1.0.86", features = ["proc-macro"]}
+proc-macro2 = { version = "1.0.86", features = ["proc-macro"] }
 quote = "1.0.37"
 serde_json.workspace = true
 syn = { version = "2.0.77", features = ["full"] }
+vercre-core.workspace = true
 vercre-openid.workspace = true
 
 [dev-dependencies]
