@@ -6285,6 +6285,7 @@ dependencies = [
  "quote",
  "serde_json",
  "syn 2.0.77",
+ "vercre-core",
  "vercre-openid",
 ]
 

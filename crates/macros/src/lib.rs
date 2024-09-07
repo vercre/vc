@@ -5,6 +5,8 @@
 
 mod create_offer;
 
+use create_offer::CreateOffer;
+use proc_macro::TokenStream;
 use syn::parse_macro_input;
 
 /// Generate a `CreateOfferRequest` from JSON.
@@ -22,6 +24,6 @@ use syn::parse_macro_input;
 /// });
 /// ```
 #[proc_macro]
-pub fn create_offer(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    create_offer::expand(&parse_macro_input!(input as create_offer::CreateOffer))
+pub fn create_offer(input: TokenStream) -> TokenStream {
+    create_offer::expand(&parse_macro_input!(input as CreateOffer)).into()
 }
