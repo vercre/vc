@@ -9,7 +9,6 @@
 
 mod error;
 pub mod issuer;
-mod macros;
 pub mod oauth;
 pub mod provider;
 pub mod verifier;

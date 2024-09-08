@@ -242,9 +242,9 @@ async fn process(
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use serde_json::json;
     use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
+    use vercre_macros::create_offer_request;
 
     use super::*;
 
@@ -256,7 +256,7 @@ mod tests {
         let provider = Provider::new();
 
         // create offer to 'send' to the app
-        let value = json!({
+        let request = create_offer_request!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "credential_configuration_ids": ["EmployeeID_JWT"],
             "subject_id": NORMAL_USER,
@@ -265,8 +265,6 @@ mod tests {
             "send_type": SendType::ByVal,
         });
 
-        let request = serde_json::from_value::<CreateOfferRequest>(value)
-            .expect("request should deserialize");
         let response = create_offer(provider.clone(), request).await.expect("response is ok");
 
         assert_snapshot!("create_offer:pre-authorized:response", &response, {
