@@ -8,8 +8,7 @@
 
 pub mod bitstring;
 mod config;
-mod issuer;
+pub mod issuer;
 mod log;
 mod provider;
-
-pub use issuer::Status;
+pub mod verifier;

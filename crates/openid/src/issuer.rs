@@ -14,7 +14,7 @@ use vercre_core::{stringify, Kind};
 use vercre_datasec::jose::jwk::PublicKeyJwk;
 use vercre_datasec::SecOps;
 use vercre_did::DidResolver;
-use vercre_status::Status;
+use vercre_status::issuer::Status;
 use vercre_w3c_vc::model::VerifiableCredential;
 
 pub use super::FormatProfile;

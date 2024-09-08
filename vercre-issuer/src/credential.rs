@@ -21,7 +21,7 @@ use vercre_openid::issuer::{
     SingleProof, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
-use vercre_status::Status;
+use vercre_status::issuer::Status;
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{self, Payload};
 use vercre_w3c_vc::verify_key;

@@ -8,7 +8,7 @@ use vercre_did::{DidResolver, Document};
 use vercre_openid::issuer::{
     ClaimEntry, Client, Dataset, Issuer, Metadata, Result, Server, StateStore, Subject,
 };
-use vercre_status::Status;
+use vercre_status::issuer::Status;
 
 use crate::store::keystore::IssuerKeystore;
 use crate::store::{issuance, resolver, state};

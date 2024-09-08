@@ -107,7 +107,7 @@ pub mod provider {
         ClaimDefinition, ClaimEntry, Client, Dataset, GrantType, Issuer, Metadata, Provider,
         Result, Server, StateStore, Subject,
     };
-    pub use vercre_status::Status;
+    pub use vercre_status::issuer::Status;
 }
 
 // use std::future::Future;
