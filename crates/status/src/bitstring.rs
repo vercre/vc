@@ -11,13 +11,29 @@ use bitvec::bits;
 use bitvec::order::Lsb0;
 use bitvec::view::BitView;
 use flate2::write::GzEncoder;
+use serde::Deserialize;
 use serde_json::{Map, Value};
+use thiserror::Error;
 use vercre_datasec::Signer;
 use vercre_w3c_vc::model::{CredentialSubject, StatusPurpose, VcBuilder};
 use vercre_w3c_vc::proof::{self, Format, Payload};
 
 use crate::config::ListConfig;
 use crate::log::StatusLogEntry;
+
+/// Standard error codes for bitstring-based status list validation.
+/// 
+/// The standard calls for returning strongly typed errors when a verifier
+/// attempts to validate a verifiable credential against a published status
+/// list.
+/// 
+/// [Processing Errors](https://www.w3.org/TR/vc-bitstring-status-list/#processing-errors)
+#[derive(Error, Debug, Deserialize)]
+pub enum Error {
+    /// A status list cannot be accessed from a supplied URL.
+    #[error(r#"{{"error": "128", "error_description": "{0}"}}"#)]
+    StatusRetrievalError(String)
+}
 
 // TODO: Configurable.
 // TODO: This is minimum length as per spec. May need to be configurable
