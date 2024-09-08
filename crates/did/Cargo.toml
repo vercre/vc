@@ -47,5 +47,5 @@ vercre-datasec.workspace = true
 # tracing.workspace = true
 
 [dev-dependencies]
-insta = { version = "1.39.0", features = ["filters", "json", "redactions", "yaml"] }
+insta = { version = "1.40.0", features = ["filters", "json", "redactions", "yaml"] }
 tokio.workspace = true

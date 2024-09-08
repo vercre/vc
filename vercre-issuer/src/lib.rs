@@ -120,6 +120,7 @@ pub use deferred::deferred;
 pub use metadata::metadata;
 pub use register::register;
 pub use token::token;
+pub use vercre_macros::create_offer_request;
 pub use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     AuthorizationResponse, AuthorizationSpec, Authorized, CreateOfferRequest, CreateOfferResponse,

@@ -6,7 +6,7 @@ fn create_offer() {
     const CREDENTIAL_ISSUER: &str = "http://vercre.io";
     let subject_id = "normal_user";
 
-    let x = create_offer_request!({
+    let request = create_offer_request!({
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": subject_id,
@@ -15,5 +15,5 @@ fn create_offer() {
         "send_type": SendType::ByVal,
     });
 
-    println!("{:?}", x);
+    println!("{:?}", request);
 }

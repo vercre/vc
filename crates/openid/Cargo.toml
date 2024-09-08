@@ -37,4 +37,4 @@ vercre-status.workspace = true
 vercre-w3c-vc.workspace = true
 
 [dev-dependencies]
-insta = { version = "1.39.0", features = ["filters", "redactions", "yaml"] }
+insta = { version = "1.40.0", features = ["filters", "redactions", "yaml"] }

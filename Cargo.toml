@@ -36,7 +36,7 @@ pedantic = "warn"
 nursery = "warn"
 
 [workspace.dependencies]
-anyhow = "1.0.86"
+anyhow = "1.0.87"
 assert_let_bind = "0.1.1"
 axum = { version = "0.7.5", features = ["macros"] }
 axum-extra = { version = "0.9.3", features = ["typed-header"] }
@@ -45,8 +45,8 @@ chrono = { version = "0.4.38", features = ["serde"] }
 derive_builder = "0.20.1"
 ecdsa = "0.16.9"
 futures = "0.3.30"
-insta = { version = "1.39.0", features = ["redactions", "yaml"] }
-serde = { version = "1.0.209", features = ["derive"] }
+insta = { version = "1.40.0", features = ["redactions", "yaml"] }
+serde = { version = "1.0.210", features = ["derive"] }
 serde_json = { version = "1.0.128", features = ["alloc"] }
 serde_qs = "0.13.0"
 tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"] }
