@@ -36,8 +36,8 @@ pub const DEFAULT_TTL: u64 = 300_000;
 /// Generates a compressed, encoded bitstring representing the status list for
 /// the given issued credentials and the purpose implied by a list configuration.
 ///
-/// #Errors
-///
+/// # Errors
+/// 
 /// Returns an error if there is a compression or encoding problem, or the
 /// provided status position is out of range of the bitstring size.
 ///
@@ -56,6 +56,7 @@ pub const DEFAULT_TTL: u64 = 300_000;
 /// credential issued or an update to the status of an existing one).
 //
 // TODO: Provide methods for updating the bitstring incrementally.
+#[allow(clippy::module_name_repetitions)]
 pub fn bitstring(config: &ListConfig, issued: &[StatusLogEntry]) -> anyhow::Result<String> {
     let bits = bits![mut 0; MAX_ENTRIES];
     for entry in issued {
@@ -100,7 +101,7 @@ pub fn bitstring(config: &ListConfig, issued: &[StatusLogEntry]) -> anyhow::Resu
 ///
 /// Requires the bitstring to be pre-generated. This allows for the implementer
 /// to use an efficient generation and/or maintenance method.
-/// 
+///
 /// If `ttl` is not provided, a value of `DEFAULT_TTL` will be used.
 ///
 /// Generates a credential in `jwt_vc_json` format with a `jwt` proof type.
@@ -109,19 +110,16 @@ pub fn bitstring(config: &ListConfig, issued: &[StatusLogEntry]) -> anyhow::Resu
 ///
 /// * verifiable credential building errors.
 /// * signing errors.
+#[allow(clippy::module_name_repetitions)]
 pub async fn bitstring_credential(
-    credential_issuer: &str,
-    config: &ListConfig,
-    status_list_base_url: &str,
-    bitstring: &str,
-    ttl: Option<u64>,
-    signer: impl Signer,
+    credential_issuer: &str, config: &ListConfig, status_list_base_url: &str, bitstring: &str,
+    ttl: Option<u64>, signer: impl Signer,
 ) -> anyhow::Result<String> {
     let mut base_url = status_list_base_url.to_string();
     if !base_url.ends_with('/') {
         base_url.push('/');
     }
-    let id = format!{"{base_url}/{}", config.list};
+    let id = format!("{base_url}/{}", config.list);
 
     let mut claims = Map::new();
     claims.insert("type".into(), Value::String("BitstringStatusList".into()));

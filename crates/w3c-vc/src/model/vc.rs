@@ -7,9 +7,10 @@
 //! [Verifiable Credentials Data Model v1.1]: (https://www.w3.org/TR/vc-data-model)
 //! [implementation guidelines]: (https://model.github.io/vc-imp-guide)
 
-use std::fmt;
-use std::{clone::Clone, fmt::Display};
+use std::clone::Clone;
 use std::collections::HashMap;
+use std::fmt;
+use std::fmt::Display;
 
 use anyhow::bail;
 use chrono::{DateTime, Utc};

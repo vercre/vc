@@ -24,7 +24,10 @@ pub use crate::provider::{self, Result, StateStore};
 // TODO: find a home for shared types
 
 /// Issuer Provider trait.
-pub trait Provider: Metadata + Subject + StateStore + SecOps + DidResolver + Status + Clone {}
+pub trait Provider:
+    Metadata + Subject + StateStore + SecOps + DidResolver + Status + Clone
+{
+}
 
 /// The `Metadata` trait is used by implementers to provide `Client`, `Issuer`, and
 /// `Server` metadata to the library.

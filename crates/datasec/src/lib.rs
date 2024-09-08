@@ -83,4 +83,3 @@ pub trait Decryptor: Send + Sync {
         &self, ciphertext: &[u8], sender_public_key: &[u8],
     ) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
 }
-

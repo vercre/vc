@@ -1,5 +1,5 @@
 //! # Status (Issuer)
-//! 
+//!
 //! Traits and types for managing the publication of a credential status as an
 //! issuer.
 
