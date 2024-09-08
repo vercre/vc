@@ -1,0 +1,12 @@
+---
+source: crates/macros/tests/create_offer.rs
+assertion_line: 21
+expression: "&request"
+---
+credential_issuer: "http://vercre.io"
+subject_id: normal_user
+credential_configuration_ids:
+  - EmployeeID_JWT
+pre-authorize: true
+tx_code_required: true
+send_type: ByVal

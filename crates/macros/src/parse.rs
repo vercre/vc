@@ -40,7 +40,7 @@ pub enum Value {
     #[default]
     Null,
     Bool(bool),
-    // Number(u64),
+    Number(u64),
     String(String),
     Array(Vec<Self>),
     // Object(HashMap<String, JsonValue>),
@@ -66,6 +66,8 @@ impl Parse for Value {
 
         let rhs = if l.peek(syn::LitStr) {
             Self::String(input.parse::<syn::LitStr>()?.value())
+        } else if l.peek(syn::LitInt) {
+            Self::Number(input.parse::<syn::LitInt>()?.base10_parse::<u64>()?)
         } else if l.peek(syn::LitBool) {
             Self::Bool(input.parse::<syn::LitBool>()?.value())
         } else if l.peek(token::Bracket) {
@@ -101,6 +103,7 @@ impl ToTokens for Value {
             Self::Null => tokens.extend(quote! { None }),
             Self::Bool(b) => tokens.extend(quote! { #b }),
             Self::String(s) => tokens.extend(quote! { #s }),
+            Self::Number(n) => tokens.extend(quote! { #n }),
             Self::Array(a) => {
                 let values = a.iter().map(|v| {
                     let mut tokens = TokenStream::new();
