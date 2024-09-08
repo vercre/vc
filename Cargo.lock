@@ -6208,6 +6208,7 @@ dependencies = [
  "flate2",
  "serde",
  "serde_json",
+ "thiserror",
  "vercre-core",
  "vercre-datasec",
  "vercre-w3c-vc",
