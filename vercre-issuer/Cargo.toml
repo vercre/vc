@@ -34,14 +34,14 @@ tracing.workspace = true
 vercre-core.workspace = true
 vercre-datasec.workspace = true
 vercre-did.workspace = true
+vercre-macros.workspace = true
 vercre-openid.workspace = true
 vercre-w3c-vc.workspace = true
 
 [dev-dependencies]
 assert_let_bind.workspace = true
-async-std = { version = "1.12.0", features = ["attributes"] }
+async-std = { version = "1.13.0", features = ["attributes"] }
 insta.workspace = true
 rstest = "0.22.0"
 tokio.workspace = true
-vercre-macros.workspace = true
 vercre-test-utils.workspace = true
