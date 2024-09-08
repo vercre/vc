@@ -1,0 +1,13 @@
+---
+source: crates/macros/tests/authorize.rs
+assertion_line: 27
+expression: "&request"
+---
+credential_issuer: "http://vercre.io"
+response_type: code
+client_id: 96bfb9cb-0513-7d64-5532-bed74c48f9ab
+redirect_uri: "http://localhost:3000/callback"
+state: "1234"
+code_challenge: ""
+code_challenge_method: S256
+subject_id: ""

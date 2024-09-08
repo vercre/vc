@@ -6169,11 +6169,10 @@ dependencies = [
 name = "vercre-macros"
 version = "0.1.0-alpha.6"
 dependencies = [
+ "insta",
  "proc-macro2",
  "quote",
- "serde_json",
  "syn 2.0.77",
- "vercre-core",
  "vercre-openid",
 ]
 

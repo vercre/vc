@@ -1,3 +1,4 @@
+use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_macros::create_offer_request;
 use vercre_openid::issuer::{CreateOfferRequest, SendType};
 
@@ -16,4 +17,5 @@ fn create_offer() {
     });
 
     println!("{:?}", request);
+    assert_snapshot!("pre-authorized", &request);
 }
