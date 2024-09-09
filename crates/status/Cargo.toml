@@ -1,7 +1,8 @@
 [package]
-name = "vercre-test-utils"
-description = "Test utilities"
+name = "vercre-status"
+description = "W3C compliant Verifiable Credential status API used by an Issuer to publish credential status information and by a Verifier to check the status of a credential"
 license = "MIT OR Apache-2.0"
+readme = "README.md"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -13,21 +14,21 @@ rust-version.workspace = true
 version.workspace = true
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+# crate-type = ["cdylib", "rlib"]
+
+[lints]
+workspace = true
 
 [dependencies]
 anyhow.workspace = true
 base64ct.workspace = true
-chrono.workspace = true
-ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
+bitvec = "1.0.1"
+flate2 = "1.0.33"
 serde.workspace = true
 serde_json.workspace = true
-tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
-tracing.workspace = true
-uuid.workspace = true
+thiserror = "1.0.63"
+vercre-core.workspace = true
 vercre-datasec.workspace = true
-vercre-did.workspace = true
-vercre-openid.workspace = true
-vercre-status.workspace = true
+vercre-w3c-vc.workspace = true
 
 [dev-dependencies]

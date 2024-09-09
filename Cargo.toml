@@ -62,6 +62,7 @@ vercre-holder = { path = "vercre-holder", version = "0.1.0-alpha.6" }
 vercre-issuer = { path = "vercre-issuer", version = "0.1.0-alpha.6" }
 vercre-macros = { path = "crates/macros" }
 vercre-openid = { path = "crates/openid", version = "0.1.0-alpha.6" }
+vercre-status = { path = "crates/status", version = "0.1.0-alpha.6" }
 vercre-test-utils = { path = "crates/test-utils", version = "0.1.0-alpha.6" }
 vercre-verifier = { path = "vercre-verifier", version = "0.1.0-alpha.6" }
 vercre-w3c-vc = { path = "crates/w3c-vc", version = "0.1.0-alpha.6" }

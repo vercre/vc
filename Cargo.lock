@@ -6160,6 +6160,7 @@ dependencies = [
  "vercre-did",
  "vercre-macros",
  "vercre-openid",
+ "vercre-status",
  "vercre-test-utils",
  "vercre-w3c-vc",
 ]
@@ -6195,6 +6196,23 @@ dependencies = [
  "vercre-datasec",
  "vercre-did",
  "vercre-dif-exch",
+ "vercre-status",
+ "vercre-w3c-vc",
+]
+
+[[package]]
+name = "vercre-status"
+version = "0.1.0-alpha.6"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "bitvec",
+ "flate2",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "vercre-core",
+ "vercre-datasec",
  "vercre-w3c-vc",
 ]
 
@@ -6214,6 +6232,7 @@ dependencies = [
  "vercre-datasec",
  "vercre-did",
  "vercre-openid",
+ "vercre-status",
 ]
 
 [[package]]

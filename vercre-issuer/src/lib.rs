@@ -107,6 +107,7 @@ pub mod provider {
         ClaimDefinition, ClaimEntry, Client, Dataset, GrantType, Issuer, Metadata, Provider,
         Result, Server, StateStore, Subject,
     };
+    pub use vercre_status::issuer::Status;
 }
 
 // use std::future::Future;
@@ -131,6 +132,9 @@ pub use vercre_openid::issuer::{
     TxCode,
 };
 pub use vercre_openid::Result;
+pub use vercre_w3c_vc::model::{
+    Bitstring, CredentialStatus, CredentialStatusType, StatusMessage, StatusPurpose,
+};
 
 // async fn shell<'a, P, R, U, E, F, Fut>(provider: P, request: &'a R, handler: F) -> Result<U, E>
 // where

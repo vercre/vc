@@ -21,6 +21,7 @@ use vercre_openid::issuer::{
     SingleProof, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
+use vercre_status::issuer::Status;
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{self, Payload};
 use vercre_w3c_vc::verify_key;
@@ -278,6 +279,11 @@ impl Context {
             return Err(Error::ServerError("Credential type not set".into()));
         };
 
+        // Provider supplies status lookup information
+        let status = Status::status(provider, subject_id, credential_identifier)
+            .await
+            .map_err(|e| Error::ServerError(format!("issue populating credential status: {e}")))?;
+
         let vc = VerifiableCredential::builder()
             .add_context(Kind::String(format!("{credential_issuer}/credentials/v1")))
             // TODO: generate credential id
@@ -288,6 +294,7 @@ impl Context {
                 id: Some(self.holder_did.clone()),
                 claims: dataset.claims,
             })
+            .status(status)
             .build()
             .map_err(|e| Error::ServerError(format!("issue building VC: {e}")))?;
 
