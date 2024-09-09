@@ -1,4 +1,6 @@
+use base64ct::{Base64UrlUnpadded, Encoding};
 use insta::assert_yaml_snapshot as assert_snapshot;
+use sha2::{Digest, Sha256};
 use vercre_macros::authorization_request;
 
 const CREDENTIAL_ISSUER: &str = "http://vercre.io";
@@ -13,7 +15,7 @@ fn configuration_id() {
         "client_id": CLIENT_ID,
         "redirect_uri": "http://localhost:3000/callback",
         "state": "1234",
-        // "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+        "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
         "code_challenge_method": "S256",
         "authorization_details": [{
             "type": "openid_credential",
@@ -23,8 +25,9 @@ fn configuration_id() {
         "wallet_issuer": CREDENTIAL_ISSUER
     });
 
-    println!("{:?}", request);
-    assert_snapshot!("configuration_id", &request);
+    assert_snapshot!("configuration_id", &request, {
+        ".code_challenge" => "[base64]"
+    });
 }
 
 // #[test]

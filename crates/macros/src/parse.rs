@@ -4,10 +4,10 @@ use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::parse::{Parse, ParseStream}; // Error,
 use syn::punctuated::{Pair, Punctuated};
-use syn::{braced, bracketed, token, Result};
+use syn::{braced, bracketed, token, Result, Token};
 
 #[derive(Default)]
-pub struct Data {
+pub struct Json {
     pub fields: HashMap<String, Value>,
 }
 
@@ -16,7 +16,7 @@ struct Field {
     rhs: Value,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default)]
 pub enum Value {
     #[default]
     Null,
@@ -26,31 +26,36 @@ pub enum Value {
     Array(Vec<Self>),
     Object(HashMap<String, Self>),
     Ident(syn::Ident),
-    Enum(syn::Ident, syn::Ident),
+    Tokens(TokenStream),
 }
 
-impl Parse for Data {
+// Parse the macro contents into a Data struct.
+impl Parse for Json {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
-        let mut data = Self::default();
+        let mut json = Self::default();
 
+        // all our content should be wrapped in braces
         if input.peek(token::Brace) {
             let content;
             braced!(content in input);
 
+            // parse key-value pairs into fields
             let fields = Punctuated::<Field, token::Comma>::parse_terminated(&content)?;
             for field in fields.into_pairs() {
                 let field = field.into_value();
-                data.fields.insert(field.lhs, field.rhs);
+                json.fields.insert(field.lhs, field.rhs);
             }
         }
 
-        Ok(data)
+        Ok(json)
     }
 }
 
+// Parse key-value pair into a Field.
 impl Parse for Field {
     fn parse(input: ParseStream) -> Result<Self> {
         let lhs = input.parse::<syn::LitStr>()?;
+        // chomp colon
         input.parse::<token::Colon>()?;
 
         Ok(Self {
@@ -60,6 +65,7 @@ impl Parse for Field {
     }
 }
 
+// Parse RHS of key-value pair into a Value.
 impl Parse for Value {
     fn parse(input: ParseStream) -> Result<Self> {
         let l = input.lookahead1();
@@ -87,20 +93,11 @@ impl Parse for Value {
             let items = Punctuated::<Self, token::Comma>::parse_terminated(&contents)?;
             let values = items.into_pairs().map(Pair::into_value).collect();
             Self::Array(values)
+        } else if l.peek(syn::Ident) && input.peek2(Token![::]) {
+            Self::Tokens(input.parse::<syn::Expr>()?.to_token_stream())
         } else if l.peek(syn::Ident) {
-            let ident = input.parse::<syn::Ident>()?;
-
-            // is this an enum variant?
-            let l = input.lookahead1();
-            if l.peek(token::PathSep) {
-                input.parse::<token::PathSep>()?;
-                let variant = input.parse::<syn::Ident>()?;
-                Self::Enum(ident, variant)
-            } else {
-                Self::Ident(ident)
-            }
+            Self::Ident(input.parse::<syn::Ident>()?)
         } else {
-            // dump(input)?;
             return Err(input.error("unexpected token"));
         };
 
@@ -108,6 +105,7 @@ impl Parse for Value {
     }
 }
 
+// Implement ToTokens for Value to generate the corresponding Rust code.
 impl ToTokens for Value {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         match self {
@@ -132,11 +130,12 @@ impl ToTokens for Value {
                 tokens.extend(quote! { #(#fields),* });
             }
             Self::Ident(i) => tokens.extend(quote! { #i.to_string() }),
-            Self::Enum(i, v) => tokens.extend(quote! { #i::#v }),
+            Self::Tokens(t) => tokens.extend(t.clone()),
         }
     }
 }
 
+// Dump out remainder of input stream for debugging
 #[allow(dead_code)]
 fn dump(input: ParseStream) -> Result<()> {
     input.step(|cursor| {

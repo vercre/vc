@@ -2,12 +2,14 @@ use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::parse::{Error, Result};
 
-use crate::parse::{Data, Value};
+use crate::parse::{Json, Value};
 
-pub fn request(input: &Data) -> Result<TokenStream> {
+pub fn request(input: &Json) -> Result<TokenStream> {
     // when returning an Option<_> token
     let none = || quote! {None};
     let some = |v: Value| quote! {#v.into()};
+    let path = quote! {vercre_openid::issuer};
+
     let span = Span::call_site();
 
     // remove fields as we go so we can check for unexpected input
@@ -23,17 +25,18 @@ pub fn request(input: &Data) -> Result<TokenStream> {
     let Some(client_id) = fields.remove("client_id") else {
         return Err(Error::new(span, "`client_id` is not set"));
     };
+
     let redirect_uri = fields.remove("redirect_uri").map_or_else(none, some);
     let state = fields.remove("state").map_or_else(none, some);
 
-    //  let code_challenge = fields.remove("code_challenge").unwrap();
+    let Some(code_challenge) = fields.remove("code_challenge") else {
+        return Err(Error::new(span, "`code_challenge` is not set"));
+    };
     let Some(code_challenge_method) = fields.remove("code_challenge_method") else {
         return Err(Error::new(span, "`code_challenge_method` is not set"));
     };
 
-    let mut authorization_details = TokenStream::new();
-
-    if let Some(details) = fields.remove("authorization_details") {
+    let authorization_details = if let Some(details) = fields.remove("authorization_details") {
         let Value::Array(details) = details else {
             return Err(Error::new(span, "`authorization_details` must be an array"));
         };
@@ -41,33 +44,41 @@ pub fn request(input: &Data) -> Result<TokenStream> {
         let mut tokens = TokenStream::new();
 
         for detail in details {
-            let Value::Object(mut detail) = detail else {
+            let Value::Object(detail) = detail else {
                 return Err(Error::new(span, "`authorization_details` must be an object"));
             };
-            // let Some(type_) = detail.remove("type") else {
-            //     return Err(Error::new(span, "`type` is not set"));
-            // };
-            let Some(credential_configuration_id) = detail.remove("credential_configuration_id")
-            else {
-                return Err(Error::new(span, "`credential_configuration_id` is not set"));
-            };
+
+            // check type is set and is `openid_credential`
+            if let Some(type_) = detail.get("type") {
+                if let Value::String(t) = type_
+                    && t != "openid_credential"
+                {
+                    return Err(Error::new(span, "`type` must be `openid_credential`"));
+                }
+            } else {
+                return Err(Error::new(span, "`type` is not set"));
+            }
+
+            let credential_configuration_id = &detail["credential_configuration_id"];
 
             tokens.extend(quote! {
-                vercre_openid::issuer::AuthorizationDetail {
-                    type_: vercre_openid::issuer::AuthorizationDetailType::OpenIdCredential,
-                    specification: vercre_openid::issuer::AuthorizationSpec::ConfigurationId(vercre_openid::issuer::ConfigurationId::Definition {
-                        credential_configuration_id: #credential_configuration_id,
-                        credential_definition: None,
-                    }),
+                #path::AuthorizationDetail {
+                    type_: #path::AuthorizationDetailType::OpenIdCredential,
+                    specification: #path::AuthorizationSpec::ConfigurationId (
+                        #path::ConfigurationId::Definition {
+                            credential_configuration_id: #credential_configuration_id,
+                            credential_definition: None,
+                        }
+                    ),
                     locations: None
                 }
             });
         }
 
-        authorization_details.extend(quote! {Some(vec![#tokens])});
+        quote! {Some(vec![#tokens])}
     } else {
-        authorization_details.extend(quote! {None});
-    }
+        quote! {None}
+    };
 
     let scope = fields.remove("scope").map_or_else(none, some);
     let resource = fields.remove("resource").map_or_else(none, some);
@@ -85,13 +96,13 @@ pub fn request(input: &Data) -> Result<TokenStream> {
     }
 
     Ok(quote! {
-        vercre_openid::issuer::AuthorizationRequest {
+        #path::AuthorizationRequest {
             credential_issuer: #credential_issuer,
             response_type: #response_type,
             client_id: #client_id,
             redirect_uri: #redirect_uri,
             state: #state,
-            // code_challenge: #code_challenge,
+            code_challenge: #code_challenge,
             code_challenge_method: #code_challenge_method,
             scope: #scope,
             resource: #resource,
