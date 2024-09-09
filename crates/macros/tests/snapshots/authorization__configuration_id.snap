@@ -1,5 +1,5 @@
 ---
-source: crates/macros/tests/authorize.rs
+source: crates/macros/tests/authorization.rs
 assertion_line: 31
 expression: "&request"
 ---

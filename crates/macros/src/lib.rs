@@ -3,7 +3,8 @@
 //! This crate provides common utilities for the Vercre project and is not intended to be used
 //! directly.
 
-mod issuer;
+mod create_offer;
+mod authorization;
 mod parse;
 
 use parse::Data;
@@ -31,7 +32,7 @@ use syn::{parse_macro_input, Error};
 /// ```
 #[proc_macro]
 pub fn create_offer_request(input: TokenStream) -> TokenStream {
-    issuer::create_offer_request(&parse_macro_input!(input as Data))
+    create_offer::request(&parse_macro_input!(input as Data))
         .unwrap_or_else(Error::into_compile_error)
         .into()
 }
@@ -57,7 +58,7 @@ pub fn create_offer_request(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro]
 pub fn authorization_request(input: TokenStream) -> TokenStream {
-    issuer::authorization_request(&parse_macro_input!(input as Data))
+    authorization::request(&parse_macro_input!(input as Data))
         .unwrap_or_else(Error::into_compile_error)
         .into()
 }

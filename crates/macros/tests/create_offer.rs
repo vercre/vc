@@ -19,12 +19,12 @@ fn create_offer() {
     assert_snapshot!("pre-authorized", &request);
 }
 
-// #[test]
-// fn create_offer_default() {
-//     let request = create_offer_request!({
-//         "credential_issuer": "http://vercre.io",
-//         "credential_configuration_ids": ["EmployeeID_JWT"],
-//     });
+#[test]
+fn create_offer_default() {
+    let request = create_offer_request!({
+        "credential_issuer": "http://vercre.io",
+        "credential_configuration_ids": ["EmployeeID_JWT"],
+    });
 
-//     assert_snapshot!("default", &request);
-// }
+    assert_snapshot!("default", &request);
+}
