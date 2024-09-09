@@ -12,7 +12,6 @@
 pub mod model;
 pub mod proof;
 pub mod schema;
-pub mod status;
 
 pub use anyhow::anyhow;
 pub use vercre_did::{dereference, Resource};
