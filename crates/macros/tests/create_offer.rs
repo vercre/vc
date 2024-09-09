@@ -1,6 +1,6 @@
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_macros::create_offer_request;
-use vercre_openid::issuer::{CreateOfferRequest, SendType};
+use vercre_openid::issuer::SendType;
 
 #[test]
 fn create_offer() {
@@ -21,7 +21,6 @@ fn create_offer() {
 
 #[test]
 fn create_offer_default() {
-
     let request = create_offer_request!({
         "credential_issuer": "http://vercre.io",
         "credential_configuration_ids": ["EmployeeID_JWT"],
