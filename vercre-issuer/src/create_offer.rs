@@ -242,9 +242,9 @@ async fn process(
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use vercre_macros::create_offer_request;
     use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
-    use vercre_macros::create_offer_request;
 
     use super::*;
 
