@@ -1,6 +1,6 @@
 ---
 source: crates/macros/tests/authorize.rs
-assertion_line: 27
+assertion_line: 28
 expression: "&request"
 ---
 credential_issuer: "http://vercre.io"
@@ -10,4 +10,5 @@ redirect_uri: "http://localhost:3000/callback"
 state: "1234"
 code_challenge: ""
 code_challenge_method: S256
-subject_id: ""
+subject_id: normal_user
+wallet_issuer: "http://vercre.io"
