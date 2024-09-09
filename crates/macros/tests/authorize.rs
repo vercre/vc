@@ -4,6 +4,7 @@ use vercre_openid::issuer::AuthorizationRequest;
 
 const CREDENTIAL_ISSUER: &str = "http://vercre.io";
 const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
+const NORMAL_USER: &str = "normal_user";
 
 #[test]
 fn configuration_id() {
@@ -19,8 +20,8 @@ fn configuration_id() {
         //     "type": "openid_credential",
         //     "credential_configuration_id": "EmployeeID_JWT"
         // }]).to_string(),
-        // "subject_id": NORMAL_USER,
-        // "wallet_issuer": CREDENTIAL_ISSUER
+        "subject_id": NORMAL_USER,
+        "wallet_issuer": CREDENTIAL_ISSUER
     });
 
     println!("{:?}", request);

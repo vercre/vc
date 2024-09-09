@@ -35,7 +35,7 @@ struct Field {
     rhs: Value,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub enum Value {
     #[default]
     Null,
@@ -45,7 +45,7 @@ pub enum Value {
     Array(Vec<Self>),
     // Object(HashMap<String, JsonValue>),
     Ident(syn::Ident),
-    Enum(syn::Ident, syn::Variant),
+    Enum(syn::Ident, syn::Ident),
 }
 
 impl Parse for Field {
@@ -83,7 +83,7 @@ impl Parse for Value {
             let l = input.lookahead1();
             if l.peek(token::PathSep) {
                 input.parse::<token::PathSep>()?;
-                let variant = input.parse::<syn::Variant>()?;
+                let variant = input.parse::<syn::Ident>()?;
                 Self::Enum(ident, variant)
             } else {
                 Self::Ident(ident)
@@ -102,7 +102,7 @@ impl ToTokens for Value {
         match self {
             Self::Null => tokens.extend(quote! { None }),
             Self::Bool(b) => tokens.extend(quote! { #b }),
-            Self::String(s) => tokens.extend(quote! { #s }),
+            Self::String(s) => tokens.extend(quote! { #s.to_string() }),
             Self::Number(n) => tokens.extend(quote! { #n }),
             Self::Array(a) => {
                 let values = a.iter().map(|v| {
@@ -112,7 +112,7 @@ impl ToTokens for Value {
                 });
                 tokens.extend(quote! { vec![#(#values),*] });
             }
-            Self::Ident(i) => tokens.extend(quote! { #i }),
+            Self::Ident(i) => tokens.extend(quote! { #i.to_string() }),
             Self::Enum(i, v) => tokens.extend(quote! { #i::#v }),
         }
     }
