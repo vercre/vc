@@ -65,7 +65,7 @@ impl Parse for Field {
     }
 }
 
-// Parse RHS of key-value pair into a Value.
+// Parse the RHS of key-value pair into a Value.
 impl Parse for Value {
     fn parse(input: ParseStream) -> Result<Self> {
         let l = input.lookahead1();
@@ -78,6 +78,7 @@ impl Parse for Value {
         } else if l.peek(syn::LitBool) {
             Self::Bool(input.parse::<syn::LitBool>()?.value())
         } else if l.peek(token::Brace) {
+            // parse object
             let mut data = HashMap::new();
             let content;
             braced!(content in input);
@@ -88,14 +89,17 @@ impl Parse for Value {
             }
             Self::Object(data)
         } else if l.peek(token::Bracket) {
+            // parse array
             let contents;
             bracketed!(contents in input);
             let items = Punctuated::<Self, token::Comma>::parse_terminated(&contents)?;
             let values = items.into_pairs().map(Pair::into_value).collect();
             Self::Array(values)
-        } else if l.peek(syn::Ident) && input.peek2(Token![::]) {
+        } else if l.peek(syn::Ident) && (input.peek2(Token!(::)) || input.peek2(token::Paren)) {
+            // parse enum variant or method call
             Self::Tokens(input.parse::<syn::Expr>()?.to_token_stream())
         } else if l.peek(syn::Ident) {
+            // parse const or variable
             Self::Ident(input.parse::<syn::Ident>()?)
         } else {
             return Err(input.error("unexpected token"));
