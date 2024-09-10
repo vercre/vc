@@ -91,7 +91,7 @@ pub struct ValidationError {
     /// Type of error in URL format.
     /// 
     /// The type value of the error object MUST be a URL that starts with the
-    /// value https://www.w3.org/ns/credentials/status-list# and ends with the
+    /// value `https://www.w3.org/ns/credentials/status-list#` and ends with the
     /// value in the section listed below.
     #[serde(rename = "type")]
     pub type_: String,
@@ -234,7 +234,7 @@ pub async fn credential(
 /// 
 /// Will return a specific `ValidationError` if the status list is not resolved
 /// or processing the status list fails for the given `CredentialStatus`.
-pub async fn validate(_resolver: impl verifier::Status, _status: &CredentialStatus) -> Result<bool, Error> {
+pub fn validate(_resolver: &impl verifier::Status, _status: &CredentialStatus) -> Result<bool, Error> {
     // The following process, or one generating the exact output, MUST be followed when validating a verifiable credential that is contained in a BitstringStatusListCredential. The algorithm takes a status list verifiable credential as input and either throws an error or returns a status list credential as output.
 
     // Let credentialToValidate be a verifiable credential containing a credentialStatus entry that is a BitstringStatusListEntry.
