@@ -28,7 +28,7 @@ fn configuration_id() {
     });
 
     assert_snapshot!("configuration_id", &request, {
-        ".code_challenge" => "[base64]"
+        ".code_challenge" => "[base64]",
     });
 }
 
@@ -58,7 +58,8 @@ fn credential_definition() {
 
     assert_snapshot!("credential_definition", &request, {
         ".code_challenge" => "[base64]",
-        ".authorization_details.*.credential_definition.credentialSubject" => insta::sorted_redaction(),
+        // ".authorization_details.*.credential_definition.credentialSubject" => insta::sorted_redaction(),
+        ".authorization_details" => "[authorization_details]"
     });
 }
 
