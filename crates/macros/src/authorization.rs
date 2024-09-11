@@ -5,58 +5,41 @@ use syn::parse::{Error, Result};
 use crate::parse::{Json, Value};
 
 pub fn request(input: &Json) -> Result<TokenStream> {
-    // when returning an Option<_> token
-    let none = || quote! {None};
-    let some = |v: Value| quote! {#v.into()};
-    let path = quote! {vercre_openid::issuer};
+    // we remove fields as we go so we can check for unexpected input
+    let mut input1 = input.clone();
 
-    let span = Span::call_site();
+    // required fields — return error if not present
+    let credential_issuer = input1.expect("credential_issuer")?;
+    let response_type = input1.expect("response_type")?;
+    let client_id = input1.expect("client_id")?;
+    let code_challenge = input1.expect("code_challenge")?;
+    let code_challenge_method = input1.expect("code_challenge_method")?;
+    let subject_id = input1.expect("subject_id")?;
 
-    // remove fields as we go so we can check for unexpected input
-    let mut fields = input.fields.clone();
+    // optional fields — return Some or None
+    let redirect_uri = input1.either("redirect_uri");
+    let state = input1.either("state");
+    let scope = input1.either("scope");
+    let resource = input1.either("resource");
+    let wallet_issuer = input1.either("wallet_issuer");
+    let user_hint = input1.either("user_hint");
+    let issuer_state = input1.either("issuer_state");
 
-    // `credential_issuer` is required
-    let Some(credential_issuer) = fields.remove("credential_issuer") else {
-        return Err(Error::new(span, "`credential_issuer` is not set"));
-    };
-    let Some(response_type) = fields.remove("response_type") else {
-        return Err(Error::new(span, "`response_type` is not set"));
-    };
-    let Some(client_id) = fields.remove("client_id") else {
-        return Err(Error::new(span, "`client_id` is not set"));
-    };
-
-    let redirect_uri = fields.remove("redirect_uri").map_or_else(none, some);
-    let state = fields.remove("state").map_or_else(none, some);
-
-    let Some(code_challenge) = fields.remove("code_challenge") else {
-        return Err(Error::new(span, "`code_challenge` is not set"));
-    };
-    let Some(code_challenge_method) = fields.remove("code_challenge_method") else {
-        return Err(Error::new(span, "`code_challenge_method` is not set"));
-    };
-
-    let authorization_details = if let Some(details) = fields.remove("authorization_details") {
-        let authorization_details = authorization_details(details)?;
+    let authorization_details = if let Some(details) = input1.get("authorization_details") {
+        let authorization_details = authorization_details(&details)?;
         quote! {Some(#authorization_details)}
     } else {
         quote! {None}
     };
 
-    let scope = fields.remove("scope").map_or_else(none, some);
-    let resource = fields.remove("resource").map_or_else(none, some);
-    let Some(subject_id) = fields.remove("subject_id") else {
-        return Err(Error::new(span, "`subject_id` is not set"));
-    };
-    let wallet_issuer = fields.remove("wallet_issuer").map_or_else(none, some);
-    let user_hint = fields.remove("user_hint").map_or_else(none, some);
-    let issuer_state = fields.remove("issuer_state").map_or_else(none, some);
-
-    // return error for any additional fields
-    if !fields.is_empty() {
-        let keys = fields.keys().map(|k| format!("`{k}`")).collect::<Vec<_>>().join(", ");
+    // return error for either additional fields
+    if !input1.remaining().is_empty() {
+        let keys =
+            input1.remaining().iter().map(|k| format!("`{k}`")).collect::<Vec<_>>().join(", ");
         return Err(Error::new(Span::call_site(), format!("unexpected field(s): {keys}")));
     }
+
+    let path = quote! {vercre_openid::issuer};
 
     Ok(quote! {
         #path::AuthorizationRequest {
@@ -78,24 +61,24 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     })
 }
 
-fn authorization_details(details: Value) -> Result<TokenStream> {
+fn authorization_details(details: &Value) -> Result<TokenStream> {
     let span = Span::call_site();
     let path = quote! {vercre_openid::issuer};
 
-    let Value::Array(details) = details else {
+    let Some(details) = details.as_array() else {
         return Err(Error::new(span, "`authorization_details` must be an array"));
     };
 
     let mut tokens = TokenStream::new();
 
     for detail in details {
-        let Value::Object(detail) = detail else {
+        let Some(detail) = detail.as_object() else {
             return Err(Error::new(span, "`authorization_details` must be an object"));
         };
 
         // check type is set and is `openid_credential`
         if let Some(type_) = detail.get("type") {
-            if let Value::String(t) = type_
+            if let Some(t) = type_.as_string()
                 && t != "openid_credential"
             {
                 return Err(Error::new(span, "`type` must be `openid_credential`"));
@@ -104,31 +87,14 @@ fn authorization_details(details: Value) -> Result<TokenStream> {
             return Err(Error::new(span, "`type` is not set"));
         }
 
-        let credential_configuration_id = &detail["credential_configuration_id"];
+        let Some(credential_configuration_id) = &detail.get("credential_configuration_id") else {
+            return Err(Error::new(span, "`credential_configuration_id` is not set"));
+        };
 
         // credential_definition
-        let credential_definition = if let Some(cd_value) = detail.get("credential_definition") {
-            let Value::Object(credential_definition) = cd_value else {
-                return Err(Error::new(span, "`credential_definition` must be an object"));
-            };
-            let Some(cs_value) = credential_definition.get("credentialSubject") else {
-                return Err(Error::new(span, "`credentialSubject` is not set"));
-            };
-            let Value::Object(credential_subject) = cs_value else {
-                return Err(Error::new(span, "`credential_subject` must be an object"));
-            };
-
-            // build claims map
-            let claims = credential_subject.iter().map(|(k, _)| {
-                    quote! {(#k.to_string(), #path::ClaimEntry::Claim(#path::ClaimDefinition::default()))}
-                });
-            quote! {
-                Some(#path::CredentialDefinition {
-                    credential_subject: Some(std::collections::HashMap::from([#(#claims),*])),
-                    context: None,
-                    type_: None,
-                })
-            }
+        let credential_definition = if let Some(defn_value) = detail.get("credential_definition") {
+            let credential_definition = credential_definition(defn_value)?;
+            quote! {Some(#credential_definition)}
         } else {
             quote! {None}
         };
@@ -148,4 +114,32 @@ fn authorization_details(details: Value) -> Result<TokenStream> {
     }
 
     Ok(quote! {vec![#tokens]})
+}
+
+fn credential_definition(defn_value: &Value) -> Result<TokenStream> {
+    let span = Span::call_site();
+    let path = quote! {vercre_openid::issuer};
+
+    let Some(credential_definition) = defn_value.as_object() else {
+        return Err(Error::new(span, "`credential_definition` must be an object"));
+    };
+    let Some(subject_value) = credential_definition.get("credentialSubject") else {
+        return Err(Error::new(span, "`credentialSubject` is not set"));
+    };
+    let Some(credential_subject) = subject_value.as_object() else {
+        return Err(Error::new(span, "`credential_subject` must be an object"));
+    };
+
+    // build claims map
+    let claims = credential_subject.iter().map(|(k, _)| {
+        quote! {(#k.to_string(), #path::ClaimEntry::Claim(#path::ClaimDefinition::default()))}
+    });
+    
+    Ok(quote! {
+        #path::CredentialDefinition {
+            credential_subject: Some(std::collections::HashMap::from([#(#claims),*])),
+            context: None,
+            type_: None,
+        }
+    })
 }

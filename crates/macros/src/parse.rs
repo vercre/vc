@@ -1,14 +1,40 @@
 use std::collections::HashMap;
 
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
-use syn::parse::{Parse, ParseStream}; // Error,
+use syn::parse::{Error, Parse, ParseStream};
 use syn::punctuated::{Pair, Punctuated};
 use syn::{braced, bracketed, token, Result, Token};
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Json {
     pub fields: HashMap<String, Value>,
+}
+
+impl Json {
+    /// Get the value for the key, removing it from the JSON object.
+    pub fn get(&mut self, key: &str) -> Option<Value> {
+        self.fields.remove(key)
+    }
+
+    /// Expect the key to be present and return the value or an error.
+    pub fn expect(&mut self, key: &str) -> Result<TokenStream> {
+        let value = self
+            .fields
+            .remove(key)
+            .ok_or_else(|| Error::new(Span::call_site(), "`{key}` is not set"))?;
+        Ok(value.into_token_stream())
+    }
+
+    /// Either `Some` or `None` depending on whether the key is present.
+    pub fn either(&mut self, key: &str) -> TokenStream {
+        self.fields.remove(key).map_or_else(|| quote! {None}, |v: Value| quote! {#v.into()})
+    }
+
+    /// Get any fields that are left in the JSON object.
+    pub fn remaining(&self) -> Vec<String> {
+        self.fields.keys().cloned().collect()
+    }
 }
 
 struct Field {
@@ -117,6 +143,8 @@ impl ToTokens for Value {
             Self::Bool(b) => tokens.extend(quote! { #b }),
             Self::String(s) => tokens.extend(quote! { #s.to_string() }),
             Self::Number(n) => tokens.extend(quote! { #n }),
+            Self::Ident(i) => tokens.extend(quote! { #i.to_string() }),
+            Self::Tokens(t) => tokens.extend(t.clone()),
             Self::Array(a) => {
                 let values = a.iter().map(|v| {
                     let mut tokens = TokenStream::new();
@@ -125,18 +153,40 @@ impl ToTokens for Value {
                 });
                 tokens.extend(quote! { vec![#(#values),*] });
             }
-            Self::Object(o) => {
-                let fields = o.iter().map(|(k, v)| {
-                    let mut tokens = TokenStream::new();
-                    v.to_tokens(&mut tokens);
-                    quote! {#k: #tokens}
+            Self::Object(_) => {
+                unimplemented!("Value::to_tokens for Object");
+                //     let fields = o.iter().map(|(k, v)| {
+                //         let mut tokens = TokenStream::new();
+                //         v.to_tokens(&mut tokens);
+                //         quote! {#k: #tokens}
 
-                    // quote! {#k: #v}
-                });
-                tokens.extend(quote! { #(#fields),* });
+                //         // quote! {#k: #v}
+                //     });
+                //     tokens.extend(quote! { #(#fields),* });
             }
-            Self::Ident(i) => tokens.extend(quote! { #i.to_string() }),
-            Self::Tokens(t) => tokens.extend(t.clone()),
+        }
+    }
+}
+
+impl Value {
+    pub const fn as_string(&self) -> Option<&String> {
+        match self {
+            Self::String(s) => Some(s),
+            _ => None,
+        }
+    }
+
+    pub const fn as_array(&self) -> Option<&Vec<Self>> {
+        match self {
+            Self::Array(a) => Some(a),
+            _ => None,
+        }
+    }
+
+    pub const fn as_object(&self) -> Option<&HashMap<String, Self>> {
+        match self {
+            Self::Object(o) => Some(o),
+            _ => None,
         }
     }
 }
