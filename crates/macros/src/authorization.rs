@@ -38,7 +38,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
 
     let authorization_details = if let Some(details) = fields.remove("authorization_details") {
         let authorization_details = authorization_details(details)?;
-        quote! {Some(vec![#authorization_details])}
+        quote! {Some(#authorization_details)}
     } else {
         quote! {None}
     };
@@ -67,15 +67,13 @@ pub fn request(input: &Json) -> Result<TokenStream> {
             state: #state,
             code_challenge: #code_challenge,
             code_challenge_method: #code_challenge_method,
+            authorization_details: #authorization_details,
             scope: #scope,
             resource: #resource,
-            authorization_details: #authorization_details,
             subject_id: #subject_id,
             wallet_issuer: #wallet_issuer,
             user_hint: #user_hint,
             issuer_state: #issuer_state,
-
-            ..Default::default()
         }
     })
 }
@@ -149,5 +147,5 @@ fn authorization_details(details: Value) -> Result<TokenStream> {
         });
     }
 
-    Ok(tokens)
+    Ok(quote! {vec![#tokens]})
 }
