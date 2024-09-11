@@ -37,73 +37,8 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     };
 
     let authorization_details = if let Some(details) = fields.remove("authorization_details") {
-        let Value::Array(details) = details else {
-            return Err(Error::new(span, "`authorization_details` must be an array"));
-        };
-
-        let mut tokens = TokenStream::new();
-
-        for detail in details {
-            let Value::Object(detail) = detail else {
-                return Err(Error::new(span, "`authorization_details` must be an object"));
-            };
-
-            // check type is set and is `openid_credential`
-            if let Some(type_) = detail.get("type") {
-                if let Value::String(t) = type_
-                    && t != "openid_credential"
-                {
-                    return Err(Error::new(span, "`type` must be `openid_credential`"));
-                }
-            } else {
-                return Err(Error::new(span, "`type` is not set"));
-            }
-
-            let credential_configuration_id = &detail["credential_configuration_id"];
-
-            // credential_definition
-            let credential_definition = if let Some(cd_value) = detail.get("credential_definition")
-            {
-                let Value::Object(credential_definition) = cd_value else {
-                    return Err(Error::new(span, "`credential_definition` must be an object"));
-                };
-                let Some(cs_value) = credential_definition.get("credentialSubject") else {
-                    return Err(Error::new(span, "`credentialSubject` is not set"));
-                };
-                let Value::Object(credential_subject) = cs_value else {
-                    return Err(Error::new(span, "`credential_subject` must be an object"));
-                };
-
-                // build claims map
-                let claims = credential_subject.iter().map(|(k, _)| {
-                    quote! {(#k.to_string(), #path::ClaimEntry::Claim(#path::ClaimDefinition::default()))}
-                });
-                quote! {
-                    Some(#path::CredentialDefinition {
-                        credential_subject: Some(std::collections::HashMap::from([#(#claims),*])),
-                        context: None,
-                        type_: None,
-                    })
-                }
-            } else {
-                quote! {None}
-            };
-
-            tokens.extend(quote! {
-                #path::AuthorizationDetail {
-                    type_: #path::AuthorizationDetailType::OpenIdCredential,
-                    specification: #path::AuthorizationSpec::ConfigurationId (
-                        #path::ConfigurationId::Definition {
-                            credential_configuration_id: #credential_configuration_id,
-                            credential_definition: #credential_definition,
-                        }
-                    ),
-                    locations: None
-                }
-            });
-        }
-
-        quote! {Some(vec![#tokens])}
+        let authorization_details = authorization_details(details)?;
+        quote! {Some(vec![#authorization_details])}
     } else {
         quote! {None}
     };
@@ -143,4 +78,76 @@ pub fn request(input: &Json) -> Result<TokenStream> {
             ..Default::default()
         }
     })
+}
+
+fn authorization_details(details: Value) -> Result<TokenStream> {
+    let span = Span::call_site();
+    let path = quote! {vercre_openid::issuer};
+
+    let Value::Array(details) = details else {
+        return Err(Error::new(span, "`authorization_details` must be an array"));
+    };
+
+    let mut tokens = TokenStream::new();
+
+    for detail in details {
+        let Value::Object(detail) = detail else {
+            return Err(Error::new(span, "`authorization_details` must be an object"));
+        };
+
+        // check type is set and is `openid_credential`
+        if let Some(type_) = detail.get("type") {
+            if let Value::String(t) = type_
+                && t != "openid_credential"
+            {
+                return Err(Error::new(span, "`type` must be `openid_credential`"));
+            }
+        } else {
+            return Err(Error::new(span, "`type` is not set"));
+        }
+
+        let credential_configuration_id = &detail["credential_configuration_id"];
+
+        // credential_definition
+        let credential_definition = if let Some(cd_value) = detail.get("credential_definition") {
+            let Value::Object(credential_definition) = cd_value else {
+                return Err(Error::new(span, "`credential_definition` must be an object"));
+            };
+            let Some(cs_value) = credential_definition.get("credentialSubject") else {
+                return Err(Error::new(span, "`credentialSubject` is not set"));
+            };
+            let Value::Object(credential_subject) = cs_value else {
+                return Err(Error::new(span, "`credential_subject` must be an object"));
+            };
+
+            // build claims map
+            let claims = credential_subject.iter().map(|(k, _)| {
+                    quote! {(#k.to_string(), #path::ClaimEntry::Claim(#path::ClaimDefinition::default()))}
+                });
+            quote! {
+                Some(#path::CredentialDefinition {
+                    credential_subject: Some(std::collections::HashMap::from([#(#claims),*])),
+                    context: None,
+                    type_: None,
+                })
+            }
+        } else {
+            quote! {None}
+        };
+
+        tokens.extend(quote! {
+            #path::AuthorizationDetail {
+                type_: #path::AuthorizationDetailType::OpenIdCredential,
+                specification: #path::AuthorizationSpec::ConfigurationId (
+                    #path::ConfigurationId::Definition {
+                        credential_configuration_id: #credential_configuration_id,
+                        credential_definition: #credential_definition,
+                    }
+                ),
+                locations: None
+            }
+        });
+    }
+
+    Ok(tokens)
 }

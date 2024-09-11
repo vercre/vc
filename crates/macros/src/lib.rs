@@ -1,9 +1,10 @@
 #![feature(let_chains)]
 
-//! # Core Utilities for Vercre
+//! # Core Vercre `proc_macros`
 //!
-//! This crate provides common utilities for the Vercre project and is not intended to be used
-//! directly.
+//! This crate provides external `proc_macro`s for use by Vercre implementers. It 
+//! not intended to be used directly as the macros are re-exported from one  of the
+//! top-level crates (`vercre-issuer`, `vercre-verifier`, and `vercre-holder`).
 
 mod authorization;
 mod create_offer;

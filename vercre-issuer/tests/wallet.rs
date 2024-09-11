@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(missing_docs)]
 
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;

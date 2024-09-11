@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 //! Issuer-initiated Tests
 
 mod utils;

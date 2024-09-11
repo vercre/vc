@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_macros::create_offer_request;
 use vercre_openid::issuer::SendType;
