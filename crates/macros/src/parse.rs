@@ -130,6 +130,8 @@ impl ToTokens for Value {
                     let mut tokens = TokenStream::new();
                     v.to_tokens(&mut tokens);
                     quote! {#k: #tokens}
+
+                    // quote! {#k: #v}
                 });
                 tokens.extend(quote! { #(#fields),* });
             }

@@ -96,7 +96,7 @@ impl Wallet {
             "state": state.unwrap_or("1234".to_string()),
             "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
             "code_challenge_method": "S256",
-            "authorization_details": json!([{
+            "authorization_details": [{
                 "type": "openid_credential",
                 "format": "jwt_vc_json",
                 "credential_definition": {
@@ -114,7 +114,7 @@ impl Wallet {
                         "email": {}
                     }
                 }
-            }]).to_string(),
+            }],
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
         });

@@ -30,33 +30,35 @@ fn configuration_id() {
     });
 }
 
-// #[test]
-// fn credential_definition() {
-//     let request = json!({
-//         "credential_issuer": CREDENTIAL_ISSUER,
-//         "response_type": "code",
-//         "client_id": CLIENT_ID,
-//         "redirect_uri": "http://localhost:3000/callback",
-//         "state": "1234",
-//         "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
-//         "code_challenge_method": "S256",
-//         "authorization_details": [{
-//             "type": "openid_credential",
-//             "credential_configuration_id": "EmployeeID_JWT",
-//             "credential_definition": {
-//                 "credentialSubject": {
-//                     "given_name": {},
-//                     "family_name": {},
-//                 }
-//             }
-//         }],
-//         "subject_id": NORMAL_USER,
-//         "wallet_issuer": CREDENTIAL_ISSUER
-//     });
+#[test]
+fn credential_definition() {
+    let request = authorization_request!({
+        "credential_issuer": CREDENTIAL_ISSUER,
+        "response_type": "code",
+        "client_id": CLIENT_ID,
+        "redirect_uri": "http://localhost:3000/callback",
+        "state": "1234",
+        "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+        "code_challenge_method": "S256",
+        "authorization_details": [{
+            "type": "openid_credential",
+            "credential_configuration_id": "EmployeeID_JWT",
+            "credential_definition": {
+                "credentialSubject": {
+                    "given_name": {},
+                    "family_name": {},
+                }
+            }
+        }],
+        "subject_id": NORMAL_USER,
+        "wallet_issuer": CREDENTIAL_ISSUER
+    });
 
-//     println!("{:?}", request);
-//     assert_snapshot!("pre-authorized", &request);
-// }
+    assert_snapshot!("credential_definition", &request, {
+        ".code_challenge" => "[base64]",
+        ".authorization_details.*.credential_definition.credentialSubject" => insta::sorted_redaction(),
+    });
+}
 
 // #[test]
 // fn format() {

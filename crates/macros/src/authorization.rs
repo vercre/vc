@@ -61,13 +61,41 @@ pub fn request(input: &Json) -> Result<TokenStream> {
 
             let credential_configuration_id = &detail["credential_configuration_id"];
 
+            // credential_definition
+            let credential_definition = if let Some(cd_value) = detail.get("credential_definition")
+            {
+                let Value::Object(credential_definition) = cd_value else {
+                    return Err(Error::new(span, "`credential_definition` must be an object"));
+                };
+                let Some(cs_value) = credential_definition.get("credentialSubject") else {
+                    return Err(Error::new(span, "`credentialSubject` is not set"));
+                };
+                let Value::Object(credential_subject) = cs_value else {
+                    return Err(Error::new(span, "`credential_subject` must be an object"));
+                };
+
+                // build claims map
+                let claims = credential_subject.iter().map(|(k, _)| {
+                    quote! {(#k.to_string(), #path::ClaimEntry::Claim(#path::ClaimDefinition::default()))}
+                });
+                quote! {
+                    Some(#path::CredentialDefinition {
+                        credential_subject: Some(std::collections::HashMap::from([#(#claims),*])),
+                        context: None,
+                        type_: None,
+                    })
+                }
+            } else {
+                quote! {None}
+            };
+
             tokens.extend(quote! {
                 #path::AuthorizationDetail {
                     type_: #path::AuthorizationDetailType::OpenIdCredential,
                     specification: #path::AuthorizationSpec::ConfigurationId (
                         #path::ConfigurationId::Definition {
                             credential_configuration_id: #credential_configuration_id,
-                            credential_definition: None,
+                            credential_definition: #credential_definition,
                         }
                     ),
                     locations: None

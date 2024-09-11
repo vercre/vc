@@ -37,11 +37,11 @@ const MAX_ENTRIES: usize = 131_072;
 pub const DEFAULT_TTL: u64 = 300_000;
 
 /// Standard error codes for bitstring-based status list validation.
-/// 
+///
 /// The standard calls for returning strongly typed errors when a verifier
 /// attempts to validate a verifiable credential against a published status
 /// list.
-/// 
+///
 /// [Processing Errors](https://www.w3.org/TR/vc-bitstring-status-list/#processing-errors)
 #[derive(Error, Debug, Deserialize)]
 pub enum Error {
@@ -83,13 +83,13 @@ impl Error {
 }
 
 /// Error response for bitstring status list validation.
-/// 
+///
 /// [Processing Errors](https://www.w3.org/TR/vc-bitstring-status-list/#processing-errors)
 /// [RFC 9457: Problem Details for HTTP APIs](https://www.rfc-editor.org/rfc/rfc9457)
 #[derive(Deserialize, Serialize)]
 pub struct ValidationError {
     /// Type of error in URL format.
-    /// 
+    ///
     /// The type value of the error object MUST be a URL that starts with the
     /// value `https://www.w3.org/ns/credentials/status-list#` and ends with the
     /// value in the section listed below.
@@ -97,19 +97,19 @@ pub struct ValidationError {
     pub type_: String,
 
     /// Integer code
-    /// 
+    ///
     /// The code value MUST be the integer code described in the specification.
     pub code: i32,
 
     /// Title
-    /// 
+    ///
     /// The title value SHOULD provide a short but specific human-readable
     /// string for the error.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
 
     /// Detail
-    /// 
+    ///
     /// The detail value SHOULD provide a longer human-readable string for the
     /// error.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -120,7 +120,7 @@ pub struct ValidationError {
 /// the given issued credentials and the purpose implied by a list configuration.
 ///
 /// # Errors
-/// 
+///
 /// Returns an error if there is a compression or encoding problem, or the
 /// provided status position is out of range of the bitstring size.
 ///
@@ -226,15 +226,17 @@ pub async fn credential(
 }
 
 /// Validates a credential from the status information contained inside it.
-/// 
+///
 /// Uses a provider to retrieve the status list, which is assumed to be in
 /// bitstring format.
-/// 
+///
 /// # Errors
-/// 
+///
 /// Will return a specific `ValidationError` if the status list is not resolved
 /// or processing the status list fails for the given `CredentialStatus`.
-pub fn validate(_resolver: &impl verifier::Status, _status: &CredentialStatus) -> Result<bool, Error> {
+pub fn validate(
+    _resolver: &impl verifier::Status, _status: &CredentialStatus,
+) -> Result<bool, Error> {
     // The following process, or one generating the exact output, MUST be followed when validating a verifiable credential that is contained in a BitstringStatusListCredential. The algorithm takes a status list verifiable credential as input and either throws an error or returns a status list credential as output.
 
     // Let credentialToValidate be a verifiable credential containing a credentialStatus entry that is a BitstringStatusListEntry.

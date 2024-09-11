@@ -519,7 +519,7 @@ mod tests {
             //     "type": "openid_credential",
             //     "credential_configuration_id": "EmployeeID_JWT"
             // }]).to_string(),
-            "authorization_details": json!([{
+            "authorization_details": [{
                 "type": "openid_credential",
                 "format": "jwt_vc_json",
                 "credential_definition": {
@@ -528,7 +528,7 @@ mod tests {
                         "EmployeeIDCredential"
                     ]
                 }
-            }]).to_string(),
+            }],
         });
 
         let request =
