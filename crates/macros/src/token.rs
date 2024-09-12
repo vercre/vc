@@ -7,25 +7,29 @@ use syn::parse::{Error, Result};
 use crate::parse::{Json, Value};
 
 pub fn request(input: &Json) -> Result<TokenStream> {
+    // let path = quote! {vercre_openid::issuer};
+
     // we remove fields as we go so we can check for unexpected input
     let mut input1 = input.clone();
 
     // required fields — return error if not present
     let credential_issuer = input1.expect("credential_issuer")?;
-    let response_type = input1.expect("response_type")?;
-    let client_id = input1.expect("client_id")?;
-    let code_challenge = input1.expect("code_challenge")?;
-    let code_challenge_method = input1.expect("code_challenge_method")?;
-    let subject_id = input1.expect("subject_id")?;
 
     // optional fields — return Some or None
-    let redirect_uri = input1.option("redirect_uri");
-    let state = input1.option("state");
-    let scope = input1.option("scope");
-    let resource = input1.option("resource");
-    let wallet_issuer = input1.option("wallet_issuer");
-    let user_hint = input1.option("user_hint");
-    let issuer_state = input1.option("issuer_state");
+    let client_id = input1.option("client_id");
+
+    let Some(grant_type) = input1.get("grant_type") else {
+        return Err(Error::new(Span::call_site(), "`grant_type` is not set"));
+    };
+
+    let grant_type =
+        if grant_type.as_str() == Some("urn:ietf:params:oauth:grant-type:pre-authorized_code") {
+            pre_authorized_code(&mut input1)?
+        } else if grant_type.as_str() == Some("authorization_code") {
+            authorization_code(&mut input1)?
+        } else {
+            return Err(Error::new(Span::call_site(), "unknown `grant_type`"));
+        };
 
     let authorization_details = if let Some(details) = input1.get("authorization_details") {
         let authorization_details = authorization_details(&details)?;
@@ -44,21 +48,42 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     let path = quote! {vercre_openid::issuer};
 
     Ok(quote! {
-        #path::AuthorizationRequest {
+        #path::TokenRequest {
             credential_issuer: #credential_issuer,
-            response_type: #response_type,
             client_id: #client_id,
-            redirect_uri: #redirect_uri,
-            state: #state,
-            code_challenge: #code_challenge,
-            code_challenge_method: #code_challenge_method,
+            grant_type: #grant_type,
             authorization_details: #authorization_details,
-            scope: #scope,
-            resource: #resource,
-            subject_id: #subject_id,
-            wallet_issuer: #wallet_issuer,
-            user_hint: #user_hint,
-            issuer_state: #issuer_state,
+            client_assertion: None,
+        }
+    })
+}
+
+fn pre_authorized_code(input: &mut Json) -> Result<TokenStream> {
+    let path = quote! {vercre_openid::issuer};
+
+    let pre_authorized_code = input.expect("pre-authorized_code")?;
+    let tx_code = input.option("tx_code");
+
+    Ok(quote! {
+        #path::TokenGrantType::PreAuthorizedCode {
+            pre_authorized_code: #pre_authorized_code,
+            tx_code: #tx_code,
+        }
+    })
+}
+
+fn authorization_code(input: &mut Json) -> Result<TokenStream> {
+    let path = quote! {vercre_openid::issuer};
+
+    let code = input.expect("code")?;
+    let redirect_uri = input.option("redirect_uri");
+    let code_verifier = input.expect("code_verifier")?;
+
+    Ok(quote! {
+        #path::TokenGrantType::AuthorizationCode {
+            code: #code,
+            redirect_uri: #redirect_uri,
+            code_verifier: Some(#code_verifier),
         }
     })
 }
@@ -158,14 +183,11 @@ fn configuration_definition(defn_value: &Value) -> Result<TokenStream> {
     let Some(credential_definition) = defn_value.as_object() else {
         return Err(Error::new(span, "`credential_definition` must be an object"));
     };
-
-    // TODO: only allow @context if format is ldp-vc or jwt_vc_json-ld
-    // let context = if let Some(context) = credential_definition.get("@context") {
-    //     quote! {Some(#context)}
-    // } else {
-    //     quote! {None}
-    // };
-
+    let context = if let Some(context) = credential_definition.get("@context") {
+        quote! {Some(#context)}
+    } else {
+        quote! {None}
+    };
     let type_ = if let Some(type_array) = credential_definition.get("type") {
         quote! {Some(#type_array)}
     } else {
@@ -177,7 +199,7 @@ fn configuration_definition(defn_value: &Value) -> Result<TokenStream> {
     Ok(quote! {
         #path::CredentialDefinition {
             credential_subject: #subject,
-            context: None,
+            context: #context,
             type_: #type_,
         }
     })

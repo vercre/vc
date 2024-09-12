@@ -10,6 +10,7 @@ mod authorization;
 mod create_offer;
 mod credential;
 mod parse;
+mod token;
 
 use parse::Json;
 use proc_macro::TokenStream;
@@ -82,7 +83,36 @@ pub fn authorization_request(input: TokenStream) -> TokenStream {
         .into()
 }
 
-/// Generate an `AuthorizationRequest` using a JSON-like format.
+/// Generate an `TokenRequest` using a JSON-like format.
+///
+/// # Example
+///
+/// ```rust
+/// use vercre_macros::token_request;
+///
+/// const CREDENTIAL_ISSUER: &str = "http://vercre.io";
+/// const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
+///
+/// let pre_auth_code = "ABCDEF";
+///
+/// let request = token_request!({
+///     "credential_issuer": CREDENTIAL_ISSUER,
+///     "client_id": CLIENT_ID,
+///     "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+///     "pre-authorized_code": pre_auth_code,
+///     "tx_code": "1234"
+/// });
+///
+/// assert_eq!(request.credential_issuer, CREDENTIAL_ISSUER);
+/// ```
+#[proc_macro]
+pub fn token_request(input: TokenStream) -> TokenStream {
+    token::request(&parse_macro_input!(input as Json))
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
+}
+
+/// Generate an `CredentialRequest` using a JSON-like format.
 ///
 /// # Example
 ///

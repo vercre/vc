@@ -77,10 +77,6 @@ fn format() {
             "type": "openid_credential",
             "format": "jwt_vc_json",
             "credential_definition": {
-                "@context": [
-                    "https://www.w3.org/2018/credentials/v1",
-                    "https://www.w3.org/2018/credentials/examples/v1"
-                ],
                 "type": [
                     "VerifiableCredential",
                     "EmployeeIDCredential"

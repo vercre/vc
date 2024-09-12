@@ -1,0 +1,12 @@
+---
+source: crates/macros/tests/token.rs
+assertion_line: 64
+expression: "&request"
+---
+credential_issuer: "http://vercre.io"
+client_id: 96bfb9cb-0513-7d64-5532-bed74c48f9ab
+grant_type: authorization_code
+code: ABCDEF
+redirect_uri: "https://example.com"
+code_verifier: ABCDEF12345
+authorization_details: "[{\"type\":\"openid_credential\",\"format\":\"jwt_vc_json\",\"credential_definition\":{\"type\":[\"VerifiableCredential\",\"EmployeeIDCredential\"]}}]"

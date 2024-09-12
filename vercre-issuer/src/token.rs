@@ -312,7 +312,7 @@ fn is_match(a: &AuthorizationDetail, b: &AuthorizationDetail) -> bool {
 mod tests {
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use serde_json::json;
+    use vercre_macros::token_request;
     use vercre_openid::issuer::{
         AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec, Authorized,
         ConfigurationId, CredentialDefinition, Format,
@@ -360,16 +360,13 @@ mod tests {
             .expect("state exists");
 
         // create TokenRequest to 'send' to the app
-        let value = json!({
+        let request = token_request!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "client_id": CLIENT_ID,
             "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
             "pre-authorized_code": pre_auth_code,
             "tx_code": "1234"
         });
-
-        let request =
-            serde_json::from_value::<TokenRequest>(value).expect("request should deserialize");
         let token_resp = token(provider.clone(), request).await.expect("response is valid");
 
         assert_snapshot!("token:pre_authorized:response", &token_resp, {
@@ -432,16 +429,13 @@ mod tests {
         StateStore::put(&provider, code, &state, state.expires_at).await.expect("state exists");
 
         // create TokenRequest to 'send' to the app
-        let value = json!({
+        let request = token_request!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "client_id": CLIENT_ID,
             "grant_type": "authorization_code",
             "code": code,
             "code_verifier": verifier,
         });
-
-        let request =
-            serde_json::from_value::<TokenRequest>(value).expect("request should deserialize");
         let token_resp = token(provider.clone(), request).await.expect("response is valid");
 
         assert_snapshot!("token:authorized:response", &token_resp, {
@@ -508,17 +502,13 @@ mod tests {
         StateStore::put(&provider, code, &state, state.expires_at).await.expect("state exists");
 
         // create TokenRequest to 'send' to the app
-        let value = json!({
+        let request = token_request!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "client_id": CLIENT_ID,
             "grant_type": "authorization_code",
             "code": code,
             "code_verifier": verifier,
             "redirect_uri": "https://example.com",
-            // "authorization_details": json!([{
-            //     "type": "openid_credential",
-            //     "credential_configuration_id": "EmployeeID_JWT"
-            // }]).to_string(),
             "authorization_details": [{
                 "type": "openid_credential",
                 "format": "jwt_vc_json",
@@ -530,9 +520,6 @@ mod tests {
                 }
             }],
         });
-
-        let request =
-            serde_json::from_value::<TokenRequest>(value).expect("request should deserialize");
         let response = token(provider.clone(), request).await.expect("response is valid");
 
         assert_snapshot!("token:authorization_details:response", &response, {
