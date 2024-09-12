@@ -75,7 +75,7 @@ fn authorization_details(details: &Value) -> Result<TokenStream> {
 
     for detail in details {
         let Some(detail) = detail.as_object() else {
-            return Err(Error::new(span, "`authorization_details` must be an object"));
+            return Err(Error::new(span, "`authorization_detail` must be an object"));
         };
 
         // check type is set and is `openid_credential`
@@ -146,7 +146,7 @@ fn credential_specification(detail: &HashMap<String, Value>) -> Result<TokenStre
     } else {
         return Err(Error::new(
             span,
-            "option `credential_configuration_id` or `format` must be set",
+            "either `credential_configuration_id` or `format` must be set",
         ));
     }
 }
@@ -211,7 +211,7 @@ fn subject(definition: &HashMap<String, Value>) -> Result<TokenStream> {
 
     if let Some(subject_value) = definition.get("credentialSubject") {
         let Some(credential_subject) = subject_value.as_object() else {
-            return Err(Error::new(span, "`credential_subject` must be an object"));
+            return Err(Error::new(span, "`credentialSubject` must be an object"));
         };
 
         // build claims map

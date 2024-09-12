@@ -92,8 +92,6 @@ fn format() {
         "wallet_issuer": CREDENTIAL_ISSUER
     });
 
-    println!("{:?}", request);
-
     assert_snapshot!("format", &request, {
         ".code_challenge" => "[base64]",
         ".authorization_details" => "[authorization_details]"

@@ -150,7 +150,6 @@ impl Wallet {
 
         // FIXME: loop through all credential identifiers
         let credential_identifier = &auth_dets[0].credential_identifiers[0];
-        println!("credential_identifier: {:?}", credential_identifier);
 
         let req_json = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
