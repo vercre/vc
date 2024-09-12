@@ -98,7 +98,7 @@ fn authorization_details(details: &Value) -> Result<TokenStream> {
                 specification: #specification,
                 locations: None
             }
-        })
+        });
     }
 
     Ok(quote! {vec![#tokens]})
@@ -166,12 +166,9 @@ fn configuration_definition(defn_value: &Value) -> Result<TokenStream> {
     //     quote! {None}
     // };
 
-    let type_ = if let Some(type_array) = credential_definition.get("type") {
-        quote! {Some(#type_array)}
-    } else {
-        quote! {None}
-    };
-
+    let type_ = credential_definition
+        .get("type")
+        .map_or_else(|| quote! {None}, |type_array| quote! {Some(#type_array)});
     let subject = subject(credential_definition)?;
 
     Ok(quote! {

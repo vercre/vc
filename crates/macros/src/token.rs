@@ -123,7 +123,7 @@ fn authorization_details(details: &Value) -> Result<TokenStream> {
                 specification: #specification,
                 locations: None
             }
-        })
+        });
     }
 
     Ok(quote! {vec![#tokens]})
@@ -183,16 +183,12 @@ fn configuration_definition(defn_value: &Value) -> Result<TokenStream> {
     let Some(credential_definition) = defn_value.as_object() else {
         return Err(Error::new(span, "`credential_definition` must be an object"));
     };
-    let context = if let Some(context) = credential_definition.get("@context") {
-        quote! {Some(#context)}
-    } else {
-        quote! {None}
-    };
-    let type_ = if let Some(type_array) = credential_definition.get("type") {
-        quote! {Some(#type_array)}
-    } else {
-        quote! {None}
-    };
+    let context = credential_definition
+        .get("@context")
+        .map_or_else(|| quote! {None}, |context| quote! {Some(#context)});
+    let type_ = credential_definition
+        .get("type")
+        .map_or_else(|| quote! {None}, |type_array| quote! {Some(#type_array)});
 
     let subject = subject(credential_definition)?;
 
