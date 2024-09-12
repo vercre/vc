@@ -27,7 +27,7 @@ impl Json {
     }
 
     /// Either `Some` or `None` depending on whether the key is present.
-    pub fn either(&mut self, key: &str) -> TokenStream {
+    pub fn option(&mut self, key: &str) -> TokenStream {
         self.fields.remove(key).map_or_else(|| quote! {None}, |v: Value| quote! {#v.into()})
     }
 
@@ -169,7 +169,7 @@ impl ToTokens for Value {
 }
 
 impl Value {
-    pub const fn as_string(&self) -> Option<&String> {
+    pub fn as_str(&self) -> Option<&str> {
         match self {
             Self::String(s) => Some(s),
             _ => None,

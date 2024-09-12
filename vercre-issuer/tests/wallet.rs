@@ -68,11 +68,8 @@ impl Wallet {
                 tx_code: self.tx_code.clone(),
             }
         } else {
-            let issuer_state = if let Some(grant) = grants.authorization_code {
-                grant.issuer_state
-            } else {
-                None
-            };
+            let issuer_state =
+                if let Some(grant) = grants.authorization_code { grant.issuer_state } else { None };
             let auth = self.authorize(issuer_state).await?;
 
             TokenGrantType::AuthorizationCode {

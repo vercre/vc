@@ -88,7 +88,7 @@ pub fn authorization_request(input: TokenStream) -> TokenStream {
 ///
 /// ```rust
 /// use vercre_macros::credential_request;
-/// 
+///
 /// const CREDENTIAL_ISSUER: &str = "http://vercre.io";
 /// let jwt = "eyJhbGciOiJFZERTQSIsInR5cCI6Im9wZW5pZDR2Y...";
 ///
