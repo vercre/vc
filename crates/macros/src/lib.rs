@@ -2,7 +2,7 @@
 
 //! # Core Vercre `proc_macros`
 //!
-//! This crate provides external `proc_macro`s for use by Vercre implementers. It 
+//! This crate provides external `proc_macro`s for use by Vercre implementers. It
 //! not intended to be used directly as the macros are re-exported from one  of the
 //! top-level crates (`vercre-issuer`, `vercre-verifier`, and `vercre-holder`).
 
@@ -71,7 +71,7 @@ pub fn create_offer_request(input: TokenStream) -> TokenStream {
 ///     }],
 ///     "subject_id": subject_id,
 ///     "wallet_issuer": CREDENTIAL_ISSUER
-// });
+/// });
 ///
 /// assert_eq!(request.credential_issuer, CREDENTIAL_ISSUER);
 /// ```
@@ -87,29 +87,20 @@ pub fn authorization_request(input: TokenStream) -> TokenStream {
 /// # Example
 ///
 /// ```rust
-/// use base64ct::{Base64UrlUnpadded, Encoding};
-/// use sha2::{Digest, Sha256};
 /// use vercre_macros::credential_request;
-///
+/// 
 /// const CREDENTIAL_ISSUER: &str = "http://vercre.io";
-/// const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
-/// let subject_id = "normal_user";
+/// let jwt = "eyJhbGciOiJFZERTQSIsInR5cCI6Im9wZW5pZDR2Y...";
 ///
 /// let request = credential_request!({
 ///     "credential_issuer": CREDENTIAL_ISSUER,
-///     "response_type": "code",
-///     "client_id": CLIENT_ID,
-///     "redirect_uri": "http://localhost:3000/callback",
-///     "state": "1234",
-///     "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
-///     "code_challenge_method": "S256",
-///     "authorization_details": [{
-///         "type": "openid_credential",
-///         "credential_configuration_id": "EmployeeID_JWT",
-///     }],
-///     "subject_id": subject_id,
-///     "wallet_issuer": CREDENTIAL_ISSUER
-// });
+///     "access_token": "access_token",
+///     "credential_identifier": "PHLEmployeeID",
+///     "proof": {
+///         "proof_type": "jwt",
+///         "jwt": jwt
+///     }
+/// });
 ///
 /// assert_eq!(request.credential_issuer, CREDENTIAL_ISSUER);
 /// ```
