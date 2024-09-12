@@ -7,39 +7,41 @@ use crate::parse::{Json, Value};
 // Create strongly typed `CredentialRequest` from JSON-like input,
 // doing basic validation and setting sensible defaults.
 pub fn request(input: &Json) -> Result<TokenStream> {
-    // when returning an Option<_> token
-    let none = || quote! {None};
-    let some = |v: Value| quote! {#v.into()};
     let path = quote! {vercre_openid::issuer};
-
-    // remove fields as we go so we can check for unexpected input
-    let mut fields = input.fields.clone();
     let span = Span::call_site();
 
-    // `credential_issuer` is required
-    let Some(credential_issuer) = fields.remove("credential_issuer") else {
-        return Err(Error::new(span, "`credential_issuer` is not set"));
-    };
-    // `access_token` is required
-    let Some(access_token) = fields.remove("access_token") else {
-        return Err(Error::new(span, "`access_token` is not set"));
-    };
+    let mut input1 = input.clone();
 
-    let specification = if let Some(ci) = fields.remove("credential_identifier") {
-        let Value::String(identifier) = ci else {
-            return Err(Error::new(span, "`credential_identifier` must be a string"));
-        };
+    let credential_issuer = input1.expect("credential_issuer")?;
+    let access_token = input1.expect("access_token")?;
 
+    let specification = if let Some(identifier) = input1.get("credential_identifier") {
         quote! {
             #path::CredentialSpec::Identifier {
-                credential_identifier: #identifier.to_string(),
+                credential_identifier: #identifier,
             }
         }
+    } else if let Some(format) = input1.get("format") {
+        let Some(defn_value) = input1.get("credential_definition") else {
+            return Err(Error::new(span, "`credential_definition` is not set"));
+        };
+        let credential_definition = format_definition(&defn_value)?;
+
+        match format.as_str() {
+            Some("jwt_vc_json") => {
+                quote! {
+                    #path::CredentialSpec::Format(#path::Format::JwtVcJson {
+                        credential_definition: #credential_definition,
+                    })
+                }
+            }
+            _ => return Err(Error::new(span, "unsupported format")),
+        }
     } else {
-        return Err(Error::new(span, "`credential_identifier` is not set"));
+        return Err(Error::new(span, "neither `credential_identifier` nor `format` are set"));
     };
 
-    let proof = if let Some(p) = fields.remove("proof") {
+    let proof = if let Some(p) = input1.get("proof") {
         let Value::Object(proof) = p else {
             return Err(Error::new(span, "`proof` must be an object"));
         };
@@ -70,13 +72,13 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     };
 
     // use default values if not set
-    let credential_response_encryption =
-        fields.remove("credential_response_encryption").map_or_else(none, some);
+    let credential_response_encryption = input1.option("credential_response_encryption");
 
     // return error for any unexpected fields
-    if !fields.is_empty() {
-        let keys = fields.keys().map(|k| format!("`{k}`")).collect::<Vec<_>>().join(", ");
-        return Err(Error::new(span, format!("unexpected field(s): {keys}")));
+    if !input1.remaining().is_empty() {
+        let keys =
+            input1.remaining().iter().map(|k| format!("`{k}`")).collect::<Vec<_>>().join(", ");
+        return Err(Error::new(Span::call_site(), format!("unexpected field(s): {keys}")));
     }
 
     let path = quote! {vercre_openid::issuer};
@@ -88,6 +90,34 @@ pub fn request(input: &Json) -> Result<TokenStream> {
             specification: #specification,
             proof: #proof,
             credential_response_encryption: #credential_response_encryption,
+        }
+    })
+}
+
+fn format_definition(defn_value: &Value) -> Result<TokenStream> {
+    let span = Span::call_site();
+    let path = quote! {vercre_openid::issuer};
+
+    let Some(credential_definition) = defn_value.as_object() else {
+        return Err(Error::new(span, "`credential_definition` must be an object"));
+    };
+
+    // TODO: only allow @context if format is ldp-vc or jwt_vc_json-ld
+    // let Some(context) = credential_definition.get("@context") else {
+    //     return Err(Error::new(span, "`@context` is not set"));
+    // };
+
+    let Some(type_array) = credential_definition.get("type") else {
+        return Err(Error::new(span, "`type` is not set"));
+    };
+
+    // let subject = subject(credential_definition)?;
+
+    Ok(quote! {
+        #path::CredentialDefinition {
+            credential_subject: None,
+            context: None,
+            type_: Some(#type_array),
         }
     })
 }

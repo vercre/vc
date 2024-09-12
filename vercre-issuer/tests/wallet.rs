@@ -4,7 +4,6 @@
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
 use insta::assert_yaml_snapshot as assert_snapshot;
-use serde_json::json;
 use sha2::{Digest, Sha256};
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_issuer::{
@@ -12,6 +11,7 @@ use vercre_issuer::{
     DeferredCredentialRequest, DeferredCredentialResponse, OfferType, ProofClaims, TokenGrantType,
     TokenRequest, TokenResponse,
 };
+use vercre_macros::{authorization_request, credential_request};
 use vercre_openid::{Error, FormatProfile, Result};
 use vercre_test_utils::holder;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -86,7 +86,7 @@ impl Wallet {
     // Simulate Issuer request to '/create_offer' endpoint to get credential offer to use to
     // make credential offer to Wallet.
     pub async fn authorize(&self, state: Option<String>) -> Result<AuthorizationResponse> {
-        let req_json = json!({
+        let request = authorization_request!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
@@ -98,10 +98,6 @@ impl Wallet {
                 "type": "openid_credential",
                 "format": "jwt_vc_json",
                 "credential_definition": {
-                    "context": [
-                        "https://www.w3.org/2018/credentials/v1",
-                        "https://www.w3.org/2018/credentials/examples/v1"
-                    ],
                     "type": [
                         "VerifiableCredential",
                         "EmployeeIDCredential"
@@ -116,8 +112,6 @@ impl Wallet {
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
         });
-        let request =
-            serde_json::from_value(req_json).map_err(|e| Error::ServerError(format!("{e}")))?;
         vercre_issuer::authorize(self.provider.clone(), request).await
     }
 
@@ -150,18 +144,17 @@ impl Wallet {
 
         // FIXME: loop through all credential identifiers
         let credential_identifier = &auth_dets[0].credential_identifiers[0];
+        let access_token = &token_resp.access_token;
 
-        let req_json = json!({
+        let request = credential_request!({
             "credential_issuer": CREDENTIAL_ISSUER,
-            "access_token": token_resp.access_token,
+            "access_token": access_token,
             "credential_identifier": credential_identifier,
             "proof":{
                 "proof_type": "jwt",
                 "jwt": jwt
             }
         });
-        let request =
-            serde_json::from_value(req_json).map_err(|e| Error::ServerError(format!("{e}")))?;
         let mut response = vercre_issuer::credential(self.provider.clone(), request).await?;
 
         // fetch credential if response is deferred

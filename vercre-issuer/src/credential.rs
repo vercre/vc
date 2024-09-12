@@ -371,7 +371,7 @@ mod tests {
 
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use serde_json::json;
+    use vercre_macros::credential_request;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::{holder, snapshot};
     use vercre_w3c_vc::proof::{self, Verify};
@@ -413,7 +413,7 @@ mod tests {
         };
         let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
 
-        let value = json!({
+        let request = credential_request!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "access_token": access_token,
             "credential_identifier": "PHLEmployeeID",
@@ -422,12 +422,6 @@ mod tests {
                 "jwt": jwt
             }
         });
-
-        let mut request =
-            serde_json::from_value::<CredentialRequest>(value).expect("request should deserialize");
-        request.credential_issuer = CREDENTIAL_ISSUER.into();
-        request.access_token = access_token.into();
-
         let response = credential(provider.clone(), request).await.expect("response is valid");
         assert_snapshot!("credential:identifier:response", &response, {
             ".credential" => "[credential]",
@@ -494,7 +488,7 @@ mod tests {
         };
         let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
 
-        let value = json!({
+        let request = credential_request!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "access_token": access_token,
             "format": "jwt_vc_json",
@@ -509,9 +503,6 @@ mod tests {
                 "jwt": jwt
             }
         });
-
-        let request =
-            serde_json::from_value::<CredentialRequest>(value).expect("request should deserialize");
         let response = credential(provider.clone(), request).await.expect("response is valid");
 
         assert_snapshot!("credential:format:response", &response, {

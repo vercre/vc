@@ -73,9 +73,9 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use serde_json::json;
     use vercre_datasec::jose::jws::{self, Type};
-    use vercre_openid::issuer::{CredentialRequest, CredentialResponseType, ProofClaims};
+    use vercre_macros::credential_request;
+    use vercre_openid::issuer::{CredentialResponseType, ProofClaims};
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::{holder, snapshot};
     use vercre_w3c_vc::proof::{self, Payload, Verify};
@@ -102,7 +102,7 @@ mod tests {
         };
         let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
 
-        let body = json!({
+        let cred_req = credential_request!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "access_token": access_token,
             "credential_identifier": "PHLEmployeeID",
@@ -111,8 +111,6 @@ mod tests {
                 "jwt": jwt
             }
         });
-        let cred_req =
-            serde_json::from_value::<CredentialRequest>(body).expect("request should deserialize");
 
         // set up state
         let mut state = State {

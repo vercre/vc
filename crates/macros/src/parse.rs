@@ -4,7 +4,7 @@ use proc_macro2::{Span, TokenStream};
 use quote::{quote, ToTokens};
 use syn::parse::{Error, Parse, ParseStream};
 use syn::punctuated::{Pair, Punctuated};
-use syn::{braced, bracketed, token, Result, Token};
+use syn::{braced, bracketed, token, Result};
 
 #[derive(Default, Clone)]
 pub struct Json {
@@ -121,7 +121,9 @@ impl Parse for Value {
             let items = Punctuated::<Self, token::Comma>::parse_terminated(&contents)?;
             let values = items.into_pairs().map(Pair::into_value).collect();
             Self::Array(values)
-        } else if l.peek(syn::Ident) && (input.peek2(Token!(::)) || input.peek2(token::Paren)) {
+        } else if l.peek(syn::Ident)
+            && (input.peek2(token::PathSep) || input.peek2(token::Paren) || input.peek2(token::Dot))
+        {
             // parse enum variant or method call
             Self::Tokens(input.parse::<syn::Expr>()?.to_token_stream())
         } else if l.peek(syn::Ident) {
