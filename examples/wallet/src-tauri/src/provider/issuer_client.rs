@@ -5,7 +5,7 @@ use vercre_holder::{
     CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse, TokenRequest,
     TokenResponse,
 };
-
+use tauri_plugin_http::reqwest;
 use super::Provider;
 
 impl Issuer for Provider {

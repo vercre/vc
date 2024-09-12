@@ -1,18 +1,18 @@
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 
-import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
-import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Stack from '@mui/material/Stack';
-import { useTheme } from '@mui/material/styles';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
-import { invoke } from '@tauri-apps/api/core';
-import { useSetRecoilState } from 'recoil';
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Stack from "@mui/material/Stack";
+import { useTheme } from "@mui/material/styles";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { invoke } from "@tauri-apps/api/core";
+import { useSetRecoilState } from "recoil";
 
-import { header } from '../Layout';
+import { header } from "../Layout";
 
 export type AddProps = {
     onClose: () => void;
@@ -32,21 +32,28 @@ const Add = (props: AddProps) => {
         }
         init.current = true;
         setHeader({
-            title: 'Add Credential',
+            title: "Add Credential",
             action: (
                 <IconButton onClick={onClose} size="large">
-                    <ArrowBackIosIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
+                    <ArrowBackIosIcon
+                        fontSize="large"
+                        sx={{ color: theme.palette.primary.contrastText }}
+                    />
                 </IconButton>
             ),
             secondaryAction: undefined,
         });
     }, [onClose, setHeader, theme.palette.primary.contrastText]);
 
-    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (
+        e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
         const val = e.target.value.trim();
         setOffer(val);
         if (val === "") {
             setError("Offer is required");
+        } else {
+            setError(undefined);
         }
     };
 
@@ -56,7 +63,15 @@ const Add = (props: AddProps) => {
         }
         const encoded = encodeURIComponent(offer);
         console.log("invoking offer:", encoded);
-        invoke("offer", { encodedOffer: encoded });
+
+        const requestEndpoint = async () => {
+            try {
+                await invoke("offer", { encodedOffer: encoded });
+            } catch {
+                setError("Error processing offer");
+            }
+        };
+        requestEndpoint();
     };
 
     return (
@@ -64,7 +79,10 @@ const Add = (props: AddProps) => {
             <Typography gutterBottom>
                 Paste the Verifiable Credential offer.
             </Typography>
-            <Alert severity="info">You will have a chance to review the Credential before it is added</Alert>
+            <Alert severity="info">
+                You will have a chance to review the Credential before it is
+                added
+            </Alert>
             <TextField
                 error={!!error}
                 fullWidth
@@ -83,17 +101,15 @@ const Add = (props: AddProps) => {
             />
             <Box
                 sx={{
-                    display: 'flex',
+                    display: "flex",
                     my: 2,
-                    justifyContent: 'center',
-                }}
-            >
+                    justifyContent: "center",
+                }}>
                 <Button
                     color="primary"
                     disabled={!!error || offer === ""}
                     onClick={handleSubmit}
-                    variant="contained"
-                >
+                    variant="contained">
                     Review
                 </Button>
             </Box>

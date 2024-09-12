@@ -3,6 +3,7 @@
 //! Basic passing of error information from API calls to the frontend.
 
 use std::fmt::{Display, Formatter, Result};
+use tauri_plugin_http::reqwest;
 
 use http::status;
 use serde::Serialize;

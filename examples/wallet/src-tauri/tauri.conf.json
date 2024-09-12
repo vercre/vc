@@ -44,6 +44,9 @@
     "iOS": {
       "developmentTeam": "Vercre"
     },
+    "android": {
+      "minSdkVersion": 24
+    },
     "macOS": {
       "minimumSystemVersion": "10.13"
     },

@@ -6,7 +6,7 @@ use vercre_openid::verifier::{Metadata, Result, StateStore, Verifier, Wallet};
 use crate::store::keystore::VerifierKeystore;
 use crate::store::{presentation, resolver, state};
 
-pub const VERIFIER_ID: &str = "http://vercre.io";
+pub const VERIFIER_ID: &str = "http://localhost:8080";
 
 #[derive(Default, Clone, Debug)]
 pub struct Provider {

@@ -38,10 +38,30 @@ RESP=$(curl --json '{
 # send credential offer to wallet (Tauri app)
 OFFER=$(echo $RESP | jq '.credential_offer' | jq -r @uri)
 open "openid-credential-offer://?credential_offer=$OFFER"
+```
+
+In order to access the credential, paste the `credential_offer` object response from the `issuer/create_offer` endpoint into the Offer input in the wallet UI
+```json
+{
+    "credential_configuration_ids": [
+        "EmployeeID_JWT"
+    ],
+    "credential_issuer": "http://localhost:8080", // example host 
+    "grants": {
+        "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+            "pre-authorized_code": "<pre-authorized_code>",
+            "tx_code": {
+                "description": "Please provide the one-time code received",
+                "input_mode": "numeric",
+                "length": 6
+            }
+        }
+    }
+}
+```
 
 # print user pin
 echo $RESP | jq '.user_code'
-```
 
 The resultant link should look like:
 
@@ -182,3 +202,27 @@ pnpm update
 # Rust
 cargo update
 ```
+
+## Android 
+
+In order to get it running on mobile you will need to configure your hosts file. <br />
+Tauri has some instructions on how to get started [here]("https://v2.tauri.app/plugin/http-client/"). 
+
+1. In order to get android studio and the emulator working on your machine, update your `zshrc` file configuration to look like this 
+```bash
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export NDK_VERSION=$(ls -1 $ANDROID_HOME/ndk | sort -V | tail -n 1)
+export NDK_HOME="$ANDROID_HOME/ndk/$NDK_VERSION"
+export ANDROID_SDK_ROOT=$ANDROID_HOME
+
+export PATH=$PATH:$NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/bin
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/tools
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+
+# Java configuration
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export PATH=$JAVA_HOME/bin:$PATH
+```
+2. Run `pnpm tauri android init` to generate the application
+3. Then run `pnpm tauri android dev` to build and run it. 

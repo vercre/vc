@@ -1,11 +1,11 @@
 ---
 source: vercre-verifier/src/create_request.rs
-assertion_line: 244
+assertion_line: 215
 expression: response
 ---
 request_object:
   response_type: vp_token
-  client_id: "http://vercre.io/callback"
+  client_id: "http://localhost:8080/callback"
   nonce: "[nonce]"
   state: "[state]"
   presentation_definition: "[presentation_definition]"

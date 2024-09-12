@@ -3,6 +3,7 @@ use vercre_holder::provider::Verifier;
 use vercre_holder::{RequestObjectResponse, ResponseRequest, ResponseResponse};
 
 use super::Provider;
+use tauri_plugin_http::reqwest;
 
 impl Verifier for Provider {
     /// Get a request object. If an error is returned, the wallet will cancel the presentation flow.
