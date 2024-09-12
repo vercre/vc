@@ -1,7 +1,7 @@
 //! # Presentation Request Endpoint
 //!
 //! The `request` endpoint can take a request for presentation in the form of a URI to go get the
-//! request details or all of the details as a `PresentationRequest` struct serialized to a URL
+//! request details or all of the details as a `RequestObject` struct serialized to a URL
 //! query parameter.
 
 use anyhow::{anyhow, bail};
@@ -34,7 +34,7 @@ pub struct RequestResponse {
 }
 
 /// Initiates the presentation flow triggered by a new presentation request where the form of
-/// the request is a URI to retrieve the request details or a `PresentationRequest` struct as a
+/// the request is a URI to retrieve the request details or a `RequestObject` struct as a
 /// URL query parameter.
 #[instrument(level = "debug", skip(provider))]
 pub async fn request(
