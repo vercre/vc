@@ -38,12 +38,8 @@ pub fn request(input: &Json) -> Result<TokenStream> {
         quote! {None}
     };
 
-    // return error for option additional fields
-    if !input1.remaining().is_empty() {
-        let keys =
-            input1.remaining().iter().map(|k| format!("`{k}`")).collect::<Vec<_>>().join(", ");
-        return Err(Error::new(Span::call_site(), format!("unexpected field(s): {keys}")));
-    }
+    // return error for any unexpected fields
+    input1.err_unconsumed()?;
 
     let path = quote! {vercre_openid::issuer};
 

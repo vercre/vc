@@ -4,9 +4,10 @@ use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_macros::create_offer_request;
 use vercre_openid::issuer::SendType;
 
+const CREDENTIAL_ISSUER: &str = "http://vercre.io";
+
 #[test]
-fn create_offer() {
-    const CREDENTIAL_ISSUER: &str = "http://vercre.io";
+fn pre_authorized() {
     let subject_id = "normal_user";
 
     let request = create_offer_request!({
@@ -22,7 +23,7 @@ fn create_offer() {
 }
 
 #[test]
-fn create_offer_default() {
+fn default() {
     let request = create_offer_request!({
         "credential_issuer": "http://vercre.io",
         "credential_configuration_ids": ["EmployeeID_JWT"],

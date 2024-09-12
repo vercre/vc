@@ -31,9 +31,13 @@ impl Json {
         self.fields.remove(key).map_or_else(|| quote! {None}, |v: Value| quote! {#v.into()})
     }
 
-    /// Get any fields that are left in the JSON object.
-    pub fn remaining(&self) -> Vec<String> {
-        self.fields.keys().cloned().collect()
+    /// Return an error if any fields are left unconsumed.
+    pub fn err_unconsumed(&self) -> Result<()> {
+        if !self.fields.is_empty() {
+            let keys = self.fields.keys().map(|k| format!("`{k}`")).collect::<Vec<_>>().join(", ");
+            return Err(Error::new(Span::call_site(), format!("unexpected field(s): {keys}")));
+        }
+        Ok(())
     }
 }
 

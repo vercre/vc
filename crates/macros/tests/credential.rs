@@ -2,11 +2,11 @@
 
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_macros::credential_request;
-// use vercre_openid::issuer::SendType;
+
+const CREDENTIAL_ISSUER: &str = "http://vercre.io";
 
 #[test]
 fn identifier() {
-    const CREDENTIAL_ISSUER: &str = "http://vercre.io";
     let access_token = "AVCDEF12345";
     let jwt = "eyJhbGciOiJFZERTQSIsInR5cCI6Im9wZW5pZDR2Y...";
     let credential_identifier = "PHLEmployeeID";
@@ -26,7 +26,6 @@ fn identifier() {
 
 #[test]
 fn format() {
-    const CREDENTIAL_ISSUER: &str = "http://vercre.io";
     let access_token = "AVCDEF12345";
     let jwt = "eyJhbGciOiJFZERTQSIsInR5cCI6Im9wZW5pZDR2Y...";
 
