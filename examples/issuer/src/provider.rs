@@ -4,8 +4,8 @@ use chrono::{DateTime, Utc};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use vercre_issuer::provider::{
-    Algorithm, ClaimEntry, Client, Dataset, Decryptor, DidResolver, Document, Encryptor, Issuer,
-    Metadata, Result, SecOps, Server, Signer, StateStore, Status, Subject,
+    Algorithm, ClaimEntry, Client, Credentials, Dataset, Decryptor, DidResolver, Document,
+    Encryptor, Issuer, Metadata, Result, SecOps, Server, Signer, StateStore, Status, Subject,
 };
 use vercre_test_utils::store::keystore::IssuerKeystore;
 use vercre_test_utils::store::{issuance, resolver, state};
@@ -53,6 +53,11 @@ impl Metadata for Provider {
 }
 
 impl Subject for Provider {
+    async fn authenticate(&self, _credentials: Credentials) -> Result<String> {
+        // self.subject.authenticate(subject_id, password)
+        todo!("implement authentication")
+    }
+
     /// Authorize issuance of the specified credential for the holder.
     async fn authorize(
         &self, subject_id: &str, credential_configuration_id: &str,

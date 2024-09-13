@@ -6,7 +6,7 @@ use serde::Serialize;
 use vercre_datasec::{Algorithm, Decryptor, Encryptor, SecOps, Signer};
 use vercre_did::{DidResolver, Document};
 use vercre_openid::issuer::{
-    ClaimEntry, Client, Dataset, Issuer, Metadata, Result, Server, StateStore, Subject,
+    ClaimEntry, Client, Credentials, Dataset, Issuer, Metadata, Result, Server, StateStore, Subject,
 };
 use vercre_status::issuer::Status;
 
@@ -61,6 +61,11 @@ impl Metadata for Provider {
 }
 
 impl Subject for Provider {
+    async fn authenticate(&self, _credentials: Credentials) -> Result<String> {
+        // self.subject.authenticate(subject_id, password)
+        todo!("implement authentication")
+    }
+
     /// Authorize issuance of the specified credential for the holder.
     async fn authorize(
         &self, subject_id: &str, credential_configuration_id: &str,

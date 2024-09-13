@@ -48,6 +48,11 @@ pub trait Metadata: Send + Sync {
 /// The Subject trait specifies how the library expects issuance subject (user)
 /// information to be provided by implementers.
 pub trait Subject: Send + Sync {
+    /// Authenticate Holder, returning the Holder's `subject_id` if successful.
+    fn authenticate(
+        &self, credentials: Credentials,
+    ) -> impl Future<Output = provider::Result<String>> + Send;
+
     /// Authorize issuance of the credential specified by `credential_configuration_id`.
     /// Returns a one or more `credential_identifier`s the subject (holder) is
     /// authorized to request.
@@ -61,6 +66,24 @@ pub trait Subject: Send + Sync {
     fn dataset(
         &self, subject_id: &str, credential_identifier: &str,
     ) -> impl Future<Output = provider::Result<Dataset>> + Send;
+}
+
+/// Supported Holder authentication credential types.
+pub enum Credentials {
+    /// Username and password.
+    Password {
+        /// The username.
+        username: String,
+
+        /// The password.
+        password: String,
+    },
+    //
+    // /// A Verifiable Credential.
+    // VerifiableCredential(VerifiableCredential),
+
+    // /// A JWT.
+    // Jwt(String),
 }
 
 /// The user information returned by the Subject trait.
