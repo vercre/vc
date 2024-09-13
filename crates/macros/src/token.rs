@@ -10,28 +10,28 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     // let path = quote! {vercre_openid::issuer};
 
     // we remove fields as we go so we can check for unexpected input
-    let mut input1 = input.clone();
+    let mut input = input.clone();
 
     // required fields — return error if not present
-    let credential_issuer = input1.expect("credential_issuer")?;
+    let credential_issuer = input.expect("credential_issuer")?;
 
     // optional fields — return Some or None
-    let client_id = input1.option("client_id");
+    let client_id = input.option("client_id");
 
-    let Some(grant_type) = input1.get("grant_type") else {
+    let Some(grant_type) = input.get("grant_type") else {
         return Err(Error::new(Span::call_site(), "`grant_type` is not set"));
     };
 
     let grant_type =
         if grant_type.as_str() == Some("urn:ietf:params:oauth:grant-type:pre-authorized_code") {
-            pre_authorized_code(&mut input1)?
+            pre_authorized_code(&mut input)?
         } else if grant_type.as_str() == Some("authorization_code") {
-            authorization_code(&mut input1)?
+            authorization_code(&mut input)?
         } else {
             return Err(Error::new(Span::call_site(), "unknown `grant_type`"));
         };
 
-    let authorization_details = if let Some(details) = input1.get("authorization_details") {
+    let authorization_details = if let Some(details) = input.get("authorization_details") {
         let authorization_details = authorization_details(&details)?;
         quote! {Some(#authorization_details)}
     } else {
@@ -39,7 +39,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     };
 
     // return error for any unexpected fields
-    input1.err_unconsumed()?;
+    input.check_consumed()?;
 
     let path = quote! {vercre_openid::issuer};
 

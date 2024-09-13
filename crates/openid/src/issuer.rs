@@ -137,6 +137,15 @@ impl fmt::Display for SendType {
     }
 }
 
+impl From<String> for SendType {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "by_ref" => Self::ByRef,
+            _ => Self::ByVal,
+        }
+    }
+}
+
 /// The response to a Credential Offer request.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CreateOfferResponse {

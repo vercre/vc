@@ -260,7 +260,7 @@ mod tests {
             "credential_issuer": CREDENTIAL_ISSUER,
             "credential_configuration_ids": ["EmployeeID_JWT"],
             "subject_id": NORMAL_USER,
-            "pre-authorize": true,
+            "pre_authorize": true,
             "tx_code_required": true,
             "send_type": SendType::ByVal,
         });

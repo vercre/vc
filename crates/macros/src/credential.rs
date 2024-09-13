@@ -7,16 +7,16 @@ use crate::parse::{Json, Value};
 // Create strongly typed `CredentialRequest` from JSON-like input,
 // doing basic validation and setting sensible defaults.
 pub fn request(input: &Json) -> Result<TokenStream> {
-    let mut input1 = input.clone();
+    let mut input = input.clone();
 
-    let credential_issuer = input1.expect("credential_issuer")?;
-    let access_token = input1.expect("access_token")?;
-    let specification = credential_specification(&mut input1)?;
-    let proof = proof(&mut input1)?;
-    let credential_response_encryption = input1.option("credential_response_encryption");
+    let credential_issuer = input.expect("credential_issuer")?;
+    let access_token = input.expect("access_token")?;
+    let specification = credential_specification(&mut input)?;
+    let proof = proof(&mut input)?;
+    let credential_response_encryption = input.option("credential_response_encryption");
 
     // return error for any unexpected fields
-    input1.err_unconsumed()?;
+    input.check_consumed()?;
 
     let path = quote! {vercre_openid::issuer};
 
@@ -31,18 +31,18 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     })
 }
 
-fn credential_specification(input1: &mut Json) -> Result<TokenStream> {
+fn credential_specification(input: &mut Json) -> Result<TokenStream> {
     let path = quote! {vercre_openid::issuer};
     let span = Span::call_site();
 
-    if let Some(identifier) = input1.get("credential_identifier") {
+    if let Some(identifier) = input.get("credential_identifier") {
         Ok(quote! {
             #path::CredentialSpec::Identifier {
                 credential_identifier: #identifier,
             }
         })
-    } else if let Some(format) = input1.get("format") {
-        let Some(defn_value) = input1.get("credential_definition") else {
+    } else if let Some(format) = input.get("format") {
+        let Some(defn_value) = input.get("credential_definition") else {
             return Err(Error::new(span, "`credential_definition` is not set"));
         };
         let credential_definition = format_definition(&defn_value)?;
@@ -88,11 +88,11 @@ fn format_definition(defn_value: &Value) -> Result<TokenStream> {
     })
 }
 
-fn proof(input1: &mut Json) -> Result<TokenStream> {
+fn proof(input: &mut Json) -> Result<TokenStream> {
     let path = quote! {vercre_openid::issuer};
     let span = Span::call_site();
 
-    if let Some(p) = input1.get("proof") {
+    if let Some(p) = input.get("proof") {
         let Some(proof) = p.as_object() else {
             return Err(Error::new(span, "`proof` must be an object"));
         };

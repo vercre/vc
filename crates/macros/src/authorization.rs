@@ -8,26 +8,26 @@ use crate::parse::{Json, Value};
 
 pub fn request(input: &Json) -> Result<TokenStream> {
     // we remove fields as we go so we can check for unexpected input
-    let mut input1 = input.clone();
+    let mut input = input.clone();
 
     // required fields — return error if not present
-    let credential_issuer = input1.expect("credential_issuer")?;
-    let response_type = input1.expect("response_type")?;
-    let client_id = input1.expect("client_id")?;
-    let code_challenge = input1.expect("code_challenge")?;
-    let code_challenge_method = input1.expect("code_challenge_method")?;
-    let subject_id = input1.expect("subject_id")?;
+    let credential_issuer = input.expect("credential_issuer")?;
+    let response_type = input.expect("response_type")?;
+    let client_id = input.expect("client_id")?;
+    let code_challenge = input.expect("code_challenge")?;
+    let code_challenge_method = input.expect("code_challenge_method")?;
+    let subject_id = input.expect("subject_id")?;
 
     // optional fields — return Some or None
-    let redirect_uri = input1.option("redirect_uri");
-    let state = input1.option("state");
-    let scope = input1.option("scope");
-    let resource = input1.option("resource");
-    let wallet_issuer = input1.option("wallet_issuer");
-    let user_hint = input1.option("user_hint");
-    let issuer_state = input1.option("issuer_state");
+    let redirect_uri = input.option("redirect_uri");
+    let state = input.option("state");
+    let scope = input.option("scope");
+    let resource = input.option("resource");
+    let wallet_issuer = input.option("wallet_issuer");
+    let user_hint = input.option("user_hint");
+    let issuer_state = input.option("issuer_state");
 
-    let authorization_details = if let Some(details) = input1.get("authorization_details") {
+    let authorization_details = if let Some(details) = input.get("authorization_details") {
         let authorization_details = authorization_details(&details)?;
         quote! {Some(#authorization_details)}
     } else {
@@ -35,7 +35,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     };
 
     // return error for any unexpected fields
-    input1.err_unconsumed()?;
+    input.check_consumed()?;
 
     let path = quote! {vercre_openid::issuer};
 

@@ -31,8 +31,14 @@ impl Json {
         self.fields.remove(key).map_or_else(|| quote! {None}, |v: Value| quote! {#v.into()})
     }
 
-    /// Return an error if any fields are left unconsumed.
-    pub fn err_unconsumed(&self) -> Result<()> {
+    // /// Either `Some` or `None` depending on whether the key is present.
+    // pub fn option2<T>(&mut self, key: &str) -> TokenStream {
+    //     self.fields.remove(key).map_or_else(|| quote! {None}, |v: Value| quote! {#v.into()})
+    // }
+
+    /// Check all parsed fields have been consumed, returning an error if any fields
+    /// are left unconsumed.
+    pub fn check_consumed(&self) -> Result<()> {
         if !self.fields.is_empty() {
             let keys = self.fields.keys().map(|k| format!("`{k}`")).collect::<Vec<_>>().join(", ");
             return Err(Error::new(Span::call_site(), format!("unexpected field(s): {keys}")));
@@ -64,17 +70,19 @@ impl Parse for Json {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
         let mut json = Self::default();
 
-        // all our content should be wrapped in braces
-        if input.peek(token::Brace) {
-            let content;
-            braced!(content in input);
+        // content should be wrapped in braces
+        if !input.peek(token::Brace) {
+            return Err(input.error("expected JSON object"));
+        }
 
-            // parse key-value pairs into fields
-            let fields = Punctuated::<Field, token::Comma>::parse_terminated(&content)?;
-            for field in fields.into_pairs() {
-                let field = field.into_value();
-                json.fields.insert(field.lhs, field.rhs);
-            }
+        let content;
+        braced!(content in input);
+
+        // parse key-value pairs into fields
+        let fields = Punctuated::<Field, token::Comma>::parse_terminated(&content)?;
+        for field in fields.into_pairs() {
+            let field = field.into_value();
+            json.fields.insert(field.lhs, field.rhs);
         }
 
         Ok(json)

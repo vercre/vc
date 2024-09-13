@@ -9,13 +9,13 @@ use crate::parse::{Json, Value};
 pub fn request(input: &Json) -> Result<TokenStream> {
     let span = Span::call_site();
 
-    let mut input1 = input.clone();
+    let mut input = input.clone();
 
-    let credential_issuer = input1.expect("credential_issuer")?;
-    let subject_id = input1.option("subject_id");
+    let credential_issuer = input.expect("credential_issuer")?;
+    let subject_id = input.option("subject_id");
 
     // one or more `credential_configuration_ids` are required
-    let Some(credential_configuration_ids) = input1.get("credential_configuration_ids") else {
+    let Some(credential_configuration_ids) = input.get("credential_configuration_ids") else {
         return Err(Error::new(span, "`credential_configuration_ids` is not set"));
     };
     let Some(ids) = &credential_configuration_ids.as_array() else {
@@ -26,19 +26,19 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     }
 
     // use default values if not set
-    let pre_authorize = input1.get("pre-authorize").unwrap_or(Value::Bool(false));
-    let tx_code_required = input1.get("tx_code_required").unwrap_or(Value::Bool(false));
+    let pre_authorize = input.get("pre_authorize").unwrap_or(Value::Bool(false));
+    let tx_code_required = input.get("tx_code_required").unwrap_or(Value::Bool(false));
     let send_type =
-        input1.get("send_type").map_or_else(|| quote! {SendType::ByVal}, |v| quote! {#v.into()});
+        input.get("send_type").map_or_else(|| quote! {SendType::ByVal}, |v| quote! {#v.into()});
 
     // return error for any unexpected fields
-    input1.err_unconsumed()?;
+    input.check_consumed()?;
 
     let path = quote! {vercre_openid::issuer};
 
     Ok(quote! {
         #path::CreateOfferRequest {
-            credential_issuer: #credential_issuer,
+            credential_issuer: #credential_issuer.to_string(),
             subject_id: #subject_id,
             credential_configuration_ids: #credential_configuration_ids,
             pre_authorize: #pre_authorize,
