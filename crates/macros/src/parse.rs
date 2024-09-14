@@ -18,23 +18,17 @@ impl Json {
     }
 
     /// Expect the key to be present and return the value or an error.
-    pub fn expect(&mut self, key: &str) -> Result<TokenStream> {
-        let value = self
-            .fields
-            .remove(key)
-            .ok_or_else(|| Error::new(Span::call_site(), "`{key}` is not set"))?;
-        Ok(value.into_token_stream())
+    pub fn expect(&mut self, key: &str) -> Result<Value> {
+        self.fields.remove(key).ok_or_else(|| Error::new(Span::call_site(), "`{key}` is not set"))
     }
 
     /// Either `Some` or `None` depending on whether the key is present.
-    pub fn option(&mut self, key: &str) -> TokenStream {
-        self.fields.remove(key).map_or_else(|| quote! {None}, |v: Value| quote! {#v.into()})
+    pub fn option(&mut self, key: &str) -> Value {
+        self.fields.remove(key).map_or_else(
+            || Value::Tokens(quote! {None}),
+            |v: Value| Value::Tokens(quote! {#v.into()}),
+        )
     }
-
-    // /// Either `Some` or `None` depending on whether the key is present.
-    // pub fn option2<T>(&mut self, key: &str) -> TokenStream {
-    //     self.fields.remove(key).map_or_else(|| quote! {None}, |v: Value| quote! {#v.into()})
-    // }
 
     /// Check all parsed fields have been consumed, returning an error if any fields
     /// are left unconsumed.
