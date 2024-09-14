@@ -38,7 +38,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
 
     Ok(quote! {
         #path::CreateOfferRequest {
-            credential_issuer: #credential_issuer.to_string(),
+            credential_issuer: #credential_issuer,
             subject_id: #subject_id,
             credential_configuration_ids: #credential_configuration_ids,
             pre_authorize: #pre_authorize,

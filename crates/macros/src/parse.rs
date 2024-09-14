@@ -19,14 +19,17 @@ impl Json {
 
     /// Expect the key to be present and return the value or an error.
     pub fn expect(&mut self, key: &str) -> Result<Value> {
-        self.fields.remove(key).ok_or_else(|| Error::new(Span::call_site(), "`{key}` is not set"))
+        let Some(v) = self.fields.remove(key) else {
+            return Err(Error::new(Span::call_site(), "`{key}` is not set"));
+        };
+        Ok(Value::Tokens(quote! {Into::into(#v)}))
     }
 
     /// Either `Some` or `None` depending on whether the key is present.
     pub fn option(&mut self, key: &str) -> Value {
         self.fields.remove(key).map_or_else(
             || Value::Tokens(quote! {None}),
-            |v: Value| Value::Tokens(quote! {#v.into()}),
+            |v: Value| Value::Tokens(quote! {Some(#v.into())}),
         )
     }
 
@@ -132,6 +135,9 @@ impl Parse for Value {
         {
             // parse enum variant or method call
             Self::Tokens(input.parse::<syn::Expr>()?.to_token_stream())
+        // } else if l.peek(token::And) {
+        //     // parse enum variant or method call
+        //     Self::Tokens(input.parse::<syn::Expr>()?.to_token_stream())
         } else if l.peek(syn::Ident) {
             // parse const or variable
             Self::Ident(input.parse::<syn::Ident>()?)
@@ -151,7 +157,7 @@ impl ToTokens for Value {
             Self::Bool(b) => tokens.extend(quote! { #b }),
             Self::String(s) => tokens.extend(quote! { #s.to_string() }),
             Self::Number(n) => tokens.extend(quote! { #n }),
-            Self::Ident(i) => tokens.extend(quote! { #i.to_string() }),
+            Self::Ident(i) => tokens.extend(quote! { #i }),
             Self::Tokens(t) => tokens.extend(t.clone()),
             Self::Array(a) => {
                 let values = a.iter().map(|v| {

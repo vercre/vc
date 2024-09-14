@@ -38,7 +38,7 @@ fn credential_specification(input: &mut Json) -> Result<TokenStream> {
     if let Some(identifier) = input.get("credential_identifier") {
         Ok(quote! {
             #path::CredentialSpec::Identifier {
-                credential_identifier: #identifier,
+                credential_identifier: #identifier.into(),
             }
         })
     } else if let Some(format) = input.get("format") {
@@ -112,7 +112,7 @@ fn proof(input: &mut Json) -> Result<TokenStream> {
         return Ok(quote! {
             Some(#path::Proof::Single{
                 proof_type: #path::SingleProof::Jwt{
-                    jwt: #jwt,
+                    jwt: #jwt.into(),
                 },
             })
         });
