@@ -226,3 +226,12 @@ export PATH=$JAVA_HOME/bin:$PATH
 ```
 2. Run `pnpm tauri android init` to generate the application
 3. Then run `pnpm tauri android dev` to build and run it. 
+
+### Set up a wireless connection
+
+1. Enable developer options on your android device, then enable debugging over Wi-Fi. 
+2. Open the android studio desktop application, go to Settings > Plugins > Andorid > Pair Devices Using Wi-Fi, a QR code should appear.
+3. Scan the QR code to pair over Wi-Fi, then Tap Wireless debugging and pair your device: <br/>
+    a. To pair your device with a QR code, select Pair device with QR code and scan the QR code, shown in figure 2. <br/>
+    b. To pair your device with a pairing code, select Pair device with pairing code from the Pair new devices over Wi-Fi dialog. On your device, select Pair using pairing code. A six-digit code appears. Once your device appears on the Pair devices over Wi-Fi window, enter the six-digit code shown on your device and select Pair.
+4. When you run the application via the terminal, an ooption to run either the built-in emulator, or your device should appear. 
