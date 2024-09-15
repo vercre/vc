@@ -31,7 +31,6 @@ Verifiable Credential Issuance specification:
 | **Signature**  | ES256K, EdDSA             |                 |                                  |
 | **Binding**    | did:web, did:key          |                 | did:dht, did:keri                |
 | **Encryption** |                           | ECDH-ES/A128GCM | ECDH-ES/A256GCM                  |
-|                |                           |                 |                                  |
 
 1. Working code, but not yet rigorously verified.
 
