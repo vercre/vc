@@ -45,7 +45,7 @@ Verifiable Credential Issuance specification:
 | -------------- | ------------------------- | --------------- | -------------------------------- |
 | **Initiated**  | Issuer, Wallet            |                 |                                  |
 | **Flow**       | Pre-Authorized            | Authorization   |                                  |
-| **Origin**     | Cross-device, same-device |                 |                                  |
+| **Origin**     | Cross-device, Same-device |                 |                                  |
 | **Issuance**   | Immediate, Deferred       |                 |                                  |
 | **Format**     | jwt_vc_json               |                 | ldp_vc, jwt_vc_json-ld, mso-mdoc |
 | **Signature**  | ES256K, EdDSA             |                 |                                  |
