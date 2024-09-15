@@ -999,6 +999,28 @@ impl Default for CredentialSpec {
     }
 }
 
+// impl CredentialSpec {
+//     /// Returns the Credential Identifier.
+//     #[must_use]
+//     pub fn as_identifier(&self) -> Option<&str> {
+//         match self {
+//             Self::Identifier {
+//                 credential_identifier,
+//             } => Some(credential_identifier),
+//             Self::Format(_) => None,
+//         }
+//     }
+
+//     /// Returns the Credential Format.
+//     #[must_use]
+//     pub const fn as_format(&self) -> Option<&Format> {
+//         match self {
+//             Self::Format(format) => Some(format),
+//             Self::Identifier{..} => None,
+//         }
+//     }
+// }
+
 /// Wallet's proof of possession of the key material the issued Credential is to
 /// be bound to.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]

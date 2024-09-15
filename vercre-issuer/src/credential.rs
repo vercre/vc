@@ -247,6 +247,15 @@ impl Context {
     ) -> Result<Option<VerifiableCredential>> {
         tracing::debug!("credential::generate_vc");
 
+        // let Some(credential_identifier) = &request.specification.as_identifier() else {
+        //     return Err(Error::InvalidCredentialRequest("invalid credential request".into()));
+        // };
+
+        // --------------------------------------------------------------------
+        // Get dataset
+        //   TODO: support request by credential format (e.g. jwt_vc_json, etc.) 
+        //   need to get dataset by credential_configuration_id??
+        // --------------------------------------------------------------------
         // get credential identifier and configuration
         let CredentialSpec::Identifier {
             credential_identifier,
@@ -262,6 +271,7 @@ impl Context {
         let dataset = Subject::dataset(provider, subject_id, credential_identifier)
             .await
             .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
+        // --------------------------------------------------------------------
 
         // defer issuance if claims are pending (approval),
         if dataset.pending {

@@ -141,7 +141,7 @@ impl Parse for Value {
         } else if l.peek(token::And) {
             // chomp `&` and re-parse
             input.parse::<token::And>()?;
-            input.parse::<Value>()?
+            input.parse::<Self>()?
         } else {
             return Err(input.error("unexpected token"));
         };
