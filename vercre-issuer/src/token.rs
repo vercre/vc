@@ -155,11 +155,13 @@ impl Context {
             _ => return Err(Error::ServerError("could not get authorization state".into())),
         };
 
+        // TODO: support narrowing of scope
+
         // narrow token's authorization if requested by wallet
         if let Some(auth_dets) = request.authorization_details
             && let Some(authzd) = authorized
         {
-            let reduced = reduce_auth(&authzd, &auth_dets);
+            let reduced = narrow_auth(&authzd, &auth_dets);
             if reduced.is_empty() {
                 return Err(Error::InvalidRequest("no matching authorization details".into()));
             }
@@ -191,59 +193,8 @@ impl Context {
     }
 }
 
-// // Reduce previously authorized credentials to requested ones.
-// fn reduce_auth(authorized: &[Authorized], requested: &[AuthorizationDetail]) -> Vec<Authorized> {
-//     // filter authorized credentials to match requested ones
-//     let subset: Vec<Authorized> = authorized
-//         .iter()
-//         .filter(|authzd| {
-//             // find first matching requested credential
-//             requested.iter().any(|reqd| {
-//                 // ignore non-OpenID authorization_detail entries
-//                 if reqd.type_ != AuthorizationDetailType::OpenIdCredential {
-//                     return true;
-//                 }
-
-//                 match &reqd.specification {
-//                     AuthorizationSpec::ConfigurationId(ConfigurationId::Definition {
-//                         credential_configuration_id: requested_id,
-//                         ..
-//                     }) => {
-//                         let AuthorizationSpec::ConfigurationId(ConfigurationId::Definition {
-//                             credential_configuration_id,
-//                             ..
-//                         }) = &authzd.authorization_detail.specification
-//                         else {
-//                             return false;
-//                         };
-
-//                         requested_id == credential_configuration_id
-//                     }
-//                     AuthorizationSpec::Format(Format::JwtVcJson {
-//                         credential_definition: requested_def,
-//                     }) => {
-//                         if let AuthorizationSpec::Format(Format::JwtVcJson {
-//                             credential_definition: authorized_def,
-//                         }) = &authzd.authorization_detail.specification
-//                         {
-//                             requested_def == authorized_def
-//                         } else {
-//                             false
-//                         }
-//                     }
-
-//                     _ => todo!("remaining match arms"),
-//                 }
-//             })
-//         })
-//         .cloned()
-//         .collect();
-
-//     subset
-// }
-
-// Reduce previously authorized credentials to requested ones.
-fn reduce_auth(authorized: &[Authorized], requested: &[AuthorizationDetail]) -> Vec<Authorized> {
+// Narrow previously authorized credentials to requested ones.
+fn narrow_auth(authorized: &[Authorized], requested: &[AuthorizationDetail]) -> Vec<Authorized> {
     let mut subset = vec![];
 
     for reqd in requested {
@@ -253,6 +204,8 @@ fn reduce_auth(authorized: &[Authorized], requested: &[AuthorizationDetail]) -> 
         else {
             continue;
         };
+
+        // TODO: potentially, reduce claimset to requested claims
 
         // add to subset
         subset.push(auth_det.clone());
@@ -268,28 +221,6 @@ fn is_match(a: &AuthorizationDetail, b: &AuthorizationDetail) -> bool {
                 return false;
             };
             a_config == b_config
-
-            // let a_id = match a_config {
-            //     ConfigurationId::Definition {
-            //         credential_configuration_id,
-            //         ..
-            //     }
-            //     | ConfigurationId::Claims {
-            //         credential_configuration_id,
-            //         ..
-            //     } => credential_configuration_id,
-            // };
-            // let b_id = match a_config {
-            //     ConfigurationId::Definition {
-            //         credential_configuration_id,
-            //         ..
-            //     }
-            //     | ConfigurationId::Claims {
-            //         credential_configuration_id,
-            //         ..
-            //     } => credential_configuration_id,
-            // };
-            // a_id == b_id
         }
 
         AuthorizationSpec::Format(Format::JwtVcJson {
@@ -304,6 +235,7 @@ fn is_match(a: &AuthorizationDetail, b: &AuthorizationDetail) -> bool {
             a_def == b_def
         }
 
+        // TODO: add remaining match arms
         AuthorizationSpec::Format(_) => todo!("remaining match arms"),
     }
 }

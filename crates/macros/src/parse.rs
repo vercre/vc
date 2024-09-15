@@ -135,12 +135,14 @@ impl Parse for Value {
         {
             // parse enum variant or method call
             Self::Tokens(input.parse::<syn::Expr>()?.to_token_stream())
-        // } else if l.peek(token::And) {
-        //     // parse enum variant or method call
-        //     Self::Tokens(input.parse::<syn::Expr>()?.to_token_stream())
         } else if l.peek(syn::Ident) {
             // parse const or variable
             Self::Ident(input.parse::<syn::Ident>()?)
+        // } else if l.peek(token::And) {
+        //     // parse borrow + ident
+        //     input.parse::<token::And>()?;
+        //     let ident = input.parse::<syn::Ident>()?;
+        //     Self::Tokens(quote! {#ident.clone()})
         } else {
             return Err(input.error("unexpected token"));
         };
