@@ -18,9 +18,10 @@ An example impementation of a Verifiable Credential Issuance service can be foun
 
 ## Specification Conformance
 
-The following table shows the current status of the implementation of the OpenID for Verifiable Credential Issuance specification:
+The following table shows the current status of the implementation of the OpenID for 
+Verifiable Credential Issuance specification:
 
-|                | Alpha[^1]                 | In-progress     | Planned                          |
+|                | Alpha<sup>1</sup>         | In-progress     | Planned                          |
 | -------------- | ------------------------- | --------------- | -------------------------------- |
 | **Initiated**  | Issuer, Wallet            |                 |                                  |
 | **Flow**       | Pre-Authorized            | Authorization   |                                  |
@@ -28,11 +29,11 @@ The following table shows the current status of the implementation of the OpenID
 | **Issuance**   | Immediate, Deferred       |                 |                                  |
 | **Format**     | jwt_vc_json               |                 | ldp_vc, jwt_vc_json-ld, mso-mdoc |
 | **Signature**  | ES256K, EdDSA             |                 |                                  |
-| **Binding**    | did:web, did:key          |                 | did:dht, did:keri                          |
+| **Binding**    | did:web, did:key          |                 | did:dht, did:keri                |
 | **Encryption** |                           | ECDH-ES/A128GCM | ECDH-ES/A256GCM                  |
+|                |                           |                 |                                  |
 
-
-[^1]: Working code, but not yet rigorously verified.
+1. Working code, but not yet rigorously verified.
 
 ## Additional
 

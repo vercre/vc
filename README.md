@@ -41,7 +41,7 @@ directory.
 The following table shows the current status of the implementation of the OpenID for 
 Verifiable Credential Issuance specification:
 
-|                | Alpha[^1]                 | In-progress     | Planned                          |
+|                | Alpha<sup>1</sup>         | In-progress     | Planned                          |
 | -------------- | ------------------------- | --------------- | -------------------------------- |
 | **Initiated**  | Issuer, Wallet            |                 |                                  |
 | **Flow**       | Pre-Authorized            | Authorization   |                                  |
@@ -51,8 +51,9 @@ Verifiable Credential Issuance specification:
 | **Signature**  | ES256K, EdDSA             |                 |                                  |
 | **Binding**    | did:web, did:key          |                 | did:dht, did:keri                |
 | **Encryption** |                           | ECDH-ES/A128GCM | ECDH-ES/A256GCM                  |
+|                |                           |                 |                                  |
 
-[^1]: Working code, but not yet rigorously verified.
+1. Working code, but not yet rigorously verified.
 
 ### OpenID for Verifiable Presentations
 
