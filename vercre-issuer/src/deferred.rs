@@ -16,7 +16,7 @@ use vercre_openid::{Error, Result};
 
 use crate::credential::credential;
 // use crate::shell;
-use crate::state::{State, Step};
+use crate::state::{Stage, State};
 
 /// Deferred credential request handler.
 ///
@@ -45,7 +45,7 @@ async fn process(
         return Err(Error::InvalidRequest("state expired".into()));
     }
 
-    let Step::Deferred(deferred_state) = state.current_step else {
+    let Stage::Deferred(deferred_state) = state.stage else {
         return Err(Error::ServerError("Deferred state not found.".into()));
     };
 
@@ -81,7 +81,7 @@ mod tests {
     use vercre_w3c_vc::proof::{self, Payload, Verify};
 
     use super::*;
-    use crate::state::{Deferred, Expire, Token};
+    use crate::state::{Deferrance, Expire, Token};
 
     #[tokio::test]
     async fn deferred_ok() {
@@ -116,9 +116,9 @@ mod tests {
         let mut state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
             subject_id: Some(NORMAL_USER.into()),
-            credentials: Some(HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())])),
-            current_step: Step::Token(Token {
+            stage: Stage::Validated(Token {
                 access_token: access_token.into(),
+                credentials: HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())]),
                 c_nonce: c_nonce.into(),
                 c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             }),
@@ -130,7 +130,7 @@ mod tests {
             .expect("state exists");
 
         // state entry 2: deferred state keyed by transaction_id
-        state.current_step = Step::Deferred(Deferred {
+        state.stage = Stage::Deferred(Deferrance {
             transaction_id: transaction_id.into(),
             credential_request: cred_req.clone(),
         });
@@ -149,6 +149,7 @@ mod tests {
             ".transaction_id" => "[transaction_id]",
             ".credential" => "[credential]",
             ".c_nonce" => "[c_nonce]",
+            ".notification_id" => "[notification_id]",
         });
 
         // extract credential response
@@ -173,8 +174,9 @@ mod tests {
         assert_let!(Ok(state), StateStore::get::<State>(&provider, access_token).await);
         assert_snapshot!("deferred:deferred_ok:state", state, {
             ".expires_at" => "[expires_at]",
-            ".current_step.c_nonce"=>"[c_nonce]",
-            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]"
+            ".stage.access_token" => "[access_token]",
+            ".stage.c_nonce"=>"[c_nonce]",
+            ".stage.c_nonce_expires_at" => "[c_nonce_expires_at]"
         });
 
         // deferred state should not exist

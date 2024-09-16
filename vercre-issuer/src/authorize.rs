@@ -82,7 +82,7 @@ use vercre_openid::issuer::{
 use vercre_openid::{Error, Result};
 
 // use crate::shell;
-use crate::state::{Authorization, Expire, State, Step};
+use crate::state::{Authorization, Expire, Scope, Stage, State};
 
 /// Authorization request handler.
 ///
@@ -349,10 +349,8 @@ impl Context {
     ) -> Result<AuthorizationResponse> {
         tracing::debug!("authorize::process");
 
-        // for Credentials requested using `authorization_detail`
+        // authorization_detail
         let mut authzd_detail = vec![];
-        let mut credentials = HashMap::new();
-
         for (config_id, auth_det) in &self.auth_dets {
             let identifiers =
                 Subject::authorize(provider, &request.subject_id, config_id, self.claims.clone())
@@ -363,33 +361,27 @@ impl Context {
                 authorization_detail: auth_det.clone(),
                 credential_identifiers: identifiers.clone(),
             });
-
-            for identifier in &identifiers {
-                credentials.insert(identifier.clone(), config_id.clone());
-            }
         }
+        let authorization_details =
+            if authzd_detail.is_empty() { None } else { Some(authzd_detail) };
 
-        // for Credentials requested using `scope`
-        // FIXME: add `credential_identifiers` to Authorized state
+        // scope
         let mut authzd_scope = vec![];
         for (config_id, scope_item) in &self.scope_items {
             let identifiers = Subject::authorize(provider, &request.subject_id, config_id, None)
                 .await
                 .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
 
-            authzd_scope.push(scope_item.clone());
-
-            for identifier in &identifiers {
-                credentials.insert(identifier.clone(), config_id.clone());
-            }
+            authzd_scope.push(Scope {
+                item: scope_item.clone(),
+                credential_configuration_id: config_id.clone(),
+                credential_identifiers: identifiers.clone(),
+            });
         }
-
-        let authorized = if authzd_detail.is_empty() { None } else { Some(authzd_detail) };
-
-        let scope = if authzd_scope.is_empty() { None } else { Some(authzd_scope.join(" ")) };
+        let scope = if authzd_scope.is_empty() { None } else { Some(authzd_scope) };
 
         // return an error if holder is not authorized for any requested credentials
-        if authorized.is_none() && scope.is_none() {
+        if authorization_details.is_none() && scope.is_none() {
             return Err(Error::AccessDenied(
                 "holder is not authorized for requested credentials".into(),
             ));
@@ -398,17 +390,15 @@ impl Context {
         // save authorization state
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
-            credentials: Some(credentials),
             subject_id: Some(request.subject_id),
-            current_step: Step::Authorization(Authorization {
+            stage: Stage::Authorized(Authorization {
                 code_challenge: request.code_challenge,
                 code_challenge_method: request.code_challenge_method,
-                authorized,
+                authorization_details,
                 scope,
                 client_id: request.client_id,
                 redirect_uri: request.redirect_uri.clone(),
             }),
-            ..State::default()
         };
 
         let code = gen::auth_code();
@@ -468,7 +458,7 @@ mod tests {
 
         assert_snapshot!(format!("authorize:{name}:state"), state, {
             ".expires_at" => "[expires_at]",
-            ".current_step.authorized.*.credential_definition.credentialSubject" => insta::sorted_redaction(),
+            ".stage.authorization_details[].credential_definition.credentialSubject" => insta::sorted_redaction(),
         });
     }
 

@@ -26,7 +26,7 @@ use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{self, Payload};
 use vercre_w3c_vc::verify_key;
 
-use crate::state::{Deferred, Expire, State, Step};
+use crate::state::{Deferrance, Expire, Stage, State};
 
 /// Credential request handler.
 ///
@@ -81,7 +81,7 @@ impl Context {
             return Err(Error::InvalidRequest("state expired".into()));
         }
 
-        let Step::Token(token_state) = &self.state.current_step else {
+        let Stage::Validated(token_state) = &self.state.stage else {
             return Err(Error::AccessDenied("invalid access token state".into()));
         };
 
@@ -200,12 +200,12 @@ impl Context {
             let mut state = self.state.clone();
             state.expires_at = Utc::now() + Expire::Access.duration();
 
-            let Step::Token(mut token_state) = state.current_step else {
+            let Stage::Validated(mut token_state) = state.stage else {
                 return Err(Error::AccessDenied("invalid access token state".into()));
             };
             token_state.c_nonce = gen::nonce();
             token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
-            state.current_step = Step::Token(token_state.clone());
+            state.stage = Stage::Validated(token_state.clone());
 
             // TODO: save this into state
             let notification_id = gen::notification_id();
@@ -227,7 +227,7 @@ impl Context {
 
         let state = State {
             expires_at: Utc::now() + Expire::Access.duration(),
-            current_step: Step::Deferred(Deferred {
+            stage: Stage::Deferred(Deferrance {
                 transaction_id: txn_id.clone(),
                 credential_request: request,
             }),
@@ -321,17 +321,14 @@ impl Context {
             CredentialSpec::Identifier {
                 credential_identifier,
             } => {
-                let Some(credentials) = &self.state.credentials else {
-                    return Err(Error::InvalidCredentialRequest(
-                        "no authorized credentials".into(),
-                    ));
+                let Stage::Validated(token_state) = &self.state.stage else {
+                    return Err(Error::AccessDenied("invalid access token state".into()));
                 };
-                let Some(config_id) = credentials.get(credential_identifier) else {
+                let Some(config_id) = token_state.credentials.get(credential_identifier) else {
                     return Err(Error::InvalidCredentialRequest(
                         "unauthorized credential requested".into(),
                     ));
                 };
-
                 self.issuer.credential_configurations_supported.get(config_id).cloned().ok_or_else(
                     || Error::InvalidCredentialRequest("unsupported credential requested".into()),
                 )
@@ -364,12 +361,12 @@ impl Context {
         let mut state = self.state.clone();
         state.expires_at = Utc::now() + Expire::Access.duration();
 
-        let Step::Token(mut token_state) = state.current_step else {
+        let Stage::Validated(mut token_state) = state.stage else {
             return Err(Error::AccessDenied("invalid access token state".into()));
         };
         token_state.c_nonce.clone_from(&c_nonce);
         token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
-        state.current_step = Step::Token(token_state.clone());
+        state.stage = Stage::Validated(token_state.clone());
 
         StateStore::put(provider, &token_state.access_token, &state, state.expires_at)
             .await
@@ -406,9 +403,9 @@ mod tests {
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
             subject_id: Some(NORMAL_USER.into()),
-            credentials: Some(HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())])),
-            current_step: Step::Token(Token {
+            stage: Stage::Validated(Token {
                 access_token: access_token.into(),
+                credentials: HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())]),
                 c_nonce: c_nonce.into(),
                 c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             }),
@@ -440,6 +437,7 @@ mod tests {
         assert_snapshot!("credential:identifier:response", &response, {
             ".credential" => "[credential]",
             ".c_nonce" => "[c_nonce]",
+            ".notification_id" => "[notification_id]",
         });
 
         // verify credential
@@ -461,8 +459,8 @@ mod tests {
         assert_let!(Ok(state), StateStore::get::<State>(&provider, access_token).await);
         assert_snapshot!("credential:identifier:state", state, {
             ".expires_at" => "[expires_at]",
-            ".current_step.c_nonce"=>"[c_nonce]",
-            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]"
+            ".stage.c_nonce"=>"[c_nonce]",
+            ".stage.c_nonce_expires_at" => "[c_nonce_expires_at]"
         });
     }
 
@@ -480,9 +478,9 @@ mod tests {
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
             subject_id: Some(NORMAL_USER.into()),
-            credentials: Some(HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())])),
-            current_step: Step::Token(Token {
+            stage: Stage::Validated(Token {
                 access_token: access_token.into(),
+                credentials: HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())]),
                 c_nonce: c_nonce.into(),
                 c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             }),
@@ -544,8 +542,8 @@ mod tests {
         assert_let!(Ok(state), StateStore::get::<State>(&provider, access_token).await);
         assert_snapshot!("credential:format:state", state, {
             ".expires_at" => "[expires_at]",
-            ".current_step.c_nonce"=>"[c_nonce]",
-            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]"
+            ".stage.c_nonce"=>"[c_nonce]",
+            ".stage.c_nonce_expires_at" => "[c_nonce_expires_at]"
         });
     }
 }

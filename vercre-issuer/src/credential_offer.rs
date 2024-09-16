@@ -19,7 +19,7 @@ use vercre_openid::issuer::{
 };
 use vercre_openid::{Error, Result};
 
-use crate::state::State;
+use crate::state::{PreAuthorization, Stage, State};
 
 /// Endpoint for the Wallet to request the Issuer's Credential Offer when engaged
 /// in a cross-device flow.
@@ -41,7 +41,7 @@ async fn process(
     tracing::debug!("credential_offer::process");
 
     // retrieve Credential Offer from state
-    let state = StateStore::get::<State>(provider, &request.id)
+    let mut state = StateStore::get::<State>(provider, &request.id)
         .await
         .map_err(|e| Error::ServerError(format!("issue fetching state: {e}")))?;
 
@@ -49,9 +49,21 @@ async fn process(
         return Err(Error::InvalidRequest("state expired".into()));
     }
 
-    let Some(credential_offer) = state.credential_offer else {
+    let Stage::Offered(offer) = state.stage else {
         return Err(Error::InvalidRequest("no credential offer found".into()));
     };
+
+    state.stage = Stage::PreAuthorized(PreAuthorization {
+        credentials: offer.credentials.clone(),
+        tx_code: offer.tx_code.clone(),
+    });
+
+    // TODO: generate pre-authorized code to use as state key and save to state
+    StateStore::put(provider, &request.id, &state, state.expires_at)
+        .await
+        .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
+
+    let credential_offer = offer.credential_offer;
 
     // verify client_id (perhaps should use 'verify' method?)
     if credential_offer.credential_issuer != request.credential_issuer {

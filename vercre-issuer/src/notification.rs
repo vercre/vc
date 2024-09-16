@@ -36,6 +36,8 @@ pub async fn notification(
 ) -> Result<NotificationResponse> {
     process(&provider, request).await
 }
+
+#[allow(clippy::unused_async)]
 #[allow(dead_code)]
 async fn process(
     _provider: &impl Provider, request: NotificationRequest,

@@ -32,8 +32,8 @@
 //! The endpoints are designed to be used with Rust-based HTTP servers, such as
 //! [axum](https://docs.rs/axum/latest/axum/).
 //!
-//! Endpoints can be combined to implement both the [OpenID4VCI] Authorization Code Step
-//! and Pre-Authorized Code Step.
+//! Endpoints can be combined to implement both the [OpenID4VCI] Authorization Code Stage
+//! and Pre-Authorized Code Stage.
 //!
 //! **Running**
 //!

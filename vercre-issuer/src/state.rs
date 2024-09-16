@@ -35,17 +35,15 @@ pub struct State {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subject_id: Option<String>,
 
-    // Authorized credentials (configuration id and identifier).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credentials: Option<HashMap<String, String>>,
-
-    /// Credential Offer when offer made by reference.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_offer: Option<CredentialOffer>,
-
-    /// Step-specific issuance state.
-    pub current_step: Step,
+    /// Stage-specific issuance state.
+    pub stage: Stage,
 }
+
+// #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+// pub struct AuthorizedCredential {
+//     pub credential_identifier: String,
+//     pub credential_configuration_id: String,
+// }
 
 impl State {
     /// Determines whether state has expired or not.
@@ -57,36 +55,64 @@ impl State {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 #[allow(clippy::large_enum_variant)]
-pub enum Step {
+pub enum Stage {
     #[default]
     Unauthorized,
 
-    /// Pre-authorized state.
-    PreAuthorized(PreAuthorized),
+    /// Credential Offer state.
+    Offered(Offer),
 
-    /// Authorization state.
-    Authorization(Authorization),
+    /// Pre-authorized state.
+    PreAuthorized(PreAuthorization),
+
+    /// Authorized state.
+    Authorized(Authorization),
 
     /// Token state.
-    Token(Token),
+    Validated(Token),
+
+    /// Issued Credential state.
+    Issued(),
 
     /// Deferred issuance state.
-    Deferred(Deferred),
+    Deferred(Deferrance),
 }
 
-/// `Auth` is used to store authorization state.
+/// Pre-authorization state from the `create_offer` endpoint.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct PreAuthorized {
-    /// Lists credential identifiers that the Wallet is authorized to request.
-    pub authorized: Vec<Authorized>,
+#[allow(clippy::struct_field_names)]
+pub struct Offer {
+    /// Credential Offer, ready for the client to retrieve.
+    pub credential_offer: CredentialOffer,
+
+    // Authorized credentials (configuration id and identifier).
+    pub credentials: HashMap<String, String>,
+
+    /// Transaction code for pre-authorized offers.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tx_code: Option<String>,
+}
+
+/// Pre-authorization state from the `create_offer` endpoint.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct PreAuthorization {
+    // Authorized credentials (configuration id and identifier).
+    pub credentials: HashMap<String, String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tx_code: Option<String>,
 }
 
-/// `Auth` is used to store authorization state.
+/// Authorization state.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[allow(clippy::struct_field_names)]
 pub struct Authorization {
+    /// The `client_id` of the Wallet requesting issuance.
+    pub client_id: String,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub redirect_uri: Option<String>,
+
     /// PKCE code challenge from the Authorization Request.
     pub code_challenge: String,
 
@@ -95,17 +121,24 @@ pub struct Authorization {
 
     /// Lists credential identifiers that the Wallet is authorized to request.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub authorized: Option<Vec<Authorized>>,
+    pub authorization_details: Option<Vec<Authorized>>,
 
     /// Lists credentials (as scope items) that the Wallet is authorized to request.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub scope: Option<String>,
+    pub scope: Option<Vec<Scope>>,
+}
 
-    /// The `client_id` of the Wallet requesting issuance.
-    pub client_id: String,
+/// Scope is used to store authorized scopes and attendant credential identifiers.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Scope {
+    /// Authorized scope
+    pub item: String,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub redirect_uri: Option<String>,
+    /// Authorized `credential_configuration_id` for the scope item.
+    pub credential_configuration_id: String,
+
+    /// Authorized credential datasets for the scope item.
+    pub credential_identifiers: Vec<String>,
 }
 
 /// `Token` is used to store token state.
@@ -114,6 +147,10 @@ pub struct Token {
     /// The access token.
     #[allow(clippy::struct_field_names)]
     pub access_token: String,
+
+    /// Credentials (configuration id and identifier) validated for issuance using
+    /// the accompanying access token.
+    pub credentials: HashMap<String, String>,
 
     /// The nonce to be used by the Wallet when creating a proof of possession of
     /// the key proof.
@@ -135,7 +172,7 @@ impl Token {
 
 /// `Token` is used to store token state.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Deferred {
+pub struct Deferrance {
     /// Used to identify a Deferred Issuance transaction. Is used as the
     /// state persistence key.
     pub transaction_id: String,

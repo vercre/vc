@@ -1725,6 +1725,7 @@ pub enum NotificationEvent {
 
 /// When the Credential Issuer has successfully received the Notification Request
 /// from the Wallet, it MUST respond with an HTTP status code in the 2xx range.
+/// 
 /// Use of the HTTP status code 204 (No Content) is RECOMMENDED.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct NotificationResponse {}

@@ -41,7 +41,7 @@
 //! as an HTTP GET request, an HTTP redirect, or a QR code.
 //!
 //! Below is a non-normative example of a Credential Offer Object for a Pre-Authorized
-//! Code Step (with a credential type reference):
+//! Code Stage (with a credential type reference):
 //!
 //! ```json
 //! {
@@ -70,13 +70,12 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec,
-    Authorized, ConfigurationId, CreateOfferRequest, CreateOfferResponse, CredentialOffer, Grants,
+    AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer, Grants,
     Metadata, OfferType, PreAuthorizedCodeGrant, Provider, SendType, StateStore, Subject, TxCode,
 };
 use vercre_openid::{Error, Result};
 
-use crate::state::{Expire, PreAuthorized, State, Step};
+use crate::state::{Expire, Offer, PreAuthorization, Stage, State};
 
 /// Invoke request handler generates and returns a Credential Offer.
 ///
@@ -132,21 +131,72 @@ async fn process(
 ) -> Result<CreateOfferResponse> {
     tracing::debug!("create_offer::process");
 
-    let mut state = State {
+    let credential_offer = credential_offer(&request);
+    let tx_code =
+        if request.pre_authorize && request.tx_code_required { Some(gen::tx_code()) } else { None };
+    let credentials = authorized_credentials(provider, &request).await?;
+
+    // ------------------------------------------------------------------------
+    // save state
+    // ------------------------------------------------------------------------
+    let state_key = state_key(&credential_offer)?;
+
+    let state_stage = if request.pre_authorize && request.send_type == SendType::ByVal {
+        Stage::PreAuthorized(PreAuthorization {
+            credentials: credentials.clone(),
+            tx_code: tx_code.clone(),
+        })
+    } else {
+        Stage::Offered(Offer {
+            credential_offer: credential_offer.clone(),
+            credentials: credentials.clone(),
+            tx_code: tx_code.clone(),
+        })
+    };
+    let state = State {
         expires_at: Utc::now() + Expire::Authorized.duration(),
         subject_id: request.subject_id.clone(),
-        ..State::default()
+        stage: state_stage,
+    };
+    StateStore::put(provider, &state_key, &state, state.expires_at)
+        .await
+        .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
+    // ------------------------------------------------------------------------
+
+    // TODO: use unique id rather than pre_authorized_code in URI
+    let offer_type = if request.send_type == SendType::ByRef {
+        // TODO: use unique id rather than pre_authorized_code in URI
+        OfferType::Uri(format!("{}/credential_offer/{state_key}", request.credential_issuer))
+    } else {
+        OfferType::Object(credential_offer)
     };
 
-    let mut grants = Grants::default();
-    let mut tx_code = None;
-    let state_key: String;
+    Ok(CreateOfferResponse { offer_type, tx_code })
+}
 
-    if request.pre_authorize {
-        // Pre-authorized Code Grant
-        let pre_auth_code = gen::auth_code();
-        state_key = pre_auth_code.clone();
+fn state_key(credential_offer: &CredentialOffer) -> Result<String> {
+    // get pre-authorized code as state key
+    let Some(grants) = &credential_offer.grants else {
+        return Err(Error::ServerError("no grants".into()));
+    };
 
+    if let Some(pre_auth_code) = &grants.pre_authorized_code {
+        return Ok(pre_auth_code.pre_authorized_code.clone());
+    };
+
+    if let Some(authorization_code) = &grants.authorization_code {
+        let Some(issuer_state) = &authorization_code.issuer_state else {
+            return Err(Error::ServerError("no issuer_state".into()));
+        };
+        return Ok(issuer_state.clone());
+    };
+
+    Err(Error::ServerError("no grants".into()))
+}
+
+// Create CredentialOffer
+fn credential_offer(request: &CreateOfferRequest) -> CredentialOffer {
+    let grants = if request.pre_authorize {
         let tx_code_def = if request.tx_code_required {
             Some(TxCode {
                 input_mode: Some("numeric".into()),
@@ -157,85 +207,60 @@ async fn process(
             None
         };
 
-        grants.pre_authorized_code = Some(PreAuthorizedCodeGrant {
-            pre_authorized_code: pre_auth_code,
-            tx_code: tx_code_def,
-            authorization_server: None,
-        });
-
-        if request.tx_code_required {
-            tx_code = Some(gen::tx_code());
+        Grants {
+            authorization_code: None,
+            pre_authorized_code: Some(PreAuthorizedCodeGrant {
+                pre_authorized_code: gen::auth_code(),
+                tx_code: tx_code_def,
+                authorization_server: None,
+            }),
         }
-
-        let Some(subject_id) = request.subject_id else {
-            return Err(Error::InvalidRequest(
-                "`subject_id` must be set for pre-authorized offers".into(),
-            ));
-        };
-
-        let mut authorized = vec![];
-        let mut credentials = HashMap::new();
-
-        for config_id in request.credential_configuration_ids.clone() {
-            let identifiers = Subject::authorize(provider, &subject_id, &config_id, None)
-                .await
-                .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
-
-            for identifier in &identifiers {
-                credentials.insert(identifier.clone(), config_id.clone());
-            }
-
-            // subject is authorized to receive the requested credential
-            authorized.push(Authorized {
-                authorization_detail: AuthorizationDetail {
-                    type_: AuthorizationDetailType::OpenIdCredential,
-                    specification: AuthorizationSpec::ConfigurationId(
-                        ConfigurationId::Definition {
-                            credential_configuration_id: config_id,
-                            credential_definition: None,
-                        },
-                    ),
-                    ..AuthorizationDetail::default()
-                },
-                credential_identifiers: identifiers,
-            });
-        }
-
-        state.credentials = Some(credentials);
-        state.current_step = Step::PreAuthorized(PreAuthorized {
-            authorized,
-            tx_code: tx_code.clone(),
-        });
     } else {
-        // Authorization Code Grant
-        let issuer_state = gen::state_key();
-        state_key = issuer_state.clone();
+        Grants {
+            authorization_code: Some(AuthorizationCodeGrant {
+                issuer_state: Some(gen::state_key()),
+                authorization_server: None,
+            }),
+            pre_authorized_code: None,
+        }
+    };
 
-        grants.authorization_code = Some(AuthorizationCodeGrant {
-            issuer_state: Some(issuer_state),
-            authorization_server: None,
-        });
+    CredentialOffer {
+        credential_issuer: request.credential_issuer.clone(),
+        credential_configuration_ids: request.credential_configuration_ids.clone(),
+        grants: Some(grants),
+    }
+}
+
+async fn authorized_credentials(
+    provider: &impl Provider, request: &CreateOfferRequest,
+) -> Result<HashMap<String, String>> {
+    let Some(subject_id) = &request.subject_id else {
+        return Err(Error::InvalidRequest(
+            "`subject_id` must be set for pre-authorized offers".into(),
+        ));
+    };
+
+    let mut credentials = HashMap::new();
+
+    for config_id in request.credential_configuration_ids.clone() {
+        let identifiers = Subject::authorize(provider, subject_id, &config_id, None)
+            .await
+            .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
+
+        for identifier in &identifiers {
+            credentials.insert(
+                identifier.clone(),
+                config_id.clone(),
+                // AuthorizedCredential {
+                //     credential_identifier: identifier.clone(),
+                //     credential_configuration_id: config_id.clone(),
+                // },
+            );
+        }
     }
 
-    let credential_offer = CredentialOffer {
-        credential_issuer: request.credential_issuer.clone(),
-        credential_configuration_ids: request.credential_configuration_ids,
-        grants: Some(grants),
-    };
-
-    let offer_type = if request.send_type == SendType::ByRef {
-        state.credential_offer = Some(credential_offer);
-        OfferType::Uri(format!("{}/credential_offer/{state_key}", request.credential_issuer))
-    } else {
-        OfferType::Object(credential_offer)
-    };
-
-    StateStore::put(provider, &state_key, &state, state.expires_at)
-        .await
-        .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
-
-    // TODO: add support for `credential_offer_uri`
-    Ok(CreateOfferResponse { offer_type, tx_code })
+    Ok(credentials)
 }
 
 #[cfg(test)]
@@ -287,10 +312,10 @@ mod tests {
 
         assert_snapshot!("create_offer:pre-authorized:state", &state, {
             ".expires_at" => "[expires_at]",
-            ".current_step.tx_code" => "[tx_code]"
+            ".stage.tx_code" => "[tx_code]"
         });
 
-        assert_let!(Step::PreAuthorized(auth_state), &state.current_step);
+        assert_let!(Stage::PreAuthorized(auth_state), &state.stage);
         assert_eq!(auth_state.tx_code, response.tx_code);
     }
 }
