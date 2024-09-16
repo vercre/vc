@@ -37,6 +37,13 @@ pub fn transaction_id() -> String {
     Base64UrlUnpadded::encode_string(rnd.as_bytes())
 }
 
+/// Generates a base64 encoded random string for deferred issuance `transaction_id`.
+#[must_use]
+pub fn notification_id() -> String {
+    let rnd = random_string(STATE_LEN, SAFE_CHARS);
+    Base64UrlUnpadded::encode_string(rnd.as_bytes())
+}
+
 /// Generates a base64 encoded random string for nonce
 #[must_use]
 pub fn nonce() -> String {

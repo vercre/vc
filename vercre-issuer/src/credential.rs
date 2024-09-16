@@ -207,6 +207,9 @@ impl Context {
             token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
             state.current_step = Step::Token(token_state.clone());
 
+            // TODO: save this into state
+            let notification_id = gen::notification_id();
+
             StateStore::put(provider, &token_state.access_token, &state, state.expires_at)
                 .await
                 .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
@@ -215,6 +218,7 @@ impl Context {
                 response: CredentialResponseType::Credential(Kind::String(jwt)),
                 c_nonce: Some(token_state.c_nonce.clone()),
                 c_nonce_expires_in: Some(token_state.c_nonce_expires_in()),
+                notification_id: Some(notification_id),
             });
         }
 
@@ -253,7 +257,7 @@ impl Context {
 
         // --------------------------------------------------------------------
         // Get dataset
-        //   TODO: support request by credential format (e.g. jwt_vc_json, etc.) 
+        //   TODO: support request by credential format (e.g. jwt_vc_json, etc.)
         //   need to get dataset by credential_configuration_id??
         // --------------------------------------------------------------------
         // get credential identifier and configuration
