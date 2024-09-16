@@ -46,7 +46,7 @@ mod tests {
         let provider = Provider::new();
 
         let request = MetadataRequest {
-            client_id: "http://vercre.io".into(),
+            client_id: "http://localhost:8080".into(),
         };
         let response = metadata(provider, &request).await.expect("response is ok");
         assert_snapshot!("response", response, {

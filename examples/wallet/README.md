@@ -38,10 +38,30 @@ RESP=$(curl --json '{
 # send credential offer to wallet (Tauri app)
 OFFER=$(echo $RESP | jq '.credential_offer' | jq -r @uri)
 open "openid-credential-offer://?credential_offer=$OFFER"
+```
+
+In order to access the credential, paste the `credential_offer` object response from the `issuer/create_offer` endpoint into the Offer input in the wallet UI
+```json
+{
+    "credential_configuration_ids": [
+        "EmployeeID_JWT"
+    ],
+    "credential_issuer": "http://localhost:8080", // example host 
+    "grants": {
+        "urn:ietf:params:oauth:grant-type:pre-authorized_code": {
+            "pre-authorized_code": "<pre-authorized_code>",
+            "tx_code": {
+                "description": "Please provide the one-time code received",
+                "input_mode": "numeric",
+                "length": 6
+            }
+        }
+    }
+}
+```
 
 # print user pin
-echo $RESP | jq '.tx_code'
-```
+echo $RESP | jq '.user_code'
 
 The resultant link should look like:
 
@@ -182,3 +202,36 @@ pnpm update
 # Rust
 cargo update
 ```
+
+## Android 
+
+In order to get it running on mobile you will need to configure your hosts file. <br />
+Tauri has some instructions on how to get started [here]("https://v2.tauri.app/plugin/http-client/"). 
+
+1. In order to get android studio and the emulator working on your machine, update your `zshrc` file configuration to look like this 
+```bash
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export NDK_VERSION=$(ls -1 $ANDROID_HOME/ndk | sort -V | tail -n 1)
+export NDK_HOME="$ANDROID_HOME/ndk/$NDK_VERSION"
+export ANDROID_SDK_ROOT=$ANDROID_HOME
+
+export PATH=$PATH:$NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/bin
+export PATH=$PATH:$ANDROID_HOME/emulator
+export PATH=$PATH:$ANDROID_HOME/tools
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+
+# Java configuration
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export PATH=$JAVA_HOME/bin:$PATH
+```
+2. Run `pnpm tauri android init` to generate the application
+3. Then run `pnpm tauri android dev` to build and run it. 
+
+### Set up a wireless connection
+
+1. Enable developer options on your android device, then enable debugging over Wi-Fi. 
+2. Open the android studio desktop application, go to Settings > Plugins > Andorid > Pair Devices Using Wi-Fi, a QR code should appear.
+3. Scan the QR code to pair over Wi-Fi, then Tap Wireless debugging and pair your device: <br/>
+    a. To pair your device with a QR code, select Pair device with QR code and scan the QR code, shown in figure 2. <br/>
+    b. To pair your device with a pairing code, select Pair device with pairing code from the Pair new devices over Wi-Fi dialog. On your device, select Pair using pairing code. A six-digit code appears. Once your device appears on the Pair devices over Wi-Fi window, enter the six-digit code shown on your device and select Pair.
+4. When you run the application via the terminal, an ooption to run either the built-in emulator, or your device should appear. 

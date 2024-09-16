@@ -198,7 +198,7 @@ mod tests {
 
         let mut request =
             serde_json::from_value::<CreateRequestRequest>(body).expect("should deserialize");
-        request.client_id = "http://vercre.io".into();
+        request.client_id = "http://localhost:8080".into();
 
         let response = create_request(provider.clone(), &request).await.expect("response is ok");
 
@@ -245,7 +245,7 @@ mod tests {
 
         let mut request =
             serde_json::from_value::<CreateRequestRequest>(body).expect("should deserialize");
-        request.client_id = "http://vercre.io".into();
+        request.client_id = "http://localhost:8080".into();
 
         let response = create_request(provider.clone(), &request).await.expect("response is ok");
 

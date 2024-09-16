@@ -1,9 +1,9 @@
 ---
 source: vercre-verifier/src/metadata.rs
-assertion_line: 84
+assertion_line: 52
 expression: response
 ---
-client_id: "http://vercre.io"
+client_id: "http://localhost:8080"
 redirect_uris:
   - "http://localhost:3000/callback"
 response_types:
