@@ -30,11 +30,11 @@ http = "1.1.0"
 log = "0.4.22"
 serde.workspace = true
 serde_json.workspace = true
-tauri = { version = "2.0.0-rc.2", features = ["test"] }
-tauri-plugin-deep-link = "2.0.0-rc.0"
-tauri-plugin-log = "2.0.0-rc.0"
-tauri-plugin-shell = "2.0.0-rc.0"
-tauri-plugin-store = "2.0.0-rc.0"
+tauri = { version = "2.0.0-rc.13", features = ["test"] }
+tauri-plugin-deep-link = "2.0.0-rc.5"
+tauri-plugin-log = "2.0.0-rc.2"
+tauri-plugin-shell = "2.0.0-rc.3"
+tauri-plugin-store = "2.0.0-rc.3"
 tauri-plugin-http = "2.0.0-rc.0"
 typeshare = "1.0.3"
 urlencoding = "2.1.3"
