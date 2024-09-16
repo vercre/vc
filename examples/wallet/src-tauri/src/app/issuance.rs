@@ -73,9 +73,18 @@ impl AppState {
     /// Get the credentials for the accepted issuance offer.
     pub async fn get_credentials(&mut self, provider: Provider) -> anyhow::Result<()> {
         log::info!("Getting credentials for issuance {}", self.issuance.id);
-        let status = vercre_holder::get_credentials(provider, self.issuance.id.clone()).await?;
-        self.issuance.status = status;
-        self.sub_app = SubApp::Credential;
-        Ok(())
+
+        match vercre_holder::get_credentials(provider, self.issuance.id.clone()).await {
+            Ok(status) => {
+                log::info!("Received status: {:?}", status);
+                self.issuance.status = status;
+                self.sub_app = SubApp::Credential;
+                Ok(())
+            }
+            Err(e) => {
+                log::error!("Error getting credentials: {:?}", e);
+                Err(e)
+            }
+        }
     }
 }

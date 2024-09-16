@@ -91,7 +91,7 @@ const Pin = (props: PinProps) => {
                 }}
             >
                 <Button
-                    onClick={() => invoke('cancel')}
+                    onClick={() => invoke('reset')}
                     variant="outlined"
                 >
                     Cancel

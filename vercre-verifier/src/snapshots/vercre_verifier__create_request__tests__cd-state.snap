@@ -1,14 +1,14 @@
 ---
 source: vercre-verifier/src/create_request.rs
-assertion_line: 289
+assertion_line: 259
 expression: state
 ---
 expires_at: "[expires_at]"
 request_object:
   response_type: vp_token
-  client_id: "http://vercre.io/post"
+  client_id: "http://localhost:8080/post"
   response_mode: direct_post
-  response_uri: "http://vercre.io/post"
+  response_uri: "http://localhost:8080/post"
   nonce: "[nonce]"
   state: "[state]"
   presentation_definition: "[presentation_definition]"

@@ -1,6 +1,6 @@
 ---
 source: vercre-verifier/src/request_object.rs
-assertion_line: 121
+assertion_line: 119
 expression: jwt
 ---
 header:
@@ -9,9 +9,9 @@ header:
   kid: "did:web:demo.credibil.io#key-0"
 claims:
   response_type: vp_token
-  client_id: "http://vercre.io/post"
+  client_id: "http://localhost:8080/post"
   response_mode: direct_post
-  response_uri: "http://vercre.io/post"
+  response_uri: "http://localhost:8080/post"
   nonce: "1234567890"
   state: ABCDEF123456
   presentation_definition:

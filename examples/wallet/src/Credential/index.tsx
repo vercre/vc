@@ -33,6 +33,7 @@ const Credential = (props: CredentialProps) => {
 
     const handleClose = () => {
         setSelected(undefined);
+        invoke("reset");
         setViewMode('list');
     };
 
