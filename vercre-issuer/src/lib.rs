@@ -1,3 +1,5 @@
+#![feature(let_chains)]
+
 //! An API for the issuance of Verifiable Credentials based on the
 //! [OpenID for Verifiable Credential Issuance] specification.
 //!
@@ -30,8 +32,8 @@
 //! The endpoints are designed to be used with Rust-based HTTP servers, such as
 //! [axum](https://docs.rs/axum/latest/axum/).
 //!
-//! Endpoints can be combined to implement both the [OpenID4VCI] Authorization Code Flow
-//! and Pre-Authorized Code Flow.
+//! Endpoints can be combined to implement both the [OpenID4VCI] Authorization Code Step
+//! and Pre-Authorized Code Step.
 //!
 //! **Running**
 //!
@@ -89,6 +91,7 @@
 mod authorize;
 mod create_offer;
 mod credential;
+mod credential_offer;
 mod deferred;
 mod metadata;
 mod register;
@@ -101,9 +104,10 @@ pub mod provider {
     pub use vercre_datasec::{Algorithm, Decryptor, Encryptor, SecOps, Signer};
     pub use vercre_did::{DidResolver, Document};
     pub use vercre_openid::issuer::{
-        ClaimDefinition, Claims, Client, GrantType, Issuer, Metadata, Provider, Result, Server,
-        StateStore, Subject,
+        ClaimDefinition, ClaimEntry, Client, Credentials, Dataset, GrantType, Issuer, Metadata,
+        Provider, Result, Server, StateStore, Subject,
     };
+    pub use vercre_status::issuer::Status;
 }
 
 // use std::future::Future;
@@ -111,20 +115,26 @@ pub mod provider {
 pub use authorize::authorize;
 pub use create_offer::create_offer;
 pub use credential::credential;
+pub use credential_offer::credential_offer;
 pub use deferred::deferred;
 pub use metadata::metadata;
 pub use register::register;
 pub use token::token;
+pub use vercre_macros::create_offer_request;
 pub use vercre_openid::issuer::{
-    AuthorizationCodeGrant, AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType,
-    AuthorizationRequest, AuthorizationResponse, CreateOfferRequest, CreateOfferResponse,
-    CredentialConfiguration, CredentialOffer, CredentialOfferType, CredentialRequest,
-    CredentialResponse, CredentialType, DeferredCredentialRequest, DeferredCredentialResponse,
-    Grants, MetadataRequest, MetadataResponse, PreAuthorizedCodeGrant, ProofClaims, ProofType,
-    RegistrationRequest, RegistrationResponse, TokenAuthorizationDetail, TokenRequest,
-    TokenResponse, TxCode,
+    AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
+    AuthorizationResponse, AuthorizationSpec, Authorized, CreateOfferRequest, CreateOfferResponse,
+    CredentialConfiguration, CredentialOffer, CredentialOfferRequest, CredentialOfferResponse,
+    CredentialRequest, CredentialResponse, CredentialResponseType, CredentialSpec,
+    DeferredCredentialRequest, DeferredCredentialResponse, Grants, MetadataRequest,
+    MetadataResponse, OfferType, PreAuthorizedCodeGrant, ProofClaims, RegistrationRequest,
+    RegistrationResponse, SendType, SingleProof, TokenGrantType, TokenRequest, TokenResponse,
+    TxCode,
 };
 pub use vercre_openid::Result;
+pub use vercre_w3c_vc::model::{
+    Bitstring, CredentialStatus, CredentialStatusType, StatusMessage, StatusPurpose,
+};
 
 // async fn shell<'a, P, R, U, E, F, Fut>(provider: P, request: &'a R, handler: F) -> Result<U, E>
 // where

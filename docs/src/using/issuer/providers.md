@@ -64,11 +64,11 @@ to:
 ```rust,ignore
 pub trait Subject: Send + Sync {
     fn authorize(
-        &self, holder_subject: &str, credential_identifier: &str,
+        &self, subject_id: &str, credential_identifier: &str,
     ) -> impl Future<Output = Result<bool>> + Send;
 
     fn claims(
-        &self, holder_subject: &str, credential: &CredentialDefinition,
+        &self, subject_id: &str, credential: &CredentialDefinition,
     ) -> impl Future<Output = Result<Claims>> + Send;
 }
 ```

@@ -1,7 +1,11 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use vercre_issuer::provider::{
-    Algorithm, Claims, Client, Decryptor, DidResolver, Document, Encryptor, Issuer, Metadata,
-    Result, SecOps, Server, Signer, StateStore, Subject,
+    Algorithm, ClaimEntry, Client, Credentials, Dataset, Decryptor, DidResolver, Document,
+    Encryptor, Issuer, Metadata, Result, SecOps, Server, Signer, StateStore, Status, Subject,
 };
 use vercre_test_utils::store::keystore::IssuerKeystore;
 use vercre_test_utils::store::{issuance, resolver, state};
@@ -11,7 +15,7 @@ pub struct Provider {
     pub client: issuance::ClientStore,
     pub issuer: issuance::IssuerStore,
     pub server: issuance::ServerStore,
-    pub subject: issuance::SubjectStore,
+    pub subject: issuance::DatasetStore,
     pub state: state::Store,
 }
 
@@ -22,7 +26,7 @@ impl Provider {
             client: issuance::ClientStore::new(),
             issuer: issuance::IssuerStore::new(),
             server: issuance::ServerStore::new(),
-            subject: issuance::SubjectStore::new(),
+            subject: issuance::DatasetStore::new(),
             state: state::Store::new(),
         }
     }
@@ -49,22 +53,30 @@ impl Metadata for Provider {
 }
 
 impl Subject for Provider {
-    /// Authorize issuance of the specified credential for the holder.
-    async fn authorize(&self, holder_subject: &str, credential_identifier: &str) -> Result<bool> {
-        self.subject.authorize(holder_subject, credential_identifier)
+    async fn authenticate(&self, _credentials: Credentials) -> Result<String> {
+        // self.subject.authenticate(subject_id, password)
+        todo!("implement authentication")
     }
 
-    async fn claims(&self, holder_subject: &str, credential_identifier: &str) -> Result<Claims> {
-        self.subject.claims(holder_subject, credential_identifier)
+    /// Authorize issuance of the specified credential for the holder.
+    async fn authorize(
+        &self, subject_id: &str, credential_configuration_id: &str,
+        claims: Option<HashMap<String, ClaimEntry>>,
+    ) -> Result<Vec<String>> {
+        self.subject.authorize(subject_id, credential_configuration_id, claims)
+    }
+
+    async fn dataset(&self, subject_id: &str, credential_identifier: &str) -> Result<Dataset> {
+        self.subject.dataset(subject_id, credential_identifier)
     }
 }
 
 impl StateStore for Provider {
-    async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
+    async fn put(&self, key: &str, state: impl Serialize + Send, dt: DateTime<Utc>) -> Result<()> {
         self.state.put(key, state, dt)
     }
 
-    async fn get(&self, key: &str) -> Result<Vec<u8>> {
+    async fn get<T: DeserializeOwned>(&self, key: &str) -> Result<T> {
         self.state.get(key)
     }
 
@@ -124,3 +136,5 @@ impl Decryptor for IssuerSec {
         todo!()
     }
 }
+
+impl Status for Provider {}

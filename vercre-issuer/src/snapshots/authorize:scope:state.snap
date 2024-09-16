@@ -1,0 +1,16 @@
+---
+source: vercre-issuer/src/authorize.rs
+assertion_line: 428
+expression: state
+---
+expires_at: "[expires_at]"
+subject_id: normal_user
+credentials:
+  PHLEmployeeID: EmployeeID_JWT
+current_step:
+  authorization:
+    code_challenge: B6qi8EPWVTnONnO8XNSAsN7O2ejthn3pCKwZUO0HzU8
+    code_challenge_method: S256
+    scope: EmployeeIDCredential
+    client_id: 96bfb9cb-0513-7d64-5532-bed74c48f9ab
+    redirect_uri: "http://localhost:3000/callback"

@@ -1,8 +1,0 @@
----
-source: vercre-issuer/src/deferred.rs
-assertion_line: 229
-expression: "&response"
----
-credential: "[credential]"
-c_nonce: "[c_nonce]"
-c_nonce_expires_in: "[c_nonce_expires_in]"

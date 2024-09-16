@@ -10,6 +10,8 @@ use std::sync::Arc;
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use futures::lock::Mutex;
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use vercre_holder::provider::{
     Algorithm, DidResolver, Document, HolderProvider, Result, Signer, StateStore,
 };
@@ -37,16 +39,17 @@ impl Provider {
 impl HolderProvider for Provider {}
 
 impl StateStore for Provider {
-    async fn put(&self, key: &str, state: Vec<u8>, _: DateTime<Utc>) -> Result<()> {
+    async fn put(&self, key: &str, state: impl Serialize + Send, _: DateTime<Utc>) -> Result<()> {
+        let state = serde_json::to_vec(&state)?;
         self.state_store.lock().await.insert(key.to_string(), state);
         Ok(())
     }
 
-    async fn get(&self, key: &str) -> Result<Vec<u8>> {
+    async fn get<T: DeserializeOwned>(&self, key: &str) -> Result<T> {
         let Some(state) = self.state_store.lock().await.get(key).cloned() else {
             return Err(anyhow!("state not found for key: {key}"));
         };
-        Ok(state)
+        Ok(serde_json::from_slice(&state)?)
     }
 
     async fn purge(&self, key: &str) -> Result<()> {

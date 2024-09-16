@@ -3,6 +3,8 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use vercre_openid::provider::Result;
 
 #[derive(Default, Clone, Debug)]
@@ -18,16 +20,17 @@ impl Store {
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    pub fn put(&self, key: &str, state: Vec<u8>, _: DateTime<Utc>) -> Result<()> {
+    pub fn put(&self, key: &str, state: impl Serialize, _: DateTime<Utc>) -> Result<()> {
+        let state = serde_json::to_vec(&state)?;
         self.store.lock().expect("should lock").insert(key.to_string(), state);
         Ok(())
     }
 
-    pub fn get(&self, key: &str) -> Result<Vec<u8>> {
+    pub fn get<T: DeserializeOwned>(&self, key: &str) -> Result<T> {
         let Some(state) = self.store.lock().expect("should lock").get(key).cloned() else {
             return Err(anyhow!("state not found for key: {key}"));
         };
-        Ok(state)
+        Ok(serde_json::from_slice(&state)?)
     }
 
     #[allow(clippy::unnecessary_wraps)]

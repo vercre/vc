@@ -5,7 +5,7 @@ use anyhow::anyhow;
 use serde::Deserialize;
 use serde_json::{Map, Value};
 use uuid::Uuid;
-use vercre_openid::issuer::{Claims, Client, Issuer, Server};
+use vercre_openid::issuer::{ClaimEntry, Client, Dataset, Issuer, Server};
 use vercre_openid::provider::Result;
 
 // pub const NORMAL_USER: &str = "normal_user";
@@ -109,46 +109,86 @@ impl ClientStore {
 
 #[derive(Default, Clone, Debug, Deserialize)]
 struct Credential {
+    configuration_id: String,
     claims: Map<String, Value>,
     pending: bool,
 }
 
 #[derive(Default, Clone, Debug)]
-pub struct SubjectStore {
-    subjects: Arc<Mutex<HashMap<String, HashMap<String, Credential>>>>,
+pub struct DatasetStore {
+    datasets: Arc<Mutex<HashMap<String, HashMap<String, Credential>>>>,
 }
 
-impl SubjectStore {
+impl DatasetStore {
     pub fn new() -> Self {
-        let json = include_bytes!("subject.json");
-        let subjects: HashMap<String, HashMap<String, Credential>> =
+        let json = include_bytes!("datasets.json");
+        let datasets: HashMap<String, HashMap<String, Credential>> =
             serde_json::from_slice(json).expect("should serialize");
 
         Self {
-            subjects: Arc::new(Mutex::new(subjects)),
+            datasets: Arc::new(Mutex::new(datasets)),
         }
     }
 
-    pub fn authorize(&self, holder_subject: &str, _credential_identifier: &str) -> Result<bool> {
-        if self.subjects.lock().expect("should lock").get(holder_subject).is_none() {
-            return Err(anyhow!("no matching holder_subject"));
-        };
-        Ok(true)
+    pub fn authorize(
+        &self, subject_id: &str, credential_configuration_id: &str,
+        claims: Option<HashMap<String, ClaimEntry>>,
+    ) -> Result<Vec<String>> {
+        let subj_datasets =
+            self.datasets.lock().expect("should lock").get(subject_id).unwrap().clone();
+
+        // preset dataset identifiers for subject/credential
+        let mut identifiers = vec![];
+        for (k, credential) in subj_datasets.iter() {
+            if credential.configuration_id != credential_configuration_id {
+                continue;
+            }
+
+            // create new dataset for subject using provided claims
+            if let Some(requested_claims) = &claims {
+                // create a new credential dataset with the requested claims
+                let mut claims = Map::new();
+                for k in requested_claims.keys() {
+                    if let Some(claim) = credential.claims.get(k) {
+                        claims.insert(k.clone(), claim.clone());
+                    }
+                }
+                let mut credential = credential.clone();
+                credential.claims = claims;
+
+                let credential_identifier = format!("{k}-custom"); // Uuid::new_v4().to_string();
+                identifiers.push(credential_identifier.clone());
+
+                // add custom claims to 'database'
+                let mut datasets =
+                    self.datasets.lock().expect("should lock").get(subject_id).unwrap().clone();
+                datasets.insert(credential_identifier, credential);
+                self.datasets.lock().expect("should lock").insert(subject_id.to_string(), datasets);
+            } else {
+                identifiers.push(k.clone());
+            }
+        }
+
+        if identifiers.is_empty() {
+            return Err(anyhow!("no matching dataset for subject/credential"));
+        }
+
+        Ok(identifiers)
     }
 
-    pub fn claims(&self, holder_subject: &str, credential_identifier: &str) -> Result<Claims> {
-        // get claims for the given `holder_subject` and `credential_identifier`
-        let mut subject =
-            self.subjects.lock().expect("should lock").get(holder_subject).unwrap().clone();
-        let mut credential = subject.get(credential_identifier).unwrap().clone();
+    pub fn dataset(&self, subject_id: &str, credential_identifier: &str) -> Result<Dataset> {
+        // get claims for the given `subject_id` and `credential_identifier`
+        let mut subj_datasets =
+            self.datasets.lock().expect("should lock").get(subject_id).unwrap().clone();
+        let mut credential = subj_datasets.get(credential_identifier).unwrap().clone();
 
         // update subject's pending state to make Deferred Issuance work
         let pending = credential.pending;
         credential.pending = false;
-        subject.insert(credential_identifier.to_string(), credential.clone());
-        self.subjects.lock().expect("should lock").insert(holder_subject.to_string(), subject);
+        subj_datasets.insert(credential_identifier.to_string(), credential.clone());
+        self.datasets.lock().expect("should lock").insert(subject_id.to_string(), subj_datasets);
 
-        Ok(Claims {
+        Ok(Dataset {
             claims: credential.claims,
             pending,
         })

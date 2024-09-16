@@ -54,7 +54,7 @@ pub fn run() {
             let handle = app.handle().clone();
 
             // initialise stronghold
-            // FIXME: get passphrase from user and salt from file(?)
+            // HACK: get passphrase from user and salt from file(?)
             // let passphrase = b"pass-phrase";
             // let salt = b"randomsalt";
             // let _hash = argon2::hash_raw(passphrase, salt, &argon2::Config::default())?;

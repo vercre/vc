@@ -7,7 +7,7 @@ mod provider;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
-use axum::extract::State;
+use axum::extract::{Path, State};
 use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
@@ -26,9 +26,9 @@ use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 use vercre_issuer::{
-    AuthorizationRequest, CreateOfferRequest, CreateOfferResponse, CredentialRequest,
-    CredentialResponse, DeferredCredentialRequest, DeferredCredentialResponse, MetadataRequest,
-    MetadataResponse, TokenRequest, TokenResponse,
+    AuthorizationRequest, CreateOfferRequest, CreateOfferResponse, CredentialOfferRequest,
+    CredentialOfferResponse, CredentialRequest, CredentialResponse, DeferredCredentialRequest,
+    DeferredCredentialResponse, MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,
 };
 
 use crate::provider::Provider;
@@ -45,6 +45,7 @@ async fn main() {
 
     let router = Router::new()
         .route("/create_offer", post(create_offer))
+        .route("/credential_offer/:offer_id", get(credential_offer))
         .route("/.well-known/openid-credential-issuer", get(metadata))
         .route("/auth", get(authorize))
         .route("/login", post(login))
@@ -71,8 +72,20 @@ async fn create_offer(
     Json(mut req): Json<CreateOfferRequest>,
 ) -> AxResult<CreateOfferResponse> {
     req.credential_issuer = format!("http://{host}");
+    vercre_issuer::create_offer(provider, req).await.into()
+}
 
-    vercre_issuer::create_offer(provider, &req).await.into()
+// Retrieve Authorization Request Object endpoint
+#[axum::debug_handler]
+async fn credential_offer(
+    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    Path(offer_id): Path<String>,
+) -> AxResult<CredentialOfferResponse> {
+    let request = CredentialOfferRequest {
+        credential_issuer: format!("http://{host}"),
+        id: offer_id,
+    };
+    vercre_issuer::credential_offer(provider, request).await.into()
 }
 
 // Metadata endpoint
@@ -88,7 +101,7 @@ async fn metadata(
             .and_then(|v| v.to_str().ok())
             .map(ToString::to_string),
     };
-    vercre_issuer::metadata(provider.clone(), &req).await.into()
+    vercre_issuer::metadata(provider.clone(), req).await.into()
 }
 
 /// Authorize endpoint
@@ -138,7 +151,7 @@ async fn authorize(
             .into_response();
     };
 
-    match vercre_issuer::authorize(provider.clone(), &req).await {
+    match vercre_issuer::authorize(provider, req).await {
         Ok(v) => (StatusCode::FOUND, Redirect::to(&format!("{redirect_uri}?code={}", v.code)))
             .into_response(),
         Err(e) => {
@@ -201,7 +214,7 @@ async fn token(
     Form(mut req): Form<TokenRequest>,
 ) -> AxResult<TokenResponse> {
     req.credential_issuer = format!("http://{host}");
-    vercre_issuer::token(provider.clone(), &req).await.into()
+    vercre_issuer::token(provider.clone(), req).await.into()
 }
 
 // Credential endpoint
@@ -212,7 +225,7 @@ async fn credential(
 ) -> AxResult<CredentialResponse> {
     req.credential_issuer = format!("http://{host}");
     req.access_token = auth.token().to_string();
-    vercre_issuer::credential(provider.clone(), &req).await.into()
+    vercre_issuer::credential(provider.clone(), req).await.into()
 }
 
 // Deferred endpoint
@@ -224,7 +237,7 @@ async fn deferred_credential(
 ) -> AxResult<DeferredCredentialResponse> {
     req.credential_issuer = format!("http://{host}");
     req.access_token = auth.0.token().to_string();
-    vercre_issuer::deferred(provider.clone(), &req).await.into()
+    vercre_issuer::deferred(provider.clone(), req).await.into()
 }
 
 // ----------------------------------------------------------------------------

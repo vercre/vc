@@ -42,11 +42,9 @@ async fn process(
     tracing::debug!("request_object::process");
 
     // retrieve request object from state
-    let buf = StateStore::get(&provider, &request.state)
+    let state = StateStore::get::<State>(&provider, &request.id)
         .await
         .map_err(|e| Error::ServerError(format!("issue fetching state: {e}")))?;
-    let state = State::from_slice(&buf)
-        .map_err(|e| Error::ServerError(format!("issue deserializing state: {e}")))?;
     let req_obj = state.request_object;
 
     // verify client_id (perhaps should use 'verify' method?)
@@ -67,6 +65,7 @@ async fn process(
 
 #[cfg(test)]
 mod tests {
+    use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use vercre_core::Kind;
     use vercre_dif_exch::PresentationDefinition;
@@ -75,6 +74,7 @@ mod tests {
     use vercre_w3c_vc::verify_key;
 
     use super::*;
+    use crate::state::Expire;
 
     #[tokio::test]
     async fn request_jwt() {
@@ -100,13 +100,17 @@ mod tests {
             scope: None,
         };
 
-        let state = State::builder().request_object(req_obj).build().expect("should build state");
-        let buf = state.to_vec().expect("should serialize state");
-        StateStore::put(&provider, &state_key, buf, state.expires_at).await.expect("state exists");
+        let state = State {
+            expires_at: Utc::now() + Expire::Request.duration(),
+            request_object: req_obj,
+        };
+        StateStore::put(&provider, &state_key, &state, state.expires_at)
+            .await
+            .expect("state exists");
 
         let request = RequestObjectRequest {
             client_id: VERIFIER_ID.to_string(),
-            state: state_key.to_string(),
+            id: state_key.to_string(),
         };
         let response = request_object(provider.clone(), &request).await.expect("response is valid");
 
@@ -119,6 +123,6 @@ mod tests {
         assert_snapshot!("response", jwt);
 
         // request state should not exist
-        assert!(StateStore::get(&provider, state_key).await.is_ok());
+        assert!(StateStore::get::<State>(&provider, state_key).await.is_ok());
     }
 }

@@ -16,6 +16,24 @@ An example impementation of a Verifiable Credential Issuance service can be foun
 
 [Read the API documentation](https://docs.rs/vercre-issuer).
 
+## Specification Conformance
+
+The following table shows the current status of the implementation of the OpenID for 
+Verifiable Credential Issuance specification:
+
+|                | Alpha<sup>1</sup>         | In-progress     | Planned                          |
+| -------------- | ------------------------- | --------------- | -------------------------------- |
+| **Initiated**  | Issuer, Wallet            |                 |                                  |
+| **Flow**       | Pre-Authorized            | Authorization   |                                  |
+| **Origin**     | Cross-device, same-device |                 |                                  |
+| **Issuance**   | Immediate, Deferred       |                 |                                  |
+| **Format**     | jwt_vc_json               |                 | ldp_vc, jwt_vc_json-ld, mso-mdoc |
+| **Signature**  | ES256K, EdDSA             |                 |                                  |
+| **Binding**    | did:web, did:key          |                 | did:dht, did:keri                |
+| **Encryption** |                           | ECDH-ES/A128GCM | ECDH-ES/A256GCM                  |
+
+1. Working code, but not yet rigorously verified.
+
 ## Additional
 
 [![Crates.io Status](https://img.shields.io/crates/v/vercre-vci.svg)](https://crates.io/crates/vercre-vci)

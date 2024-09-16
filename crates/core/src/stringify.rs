@@ -46,7 +46,7 @@ where
         type Value = T;
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            formatter.write_str("deserialized string")
+            formatter.write_str("stringified object")
         }
 
         fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
@@ -64,6 +64,15 @@ where
             M: MapAccess<'de>,
         {
             let res: T = Deserialize::deserialize(de::value::MapAccessDeserializer::new(map))?;
+            Ok(res)
+        }
+
+        // just in case we get an un-stringified json array...
+        fn visit_seq<A>(self, seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: de::SeqAccess<'de>,
+        {
+            let res: T = Deserialize::deserialize(de::value::SeqAccessDeserializer::new(seq))?;
             Ok(res)
         }
     }
@@ -122,7 +131,7 @@ pub mod option {
             type Value = Option<T>;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("deserialized string")
+                formatter.write_str("stringified object")
             }
 
             fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
@@ -140,6 +149,15 @@ pub mod option {
                 M: MapAccess<'de>,
             {
                 let res: T = Deserialize::deserialize(de::value::MapAccessDeserializer::new(map))?;
+                Ok(Some(res))
+            }
+
+            // just in case we get an un-stringified json array...
+            fn visit_seq<A>(self, seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: de::SeqAccess<'de>,
+            {
+                let res: T = Deserialize::deserialize(de::value::SeqAccessDeserializer::new(seq))?;
                 Ok(Some(res))
             }
         }

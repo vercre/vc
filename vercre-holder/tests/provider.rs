@@ -1,8 +1,12 @@
+#![allow(missing_docs)]
+
 use std::collections::HashMap;
 use std::str;
 use std::sync::{Arc, Mutex};
 
 use chrono::{DateTime, Utc};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 // TODO: remove this import
 use vercre_dif_exch::Constraints;
 use vercre_holder::provider::{
@@ -42,19 +46,19 @@ impl HolderProvider for Provider {}
 
 impl Issuer for Provider {
     async fn get_metadata(
-        &self, _flow_id: &str, req: &MetadataRequest,
+        &self, _flow_id: &str, req: MetadataRequest,
     ) -> anyhow::Result<MetadataResponse> {
         let response = vercre_issuer::metadata(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 
-    async fn get_token(&self, _flow_id: &str, req: &TokenRequest) -> anyhow::Result<TokenResponse> {
+    async fn get_token(&self, _flow_id: &str, req: TokenRequest) -> anyhow::Result<TokenResponse> {
         let response = vercre_issuer::token(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 
     async fn get_credential(
-        &self, _flow_id: &str, req: &CredentialRequest,
+        &self, _flow_id: &str, req: CredentialRequest,
     ) -> anyhow::Result<CredentialResponse> {
         let response = vercre_issuer::credential(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
@@ -75,7 +79,7 @@ impl Verifier for Provider {
         }
         let request = RequestObjectRequest {
             client_id: parts[2].into(),
-            state: parts[0].into(),
+            id: parts[0].into(),
         };
         Ok(vercre_verifier::request_object(self.verifier.clone().unwrap(), &request).await?)
     }
@@ -124,11 +128,11 @@ impl CredentialStorer for Provider {
 }
 
 impl StateStore for Provider {
-    async fn put(&self, key: &str, state: Vec<u8>, dt: DateTime<Utc>) -> Result<()> {
+    async fn put(&self, key: &str, state: impl Serialize, dt: DateTime<Utc>) -> Result<()> {
         self.state.put(key, state, dt)
     }
 
-    async fn get(&self, key: &str) -> Result<Vec<u8>> {
+    async fn get<T: DeserializeOwned>(&self, key: &str) -> Result<T> {
         self.state.get(key)
     }
 

@@ -63,7 +63,7 @@
                             }
                         ]
                     },
-                    "familyName": {
+                    "family_name": {
                         "mandatory": true,
                         "value_type": "string",
                         "display": [
@@ -73,7 +73,7 @@
                             }
                         ]
                     },
-                    "givenName": {
+                    "given_name": {
                         "mandatory": true,
                         "value_type": "string",
                         "display": [
@@ -142,7 +142,7 @@
                             }
                         ]
                     },
-                    "familyName": {
+                    "family_name": {
                         "mandatory": true,
                         "value_type": "string",
                         "display": [
@@ -152,7 +152,7 @@
                             }
                         ]
                     },
-                    "givenName": {
+                    "given_name": {
                         "mandatory": true,
                         "value_type": "string",
                         "display": [

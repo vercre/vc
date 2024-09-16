@@ -92,20 +92,12 @@ impl FromStr for Status {
 
 /// Get and put presentation state information using the supplied provider.
 async fn get_presentation(provider: impl HolderProvider, id: &str) -> anyhow::Result<Presentation> {
-    let current_state = StateStore::get(&provider, id).await?;
-    let presentation = serde_json::from_slice::<Presentation>(&current_state)?;
-    Ok(presentation)
+    StateStore::get(&provider, id).await
 }
 
 async fn put_presentation(
     provider: impl HolderProvider, presentation: &Presentation,
 ) -> anyhow::Result<()> {
-    StateStore::put(
-        &provider,
-        &presentation.id,
-        serde_json::to_vec(&presentation)?,
-        DateTime::<Utc>::MAX_UTC,
-    )
-    .await?;
+    StateStore::put(&provider, &presentation.id, &presentation, DateTime::<Utc>::MAX_UTC).await?;
     Ok(())
 }

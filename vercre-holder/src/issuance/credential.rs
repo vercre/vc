@@ -4,11 +4,11 @@
 
 use anyhow::{anyhow, bail};
 use tracing::instrument;
-use vercre_core::{Kind, Quota};
+use vercre_core::Kind;
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_openid::issuer::{
-    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialType, ProofClaims,
-    ProofOption, ProofType, TokenGrantType, TokenRequest,
+    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialResponseType,
+    CredentialSpec, Proof, ProofClaims, SingleProof, TokenGrantType, TokenRequest,
 };
 use vercre_w3c_vc::proof::{Payload, Verify};
 
@@ -34,7 +34,7 @@ pub async fn get_credentials(
 
     // Request an access token from the issuer.
     let token_request = token_request(&issuance);
-    issuance.token = match Issuer::get_token(&provider, &issuance.id, &token_request).await {
+    issuance.token = match Issuer::get_token(&provider, &issuance.id, token_request).await {
         Ok(token) => token,
         Err(e) => {
             tracing::error!(target: "Endpoint::get_credentials", ?e);
@@ -42,9 +42,14 @@ pub async fn get_credentials(
         }
     };
 
+    let Some(authorized) = &issuance.token.authorization_details else {
+        bail!("no authorization details in token response");
+    };
+    let auth = authorized[0].clone();
+
     // Request each credential offered.
     // TODO: concurrent requests. Would that be possible if wallet is WASM/WASI?
-    for (id, cfg) in &issuance.offered {
+    for cfg in issuance.offered.values() {
         // Construct a proof to be used in credential requests.
         let claims = ProofClaims {
             iss: Some(issuance.client_id.clone()),
@@ -59,13 +64,21 @@ pub async fn get_credentials(
                 return Err(e);
             }
         };
-        let proof = ProofOption::Proof {
-            proof_type: ProofType::Jwt { jwt },
+        let proof = Proof::Single {
+            proof_type: SingleProof::Jwt { jwt },
         };
 
-        let request = credential_request(&issuance, id, cfg, &proof);
+        let request = CredentialRequest {
+            credential_issuer: issuance.offer.credential_issuer.clone(),
+            access_token: issuance.token.access_token.clone(),
+            specification: CredentialSpec::Identifier {
+                credential_identifier: auth.credential_identifiers[0].clone(),
+            },
+            proof: Some(proof.clone()),
+            credential_response_encryption: None,
+        };
 
-        let cred_res = match Issuer::get_credential(&provider, &issuance.id, &request).await {
+        let cred_res = match Issuer::get_credential(&provider, &issuance.id, request).await {
             Ok(cred_res) => cred_res,
             Err(e) => {
                 tracing::error!(target: "Endpoint::get_credentials", ?e);
@@ -124,26 +137,12 @@ fn token_request(issuance: &Issuance) -> TokenRequest {
 
     TokenRequest {
         credential_issuer: issuance.offer.credential_issuer.clone(),
-        client_id: issuance.client_id.clone(),
+        client_id: Some(issuance.client_id.clone()),
         grant_type: TokenGrantType::PreAuthorizedCode {
             pre_authorized_code: pre_auth_code.pre_authorized_code.clone(),
             tx_code: issuance.pin.clone(),
         },
-        ..Default::default()
-    }
-}
-
-/// Construct a credential request from an offered credential configuration.
-fn credential_request(
-    issuance: &Issuance, _id: &str, cfg: &CredentialConfiguration, proof: &ProofOption,
-) -> CredentialRequest {
-    CredentialRequest {
-        credential_issuer: issuance.offer.credential_issuer.clone(),
-        access_token: issuance.token.access_token.clone(),
-        credential_type: CredentialType::Format(cfg.format.clone()),
-        credential_definition: Some(cfg.credential_definition.clone()),
-        proof_option: Some(proof.clone()),
-        credential_response_encryption: None,
+        ..TokenRequest::default()
     }
 }
 
@@ -152,13 +151,14 @@ async fn credential(
     credential_configuration: &CredentialConfiguration, resp: &CredentialResponse,
     resolver: &impl DidResolver,
 ) -> anyhow::Result<Credential> {
-    let vc_quota = resp.credential.as_ref().expect("no credential in response");
-    let vc_kind = match vc_quota {
-        Quota::One(vc_kind) => vc_kind,
-        Quota::Many(_) => bail!("expected one credential"),
-    };
+    // get the credential from the response
+    let CredentialResponseType::Credential(vc_kind) = &resp.response else {
+        // FIXME: handle other reponse types
+        // CredentialResponseType::Credentials(_) => (),
+        // CredentialResponseType::TransactionId(_) => (),
 
-    // TODO: support multiple credentials in response
+        bail!("expected credential in response");
+    };
 
     let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), resolver)
         .await

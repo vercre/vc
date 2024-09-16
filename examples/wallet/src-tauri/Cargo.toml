@@ -44,7 +44,7 @@ vercre-test-utils.workspace = true
 [dev-dependencies]
 
 [build-dependencies]
-tauri-build = { version = "2.0.0-rc.2", features = [] }
+tauri-build = { version = "2.0.0-rc.10", features = [] }
 
 [features]
 # by default Tauri runs in production mode

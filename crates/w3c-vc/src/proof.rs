@@ -42,7 +42,6 @@ use crate::verify_key;
 
 /// Credential format options for the resulting proof.
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[allow(clippy::large_enum_variant)]
 pub enum Format {
     /// VC signed as a JWT, not using JSON-LD
     #[serde(rename = "jwt_vc_json")]

@@ -42,6 +42,7 @@
 
 use std::collections::HashMap;
 
+use chrono::Utc;
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::{gen, Kind};
@@ -53,7 +54,7 @@ use vercre_openid::verifier::{
 };
 use vercre_openid::{Error, Result};
 
-use crate::state::State;
+use crate::state::{Expire, State};
 
 // TODO: request supported Client Identifier schemes from the Wallet
 // TODO: add support for other Client Identifier schemes
@@ -151,12 +152,12 @@ async fn process(
     }
 
     // save request object in state
-    let state = State::builder()
-        .request_object(req_obj)
-        .build()
-        .map_err(|e| Error::ServerError(format!("issue building state: {e}")))?;
+    let state = State {
+        expires_at: Utc::now() + Expire::Request.duration(),
+        request_object: req_obj,
+    };
 
-    StateStore::put(&provider, &state_key, state.to_vec()?, state.expires_at)
+    StateStore::put(&provider, &state_key, &state, state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -208,8 +209,7 @@ mod tests {
 
         // compare response with saved state
         let state_key = req_obj.state.as_ref().expect("has state");
-        let buf = StateStore::get(&provider, state_key).await.expect("state exists");
-        let state = State::try_from(buf).expect("state is valid");
+        let state = StateStore::get::<State>(&provider, state_key).await.expect("state exists");
 
         assert_eq!(req_obj.nonce, state.request_object.nonce);
         assert_snapshot!("sd-response", response, {
@@ -254,8 +254,7 @@ mod tests {
 
         // check state for RequestObject
         let state_key = req_uri.split('/').last().expect("has state");
-        let buf = StateStore::get(&provider, state_key).await.expect("state exists");
-        let state = State::try_from(buf).expect("state is valid");
+        let state = StateStore::get::<State>(&provider, state_key).await.expect("state exists");
         assert_snapshot!("cd-state", state, {
             ".expires_at" => "[expires_at]",
             ".request_object.presentation_definition"  => "[presentation_definition]",

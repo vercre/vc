@@ -1,0 +1,34 @@
+[package]
+name = "vercre-status"
+description = "W3C compliant Verifiable Credential status API used by an Issuer to publish credential status information and by a Verifier to check the status of a credential"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+exclude.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[lib]
+# crate-type = ["cdylib", "rlib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow.workspace = true
+base64ct.workspace = true
+bitvec = "1.0.1"
+flate2 = "1.0.33"
+serde.workspace = true
+serde_json.workspace = true
+thiserror = "1.0.63"
+vercre-core.workspace = true
+vercre-datasec.workspace = true
+vercre-w3c-vc.workspace = true
+
+[dev-dependencies]

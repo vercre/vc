@@ -37,16 +37,16 @@ use vercre_openid::{Error, Result};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn metadata(
-    provider: impl Provider, request: &MetadataRequest,
+    provider: impl Provider, request: MetadataRequest,
 ) -> Result<MetadataResponse> {
-    process(provider, request).await
+    process(&provider, request).await
 }
 
-async fn process(provider: impl Provider, request: &MetadataRequest) -> Result<MetadataResponse> {
+async fn process(provider: &impl Provider, request: MetadataRequest) -> Result<MetadataResponse> {
     tracing::debug!("metadata::process");
 
     // TODO: add languages to request
-    let credential_issuer = Metadata::issuer(&provider, &request.credential_issuer)
+    let credential_issuer = Metadata::issuer(provider, &request.credential_issuer)
         .await
         .map_err(|e| Error::ServerError(format!("issue getting metadata: {e}")))?;
     Ok(MetadataResponse { credential_issuer })
@@ -56,12 +56,14 @@ async fn process(provider: impl Provider, request: &MetadataRequest) -> Result<M
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER};
+    use vercre_test_utils::snapshot;
 
     use super::*;
 
     #[tokio::test]
     async fn metadata_ok() {
         vercre_test_utils::init_tracer();
+        snapshot!("");
 
         let provider = Provider::new();
 
@@ -69,8 +71,8 @@ mod tests {
             credential_issuer: CREDENTIAL_ISSUER.to_string(),
             languages: None,
         };
-        let response = metadata(provider, &request).await.expect("response is ok");
-        assert_snapshot!("response", response, {
+        let response = metadata(provider, request).await.expect("response is ok");
+        assert_snapshot!("metadata:metadata_ok:response", response, {
             ".credential_configurations_supported" => insta::sorted_redaction(),
             ".credential_configurations_supported.*.credential_definition.credentialSubject" => insta::sorted_redaction()
         });

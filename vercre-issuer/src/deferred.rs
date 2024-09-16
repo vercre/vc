@@ -16,7 +16,7 @@ use vercre_openid::{Error, Result};
 
 use crate::credential::credential;
 // use crate::shell;
-use crate::state::State;
+use crate::state::{State, Step};
 
 /// Deferred credential request handler.
 ///
@@ -26,30 +26,31 @@ use crate::state::State;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn deferred(
-    provider: impl Provider, request: &DeferredCredentialRequest,
+    provider: impl Provider, request: DeferredCredentialRequest,
 ) -> Result<DeferredCredentialResponse> {
-    process(provider, request).await
+    process(&provider, request).await
 }
 
 async fn process(
-    provider: impl Provider, request: &DeferredCredentialRequest,
+    provider: &impl Provider, request: DeferredCredentialRequest,
 ) -> Result<DeferredCredentialResponse> {
     tracing::debug!("deferred::process");
 
     // retrieve deferred credential request from state
-    let Ok(buf) = StateStore::get(&provider, &request.transaction_id).await else {
+    let Ok(state) = StateStore::get::<State>(provider, &request.transaction_id).await else {
         return Err(Error::InvalidTransactionId("deferred state not found".into()));
     };
-    let Ok(state) = State::try_from(buf) else {
-        return Err(Error::InvalidTransactionId("deferred state is expired or corrupted".into()));
-    };
 
-    let Some(deferred_state) = state.deferred else {
+    if state.is_expired() {
+        return Err(Error::InvalidRequest("state expired".into()));
+    }
+
+    let Step::Deferred(deferred_state) = state.current_step else {
         return Err(Error::ServerError("Deferred state not found.".into()));
     };
 
     // remove deferred state item
-    StateStore::purge(&provider, &request.transaction_id)
+    StateStore::purge(provider, &request.transaction_id)
         .await
         .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
 
@@ -58,7 +59,7 @@ async fn process(
     cred_req.credential_issuer.clone_from(&request.credential_issuer);
     cred_req.access_token.clone_from(&request.access_token);
 
-    let response = credential(provider.clone(), &cred_req).await?;
+    let response = credential(provider.clone(), cred_req).await?;
 
     Ok(DeferredCredentialResponse {
         credential_response: response,
@@ -67,15 +68,16 @@ async fn process(
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use serde_json::json;
-    use vercre_core::Quota;
     use vercre_datasec::jose::jws::{self, Type};
-    use vercre_openid::issuer::{CredentialRequest, ProofClaims};
-    use vercre_test_utils::holder;
+    use vercre_macros::credential_request;
+    use vercre_openid::issuer::{CredentialResponseType, ProofClaims};
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+    use vercre_test_utils::{holder, snapshot};
     use vercre_w3c_vc::proof::{self, Payload, Verify};
 
     use super::*;
@@ -84,12 +86,12 @@ mod tests {
     #[tokio::test]
     async fn deferred_ok() {
         vercre_test_utils::init_tracer();
+        snapshot!("");
 
         let provider = Provider::new();
         let access_token = "tkn-ABCDEF";
         let c_nonce = "1234ABCD".to_string();
         let transaction_id = "txn-ABCDEF";
-        let credentials = vec!["EmployeeID_JWT".into()];
 
         // create CredentialRequest to 'send' to the app
         let claims = ProofClaims {
@@ -100,57 +102,39 @@ mod tests {
         };
         let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
 
-        let body = json!({
-            "format": "jwt_vc_json",
-            "credential_definition": {
-                "type": [
-                    "VerifiableCredential",
-                    "EmployeeIDCredential"
-                ]
-            },
+        let cred_req = credential_request!({
+            "credential_issuer": CREDENTIAL_ISSUER,
+            "access_token": access_token,
+            "credential_identifier": "PHLEmployeeID",
             "proof":{
                 "proof_type": "jwt",
                 "jwt": jwt
             }
         });
 
-        let mut cred_req =
-            serde_json::from_value::<CredentialRequest>(body).expect("request should deserialize");
-        cred_req.credential_issuer = CREDENTIAL_ISSUER.into();
-        cred_req.access_token = access_token.into();
-
         // set up state
-        let mut state = State::builder()
-            .credential_issuer(CREDENTIAL_ISSUER.into())
-            .expires_at(Utc::now() + Expire::AuthCode.duration())
-            .credential_identifiers(credentials)
-            .subject_id(Some(NORMAL_USER.into()))
-            .build()
-            .expect("should build state");
+        let mut state = State {
+            expires_at: Utc::now() + Expire::Authorized.duration(),
+            subject_id: Some(NORMAL_USER.into()),
+            credentials: Some(HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())])),
+            current_step: Step::Token(Token {
+                access_token: access_token.into(),
+                c_nonce: c_nonce.into(),
+                c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
+            }),
+            ..State::default()
+        };
 
-        // state entry 1: token state keyed by access_token
-        state.token = Some(Token {
-            access_token: access_token.into(),
-            token_type: "Bearer".into(),
-            c_nonce,
-            c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
-            ..Default::default()
-        });
-
-        let ser = state.to_vec().expect("should serialize");
-        StateStore::put(&provider, access_token, ser, state.expires_at)
+        StateStore::put(&provider, access_token, &state, state.expires_at)
             .await
             .expect("state exists");
 
         // state entry 2: deferred state keyed by transaction_id
-        state.token = None;
-        state.deferred = Some(Deferred {
+        state.current_step = Step::Deferred(Deferred {
             transaction_id: transaction_id.into(),
             credential_request: cred_req.clone(),
         });
-
-        let ser = state.to_vec().expect("should serialize");
-        StateStore::put(&provider, transaction_id, ser, state.expires_at)
+        StateStore::put(&provider, transaction_id, &state, state.expires_at)
             .await
             .expect("state exists");
 
@@ -160,43 +144,40 @@ mod tests {
             transaction_id: transaction_id.into(),
         };
 
-        let response = deferred(provider.clone(), &request).await.expect("response is valid");
-        assert_snapshot!("response", &response, {
+        let response = deferred(provider.clone(), request).await.expect("response is valid");
+        assert_snapshot!("deferred:deferred_ok:response", &response, {
+            ".transaction_id" => "[transaction_id]",
             ".credential" => "[credential]",
             ".c_nonce" => "[c_nonce]",
-            ".c_nonce_expires_in" => "[c_nonce_expires_in]"
         });
 
         // extract credential response
         let cred_resp = response.credential_response;
 
         // verify credential
-        let vc_quota = cred_resp.credential.expect("credential is present");
-        let Quota::One(vc_kind) = vc_quota else {
-            panic!("expected one credential")
+        let CredentialResponseType::Credential(vc_kind) = &cred_resp.response else {
+            panic!("expected a single credential");
         };
-
         let Payload::Vc(vc) =
             proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
         else {
             panic!("should be VC");
         };
 
-        assert_snapshot!("vc", vc, {
+        assert_snapshot!("deferred:deferred_ok:vc", vc, {
             ".issuanceDate" => "[issuanceDate]",
             ".credentialSubject" => insta::sorted_redaction()
         });
 
         // token state should remain unchanged
-        assert_let!(Ok(buf), StateStore::get(&provider, access_token).await);
-        let state = State::try_from(buf).expect("token state is valid");
-        assert_snapshot!("state", state, {
+        assert_let!(Ok(state), StateStore::get::<State>(&provider, access_token).await);
+        assert_snapshot!("deferred:deferred_ok:state", state, {
             ".expires_at" => "[expires_at]",
-            ".token.c_nonce"=>"[c_nonce]",
-            ".token.c_nonce_expires_at" => "[c_nonce_expires_at]"
+            ".current_step.c_nonce"=>"[c_nonce]",
+            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]"
         });
 
         // deferred state should not exist
-        assert!(StateStore::get(&provider, transaction_id).await.is_err());
+        assert!(StateStore::get::<State>(&provider, transaction_id).await.is_err());
     }
 }

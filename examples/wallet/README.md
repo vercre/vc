@@ -128,7 +128,7 @@ RESP=$(curl --json '{
 echo $RESP | jq '.credential_offer'
 
 # print user pin
-echo $RESP | jq '.user_code'
+echo $RESP | jq '.tx_code'
 ```
 
 For presentation, run the presentation example service as above then

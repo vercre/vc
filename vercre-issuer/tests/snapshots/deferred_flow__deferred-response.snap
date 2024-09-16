@@ -1,8 +1,0 @@
----
-source: vercre-issuer/tests/deferred_flow.rs
-assertion_line: 39
-expression: deferred_resp
----
-credential: "[credential]"
-c_nonce: "[c_nonce]"
-c_nonce_expires_in: "[c_nonce_expires_in]"
