@@ -76,7 +76,7 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    AuthorizationSpec, Authorized, ClaimEntry, ConfigurationId, Format, FormatProfile, GrantType,
+    AuthorizationSpec, ClaimEntry, ConfigurationId, Format, FormatProfile, GrantType,
     Issuer, Metadata, Provider, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
@@ -358,11 +358,9 @@ impl Context {
                     .map_err(|e| Error::ServerError(format!("issue authorizing subject: {e}")))?;
 
             authzd_details.push(DetailItem {
-                authorization_detail: Authorized {
-                    authorization_detail: auth_det.clone(),
-                    credential_identifiers: identifiers.clone(),
-                },
+                authorization_detail: auth_det.clone(),
                 credential_configuration_id: config_id.clone(),
+                credential_identifiers: identifiers.clone(),
             });
         }
 
@@ -461,7 +459,7 @@ mod tests {
 
         assert_snapshot!(format!("authorize:{name}:state"), state, {
             ".expires_at" => "[expires_at]",
-            ".stage.authorization_details[].credential_definition.credentialSubject" => insta::sorted_redaction(),
+            ".stage.details[].authorization_detail.credential_definition.credentialSubject" => insta::sorted_redaction(),
         });
     }
 

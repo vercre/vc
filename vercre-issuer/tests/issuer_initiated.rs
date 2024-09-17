@@ -75,7 +75,6 @@ async fn format(provider: Provider, #[case] credential_format: FormatProfile) {
 
 // Authorization Code flow
 #[rstest]
-#[ignore]
 async fn authorization(provider: Provider) {
     vercre_test_utils::init_tracer();
     snapshot!("issuer:authorization");

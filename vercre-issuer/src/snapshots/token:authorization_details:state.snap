@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/token.rs
-assertion_line: 540
+assertion_line: 539
 expression: state
 ---
 expires_at: "[expires_at]"
@@ -8,6 +8,7 @@ subject_id: normal_user
 stage:
   validated:
     access_token: "[access_token]"
-    credentials: {}
+    credentials:
+      PHLEmployeeID: EmployeeID_JWT
     c_nonce: "[c_nonce]"
     c_nonce_expires_at: "[c_nonce_expires_at]"

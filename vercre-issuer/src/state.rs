@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
-use vercre_openid::issuer::{Authorized, CredentialOffer, CredentialRequest};
+use vercre_openid::issuer::{AuthorizationDetail, CredentialOffer, CredentialRequest};
 
 pub enum Expire {
     Authorized,
@@ -134,10 +134,13 @@ pub struct Authorization {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct DetailItem {
     /// Authorized `authorization_detail`
-    pub authorization_detail: Authorized,
+    pub authorization_detail: AuthorizationDetail,
 
     /// Corresponding `credential_configuration_id` for the detail item.
     pub credential_configuration_id: String,
+
+    /// Authorized credential datasets for the scope item.
+    pub credential_identifiers: Vec<String>,
 }
 
 /// Stores authorized scope items with attendant `credential_configuration_id`
