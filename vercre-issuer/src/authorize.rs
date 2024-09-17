@@ -82,7 +82,7 @@ use vercre_openid::issuer::{
 use vercre_openid::{Error, Result};
 
 // use crate::shell;
-use crate::state::{Authorization, Expire, Scope, Stage, State};
+use crate::state::{Authorization, DetailItem, Expire, ScopeItem, Stage, State};
 
 /// Authorization request handler.
 ///
@@ -350,20 +350,23 @@ impl Context {
         tracing::debug!("authorize::process");
 
         // authorization_detail
-        let mut authzd_detail = vec![];
+        let mut authzd_details = vec![];
         for (config_id, auth_det) in &self.auth_dets {
             let identifiers =
                 Subject::authorize(provider, &request.subject_id, config_id, self.claims.clone())
                     .await
                     .map_err(|e| Error::ServerError(format!("issue authorizing subject: {e}")))?;
 
-            authzd_detail.push(Authorized {
-                authorization_detail: auth_det.clone(),
-                credential_identifiers: identifiers.clone(),
+            authzd_details.push(DetailItem {
+                authorization_detail: Authorized {
+                    authorization_detail: auth_det.clone(),
+                    credential_identifiers: identifiers.clone(),
+                },
+                credential_configuration_id: config_id.clone(),
             });
         }
-        let authorization_details =
-            if authzd_detail.is_empty() { None } else { Some(authzd_detail) };
+
+        let details = if authzd_details.is_empty() { None } else { Some(authzd_details) };
 
         // scope
         let mut authzd_scope = vec![];
@@ -372,7 +375,7 @@ impl Context {
                 .await
                 .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
 
-            authzd_scope.push(Scope {
+            authzd_scope.push(ScopeItem {
                 item: scope_item.clone(),
                 credential_configuration_id: config_id.clone(),
                 credential_identifiers: identifiers.clone(),
@@ -381,7 +384,7 @@ impl Context {
         let scope = if authzd_scope.is_empty() { None } else { Some(authzd_scope) };
 
         // return an error if holder is not authorized for any requested credentials
-        if authorization_details.is_none() && scope.is_none() {
+        if details.is_none() && scope.is_none() {
             return Err(Error::AccessDenied(
                 "holder is not authorized for requested credentials".into(),
             ));
@@ -394,7 +397,7 @@ impl Context {
             stage: Stage::Authorized(Authorization {
                 code_challenge: request.code_challenge,
                 code_challenge_method: request.code_challenge_method,
-                authorization_details,
+                details,
                 scope,
                 client_id: request.client_id,
                 redirect_uri: request.redirect_uri.clone(),

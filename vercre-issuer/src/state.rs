@@ -119,18 +119,31 @@ pub struct Authorization {
     /// PKCE code challenge method from the Authorization Request.
     pub code_challenge_method: String,
 
-    /// Lists credential identifiers that the Wallet is authorized to request.
+    /// Lists credentials (as `authorization_details` entries) that the Wallet is
+    /// authorized to request.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub authorization_details: Option<Vec<Authorized>>,
+    pub details: Option<Vec<DetailItem>>,
 
     /// Lists credentials (as scope items) that the Wallet is authorized to request.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub scope: Option<Vec<Scope>>,
+    pub scope: Option<Vec<ScopeItem>>,
 }
 
-/// Scope is used to store authorized scopes and attendant credential identifiers.
+/// Stores authorized `authorization_detail` item and attendant
+/// `credential_configuration_id`.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Scope {
+pub struct DetailItem {
+    /// Authorized `authorization_detail`
+    pub authorization_detail: Authorized,
+
+    /// Corresponding `credential_configuration_id` for the detail item.
+    pub credential_configuration_id: String,
+}
+
+/// Stores authorized scope items with attendant `credential_configuration_id`
+/// and `credential_identifier`s.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct ScopeItem {
     /// Authorized scope
     pub item: String,
 

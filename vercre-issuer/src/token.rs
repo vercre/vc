@@ -144,6 +144,7 @@ impl Context {
     // TODO: add `client_assertion` JWT verification
 
     // Exchange authorization/pre-authorized code for access token.
+    #[allow(clippy::too_many_lines)]
     async fn process(
         &self, provider: &impl Provider, request: TokenRequest,
     ) -> Result<TokenResponse> {
@@ -210,12 +211,21 @@ impl Context {
 
                 // narrow token's authorization if requested by wallet
                 let auth_dets = if let Some(requested) = request.authorization_details
-                    && let Some(authorized) = &authzn.authorization_details
+                    && let Some(details) = &authzn.details
                 {
-                    let reduced = narrow_auth(authorized, &requested)?;
+                    let authorized =
+                        details.iter().map(|d| d.authorization_detail.clone()).collect::<Vec<_>>();
+
+                    let reduced = narrow_auth(&authorized, &requested)?;
                     Some(reduced)
                 } else {
-                    authzn.authorization_details.clone()
+                    authzn.details.as_ref().map(|details| {
+                        let authorized = details
+                            .iter()
+                            .map(|d| d.authorization_detail.clone())
+                            .collect::<Vec<_>>();
+                        authorized
+                    })
                 };
 
                 if let Some(auth_dets) = &auth_dets {
@@ -334,7 +344,7 @@ mod tests {
     use vercre_test_utils::snapshot;
 
     use super::*;
-    use crate::state::{Authorization, PreAuthorization};
+    use crate::state::{Authorization, DetailItem, PreAuthorization};
 
     #[tokio::test]
     async fn pre_authorized() {
@@ -406,18 +416,21 @@ mod tests {
             stage: Stage::Authorized(Authorization {
                 code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
                 code_challenge_method: "S256".into(),
-                authorization_details: Some(vec![Authorized {
-                    authorization_detail: AuthorizationDetail {
-                        type_: AuthorizationDetailType::OpenIdCredential,
-                        specification: AuthorizationSpec::ConfigurationId(
-                            ConfigurationId::Definition {
-                                credential_configuration_id: "EmployeeID_JWT".into(),
-                                credential_definition: None,
-                            },
-                        ),
-                        ..AuthorizationDetail::default()
+                details: Some(vec![DetailItem {
+                    authorization_detail: Authorized {
+                        authorization_detail: AuthorizationDetail {
+                            type_: AuthorizationDetailType::OpenIdCredential,
+                            specification: AuthorizationSpec::ConfigurationId(
+                                ConfigurationId::Definition {
+                                    credential_configuration_id: "EmployeeID_JWT".into(),
+                                    credential_definition: None,
+                                },
+                            ),
+                            ..AuthorizationDetail::default()
+                        },
+                        credential_identifiers: vec!["PHLEmployeeID".into()],
                     },
-                    credential_identifiers: vec!["PHLEmployeeID".into()],
+                    credential_configuration_id: "EmployeeID_JWT".into(),
                 }]),
                 client_id: CLIENT_ID.into(),
                 ..Authorization::default()
@@ -477,22 +490,26 @@ mod tests {
                 redirect_uri: Some("https://example.com".into()),
                 code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
                 code_challenge_method: "S256".into(),
-                authorization_details: Some(vec![Authorized {
-                    authorization_detail: AuthorizationDetail {
-                        type_: AuthorizationDetailType::OpenIdCredential,
-                        specification: AuthorizationSpec::Format(Format::JwtVcJson {
-                            credential_definition: CredentialDefinition {
-                                type_: Some(vec![
-                                    "VerifiableCredential".into(),
-                                    "EmployeeIDCredential".into(),
-                                ]),
-                                ..CredentialDefinition::default()
-                            },
-                        }),
-                        ..AuthorizationDetail::default()
+                details: Some(vec![DetailItem {
+                    authorization_detail: Authorized {
+                        authorization_detail: AuthorizationDetail {
+                            type_: AuthorizationDetailType::OpenIdCredential,
+                            specification: AuthorizationSpec::Format(Format::JwtVcJson {
+                                credential_definition: CredentialDefinition {
+                                    type_: Some(vec![
+                                        "VerifiableCredential".into(),
+                                        "EmployeeIDCredential".into(),
+                                    ]),
+                                    ..CredentialDefinition::default()
+                                },
+                            }),
+                            ..AuthorizationDetail::default()
+                        },
+                        credential_identifiers: vec!["PHLEmployeeID".into()],
                     },
-                    credential_identifiers: vec!["EmployeeID_JWT".into()],
+                    credential_configuration_id: "EmployeeID_JWT".into(),
                 }]),
+
                 ..Authorization::default()
             }),
             ..State::default()
