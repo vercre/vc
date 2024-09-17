@@ -49,21 +49,26 @@ async fn process(
         return Err(Error::InvalidRequest("state expired".into()));
     }
 
-    let Stage::Offered(offer) = state.stage else {
+    let Stage::Offered(offer) = &state.stage else {
         return Err(Error::InvalidRequest("no credential offer found".into()));
     };
 
-    state.stage = Stage::PreAuthorized(PreAuthorization {
-        credentials: offer.credentials.clone(),
-        tx_code: offer.tx_code.clone(),
-    });
+    let credential_offer = offer.credential_offer.clone();
+
+    // update State stage if credential_offer has a `pre_authorized_code` grant,
+    if let Some(grants) = &credential_offer.grants {
+        if grants.pre_authorized_code.is_some() {
+            state.stage = Stage::PreAuthorized(PreAuthorization {
+                credentials: offer.credentials.clone(),
+                tx_code: offer.tx_code.clone(),
+            });
+        }
+    }
 
     // TODO: generate pre-authorized code to use as state key and save to state
     StateStore::put(provider, &request.id, &state, state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
-
-    let credential_offer = offer.credential_offer;
 
     // verify client_id (perhaps should use 'verify' method?)
     if credential_offer.credential_issuer != request.credential_issuer {

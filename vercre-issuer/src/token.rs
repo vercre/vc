@@ -191,7 +191,7 @@ impl Context {
 
                 // TODO: reduce scope if requested scope
 
-                let scope = if let Some(scope_items) = &authzn_state.scope {
+                let scope = authzn_state.scope.as_ref().map(|scope_items| {
                     let mut scope_str = String::new();
 
                     for item in scope_items {
@@ -204,15 +204,13 @@ impl Context {
                             );
                         }
                     }
-                    Some(scope_str)
-                } else {
-                    None
-                };
+                    scope_str
+                });
 
                 // narrow token's authorization if requested by wallet
                 let authorization_details = if let Some(detail_items) = &authzn_state.details {
                     let detail_items = if let Some(requested) = &request.authorization_details {
-                        narrow_auth(&detail_items, &requested)?
+                        narrow_auth(detail_items, requested)?
                     } else {
                         detail_items.clone()
                     };
