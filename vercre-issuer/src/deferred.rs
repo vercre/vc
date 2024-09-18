@@ -1,12 +1,12 @@
 //! # Deferred Credential Endpoint
 //!
-//! This endpoint is used to issue a Credential previously requested at the Credential
-//! Endpoint or Batch Credential Endpoint in cases where the Credential Issuer was not
-//! able to immediately issue this Credential.
+//! This endpoint is used to issue a Credential previously requested at the
+//! Credential Endpoint or Batch Credential Endpoint in cases where the
+//! Credential Issuer was not able to immediately issue this Credential.
 //!
-//! The Wallet MUST present to the Deferred Endpoint an Access Token that is valid for
-//! the issuance of the Credential previously requested at the Credential Endpoint or
-//! the Batch Credential Endpoint.
+//! The Wallet MUST present to the Deferred Endpoint an Access Token that is
+//! valid for the issuance of the Credential previously requested at the
+//! Credential Endpoint or the Batch Credential Endpoint.
 
 use tracing::instrument;
 use vercre_openid::issuer::{

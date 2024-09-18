@@ -1,6 +1,7 @@
 //! # Issuance
 //!
-//! The Issuance endpoints implement the vercre-holder's credential issuance flow.
+//! The Issuance endpoints implement the vercre-holder's credential issuance
+//! flow.
 
 pub mod accept;
 pub mod credential;
@@ -19,8 +20,9 @@ use crate::provider::{HolderProvider, StateStore};
 /// `Issuance` represents app state across the steps of the issuance flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Issuance {
-    /// The unique identifier for the issuance flow. Not used internally but passed to providers
-    /// so that wallet clients can track interactions with specific flows.
+    /// The unique identifier for the issuance flow. Not used internally but
+    /// passed to providers so that wallet clients can track interactions
+    /// with specific flows.
     pub id: String,
 
     /// Client ID of the holder's agent (eg. wallet)

@@ -29,8 +29,8 @@ pub trait Provider:
 {
 }
 
-/// The `Metadata` trait is used by implementers to provide `Client`, `Issuer`, and
-/// `Server` metadata to the library.
+/// The `Metadata` trait is used by implementers to provide `Client`, `Issuer`,
+/// and `Server` metadata to the library.
 pub trait Metadata: Send + Sync {
     /// Client (wallet) metadata for the specified issuance client.
     fn client(&self, client_id: &str) -> impl Future<Output = provider::Result<Client>> + Send;
@@ -41,7 +41,8 @@ pub trait Metadata: Send + Sync {
     /// Authorization Server metadata for the specified issuer/server.
     fn server(&self, server_id: &str) -> impl Future<Output = provider::Result<Server>> + Send;
 
-    /// Used to dynamically register OAuth 2.0 clients with the authorization server.
+    /// Used to dynamically register OAuth 2.0 clients with the authorization
+    /// server.
     fn register(&self, client: &Client) -> impl Future<Output = provider::Result<Client>> + Send;
 }
 
@@ -53,9 +54,10 @@ pub trait Subject: Send + Sync {
         &self, credentials: Credentials,
     ) -> impl Future<Output = provider::Result<String>> + Send;
 
-    /// Authorize issuance of the credential specified by `credential_configuration_id`.
-    /// Returns a one or more `credential_identifier`s the subject (holder) is
-    /// authorized to request.
+    /// Authorize issuance of the credential specified by
+    /// `credential_configuration_id`. Returns a one or more
+    /// `credential_identifier`s the subject (holder) is authorized to
+    /// request.
     fn authorize(
         &self, subject_id: &str, credential_configuration_id: &str,
         claims: Option<HashMap<String, ClaimEntry>>,
@@ -105,33 +107,34 @@ pub struct CreateOfferRequest {
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub credential_issuer: String,
 
-    /// Identifies the (previously authenticated) Holder in order that Issuer can
-    /// authorize credential issuance.
+    /// Identifies the (previously authenticated) Holder in order that Issuer
+    /// can authorize credential issuance.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subject_id: Option<String>,
 
-    /// A list of credentials (as identified by their metadata ids) to include in the
-    /// offer to the Wallet. Each id identifies one of the keys in the name/value
-    /// pairs stored in the `credential_configurations_supported` Credential Issuer
-    /// metadata property. The Wallet uses this string value to obtain the respective
-    /// object that contains information about the Credential being offered. For
-    /// example, this string value can be used to obtain scope value to be used in
-    /// the Authorization Request.
+    /// A list of credentials (as identified by their metadata ids) to include
+    /// in the offer to the Wallet. Each id identifies one of the keys in
+    /// the name/value pairs stored in the
+    /// `credential_configurations_supported` Credential Issuer
+    /// metadata property. The Wallet uses this string value to obtain the
+    /// respective object that contains information about the Credential
+    /// being offered. For example, this string value can be used to obtain
+    /// scope value to be used in the Authorization Request.
     pub credential_configuration_ids: Vec<String>,
 
     // TODO: add support for `authorization_details` parameter
     // pub authorization_details: Vec<Authorized>,
-    //
     /// Whether the Issuer should provide a pre-authorized offer or not. If not
     /// pre-authorized, the Wallet must request authorization to fulfill the
     /// offer.
-    /// When set to `true`, only the `urn:ietf:params:oauth:grant-type:pre-authorized_code`
-    /// Grant Type will be set in the returned Credential Offer.
+    /// When set to `true`, only the
+    /// `urn:ietf:params:oauth:grant-type:pre-authorized_code` Grant Type
+    /// will be set in the returned Credential Offer.
     #[serde(rename = "pre-authorize")]
     pub pre_authorize: bool,
 
-    /// Specifies whether a Transaction Code (PIN) is required by the `token` endpoint
-    /// during the Pre-Authorized Code Flow.
+    /// Specifies whether a Transaction Code (PIN) is required by the `token`
+    /// endpoint during the Pre-Authorized Code Flow.
     pub tx_code_required: bool,
 
     /// The Issuer can specify whether Credential Offer is an object or a URI.
@@ -141,13 +144,14 @@ pub struct CreateOfferRequest {
 /// Determines how the Credential Offer is sent to the Wallet.
 #[derive(Clone, Default, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum SendType {
-    /// The Credential Offer is sent to the Wallet by value — as an object containing
-    /// the Credential Offer parameters.
+    /// The Credential Offer is sent to the Wallet by value — as an object
+    /// containing the Credential Offer parameters.
     #[default]
     ByVal,
 
-    /// The Credential Offer is sent to the Wallet by reference — as a string containing
-    /// a URL pointing to a location where the offer can be retrieved.
+    /// The Credential Offer is sent to the Wallet by reference — as a string
+    /// containing a URL pointing to a location where the offer can be
+    /// retrieved.
     ByRef,
 }
 
@@ -173,8 +177,8 @@ impl From<String> for SendType {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CreateOfferResponse {
     /// A Credential Offer that can be used to initiate issuance with a Wallet.
-    /// The offer can be an object or URL pointing to the Credential Offer Endpoint
-    /// where A `CredentialOffer` object can be retrieved.
+    /// The offer can be an object or URL pointing to the Credential Offer
+    /// Endpoint where A `CredentialOffer` object can be retrieved.
     #[serde(flatten)]
     pub offer_type: OfferType,
 
@@ -184,16 +188,17 @@ pub struct CreateOfferResponse {
     pub tx_code: Option<String>,
 }
 
-/// The type of Credential Offer returned in a `CreateOfferResponse`: either an object
-/// or a URI.
+/// The type of Credential Offer returned in a `CreateOfferResponse`: either an
+/// object or a URI.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub enum OfferType {
-    /// A Credential Offer object that can be sent to a Wallet as an HTTP GET request.
+    /// A Credential Offer object that can be sent to a Wallet as an HTTP GET
+    /// request.
     #[serde(rename = "credential_offer")]
     Object(CredentialOffer),
 
-    /// A URI pointing to the Credential Offer Endpoint where a `CredentialOffer` object
-    /// can be retrieved.
+    /// A URI pointing to the Credential Offer Endpoint where a
+    /// `CredentialOffer` object can be retrieved.
     #[serde(rename = "credential_offer_uri")]
     Uri(String),
 }
@@ -208,11 +213,12 @@ pub struct CredentialOffer {
     pub credential_issuer: String,
 
     /// Credentials offered to the Wallet.
-    /// A list of names identifying entries in the `credential_configurations_supported`
-    /// `HashMap` in the Credential Issuer metadata. The Wallet uses the identifier to
-    /// obtain the respective Credential Definition containing information about the
-    /// Credential being offered. For example, the identifier can be used to obtain
-    /// scope value to be used in the Authorization Request.
+    /// A list of names identifying entries in the
+    /// `credential_configurations_supported` `HashMap` in the Credential
+    /// Issuer metadata. The Wallet uses the identifier to obtain the
+    /// respective Credential Definition containing information about the
+    /// Credential being offered. For example, the identifier can be used to
+    /// obtain scope value to be used in the Authorization Request.
     ///
     /// # Example
     ///
@@ -224,18 +230,19 @@ pub struct CredentialOffer {
     /// ```
     pub credential_configuration_ids: Vec<String>,
 
-    /// Indicates to the Wallet the Grant Types the Credential Issuer is prepared to
-    /// process for this credential offer. If not present, the Wallet MUST determine
-    /// the Grant Types the Credential Issuer supports using the Issuer metadata. When
-    /// multiple grants are present, it's at the Wallet's discretion which one to use.
+    /// Indicates to the Wallet the Grant Types the Credential Issuer is
+    /// prepared to process for this credential offer. If not present, the
+    /// Wallet MUST determine the Grant Types the Credential Issuer supports
+    /// using the Issuer metadata. When multiple grants are present, it's at
+    /// the Wallet's discretion which one to use.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub grants: Option<Grants>,
 }
 
 impl CredentialOffer {
     /// Generate a qrcode for the Credential Offer.
-    /// Use the `endpoint` parameter to specify vercre-wallet's endpoint using deep link or
-    /// direct call format.
+    /// Use the `endpoint` parameter to specify vercre-wallet's endpoint using
+    /// deep link or direct call format.
     ///
     /// For example,
     ///
@@ -246,8 +253,8 @@ impl CredentialOffer {
     ///
     /// # Errors
     ///
-    /// Returns an `Error::ServerError` error if error if the Credential Offer cannot
-    /// be serialized.
+    /// Returns an `Error::ServerError` error if error if the Credential Offer
+    /// cannot be serialized.
     pub fn to_qrcode(&self, endpoint: &str) -> anyhow::Result<String> {
         let qs =
             self.to_querystring().map_err(|e| anyhow!("Failed to generate querystring: {e}"))?;
@@ -272,8 +279,8 @@ impl CredentialOffer {
     ///
     /// # Errors
     ///
-    /// Returns an `Error::ServerError` error if error if the Credential Offer cannot
-    /// be serialized.
+    /// Returns an `Error::ServerError` error if error if the Credential Offer
+    /// cannot be serialized.
     pub fn to_querystring(&self) -> anyhow::Result<String> {
         serde_qs::to_string(&self).map_err(|e| anyhow!("issue creating query string: {e}"))
     }
@@ -312,11 +319,12 @@ pub struct AuthorizationCodeGrant {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub issuer_state: Option<String>,
 
-    /// To be used by the Wallet to identify the Authorization Server to use with
-    /// this grant type when `authorization_servers` parameter in the Credential Issuer
-    /// metadata has multiple entries. MUST NOT be used otherwise.
-    /// The value of this parameter MUST match with one of the values in the Credential
-    /// Issuer `authorization_servers` metadata property.
+    /// To be used by the Wallet to identify the Authorization Server to use
+    /// with this grant type when `authorization_servers` parameter in the
+    /// Credential Issuer metadata has multiple entries. MUST NOT be used
+    /// otherwise. The value of this parameter MUST match with one of the
+    /// values in the Credential Issuer `authorization_servers` metadata
+    /// property.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub authorization_server: Option<String>,
 }
@@ -333,11 +341,12 @@ pub struct PreAuthorizedCodeGrant {
     #[serde(rename = "pre-authorized_code")]
     pub pre_authorized_code: String,
 
-    /// The `tx_code` specifies whether the Authorization Server expects presentation
-    /// of a Transaction Code by the End-User along with the Token Request in a
-    /// Pre-Authorized Code Flow.
+    /// The `tx_code` specifies whether the Authorization Server expects
+    /// presentation of a Transaction Code by the End-User along with the
+    /// Token Request in a Pre-Authorized Code Flow.
     ///
-    /// The Transaction Code binds the Pre-Authorized Code to a certain transaction
+    /// The Transaction Code binds the Pre-Authorized Code to a certain
+    /// transaction
     // to prevent replay of this code by an attacker that, for example, scanned the
     /// QR code while standing behind the legitimate End-User.
     ///
@@ -345,47 +354,53 @@ pub struct PreAuthorizedCodeGrant {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tx_code: Option<TxCode>,
 
-    /// To be used by the Wallet to identify the Authorization Server to use with
-    /// this grant type when `authorization_servers` parameter in the Credential Issuer
-    /// metadata has multiple entries. MUST NOT be used otherwise.
-    /// The value of this parameter MUST match with one of the values in the Credential
-    /// Issuer `authorization_servers` metadata property.
+    /// To be used by the Wallet to identify the Authorization Server to use
+    /// with this grant type when `authorization_servers` parameter in the
+    /// Credential Issuer metadata has multiple entries. MUST NOT be used
+    /// otherwise. The value of this parameter MUST match with one of the
+    /// values in the Credential Issuer `authorization_servers` metadata
+    /// property.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub authorization_server: Option<String>,
 }
 
-/// Specifies whether the Authorization Server expects presentation of a Transaction
-/// Code by the End-User along with the Token Request in a Pre-Authorized Code Flow.
+/// Specifies whether the Authorization Server expects presentation of a
+/// Transaction Code by the End-User along with the Token Request in a
+/// Pre-Authorized Code Flow.
 ///
-/// If the Authorization Server does not expect a Transaction Code, this object is
-/// absent; this is the default.
+/// If the Authorization Server does not expect a Transaction Code, this object
+/// is absent; this is the default.
 ///
-/// The Transaction Code is used to bind the Pre-Authorized Code to a transaction to
-/// prevent replay of the code by an attacker that, for example, scanned the QR code
-/// while standing behind the legitimate End-User. It is RECOMMENDED to send the Transaction Code via a
-/// separate channel. If the Wallet decides to use the Pre-Authorized Code Flow, the
-/// Transaction Code value MUST be sent in the `tx_code` parameter with the respective
-/// Token Request as defined in Section 6.1. If no length or description is given, this
-/// object may be empty, indicating that a Transaction Code is required.
+/// The Transaction Code is used to bind the Pre-Authorized Code to a
+/// transaction to prevent replay of the code by an attacker that, for example,
+/// scanned the QR code while standing behind the legitimate End-User. It is
+/// RECOMMENDED to send the Transaction Code via a separate channel. If the
+/// Wallet decides to use the Pre-Authorized Code Flow, the Transaction Code
+/// value MUST be sent in the `tx_code` parameter with the respective
+/// Token Request as defined in Section 6.1. If no length or description is
+/// given, this object may be empty, indicating that a Transaction Code is
+/// required.
 #[derive(Clone, Default, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct TxCode {
-    /// Specifies the input character set. Possible values are "numeric" (only digits)
-    /// and "text" (any characters). The default is "numeric".
+    /// Specifies the input character set. Possible values are "numeric" (only
+    /// digits) and "text" (any characters). The default is "numeric".
     #[serde(skip_serializing_if = "Option::is_none")]
     pub input_mode: Option<String>,
 
-    /// Specifies the length of the Transaction Code. This helps the Wallet to render
-    /// the input screen and improve the user experience.
+    /// Specifies the length of the Transaction Code. This helps the Wallet to
+    /// render the input screen and improve the user experience.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub length: Option<i32>,
 
-    /// Guidance for the Holder of the Wallet on how to obtain the Transaction Code,
-    /// e.g., describing over which communication channel it is delivered. The Wallet
-    /// is RECOMMENDED to display this description next to the Transaction Code input
-    /// screen to improve the user experience. The length of the string MUST NOT exceed
-    /// 300 characters. The description does not support internationalization, however
-    /// the Issuer MAY detect the Holder's language by previous communication or an HTTP
-    /// Accept-Language header within an HTTP GET request for a Credential Offer URI.
+    /// Guidance for the Holder of the Wallet on how to obtain the Transaction
+    /// Code, e.g., describing over which communication channel it is
+    /// delivered. The Wallet is RECOMMENDED to display this description
+    /// next to the Transaction Code input screen to improve the user
+    /// experience. The length of the string MUST NOT exceed 300 characters.
+    /// The description does not support internationalization, however
+    /// the Issuer MAY detect the Holder's language by previous communication or
+    /// an HTTP Accept-Language header within an HTTP GET request for a
+    /// Credential Offer URI.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
 }
@@ -514,7 +529,8 @@ pub enum AuthorizationDetailType {
 /// See <https://www.rfc-editor.org/rfc/rfc9396.html>
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AuthorizationDetail {
-    /// Type determines the authorization details type. MUST be "`openid_credential`".
+    /// Type determines the authorization details type. MUST be
+    /// "`openid_credential`".
     #[serde(rename = "type")]
     pub type_: AuthorizationDetailType,
 
@@ -524,9 +540,9 @@ pub struct AuthorizationDetail {
     pub specification: AuthorizationSpec,
 
     // TODO: integrate locations
-    /// If the Credential Issuer metadata contains an `authorization_servers` parameter,
-    /// the authorization detail's locations field MUST be set to the Credential Issuer
-    /// Identifier.
+    /// If the Credential Issuer metadata contains an `authorization_servers`
+    /// parameter, the authorization detail's locations field MUST be set to
+    /// the Credential Issuer Identifier.
     ///
     /// # Example
     ///
@@ -544,13 +560,14 @@ pub struct AuthorizationDetail {
 #[serde(untagged)]
 pub enum AuthorizationSpec {
     /// Specifies the unique identifier of the Credential being described in the
-    /// `credential_configurations_supported` map in the Credential Issuer Metadata.
+    /// `credential_configurations_supported` map in the Credential Issuer
+    /// Metadata.
     ConfigurationId(ConfigurationId),
 
-    /// Determines the format of the Credential to be issued, which may determine
-    /// the type and other information related to the Credential to be issued. REQUIRED
-    /// when `credential_identifiers` was not returned from the Token Response. MUST
-    /// NOT be used otherwise.
+    /// Determines the format of the Credential to be issued, which may
+    /// determine the type and other information related to the Credential
+    /// to be issued. REQUIRED when `credential_identifiers` was not
+    /// returned from the Token Response. MUST NOT be used otherwise.
     #[serde(rename = "format")]
     Format(Format),
 }
@@ -561,9 +578,9 @@ impl Default for AuthorizationSpec {
     }
 }
 
-/// The `OpenID4VCI` specification defines commonly used [Credential Format Profiles]
-/// to support. The profiles define Credential format specific parameters or claims
-/// used to support a particular format.
+/// The `OpenID4VCI` specification defines commonly used [Credential Format
+/// Profiles] to support. The profiles define Credential format specific
+/// parameters or claims used to support a particular format.
 ///
 /// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -572,9 +589,9 @@ pub enum ConfigurationId {
     /// Requested Credential is specified by `credential_configuration_id` and
     /// optionally, `CredentialDefinition`.
     Definition {
-        /// Specifies a unique identifier of the Credential being described in the
-        /// `credential_configurations_supported` map in the Credential Issuer
-        /// Metadata.
+        /// Specifies a unique identifier of the Credential being described in
+        /// the `credential_configurations_supported` map in the
+        /// Credential Issuer Metadata.
         credential_configuration_id: String,
 
         /// The `credentialSubject` parameter is used by the Wallet to indicate
@@ -586,9 +603,9 @@ pub enum ConfigurationId {
     /// Requested Credential is specified by `credential_configuration_id` and
     /// optionally, `ClaimsDefinition`.
     Claims {
-        /// Specifies a unique identifier of the Credential being described in the
-        /// `credential_configurations_supported` map in the Credential Issuer
-        /// Metadata.
+        /// Specifies a unique identifier of the Credential being described in
+        /// the `credential_configurations_supported` map in the
+        /// Credential Issuer Metadata.
         credential_configuration_id: String,
 
         /// Used by the Wallet to indicate that it only accepts Credentials
@@ -624,9 +641,9 @@ impl Default for ConfigurationId {
     }
 }
 
-/// The `OpenID4VCI` specification defines commonly used [Credential Format Profiles]
-/// to support. The profiles define Credential format specific parameters or claims
-/// used to support a particular format.
+/// The `OpenID4VCI` specification defines commonly used [Credential Format
+/// Profiles] to support. The profiles define Credential format specific
+/// parameters or claims used to support a particular format.
 ///
 ///
 /// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
@@ -637,7 +654,8 @@ pub enum Format {
     ///
     /// When this format is specified, Credential Offer, Authorization Details,
     /// Credential Request, and Credential Issuer metadata, including
-    /// `credential_definition` object, MUST NOT be processed using JSON-LD rules.
+    /// `credential_definition` object, MUST NOT be processed using JSON-LD
+    /// rules.
     #[serde(rename = "jwt_vc_json")]
     JwtVcJson {
         /// Defines the Credential to be issued by type. Additionally,
@@ -650,9 +668,10 @@ pub enum Format {
     ///
     /// When using this format, data MUST NOT be processed using JSON-LD rules.
     ///
-    /// N.B. The `@context` value in the `credential_definition` object can be used by
-    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
-    /// could apply JSON-LD processing to the Credential issued.
+    /// N.B. The `@context` value in the `credential_definition` object can be
+    /// used by the Wallet to check whether it supports a certain VC. If
+    /// necessary, the Wallet could apply JSON-LD processing to the
+    /// Credential issued.
     #[serde(rename = "ldp-vc")]
     LdpVc {
         /// Defines the Credential to be issued by type. Additionally,
@@ -665,9 +684,10 @@ pub enum Format {
     ///
     /// When using this format, data MUST NOT be processed using JSON-LD rules.
     ///
-    /// N.B. The `@context` value in the `credential_definition` object can be used by
-    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
-    /// could apply JSON-LD processing to the Credential issued.
+    /// N.B. The `@context` value in the `credential_definition` object can be
+    /// used by the Wallet to check whether it supports a certain VC. If
+    /// necessary, the Wallet could apply JSON-LD processing to the
+    /// Credential issued.
     #[serde(rename = "jwt_vc_json-ld")]
     JwtVcJsonLd {
         /// Defines the Credential to be issued by type. Additionally,
@@ -678,8 +698,8 @@ pub enum Format {
 
     /// ISO mDL.
     ///
-    /// A Credential Format Profile for Credentials complying with [ISO.18013-5] —
-    /// ISO-compliant driving licence specification.
+    /// A Credential Format Profile for Credentials complying with [ISO.18013-5]
+    /// — ISO-compliant driving licence specification.
     ///
     /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
     #[serde(rename = "mso_mdoc")]
@@ -701,11 +721,12 @@ pub enum Format {
     /// [I-D.ietf-oauth-sd-jwt-vc]: (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-01)
     #[serde(rename = "vc+sd-jwt")]
     VcSdJwt {
-        /// Designates the type of a Credential, as defined in [I-D.ietf-oauth-sd-jwt-vc]
+        /// Designates the type of a Credential, as defined in
+        /// [I-D.ietf-oauth-sd-jwt-vc]
         vct: String,
 
-        /// A list of name/value pairs, where each name identifies a claim about the
-        /// subject offered in the Credential.
+        /// A list of name/value pairs, where each name identifies a claim about
+        /// the subject offered in the Credential.
         claims: Option<ClaimDefinition>,
     },
 }
@@ -762,24 +783,24 @@ pub struct TokenRequest {
 
     /// OAuth 2.0 Client ID used by the Wallet.
     ///
-    /// REQUIRED if the client is not authenticating with the authorization server.
-    /// An unauthenticated client MUST send its `client_id` to prevent itself from
-    /// inadvertently accepting a code intended for a client with a different
-    /// `client_id`.  This protects the client from substitution of the authentication
-    /// code.
+    /// REQUIRED if the client is not authenticating with the authorization
+    /// server. An unauthenticated client MUST send its `client_id` to
+    /// prevent itself from inadvertently accepting a code intended for a
+    /// client with a different `client_id`.  This protects the client from
+    /// substitution of the authentication code.
     ///
-    /// For the Pre-Authorized Code Grant Type, authentication of the Client is OPTIONAL,
-    /// as described in Section 3.2.1 of OAuth 2.0 [RFC6749], and, consequently, the
-    /// `client_id` parameter is only needed when a form of Client Authentication that
-    /// relies on this parameter is used.
+    /// For the Pre-Authorized Code Grant Type, authentication of the Client is
+    /// OPTIONAL, as described in Section 3.2.1 of OAuth 2.0 [RFC6749], and,
+    /// consequently, the `client_id` parameter is only needed when a form
+    /// of Client Authentication that relies on this parameter is used.
     pub client_id: Option<String>,
 
     /// Authorization grant type.
     #[serde(flatten)]
     pub grant_type: TokenGrantType,
 
-    /// Authorization Details is used to convey the details about the Credentials
-    /// the Wallet wants to obtain.
+    /// Authorization Details is used to convey the details about the
+    /// Credentials the Wallet wants to obtain.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
@@ -795,7 +816,8 @@ pub struct TokenRequest {
     // #[serde(skip_serializing_if = "Option::is_none")]
     // pub scope: Option<String>,
     // ---
-    /// Client identity assertion using JWT instead of credentials to authenticate.
+    /// Client identity assertion using JWT instead of credentials to
+    /// authenticate.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(flatten)]
     pub client_assertion: Option<ClientAssertion>,
@@ -808,20 +830,20 @@ pub enum TokenGrantType {
     /// Attributes required for the Authorization Code grant type.
     #[serde(rename = "authorization_code")]
     AuthorizationCode {
-        /// The authorization code received from the authorization server when the
-        /// Wallet use the Authorization Code Flow.
+        /// The authorization code received from the authorization server when
+        /// the Wallet use the Authorization Code Flow.
         code: String,
 
-        /// The client's redirection endpoint if `redirect_uri` was included in the
-        /// authorization request.
-        /// REQUIRED if the `redirect_uri` parameter was included in the authorization
-        /// request; values MUST be identical.
+        /// The client's redirection endpoint if `redirect_uri` was included in
+        /// the authorization request.
+        /// REQUIRED if the `redirect_uri` parameter was included in the
+        /// authorization request; values MUST be identical.
         #[serde(skip_serializing_if = "Option::is_none")]
         redirect_uri: Option<String>,
 
-        /// PKCE code verifier provided by the Wallet when using the Authorization
-        /// Code Flow. MUST be able to verify the `code_challenge` provided in
-        /// the authorization request.
+        /// PKCE code verifier provided by the Wallet when using the
+        /// Authorization Code Flow. MUST be able to verify the
+        /// `code_challenge` provided in the authorization request.
         #[serde(skip_serializing_if = "Option::is_none")]
         code_verifier: Option<String>,
     },
@@ -829,13 +851,14 @@ pub enum TokenGrantType {
     /// Attributes required for the Pre-Authorized Code grant type
     #[serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")]
     PreAuthorizedCode {
-        /// The pre-authorized code provided to the Wallet in a Credential Offer.
+        /// The pre-authorized code provided to the Wallet in a Credential
+        /// Offer.
         #[serde(rename = "pre-authorized_code")]
         pre_authorized_code: String,
 
-        /// The Transaction Code provided to the user during the Credential Offer
-        /// process. Must be present if `tx_code` was set to true in the Credential
-        /// Offer.
+        /// The Transaction Code provided to the user during the Credential
+        /// Offer process. Must be present if `tx_code` was set to true
+        /// in the Credential Offer.
         #[serde(skip_serializing_if = "Option::is_none")]
         tx_code: Option<String>,
     },
@@ -888,20 +911,20 @@ pub struct TokenResponse {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub c_nonce_expires_in: Option<i64>,
 
-    /// REQUIRED when `authorization_details` parameter is used to request issuance
-    /// of a certain Credential type. MUST NOT be used otherwise.
+    /// REQUIRED when `authorization_details` parameter is used to request
+    /// issuance of a certain Credential type. MUST NOT be used otherwise.
     ///
-    /// The Authorization Details `credential_identifiers` parameter may be populated
-    /// for use in subsequent Credential Requests.
+    /// The Authorization Details `credential_identifiers` parameter may be
+    /// populated for use in subsequent Credential Requests.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub authorization_details: Option<Vec<Authorized>>,
 
     /// OPTIONAL if identical to the requested scope, otherwise REQUIRED.
     ///
-    /// The authorization and token endpoints allow the client to specify the scope
-    /// of the access request using the `scope` request parameter.  In turn, the
-    /// authorization server uses the `scope` response parameter to inform the client
-    /// of the scope of the access token issued.
+    /// The authorization and token endpoints allow the client to specify the
+    /// scope of the access request using the `scope` request parameter.  In
+    /// turn, the authorization server uses the `scope` response parameter
+    /// to inform the client of the scope of the access token issued.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scope: Option<String>,
 }
@@ -935,8 +958,8 @@ pub struct Authorized {
     pub credential_identifiers: Vec<String>,
 }
 
-/// `CredentialRequest` is used by the Client to make a Credential Request to the
-/// Credential Endpoint.
+/// `CredentialRequest` is used by the Client to make a Credential Request to
+/// the Credential Endpoint.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(default)]
 pub struct CredentialRequest {
@@ -950,29 +973,30 @@ pub struct CredentialRequest {
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub access_token: String,
 
-    /// Specifies the Credential requested using either a `credential_identifier` or a
-    /// combination of supported format and type.
-    /// If `credential_identifiers` were returned in the Token Response, they MUST be
-    /// used here. Otherwise, they MUST NOT be used.
+    /// Specifies the Credential requested using either a
+    /// `credential_identifier` or a combination of supported format and
+    /// type. If `credential_identifiers` were returned in the Token
+    /// Response, they MUST be used here. Otherwise, they MUST NOT be used.
     #[serde(flatten)]
     pub specification: CredentialSpec,
 
-    /// Wallet's proof of possession of cryptographic key material the issued Credential
-    /// will be bound to.
-    /// REQUIRED if the `proof_types_supported` parameter is non-empty and present in
-    /// the `credential_configurations_supported` parameter of the Issuer metadata for
-    /// the requested Credential.
+    /// Wallet's proof of possession of cryptographic key material the issued
+    /// Credential will be bound to.
+    /// REQUIRED if the `proof_types_supported` parameter is non-empty and
+    /// present in the `credential_configurations_supported` parameter of
+    /// the Issuer metadata for the requested Credential.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(flatten)]
     pub proof: Option<Proof>,
 
-    /// If present, specifies how the Credential Response should be encrypted. If not
-    /// present.
+    /// If present, specifies how the Credential Response should be encrypted.
+    /// If not present.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_response_encryption: Option<CredentialResponseEncryption>,
 }
 
-/// Means used to identifiy Credential type and format when requesting a Credential.
+/// Means used to identifiy Credential type and format when requesting a
+/// Credential.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(untagged)]
 pub enum CredentialSpec {
@@ -1034,8 +1058,8 @@ pub enum Proof {
         proof_type: SingleProof,
     },
 
-    /// One or more proof of possessions of the cryptographic key material to which
-    /// the issued Credential instances will be bound to.
+    /// One or more proof of possessions of the cryptographic key material to
+    /// which the issued Credential instances will be bound to.
     #[serde(rename = "proofs")]
     Multiple(MultipleProofs),
 }
@@ -1048,8 +1072,8 @@ impl Default for Proof {
     }
 }
 
-/// A single proof of possession of the cryptographic key material provided by the
-/// Wallet to which the issued Credential instance will be bound.
+/// A single proof of possession of the cryptographic key material provided by
+/// the Wallet to which the issued Credential instance will be bound.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(tag = "proof_type")]
 pub enum SingleProof {
@@ -1067,8 +1091,8 @@ impl Default for SingleProof {
     }
 }
 
-/// A a single proof of possession of the cryptographic key material provided by the
-/// Wallet to which the issued Credential instance will be bound.
+/// A a single proof of possession of the cryptographic key material provided by
+/// the Wallet to which the issued Credential instance will be bound.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub enum MultipleProofs {
     /// The JWT containing the Wallet's proof of possession of key material.
@@ -1104,14 +1128,16 @@ pub struct ProofClaims {
     pub nonce: Option<String>,
 }
 
-/// `CredentialResponseEncryption` contains information about whether the Credential
-/// Issuer supports encryption of the Credential Response on top of TLS.
+/// `CredentialResponseEncryption` contains information about whether the
+/// Credential Issuer supports encryption of the Credential Response on top of
+/// TLS.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredentialResponseEncryption {
     /// The public key used for encrypting the Credential Response.
     pub jwk: PublicKeyJwk,
 
-    /// JWE [RFC7516] alg algorithm [RFC7518] for encrypting Credential Response.
+    /// JWE [RFC7516] alg algorithm [RFC7518] for encrypting Credential
+    /// Response.
     ///
     /// [RFC7516]: (https://www.rfc-editor.org/rfc/rfc7516)
     /// [RFC7518]: (https://www.rfc-editor.org/rfc/rfc7518)
@@ -1148,8 +1174,8 @@ pub struct CredentialResponse {
     pub c_nonce_expires_in: Option<i64>,
 
     /// Identifies an issued Credential when the Wallet calls the Issuer's
-    /// Notification endpoint. The `notification_id` is included in the Notification
-    /// Request.
+    /// Notification endpoint. The `notification_id` is included in the
+    /// Notification Request.
     ///
     /// Will only be set if credential parameter is set.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1164,14 +1190,15 @@ pub enum CredentialResponseType {
     /// on the Credential Format.
     Credential(Kind<VerifiableCredential>),
 
-    /// Contains an array of issued Credentials. The values in the array MAY be a
-    /// string or an object, depending on the Credential Format.
+    /// Contains an array of issued Credentials. The values in the array MAY be
+    /// a string or an object, depending on the Credential Format.
     Credentials(Kind<VerifiableCredential>),
 
-    /// String identifying a Deferred Issuance transaction. This claim is contained
-    /// in the response if the Credential Issuer cannot immediately issue the
-    /// Credential. The value is subsequently used to obtain the respective
-    /// Credential with the Deferred Credential Endpoint.
+    /// String identifying a Deferred Issuance transaction. This claim is
+    /// contained in the response if the Credential Issuer cannot
+    /// immediately issue the Credential. The value is subsequently used to
+    /// obtain the respective Credential with the Deferred Credential
+    /// Endpoint.
     TransactionId(String),
 }
 
@@ -1196,7 +1223,8 @@ pub struct DeferredCredentialRequest {
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub access_token: String,
 
-    /// Identifies a Deferred Issuance transaction from an earlier Credential Request.
+    /// Identifies a Deferred Issuance transaction from an earlier Credential
+    /// Request.
     pub transaction_id: String,
 }
 
@@ -1217,8 +1245,8 @@ pub struct MetadataRequest {
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub credential_issuer: String,
 
-    /// The language(s) set in HTTP Accept-Language Headers. MUST be values defined
-    /// in [RFC3066].
+    /// The language(s) set in HTTP Accept-Language Headers. MUST be values
+    /// defined in [RFC3066].
     ///
     /// [RFC3066]: (https://www.rfc-editor.org/rfc/rfc3066)
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1284,34 +1312,37 @@ pub struct Issuer {
     pub batch_credential_endpoint: Option<String>,
 
     /// URL of the Credential Issuer's Deferred Credential Endpoint. This URL
-    /// MUST use the https scheme and MAY contain port, path, and query parameter
-    /// components. If omitted, the Credential Issuer does not support the
-    /// Deferred Credential Endpoint.
+    /// MUST use the https scheme and MAY contain port, path, and query
+    /// parameter components. If omitted, the Credential Issuer does not
+    /// support the Deferred Credential Endpoint.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deferred_credential_endpoint: Option<String>,
 
-    /// Specifies whether (and how) the Credential Issuer supports encryption of the
-    /// Credential and Batch Credential Response on top of TLS.
+    /// Specifies whether (and how) the Credential Issuer supports encryption of
+    /// the Credential and Batch Credential Response on top of TLS.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_response_encryption: Option<SupportedCredentialResponseEncryption>,
 
-    /// Specifies whether the Credential Issuer supports returning `credential_identifiers`
-    /// parameter in the `authorization_details` Token Response parameter, with true
-    /// indicating support. The default value is "false".
+    /// Specifies whether the Credential Issuer supports returning
+    /// `credential_identifiers` parameter in the `authorization_details`
+    /// Token Response parameter, with true indicating support. The default
+    /// value is "false".
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_identifiers_supported: Option<bool>,
 
-    /// A signed JWT containing Credential Issuer metadata parameters as claims. The
-    /// signed metadata MUST be secured using JSON Web Signature (JWS) [RFC7515] and
-    /// MUST contain an iat (Issued At) claim, an iss (Issuer) claim denoting the party
-    /// attesting to the claims in the signed metadata, and sub (Subject) claim matching
-    /// the Credential Issuer identifier. If the Wallet supports signed metadata,
-    /// metadata values conveyed in the signed JWT MUST take precedence over the
-    /// corresponding values conveyed using plain JSON elements. If the Credential Issuer
-    /// wants to enforce use of signed metadata, it omits the respective metadata
-    /// parameters from the unsigned part of the Credential Issuer metadata. A signed_
-    /// metadata metadata value MUST NOT appear as a claim in the JWT. The Wallet MUST
-    /// establish trust in the signer of the metadata, and obtain the keys to validate
+    /// A signed JWT containing Credential Issuer metadata parameters as claims.
+    /// The signed metadata MUST be secured using JSON Web Signature (JWS)
+    /// [RFC7515] and MUST contain an iat (Issued At) claim, an iss (Issuer)
+    /// claim denoting the party attesting to the claims in the signed
+    /// metadata, and sub (Subject) claim matching the Credential Issuer
+    /// identifier. If the Wallet supports signed metadata, metadata values
+    /// conveyed in the signed JWT MUST take precedence over the
+    /// corresponding values conveyed using plain JSON elements. If the
+    /// Credential Issuer wants to enforce use of signed metadata, it omits
+    /// the respective metadata parameters from the unsigned part of the
+    /// Credential Issuer metadata. A signed_ metadata metadata value MUST
+    /// NOT appear as a claim in the JWT. The Wallet MUST establish trust in
+    /// the signer of the metadata, and obtain the keys to validate
     /// the signature before processing the metadata.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub signed_metadata: Option<String>,
@@ -1320,17 +1351,18 @@ pub struct Issuer {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display: Option<Display>,
 
-    /// A list of name/value pairs of credentials supported by the Credential Issuer.
-    /// Each name is a unique identifier for the supported credential described. The
-    /// identifier is used in the Credential Offer to communicate to the Wallet which
-    /// Credential is being offered. The value is a Credential object containing
-    /// metadata about specific credential.
+    /// A list of name/value pairs of credentials supported by the Credential
+    /// Issuer. Each name is a unique identifier for the supported
+    /// credential described. The identifier is used in the Credential Offer
+    /// to communicate to the Wallet which Credential is being offered. The
+    /// value is a Credential object containing metadata about specific
+    /// credential.
     pub credential_configurations_supported: HashMap<String, CredentialConfiguration>,
 }
 
-/// `SupportedCredentialResponseEncryption` contains information about whether the
-/// Credential Issuer supports encryption of the Credential and Batch Credential
-/// Response on top of TLS.
+/// `SupportedCredentialResponseEncryption` contains information about whether
+/// the Credential Issuer supports encryption of the Credential and Batch
+/// Credential Response on top of TLS.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct SupportedCredentialResponseEncryption {
     /// JWE [RFC7516] alg algorithm [RFC7518] REQUIRED for encrypting Credential
@@ -1341,26 +1373,28 @@ pub struct SupportedCredentialResponseEncryption {
     pub alg_values_supported: Vec<String>,
 
     /// JWE [RFC7516] enc algorithm [RFC7518] REQUIRED for encrypting Credential
-    /// Responses. If `credential_response_encryption_alg` is specified, the default
-    /// for this value is "`A256GCM`".
+    /// Responses. If `credential_response_encryption_alg` is specified, the
+    /// default for this value is "`A256GCM`".
     ///
     /// [RFC7516]: (https://www.rfc-editor.org/rfc/rfc7516)
     /// [RFC7518]: (https://www.rfc-editor.org/rfc/rfc7518)
     pub enc_values_supported: Vec<String>,
 
-    /// Specifies whether the Credential Issuer requires the additional encryption
-    /// on top of TLS for the Credential Response. If the value is true, the Credential
-    /// Issuer requires encryption for every Credential Response and therefore the
-    /// Wallet MUST provide encryption keys in the Credential Request. If the value is
-    /// false, the Wallet MAY chose whether it provides encryption keys or not.
+    /// Specifies whether the Credential Issuer requires the additional
+    /// encryption on top of TLS for the Credential Response. If the value
+    /// is true, the Credential Issuer requires encryption for every
+    /// Credential Response and therefore the Wallet MUST provide encryption
+    /// keys in the Credential Request. If the value is false, the Wallet
+    /// MAY chose whether it provides encryption keys or not.
     pub encryption_required: bool,
 }
 
 /// Language-based display properties for Issuer or Claim.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Display {
-    /// The name to use when displaying the name of the `Issuer` or `Claim` for the
-    /// specified locale. If no locale is set, then this value is the default value.
+    /// The name to use when displaying the name of the `Issuer` or `Claim` for
+    /// the specified locale. If no locale is set, then this value is the
+    /// default value.
     pub name: String,
 
     /// A BCP47 [RFC5646] language tag identifying the display language.
@@ -1374,38 +1408,42 @@ pub struct Display {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(default)]
 pub struct CredentialConfiguration {
-    /// Identifies the format of the credential, e.g. "`jwt_vc_json`" or "`ldp_vc`".
-    /// Each object will contain further elements defining the type and claims the
-    /// credential MAY contain, as well as information on how to display the credential.
+    /// Identifies the format of the credential, e.g. "`jwt_vc_json`" or
+    /// "`ldp_vc`". Each object will contain further elements defining the
+    /// type and claims the credential MAY contain, as well as information
+    /// on how to display the credential.
     ///
     /// See OpenID4VCI [Credential Format Profiles] for mopre detail.
     ///
     /// [Credential Format Profiles]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles
     pub format: FormatProfile,
 
-    /// The `scope` value that this Credential Issuer supports for this credential. The
-    /// value can be the same accross multiple `credential_configurations_supported`
-    /// objects. The Authorization Server MUST be able to uniquely identify the
-    /// Credential Issuer based on the scope value. The Wallet can use this value in
-    /// the Authorization Request Scope values in this Credential Issuer metadata MAY
-    /// duplicate those in the `scopes_supported` parameter of the Authorization Server.
+    /// The `scope` value that this Credential Issuer supports for this
+    /// credential. The value can be the same accross multiple
+    /// `credential_configurations_supported` objects. The Authorization
+    /// Server MUST be able to uniquely identify the Credential Issuer based
+    /// on the scope value. The Wallet can use this value in
+    /// the Authorization Request Scope values in this Credential Issuer
+    /// metadata MAY duplicate those in the `scopes_supported` parameter of
+    /// the Authorization Server.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scope: Option<String>,
 
     /// Identifies how the Credential should be bound to the identifier of the
     /// End-User who possesses the Credential. Is case sensitive.
     ///
-    /// Support for keys in JWK format [RFC7517] is indicated by the value "`jwk`".
-    /// Support for keys expressed as a COSE Key object [RFC8152] (for example, used in
-    /// [ISO.18013-5]) is indicated by the value "`cose_key`".
+    /// Support for keys in JWK format [RFC7517] is indicated by the value
+    /// "`jwk`". Support for keys expressed as a COSE Key object [RFC8152]
+    /// (for example, used in [ISO.18013-5]) is indicated by the value
+    /// "`cose_key`".
     ///
-    /// When Cryptographic Binding Method is a DID, valid values MUST be a "did:" prefix
-    /// followed by a method-name using a syntax as defined in Section 3.1 of
-    /// [DID-Core], but without a ":" and method-specific-id. For example, support for
-    /// the DID method with a method-name "example" would be represented by
-    /// "did:example". Support for all DID methods listed in Section 13 of
-    /// [DID Specification Registries] is indicated by sending a DID without any
-    /// method-name.
+    /// When Cryptographic Binding Method is a DID, valid values MUST be a
+    /// "did:" prefix followed by a method-name using a syntax as defined in
+    /// Section 3.1 of [DID-Core], but without a ":" and method-specific-id.
+    /// For example, support for the DID method with a method-name "example"
+    /// would be represented by "did:example". Support for all DID methods
+    /// listed in Section 13 of [DID Specification Registries] is indicated
+    /// by sending a DID without any method-name.
     ///
     /// [RFC7517]: (https://www.rfc-editor.org/rfc/rfc7517)
     /// [RFC8152]: (https://www.rfc-editor.org/rfc/rfc8152)
@@ -1415,34 +1453,36 @@ pub struct CredentialConfiguration {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cryptographic_binding_methods_supported: Option<Vec<String>>,
 
-    /// Case sensitive strings that identify the cryptographic suites supported for
-    /// the `cryptographic_binding_methods_supported`. Cryptographic algorithms for
-    /// Credentials in `jwt_vc` format should use algorithm names defined in IANA JOSE
-    /// Algorithms Registry. Cryptographic algorithms for Credentials in `ldp_vc` format
-    /// should use signature suites names defined in Linked Data Cryptographic Suite
-    /// Registry.
+    /// Case sensitive strings that identify the cryptographic suites supported
+    /// for the `cryptographic_binding_methods_supported`. Cryptographic
+    /// algorithms for Credentials in `jwt_vc` format should use algorithm
+    /// names defined in IANA JOSE Algorithms Registry. Cryptographic
+    /// algorithms for Credentials in `ldp_vc` format should use signature
+    /// suites names defined in Linked Data Cryptographic Suite Registry.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_signing_alg_values_supported: Option<Vec<String>>,
 
-    /// The key proof(s) that the Credential Issuer supports. This object contains
-    /// a list of name/value pairs, where each name is a unique identifier of the
-    /// supported proof type(s). Valid values are defined in Section 7.2.1,
-    /// other values MAY be used. This identifier is also used by the Wallet in the
-    /// Credential Request as defined in Section 7.2. The value in the name/value
-    /// pair is an object that contains metadata about the key proof and contains
-    /// the following parameters defined by this specification:
+    /// The key proof(s) that the Credential Issuer supports. This object
+    /// contains a list of name/value pairs, where each name is a unique
+    /// identifier of the supported proof type(s). Valid values are defined
+    /// in Section 7.2.1, other values MAY be used. This identifier is also
+    /// used by the Wallet in the Credential Request as defined in Section
+    /// 7.2. The value in the name/value pair is an object that contains
+    /// metadata about the key proof and contains the following parameters
+    /// defined by this specification:
     ///
-    ///  - `jwt`: A JWT [RFC7519] is used as proof of possession. A proof object MUST
-    ///    include a jwt claim containing a JWT defined in Section 7.2.1.1.
+    ///  - `jwt`: A JWT [RFC7519] is used as proof of possession. A proof object
+    ///    MUST include a jwt claim containing a JWT defined in Section 7.2.1.1.
     ///
-    ///  - `cwt`: A CWT [RFC8392] is used as proof of possession. A proof object MUST
-    ///    include a cwt claim containing a CWT defined in Section 7.2.1.3.
+    ///  - `cwt`: A CWT [RFC8392] is used as proof of possession. A proof object
+    ///    MUST include a cwt claim containing a CWT defined in Section 7.2.1.3.
     ///
-    ///  - `ldp_vp`: A W3C Verifiable Presentation object signed using the Data Integrity
-    ///    Proof as defined in [VC_DATA_2.0] or [VC_DATA], and where the proof of
-    ///    possession MUST be done in accordance with [VC_Data_Integrity]. When
-    ///    `proof_type` is set to `ldp_vp`, the proof object MUST include a `ldp_vp`
-    ///    claim containing a W3C Verifiable Presentation defined in Section 7.2.1.2.
+    ///  - `ldp_vp`: A W3C Verifiable Presentation object signed using the Data
+    ///    Integrity Proof as defined in [VC_DATA_2.0] or [VC_DATA], and where
+    ///    the proof of possession MUST be done in accordance with
+    ///    [VC_Data_Integrity]. When `proof_type` is set to `ldp_vp`, the proof
+    ///    object MUST include a `ldp_vp` claim containing a W3C Verifiable
+    ///    Presentation defined in Section 7.2.1.2.
     ///
     /// # Example
     ///
@@ -1468,26 +1508,28 @@ pub struct CredentialConfiguration {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display: Option<Vec<CredentialDisplay>>,
 
-    /// Language-based display properties for the associated Credential Definition.
+    /// Language-based display properties for the associated Credential
+    /// Definition.
     pub credential_definition: CredentialDefinition,
 }
 
-/// `ProofTypesSupported` describes specifics of the key proof(s) that the Credential
-/// Issuer supports.
+/// `ProofTypesSupported` describes specifics of the key proof(s) that the
+/// Credential Issuer supports.
 ///
 /// This object contains a list of name/value pairs, where each name is a unique
 /// identifier of the supported proof type(s). Valid values are defined in
-/// Section 7.2.1, other values MAY be used. This identifier is also used by the Wallet
-/// in the Credential Request as defined in Section 7.2. The value in the name/value
-/// pair is an object that contains metadata about the key proof.
+/// Section 7.2.1, other values MAY be used. This identifier is also used by the
+/// Wallet in the Credential Request as defined in Section 7.2. The value in the
+/// name/value pair is an object that contains metadata about the key proof.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ProofTypesSupported {
-    /// One or more case sensitive strings that identify the algorithms that the Issuer
-    /// supports for this proof type. The Wallet uses one of them to sign the proof.
-    /// Algorithm names used are determined by the key proof type.
+    /// One or more case sensitive strings that identify the algorithms that the
+    /// Issuer supports for this proof type. The Wallet uses one of them to
+    /// sign the proof. Algorithm names used are determined by the key proof
+    /// type.
     ///
-    /// For example, for JWT, the algorithm names are defined in IANA JOSE Algorithms
-    /// Registry.
+    /// For example, for JWT, the algorithm names are defined in IANA JOSE
+    /// Algorithms Registry.
     ///
     /// # Example
     ///
@@ -1553,32 +1595,35 @@ pub struct Image {
 /// Wallets.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredentialDefinition {
-    /// The @context property is used to map property URIs into short-form aliases,
-    /// in accordance with the W3C Verifiable Credentials Data Model.
+    /// The @context property is used to map property URIs into short-form
+    /// aliases, in accordance with the W3C Verifiable Credentials Data
+    /// Model.
     ///
     /// REQUIRED when `format` is "`jwt_vc_json-ld`" or "`ldp_vc`".
     #[serde(rename = "@context")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub context: Option<Vec<String>>,
 
-    /// Uniquely identifies the credential type the Credential Definition display
-    /// properties are for, in accordance with the W3C Verifiable Credentials Data
-    /// Model.
+    /// Uniquely identifies the credential type the Credential Definition
+    /// display properties are for, in accordance with the W3C Verifiable
+    /// Credentials Data Model.
     /// Contains the type values the Wallet requests authorization for at the
-    /// Credential Issuer. It MUST be present if the claim format is present in the
-    /// root of the authorization details object. It MUST not be present otherwise.
+    /// Credential Issuer. It MUST be present if the claim format is present in
+    /// the root of the authorization details object. It MUST not be present
+    /// otherwise.
     #[serde(rename = "type")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_: Option<Vec<String>>,
 
     /// A list of name/value pairs identifying claims offered in the Credential.
-    /// A value can be another such object (nested data structures), or an array of
-    /// objects. Each claim defines language-based display properties for
+    /// A value can be another such object (nested data structures), or an array
+    /// of objects. Each claim defines language-based display properties for
     /// `credentialSubject` fields.
     ///
     /// N.B. This property is used by the Wallet to specify which claims it is
-    /// requesting to be issued out of all the claims the Credential Issuer is capable
-    /// of issuing for this particular Credential (data minimization).
+    /// requesting to be issued out of all the claims the Credential Issuer is
+    /// capable of issuing for this particular Credential (data
+    /// minimization).
     #[serde(rename = "credentialSubject")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_subject: Option<HashMap<String, ClaimEntry>>,
@@ -1605,18 +1650,20 @@ impl Default for ClaimEntry {
 /// credentialSubject field.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ClaimDefinition {
-    /// When true, indicates that the Credential Issuer will always include this claim
-    /// in the issued Credential. When false, the claim is not included in the issued
-    /// Credential if the wallet did not request the inclusion of the claim, and/or if
-    /// the Credential Issuer chose to not include the claim. If the mandatory parameter
-    /// is omitted, the default value is false. Defaults to false.
+    /// When true, indicates that the Credential Issuer will always include this
+    /// claim in the issued Credential. When false, the claim is not
+    /// included in the issued Credential if the wallet did not request the
+    /// inclusion of the claim, and/or if the Credential Issuer chose to not
+    /// include the claim. If the mandatory parameter is omitted, the
+    /// default value is false. Defaults to false.
     //  #[serde(skip_serializing_if = "std::ops::Not::not")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mandatory: Option<bool>,
 
-    /// The type of value of the claim. Defaults to string. Supported values include
-    /// `string`, `number`, and `image` media types such as image/jpeg. See
-    /// [IANA media type registry] for a complete list of media types.
+    /// The type of value of the claim. Defaults to string. Supported values
+    /// include `string`, `number`, and `image` media types such as
+    /// image/jpeg. See [IANA media type registry] for a complete list of
+    /// media types.
     ///
     /// [IANA media type registry]: (https://www.iana.org/assignments/media-types/media-types.xhtml#image)
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1659,9 +1706,9 @@ pub struct Client {
     #[serde(flatten)]
     pub oauth: OAuthClient,
 
-    /// Used by the Wallet to publish its Credential Offer endpoint. The Credential
-    /// Issuer should use "`openid-credential-offer://`" if unable to perform discovery
-    /// of the endpoint.
+    /// Used by the Wallet to publish its Credential Offer endpoint. The
+    /// Credential Issuer should use "`openid-credential-offer://`" if
+    /// unable to perform discovery of the endpoint.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_offer_endpoint: Option<String>,
 }
@@ -1680,9 +1727,9 @@ pub struct Server {
     pub pre_authorized_grant_anonymous_access_supported: bool,
 }
 
-/// Used by the Wallet to notify the Credential Issuer of certain events for issued
-/// Credentials. These events enable the Credential Issuer to take subsequent actions
-/// after issuance.
+/// Used by the Wallet to notify the Credential Issuer of certain events for
+/// issued Credentials. These events enable the Credential Issuer to take
+/// subsequent actions after issuance.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct NotificationRequest {
     /// A previously issued Access Token, as extracted from the Authorization
@@ -1697,8 +1744,9 @@ pub struct NotificationRequest {
     /// Type of the notification event.
     pub event: NotificationEvent,
 
-    /// Human-readable ASCII text providing additional information, used to assist
-    /// the Credential Issuer developer in understanding the event that occurred.
+    /// Human-readable ASCII text providing additional information, used to
+    /// assist the Credential Issuer developer in understanding the event
+    /// that occurred.
     ///
     /// Values for the `event_description` parameter MUST NOT include characters
     /// outside the set %x20-21 / %x23-5B / %x5D-7E.
@@ -1706,9 +1754,9 @@ pub struct NotificationRequest {
     pub event_description: Option<String>,
 }
 
-/// Used by the Credential Issuer to notify the Wallet of certain events for issued
-/// Credentials. These events enable the Wallet to take subsequent actions after
-/// issuance.
+/// Used by the Credential Issuer to notify the Wallet of certain events for
+/// issued Credentials. These events enable the Wallet to take subsequent
+/// actions after issuance.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum NotificationEvent {
@@ -1723,9 +1771,10 @@ pub enum NotificationEvent {
     CredentialDeleted,
 }
 
-/// When the Credential Issuer has successfully received the Notification Request
-/// from the Wallet, it MUST respond with an HTTP status code in the 2xx range.
-/// 
+/// When the Credential Issuer has successfully received the Notification
+/// Request from the Wallet, it MUST respond with an HTTP status code in the 2xx
+/// range.
+///
 /// Use of the HTTP status code 204 (No Content) is RECOMMENDED.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct NotificationResponse {}

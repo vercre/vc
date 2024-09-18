@@ -1,15 +1,17 @@
 //! # Authorization Endpoint
 //!
-//! The Authorization Endpoint is used by Wallets to request access to the Credential
-//! Endpoint, that is, to request issuance of a Credential. The endpoint is used in
-//! the same manner as defined in [RFC6749].
+//! The Authorization Endpoint is used by Wallets to request access to the
+//! Credential Endpoint, that is, to request issuance of a Credential. The
+//! endpoint is used in the same manner as defined in [RFC6749].
 //!
 //! Wallets can request authorization for issuance of a Credential using
-//! `authorization_details` (as defined in [RFC9396]) or `scope` parameters (or both).
+//! `authorization_details` (as defined in [RFC9396]) or `scope` parameters (or
+//! both).
 //!
 //! ## Authorization Requests
 //!
-//! - One (and only one) of `credential_configuration_id` or `format` is REQUIRED.
+//! - One (and only one) of `credential_configuration_id` or `format` is
+//!   REQUIRED.
 //! - `credential_definition` is OPTIONAL.
 
 //! ## Example
@@ -76,8 +78,8 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    AuthorizationSpec, ClaimEntry, ConfigurationId, Format, FormatProfile, GrantType,
-    Issuer, Metadata, Provider, StateStore, Subject,
+    AuthorizationSpec, ClaimEntry, ConfigurationId, Format, FormatProfile, GrantType, Issuer,
+    Metadata, Provider, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 
@@ -218,8 +220,8 @@ impl Context {
     }
 
     // Verify Credentials requested in `authorization_details` are supported.
-    // N.B. has side effect of saving valid `authorization_detail` objects into context
-    // for later use.
+    // N.B. has side effect of saving valid `authorization_detail` objects into
+    // context for later use.
     fn verify_authorization_details(
         &mut self, authorization_details: &[AuthorizationDetail],
     ) -> Result<()> {

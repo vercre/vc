@@ -1,8 +1,9 @@
 //! # Issuance Offer Acceptance
 //!
-//! The `accept` endpoint is used to register acceptance of a credential issuance offer with the
-//! issuance flow. If a PIN is required, this endpoint will simply update the state to indicate
-//! that, otherwise it will proceed with the token request and credential requests.
+//! The `accept` endpoint is used to register acceptance of a credential
+//! issuance offer with the issuance flow. If a PIN is required, this endpoint
+//! will simply update the state to indicate that, otherwise it will proceed
+//! with the token request and credential requests.
 
 use anyhow::anyhow;
 use tracing::instrument;
@@ -10,8 +11,8 @@ use tracing::instrument;
 use crate::issuance::Status;
 use crate::provider::HolderProvider;
 
-/// Progresses the issuance flow triggered by a holder accepting a credential offer.
-/// The request is the issuance flow ID.
+/// Progresses the issuance flow triggered by a holder accepting a credential
+/// offer. The request is the issuance flow ID.
 #[instrument(level = "debug", skip(provider))]
 pub async fn accept(provider: impl HolderProvider, request: String) -> anyhow::Result<Status> {
     tracing::debug!("Endpoint::accept");

@@ -1,8 +1,9 @@
 //! # Issuance Offer Endpoint
 //!
-//! The offer endpoint processes an issuance offer request where the offer originates with an
-//! issuer. The endpoint uses the holder client to get metadata and present the offer details for
-//! acceptance/rejection by the holder.
+//! The offer endpoint processes an issuance offer request where the offer
+//! originates with an issuer. The endpoint uses the holder client to get
+//! metadata and present the offer details for acceptance/rejection by the
+//! holder.
 
 use std::collections::HashMap;
 use std::fmt::Debug;
@@ -16,21 +17,23 @@ use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, MetadataRe
 use super::{Issuance, Status};
 use crate::provider::{HolderProvider, Issuer};
 
-/// `OfferRequest` is the request to the `offer` endpoint to initiate an issuance flow.
+/// `OfferRequest` is the request to the `offer` endpoint to initiate an
+/// issuance flow.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions)]
 pub struct OfferRequest {
-    /// Wallet client identifier. This is used by the issuance service to issue an access token so
-    /// should be unique to the holder's agent. Care should be taken to ensure this is not shared
-    /// across holders in the case of headless, multi-tenant agents.
+    /// Wallet client identifier. This is used by the issuance service to issue
+    /// an access token so should be unique to the holder's agent. Care
+    /// should be taken to ensure this is not shared across holders in the
+    /// case of headless, multi-tenant agents.
     pub client_id: String,
 
     /// The credential offer from the issuer.
     pub offer: CredentialOffer,
 }
 
-/// `OfferResponse` is the response from the `offer` endpoint. The agent application can use this
-/// to present the offer to the holder for acceptance.
+/// `OfferResponse` is the response from the `offer` endpoint. The agent
+/// application can use this to present the offer to the holder for acceptance.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions)]
 pub struct OfferResponse {
@@ -43,7 +46,8 @@ pub struct OfferResponse {
     /// The identifer of the credential issuer.
     pub issuer: String,
 
-    /// The credentials offered from the issuer to the holder, keyed by credential configuration ID.
+    /// The credentials offered from the issuer to the holder, keyed by
+    /// credential configuration ID.
     pub offered: HashMap<String, CredentialConfiguration>,
 
     /// Details of any PIN required by the holder to accept the offer.
@@ -87,8 +91,8 @@ pub async fn offer(
         issuance.offered.insert(id.into(), CredentialConfiguration::default());
     }
 
-    // Process the offer and establish a metadata request, passing that to the provider to
-    // use.
+    // Process the offer and establish a metadata request, passing that to the
+    // provider to use.
     let md_request = MetadataRequest {
         credential_issuer: request.offer.credential_issuer.clone(),
         languages: None, // The wallet client should provide any specific languages required.

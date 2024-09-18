@@ -6,12 +6,12 @@ use vercre_datasec::jose::jwk::PublicKeyJwk;
 /// A controller document contains a set of verification methods that specify
 /// relationships between the controller and a set of public keys.
 ///
-/// The relationships permit the use of the verification methods for the purpose of
-/// authenticating or authorizing interactions with the controller or associated
-/// parties.
+/// The relationships permit the use of the verification methods for the purpose
+/// of authenticating or authorizing interactions with the controller or
+/// associated parties.
 ///
-/// For example, a public key can be used to verify that a signer has control over
-/// the associated cryptographic private key.
+/// For example, a public key can be used to verify that a signer has control
+/// over the associated cryptographic private key.
 ///
 /// Verification methods might take many parameters. For example, a controller
 /// document lists five cryptographic keys from which any three are required to
@@ -22,25 +22,26 @@ pub struct Controller {
     pub verification_methods: Vec<VerificationMethod>,
 }
 
-/// The `VerificationMethod` contains set of parameters that can be used together with a
-/// process to independently verify a proof.
+/// The `VerificationMethod` contains set of parameters that can be used
+/// together with a process to independently verify a proof.
 ///
-/// For example, a cryptographic public key can be used as a verification method with
-/// respect to a digital signature; in such usage, it verifies that the signer possessed
-/// the associated cryptographic private key.
+/// For example, a cryptographic public key can be used as a verification method
+/// with respect to a digital signature; in such usage, it verifies that the
+/// signer possessed the associated cryptographic private key.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct VerificationMethod {
     /// A URL for the verification method.
     ///
-    /// For example, did:example:123#_Qq0UL2Fq651Q0Fjd6TvnYE-faHiOpRlPVQcY_-tA4A.
+    /// For example,
+    /// did:example:123#_Qq0UL2Fq651Q0Fjd6TvnYE-faHiOpRlPVQcY_-tA4A.
     pub id: String,
 
     /// The verification method type. One of `JsonWebKey` or `Multikey`.
     #[serde(rename = "type")]
     pub type_: MethodType,
 
-    /// A URL referencing the controller of the verification method. This could resolve
-    /// to a DID Document or a `.well-known` endpoint.
+    /// A URL referencing the controller of the verification method. This could
+    /// resolve to a DID Document or a `.well-known` endpoint.
     pub controller: String,
 
     /// An [XMLSCHEMA11-2](https://www.rfc-editor.org/rfc/rfc3339) dateTimeStamp
@@ -48,8 +49,8 @@ pub struct VerificationMethod {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub revoked: Option<String>,
 
-    /// The public key JWK used to for verification. MUST NOT be set if `public-key-multibase`
-    /// is set.
+    /// The public key JWK used to for verification. MUST NOT be set if
+    /// `public-key-multibase` is set.
     ///
     /// For example,
     ///
@@ -64,7 +65,8 @@ pub struct VerificationMethod {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub public_key_jwk: Option<PublicKeyJwk>,
 
-    /// A Multibase-encoded public key. MUST NOT be set if `public-key-jwk` is set.
+    /// A Multibase-encoded public key. MUST NOT be set if `public-key-jwk` is
+    /// set.
     ///
     /// For example, `z6MkmM42vxfqZQsv4ehtTjFFxQ4sQKS2w6WR7emozFAn5cxu`.
     ///

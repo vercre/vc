@@ -1,11 +1,12 @@
 //! # Invoke Endpoint
 //!
-//! The Invoke endpoint is used to initiate Pre-authorized credential issuance flow.
-//! Credential Issuers can use this endpoint to generate a Credential Offer which can
-//! be used to initiate issuance with a Wallet.
+//! The Invoke endpoint is used to initiate Pre-authorized credential issuance
+//! flow. Credential Issuers can use this endpoint to generate a Credential
+//! Offer which can be used to initiate issuance with a Wallet.
 //!
-//! When a Credential Issuer is already interacting with a user and wishes to initate a
-//! Credential issuance, they can 'send' the user's Wallet a Credential Offer.
+//! When a Credential Issuer is already interacting with a user and wishes to
+//! initate a Credential issuance, they can 'send' the user's Wallet a
+//! Credential Offer.
 //!
 //! The diagram illustrates this Credential Issuer initiated flow:
 //!
@@ -37,11 +38,11 @@
 //!         |                |<---------------------------------------------------|
 //! ```
 //!
-//! While JSON-based, the Offer can be sent to the Wallet's Credential Offer Handler URL
-//! as an HTTP GET request, an HTTP redirect, or a QR code.
+//! While JSON-based, the Offer can be sent to the Wallet's Credential Offer
+//! Handler URL as an HTTP GET request, an HTTP redirect, or a QR code.
 //!
-//! Below is a non-normative example of a Credential Offer Object for a Pre-Authorized
-//! Code Stage (with a credential type reference):
+//! Below is a non-normative example of a Credential Offer Object for a
+//! Pre-Authorized Code Stage (with a credential type reference):
 //!
 //! ```json
 //! {

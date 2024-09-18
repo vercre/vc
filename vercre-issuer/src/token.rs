@@ -1,15 +1,15 @@
 //! # Token Endpoint
 //!
-//! The Token Endpoint issues an Access Token and, optionally, a Refresh Token in
-//! exchange for the Authorization Code that client obtained in a successful
+//! The Token Endpoint issues an Access Token and, optionally, a Refresh Token
+//! in exchange for the Authorization Code that client obtained in a successful
 //! Authorization Response. It is used in the same manner as defined in
 //! [RFC6749](https://tools.ietf.org/html/rfc6749#section-5.1) and follows the
 //! recommendations given in [I-D.ietf-oauth-security-topics].
 //!
-//! The authorization server MUST include the HTTP "Cache-Control" response header
-//! field [RFC2616](https://www.rfc-editor.org/rfc/rfc2616) with a value of "no-store" in any response containing tokens,
-//! credentials, or other sensitive information, as well as the "Pragma" response
-//! header field [RFC2616](https://www.rfc-editor.org/rfc/rfc2616) with a value of "no-cache".
+//! The authorization server MUST include the HTTP "Cache-Control" response
+//! header field [RFC2616](https://www.rfc-editor.org/rfc/rfc2616) with a value of "no-store" in any response containing tokens,
+//! credentials, or other sensitive information, as well as the "Pragma"
+//! response header field [RFC2616](https://www.rfc-editor.org/rfc/rfc2616) with a value of "no-cache".
 
 // TODO: verify `client_assertion` JWT, when set
 
@@ -182,8 +182,8 @@ impl Context {
 
                 (Some(authorization_details), None)
 
-                // TODO: if narrowing is requested, narrow the authorization and return
-                // authorization_details (or scope?)
+                // TODO: if narrowing is requested, narrow the authorization and
+                // return authorization_details (or scope?)
             }
 
             TokenGrantType::AuthorizationCode { .. } => {

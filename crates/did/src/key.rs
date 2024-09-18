@@ -1,7 +1,8 @@
 //! # DID Key
 //!
-//! The `did:key` method is a DID method for static cryptographic keys. At its core,
-//! it is based on expanding a cryptographic public key into a DID Document.
+//! The `did:key` method is a DID method for static cryptographic keys. At its
+//! core, it is based on expanding a cryptographic public key into a DID
+//! Document.
 //!
 //! See:
 //!

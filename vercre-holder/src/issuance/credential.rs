@@ -16,8 +16,8 @@ use super::{Issuance, Status};
 use crate::credential::Credential;
 use crate::provider::{CredentialStorer, DidResolver, HolderProvider, Issuer, StateStore};
 
-/// Progresses the issuance flow by getting an access token then using that to get the
-/// credentials contained in the offer.
+/// Progresses the issuance flow by getting an access token then using that to
+/// get the credentials contained in the offer.
 #[instrument(level = "debug", skip(provider))]
 pub async fn get_credentials(
     provider: impl HolderProvider, request: String,
@@ -129,8 +129,8 @@ pub async fn get_credentials(
 
 /// Construct a token request.
 fn token_request(issuance: &Issuance) -> TokenRequest {
-    // Get pre-authorized code. Unwraps are OK since verification should be called on outer endpoint
-    // to check existence.
+    // Get pre-authorized code. Unwraps are OK since verification should be called
+    // on outer endpoint to check existence.
     let grants = issuance.offer.grants.as_ref().expect("grants exist on offer");
     let pre_auth_code =
         grants.pre_authorized_code.as_ref().expect("pre-authorized code exists on offer");

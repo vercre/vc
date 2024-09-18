@@ -1,7 +1,7 @@
 //! # Core Utilities for Vercre
 //!
-//! This crate provides common utilities for the Vercre project and is not intended to be used
-//! directly.
+//! This crate provides common utilities for the Vercre project and is not
+//! intended to be used directly.
 
 // generic member access API on the error trait
 // https://github.com/rust-lang/rust/issues/99301
@@ -47,7 +47,8 @@ impl<T: Default> Kind<T> {
     }
 }
 
-/// `Quota` allows serde to serialize/deserialize a single object or a set of objects.
+/// `Quota` allows serde to serialize/deserialize a single object or a set of
+/// objects.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Quota<T> {

@@ -1,12 +1,12 @@
 //! # Batch Credential Endpoint
 //!
-//! The Batch Credential Endpoint issues multiple Credentials in one Batch Credential
-//! Response as approved by the End-User upon presentation of a valid Access Token
-//! representing this approval.
+//! The Batch Credential Endpoint issues multiple Credentials in one Batch
+//! Credential Response as approved by the End-User upon presentation of a valid
+//! Access Token representing this approval.
 //!
-//! A Wallet can request issuance of multiple Credentials of certain types and formats
-//! in one Batch Credential Request. This includes Credentials of the same type and
-//! multiple formats, different types and one format, or both.
+//! A Wallet can request issuance of multiple Credentials of certain types and
+//! formats in one Batch Credential Request. This includes Credentials of the
+//! same type and multiple formats, different types and one format, or both.
 
 use std::fmt::Debug;
 
@@ -68,8 +68,9 @@ impl Context {
     // TODO: check this list for compliance
     // To validate a key proof, ensure that:
     //   - the header parameter does not contain a private key
-    //   - the creation time of the JWT, as determined by either the issuance time, or a server managed
-    //     timestamp via the nonce claim, is within an acceptable window (see Section 11.5).
+    //   - the creation time of the JWT, as determined by either the issuance time,
+    //     or a server managed timestamp via the nonce claim, is within an
+    //     acceptable window (see Section 11.5).
 
     // Verify the credential request
     async fn verify(
@@ -251,9 +252,9 @@ impl Context {
     ) -> Result<Option<VerifiableCredential>> {
         tracing::debug!("credential::generate_vc");
 
-        // let Some(credential_identifier) = &request.specification.as_identifier() else {
-        //     return Err(Error::InvalidCredentialRequest("invalid credential request".into()));
-        // };
+        // let Some(credential_identifier) = &request.specification.as_identifier() else
+        // {     return Err(Error::InvalidCredentialRequest("invalid credential
+        // request".into())); };
 
         // --------------------------------------------------------------------
         // Get dataset

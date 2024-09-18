@@ -4,15 +4,17 @@
 //! JWS [RFC7515], and JWK [RFC7517].
 //!
 //! The Securing Verifiable Credentials using JOSE and COSE [VC-JOSE-COSE]
-//! recommendation defines a "bridge" between these and the Verifiable Credentials Data
-//! Model v2.0, specifying the suitable header claims, media types, etc.
+//! recommendation defines a "bridge" between these and the Verifiable
+//! Credentials Data Model v2.0, specifying the suitable header claims, media
+//! types, etc.
 //!
-//! In the case of JOSE, the Credential is the "payload". This is preceded by a suitable
-//! header whose details are specified by Securing Verifiable Credentials using JOSE and
-//! COSE for the usage of JWT. These are encoded, concatenated, and signed, to be
-//! transferred in a compact form by one entity to an other (e.g., sent by the holder to
-//! the verifier). All the intricate details on signatures, encryption keys, etc., are
-//! defined by the IETF specifications; see Example 6 for a specific case.
+//! In the case of JOSE, the Credential is the "payload". This is preceded by a
+//! suitable header whose details are specified by Securing Verifiable
+//! Credentials using JOSE and COSE for the usage of JWT. These are encoded,
+//! concatenated, and signed, to be transferred in a compact form by one entity
+//! to an other (e.g., sent by the holder to the verifier). All the intricate
+//! details on signatures, encryption keys, etc., are defined by the IETF
+//! specifications; see Example 6 for a specific case.
 //!
 //! ## Note
 //!

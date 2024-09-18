@@ -5,52 +5,54 @@
 //!
 //! # [OpenID for Verifiable Credential Issuance]
 //!
-//! This library implements an OAuth protected API for the issuance of Verifiable
-//! Credentials as specified by [OpenID for Verifiable Credential Issuance].
+//! This library implements an OAuth protected API for the issuance of
+//! Verifiable Credentials as specified by [OpenID for Verifiable Credential
+//! Issuance].
 //!
 //! Verifiable Credentials are similar to identity assertions, like ID Tokens in
-//! [OpenID Connect], in that they allow a Credential Issuer to assert End-User claims.
-//! A Verifiable Credential follows a pre-defined schema (the Credential type) and MAY
-//! be bound to a certain holder, e.g., through Cryptographic Holder Binding. Verifiable
-//! Credentials can be securely presented for the End-User to the RP, without
-//! involvement of the Credential Issuer.
+//! [OpenID Connect], in that they allow a Credential Issuer to assert End-User
+//! claims. A Verifiable Credential follows a pre-defined schema (the Credential
+//! type) and MAY be bound to a certain holder, e.g., through Cryptographic
+//! Holder Binding. Verifiable Credentials can be securely presented for the
+//! End-User to the RP, without involvement of the Credential Issuer.
 //!
 //! Access to this API is authorized using OAuth 2.0 [RFC6749],
 //! i.e., Wallets use OAuth 2.0 to obtain authorization to receive Verifiable
-//! Credentials. This way the issuance process can benefit from the proven security,
-//! simplicity, and flexibility of OAuth 2.0, use existing OAuth 2.0 deployments, and
-//! [OpenID Connect] OPs can be extended to become Credential Issuers.
+//! Credentials. This way the issuance process can benefit from the proven
+//! security, simplicity, and flexibility of OAuth 2.0, use existing OAuth 2.0
+//! deployments, and [OpenID Connect] OPs can be extended to become Credential
+//! Issuers.
 //!
 //! # Design
 //!
 //! **Endpoints**
 //!
-//! The library is architected around the [OpenID4VCI] endpoints, each with its own
-//! `XxxRequest` and `XxxResponse` types. The types serialize to and from JSON, in
-//! accordance with the specification.
+//! The library is architected around the [OpenID4VCI] endpoints, each with its
+//! own `XxxRequest` and `XxxResponse` types. The types serialize to and from
+//! JSON, in accordance with the specification.
 //!
 //! The endpoints are designed to be used with Rust-based HTTP servers, such as
 //! [axum](https://docs.rs/axum/latest/axum/).
 //!
-//! Endpoints can be combined to implement both the [OpenID4VCI] Authorization Code Stage
-//! and Pre-Authorized Code Stage.
+//! Endpoints can be combined to implement both the [OpenID4VCI] Authorization
+//! Code Stage and Pre-Authorized Code Stage.
 //!
 //! **Running**
 //!
-//! Per the OAuth 2.0 specification, endpoints are exposed using HTTP. The library
-//! will work with most common Rust HTTP servers with a few lines of 'wrapper' code
-//! for each endpoint.
+//! Per the OAuth 2.0 specification, endpoints are exposed using HTTP. The
+//! library will work with most common Rust HTTP servers with a few lines of
+//! 'wrapper' code for each endpoint.
 //!
-//! In addition, implementors need to implement 'Provider' traits that are responsible
-//! for handling externals such as  storage, authorization, external communication,
-//! etc.. See [`core_utils`](https://docs.rs/core-utils/latest/core_utils/).
+//! In addition, implementors need to implement 'Provider' traits that are
+//! responsible for handling externals such as  storage, authorization, external
+//! communication, etc.. See [`core_utils`](https://docs.rs/core-utils/latest/core_utils/).
 //!
 //! # Example
 //!
 //! The following example demonstrates how a single endpoint might be surfaced.
 //!
-//! A number of elements have been excluded for brevity. A more complete example can be
-//! found in the `examples` directory.
+//! A number of elements have been excluded for brevity. A more complete example
+//! can be found in the `examples` directory.
 //!  
 //! ```rust,ignore
 //! #[tokio::main]
@@ -137,8 +139,8 @@ pub use vercre_w3c_vc::model::{
     Bitstring, CredentialStatus, CredentialStatusType, StatusMessage, StatusPurpose,
 };
 
-// async fn shell<'a, P, R, U, E, F, Fut>(provider: P, request: &'a R, handler: F) -> Result<U, E>
-// where
+// async fn shell<'a, P, R, U, E, F, Fut>(provider: P, request: &'a R, handler:
+// F) -> Result<U, E> where
 //     P: Provider,
 //     R: Request + Sync,
 //     F: FnOnce(P, &'a R) -> Fut + Send,

@@ -8,8 +8,9 @@ use typeshare::typeshare;
 use crate::app::PresentationState;
 use crate::view::credential::CredentialDisplay;
 
-/// Status of the presentation flow. This is re-typed instead of using the status defined by
-/// vercre-holder so that we can use typeshare to generate the equivalent TypeScript enum.
+/// Status of the presentation flow. This is re-typed instead of using the
+/// status defined by vercre-holder so that we can use typeshare to generate the
+/// equivalent TypeScript enum.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 #[allow(clippy::module_name_repetitions)]

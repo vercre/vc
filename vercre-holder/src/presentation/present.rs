@@ -1,7 +1,7 @@
 //! # Presentation Present Endpoint
 //!
-//! The `present` endpoint creates a presentation submission, signs it, and sends it to the
-//! verifier.
+//! The `present` endpoint creates a presentation submission, signs it, and
+//! sends it to the verifier.
 
 use anyhow::{anyhow, bail};
 use tracing::instrument;
@@ -15,9 +15,9 @@ use vercre_w3c_vc::proof::{self, Format, Payload};
 use super::{Presentation, Status};
 use crate::provider::{HolderProvider, Signer, Verifier};
 
-/// Creates a presentation submission, signs it and sends it to the verifier. The `request`
-/// parameter is the presentation flow ID of an authorized presentation request created in
-/// prior steps.
+/// Creates a presentation submission, signs it and sends it to the verifier.
+/// The `request` parameter is the presentation flow ID of an authorized
+/// presentation request created in prior steps.
 #[instrument(level = "debug", skip(provider))]
 pub async fn present(
     provider: impl HolderProvider, request: String,
@@ -70,7 +70,8 @@ pub async fn present(
         }
     };
 
-    // Assemble the presentation response to the verifier and ask the wallet client to send it.
+    // Assemble the presentation response to the verifier and ask the wallet client
+    // to send it.
     let res_req = ResponseRequest {
         vp_token: Some(vec![Kind::String(jwt)]),
         presentation_submission: Some(submission),
@@ -90,7 +91,8 @@ pub async fn present(
     Ok(response)
 }
 
-/// Create a presentation submission from the presentation request and matched credentials.
+/// Create a presentation submission from the presentation request and matched
+/// credentials.
 fn create_submission(presentation: &Presentation) -> anyhow::Result<PresentationSubmission> {
     let request = presentation.request.clone();
     let pd = match &request.presentation_definition {

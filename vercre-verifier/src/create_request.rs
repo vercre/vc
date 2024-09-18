@@ -1,7 +1,8 @@
 //! # Create Request Endpoint
 //!
 //! This endpoint is used to prepare an [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html)
-//! Authorization Request to use to request Verifiable Presentations from an End-User's Wallet.
+//! Authorization Request to use to request Verifiable Presentations from an
+//! End-User's Wallet.
 //!
 //! While based on the [OpenID4VP](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
 //! specification, the endpoint only implements a subset of the specification
@@ -9,9 +10,9 @@
 //! Aside from reducing complexity, the profile enables greater presentation
 //! interoperability between Wallets and Verifiers.
 //!
-//! The Verifier requests an Authorization Request be prepared by articulating the
-//! Credential(s) desired using a Credential Definition and, optionally, specifying
-//! the device flow that will be used.
+//! The Verifier requests an Authorization Request be prepared by articulating
+//! the Credential(s) desired using a Credential Definition and, optionally,
+//! specifying the device flow that will be used.
 //!
 //! # Example
 //!
@@ -34,11 +35,12 @@
 //! }
 //! ```
 //!
-//! The prepared Authorization Request Object may be sent by value or by reference as
-//! defined in JWT-Secured Authorization Request (JAR) [RFC9101](https://www.rfc-editor.org/rfc/rfc9101).
-//! If sent by value, the Request Object is sent directly to the Wallet as a URL fragment in the
-//! Authorization Request. If by reference, the Authorization Request will contain a
-//! `request_uri` pointing to the prepared Request Object.
+//! The prepared Authorization Request Object may be sent by value or by
+//! reference as defined in JWT-Secured Authorization Request (JAR) [RFC9101](https://www.rfc-editor.org/rfc/rfc9101).
+//! If sent by value, the Request Object is sent directly to the Wallet as a URL
+//! fragment in the Authorization Request. If by reference, the Authorization
+//! Request will contain a `request_uri` pointing to the prepared Request
+//! Object.
 
 use std::collections::HashMap;
 

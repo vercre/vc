@@ -3,13 +3,14 @@
 //! This endpoint is used by the Wallet to retrieve a previously created
 //! Credential Offer.
 //!
-//! The Credential Offer is created by the Issuer when calling the `Create Offer`
-//! endpoint to create an Credential Offer. Instead of sending the Offer to the Wallet,
-//! the Issuer sends a response containing a `credential_offer_uri` which can be used
-//! to retrieve the saved Credential Offer.
+//! The Credential Offer is created by the Issuer when calling the `Create
+//! Offer` endpoint to create an Credential Offer. Instead of sending the Offer
+//! to the Wallet, the Issuer sends a response containing a
+//! `credential_offer_uri` which can be used to retrieve the saved Credential
+//! Offer.
 //!
-//! Per the [JWT VC Issuance Profile], the Credential Offer MUST be returned as an
-//! encoded JWT.
+//! Per the [JWT VC Issuance Profile], the Credential Offer MUST be returned as
+//! an encoded JWT.
 //!
 //! [JWT VC Issuance Profile]: (https://identity.foundation/jwt-vc-issuance-profile)
 
@@ -21,8 +22,8 @@ use vercre_openid::{Error, Result};
 
 use crate::state::{PreAuthorization, Stage, State};
 
-/// Endpoint for the Wallet to request the Issuer's Credential Offer when engaged
-/// in a cross-device flow.
+/// Endpoint for the Wallet to request the Issuer's Credential Offer when
+/// engaged in a cross-device flow.
 ///
 /// # Errors
 ///

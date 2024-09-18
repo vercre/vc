@@ -9,12 +9,12 @@ use vercre_openid::issuer::{AuthorizationDetail, CredentialOffer, CredentialRequ
 
 type CredentialIdentifier = String;
 
-/// State is used to persist request information between issuance steps in the Credential
-/// issuance process.
+/// State is used to persist request information between issuance steps in the
+/// Credential issuance process.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct State {
-    /// Identifies the (previously authenticated) Holder in order that Issuer can
-    /// authorize credential issuance.
+    /// Identifies the (previously authenticated) Holder in order that Issuer
+    /// can authorize credential issuance.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subject_id: Option<String>,
 
@@ -42,17 +42,18 @@ pub enum Stage {
     #[default]
     Unauthorized,
 
-    /// Holds a Credential Offer awaiting retrieval by the Wallet. The Wallet has
-    /// been sent a unique URL it can use to retrieve the offer.
+    /// Holds a Credential Offer awaiting retrieval by the Wallet. The Wallet
+    /// has been sent a unique URL it can use to retrieve the offer.
     Offered(Offer),
 
     /// Holds pre-authorized offer data as presented to the Wallet. This data is
     /// used when validating the Wallet's request for an access token.
     PreAuthorized(PreAuthorization),
 
-    /// Holds authorization data in cases where the Wallet requests and is granted
-    /// authorization to request credential issuance. As with `PreAuthorized` state,
-    /// this data is used when validating the Wallet's request for an access token.
+    /// Holds authorization data in cases where the Wallet requests and is
+    /// granted authorization to request credential issuance. As with
+    /// `PreAuthorized` state, this data is used when validating the
+    /// Wallet's request for an access token.
     Authorized(Authorization),
 
     /// Holds information about the access token and corresponding credentials
@@ -80,9 +81,10 @@ pub struct AuthorizedCredential {
     /// credential metadata.
     pub credential_configuration_id: String,
 
-    /// Identifies a subset of claims to use when issuing the associated credential.
-    /// This subset is used in cases where the Wallet has requested (and has been
-    /// authorized for) issuance of a credential containing subset of claims.
+    /// Identifies a subset of claims to use when issuing the associated
+    /// credential. This subset is used in cases where the Wallet has
+    /// requested (and has been authorized for) issuance of a credential
+    /// containing subset of claims.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub claim_ids: Option<Vec<String>>,
 }
@@ -130,12 +132,13 @@ pub struct Authorization {
     /// PKCE code challenge method from the Authorization Request.
     pub code_challenge_method: String,
 
-    /// Lists credentials (as `authorization_details` entries) that the Wallet is
-    /// authorized to request.
+    /// Lists credentials (as `authorization_details` entries) that the Wallet
+    /// is authorized to request.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub details: Option<Vec<DetailItem>>,
 
-    /// Lists credentials (as scope items) that the Wallet is authorized to request.
+    /// Lists credentials (as scope items) that the Wallet is authorized to
+    /// request.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scope: Option<Vec<ScopeItem>>,
 }
@@ -175,15 +178,15 @@ pub struct Token {
     #[allow(clippy::struct_field_names)]
     pub access_token: String,
 
-    /// The nonce to be used by the Wallet when creating a proof of possession of
-    /// the key proof.
+    /// The nonce to be used by the Wallet when creating a proof of possession
+    /// of the key proof.
     pub c_nonce: String,
 
     /// Number denoting the lifetime in seconds of the `c_nonce`.
     pub c_nonce_expires_at: DateTime<Utc>,
 
-    /// Credentials (configuration id and identifier) validated for issuance using
-    /// the accompanying access token.
+    /// Credentials (configuration id and identifier) validated for issuance
+    /// using the accompanying access token.
     pub credentials: HashMap<CredentialIdentifier, AuthorizedCredential>,
 }
 

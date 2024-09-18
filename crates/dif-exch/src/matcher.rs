@@ -14,7 +14,8 @@ use serde_json_path::JsonPath;
 
 use super::{Claims, Constraints, Field, FilterValue};
 
-// LATER: add support for Zero-Knowledge Proofs by enabling the `predicate` feature
+// LATER: add support for Zero-Knowledge Proofs by enabling the `predicate`
+// feature
 
 impl Constraints {
     /// Check if a `VerifiableCredential` satisfies constraints provided in the
@@ -45,10 +46,11 @@ impl Constraints {
 }
 
 impl Field {
-    /// Check whether `Constraint` `Field` can be matched to a field the provided
-    /// `VerifiableCredential`.
-    /// The [Presentation Exchange 2.0.0] specification only requires one matching
-    /// JSON path expression for the field to be considered matched.
+    /// Check whether `Constraint` `Field` can be matched to a field the
+    /// provided `VerifiableCredential`.
+    /// The [Presentation Exchange 2.0.0] specification only requires one
+    /// matching JSON path expression for the field to be considered
+    /// matched.
     fn matched(&self, vc: &Value) -> Result<bool> {
         // find the FIRST matching JSON path expression for field
         for path in &self.path {
@@ -83,8 +85,8 @@ impl Field {
 }
 
 impl FilterValue {
-    /// Check whether the result of a `JSONPath` query can be matched to the specified
-    /// `FilterValue`.
+    /// Check whether the result of a `JSONPath` query can be matched to the
+    /// specified `FilterValue`.
     fn matched(&self, vc_node: &Value) -> Result<bool> {
         match self {
             Self::Const(_) => match_const(self, vc_node),

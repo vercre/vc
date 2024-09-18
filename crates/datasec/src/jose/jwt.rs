@@ -40,16 +40,17 @@ pub struct Header {
     #[serde(flatten)]
     pub key: KeyType,
 
-    /// Contains a certificate (or certificate chain) corresponding to the key used to
-    /// sign the JWT. This element MAY be used to convey a key attestation. In such a
-    /// case, the actual key certificate will contain attributes related to the key
-    /// properties.
+    /// Contains a certificate (or certificate chain) corresponding to the key
+    /// used to sign the JWT. This element MAY be used to convey a key
+    /// attestation. In such a case, the actual key certificate will contain
+    /// attributes related to the key properties.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub x5c: Option<String>,
 
-    /// Contains an OpenID.Federation Trust Chain. This element MAY be used to convey
-    /// key attestation, metadata, metadata policies, federation Trust Marks and any
-    /// other information related to a specific federation, if available in the chain.
+    /// Contains an OpenID.Federation Trust Chain. This element MAY be used to
+    /// convey key attestation, metadata, metadata policies, federation
+    /// Trust Marks and any other information related to a specific
+    /// federation, if available in the chain.
     ///
     /// When used for signature verification, `kid` MUST be set.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -86,9 +87,10 @@ impl Display for Type {
 /// The type of public key material for the JWT.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum KeyType {
-    /// Contains the key ID. If the Credential is bound to a DID, the kid refers to a
-    /// DID URL which identifies a particular key in the DID Document that the
-    /// Credential should bound to. Alternatively, may refer to a key inside a JWKS.
+    /// Contains the key ID. If the Credential is bound to a DID, the kid refers
+    /// to a DID URL which identifies a particular key in the DID Document
+    /// that the Credential should bound to. Alternatively, may refer to a
+    /// key inside a JWKS.
     #[serde(rename = "kid")]
     KeyId(String),
 

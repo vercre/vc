@@ -1,7 +1,7 @@
 //! # Issuance Offer Set PIN
 //!
-//! The `pin` endpoint is used to set a PIN for use in the token request as part of the issuance
-//! flow.
+//! The `pin` endpoint is used to set a PIN for use in the token request as part
+//! of the issuance flow.
 
 use std::fmt::Debug;
 

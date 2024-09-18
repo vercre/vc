@@ -108,7 +108,8 @@ pub struct PinSchema {
     /// the input screen and improve the user experience.
     pub length: i32,
 
-    /// Guidance for the Holder of the Wallet on how to obtain the Transaction Code,
+    /// Guidance for the Holder of the Wallet on how to obtain the Transaction
+    /// Code,
     pub description: Option<String>,
 }
 

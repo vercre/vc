@@ -1,8 +1,8 @@
 //! # JSON Web Encryption (JWE)
 //!
-//! JWE ([RFC7516]) specifies how encrypted content can be represented using JSON.
-//! See JWA ([RFC7518]) for more on the cyptographic algorithms and identifiers
-//! used.
+//! JWE ([RFC7516]) specifies how encrypted content can be represented using
+//! JSON. See JWA ([RFC7518]) for more on the cyptographic algorithms and
+//! identifiers used.
 //!
 //! See also:
 //!
@@ -41,10 +41,11 @@
 //! ```
 
 // TODO: investigate PartyUInfo and PartyVInfo more thoroughly
-// The ephemeral public key for the Agreement is stored alongside the wrapped per-file key.
-// The KDF is Concatenation Key Derivation Function (Approved Alternative 1) as described in
-// 5.8.1 of NIST SP 800-56A. AlgorithmID is omitted. PartyUInfo and PartyVInfo are the ephemeral
-// and static public keys, respectively. SHA256 is used as the hashing function.
+// The ephemeral public key for the Agreement is stored alongside the wrapped
+// per-file key. The KDF is Concatenation Key Derivation Function (Approved
+// Alternative 1) as described in 5.8.1 of NIST SP 800-56A. AlgorithmID is
+// omitted. PartyUInfo and PartyVInfo are the ephemeral and static public keys,
+// respectively. SHA256 is used as the hashing function.
 
 use std::fmt::{self, Display};
 use std::str::FromStr;
@@ -74,13 +75,15 @@ pub async fn encrypt<T: Serialize + Send>(
     plaintext: T, recipient_key: &[u8; 32], encryptor: &impl Encryptor,
 ) -> anyhow::Result<String> {
     // 1. Key Management Mode determines the Content Encryption Key (CEK)
-    //     - alg: "ECDH-ES" (Diffie-Hellman Ephemeral Static key agreement using Concat KDF)
+    //     - alg: "ECDH-ES" (Diffie-Hellman Ephemeral Static key agreement using
+    //       Concat KDF)
     //     - enc: "A128GCM" (128-bit AES-GCM)
 
     // 2. Generate a CEK — Content Encryption Mode — to encrypt payload
     let cek = Aes128Gcm::generate_key(&mut OsRng);
 
-    // 3. Use Key Agreement Algorithm (ECDH) to compute a shared secret to wrap the CEK.
+    // 3. Use Key Agreement Algorithm (ECDH) to compute a shared secret to wrap the
+    //    CEK.
     // 4. Encrypt the CEK and set as the JWE Encrypted Key.
     let encrypted_cek = encryptor.encrypt(&cek, recipient_key).await?;
 
@@ -144,12 +147,13 @@ pub async fn decrypt<T: DeserializeOwned>(
 ) -> anyhow::Result<T> {
     // 1. Parse the JWE to extract the serialized values of it's components.
     // 3. Verify the JWE Protected Header.
-    // 4. If using JWE Compact Serialization, let JOSE Header = JWE Protected Header.
+    // 4. If using JWE Compact Serialization, let JOSE Header = JWE Protected
+    //    Header.
     let jwe = Jwe::from_str(compact_jwe)?;
 
-    // 2. Base64url decode the JWE Protected Header, JWE Encrypted Key,
-    //    JWE Initialization Vector, JWE Ciphertext, JWE Authentication Tag, and
-    //    JWE AAD,
+    // 2. Base64url decode the JWE Protected Header, JWE Encrypted Key, JWE
+    //    Initialization Vector, JWE Ciphertext, JWE Authentication Tag, and JWE
+    //    AAD,
     let encrypted_cek = Base64::decode_vec(&jwe.encrypted_key)
         .map_err(|e| anyhow!("issue decoding `encrypted_key`: {e}"))?;
     let iv = Base64::decode_vec(&jwe.iv).map_err(|e| anyhow!("issue decoding `iv`: {e}"))?;
@@ -169,9 +173,11 @@ pub async fn decrypt<T: DeserializeOwned>(
 
     let cek = decryptor.decrypt(&encrypted_cek, sender_key).await?;
 
-    // 12. Record whether the CEK could be successfully determined for this recipient.
+    // 12. Record whether the CEK could be successfully determined for this
+    //     recipient.
     // 14. Compute the Encoded Protected Header value base64(JWE Protected Header).
-    // 15. Let the Additional Authenticated Data (JWE AAD) = Encoded Protected Header.
+    // 15. Let the Additional Authenticated Data (JWE AAD) = Encoded Protected
+    //     Header.
     let aad = jwe.protected.to_string();
 
     // 16. Decrypt the JWE Ciphertext using the CEK, the JWE Initialization Vector,
@@ -187,8 +193,9 @@ pub async fn decrypt<T: DeserializeOwned>(
     Ok(serde_json::from_slice(&buffer)?)
 }
 
-/// In JWE JSON serialization, one or more of the JWE Protected Header, JWE Shared
-/// Unprotected Header, and JWE Per-Recipient Unprotected Header MUST be present.
+/// In JWE JSON serialization, one or more of the JWE Protected Header, JWE
+/// Shared Unprotected Header, and JWE Per-Recipient Unprotected Header MUST be
+/// present.
 ///
 /// In this case, the members of the JOSE Header are the union of the members of
 /// the JWE Protected Header, JWE Shared Unprotected Header, and JWE
@@ -215,7 +222,8 @@ pub struct Jwe {
     /// Ciphertext, as a base64Url encoded string.
     ciphertext: String,
 
-    /// Authentication tag resulting from the encryption, as a base64Url encoded string.
+    /// Authentication tag resulting from the encryption, as a base64Url encoded
+    /// string.
     tag: String,
     //
     // /// Recipients array contains information specific to a single
@@ -281,8 +289,8 @@ pub struct Header {
     /// Contains producer information as a base64url string.
     pub apv: String,
 
-    /// The ephemeral public key created by the originator for use in key agreement
-    /// algorithms.
+    /// The ephemeral public key created by the originator for use in key
+    /// agreement algorithms.
     pub epk: PublicKeyJwk,
 }
 
@@ -317,8 +325,8 @@ pub struct Recipient {
     encrypted_key: Option<String>,
 }
 
-/// The algorithm used to encrypt or determine the value of the content encryption
-/// key (CEK).
+/// The algorithm used to encrypt or determine the value of the content
+/// encryption key (CEK).
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub enum CekAlgorithm {
     /// Elliptic Curve Diffie-Hellman Ephemeral-Static key agreement
@@ -329,7 +337,8 @@ pub enum CekAlgorithm {
 }
 
 /// The algorithm used to perform authenticated encryption on the plaintext to
-/// produce the ciphertext and the Authentication Tag. MUST be an AEAD algorithm.
+/// produce the ciphertext and the Authentication Tag. MUST be an AEAD
+/// algorithm.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub enum EncryptionAlgorithm {
     /// AES in Galois/Counter Mode (GCM) using a 128-bit key.

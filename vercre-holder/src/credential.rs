@@ -1,7 +1,7 @@
 //! # Holder Agent (Wallet)
 //!
-//! This module defines types and traits to enable wallets or other holder agents to interact with
-//! the `vercre-holder` endpoints.
+//! This module defines types and traits to enable wallets or other holder
+//! agents to interact with the `vercre-holder` endpoints.
 
 use std::ops::Deref;
 
@@ -20,8 +20,8 @@ pub struct Credential {
     /// The credential issuer.
     pub issuer: String,
 
-    /// The unpacked Verifiable Credential. Used to display VC details and for `JSONPath`
-    /// Presentation Definition queries.
+    /// The unpacked Verifiable Credential. Used to display VC details and for
+    /// `JSONPath` Presentation Definition queries.
     // TODO: Simplify. Make this a Value or a serialised VC or a stripped-down struct that helps
     // with display and filtering.
     pub vc: VerifiableCredential,
@@ -29,12 +29,13 @@ pub struct Credential {
     /// `CredentialConfiguration` metadata
     pub metadata: CredentialConfiguration,
 
-    /// The Verifiable Credential as issued, for use in Presentation Submissions.
-    /// This could be a base64-encoded JWT or 'stringified' JSON.
+    /// The Verifiable Credential as issued, for use in Presentation
+    /// Submissions. This could be a base64-encoded JWT or 'stringified'
+    /// JSON.
     pub issued: String,
 
-    /// A base64-encoded logo image for the credential ingested from the logo url in the
-    /// display section of the metadata.
+    /// A base64-encoded logo image for the credential ingested from the logo
+    /// url in the display section of the metadata.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub logo: Option<Logo>,
 }

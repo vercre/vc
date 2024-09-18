@@ -30,14 +30,16 @@ pub fn token() -> String {
     Base64UrlUnpadded::encode_string(rnd.as_bytes())
 }
 
-/// Generates a base64 encoded random string for deferred issuance `transaction_id`.
+/// Generates a base64 encoded random string for deferred issuance
+/// `transaction_id`.
 #[must_use]
 pub fn transaction_id() -> String {
     let rnd = random_string(STATE_LEN, SAFE_CHARS);
     Base64UrlUnpadded::encode_string(rnd.as_bytes())
 }
 
-/// Generates a base64 encoded random string for deferred issuance `transaction_id`.
+/// Generates a base64 encoded random string for deferred issuance
+/// `transaction_id`.
 #[must_use]
 pub fn notification_id() -> String {
     let rnd = random_string(STATE_LEN, SAFE_CHARS);
@@ -64,8 +66,8 @@ pub fn tx_code() -> String {
     random_string(PIN_LEN, PIN_CHARS)
 }
 
-// Generates a random string from a given set of characters. Uses fastrand so is not
-// cryptographically secure.
+// Generates a random string from a given set of characters. Uses fastrand so is
+// not cryptographically secure.
 fn random_string(len: usize, charset: &str) -> String {
     let chars: Vec<char> = charset.chars().collect();
     (0..len).map(|_| chars[fastrand::usize(..chars.len())]).collect()
@@ -81,8 +83,9 @@ fn random_string(len: usize, charset: &str) -> String {
 // ///
 // /// # Arguments
 // ///
-// /// * `num_bytes` - Number of random bytes to generate, prior to base64-encoding.
-// pub fn new_random_len(num_bytes: u32) -> Self {
-//     let random_bytes: Vec<u8> = (0..num_bytes).map(|_| thread_rng().gen::<u8>()).collect();
-//     CsrfToken::new(base64::encode_config(&random_bytes, base64::URL_SAFE_NO_PAD))
-// }
+// /// * `num_bytes` - Number of random bytes to generate, prior to
+// base64-encoding. pub fn new_random_len(num_bytes: u32) -> Self {
+//     let random_bytes: Vec<u8> = (0..num_bytes).map(|_|
+// thread_rng().gen::<u8>()).collect();
+//     CsrfToken::new(base64::encode_config(&random_bytes,
+// base64::URL_SAFE_NO_PAD)) }
