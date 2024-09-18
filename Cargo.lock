@@ -6148,6 +6148,7 @@ dependencies = [
  "vercre-did",
  "vercre-dif-exch",
  "vercre-issuer",
+ "vercre-macros",
  "vercre-openid",
  "vercre-test-utils",
  "vercre-verifier",

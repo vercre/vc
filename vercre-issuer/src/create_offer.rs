@@ -245,7 +245,7 @@ async fn credentials(
     let mut credentials = HashMap::new();
 
     for config_id in request.credential_configuration_ids.clone() {
-        let identifiers = Subject::authorize(provider, subject_id, &config_id, None)
+        let identifiers = Subject::authorize(provider, subject_id, &config_id)
             .await
             .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
 

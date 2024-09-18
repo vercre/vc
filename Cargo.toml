@@ -60,7 +60,7 @@ vercre-did = { path = "crates/did", version = "0.1.0-alpha.6" }
 vercre-dif-exch = { path = "crates/dif-exch", version = "0.1.0-alpha.6" }
 vercre-holder = { path = "vercre-holder", version = "0.1.0-alpha.6" }
 vercre-issuer = { path = "vercre-issuer", version = "0.1.0-alpha.6" }
-vercre-macros = { path = "crates/macros" }
+vercre-macros = { path = "crates/macros", version = "0.1.0-alpha.6" }
 vercre-openid = { path = "crates/openid", version = "0.1.0-alpha.6" }
 vercre-status = { path = "crates/status", version = "0.1.0-alpha.6" }
 vercre-test-utils = { path = "crates/test-utils", version = "0.1.0-alpha.6" }

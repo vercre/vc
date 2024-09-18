@@ -5,7 +5,7 @@ use anyhow::anyhow;
 use serde::Deserialize;
 use serde_json::{Map, Value};
 use uuid::Uuid;
-use vercre_openid::issuer::{ClaimEntry, Client, Dataset, Issuer, Server};
+use vercre_openid::issuer::{Client, Dataset, Issuer, Server};
 use vercre_openid::provider::Result;
 
 // pub const NORMAL_USER: &str = "normal_user";
@@ -132,7 +132,6 @@ impl DatasetStore {
 
     pub fn authorize(
         &self, subject_id: &str, credential_configuration_id: &str,
-        claims: Option<HashMap<String, ClaimEntry>>,
     ) -> Result<Vec<String>> {
         let subj_datasets =
             self.datasets.lock().expect("should lock").get(subject_id).unwrap().clone();
@@ -143,30 +142,7 @@ impl DatasetStore {
             if credential.configuration_id != credential_configuration_id {
                 continue;
             }
-
-            // create new dataset for subject using provided claims
-            if let Some(requested_claims) = &claims {
-                // create a new credential dataset with the requested claims
-                let mut claims = Map::new();
-                for k in requested_claims.keys() {
-                    if let Some(claim) = credential.claims.get(k) {
-                        claims.insert(k.clone(), claim.clone());
-                    }
-                }
-                let mut credential = credential.clone();
-                credential.claims = claims;
-
-                let credential_identifier = format!("{k}-custom"); // Uuid::new_v4().to_string();
-                identifiers.push(credential_identifier.clone());
-
-                // add custom claims to 'database'
-                let mut datasets =
-                    self.datasets.lock().expect("should lock").get(subject_id).unwrap().clone();
-                datasets.insert(credential_identifier, credential);
-                self.datasets.lock().expect("should lock").insert(subject_id.to_string(), datasets);
-            } else {
-                identifiers.push(k.clone());
-            }
+            identifiers.push(k.clone());
         }
 
         if identifiers.is_empty() {

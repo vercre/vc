@@ -33,6 +33,7 @@ vercre-datasec.workspace = true
 vercre-did.workspace = true
 vercre-dif-exch.workspace = true
 vercre-openid.workspace = true
+vercre-macros.workspace = true
 vercre-w3c-vc.workspace = true
 
 [dev-dependencies]
