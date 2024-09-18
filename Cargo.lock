@@ -6201,7 +6201,7 @@ dependencies = [
  "quote",
  "sha2",
  "syn 2.0.77",
- "vercre-openid",
+ "vercre-issuer",
 ]
 
 [[package]]
