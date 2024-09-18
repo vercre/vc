@@ -3,10 +3,12 @@ source: vercre-issuer/src/create_offer.rs
 assertion_line: 313
 expression: "&state"
 ---
-expires_at: "[expires_at]"
 subject_id: normal_user
 stage:
   pre_authorized:
     credentials:
-      PHLEmployeeID: EmployeeID_JWT
+      PHLEmployeeID:
+        credential_identifier: PHLEmployeeID
+        credential_configuration_id: EmployeeID_JWT
     tx_code: "[tx_code]"
+expires_at: "[expires_at]"

@@ -324,14 +324,18 @@ impl Context {
                 let Stage::Validated(token_state) = &self.state.stage else {
                     return Err(Error::AccessDenied("invalid access token state".into()));
                 };
-                let Some(config_id) = token_state.credentials.get(credential_identifier) else {
+                let Some(authorized) = token_state.credentials.get(credential_identifier) else {
                     return Err(Error::InvalidCredentialRequest(
                         "unauthorized credential requested".into(),
                     ));
                 };
-                self.issuer.credential_configurations_supported.get(config_id).cloned().ok_or_else(
-                    || Error::InvalidCredentialRequest("unsupported credential requested".into()),
-                )
+                self.issuer
+                    .credential_configurations_supported
+                    .get(&authorized.credential_configuration_id)
+                    .cloned()
+                    .ok_or_else(|| {
+                        Error::InvalidCredentialRequest("unsupported credential requested".into())
+                    })
             }
 
             CredentialSpec::Format(Format::JwtVcJson { .. }) => {
@@ -388,7 +392,7 @@ mod tests {
     use vercre_w3c_vc::proof::{self, Verify};
 
     use super::*;
-    use crate::state::Token;
+    use crate::state::{AuthorizedCredential, Token};
 
     #[tokio::test]
     async fn identifier() {
@@ -405,7 +409,14 @@ mod tests {
             subject_id: Some(NORMAL_USER.into()),
             stage: Stage::Validated(Token {
                 access_token: access_token.into(),
-                credentials: HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())]),
+                credentials: HashMap::from([(
+                    "PHLEmployeeID".into(),
+                    AuthorizedCredential {
+                        credential_identifier: "PHLEmployeeID".into(),
+                        credential_configuration_id: "EmployeeID_JWT".into(),
+                        claim_ids: None,
+                    },
+                )]),
                 c_nonce: c_nonce.into(),
                 c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             }),
@@ -480,7 +491,14 @@ mod tests {
             subject_id: Some(NORMAL_USER.into()),
             stage: Stage::Validated(Token {
                 access_token: access_token.into(),
-                credentials: HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())]),
+                credentials: HashMap::from([(
+                    "PHLEmployeeID".into(),
+                    AuthorizedCredential {
+                        credential_identifier: "PHLEmployeeID".into(),
+                        credential_configuration_id: "EmployeeID_JWT".into(),
+                        claim_ids: None,
+                    },
+                )]),
                 c_nonce: c_nonce.into(),
                 c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             }),

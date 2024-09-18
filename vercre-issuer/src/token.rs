@@ -27,7 +27,7 @@ use vercre_openid::issuer::{
 };
 use vercre_openid::{Error, Result};
 
-use crate::state::{DetailItem, Expire, Stage, State, Token};
+use crate::state::{AuthorizedCredential, DetailItem, Expire, Stage, State, Token};
 
 /// Token request handler.
 ///
@@ -162,13 +162,15 @@ impl Context {
 
                 let mut authorization_details = vec![];
 
-                for (identifier, config_id) in &pre_auth_state.credentials {
+                for (identifier, authorized) in &pre_auth_state.credentials {
                     authorization_details.push(Authorized {
                         authorization_detail: AuthorizationDetail {
                             type_: AuthorizationDetailType::OpenIdCredential,
                             specification: AuthorizationSpec::ConfigurationId(
                                 ConfigurationId::Definition {
-                                    credential_configuration_id: config_id.clone(),
+                                    credential_configuration_id: authorized
+                                        .credential_configuration_id
+                                        .clone(),
                                     credential_definition: None,
                                 },
                             ),
@@ -200,7 +202,13 @@ impl Context {
                         for identifier in &item.credential_identifiers {
                             credentials.insert(
                                 identifier.clone(),
-                                item.credential_configuration_id.clone(),
+                                AuthorizedCredential {
+                                    credential_identifier: identifier.clone(),
+                                    credential_configuration_id: item
+                                        .credential_configuration_id
+                                        .clone(),
+                                    claim_ids: None,
+                                },
                             );
                         }
                     }
@@ -225,7 +233,13 @@ impl Context {
                         for identifier in &item.credential_identifiers {
                             credentials.insert(
                                 identifier.clone(),
-                                item.credential_configuration_id.clone(),
+                                AuthorizedCredential {
+                                    credential_identifier: identifier.clone(),
+                                    credential_configuration_id: item
+                                        .credential_configuration_id
+                                        .clone(),
+                                    claim_ids: None,
+                                },
                             );
                         }
                     }
@@ -329,7 +343,7 @@ mod tests {
     use vercre_test_utils::snapshot;
 
     use super::*;
-    use crate::state::{Authorization, DetailItem, PreAuthorization};
+    use crate::state::{Authorization, AuthorizedCredential, DetailItem, PreAuthorization};
 
     #[tokio::test]
     async fn pre_authorized() {
@@ -343,7 +357,14 @@ mod tests {
             expires_at: Utc::now() + Expire::Authorized.duration(),
             subject_id: Some(NORMAL_USER.into()),
             stage: Stage::PreAuthorized(PreAuthorization {
-                credentials: HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())]),
+                credentials: HashMap::from([(
+                    "PHLEmployeeID".into(),
+                    AuthorizedCredential {
+                        credential_identifier: "PHLEmployeeID".into(),
+                        credential_configuration_id: "EmployeeID_JWT".into(),
+                        claim_ids: None,
+                    },
+                )]),
                 tx_code: Some("1234".into()),
             }),
             ..State::default()

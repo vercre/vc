@@ -3,7 +3,6 @@ source: vercre-issuer/src/authorize.rs
 assertion_line: 460
 expression: state
 ---
-expires_at: "[expires_at]"
 subject_id: normal_user
 stage:
   authorized:
@@ -18,3 +17,4 @@ stage:
         credential_configuration_id: EmployeeID_JWT
         credential_identifiers:
           - PHLEmployeeID
+expires_at: "[expires_at]"

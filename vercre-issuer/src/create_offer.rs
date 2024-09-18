@@ -75,7 +75,7 @@ use vercre_openid::issuer::{
 };
 use vercre_openid::{Error, Result};
 
-use crate::state::{Expire, Offer, PreAuthorization, Stage, State};
+use crate::state::{AuthorizedCredential, Expire, Offer, PreAuthorization, Stage, State};
 
 /// Invoke request handler generates and returns a Credential Offer.
 ///
@@ -134,12 +134,12 @@ async fn process(
     let credential_offer = credential_offer(&request);
     let tx_code =
         if request.pre_authorize && request.tx_code_required { Some(gen::tx_code()) } else { None };
-    let credentials = authorized_credentials(provider, &request).await?;
 
     // ------------------------------------------------------------------------
     // save state
     // ------------------------------------------------------------------------
     let state_key = state_key(&credential_offer)?;
+    let credentials = credentials(provider, &request).await?;
 
     let state_stage = if request.pre_authorize && request.send_type == SendType::ByVal {
         Stage::PreAuthorized(PreAuthorization {
@@ -232,9 +232,9 @@ fn credential_offer(request: &CreateOfferRequest) -> CredentialOffer {
     }
 }
 
-async fn authorized_credentials(
+async fn credentials(
     provider: &impl Provider, request: &CreateOfferRequest,
-) -> Result<HashMap<String, String>> {
+) -> Result<HashMap<String, AuthorizedCredential>> {
     let Some(subject_id) = &request.subject_id else {
         return Err(Error::InvalidRequest(
             "`subject_id` must be set for pre-authorized offers".into(),
@@ -251,11 +251,11 @@ async fn authorized_credentials(
         for identifier in &identifiers {
             credentials.insert(
                 identifier.clone(),
-                config_id.clone(),
-                // AuthorizedCredential {
-                //     credential_identifier: identifier.clone(),
-                //     credential_configuration_id: config_id.clone(),
-                // },
+                AuthorizedCredential {
+                    credential_identifier: identifier.clone(),
+                    credential_configuration_id: config_id.clone(),
+                    claim_ids: None,
+                },
             );
         }
     }

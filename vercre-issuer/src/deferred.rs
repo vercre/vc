@@ -15,7 +15,6 @@ use vercre_openid::issuer::{
 use vercre_openid::{Error, Result};
 
 use crate::credential::credential;
-// use crate::shell;
 use crate::state::{Stage, State};
 
 /// Deferred credential request handler.
@@ -81,7 +80,7 @@ mod tests {
     use vercre_w3c_vc::proof::{self, Payload, Verify};
 
     use super::*;
-    use crate::state::{Deferrance, Expire, Token};
+    use crate::state::{AuthorizedCredential, Deferrance, Expire, Token};
 
     #[tokio::test]
     async fn deferred_ok() {
@@ -118,7 +117,14 @@ mod tests {
             subject_id: Some(NORMAL_USER.into()),
             stage: Stage::Validated(Token {
                 access_token: access_token.into(),
-                credentials: HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())]),
+                credentials: HashMap::from([(
+                    "PHLEmployeeID".into(),
+                    AuthorizedCredential {
+                        credential_identifier: "PHLEmployeeID".into(),
+                        credential_configuration_id: "EmployeeID_JWT".into(),
+                        claim_ids: None,
+                    },
+                )]),
                 c_nonce: c_nonce.into(),
                 c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             }),
