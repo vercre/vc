@@ -1,0 +1,21 @@
+[package]
+name = "macro-tests"
+description = "OpenID macros"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+exclude.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dev-dependencies]
+base64ct.workspace = true
+insta.workspace = true
+sha2 = "0.10.8"
+vercre-issuer.workspace = true
+vercre-macros = { path = "../macros" }

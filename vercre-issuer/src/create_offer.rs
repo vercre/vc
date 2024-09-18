@@ -247,6 +247,7 @@ mod tests {
     use vercre_test_utils::snapshot;
 
     use super::*;
+    extern crate self as vercre_issuer;
 
     #[tokio::test]
     async fn pre_authorized() {

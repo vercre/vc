@@ -32,6 +32,7 @@ vercre-core.workspace = true
 vercre-datasec.workspace = true
 vercre-did.workspace = true
 vercre-dif-exch.workspace = true
+vercre-issuer.workspace = true
 vercre-openid.workspace = true
 vercre-macros.workspace = true
 vercre-w3c-vc.workspace = true
@@ -39,6 +40,5 @@ vercre-w3c-vc.workspace = true
 [dev-dependencies]
 insta.workspace = true
 tokio.workspace = true
-vercre-issuer.workspace = true
 vercre-test-utils.workspace = true
 vercre-verifier.workspace = true

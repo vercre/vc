@@ -442,6 +442,7 @@ mod tests {
     use vercre_test_utils::snapshot;
 
     use super::*;
+    extern crate self as vercre_issuer;
 
     #[rstest]
     #[case("configuration_id", configuration_id)]

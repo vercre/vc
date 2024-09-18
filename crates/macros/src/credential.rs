@@ -18,7 +18,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     // return error for any unexpected fields
     input.check_consumed()?;
 
-    let path = quote! {vercre_openid::issuer};
+    let path = quote! {vercre_issuer};
 
     Ok(quote! {
         #path::CredentialRequest {
@@ -32,7 +32,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
 }
 
 fn credential_specification(input: &mut Json) -> Result<TokenStream> {
-    let path = quote! {vercre_openid::issuer};
+    let path = quote! {vercre_issuer};
     let span = Span::call_site();
 
     if let Some(identifier) = input.get("credential_identifier") {
@@ -62,7 +62,7 @@ fn credential_specification(input: &mut Json) -> Result<TokenStream> {
 
 fn format_definition(defn_value: &Value) -> Result<TokenStream> {
     let span = Span::call_site();
-    let path = quote! {vercre_openid::issuer};
+    let path = quote! {vercre_issuer};
 
     let Some(credential_definition) = defn_value.as_object() else {
         return Err(Error::new(span, "`credential_definition` must be an object"));
@@ -89,7 +89,7 @@ fn format_definition(defn_value: &Value) -> Result<TokenStream> {
 }
 
 fn proof(input: &mut Json) -> Result<TokenStream> {
-    let path = quote! {vercre_openid::issuer};
+    let path = quote! {vercre_issuer};
     let span = Span::call_site();
 
     if let Some(p) = input.get("proof") {

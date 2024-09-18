@@ -123,11 +123,12 @@ pub use token::token;
 pub use vercre_macros::create_offer_request;
 pub use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
-    AuthorizationResponse, AuthorizationSpec, Authorized, CreateOfferRequest, CreateOfferResponse,
-    CredentialConfiguration, CredentialOffer, CredentialOfferRequest, CredentialOfferResponse,
+    AuthorizationResponse, AuthorizationSpec, Authorized, ClaimDefinition, ClaimEntry,
+    ConfigurationId, CreateOfferRequest, CreateOfferResponse, CredentialConfiguration,
+    CredentialDefinition, CredentialOffer, CredentialOfferRequest, CredentialOfferResponse,
     CredentialRequest, CredentialResponse, CredentialResponseType, CredentialSpec,
-    DeferredCredentialRequest, DeferredCredentialResponse, Grants, MetadataRequest,
-    MetadataResponse, OfferType, PreAuthorizedCodeGrant, ProofClaims, RegistrationRequest,
+    DeferredCredentialRequest, DeferredCredentialResponse, Format, Grants, MetadataRequest,
+    MetadataResponse, OfferType, PreAuthorizedCodeGrant, Proof, ProofClaims, RegistrationRequest,
     RegistrationResponse, SendType, SingleProof, TokenGrantType, TokenRequest, TokenResponse,
     TxCode,
 };

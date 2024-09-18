@@ -254,6 +254,7 @@ mod tests {
 
     use super::*;
     use crate::state::{Authorization, PreAuthorized};
+    extern crate self as vercre_issuer;
 
     #[tokio::test]
     async fn pre_authorized() {

@@ -37,7 +37,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     // return error for any unexpected fields
     input.check_consumed()?;
 
-    let path = quote! {vercre_openid::issuer};
+    let path = quote! {vercre_issuer};
 
     Ok(quote! {
         #path::AuthorizationRequest {
@@ -61,7 +61,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
 
 fn authorization_details(details: &Value) -> Result<TokenStream> {
     let span = Span::call_site();
-    let path = quote! {vercre_openid::issuer};
+    let path = quote! {vercre_issuer};
 
     let Some(details) = details.as_array() else {
         return Err(Error::new(span, "`authorization_details` must be an array"));
@@ -102,7 +102,7 @@ fn authorization_details(details: &Value) -> Result<TokenStream> {
 
 fn credential_specification(detail: &HashMap<String, Value>) -> Result<TokenStream> {
     let span = Span::call_site();
-    let path = quote! {vercre_openid::issuer};
+    let path = quote! {vercre_issuer};
 
     // credential_configuration_id or format?
     if let Some(credential_configuration_id) = detail.get("credential_configuration_id") {
@@ -149,7 +149,7 @@ fn credential_specification(detail: &HashMap<String, Value>) -> Result<TokenStre
 
 fn configuration_definition(defn_value: &Value) -> Result<TokenStream> {
     let span = Span::call_site();
-    let path = quote! {vercre_openid::issuer};
+    let path = quote! {vercre_issuer};
 
     let Some(credential_definition) = defn_value.as_object() else {
         return Err(Error::new(span, "`credential_definition` must be an object"));
@@ -178,7 +178,7 @@ fn configuration_definition(defn_value: &Value) -> Result<TokenStream> {
 
 fn format_definition(defn_value: &Value) -> Result<TokenStream> {
     let span = Span::call_site();
-    let path = quote! {vercre_openid::issuer};
+    let path = quote! {vercre_issuer};
 
     let Some(credential_definition) = defn_value.as_object() else {
         return Err(Error::new(span, "`credential_definition` must be an object"));
@@ -206,7 +206,7 @@ fn format_definition(defn_value: &Value) -> Result<TokenStream> {
 
 fn subject(definition: &HashMap<String, Value>) -> Result<TokenStream> {
     let span = Span::call_site();
-    let path = quote! {vercre_openid::issuer};
+    let path = quote! {vercre_issuer};
 
     if let Some(subject_value) = definition.get("credentialSubject") {
         let Some(credential_subject) = subject_value.as_object() else {

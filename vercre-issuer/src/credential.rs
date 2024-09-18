@@ -253,7 +253,7 @@ impl Context {
 
         // --------------------------------------------------------------------
         // Get dataset
-        //   TODO: support request by credential format (e.g. jwt_vc_json, etc.) 
+        //   TODO: support request by credential format (e.g. jwt_vc_json, etc.)
         //   need to get dataset by credential_configuration_id??
         // --------------------------------------------------------------------
         // get credential identifier and configuration
@@ -388,6 +388,7 @@ mod tests {
 
     use super::*;
     use crate::state::Token;
+    extern crate self as vercre_issuer;
 
     #[tokio::test]
     async fn identifier() {
