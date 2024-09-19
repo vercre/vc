@@ -7,7 +7,8 @@ use std::sync::LazyLock;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::provider::CredentialStorer;
 use vercre_holder::{IssuanceStatus, OfferRequest, PinRequest};
-use vercre_issuer::{CreateOfferRequest, OfferType, SendType};
+use vercre_issuer::{OfferType, SendType};
+use vercre_macros::create_offer_request;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
 use crate::provider as holder;
@@ -16,20 +17,20 @@ static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provi
 static HOLDER_PROVIDER: LazyLock<holder::Provider> =
     LazyLock::new(|| holder::Provider::new(Some(ISSUER_PROVIDER.clone()), None));
 
-static OFFER_REQUEST: LazyLock<CreateOfferRequest> = LazyLock::new(|| CreateOfferRequest {
-    credential_issuer: CREDENTIAL_ISSUER.into(),
-    credential_configuration_ids: vec!["EmployeeID_JWT".into()],
-    subject_id: Some(NORMAL_USER.into()),
-    pre_authorize: true,
-    tx_code_required: true,
-    send_type: SendType::ByVal,
-});
-
 #[tokio::test]
-async fn e2e_issuance() {
+async fn e2e_pre_auth() {
     // Use the issuance service endpoint to create a sample offer so we can get a valid
-    // pre-auhorized code.
-    let offer_resp = vercre_issuer::create_offer(ISSUER_PROVIDER.clone(), OFFER_REQUEST.to_owned())
+    // pre-authorized code.
+    let request = create_offer_request!({
+        "credential_issuer": CREDENTIAL_ISSUER,
+        "credential_configuration_ids": ["EmployeeID_JWT"],
+        "subject_id": NORMAL_USER,
+        "pre_authorize": true,
+        "tx_code_required": true,
+        "send_type": SendType::ByVal,
+    });
+
+    let offer_resp = vercre_issuer::create_offer(ISSUER_PROVIDER.clone(), request)
         .await
         .expect("should get offer");
 
@@ -46,7 +47,7 @@ async fn e2e_issuance() {
         .await
         .expect("should process offer");
 
-    assert_snapshot!("issuance_created", issuance, {
+    assert_snapshot!("pre_auth_created", issuance, {
         ".issuance_id" => "[issuance_id]",
         ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
     });
@@ -79,7 +80,7 @@ async fn e2e_issuance() {
 
     assert_eq!(credentials.len(), 1);
 
-    assert_snapshot!("credentials", credentials, {
+    assert_snapshot!("pre_auth_credentials", credentials, {
         "[0].vc.issuanceDate" => "[issuanceDate]",
         "[0].vc" => insta::sorted_redaction(),
         "[0].vc.credentialSubject" => insta::sorted_redaction(),
