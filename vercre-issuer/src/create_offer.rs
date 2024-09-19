@@ -214,7 +214,7 @@ async fn authorize(
     Ok(authorized)
 }
 
-/// Extract `pre_authorized_code` or `issuer_state` from CredentialOffer to
+/// Extract `pre_authorized_code` or `issuer_state` from `CredentialOffer` to
 /// use as state key.
 pub fn state_key(credential_offer: &CredentialOffer) -> Result<String> {
     // get pre-authorized code as state key
@@ -236,7 +236,7 @@ pub fn state_key(credential_offer: &CredentialOffer) -> Result<String> {
     Err(Error::ServerError("no grants".into()))
 }
 
-/// Create CredentialOffer
+/// Create `CredentialOffer`
 fn credential_offer(request: &CreateOfferRequest) -> CredentialOffer {
     let grants = if request.pre_authorize {
         let tx_code_def = if request.tx_code_required {

@@ -26,7 +26,7 @@ use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{self, Payload};
 use vercre_w3c_vc::verify_key;
 
-use crate::state::{Deferrance, Expire, Stage, State};
+use crate::state::{Credential, Deferrance, Expire, Stage, State};
 
 /// Credential request handler.
 ///
@@ -192,12 +192,15 @@ impl Context {
                 .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
 
             // TODO: add support for other formats
-            let jwt =
-                vercre_w3c_vc::proof::create(proof::Format::JwtVcJson, Payload::Vc(vc), signer)
-                    .await
-                    .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
+            let jwt = vercre_w3c_vc::proof::create(
+                proof::Format::JwtVcJson,
+                Payload::Vc(vc.clone()),
+                signer,
+            )
+            .await
+            .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
 
-            // update state
+            // update token state
             let mut state = self.state.clone();
             state.expires_at = Utc::now() + Expire::Access.duration();
 
@@ -208,10 +211,15 @@ impl Context {
             token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
             state.stage = Stage::Validated(token_state.clone());
 
-            // TODO: save this into state
+            StateStore::put(provider, &token_state.access_token, &state, state.expires_at)
+                .await
+                .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
+
+            // create issuance state for notification endpoint
+            state.stage = Stage::Issued(Credential { credential: vc });
             let notification_id = gen::notification_id();
 
-            StateStore::put(provider, &token_state.access_token, &state, state.expires_at)
+            StateStore::put(provider, &notification_id, &state, state.expires_at)
                 .await
                 .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -421,7 +429,7 @@ mod tests {
                 c_nonce: c_nonce.into(),
                 c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             }),
-            ..State::default()
+            // ..State::default()
         };
 
         StateStore::put(&provider, access_token, &state, state.expires_at)

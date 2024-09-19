@@ -49,9 +49,10 @@ pub trait Metadata: Send + Sync {
 /// The Subject trait specifies how the library expects issuance subject (user)
 /// information to be provided by implementers.
 pub trait Subject: Send + Sync {
-    /// Authorize issuance of the credential specified by `credential_configuration_id`.
-    /// Returns a one or more `credential_identifier`s the subject (holder) is
-    /// authorized to request.
+    /// Authorize issuance of the credential specified by
+    /// `credential_configuration_id`. Returns a one or more
+    /// `credential_identifier`s the subject (holder) is authorized to
+    /// request.
     fn authorize(
         &self, subject_id: &str, credential_configuration_id: &str,
     ) -> impl Future<Output = provider::Result<Vec<String>>> + Send;
@@ -1298,18 +1299,19 @@ pub struct Issuer {
     /// path and query parameter components.
     pub credential_endpoint: String,
 
-    /// URL of the Credential Issuer's Batch Credential Endpoint. MAY contain
-    /// port, path and query parameter components. When omitted, the
-    /// Credential Issuer does not support the Batch Credential Handler.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub batch_credential_endpoint: Option<String>,
-
     /// URL of the Credential Issuer's Deferred Credential Endpoint. This URL
     /// MUST use the https scheme and MAY contain port, path, and query
     /// parameter components. If omitted, the Credential Issuer does not
     /// support the Deferred Credential Endpoint.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deferred_credential_endpoint: Option<String>,
+
+    /// URL of the Credential Issuer's Notification Endpoint. This URL
+    /// MUST use the https scheme and MAY contain port, path, and query
+    /// parameter components.  If omitted, the Credential Issuer does not
+    /// support the Notification Endpoint.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub notification_endpoint: Option<String>,
 
     /// Specifies whether (and how) the Credential Issuer supports encryption of
     /// the Credential and Batch Credential Response on top of TLS.
@@ -1725,6 +1727,10 @@ pub struct Server {
 /// subsequent actions after issuance.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct NotificationRequest {
+    /// The Credential Issuer for which the notification is intended.
+    #[serde(skip_serializing_if = "String::is_empty", default)]
+    pub credential_issuer: String,
+
     /// A previously issued Access Token, as extracted from the Authorization
     /// header of the Credential Request. Used to grant access to register a
     /// client.

@@ -21,9 +21,11 @@
 
 use tracing::instrument;
 use vercre_openid::issuer::{
-    NotificationEvent, NotificationRequest, NotificationResponse, Provider,
+    NotificationEvent, NotificationRequest, NotificationResponse, Provider, StateStore,
 };
-use vercre_openid::Result;
+use vercre_openid::{Error, Result};
+
+use crate::state::{Stage, State};
 
 /// Notification request handler.
 ///
@@ -41,48 +43,73 @@ pub async fn notification(
 #[allow(clippy::unused_async)]
 #[allow(dead_code)]
 async fn process(
-    _provider: &impl Provider, request: NotificationRequest,
+    provider: &impl Provider, request: NotificationRequest,
 ) -> Result<NotificationResponse> {
     tracing::debug!("notification::process");
 
-    match request.event {
-        NotificationEvent::CredentialAccepted => {
-            println!("CredentialAccepted");
-        }
-        NotificationEvent::CredentialFailure => {
-            println!("CredentialFailure");
-        }
-        NotificationEvent::CredentialDeleted => {
-            println!("CredentialDeleted");
-        }
-    }
+    let Ok(state) = StateStore::get::<State>(provider, &request.notification_id).await else {
+        return Err(Error::AccessDenied("invalid access token".into()));
+    };
+    let Stage::Issued(credential) = state.stage else {
+        return Err(Error::ServerError("issued state not found".into()));
+    };
+
+    StateStore::purge(provider, &request.notification_id)
+        .await
+        .map_err(|e| Error::ServerError(format!("failed to purge state: {e}")))?;
+
+    tracing::info!(
+        "notification: {:#?}, {:#?} for credential: {:#?}",
+        request.event,
+        request.event_description,
+        credential
+    );
 
     Ok(NotificationResponse {})
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use insta::assert_yaml_snapshot as assert_snapshot;
-//     use issuer_provider::{Provider, CREDENTIAL_ISSUER};
+#[cfg(test)]
+mod tests {
+    use assert_let_bind::assert_let;
+    use chrono::Utc;
+    use insta::assert_yaml_snapshot as assert_snapshot;
+    use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    use vercre_test_utils::snapshot;
+    use vercre_w3c_vc::model::VerifiableCredential;
 
-//     use super::*;
+    use super::*;
+    use crate::state::{Credential, Expire};
 
-//     #[tokio::test]
-//     async fn notification_ok() {
-//         test_utils::init_tracer();
+    #[tokio::test]
+    async fn notification_ok() {
+        vercre_test_utils::init_tracer();
+        snapshot!("");
 
-//         let provider = Provider::new();
+        let provider = Provider::new();
+        let notification_id = "123456";
 
-//         let request = MetadataRequest {
-//             credential_issuer: CREDENTIAL_ISSUER.to_string(),
-//             languages: None,
-//         };
-//         let response =
-// Endpoint::new(provider).metadata(request).await.expect("response is ok");
-//         assert_snapshot!("response", response, {
-//             ".credential_configurations_supported" =>
-// insta::sorted_redaction(),             
-// ".credential_configurations_supported.*.credential_definition.
-// credentialSubject" => insta::sorted_redaction()         });
-//     }
-// }
+        let state = State {
+            expires_at: Utc::now() + Expire::Authorized.duration(),
+            subject_id: Some(NORMAL_USER.into()),
+            stage: Stage::Issued(Credential {
+                credential: VerifiableCredential::default(),
+            }),
+        };
+        StateStore::put(&provider, notification_id, &state, state.expires_at)
+            .await
+            .expect("state exists");
+
+        let request = NotificationRequest {
+            credential_issuer: CREDENTIAL_ISSUER.to_string(),
+            access_token: "ABCDEF".into(),
+            notification_id: notification_id.into(),
+            event: NotificationEvent::CredentialAccepted,
+            event_description: Some("Credential accepted".into()),
+        };
+        let response = notification(provider.clone(), request).await.expect("response is ok");
+
+        assert_snapshot!("notification:ok:response", response);
+
+        assert_let!(Err(_), StateStore::get::<State>(&provider, notification_id).await);
+    }
+}

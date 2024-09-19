@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 use vercre_openid::issuer::{AuthorizationDetail, CredentialOffer, CredentialRequest};
+use vercre_w3c_vc::model::VerifiableCredential;
 
 type CredentialIdentifier = String;
 
@@ -61,7 +62,7 @@ pub enum Stage {
     Validated(Token),
 
     /// Issued Credential state.
-    Issued(),
+    Issued(Credential),
 
     /// Deferred issuance state.
     Deferred(Deferrance),
@@ -143,7 +144,7 @@ pub struct Authorization {
     pub scope: Option<Vec<ScopeItem>>,
 }
 
-/// Stores authorized `authorization_detail` item and attendant
+/// Authorized `authorization_detail` item and attendant
 /// `credential_configuration_id`.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct DetailItem {
@@ -157,8 +158,8 @@ pub struct DetailItem {
     pub credential_identifiers: Vec<String>,
 }
 
-/// Stores authorized scope items with attendant `credential_configuration_id`
-/// and `credential_identifier`s.
+/// Authorized scope item with attendant `credential_configuration_id` and
+/// `credential_identifier`s.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ScopeItem {
     /// Authorized scope
@@ -171,7 +172,7 @@ pub struct ScopeItem {
     pub credential_identifiers: Vec<String>,
 }
 
-/// `Token` is used to store token state.
+/// Token state.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Token {
     /// The access token.
@@ -200,7 +201,13 @@ impl Token {
     }
 }
 
-/// `Token` is used to store token state.
+/// Issued Credential state (for Notification endpoint).
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Credential {
+    pub credential: VerifiableCredential,
+}
+
+/// Deferred issuance state.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Deferrance {
     /// Used to identify a Deferred Issuance transaction. Is used as the
