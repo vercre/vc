@@ -354,8 +354,6 @@ mod tests {
 
         // set up PreAuthorized state
         let state = State {
-            expires_at: Utc::now() + Expire::Authorized.duration(),
-            subject_id: Some(NORMAL_USER.into()),
             stage: Stage::PreAuthorized(PreAuthorization {
                 credentials: HashMap::from([(
                     "PHLEmployeeID".into(),
@@ -367,7 +365,8 @@ mod tests {
                 )]),
                 tx_code: Some("1234".into()),
             }),
-            ..State::default()
+            subject_id: Some(NORMAL_USER.into()),
+            expires_at: Utc::now() + Expire::Authorized.duration(),
         };
 
         let pre_auth_code = "ABCDEF";
@@ -417,8 +416,6 @@ mod tests {
 
         // set up Authorization state
         let state = State {
-            expires_at: Utc::now() + Expire::Authorized.duration(),
-            subject_id: Some(NORMAL_USER.into()),
             stage: Stage::Authorized(Authorization {
                 code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
                 code_challenge_method: "S256".into(),
@@ -439,7 +436,8 @@ mod tests {
                 client_id: CLIENT_ID.into(),
                 ..Authorization::default()
             }),
-            ..State::default()
+            subject_id: Some(NORMAL_USER.into()),
+            expires_at: Utc::now() + Expire::Authorized.duration(),
         };
 
         let code = "ABCDEF";
@@ -487,8 +485,6 @@ mod tests {
 
         // set up Authorization state
         let state = State {
-            expires_at: Utc::now() + Expire::Authorized.duration(),
-            subject_id: Some(NORMAL_USER.into()),
             stage: Stage::Authorized(Authorization {
                 client_id: CLIENT_ID.into(),
                 redirect_uri: Some("https://example.com".into()),
@@ -511,10 +507,10 @@ mod tests {
                     credential_configuration_id: "EmployeeID_JWT".into(),
                     credential_identifiers: vec!["PHLEmployeeID".into()],
                 }]),
-
                 ..Authorization::default()
             }),
-            ..State::default()
+            subject_id: Some(NORMAL_USER.into()),
+            expires_at: Utc::now() + Expire::Authorized.duration(),
         };
 
         let code = "ABCDEF";

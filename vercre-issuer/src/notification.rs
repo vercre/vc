@@ -20,9 +20,7 @@
 //! certain time period or at all.
 
 use tracing::instrument;
-use vercre_openid::issuer::{
-    NotificationEvent, NotificationRequest, NotificationResponse, Provider, StateStore,
-};
+use vercre_openid::issuer::{NotificationRequest, NotificationResponse, Provider, StateStore};
 use vercre_openid::{Error, Result};
 
 use crate::state::{Stage, State};
@@ -73,6 +71,7 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use vercre_openid::issuer::NotificationEvent;
     use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
     use vercre_w3c_vc::model::VerifiableCredential;

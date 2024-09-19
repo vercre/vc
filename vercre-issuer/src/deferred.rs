@@ -113,8 +113,6 @@ mod tests {
 
         // set up state
         let mut state = State {
-            expires_at: Utc::now() + Expire::Authorized.duration(),
-            subject_id: Some(NORMAL_USER.into()),
             stage: Stage::Validated(Token {
                 access_token: access_token.into(),
                 credentials: HashMap::from([(
@@ -128,7 +126,8 @@ mod tests {
                 c_nonce: c_nonce.into(),
                 c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             }),
-            ..State::default()
+            subject_id: Some(NORMAL_USER.into()),
+            expires_at: Utc::now() + Expire::Authorized.duration(),
         };
 
         StateStore::put(&provider, access_token, &state, state.expires_at)
