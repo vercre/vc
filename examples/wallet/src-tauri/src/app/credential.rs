@@ -10,7 +10,8 @@ impl AppState {
     ///
     /// # Error
     ///
-    /// If loading the credentials from the credential store fails, an error is returned.
+    /// If loading the credentials from the credential store fails, an error is
+    /// returned.
     pub async fn reset(&mut self, credential_store: impl CredentialStorer) -> anyhow::Result<()> {
         self.error = None;
         let credentials = match credential_store.find(None).await {

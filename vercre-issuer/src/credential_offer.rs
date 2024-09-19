@@ -3,13 +3,14 @@
 //! This endpoint is used by the Wallet to retrieve a previously created
 //! Credential Offer.
 //!
-//! The Credential Offer is created by the Issuer when calling the `Create Offer`
-//! endpoint to create an Credential Offer. Instead of sending the Offer to the Wallet,
-//! the Issuer sends a response containing a `credential_offer_uri` which can be used
-//! to retrieve the saved Credential Offer.
+//! The Credential Offer is created by the Issuer when calling the `Create
+//! Offer` endpoint to create an Credential Offer. Instead of sending the Offer
+//! to the Wallet, the Issuer sends a response containing a
+//! `credential_offer_uri` which can be used to retrieve the saved Credential
+//! Offer.
 //!
-//! Per the [JWT VC Issuance Profile], the Credential Offer MUST be returned as an
-//! encoded JWT.
+//! Per the [JWT VC Issuance Profile], the Credential Offer MUST be returned as
+//! an encoded JWT.
 //!
 //! [JWT VC Issuance Profile]: (https://identity.foundation/jwt-vc-issuance-profile)
 
@@ -19,10 +20,11 @@ use vercre_openid::issuer::{
 };
 use vercre_openid::{Error, Result};
 
-use crate::state::State;
+use crate::create_offer;
+use crate::state::{PreAuthorization, Stage, State};
 
-/// Endpoint for the Wallet to request the Issuer's Credential Offer when engaged
-/// in a cross-device flow.
+/// Endpoint for the Wallet to request the Issuer's Credential Offer when
+/// engaged in a cross-device flow.
 ///
 /// # Errors
 ///
@@ -41,7 +43,7 @@ async fn process(
     tracing::debug!("credential_offer::process");
 
     // retrieve Credential Offer from state
-    let state = StateStore::get::<State>(provider, &request.id)
+    let mut state = StateStore::get::<State>(provider, &request.id)
         .await
         .map_err(|e| Error::ServerError(format!("issue fetching state: {e}")))?;
 
@@ -49,9 +51,25 @@ async fn process(
         return Err(Error::InvalidRequest("state expired".into()));
     }
 
-    let Some(credential_offer) = state.credential_offer else {
+    let Stage::Offered(offer) = &state.stage else {
         return Err(Error::InvalidRequest("no credential offer found".into()));
     };
+
+    let credential_offer = offer.credential_offer.clone();
+    let state_key = create_offer::state_key(&credential_offer)?;
+
+    // update state stage if credential_offer is pre-authorized
+    if let Some(grants) = &credential_offer.grants {
+        if grants.pre_authorized_code.is_some() {
+            state.stage = Stage::PreAuthorized(PreAuthorization {
+                credentials: offer.credentials.clone(),
+                tx_code: offer.tx_code.clone(),
+            });
+        }
+    }
+    StateStore::put(provider, &state_key, &state, state.expires_at)
+        .await
+        .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
     // verify client_id (perhaps should use 'verify' method?)
     if credential_offer.credential_issuer != request.credential_issuer {

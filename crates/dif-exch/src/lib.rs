@@ -1,7 +1,7 @@
 //! # Distributed Identity Foundation Presentation Exchange
 //!
-//! This crate provides common utilities for the Vercre project and is not intended to be used
-//! directly.
+//! This crate provides common utilities for the Vercre project and is not
+//! intended to be used directly.
 //!
 //! Specifications:
 //! - <https://identity.foundation/presentation-exchange/spec/v2.0.0>
@@ -102,12 +102,13 @@ pub struct InputDescriptor {
 
 // TODO: create enum for ClaimFormat
 
-/// A registered Claim Format Designation object (e.g., `jwt`, `jwt_vc`, `jwt_vp`,
-/// etc.) used to inform the Holder of a Claim format the Verifier can process.
+/// A registered Claim Format Designation object (e.g., `jwt`, `jwt_vc`,
+/// `jwt_vp`, etc.) used to inform the Holder of a Claim format the Verifier can
+/// process.
 ///
 /// A Format object MUST include one of the format-specific properties (i.e.,
-/// `alg`, `proof_type`) that specify which algorithms the Verifier supports for the
-/// format.
+/// `alg`, `proof_type`) that specify which algorithms the Verifier supports for
+/// the format.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ClaimFormat {
     /// An array of one or more algorithmic identifiers,
@@ -176,8 +177,9 @@ pub struct Field {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub filter: Option<Filter>,
 
-    /// The predicate Feature enables the Verifier to request that Wallet apply a
-    /// predicate and return a boolean rather than the matching credential.
+    /// The predicate Feature enables the Verifier to request that Wallet apply
+    /// a predicate and return a boolean rather than the matching
+    /// credential.
     ///
     /// If `predicate` is present:
     ///  - it MUST be one of "required" or "preferred"
@@ -195,20 +197,20 @@ pub struct Field {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
 
-    /// If present, it MUST indicate whether the field is optional or not. Defaults
-    /// to false. Even when set to `true`, the path value MUST validate against the
-    /// JSON Schema filter, if a filter is present.
+    /// If present, it MUST indicate whether the field is optional or not.
+    /// Defaults to false. Even when set to `true`, the path value MUST
+    /// validate against the JSON Schema filter, if a filter is present.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub optional: Option<bool>,
 
-    /// If present, MUST be a boolean that indicates the Verifier intends to retain
-    /// the Claim's data being requested.
+    /// If present, MUST be a boolean that indicates the Verifier intends to
+    /// retain the Claim's data being requested.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub intent_to_retain: Option<bool>,
 }
 
-/// A JSON Schema descriptor used to filter against the values returned from evaluation
-/// of the `JSONPath` expressions in the path array.
+/// A JSON Schema descriptor used to filter against the values returned from
+/// evaluation of the `JSONPath` expressions in the path array.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct Filter {
@@ -231,7 +233,8 @@ pub enum FilterValue {
     /// The value of the filter is a regular expression.
     Pattern(String),
 
-    /// The value of the filter is a JSON Schema type format. For example, "date-time".
+    /// The value of the filter is a JSON Schema type format. For example,
+    /// "date-time".
     Format(String),
 }
 
@@ -283,8 +286,8 @@ pub struct DescriptorMap {
     /// top-level of the object the Presentation Submission.
     /// For the `OpenID4VP` specification, this value MUST be:
     ///  - $ when only one Verifiable Presentation
-    ///  - $\[n\] when there are multiple Verifiable Presentations, where n is the
-    ///    vp's index.
+    ///  - $\[n\] when there are multiple Verifiable Presentations, where n is
+    ///    the vp's index.
     pub path: String,
 
     /// Refers to the actual Credential carried in the respective Verifiable

@@ -81,8 +81,8 @@ where
 }
 
 pub mod option {
-    //! This module provides a serde serializer and deserializer for 'stringifying'
-    //! optional types.
+    //! This module provides a serde serializer and deserializer for
+    //! 'stringifying' optional types.
 
     use std::fmt;
     use std::marker::PhantomData;
@@ -94,8 +94,8 @@ pub mod option {
     ///
     /// # Errors
     ///
-    /// This function will return an `Error::ServerError` error if the string cannot
-    /// be serialized into the target type.
+    /// This function will return an `Error::ServerError` error if the string
+    /// cannot be serialized into the target type.
     pub fn serialize<T, S>(value: &Option<T>, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
         // T: Serialize + ToString,
@@ -115,8 +115,8 @@ pub mod option {
     ///
     /// # Errors
     ///
-    /// This function will return an `Error::ServerError` error if the string cannot
-    /// be deserialized into the target type.
+    /// This function will return an `Error::ServerError` error if the string
+    /// cannot be deserialized into the target type.
     pub fn deserialize<'de, T, D>(deserializer: D) -> Result<Option<T>, D::Error>
     where
         T: DeserializeOwned,

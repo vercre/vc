@@ -1,12 +1,12 @@
 //! # Batch Credential Endpoint
 //!
-//! The Batch Credential Endpoint issues multiple Credentials in one Batch Credential
-//! Response as approved by the End-User upon presentation of a valid Access Token
-//! representing this approval.
+//! The Batch Credential Endpoint issues multiple Credentials in one Batch
+//! Credential Response as approved by the End-User upon presentation of a valid
+//! Access Token representing this approval.
 //!
-//! A Wallet can request issuance of multiple Credentials of certain types and formats
-//! in one Batch Credential Request. This includes Credentials of the same type and
-//! multiple formats, different types and one format, or both.
+//! A Wallet can request issuance of multiple Credentials of certain types and
+//! formats in one Batch Credential Request. This includes Credentials of the
+//! same type and multiple formats, different types and one format, or both.
 
 use std::fmt::Debug;
 
@@ -26,7 +26,7 @@ use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{self, Payload};
 use vercre_w3c_vc::verify_key;
 
-use crate::state::{Deferred, Expire, State, Step};
+use crate::state::{Credential, Deferrance, Expire, Stage, State};
 
 /// Credential request handler.
 ///
@@ -68,8 +68,9 @@ impl Context {
     // TODO: check this list for compliance
     // To validate a key proof, ensure that:
     //   - the header parameter does not contain a private key
-    //   - the creation time of the JWT, as determined by either the issuance time, or a server managed
-    //     timestamp via the nonce claim, is within an acceptable window (see Section 11.5).
+    //   - the creation time of the JWT, as determined by either the issuance time,
+    //     or a server managed timestamp via the nonce claim, is within an
+    //     acceptable window (see Section 11.5).
 
     // Verify the credential request
     async fn verify(
@@ -81,7 +82,7 @@ impl Context {
             return Err(Error::InvalidRequest("state expired".into()));
         }
 
-        let Step::Token(token_state) = &self.state.current_step else {
+        let Stage::Validated(token_state) = &self.state.stage else {
             return Err(Error::AccessDenied("invalid access token state".into()));
         };
 
@@ -191,23 +192,34 @@ impl Context {
                 .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
 
             // TODO: add support for other formats
-            let jwt =
-                vercre_w3c_vc::proof::create(proof::Format::JwtVcJson, Payload::Vc(vc), signer)
-                    .await
-                    .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
+            let jwt = vercre_w3c_vc::proof::create(
+                proof::Format::JwtVcJson,
+                Payload::Vc(vc.clone()),
+                signer,
+            )
+            .await
+            .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
 
-            // update state
+            // update token state
             let mut state = self.state.clone();
             state.expires_at = Utc::now() + Expire::Access.duration();
 
-            let Step::Token(mut token_state) = state.current_step else {
+            let Stage::Validated(mut token_state) = state.stage else {
                 return Err(Error::AccessDenied("invalid access token state".into()));
             };
             token_state.c_nonce = gen::nonce();
             token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
-            state.current_step = Step::Token(token_state.clone());
+            state.stage = Stage::Validated(token_state.clone());
 
             StateStore::put(provider, &token_state.access_token, &state, state.expires_at)
+                .await
+                .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
+
+            // create issuance state for notification endpoint
+            state.stage = Stage::Issued(Credential { credential: vc });
+            let notification_id = gen::notification_id();
+
+            StateStore::put(provider, &notification_id, &state, state.expires_at)
                 .await
                 .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
@@ -215,6 +227,7 @@ impl Context {
                 response: CredentialResponseType::Credential(Kind::String(jwt)),
                 c_nonce: Some(token_state.c_nonce.clone()),
                 c_nonce_expires_in: Some(token_state.c_nonce_expires_in()),
+                notification_id: Some(notification_id),
             });
         }
 
@@ -222,12 +235,12 @@ impl Context {
         let txn_id = gen::transaction_id();
 
         let state = State {
-            expires_at: Utc::now() + Expire::Access.duration(),
-            current_step: Step::Deferred(Deferred {
+            stage: Stage::Deferred(Deferrance {
                 transaction_id: txn_id.clone(),
                 credential_request: request,
             }),
-            ..State::default()
+            subject_id: None,
+            expires_at: Utc::now() + Expire::Access.duration(),
         };
         StateStore::put(provider, &txn_id, &state, state.expires_at)
             .await
@@ -247,9 +260,9 @@ impl Context {
     ) -> Result<Option<VerifiableCredential>> {
         tracing::debug!("credential::generate_vc");
 
-        // let Some(credential_identifier) = &request.specification.as_identifier() else {
-        //     return Err(Error::InvalidCredentialRequest("invalid credential request".into()));
-        // };
+        // let Some(credential_identifier) = &request.specification.as_identifier() else
+        // {     return Err(Error::InvalidCredentialRequest("invalid credential
+        // request".into())); };
 
         // --------------------------------------------------------------------
         // Get dataset
@@ -317,20 +330,21 @@ impl Context {
             CredentialSpec::Identifier {
                 credential_identifier,
             } => {
-                let Some(credentials) = &self.state.credentials else {
-                    return Err(Error::InvalidCredentialRequest(
-                        "no authorized credentials".into(),
-                    ));
+                let Stage::Validated(token_state) = &self.state.stage else {
+                    return Err(Error::AccessDenied("invalid access token state".into()));
                 };
-                let Some(config_id) = credentials.get(credential_identifier) else {
+                let Some(authorized) = token_state.credentials.get(credential_identifier) else {
                     return Err(Error::InvalidCredentialRequest(
                         "unauthorized credential requested".into(),
                     ));
                 };
-
-                self.issuer.credential_configurations_supported.get(config_id).cloned().ok_or_else(
-                    || Error::InvalidCredentialRequest("unsupported credential requested".into()),
-                )
+                self.issuer
+                    .credential_configurations_supported
+                    .get(&authorized.credential_configuration_id)
+                    .cloned()
+                    .ok_or_else(|| {
+                        Error::InvalidCredentialRequest("unsupported credential requested".into())
+                    })
             }
 
             CredentialSpec::Format(Format::JwtVcJson { .. }) => {
@@ -360,12 +374,12 @@ impl Context {
         let mut state = self.state.clone();
         state.expires_at = Utc::now() + Expire::Access.duration();
 
-        let Step::Token(mut token_state) = state.current_step else {
+        let Stage::Validated(mut token_state) = state.stage else {
             return Err(Error::AccessDenied("invalid access token state".into()));
         };
         token_state.c_nonce.clone_from(&c_nonce);
         token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
-        state.current_step = Step::Token(token_state.clone());
+        state.stage = Stage::Validated(token_state.clone());
 
         StateStore::put(provider, &token_state.access_token, &state, state.expires_at)
             .await
@@ -387,7 +401,7 @@ mod tests {
     use vercre_w3c_vc::proof::{self, Verify};
 
     use super::*;
-    use crate::state::Token;
+    use crate::state::{AuthorizedCredential, Token};
     extern crate self as vercre_issuer;
 
     #[tokio::test]
@@ -401,15 +415,21 @@ mod tests {
 
         // set up state
         let state = State {
-            expires_at: Utc::now() + Expire::Authorized.duration(),
-            subject_id: Some(NORMAL_USER.into()),
-            credentials: Some(HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())])),
-            current_step: Step::Token(Token {
+            stage: Stage::Validated(Token {
                 access_token: access_token.into(),
+                credentials: HashMap::from([(
+                    "PHLEmployeeID".into(),
+                    AuthorizedCredential {
+                        credential_identifier: "PHLEmployeeID".into(),
+                        credential_configuration_id: "EmployeeID_JWT".into(),
+                        claim_ids: None,
+                    },
+                )]),
                 c_nonce: c_nonce.into(),
                 c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             }),
-            ..State::default()
+            subject_id: Some(NORMAL_USER.into()),
+            expires_at: Utc::now() + Expire::Authorized.duration(),
         };
 
         StateStore::put(&provider, access_token, &state, state.expires_at)
@@ -437,6 +457,7 @@ mod tests {
         assert_snapshot!("credential:identifier:response", &response, {
             ".credential" => "[credential]",
             ".c_nonce" => "[c_nonce]",
+            ".notification_id" => "[notification_id]",
         });
 
         // verify credential
@@ -458,8 +479,8 @@ mod tests {
         assert_let!(Ok(state), StateStore::get::<State>(&provider, access_token).await);
         assert_snapshot!("credential:identifier:state", state, {
             ".expires_at" => "[expires_at]",
-            ".current_step.c_nonce"=>"[c_nonce]",
-            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]"
+            ".stage.c_nonce"=>"[c_nonce]",
+            ".stage.c_nonce_expires_at" => "[c_nonce_expires_at]"
         });
     }
 
@@ -475,15 +496,21 @@ mod tests {
 
         // set up state
         let state = State {
-            expires_at: Utc::now() + Expire::Authorized.duration(),
-            subject_id: Some(NORMAL_USER.into()),
-            credentials: Some(HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())])),
-            current_step: Step::Token(Token {
+            stage: Stage::Validated(Token {
                 access_token: access_token.into(),
+                credentials: HashMap::from([(
+                    "PHLEmployeeID".into(),
+                    AuthorizedCredential {
+                        credential_identifier: "PHLEmployeeID".into(),
+                        credential_configuration_id: "EmployeeID_JWT".into(),
+                        claim_ids: None,
+                    },
+                )]),
                 c_nonce: c_nonce.into(),
                 c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             }),
-            ..State::default()
+            subject_id: Some(NORMAL_USER.into()),
+            expires_at: Utc::now() + Expire::Authorized.duration(),
         };
 
         StateStore::put(&provider, access_token, &state, state.expires_at)
@@ -541,8 +568,8 @@ mod tests {
         assert_let!(Ok(state), StateStore::get::<State>(&provider, access_token).await);
         assert_snapshot!("credential:format:state", state, {
             ".expires_at" => "[expires_at]",
-            ".current_step.c_nonce"=>"[c_nonce]",
-            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]"
+            ".stage.c_nonce"=>"[c_nonce]",
+            ".stage.c_nonce_expires_at" => "[c_nonce_expires_at]"
         });
     }
 }

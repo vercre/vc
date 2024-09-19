@@ -1,21 +1,22 @@
 //! # Response Endpoint
 //!
 //! This endpoint is where the Wallet **redirects** to when returning an [RFC6749](https://www.rfc-editor.org/rfc/rfc6749.html).
-//! Authorization Response when both Wallet and Verifier interact on the same device.
-//! That is, during a 'same-device flow'.
+//! Authorization Response when both Wallet and Verifier interact on the same
+//! device. That is, during a 'same-device flow'.
 //!
-//! The Wallet only returns a VP Token if the corresponding Authorization Request
-//! contained a `presentation_definition` parameter, a `presentation_definition_uri`
-//! parameter, or a `scope` parameter representing a Presentation Definition.
+//! The Wallet only returns a VP Token if the corresponding Authorization
+//! Request contained a `presentation_definition` parameter, a
+//! `presentation_definition_uri` parameter, or a `scope` parameter representing
+//! a Presentation Definition.
 //!
 //! The VP Token can be returned in the Authorization Response or the Token
 //! Response depending on the Response Type used.
 //!
-//! If the Authorization Request's Response Type value is "`vp_token`", the VP Token
-//! is returned in the Authorization Response. When the Response Type value is
-//! "`vp_token id_token`" and the scope parameter contains "openid", the VP Token is
-//! returned in the Authorization Response alongside a Self-Issued ID Token as defined
-//! in [SIOPv2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html).
+//! If the Authorization Request's Response Type value is "`vp_token`", the VP
+//! Token is returned in the Authorization Response. When the Response Type
+//! value is "`vp_token id_token`" and the scope parameter contains "openid",
+//! the VP Token is returned in the Authorization Response alongside a
+//! Self-Issued ID Token as defined in [SIOPv2](https://openid.net/specs/openid-connect-self-issued-v2-1_0.html).
 //!
 //! If the Response Type value is "code" (Authorization Code Grant Type), the VP
 //! Token is provided in the Token Response.

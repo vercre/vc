@@ -1,7 +1,8 @@
-//! This module has types for the application state. The application is divided into sub-apps,
-//! so the shape of the state depends on whether the application is managing credentials,
-//! responding to an offer of issuance, or responding to a request for presentation. The underlying
-//! application state is translated into a view model for the shell to render.
+//! This module has types for the application state. The application is divided
+//! into sub-apps, so the shape of the state depends on whether the application
+//! is managing credentials, responding to an offer of issuance, or responding
+//! to a request for presentation. The underlying application state is
+//! translated into a view model for the shell to render.
 
 mod credential;
 mod issuance;

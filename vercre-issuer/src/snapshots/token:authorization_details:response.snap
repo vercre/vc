@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/token.rs
-assertion_line: 330
+assertion_line: 546
 expression: "&response"
 ---
 access_token: "[access_token]"
@@ -16,4 +16,4 @@ authorization_details:
         - VerifiableCredential
         - EmployeeIDCredential
     credential_identifiers:
-      - EmployeeID_JWT
+      - PHLEmployeeID

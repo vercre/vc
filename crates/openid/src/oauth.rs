@@ -46,7 +46,8 @@ pub struct OAuthClient {
     /// Authentication method for the token endpoint.
     /// Values are:
     /// - "`none`": The client is public and does not have a secret
-    /// - ~~"`client_secret_post`": The client uses RFC6749 HTTP POST parameters.~~
+    /// - ~~"`client_secret_post`": The client uses RFC6749 HTTP POST
+    ///   parameters.~~
     /// - ~~"`client_secret_basic`": The client uses HTTP Basic.~~
     #[serde(skip_serializing_if = "Option::is_none")]
     pub token_endpoint_auth_method: Option<String>,
@@ -105,9 +106,9 @@ pub struct OAuthClient {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub jwks_uri: Option<String>,
 
-    /// Client's JSON Web Key Set [RFC7517], containing the client's public keys.
-    /// MUST be a JSON object containing a valid JWK Set. MUST NOT be set if the
-    /// `jwks_uri` parameter is set.
+    /// Client's JSON Web Key Set [RFC7517], containing the client's public
+    /// keys. MUST be a JSON object containing a valid JWK Set. MUST NOT be
+    /// set if the `jwks_uri` parameter is set.
     ///
     /// [RFC7517]: (https://www.rfc-editor.org/rfc/rfc7517)
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -118,7 +119,8 @@ pub struct OAuthClient {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub software_id: Option<String>,
 
-    /// A version identifier string for the client software identified by `software_id`.
+    /// A version identifier string for the client software identified by
+    /// `software_id`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub software_version: Option<String>,
 }

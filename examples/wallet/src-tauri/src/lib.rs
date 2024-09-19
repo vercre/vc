@@ -25,8 +25,9 @@ struct StateModel {
     state_store: Arc<Mutex<HashMap<String, Vec<u8>>>>,
 }
 
-/// Unique identifier for this wallet application as a client of the issuance service. In a real
-/// application, this may be provided by registering the client with the issuer.
+/// Unique identifier for this wallet application as a client of the issuance
+/// service. In a real application, this may be provided by registering the
+/// client with the issuer.
 pub const CLIENT_ID: &str = "wallet";
 
 /// Tauri entry point
@@ -99,8 +100,9 @@ async fn start(state: State<'_, StateModel>) -> Result<ViewModel, error::AppErro
     Ok(view)
 }
 
-/// The `reset` command is called whenever the shell finishes a workflow, including abandoning it.
-/// Is also called by the shell after start-up is complete to initialise state.
+/// The `reset` command is called whenever the shell finishes a workflow,
+/// including abandoning it. Is also called by the shell after start-up is
+/// complete to initialise state.
 #[tauri::command]
 async fn reset(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("reset invoked");
@@ -126,7 +128,8 @@ async fn select(
     Ok(Some(credential.into()))
 }
 
-/// The `delete` command deletes a credential from storage and updates the view model.
+/// The `delete` command deletes a credential from storage and updates the view
+/// model.
 #[tauri::command]
 async fn delete(
     state: State<'_, StateModel>, app: AppHandle, id: String,
@@ -145,8 +148,9 @@ async fn delete(
 // Issuance Commands
 //-----------------------------------------------------------------------------------------------
 
-/// The `offer` command submits a credential issuance offer directly from shell input. Performs the
-/// same operation as the deep link listener but is useful for demo and testing purposes.
+/// The `offer` command submits a credential issuance offer directly from shell
+/// input. Performs the same operation as the deep link listener but is useful
+/// for demo and testing purposes.
 #[tauri::command]
 async fn offer(
     state: State<'_, StateModel>, app: AppHandle, encoded_offer: String,
@@ -161,9 +165,9 @@ async fn offer(
     Ok(())
 }
 
-/// The `accept` command accepts a credential issuance offer. This will emit a status update to
-/// indicate the holder has accepted the offer and we can proceed directly to getting the
-/// credentials or a further PIN is required.
+/// The `accept` command accepts a credential issuance offer. This will emit a
+/// status update to indicate the holder has accepted the offer and we can
+/// proceed directly to getting the credentials or a further PIN is required.
 #[tauri::command]
 async fn accept(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("accept invoked");
@@ -176,8 +180,9 @@ async fn accept(state: State<'_, StateModel>, app: AppHandle) -> Result<(), erro
     Ok(())
 }
 
-/// The `pin` command sets a user PIN on for use in the token request as part of the issuance flow.
-/// The flow will proceed from token request to credential issuance and emit a status update.
+/// The `pin` command sets a user PIN on for use in the token request as part of
+/// the issuance flow. The flow will proceed from token request to credential
+/// issuance and emit a status update.
 #[tauri::command]
 async fn pin(
     state: State<'_, StateModel>, app: AppHandle, pin: String,
@@ -192,8 +197,8 @@ async fn pin(
     Ok(())
 }
 
-/// The `get_credentials` command gets the credentials for the accepted issuance offer using the
-/// `get_credentials` endpoint in the `vercre-holder` crate.
+/// The `get_credentials` command gets the credentials for the accepted issuance
+/// offer using the `get_credentials` endpoint in the `vercre-holder` crate.
 #[tauri::command]
 async fn get_credentials(
     state: State<'_, StateModel>, app: AppHandle,
@@ -213,8 +218,9 @@ async fn get_credentials(
 // Presentation Commands
 //-----------------------------------------------------------------------------------------------
 
-/// The `request` command processes a presentation request. Performs the same operation as the deep
-/// link listener but is useful for demo and testing purposes.
+/// The `request` command processes a presentation request. Performs the same
+/// operation as the deep link listener but is useful for demo and testing
+/// purposes.
 #[tauri::command]
 async fn request(
     state: State<'_, StateModel>, app: AppHandle, request: String,
@@ -229,9 +235,9 @@ async fn request(
     Ok(())
 }
 
-/// The `authorize` command authorizes the verifier's presentation request. This will emit a status
-/// update to indicate the holder has authorized the request and we can proceed to making the
-/// presentation.
+/// The `authorize` command authorizes the verifier's presentation request. This
+/// will emit a status update to indicate the holder has authorized the request
+/// and we can proceed to making the presentation.
 #[tauri::command]
 async fn authorize(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("authorize invoked");

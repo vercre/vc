@@ -27,8 +27,8 @@ static OFFER_REQUEST: LazyLock<CreateOfferRequest> = LazyLock::new(|| CreateOffe
 
 #[tokio::test]
 async fn e2e_issuance() {
-    // Use the issuance service endpoint to create a sample offer so we can get a valid
-    // pre-auhorized code.
+    // Use the issuance service endpoint to create a sample offer so we can get a
+    // valid pre-auhorized code.
     let offer_resp = vercre_issuer::create_offer(ISSUER_PROVIDER.clone(), OFFER_REQUEST.to_owned())
         .await
         .expect("should get offer");

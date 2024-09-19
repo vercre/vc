@@ -3,27 +3,31 @@
 
 //! # `OpenID` Wallet
 //!
-//! A vercre-wallet that supports `OpenID` for Verifiable Credential Issuance and Presentation.
+//! A vercre-wallet that supports `OpenID` for Verifiable Credential Issuance
+//! and Presentation.
 //!
-//! The crate does not provide a user or service interface - that is the job of a wallet
-//! implementation. See examples for simple (not full-featured) implementations.
+//! The crate does not provide a user or service interface - that is the job of
+//! a wallet implementation. See examples for simple (not full-featured)
+//! implementations.
 //!
 //! # Design
 //!
 //! ** Endpoints **
 //!
-//! Similar to the `vercre-issuer` and `vercre-verifier` crates, the library is architected around the
-//! endpoints. The request and response types serialize to and from JSON, and where interaction with
-//! `OpenID4VC` occurs those types are used in accordance with the specification.
+//! Similar to the `vercre-issuer` and `vercre-verifier` crates, the library is
+//! architected around the endpoints. The request and response types serialize
+//! to and from JSON, and where interaction with `OpenID4VC` occurs those types
+//! are used in accordance with the specification.
 //!
-//! The endpoints are designed to be used with Rust-based HTTP servers but are not specifically tied
-//! to any particular protocol.
+//! The endpoints are designed to be used with Rust-based HTTP servers but are
+//! not specifically tied to any particular protocol.
 //!
 //! ** Provider **
 //!
-//! Implementors need to implement 'Provider' traits that are responsible for handling storage and
-//! signing. See [`vercre-openid`](https://docs.rs/vercre-openid/latest/vercre_openid/provider/) for core provider
-//! traits, and the `provider` module in this crate for traits specific to holder agents.
+//! Implementors need to implement 'Provider' traits that are responsible for
+//! handling storage and signing. See [`vercre-openid`](https://docs.rs/vercre-openid/latest/vercre_openid/provider/) for core provider
+//! traits, and the `provider` module in this crate for traits specific to
+//! holder agents.
 //!
 //! # Example
 //!

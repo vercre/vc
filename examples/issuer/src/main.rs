@@ -108,8 +108,8 @@ async fn metadata(
 /// RFC 6749: https://tools.ietf.org/html/rfc6749#section-4.1.2
 ///
 /// The authorization server issues an authorization code and delivers it to the
-/// client by adding the response parameters to the query component of the redirection
-/// URI using the "application/x-www-form-urlencoded" format.
+/// client by adding the response parameters to the query component of the
+/// redirection URI using the "application/x-www-form-urlencoded" format.
 #[axum::debug_handler]
 async fn authorize(
     State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
@@ -198,14 +198,14 @@ async fn login(
 /// Token endpoint
 /// RFC 6749: https://tools.ietf.org/html/rfc6749#section-5.1
 ///
-/// The parameters are included in the entity-body of the HTTP response using the
-/// "application/json" media type as defined by [RFC4627].  The parameters are
-/// serialized into JSON
+/// The parameters are included in the entity-body of the HTTP response using
+/// the "application/json" media type as defined by [RFC4627].  The parameters
+/// are serialized into JSON
 ///
-/// The authorization server MUST include the HTTP "Cache-Control" response header
-/// field [RFC2616] with a value of "no-store" in any response containing tokens,
-/// credentials, or other sensitive information, as well as the "Pragma" response
-/// header field [RFC2616] with a value of "no-cache".
+/// The authorization server MUST include the HTTP "Cache-Control" response
+/// header field [RFC2616] with a value of "no-store" in any response containing
+/// tokens, credentials, or other sensitive information, as well as the "Pragma"
+/// response header field [RFC2616] with a value of "no-cache".
 ///
 /// [RFC2616]: (https://www.rfc-editor.org/rfc/rfc2616)
 #[axum::debug_handler]

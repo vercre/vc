@@ -1,6 +1,7 @@
 //! # Presentation
 //!
-//! The Presentation endpoints implement the vercre-holder's credential presentation flow.
+//! The Presentation endpoints implement the vercre-holder's credential
+//! presentation flow.
 
 pub(crate) mod authorize;
 pub(crate) mod present;
@@ -21,8 +22,9 @@ use crate::provider::{HolderProvider, StateStore};
 /// `Presentation` maintains app state across steps of the presentation flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Presentation {
-    /// The unique identifier for the presentation flow. Not used internally but passed to providers
-    /// so that wallet clients can track interactions with specific flows.
+    /// The unique identifier for the presentation flow. Not used internally but
+    /// passed to providers so that wallet clients can track interactions
+    /// with specific flows.
     pub id: String,
 
     /// The current status of the presentation flow.
@@ -35,7 +37,8 @@ pub struct Presentation {
     /// Definition).
     pub credentials: Vec<Credential>,
 
-    /// The `JSONPath` query used to match credentials to the verifier's request.
+    /// The `JSONPath` query used to match credentials to the verifier's
+    /// request.
     pub filter: Constraints,
 
     /// The presentation submission token.

@@ -33,8 +33,8 @@ impl Json {
         )
     }
 
-    /// Check all parsed fields have been consumed, returning an error if any fields
-    /// are left unconsumed.
+    /// Check all parsed fields have been consumed, returning an error if any
+    /// fields are left unconsumed.
     pub fn check_consumed(&self) -> Result<()> {
         if !self.fields.is_empty() {
             let keys = self.fields.keys().map(|k| format!("`{k}`")).collect::<Vec<_>>().join(", ");

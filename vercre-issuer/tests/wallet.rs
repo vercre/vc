@@ -83,8 +83,8 @@ impl Wallet {
         self.credential(token).await
     }
 
-    // Simulate Issuer request to '/create_offer' endpoint to get credential offer to use to
-    // make credential offer to Wallet.
+    // Simulate Issuer request to '/create_offer' endpoint to get credential offer
+    // to use to make credential offer to Wallet.
     pub async fn authorize(&self, state: Option<String>) -> Result<AuthorizationResponse> {
         let request = authorization_request!({
             "credential_issuer": CREDENTIAL_ISSUER,

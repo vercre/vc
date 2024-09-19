@@ -15,13 +15,15 @@ use crate::CLIENT_ID;
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions)]
 pub struct IssuanceState {
-    /// Issuance flow identifier to pass to the vercre-holder crate for state management.
+    /// Issuance flow identifier to pass to the vercre-holder crate for state
+    /// management.
     pub id: String,
     /// Status of the issuance flow.
     pub status: IssuanceStatus,
     /// Issuer of the credential(s)
     pub issuer: String,
-    /// Description of the credential(s) offered, keyed by credential configuration ID.
+    /// Description of the credential(s) offered, keyed by credential
+    /// configuration ID.
     pub offered: HashMap<String, CredentialConfiguration>,
     /// Description of the type of PIN needed to accept the offer.
     pub tx_code: Option<TxCode>,

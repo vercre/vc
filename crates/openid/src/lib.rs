@@ -3,9 +3,9 @@
 //! Types and logic used in the `OpenID4VC` specifications and consumed by
 //! `vercre-issuer`,`vercre-verifier`, and `vercre-holder` crates.
 //!
-//! The crate is for internal use within Vercre project and is not intended to be used
-//! directly by the end users. Any public types are re-exported through the respective
-//! top-level `vercre-xxx` crates.
+//! The crate is for internal use within Vercre project and is not intended to
+//! be used directly by the end users. Any public types are re-exported through
+//! the respective top-level `vercre-xxx` crates.
 
 mod error;
 pub mod issuer;
@@ -23,9 +23,9 @@ pub use self::error::Error;
 /// Presentations.
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
-/// The `OpenID4VCI` specification defines commonly used [Credential Format Profiles]
-/// to support.  The profiles define Credential format specific parameters or claims
-/// used to support a particular format.
+/// The `OpenID4VCI` specification defines commonly used [Credential Format
+/// Profiles] to support.  The profiles define Credential format specific
+/// parameters or claims used to support a particular format.
 ///
 ///
 /// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
@@ -35,7 +35,8 @@ pub enum FormatProfile {
     ///
     /// When this format is specified, Credential Offer, Authorization Details,
     /// Credential Request, and Credential Issuer metadata, including
-    /// `credential_definition` object, MUST NOT be processed using JSON-LD rules.
+    /// `credential_definition` object, MUST NOT be processed using JSON-LD
+    /// rules.
     #[default]
     #[serde(rename = "jwt_vc_json")]
     JwtVcJson,
@@ -44,9 +45,10 @@ pub enum FormatProfile {
     ///
     /// When using this format, data MUST NOT be processed using JSON-LD rules.
     ///
-    /// N.B. The `@context` value in the `credential_definition` object can be used by
-    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
-    /// could apply JSON-LD processing to the Credential issued.
+    /// N.B. The `@context` value in the `credential_definition` object can be
+    /// used by the Wallet to check whether it supports a certain VC. If
+    /// necessary, the Wallet could apply JSON-LD processing to the
+    /// Credential issued.
     #[serde(rename = "ldp-vc")]
     LdpVc,
 
@@ -54,16 +56,17 @@ pub enum FormatProfile {
     ///
     /// When using this format, data MUST NOT be processed using JSON-LD rules.
     ///
-    /// N.B. The `@context` value in the `credential_definition` object can be used by
-    /// the Wallet to check whether it supports a certain VC. If necessary, the Wallet
-    /// could apply JSON-LD processing to the Credential issued.
+    /// N.B. The `@context` value in the `credential_definition` object can be
+    /// used by the Wallet to check whether it supports a certain VC. If
+    /// necessary, the Wallet could apply JSON-LD processing to the
+    /// Credential issued.
     #[serde(rename = "jwt_vc_json-ld")]
     JwtVcJsonLd,
 
     /// ISO mDL.
     ///
-    /// A Credential Format Profile for Credentials complying with [ISO.18013-5] —
-    /// ISO-compliant driving licence specification.
+    /// A Credential Format Profile for Credentials complying with [ISO.18013-5]
+    /// — ISO-compliant driving licence specification.
     ///
     /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
     #[serde(rename = "mso_mdoc")]

@@ -1,11 +1,12 @@
 use base64ct::{Base64, Encoding};
 use http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
+use tauri_plugin_http::reqwest;
 use vercre_holder::provider::Issuer;
 use vercre_holder::{
     CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse, TokenRequest,
     TokenResponse,
 };
-use tauri_plugin_http::reqwest;
+
 use super::Provider;
 
 impl Issuer for Provider {

@@ -2,8 +2,8 @@
 //!
 //! This endpoint is used to make Verifier metadata available to the Wallet.
 //!
-//! As the Verifier is a client to the Wallet's Authorization Server, this endpoint
-//! returns Client metadata as defined in [RFC7591](https://www.rfc-editor.org/rfc/rfc7591).
+//! As the Verifier is a client to the Wallet's Authorization Server, this
+//! endpoint returns Client metadata as defined in [RFC7591](https://www.rfc-editor.org/rfc/rfc7591).
 
 use tracing::instrument;
 use vercre_openid::verifier::{Metadata, MetadataRequest, MetadataResponse, Provider};

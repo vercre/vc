@@ -20,18 +20,18 @@ use vercre_core::{Kind, Quota};
 
 use crate::proof::integrity::Proof;
 
-/// `VerifiableCredential` represents a naive implementation of the W3C Verifiable
-/// Credential data model v1.1.
+/// `VerifiableCredential` represents a naive implementation of the W3C
+/// Verifiable Credential data model v1.1.
 /// See <https://www.w3.org/TR/vc-data-model>.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", default)]
 pub struct VerifiableCredential {
     // LATER: add support for @context objects
     #[allow(rustdoc::bare_urls)]
-    /// The @context property is used to map property URIs into short-form aliases.
-    /// It is an ordered set where the first item is "`https://www.w3.org/2018/credentials/v1`".
-    /// Subsequent items may be composed of any combination of URLs and/or objects,
-    /// each processable as a [JSON-LD Context](https://www.w3.org/TR/json-ld11/#the-context).
+    /// The @context property is used to map property URIs into short-form
+    /// aliases. It is an ordered set where the first item is "`https://www.w3.org/2018/credentials/v1`".
+    /// Subsequent items may be composed of any combination of URLs and/or
+    /// objects, each processable as a [JSON-LD Context](https://www.w3.org/TR/json-ld11/#the-context).
     #[serde(rename = "@context")]
     pub context: Vec<Kind<Value>>,
 
@@ -41,12 +41,13 @@ pub struct VerifiableCredential {
     /// the id (a schema). For example, "`http://example.edu/credentials/3732`".
     pub id: String,
 
-    /// The type property is used to uniquely identify the type of the credential.
-    /// That is, to indicate the set of claims the credential contains. It is an
-    /// unordered set of URIs (full or relative to @context). It is RECOMMENDED that
-    /// each URI, if dereferenced, will result in a document containing machine-readable
-    /// information about the type. Syntactic conveniences, such as JSON-LD, SHOULD
-    /// be used to ease developer usage.
+    /// The type property is used to uniquely identify the type of the
+    /// credential. That is, to indicate the set of claims the credential
+    /// contains. It is an unordered set of URIs (full or relative to
+    /// @context). It is RECOMMENDED that each URI, if dereferenced, will
+    /// result in a document containing machine-readable information about
+    /// the type. Syntactic conveniences, such as JSON-LD, SHOULD be used to
+    /// ease developer usage.
     #[serde(rename = "type")]
     pub type_: Vec<String>,
 
@@ -110,12 +111,14 @@ impl VerifiableCredential {
     ///
     /// # Errors
     ///
-    /// Fails with `Error::ServerError` if any of the VC's mandatory fields are not set.
+    /// Fails with `Error::ServerError` if any of the VC's mandatory fields are
+    /// not set.
     pub fn new() -> anyhow::Result<Self> {
         Self::builder().try_into()
     }
 
-    /// Returns a new [`VcBuilder`], which can be used to build a [`VerifiableCredential`]
+    /// Returns a new [`VcBuilder`], which can be used to build a
+    /// [`VerifiableCredential`]
     #[must_use]
     pub fn builder() -> VcBuilder {
         VcBuilder::new()
@@ -143,9 +146,9 @@ pub struct Issuer {
     pub extra: Option<HashMap<String, Value>>,
 }
 
-/// `CredentialSubject` holds claims about the subject(s) referenced by the credential.
-/// Or, more correctly: a set of objects containing one or more properties related to
-/// a subject of the credential.
+/// `CredentialSubject` holds claims about the subject(s) referenced by the
+/// credential. Or, more correctly: a set of objects containing one or more
+/// properties related to a subject of the credential.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(default)]
 pub struct CredentialSubject {
@@ -285,8 +288,9 @@ pub struct CredentialSchema {
     pub type_: String,
 }
 
-/// `RefreshService` can be used to provide a link to the issuer's refresh service
-/// so Holder's can refresh (manually or automatically) an expired credential.
+/// `RefreshService` can be used to provide a link to the issuer's refresh
+/// service so Holder's can refresh (manually or automatically) an expired
+/// credential.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(default)]
 pub struct RefreshService {
@@ -489,7 +493,8 @@ impl VcBuilder {
     ///
     /// # Errors
     ///
-    /// Fails with `Error::ServerError` if any of the VC's mandatory fields are not set.
+    /// Fails with `Error::ServerError` if any of the VC's mandatory fields are
+    /// not set.
     pub fn build(self) -> anyhow::Result<VerifiableCredential> {
         tracing::debug!("VcBuilder::build");
 
