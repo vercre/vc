@@ -35,6 +35,10 @@ pub struct Issuance {
     /// A list of `CredentialConfiguration`s, one for each credential offered.
     pub offered: HashMap<String, CredentialConfiguration>,
 
+    /// A list of credential configuration IDs accepted for issuance by the
+    /// holder.
+    pub accepted: Vec<String>,
+
     /// The user's pin, as set from the shell.
     pub pin: Option<String>,
 

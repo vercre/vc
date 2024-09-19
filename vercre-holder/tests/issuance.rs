@@ -6,7 +6,7 @@ use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::provider::CredentialStorer;
-use vercre_holder::{IssuanceStatus, OfferRequest, PinRequest};
+use vercre_holder::{AcceptRequest, IssuanceStatus, OfferRequest, PinRequest};
 use vercre_issuer::{OfferType, SendType};
 use vercre_macros::create_offer_request;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -53,7 +53,15 @@ async fn e2e_pre_auth() {
     });
 
     // Accept offer
-    let status = vercre_holder::accept(HOLDER_PROVIDER.clone(), issuance.issuance_id.clone())
+    let accept_req = AcceptRequest {
+        issuance_id: issuance.issuance_id.clone(),
+        credential_configuration_ids: issuance
+            .offered
+            .keys()
+            .cloned()
+            .collect::<Vec<String>>(),
+    };
+    let status = vercre_holder::accept(HOLDER_PROVIDER.clone(), &accept_req)
         .await
         .expect("should accept offer");
 

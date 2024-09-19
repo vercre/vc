@@ -4,7 +4,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use vercre_holder::{
-    CredentialConfiguration, CredentialOffer, IssuanceStatus, OfferRequest, PinRequest, TxCode,
+    AcceptRequest, CredentialConfiguration, CredentialOffer, IssuanceStatus, OfferRequest,
+    PinRequest, TxCode,
 };
 
 use super::{AppState, SubApp};
@@ -53,7 +54,13 @@ impl AppState {
 
     /// Accept a credential issuance offer.
     pub async fn accept(&mut self, provider: Provider) -> anyhow::Result<()> {
-        let status = vercre_holder::accept(provider, self.issuance.id.clone()).await?;
+        // Just accept whatever is offered. In a real app, the user would need
+        // to select which credentials to accept.
+        let req = AcceptRequest {
+            issuance_id: self.issuance.id.clone(),
+            credential_configuration_ids: self.issuance.offered.keys().cloned().collect(),
+        };
+        let status = vercre_holder::accept(provider, &req).await?;
         self.issuance.status = status;
         Ok(())
     }

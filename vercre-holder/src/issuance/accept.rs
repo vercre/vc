@@ -5,18 +5,35 @@
 //! that, otherwise it will proceed with the token request and credential requests.
 
 use anyhow::anyhow;
+use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
 use crate::issuance::Status;
 use crate::provider::HolderProvider;
 
+/// `AcceptRequest` is the request to the `accept` endpoint to accept a
+/// credential issuance offer.
+/// 
+/// The flow ID is the issuance flow identifier and
+/// the list of credential configuration IDs are the credentials the holder
+/// wishes to accept.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[allow(clippy::module_name_repetitions)]
+pub struct AcceptRequest {
+    /// The issuance flow identifier.
+    pub issuance_id: String,
+
+    /// The list of credential configuration IDs to accept.
+    pub credential_configuration_ids: Vec<String>,
+}
+
 /// Progresses the issuance flow triggered by a holder accepting a credential offer.
 /// The request is the issuance flow ID.
 #[instrument(level = "debug", skip(provider))]
-pub async fn accept(provider: impl HolderProvider, request: String) -> anyhow::Result<Status> {
+pub async fn accept(provider: impl HolderProvider, request: &AcceptRequest) -> anyhow::Result<Status> {
     tracing::debug!("Endpoint::accept");
 
-    let mut issuance = match super::get_issuance(provider.clone(), &request).await {
+    let mut issuance = match super::get_issuance(provider.clone(), &request.issuance_id).await {
         Ok(issuance) => issuance,
         Err(e) => {
             tracing::error!(target: "Endpoint::accept", ?e);
