@@ -6,7 +6,8 @@ use anyhow::{anyhow, bail};
 use tracing::instrument;
 use vercre_core::Kind;
 use vercre_datasec::jose::jws::{self, Type};
-use vercre_macros::{credential_request, token_request};
+use vercre_issuer::TokenGrantType;
+use vercre_macros::credential_request;
 use vercre_openid::issuer::{
     CredentialConfiguration, CredentialResponse, CredentialResponseType, ProofClaims, TokenRequest,
 };
@@ -20,11 +21,11 @@ use crate::provider::{CredentialStorer, DidResolver, HolderProvider, Issuer, Sta
 /// get the credentials contained in the offer.
 #[instrument(level = "debug", skip(provider))]
 pub async fn get_credentials(
-    provider: impl HolderProvider, request: String,
+    provider: impl HolderProvider, issuance_id: &str,
 ) -> anyhow::Result<Status> {
     tracing::debug!("Endpoint::get_credentials");
 
-    let mut issuance = match super::get_issuance(provider.clone(), &request).await {
+    let mut issuance: Issuance = match StateStore::get(&provider, issuance_id).await {
         Ok(issuance) => issuance,
         Err(e) => {
             tracing::error!(target: "Endpoint::get_credentials", ?e);
@@ -132,25 +133,19 @@ fn token_request(issuance: &Issuance) -> TokenRequest {
     let pre_auth_code =
         grants.pre_authorized_code.as_ref().expect("pre-authorized code exists on offer");
 
-    issuance.pin.as_ref().map_or_else(
-        || {
-            token_request!({
-               "credential_issuer": issuance.offer.credential_issuer.clone(),
-                "client_id": issuance.client_id.clone(),
-                "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
-                "pre-authorized_code": pre_auth_code.pre_authorized_code.clone(),
-            })
+    // If the accepted credentials are not all the offered ones, we need to construct
+    // authorization details.
+ 
+    TokenRequest {
+        credential_issuer: issuance.offer.credential_issuer.clone(),
+        client_id: Some(issuance.client_id.clone()),
+        grant_type: TokenGrantType::PreAuthorizedCode {
+            pre_authorized_code: pre_auth_code.pre_authorized_code.clone(),
+            tx_code: issuance.pin.clone(),
         },
-        |pin| {
-            token_request!({
-                "credential_issuer": issuance.offer.credential_issuer.clone(),
-                "client_id": issuance.client_id.clone(),
-                "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
-                "pre-authorized_code": pre_auth_code.pre_authorized_code.clone(),
-                "tx_code": pin,
-            })
-        },
-    )
+        authorization_details: issuance.accepted.clone(),
+        client_assertion: None,
+    }
 }
 
 /// Construct a credential from a credential response.

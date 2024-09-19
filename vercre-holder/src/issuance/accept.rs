@@ -6,15 +6,15 @@
 //! with the token request and credential requests.
 
 use anyhow::anyhow;
-use serde::{Deserialize, Serialize};
+use chrono::{DateTime, Utc};use serde::{Deserialize, Serialize};
 use tracing::instrument;
 
-use crate::issuance::Status;
-use crate::provider::HolderProvider;
+use super::{Issuance, Status};
+use crate::provider::{HolderProvider, StateStore};
 
 /// `AcceptRequest` is the request to the `accept` endpoint to accept a
 /// credential issuance offer.
-/// 
+///
 /// The flow ID is the issuance flow identifier and
 /// the list of credential configuration IDs are the credentials the holder
 /// wishes to accept.
@@ -25,13 +25,20 @@ pub struct AcceptRequest {
     pub issuance_id: String,
 
     /// The list of credential configuration IDs to accept.
+    ///
+    /// None implies the holder wants all credentials and all claims on offer.
+    ///
+    /// Use the cancel endpoint to abandon the issuance and accept no
+    /// credentials on offer.
     pub credential_configuration_ids: Vec<String>,
 }
 
 /// Progresses the issuance flow triggered by a holder accepting a credential
-/// offer. The request is the issuance flow ID.
+/// offer.
 #[instrument(level = "debug", skip(provider))]
-pub async fn accept(provider: impl HolderProvider, request: &AcceptRequest) -> anyhow::Result<Status> {
+pub async fn accept(
+    provider: impl HolderProvider, request: &AcceptRequest,
+) -> anyhow::Result<Status> {
     tracing::debug!("Endpoint::accept");
 
     // Abandon the issuance if no credentials are accepted.
@@ -40,7 +47,7 @@ pub async fn accept(provider: impl HolderProvider, request: &AcceptRequest) -> a
         return Ok(Status::Inactive);
     }
 
-    let mut issuance = match super::get_issuance(provider.clone(), &request.issuance_id).await {
+    let mut issuance: Issuance = match StateStore::get(&provider, &request.issuance_id).await {
         Ok(issuance) => issuance,
         Err(e) => {
             tracing::error!(target: "Endpoint::accept", ?e);
@@ -63,7 +70,7 @@ pub async fn accept(provider: impl HolderProvider, request: &AcceptRequest) -> a
         tracing::error!(target: "Endpoint::accept", ?e);
         return Err(e);
     };
-    issuance.accepted = request.credential_configuration_ids.clone();
+    issuance.accepted = None;
 
     if pre_auth_code.tx_code.is_some() {
         issuance.status = Status::PendingPin;
@@ -72,7 +79,7 @@ pub async fn accept(provider: impl HolderProvider, request: &AcceptRequest) -> a
     }
 
     // Stash the state for the next step.
-    if let Err(e) = super::put_issuance(provider, &issuance).await {
+    if let Err(e) = StateStore::put(&provider, &issuance.id, &issuance, DateTime::<Utc>::MAX_UTC).await {
         tracing::error!(target: "Endpoint::accept", ?e);
         return Err(e);
     };

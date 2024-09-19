@@ -69,7 +69,7 @@ async fn e2e_pre_auth() {
 
     // Enter PIN
     let pin_req = PinRequest {
-        id: issuance.issuance_id.clone(),
+        issuance_id: issuance.issuance_id.clone(),
         pin: offer_resp.tx_code.expect("should have user code"),
     };
     let status =
@@ -78,7 +78,7 @@ async fn e2e_pre_auth() {
     assert_eq!(status, IssuanceStatus::Accepted);
 
     // Get (and store) credentials
-    vercre_holder::get_credentials(HOLDER_PROVIDER.clone(), issuance.issuance_id.clone())
+    vercre_holder::get_credentials(HOLDER_PROVIDER.clone(), &issuance.issuance_id)
         .await
         .expect("should get credentials");
 

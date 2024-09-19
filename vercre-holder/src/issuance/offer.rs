@@ -9,13 +9,14 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 use anyhow::anyhow;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, MetadataRequest, TxCode};
 
 use super::{Issuance, Status};
-use crate::provider::{HolderProvider, Issuer};
+use crate::provider::{HolderProvider, Issuer, StateStore};
 
 /// `OfferRequest` is the request to the `offer` endpoint to initiate an
 /// issuance flow.
@@ -122,7 +123,9 @@ pub async fn offer(
     issuance.status = Status::Ready;
 
     // Stash the state for the next step.
-    if let Err(e) = super::put_issuance(provider, &issuance).await {
+    if let Err(e) =
+        StateStore::put(&provider, &issuance.id, &issuance, DateTime::<Utc>::MAX_UTC).await
+    {
         tracing::error!(target: "Endpoint::offer", ?e);
         return Err(e);
     };

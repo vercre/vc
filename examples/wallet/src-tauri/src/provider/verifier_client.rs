@@ -9,7 +9,7 @@ impl Verifier for Provider {
     /// Get a request object. If an error is returned, the wallet will cancel
     /// the presentation flow.
     async fn get_request_object(
-        &self, _flow_id: &str, req: &str,
+        &self, _presentation_id: &str, req: &str,
     ) -> anyhow::Result<RequestObjectResponse> {
         let client = reqwest::Client::new();
         let result = client.get(req).header(ACCEPT, "application/json").send().await?;
@@ -25,7 +25,7 @@ impl Verifier for Provider {
 
     /// Send the presentation to the verifier.
     async fn present(
-        &self, _flow_id: &str, uri: Option<&str>, presentation: &ResponseRequest,
+        &self, _presentation_id: &str, uri: Option<&str>, presentation: &ResponseRequest,
     ) -> anyhow::Result<ResponseResponse> {
         let client = reqwest::Client::new();
         let Some(presentation_url) = uri else {

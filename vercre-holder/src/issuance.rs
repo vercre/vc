@@ -4,6 +4,7 @@
 //! flow.
 
 pub mod accept;
+pub mod cancel;
 pub mod credential;
 pub mod offer;
 pub mod pin;
@@ -11,11 +12,10 @@ pub mod pin;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, TokenResponse};
-
-use crate::provider::{HolderProvider, StateStore};
+use vercre_openid::issuer::{
+    AuthorizationDetail, CredentialConfiguration, CredentialOffer, TokenResponse,
+};
 
 /// `Issuance` represents app state across the steps of the issuance flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -37,9 +37,11 @@ pub struct Issuance {
     /// A list of `CredentialConfiguration`s, one for each credential offered.
     pub offered: HashMap<String, CredentialConfiguration>,
 
-    /// A list of credential configuration IDs accepted for issuance by the
-    /// holder.
-    pub accepted: Vec<String>,
+    /// The list of credentials and claims the wallet wants to obtain from those
+    /// offered.
+    ///
+    /// None implies the wallet wants all claims.
+    pub accepted: Option<Vec<AuthorizationDetail>>,
 
     /// The user's pin, as set from the shell.
     pub pin: Option<String>,
@@ -49,6 +51,9 @@ pub struct Issuance {
 }
 
 /// Issuance Status values.
+///
+/// TODO: Revisit and replace in alignment with Notification endpoint
+/// implementation.
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename = "IssuanceStatus")]
 pub enum Status {
@@ -73,13 +78,4 @@ pub enum Status {
 
     /// The credential offer has failed, with an error message.
     Failed(String),
-}
-
-/// Get and put issuance state information using the supplied provider.
-async fn get_issuance(provider: impl HolderProvider, id: &str) -> anyhow::Result<Issuance> {
-    StateStore::get(&provider, id).await
-}
-
-async fn put_issuance(provider: impl HolderProvider, issuance: &Issuance) -> anyhow::Result<()> {
-    StateStore::put(&provider, &issuance.id, &issuance, DateTime::<Utc>::MAX_UTC).await
 }

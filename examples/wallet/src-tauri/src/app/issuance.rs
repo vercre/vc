@@ -70,7 +70,7 @@ impl AppState {
     /// Set a PIN
     pub async fn pin(&mut self, provider: Provider, pin: &str) -> anyhow::Result<()> {
         let request = PinRequest {
-            id: self.issuance.id.clone(),
+            issuance_id: self.issuance.id.clone(),
             pin: pin.into(),
         };
         let status = vercre_holder::pin(provider, &request).await?;
@@ -83,7 +83,7 @@ impl AppState {
     pub async fn get_credentials(&mut self, provider: Provider) -> anyhow::Result<()> {
         log::info!("Getting credentials for issuance {}", self.issuance.id);
 
-        match vercre_holder::get_credentials(provider, self.issuance.id.clone()).await {
+        match vercre_holder::get_credentials(provider, &self.issuance.id).await {
             Ok(status) => {
                 log::info!("Received status: {:?}", status);
                 self.issuance.status = status;
