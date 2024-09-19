@@ -20,6 +20,7 @@ use vercre_openid::issuer::{
 };
 use vercre_openid::{Error, Result};
 
+use crate::create_offer;
 use crate::state::{PreAuthorization, Stage, State};
 
 /// Endpoint for the Wallet to request the Issuer's Credential Offer when
@@ -55,8 +56,9 @@ async fn process(
     };
 
     let credential_offer = offer.credential_offer.clone();
+    let state_key = create_offer::state_key(&credential_offer)?;
 
-    // update State stage if credential_offer has a `pre_authorized_code` grant,
+    // update state stage if credential_offer is pre-authorized
     if let Some(grants) = &credential_offer.grants {
         if grants.pre_authorized_code.is_some() {
             state.stage = Stage::PreAuthorized(PreAuthorization {
@@ -65,9 +67,7 @@ async fn process(
             });
         }
     }
-
-    // TODO: generate pre-authorized code to use as state key and save to state
-    StateStore::put(provider, &request.id, &state, state.expires_at)
+    StateStore::put(provider, &state_key, &state, state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 

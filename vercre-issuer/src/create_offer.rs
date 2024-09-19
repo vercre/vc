@@ -119,8 +119,10 @@ async fn verify(provider: &impl Provider, request: &CreateOfferRequest) -> Resul
     }
 
     // subject_id is required
-    if request.subject_id.is_none() {
-        return Err(Error::InvalidRequest("no subject_id specified".into()));
+    if request.pre_authorize && request.subject_id.is_none() {
+        return Err(Error::InvalidRequest(
+            "`subject_id` must be specified for pre-authorization".into(),
+        ));
     };
 
     Ok(())
@@ -132,50 +134,89 @@ async fn process(
 ) -> Result<CreateOfferResponse> {
     tracing::debug!("create_offer::process");
 
+    let authorized = authorize(provider, &request).await?;
     let credential_offer = credential_offer(&request);
     let tx_code =
         if request.pre_authorize && request.tx_code_required { Some(gen::tx_code()) } else { None };
 
-    // ------------------------------------------------------------------------
-    // save state
-    // ------------------------------------------------------------------------
-    let state_key = state_key(&credential_offer)?;
-    let credentials = credentials(provider, &request).await?;
+    // offer type and corresponding state key
+    let (offer_type, state_key) = if request.send_type == SendType::ByVal {
+        let state_key = state_key(&credential_offer)?;
+        (OfferType::Object(credential_offer.clone()), state_key)
+    } else {
+        let state_key = gen::state_key();
+        (
+            OfferType::Uri(format!("{}/credential_offer/{state_key}", request.credential_issuer)),
+            state_key,
+        )
+    };
 
-    let state_stage = if request.pre_authorize && request.send_type == SendType::ByVal {
+    // save state
+    let state_stage = if request.send_type == SendType::ByVal && request.pre_authorize {
         Stage::PreAuthorized(PreAuthorization {
-            credentials: credentials.clone(),
+            credentials: authorized,
             tx_code: tx_code.clone(),
         })
     } else {
         Stage::Offered(Offer {
-            credential_offer: credential_offer.clone(),
-            credentials: credentials.clone(),
+            credential_offer,
+            credentials: authorized,
             tx_code: tx_code.clone(),
         })
     };
     let state = State {
         expires_at: Utc::now() + Expire::Authorized.duration(),
-        subject_id: request.subject_id.clone(),
+        subject_id: request.subject_id,
         stage: state_stage,
     };
     StateStore::put(provider, &state_key, &state, state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
-    // ------------------------------------------------------------------------
 
-    // TODO: use unique id rather than pre_authorized_code in URI
-    let offer_type = if request.send_type == SendType::ByRef {
-        // TODO: use unique id rather than pre_authorized_code in URI
-        OfferType::Uri(format!("{}/credential_offer/{state_key}", request.credential_issuer))
-    } else {
-        OfferType::Object(credential_offer)
-    };
-
+    // return response
     Ok(CreateOfferResponse { offer_type, tx_code })
 }
 
-fn state_key(credential_offer: &CredentialOffer) -> Result<String> {
+/// Authorize requested credentials for the subject.
+async fn authorize(
+    provider: &impl Provider, request: &CreateOfferRequest,
+) -> Result<HashMap<String, AuthorizedCredential>> {
+    // skip authorization if not pre-authorized
+    if !request.pre_authorize {
+        return Ok(HashMap::new());
+    }
+
+    let Some(subject_id) = &request.subject_id else {
+        return Err(Error::InvalidRequest(
+            "`subject_id` must be set for pre-authorized offers".into(),
+        ));
+    };
+
+    let mut authorized = HashMap::new();
+
+    for config_id in request.credential_configuration_ids.clone() {
+        let identifiers = Subject::authorize(provider, subject_id, &config_id)
+            .await
+            .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
+
+        for identifier in &identifiers {
+            authorized.insert(
+                identifier.clone(),
+                AuthorizedCredential {
+                    credential_identifier: identifier.clone(),
+                    credential_configuration_id: config_id.clone(),
+                    claim_ids: None,
+                },
+            );
+        }
+    }
+
+    Ok(authorized)
+}
+
+/// Extract `pre_authorized_code` or `issuer_state` from CredentialOffer to
+/// use as state key.
+pub fn state_key(credential_offer: &CredentialOffer) -> Result<String> {
     // get pre-authorized code as state key
     let Some(grants) = &credential_offer.grants else {
         return Err(Error::ServerError("no grants".into()));
@@ -195,7 +236,7 @@ fn state_key(credential_offer: &CredentialOffer) -> Result<String> {
     Err(Error::ServerError("no grants".into()))
 }
 
-// Create CredentialOffer
+/// Create CredentialOffer
 fn credential_offer(request: &CreateOfferRequest) -> CredentialOffer {
     let grants = if request.pre_authorize {
         let tx_code_def = if request.tx_code_required {
@@ -231,37 +272,6 @@ fn credential_offer(request: &CreateOfferRequest) -> CredentialOffer {
         credential_configuration_ids: request.credential_configuration_ids.clone(),
         grants: Some(grants),
     }
-}
-
-async fn credentials(
-    provider: &impl Provider, request: &CreateOfferRequest,
-) -> Result<HashMap<String, AuthorizedCredential>> {
-    let Some(subject_id) = &request.subject_id else {
-        return Err(Error::InvalidRequest(
-            "`subject_id` must be set for pre-authorized offers".into(),
-        ));
-    };
-
-    let mut credentials = HashMap::new();
-
-    for config_id in request.credential_configuration_ids.clone() {
-        let identifiers = Subject::authorize(provider, subject_id, &config_id)
-            .await
-            .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
-
-        for identifier in &identifiers {
-            credentials.insert(
-                identifier.clone(),
-                AuthorizedCredential {
-                    credential_identifier: identifier.clone(),
-                    credential_configuration_id: config_id.clone(),
-                    claim_ids: None,
-                },
-            );
-        }
-    }
-
-    Ok(credentials)
 }
 
 #[cfg(test)]

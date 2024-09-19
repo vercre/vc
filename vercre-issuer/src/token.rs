@@ -47,7 +47,7 @@ pub async fn token(provider: impl Provider, request: TokenRequest) -> Result<Tok
 
     // RFC 6749 requires a particular error here
     let Ok(state) = StateStore::get(&provider, state_key).await else {
-        return Err(Error::InvalidGrant("the authorization code is invalid".into()));
+        return Err(Error::InvalidGrant("authorization code is invalid".into()));
     };
 
     // authorization code is one-time use
