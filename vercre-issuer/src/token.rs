@@ -1,18 +1,19 @@
 //! # Token Endpoint
 //!
-//! The Token Endpoint issues an Access Token and, optionally, a Refresh Token in
-//! exchange for the Authorization Code that client obtained in a successful
+//! The Token Endpoint issues an Access Token and, optionally, a Refresh Token
+//! in exchange for the Authorization Code that client obtained in a successful
 //! Authorization Response. It is used in the same manner as defined in
 //! [RFC6749](https://tools.ietf.org/html/rfc6749#section-5.1) and follows the
 //! recommendations given in [I-D.ietf-oauth-security-topics].
 //!
-//! The authorization server MUST include the HTTP "Cache-Control" response header
-//! field [RFC2616](https://www.rfc-editor.org/rfc/rfc2616) with a value of "no-store" in any response containing tokens,
-//! credentials, or other sensitive information, as well as the "Pragma" response
-//! header field [RFC2616](https://www.rfc-editor.org/rfc/rfc2616) with a value of "no-cache".
+//! The authorization server MUST include the HTTP "Cache-Control" response
+//! header field [RFC2616](https://www.rfc-editor.org/rfc/rfc2616) with a value of "no-store" in any response containing tokens,
+//! credentials, or other sensitive information, as well as the "Pragma"
+//! response header field [RFC2616](https://www.rfc-editor.org/rfc/rfc2616) with a value of "no-cache".
 
 // TODO: verify `client_assertion` JWT, when set
 
+use std::collections::HashMap;
 use std::fmt::Debug;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
@@ -21,12 +22,12 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationDetail, AuthorizationSpec, Authorized, Format, Metadata, Provider, StateStore,
-    TokenGrantType, TokenRequest, TokenResponse, TokenType,
+    AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec, Authorized, ConfigurationId,
+    Format, Metadata, Provider, StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
 
-use crate::state::{Expire, State, Step, Token};
+use crate::state::{AuthorizedCredential, DetailItem, Expire, Stage, State, Token};
 
 /// Token request handler.
 ///
@@ -46,7 +47,7 @@ pub async fn token(provider: impl Provider, request: TokenRequest) -> Result<Tok
 
     // RFC 6749 requires a particular error here
     let Ok(state) = StateStore::get(&provider, state_key).await else {
-        return Err(Error::InvalidGrant("the authorization code is invalid".into()));
+        return Err(Error::InvalidGrant("authorization code is invalid".into()));
     };
 
     // authorization code is one-time use
@@ -85,7 +86,7 @@ impl Context {
                 code_verifier,
                 ..
             } => {
-                let Step::Authorization(auth_state) = &self.state.current_step else {
+                let Stage::Authorized(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("authorization state not set".into()));
                 };
 
@@ -118,7 +119,7 @@ impl Context {
                 }
             }
             TokenGrantType::PreAuthorizedCode { tx_code, .. } => {
-                let Step::PreAuthorized(auth_state) = &self.state.current_step else {
+                let Stage::PreAuthorized(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("pre-authorized state not set".into()));
                 };
 
@@ -143,37 +144,122 @@ impl Context {
     // TODO: add `client_assertion` JWT verification
 
     // Exchange authorization/pre-authorized code for access token.
+    #[allow(clippy::too_many_lines)]
     async fn process(
         &self, provider: &impl Provider, request: TokenRequest,
     ) -> Result<TokenResponse> {
         tracing::debug!("token::process");
 
-        // get authorization grants from state
-        let (mut authorized, scope) = match &self.state.current_step {
-            Step::Authorization(auth) => (auth.authorized.clone(), auth.scope.clone()),
-            Step::PreAuthorized(pre) => (Some(pre.authorized.clone()), None),
-            _ => return Err(Error::ServerError("could not get authorization state".into())),
-        };
+        let mut credentials = HashMap::new();
 
-        // TODO: support narrowing of scope
+        let (authorization_details, scope) = match &request.grant_type {
+            TokenGrantType::PreAuthorizedCode { .. } => {
+                let Stage::PreAuthorized(pre_auth_state) = &self.state.stage else {
+                    return Err(Error::ServerError("pre-authorized state not set".into()));
+                };
 
-        // narrow token's authorization if requested by wallet
-        if let Some(auth_dets) = request.authorization_details
-            && let Some(authzd) = authorized
-        {
-            let reduced = narrow_auth(&authzd, &auth_dets);
-            if reduced.is_empty() {
-                return Err(Error::InvalidRequest("no matching authorization details".into()));
+                credentials.clone_from(&pre_auth_state.credentials);
+
+                let mut authorization_details = vec![];
+
+                for (identifier, authorized) in &pre_auth_state.credentials {
+                    authorization_details.push(Authorized {
+                        authorization_detail: AuthorizationDetail {
+                            type_: AuthorizationDetailType::OpenIdCredential,
+                            specification: AuthorizationSpec::ConfigurationId(
+                                ConfigurationId::Definition {
+                                    credential_configuration_id: authorized
+                                        .credential_configuration_id
+                                        .clone(),
+                                    credential_definition: None,
+                                },
+                            ),
+                            ..AuthorizationDetail::default()
+                        },
+                        credential_identifiers: vec![identifier.clone()],
+                    });
+                }
+
+                (Some(authorization_details), None)
+
+                // TODO: if narrowing is requested, narrow the authorization and
+                // return authorization_details (or scope?)
             }
-            authorized = Some(reduced);
+
+            TokenGrantType::AuthorizationCode { .. } => {
+                let Stage::Authorized(authzn_state) = &self.state.stage else {
+                    return Err(Error::ServerError("authorization state not set".into()));
+                };
+
+                // TODO: reduce scope if requested scope
+
+                let scope = authzn_state.scope.as_ref().map(|scope_items| {
+                    let mut scope_str = String::new();
+
+                    for item in scope_items {
+                        scope_str.push_str(&item.item);
+
+                        for identifier in &item.credential_identifiers {
+                            credentials.insert(
+                                identifier.clone(),
+                                AuthorizedCredential {
+                                    credential_identifier: identifier.clone(),
+                                    credential_configuration_id: item
+                                        .credential_configuration_id
+                                        .clone(),
+                                    claim_ids: None,
+                                },
+                            );
+                        }
+                    }
+                    scope_str
+                });
+
+                // narrow token's authorization if requested by wallet
+                let authorization_details = if let Some(detail_items) = &authzn_state.details {
+                    let detail_items = if let Some(requested) = &request.authorization_details {
+                        narrow_auth(detail_items, requested)?
+                    } else {
+                        detail_items.clone()
+                    };
+
+                    let mut authorization_details = vec![];
+                    for item in &detail_items {
+                        authorization_details.push(Authorized {
+                            authorization_detail: item.authorization_detail.clone(),
+                            credential_identifiers: item.credential_identifiers.clone(),
+                        });
+
+                        for identifier in &item.credential_identifiers {
+                            credentials.insert(
+                                identifier.clone(),
+                                AuthorizedCredential {
+                                    credential_identifier: identifier.clone(),
+                                    credential_configuration_id: item
+                                        .credential_configuration_id
+                                        .clone(),
+                                    claim_ids: None,
+                                },
+                            );
+                        }
+                    }
+
+                    Some(authorization_details)
+                } else {
+                    None
+                };
+
+                (authorization_details, scope)
+            }
         };
 
         let access_token = gen::token();
         let c_nonce = gen::nonce();
 
         let mut state = self.state.clone();
-        state.current_step = Step::Token(Token {
+        state.stage = Stage::Validated(Token {
             access_token: access_token.clone(),
+            credentials,
             c_nonce: c_nonce.clone(),
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
         });
@@ -187,31 +273,35 @@ impl Context {
             expires_in: Expire::Access.duration().num_seconds(),
             c_nonce: Some(c_nonce),
             c_nonce_expires_in: Some(Expire::Nonce.duration().num_seconds()),
-            authorization_details: authorized,
+            authorization_details,
             scope,
         })
     }
 }
 
+// TODO: potentially, reduce claimset to requested claims
+
 // Narrow previously authorized credentials to requested ones.
-fn narrow_auth(authorized: &[Authorized], requested: &[AuthorizationDetail]) -> Vec<Authorized> {
+fn narrow_auth(
+    authorized: &[DetailItem], requested: &[AuthorizationDetail],
+) -> Result<Vec<DetailItem>> {
     let mut subset = vec![];
 
     for reqd in requested {
         // find `auth_det` in previously authorized
-        let Some(auth_det) =
+        let Some(detail_item) =
             authorized.iter().find(|authd| is_match(&authd.authorization_detail, reqd))
         else {
             continue;
         };
-
-        // TODO: potentially, reduce claimset to requested claims
-
-        // add to subset
-        subset.push(auth_det.clone());
+        subset.push(detail_item.clone());
     }
 
-    subset
+    if subset.is_empty() {
+        return Err(Error::InvalidRequest("no matching authorization details".into()));
+    }
+
+    Ok(subset)
 }
 
 fn is_match(a: &AuthorizationDetail, b: &AuthorizationDetail) -> bool {
@@ -246,14 +336,14 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use vercre_macros::token_request;
     use vercre_openid::issuer::{
-        AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec, Authorized,
-        ConfigurationId, CredentialDefinition, Format,
+        AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec, ConfigurationId,
+        CredentialDefinition, Format,
     };
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
 
     use super::*;
-    use crate::state::{Authorization, PreAuthorized};
+    use crate::state::{Authorization, AuthorizedCredential, DetailItem, PreAuthorization};
     extern crate self as vercre_issuer;
 
     #[tokio::test]
@@ -265,25 +355,19 @@ mod tests {
 
         // set up PreAuthorized state
         let state = State {
-            expires_at: Utc::now() + Expire::Authorized.duration(),
-            subject_id: Some(NORMAL_USER.into()),
-            current_step: Step::PreAuthorized(PreAuthorized {
-                authorized: vec![Authorized {
-                    authorization_detail: AuthorizationDetail {
-                        type_: AuthorizationDetailType::OpenIdCredential,
-                        specification: AuthorizationSpec::ConfigurationId(
-                            ConfigurationId::Definition {
-                                credential_configuration_id: "EmployeeID_JWT".into(),
-                                credential_definition: None,
-                            },
-                        ),
-                        ..AuthorizationDetail::default()
+            stage: Stage::PreAuthorized(PreAuthorization {
+                credentials: HashMap::from([(
+                    "PHLEmployeeID".into(),
+                    AuthorizedCredential {
+                        credential_identifier: "PHLEmployeeID".into(),
+                        credential_configuration_id: "EmployeeID_JWT".into(),
+                        claim_ids: None,
                     },
-                    credential_identifiers: vec!["PHLEmployeeID".into()],
-                }],
+                )]),
                 tx_code: Some("1234".into()),
             }),
-            ..State::default()
+            subject_id: Some(NORMAL_USER.into()),
+            expires_at: Utc::now() + Expire::Authorized.duration(),
         };
 
         let pre_auth_code = "ABCDEF";
@@ -317,9 +401,9 @@ mod tests {
 
         assert_snapshot!("token:pre_authorized:state", state, {
             ".expires_at" => "[expires_at]",
-            ".current_step.access_token" => "[access_token]",
-            ".current_step.c_nonce" => "[c_nonce]",
-            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]",
+            ".stage.access_token" => "[access_token]",
+            ".stage.c_nonce" => "[c_nonce]",
+            ".stage.c_nonce_expires_at" => "[c_nonce_expires_at]",
         });
     }
 
@@ -333,12 +417,10 @@ mod tests {
 
         // set up Authorization state
         let state = State {
-            expires_at: Utc::now() + Expire::Authorized.duration(),
-            subject_id: Some(NORMAL_USER.into()),
-            current_step: Step::Authorization(Authorization {
+            stage: Stage::Authorized(Authorization {
                 code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
                 code_challenge_method: "S256".into(),
-                authorized: Some(vec![Authorized {
+                details: Some(vec![DetailItem {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
                         specification: AuthorizationSpec::ConfigurationId(
@@ -349,12 +431,14 @@ mod tests {
                         ),
                         ..AuthorizationDetail::default()
                     },
+                    credential_configuration_id: "EmployeeID_JWT".into(),
                     credential_identifiers: vec!["PHLEmployeeID".into()],
                 }]),
                 client_id: CLIENT_ID.into(),
                 ..Authorization::default()
             }),
-            ..State::default()
+            subject_id: Some(NORMAL_USER.into()),
+            expires_at: Utc::now() + Expire::Authorized.duration(),
         };
 
         let code = "ABCDEF";
@@ -386,9 +470,9 @@ mod tests {
 
         assert_snapshot!("token:authorized:state", state, {
             ".expires_at" => "[expires_at]",
-            ".current_step.access_token" => "[access_token]",
-            ".current_step.c_nonce" => "[c_nonce]",
-            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]",
+            ".stage.access_token" => "[access_token]",
+            ".stage.c_nonce" => "[c_nonce]",
+            ".stage.c_nonce_expires_at" => "[c_nonce_expires_at]",
         });
     }
 
@@ -402,14 +486,12 @@ mod tests {
 
         // set up Authorization state
         let state = State {
-            expires_at: Utc::now() + Expire::Authorized.duration(),
-            subject_id: Some(NORMAL_USER.into()),
-            current_step: Step::Authorization(Authorization {
+            stage: Stage::Authorized(Authorization {
                 client_id: CLIENT_ID.into(),
                 redirect_uri: Some("https://example.com".into()),
                 code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
                 code_challenge_method: "S256".into(),
-                authorized: Some(vec![Authorized {
+                details: Some(vec![DetailItem {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
                         specification: AuthorizationSpec::Format(Format::JwtVcJson {
@@ -423,11 +505,13 @@ mod tests {
                         }),
                         ..AuthorizationDetail::default()
                     },
-                    credential_identifiers: vec!["EmployeeID_JWT".into()],
+                    credential_configuration_id: "EmployeeID_JWT".into(),
+                    credential_identifiers: vec!["PHLEmployeeID".into()],
                 }]),
                 ..Authorization::default()
             }),
-            ..State::default()
+            subject_id: Some(NORMAL_USER.into()),
+            expires_at: Utc::now() + Expire::Authorized.duration(),
         };
 
         let code = "ABCDEF";
@@ -470,9 +554,9 @@ mod tests {
 
         assert_snapshot!("token:authorization_details:state", state, {
             ".expires_at" => "[expires_at]",
-            ".current_step.access_token" => "[access_token]",
-            ".current_step.c_nonce" => "[c_nonce]",
-            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]",
+            ".stage.access_token" => "[access_token]",
+            ".stage.c_nonce" => "[c_nonce]",
+            ".stage.c_nonce_expires_at" => "[c_nonce_expires_at]",
         });
     }
 }

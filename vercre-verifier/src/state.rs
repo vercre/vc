@@ -24,8 +24,9 @@ pub struct State {
     /// The time this state item should expire.
     pub expires_at: DateTime<Utc>,
 
-    /// The Verifier's Request Object. Saved for use by the `request_uri` endpoint
-    /// and in comparing the Presentation Definition to the Presentation Submission.
+    /// The Verifier's Request Object. Saved for use by the `request_uri`
+    /// endpoint and in comparing the Presentation Definition to the
+    /// Presentation Submission.
     pub request_object: RequestObject,
 }
 

@@ -1,17 +1,17 @@
 //! # Metadata Endpoint
 //!
-//! The Credential Issuer Metadata contains information on the Credential Issuer's
-//! technical capabilities, supported Credentials, and (internationalized) display
-//! information.
+//! The Credential Issuer Metadata contains information on the Credential
+//! Issuer's technical capabilities, supported Credentials, and
+//! (internationalized) display information.
 //!
-//! The Credential Issuer's configuration can be retrieved using the Credential Issuer
-//! Identifier.
+//! The Credential Issuer's configuration can be retrieved using the Credential
+//! Issuer Identifier.
 //!
-//! Credential Issuers publishing metadata MUST make a JSON document available at the
-//! path formed by concatenating the string `/.well-known/openid-credential-issuer` to
-//! the Credential Issuer Identifier. If the Credential Issuer value contains a path
-//! component, any terminating / MUST be removed before appending
-//! `/.well-known/openid-credential-issuer`.
+//! Credential Issuers publishing metadata MUST make a JSON document available
+//! at the path formed by concatenating the string
+//! `/.well-known/openid-credential-issuer` to the Credential Issuer Identifier.
+//! If the Credential Issuer value contains a path component, any terminating /
+//! MUST be removed before appending `/.well-known/openid-credential-issuer`.
 //!
 //! The language(s) in HTTP Accept-Language and Content-Language Headers MUST use the values defined in [RFC3066](https://www.rfc-editor.org/rfc/rfc3066).
 //!

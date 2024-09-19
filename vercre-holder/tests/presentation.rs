@@ -93,15 +93,15 @@ async fn sample_credential() -> Credential {
 
 #[tokio::test]
 async fn e2e_presentation_uri() {
-    // Add the credential to the holder's store so it can be found and used by the presentation
-    // flow.
+    // Add the credential to the holder's store so it can be found and used by the
+    // presentation flow.
     let credential = sample_credential().await;
     CredentialStorer::save(&HOLDER_PROVIDER.clone(), &credential)
         .await
         .expect("should save credential");
 
-    // Use the presentation service endpoint to create a sample request so we can get a valid
-    // presentation request object.
+    // Use the presentation service endpoint to create a sample request so we can
+    // get a valid presentation request object.
     let request_request = setup_create_request();
     let init_request = vercre_verifier::create_request(VERIFIER_PROVIDER.clone(), &request_request)
         .await
@@ -136,15 +136,15 @@ async fn e2e_presentation_uri() {
 
 #[tokio::test]
 async fn e2e_presentation_obj() {
-    // Add the credential to the holder's store so it can be found and used by the presentation
-    // flow.
+    // Add the credential to the holder's store so it can be found and used by the
+    // presentation flow.
     let credential = sample_credential().await;
     CredentialStorer::save(&HOLDER_PROVIDER.clone(), &credential)
         .await
         .expect("should save credential");
 
-    // Use the presentation service endpoint to create a sample request so we can get a valid
-    // presentation request object.
+    // Use the presentation service endpoint to create a sample request so we can
+    // get a valid presentation request object.
     let mut request_request = setup_create_request();
     request_request.device_flow = DeviceFlow::SameDevice;
     let init_request = vercre_verifier::create_request(VERIFIER_PROVIDER.clone(), &request_request)

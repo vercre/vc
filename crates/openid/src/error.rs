@@ -12,7 +12,8 @@ use std::fmt::Debug;
 use serde::{Deserialize, Serialize, Serializer};
 use thiserror::Error;
 
-/// `OpenID` error codes for  for Verifiable Credential Issuance and Presentation.
+/// `OpenID` error codes for  for Verifiable Credential Issuance and
+/// Presentation.
 #[derive(Error, Debug, Deserialize)]
 pub enum Error {
     /// The request is missing a required parameter, includes an unsupported
@@ -90,9 +91,9 @@ pub enum Error {
 
     /// Credential Endpoint:
 
-    /// The Credential Request is missing a required parameter, includes an unsupported
-    /// parameter or parameter value, repeats the same parameter, or is otherwise
-    /// malformed.
+    /// The Credential Request is missing a required parameter, includes an
+    /// unsupported parameter or parameter value, repeats the same
+    /// parameter, or is otherwise malformed.
     #[error(r#"{{"error": "invalid_credential_request", "error_description": "{0}"}}"#)]
     InvalidCredentialRequest(String),
 
@@ -104,34 +105,38 @@ pub enum Error {
     #[error(r#"{{"error": "unsupported_credential_format", "error_description": "{0}"}}"#)]
     UnsupportedFormat(String),
 
-    /// Credential Request did not contain a proof, or proof was invalid, i.e. it was
-    /// not bound to a Credential Issuer provided `c_nonce`. The error response contains
-    /// new `c_nonce` as well as `c_nonce_expires_in` values to be used by the Wallet
-    /// when creating another proof of possession of key material.
+    /// Credential Request did not contain a proof, or proof was invalid, i.e.
+    /// it was not bound to a Credential Issuer provided `c_nonce`. The
+    /// error response contains new `c_nonce` as well as
+    /// `c_nonce_expires_in` values to be used by the Wallet when creating
+    /// another proof of possession of key material.
     #[allow(missing_docs)]
     #[error(r#"{{"error": "invalid_proof", "error_description": "{hint}", "c_nonce": "{c_nonce}", "c_nonce_expires_in": {c_nonce_expires_in}}}"#)]
     InvalidProof { hint: String, c_nonce: String, c_nonce_expires_in: i64 },
 
-    /// This error occurs when the encryption parameters in the Credential Request are
-    /// either invalid or missing. In the latter case, it indicates that the Credential
-    /// Issuer requires the Credential Response to be sent encrypted, but the Credential
-    /// Request does not contain the necessary encryption parameters.
+    /// This error occurs when the encryption parameters in the Credential
+    /// Request are either invalid or missing. In the latter case, it
+    /// indicates that the Credential Issuer requires the Credential
+    /// Response to be sent encrypted, but the Credential Request does not
+    /// contain the necessary encryption parameters.
     #[error(r#"{{"error": "invalid_encryption_parameters", "error_description": "{0}"}}"#)]
     InvalidEncryptionParameters(String),
 
     /// Deferred Issuance Endpoint:
 
-    /// The Credential issuance is still pending. The error response SHOULD also contain
-    /// the interval member, determining the minimum amount of time in seconds that the
-    /// Wallet needs to wait before providing a new request to the Deferred Credential
-    /// Endpoint. If interval member is missing or its value is not provided, the Wallet
-    /// MUST use 5 as the default value.
+    /// The Credential issuance is still pending. The error response SHOULD also
+    /// contain the interval member, determining the minimum amount of time
+    /// in seconds that the Wallet needs to wait before providing a new
+    /// request to the Deferred Credential Endpoint. If interval member is
+    /// missing or its value is not provided, the Wallet MUST use 5 as the
+    /// default value.
     #[error(r#"{{"error": "issuance_pending", "error_description": "{0}"}}"#)]
     IssuancePending(String),
 
-    /// The Deferred Credential Request contains an invalid `transaction_id`. This error
-    /// occurs when the `transaction_id` was not issued by the respective Credential
-    /// Issuer or it was already used to obtain the Credential.
+    /// The Deferred Credential Request contains an invalid `transaction_id`.
+    /// This error occurs when the `transaction_id` was not issued by the
+    /// respective Credential Issuer or it was already used to obtain the
+    /// Credential.
     #[error(r#"{{"error": "invalid_transaction_id", "error_description": "{0}"}}"#)]
     InvalidTransactionId(String),
 
@@ -156,11 +161,11 @@ pub enum Error {
     )]
     InvalidPresentationDefinitionReference(String),
 
-    /// The Wallet appears to be unavailable and therefore unable to respond to the
-    /// request.
+    /// The Wallet appears to be unavailable and therefore unable to respond to
+    /// the request.
     /// Use when the User Agent cannot invoke the Wallet and another component
-    /// receives the request while the End-User wishes to continue the journey on
-    /// the Verifier website.
+    /// receives the request while the End-User wishes to continue the journey
+    /// on the Verifier website.
     #[error(r#"{{"error": "wallet_unavailable", "error_description": "{0}"}}"#)]
     WalletUnavailable(String),
 }

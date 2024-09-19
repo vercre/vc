@@ -1,8 +1,8 @@
 //! # Presentation Request Endpoint
 //!
-//! The `request` endpoint can take a request for presentation in the form of a URI to go get the
-//! request details or all of the details as a `RequestObject` struct serialized to a URL
-//! query parameter.
+//! The `request` endpoint can take a request for presentation in the form of a
+//! URI to go get the request details or all of the details as a `RequestObject`
+//! struct serialized to a URL query parameter.
 
 use anyhow::{anyhow, bail};
 use serde::{Deserialize, Serialize};
@@ -18,8 +18,9 @@ use super::{Presentation, Status};
 use crate::credential::Credential;
 use crate::provider::{CredentialStorer, DidResolver, HolderProvider, Verifier};
 
-/// `RequestResponse` is the response from the `request` endpoint. It contains enough information
-/// for the holder to authorize (or reject) the presentation request.
+/// `RequestResponse` is the response from the `request` endpoint. It contains
+/// enough information for the holder to authorize (or reject) the presentation
+/// request.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions)]
 pub struct RequestResponse {
@@ -33,9 +34,9 @@ pub struct RequestResponse {
     pub credentials: Vec<Credential>,
 }
 
-/// Initiates the presentation flow triggered by a new presentation request where the form of
-/// the request is a URI to retrieve the request details or a `RequestObject` struct as a
-/// URL query parameter.
+/// Initiates the presentation flow triggered by a new presentation request
+/// where the form of the request is a URI to retrieve the request details or a
+/// `RequestObject` struct as a URL query parameter.
 #[instrument(level = "debug", skip(provider))]
 pub async fn request(
     provider: impl HolderProvider, request: &String,
@@ -81,7 +82,8 @@ pub async fn request(
     };
     presentation.request.clone_from(&req_obj);
 
-    // Get the credentials from the holder's credential store that match the verifier's request.
+    // Get the credentials from the holder's credential store that match the
+    // verifier's request.
     let filter = match build_filter(&req_obj) {
         Ok(filter) => filter,
         Err(e) => {
@@ -99,8 +101,8 @@ pub async fn request(
         return Err(e);
     }
 
-    // Return enough state for the holder agent to make a decision on whether to authorize the
-    // presentation request or reject it.
+    // Return enough state for the holder agent to make a decision on whether to
+    // authorize the presentation request or reject it.
     let response = RequestResponse {
         presentation_id: presentation.id,
         status: presentation.status,
@@ -125,8 +127,8 @@ async fn parse_request_object_response(
     Ok(jwt.claims)
 }
 
-/// Construct a credential filter (`JSONPath`) from the presentation definition contained in the
-/// presentation request.
+/// Construct a credential filter (`JSONPath`) from the presentation definition
+/// contained in the presentation request.
 // TODO: How to handle multiple input descriptors?
 fn build_filter(request: &RequestObject) -> anyhow::Result<Constraints> {
     let pd = match &request.presentation_definition {

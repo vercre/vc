@@ -1,18 +1,21 @@
 //! # JOSE Proofs
 //!
-//! JSON Object Signing and Encryption ([JOSE]) proofs are a form of enveloping proofs
-//! of Credentials based on JWT [RFC7519], JWS [RFC7515], and JWK [RFC7517].
+//! JSON Object Signing and Encryption ([JOSE]) proofs are a form of enveloping
+//! proofs of Credentials based on JWT [RFC7519], JWS [RFC7515], and JWK
+//! [RFC7517].
 //!
 //! The Securing Verifiable Credentials using JOSE and COSE [VC-JOSE-COSE]
-//! recommendation defines a "bridge" between these and the Verifiable Credentials Data
-//! Model v2.0, specifying the suitable header claims, media types, etc.
+//! recommendation defines a "bridge" between these and the Verifiable
+//! Credentials Data Model v2.0, specifying the suitable header claims, media
+//! types, etc.
 //!
-//! In the case of JOSE, the Credential is the "payload". This is preceded by a suitable
-//! header whose details are specified by Securing Verifiable Credentials using JOSE and
-//! COSE for the usage of JWT. These are encoded, concatenated, and signed, to be
-//! transferred in a compact form by one entity to an other (e.g., sent by the holder to
-//! the verifier). All the intricate details on signatures, encryption keys, etc., are
-//! defined by the IETF specifications; see Example 6 for a specific case.
+//! In the case of JOSE, the Credential is the "payload". This is preceded by a
+//! suitable header whose details are specified by Securing Verifiable
+//! Credentials using JOSE and COSE for the usage of JWT. These are encoded,
+//! concatenated, and signed, to be transferred in a compact form by one entity
+//! to an other (e.g., sent by the holder to the verifier). All the intricate
+//! details on signatures, encryption keys, etc., are defined by the IETF
+//! specifications; see Example 6 for a specific case.
 //!
 //! ## Note
 //!
@@ -42,12 +45,13 @@ use vercre_core::{Kind, Quota};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
 
-/// Claims used for Verifiable Credential issuance when format is "`jwt_vc_json`".
+/// Claims used for Verifiable Credential issuance when format is
+/// "`jwt_vc_json`".
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions)]
 pub struct VcClaims {
-    /// The `credentialSubject.id` property of the Credential. That is, the Holder ID
-    /// the Credential is intended for.
+    /// The `credentialSubject.id` property of the Credential. That is, the
+    /// Holder ID the Credential is intended for.
     /// For example, "did:example:ebfeb1f712ebc6f1c276e12ec21".
     pub sub: String,
 

@@ -1,0 +1,6 @@
+---
+source: vercre-issuer/src/notification.rs
+assertion_line: 116
+expression: response
+---
+{}

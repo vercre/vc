@@ -12,8 +12,9 @@ const STORE: &str = "store.json";
 
 /// Provider implementation
 impl CredentialStorer for Provider {
-    /// Save a `Credential` to the store. Overwrite any existing credential with the same ID. Create
-    /// a new credential if one with the same ID does not exist.
+    /// Save a `Credential` to the store. Overwrite any existing credential with
+    /// the same ID. Create a new credential if one with the same ID does
+    /// not exist.
     async fn save(&self, credential: &Credential) -> anyhow::Result<()> {
         let path = PathBuf::from(STORE);
         let collection = self.app_handle.state();
@@ -27,8 +28,8 @@ impl CredentialStorer for Provider {
         Ok(())
     }
 
-    /// Retrieve a `Credential` from the store with the given ID. Return None if no credential with
-    /// the ID exists.
+    /// Retrieve a `Credential` from the store with the given ID. Return None if
+    /// no credential with the ID exists.
     async fn load(&self, id: &str) -> anyhow::Result<Option<Credential>> {
         let path = PathBuf::from(STORE);
         let collection = self.app_handle.state();
@@ -40,8 +41,8 @@ impl CredentialStorer for Provider {
         Ok(val)
     }
 
-    /// Find the credentials that match the the provided filter. If `filter` is None, return all
-    /// credentials in the store.
+    /// Find the credentials that match the the provided filter. If `filter` is
+    /// None, return all credentials in the store.
     async fn find(&self, filter: Option<Constraints>) -> anyhow::Result<Vec<Credential>> {
         let path = PathBuf::from(STORE);
         let collection = self.app_handle.state();
@@ -65,8 +66,8 @@ impl CredentialStorer for Provider {
         Ok(values)
     }
 
-    /// Remove the credential with the given ID from the store. Return an error if the credential
-    /// does not exist.
+    /// Remove the credential with the given ID from the store. Return an error
+    /// if the credential does not exist.
     async fn remove(&self, id: &str) -> anyhow::Result<()> {
         let path = PathBuf::from(STORE);
         let collection = self.app_handle.state();

@@ -2,45 +2,49 @@
 //!
 //! ## Generic Data Integrity Structure
 //!
-//! The operation of Data Integrity is conceptually simple. To create a cryptographic
-//! proof, the following steps are performed: 1) Transformation, 2) Hashing, and 3)
-//! Proof Generation.
+//! The operation of Data Integrity is conceptually simple. To create a
+//! cryptographic proof, the following steps are performed: 1) Transformation,
+//! 2) Hashing, and 3) Proof Generation.
 //!
-//! Transformation is a process described by a transformation algorithm that takes input
-//! data and prepares it for the hashing process. In the case of data serialized in JSON
-//! this transformation includes the removal of all the artifacts that do not influence
-//! the semantics of the data like spaces, new lines, the order of JSON names, etc. (a
-//! step often referred to as canonicalization). In some cases the transformation may be
-//! more involved.
+//! Transformation is a process described by a transformation algorithm that
+//! takes input data and prepares it for the hashing process. In the case of
+//! data serialized in JSON this transformation includes the removal of all the
+//! artifacts that do not influence the semantics of the data like spaces, new
+//! lines, the order of JSON names, etc. (a step often referred to as
+//! canonicalization). In some cases the transformation may be more involved.
 //!
-//! Hashing is a process described by a hashing algorithm that calculates an identifier
-//! for the transformed data using a cryptographic hash function. Typically, the size of
-//! the resulting hash is smaller than the data, which makes it more suitable for
-//! complex cryptographic functions like digital signatures.
+//! Hashing is a process described by a hashing algorithm that calculates an
+//! identifier for the transformed data using a cryptographic hash function.
+//! Typically, the size of the resulting hash is smaller than the data, which
+//! makes it more suitable for complex cryptographic functions like digital
+//! signatures.
 //!
-//! Proof Generation is a process described by a proof method that calculates a value
-//! that protects the integrity of the input data from modification or otherwise proves
-//! a certain desired threshold of trust. A typical example is the application of a
-//! cryptographic signature using asymmetric keys, yielding the signature of the data.
+//! Proof Generation is a process described by a proof method that calculates a
+//! value that protects the integrity of the input data from modification or
+//! otherwise proves a certain desired threshold of trust. A typical example is
+//! the application of a cryptographic signature using asymmetric keys, yielding
+//! the signature of the data.
 //!
-//! Verification of a proof involves repeating the same steps on the verifier's side and,
-//! depending on the proof method, validating the newly calculated proof value with the
-//! one associated with the data. In the case of a digital signature, this test usually
-//! means comparing the calculated signature value with the one which is embedded in the
-//! data.
+//! Verification of a proof involves repeating the same steps on the verifier's
+//! side and, depending on the proof method, validating the newly calculated
+//! proof value with the one associated with the data. In the case of a digital
+//! signature, this test usually means comparing the calculated signature value
+//! with the one which is embedded in the data.
 
 //! ## VC Data Integrity
 //!
-//! The Verifiable Credential Data Integrity 1.0 [VC-DATA-INTEGRITY] specification
-//! relies on the general structure and defines a set of standard properties describing
-//! the details of the proof generation process. The specific details (canonicalization
-//! algorithm, hash and/or proof method algorithms, etc.) are defined by separate
-//! cryptosuites. The Working Group has defined a number of such cryptosuites as
-//! separate specifications, see 4.2.3 Cryptosuites below.
+//! The Verifiable Credential Data Integrity 1.0 [VC-DATA-INTEGRITY]
+//! specification relies on the general structure and defines a set of standard
+//! properties describing the details of the proof generation process. The
+//! specific details (canonicalization algorithm, hash and/or proof method
+//! algorithms, etc.) are defined by separate cryptosuites. The Working Group
+//! has defined a number of such cryptosuites as separate specifications, see
+//! 4.2.3 Cryptosuites below.
 //!
-//! The core property, in the general structure, is proof. This property embeds a claim
-//! in the Credential, referring to a separate collection of claims (referred to as a
-//! Proof Graph) detailing all the claims about the proof itself:
+//! The core property, in the general structure, is proof. This property embeds
+//! a claim in the Credential, referring to a separate collection of claims
+//! (referred to as a Proof Graph) detailing all the claims about the proof
+//! itself:
 
 use std::convert::Infallible;
 use std::str::FromStr;
@@ -52,7 +56,8 @@ use vercre_core::Quota;
 /// To be verifiable, a credential must contain at least one proof mechanism,
 /// and details necessary to evaluate that proof.
 ///
-/// A proof may be external (an enveloping proof) or internal (an embedded proof).
+/// A proof may be external (an enveloping proof) or internal (an embedded
+/// proof).
 ///
 /// Enveloping proofs are implemented using JOSE and COSE, while embedded proofs
 /// are implemented using the `Proof` object described here.
@@ -65,11 +70,11 @@ pub struct Proof {
     pub id: Option<String>,
 
     /// The specific proof type. MUST map to a URL. Examples include
-    /// "`DataIntegrityProof`" and "`Ed25519Signature2020`". The type determines the
-    /// other fields required to secure and verify the proof.
+    /// "`DataIntegrityProof`" and "`Ed25519Signature2020`". The type determines
+    /// the other fields required to secure and verify the proof.
     ///
-    /// When set to "`DataIntegrityProof`", the `cryptosuite` and the `proofValue`
-    /// properties MUST be set.
+    /// When set to "`DataIntegrityProof`", the `cryptosuite` and the
+    /// `proofValue` properties MUST be set.
     #[serde(rename = "type")]
     pub type_: String,
 

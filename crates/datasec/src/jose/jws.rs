@@ -1,8 +1,8 @@
 //! # JSON Web Signature (JWS)
 //!
-//! JWS ([RFC7515]) represents content secured with digital signatures using JSON-based data
-//! structures. Cryptographic algorithms and identifiers for use with this
-//! specification are described in the JWA ([RFC7518]) specification.
+//! JWS ([RFC7515]) represents content secured with digital signatures using
+//! JSON-based data structures. Cryptographic algorithms and identifiers for use
+//! with this specification are described in the JWA ([RFC7518]) specification.
 //!
 //! [RFC7515]: https://www.rfc-editor.org/rfc/rfc7515
 //! [RFC7518]: https://www.rfc-editor.org/rfc/rfc7518
@@ -18,7 +18,8 @@ use crate::jose::jwk::{Curve, PublicKeyJwk};
 pub use crate::jose::jwt::{Header, Jwt, KeyType, Type};
 use crate::{Algorithm, Signer};
 
-/// Encode the provided header and claims and sign, returning a JWT in compact JWS form.
+/// Encode the provided header and claims and sign, returning a JWT in compact
+/// JWS form.
 ///
 /// # Errors
 /// TODO: document errors
@@ -143,10 +144,10 @@ fn verify_eddsa(jwk: &PublicKeyJwk, msg: &str, sig_bytes: &[u8]) -> anyhow::Resu
         .map_err(|e| anyhow!("unable to verify signature: {e}"))
 }
 
-// /// In the JWS JSON Serialization, one or both of the JWS Protected Header and
-// /// JWS Unprotected Header MUST be present.  In this case, the members of the
-// /// JOSE Header are the union of the members of the JWS Protected Header and
-// /// the JWS Unprotected Header values that are present.
+// /// In the JWS JSON Serialization, one or both of the JWS Protected Header
+// and /// JWS Unprotected Header MUST be present.  In this case, the members of
+// the /// JOSE Header are the union of the members of the JWS Protected Header
+// and /// the JWS Unprotected Header values that are present.
 // #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 // pub struct Jwe {
 //     /// JWE protected header.

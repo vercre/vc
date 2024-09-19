@@ -1,7 +1,8 @@
 //! # DID Key Resolver
 //!
-//! The `did:key` method is a DID method for static cryptographic keys. At its core,
-//! it is based on expanding a cryptographic public key into a DID Document.
+//! The `did:key` method is a DID method for static cryptographic keys. At its
+//! core, it is based on expanding a cryptographic public key into a DID
+//! Document.
 //!
 //! See:
 //!
@@ -50,15 +51,16 @@ impl DidWeb {
         // 5. Append /did.json to complete the URL.
         url = format!("{url}/did.json");
 
-        // 6. Perform an HTTP GET request to the URL using an agent that can successfully
-        //    negotiate a secure HTTPS connection, which enforces the security requirements
-        //    as described in 2.6 SecOps and privacy considerations.
+        // 6. Perform an HTTP GET request to the URL using an agent that can
+        //    successfully negotiate a secure HTTPS connection, which enforces the
+        //    security requirements as described in 2.6 SecOps and privacy
+        //    considerations.
         let document = resolver.resolve(&url).await.map_err(Error::Other)?;
 
         // TODO: implement security requirement:
         // 7. When performing the DNS resolution during the HTTP GET request, the client
-        //    SHOULD utilize [RFC8484] in order to prevent tracking of the identity being
-        //    resolved.
+        //    SHOULD utilize [RFC8484] in order to prevent tracking of the identity
+        //    being resolved.
 
         // // per the spec, use the create operation to generate a DID document
         // let options = CreateOptions {

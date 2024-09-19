@@ -2,8 +2,8 @@
 
 //! # Data Security for Vercre
 //!
-//! This crate provides common utilities for the Vercre project and is not intended to be used
-//! directly.
+//! This crate provides common utilities for the Vercre project and is not
+//! intended to be used directly.
 
 pub mod jose;
 
@@ -13,15 +13,16 @@ pub use crate::jose::jwa::Algorithm;
 pub use crate::jose::jwk::PublicKeyJwk;
 pub use crate::jose::jwt::Jwt;
 
-/// The `SecOps` trait is used to provide methods needed for signing, encrypting,
-/// verifying, and decrypting data.
+/// The `SecOps` trait is used to provide methods needed for signing,
+/// encrypting, verifying, and decrypting data.
 ///
 /// Implementers of this trait are expected to provide the necessary
 /// cryptographic functionality to support Verifiable Credential issuance and
 /// Verifiable Presentation submissions.
 pub trait SecOps: Send + Sync {
     /// Signer provides digital signing-related funtionality.
-    /// The `identifier` parameter is one of `credential_issuer` or `verifier_id`.
+    /// The `identifier` parameter is one of `credential_issuer` or
+    /// `verifier_id`.
     ///
     /// # Errors
     ///

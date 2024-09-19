@@ -1,12 +1,12 @@
 //! # Deferred Credential Endpoint
 //!
-//! This endpoint is used to issue a Credential previously requested at the Credential
-//! Endpoint or Batch Credential Endpoint in cases where the Credential Issuer was not
-//! able to immediately issue this Credential.
+//! This endpoint is used to issue a Credential previously requested at the
+//! Credential Endpoint or Batch Credential Endpoint in cases where the
+//! Credential Issuer was not able to immediately issue this Credential.
 //!
-//! The Wallet MUST present to the Deferred Endpoint an Access Token that is valid for
-//! the issuance of the Credential previously requested at the Credential Endpoint or
-//! the Batch Credential Endpoint.
+//! The Wallet MUST present to the Deferred Endpoint an Access Token that is
+//! valid for the issuance of the Credential previously requested at the
+//! Credential Endpoint or the Batch Credential Endpoint.
 
 use tracing::instrument;
 use vercre_openid::issuer::{
@@ -15,8 +15,7 @@ use vercre_openid::issuer::{
 use vercre_openid::{Error, Result};
 
 use crate::credential::credential;
-// use crate::shell;
-use crate::state::{State, Step};
+use crate::state::{Stage, State};
 
 /// Deferred credential request handler.
 ///
@@ -45,7 +44,7 @@ async fn process(
         return Err(Error::InvalidRequest("state expired".into()));
     }
 
-    let Step::Deferred(deferred_state) = state.current_step else {
+    let Stage::Deferred(deferred_state) = state.stage else {
         return Err(Error::ServerError("Deferred state not found.".into()));
     };
 
@@ -81,7 +80,7 @@ mod tests {
     use vercre_w3c_vc::proof::{self, Payload, Verify};
 
     use super::*;
-    use crate::state::{Deferred, Expire, Token};
+    use crate::state::{AuthorizedCredential, Deferrance, Expire, Token};
     extern crate self as vercre_issuer;
 
     #[tokio::test]
@@ -115,15 +114,21 @@ mod tests {
 
         // set up state
         let mut state = State {
-            expires_at: Utc::now() + Expire::Authorized.duration(),
-            subject_id: Some(NORMAL_USER.into()),
-            credentials: Some(HashMap::from([("PHLEmployeeID".into(), "EmployeeID_JWT".into())])),
-            current_step: Step::Token(Token {
+            stage: Stage::Validated(Token {
                 access_token: access_token.into(),
+                credentials: HashMap::from([(
+                    "PHLEmployeeID".into(),
+                    AuthorizedCredential {
+                        credential_identifier: "PHLEmployeeID".into(),
+                        credential_configuration_id: "EmployeeID_JWT".into(),
+                        claim_ids: None,
+                    },
+                )]),
                 c_nonce: c_nonce.into(),
                 c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
             }),
-            ..State::default()
+            subject_id: Some(NORMAL_USER.into()),
+            expires_at: Utc::now() + Expire::Authorized.duration(),
         };
 
         StateStore::put(&provider, access_token, &state, state.expires_at)
@@ -131,7 +136,7 @@ mod tests {
             .expect("state exists");
 
         // state entry 2: deferred state keyed by transaction_id
-        state.current_step = Step::Deferred(Deferred {
+        state.stage = Stage::Deferred(Deferrance {
             transaction_id: transaction_id.into(),
             credential_request: cred_req.clone(),
         });
@@ -150,6 +155,7 @@ mod tests {
             ".transaction_id" => "[transaction_id]",
             ".credential" => "[credential]",
             ".c_nonce" => "[c_nonce]",
+            ".notification_id" => "[notification_id]",
         });
 
         // extract credential response
@@ -174,8 +180,9 @@ mod tests {
         assert_let!(Ok(state), StateStore::get::<State>(&provider, access_token).await);
         assert_snapshot!("deferred:deferred_ok:state", state, {
             ".expires_at" => "[expires_at]",
-            ".current_step.c_nonce"=>"[c_nonce]",
-            ".current_step.c_nonce_expires_at" => "[c_nonce_expires_at]"
+            ".stage.access_token" => "[access_token]",
+            ".stage.c_nonce"=>"[c_nonce]",
+            ".stage.c_nonce_expires_at" => "[c_nonce_expires_at]"
         });
 
         // deferred state should not exist

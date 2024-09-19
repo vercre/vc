@@ -17,7 +17,8 @@
 //!  - create SHA-256 hash of UTF-8 representation of JSON from {crv,kty,x,y}
 //!
 //! For example:
-//!  - JSON: `{"crv":"Ed25519","kty":"OKP","x":"11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"}`
+//!  - JSON: `{"crv":"Ed25519","kty":"OKP","x":"
+//!    11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"}`
 //!  - SHA-256: `90facafea9b1556698540f70c0117a22ea37bd5cf3ed3c47093c1707282b4b89`
 //!  - base64url JWK Thumbprint: `kPrK_qmxVWaYVA9wwBF6Iuo3vVzz7TxHCTwXBygrS4k`
 //!
@@ -86,9 +87,9 @@ pub enum KeyType {
 //     // /// See [RFC7518#3](https://tools.ietf.org/html/rfc7518#section-3)
 //     // Signature(SignatureAlgorithm),
 
-//     // /// Algorithms meant for key management. The algorithms are either meant to
-//     // /// encrypt a content encryption key or determine the content encryption key.
-//     // /// See [RFC7518#4](https://tools.ietf.org/html/rfc7518#section-4)
+//     // /// Algorithms meant for key management. The algorithms are either
+// meant to     // /// encrypt a content encryption key or determine the content
+// encryption key.     // /// See [RFC7518#4](https://tools.ietf.org/html/rfc7518#section-4)
 //     // KeyManagement(KeyManagementAlgorithm),
 
 //     // /// Algorithms meant for content encryption.
@@ -108,7 +109,8 @@ pub enum Curve {
     Es256K,
 }
 
-/// The intended usage of the public `KeyType`. This enum is serialized `untagged`
+/// The intended usage of the public `KeyType`. This enum is serialized
+/// `untagged`
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub enum KeyUse {
     /// Public key is to be used for signature verification

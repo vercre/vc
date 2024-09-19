@@ -1,24 +1,26 @@
 //! Securing Credentials
 //!
-//! Verifiable Credentials can be secured using two different mechanisms: enveloping
-//! proofs or embedded proofs. In both cases, a proof cryptographically secures a
-//! Credential (for example, using digital signatures). In the enveloping case,
-//! the proof wraps around the Credential, whereas embedded proofs are included in the
-//! serialization, alongside the Credential itself.
+//! Verifiable Credentials can be secured using two different mechanisms:
+//! enveloping proofs or embedded proofs. In both cases, a proof
+//! cryptographically secures a Credential (for example, using digital
+//! signatures). In the enveloping case, the proof wraps around the Credential,
+//! whereas embedded proofs are included in the serialization, alongside the
+//! Credential itself.
 //!
 //! ## Envelooping Proofs
 //!
-//! A family of enveloping proofs is defined in the [Securing Verifiable Credentials
-//! using JOSE and COSE] document, relying on technologies defined by
-//! the IETF. Other types of enveloping proofs may be specified by the community.
+//! A family of enveloping proofs is defined in the [Securing Verifiable
+//! Credentials using JOSE and COSE] document, relying on technologies defined
+//! by the IETF. Other types of enveloping proofs may be specified by the
+//! community.
 //!
 //! ## Embedded Proofs
 //!
-//! The general structure for embedded proofs is defined in a separate [Verifiable
-//! Credential Data Integrity 1.0] specification. Furthermore, some instances of this
-//! general structure are specified in the form of the "cryptosuites": Data Integrity
-//! [EdDSA Cryptosuites v1.0], Data Integrity [ECDSA Cryptosuites v1.0], and Data
-//! Integrity [BBS Cryptosuites v1.0].
+//! The general structure for embedded proofs is defined in a separate
+//! [Verifiable Credential Data Integrity 1.0] specification. Furthermore, some
+//! instances of this general structure are specified in the form of the
+//! "cryptosuites": Data Integrity [EdDSA Cryptosuites v1.0], Data Integrity
+//! [ECDSA Cryptosuites v1.0], and Data Integrity [BBS Cryptosuites v1.0].
 //!
 //! [Securing Verifiable Credentials using JOSE and COSE]: https://w3c.github.io/vc-jose-cose
 //! [Verifiable Credential Data Integrity 1.0]: https://www.w3.org/TR/vc-data-integrity
@@ -51,8 +53,8 @@ pub enum Format {
     #[serde(rename = "jwt_vc_json-ld")]
     JwtVcJsonLd,
 
-    /// VC secured using Data Integrity, using JSON-LD, with a proof suite requiring
-    /// Linked Data canonicalization.
+    /// VC secured using Data Integrity, using JSON-LD, with a proof suite
+    /// requiring Linked Data canonicalization.
     #[serde(rename = "ldp_vc")]
     DataIntegrityJsonLd,
 
@@ -117,7 +119,8 @@ pub async fn create(
     //     type_: Signer::algorithm(provider).proof_type(),
     //     verification_method: Signer::verification_method(provider),
     //     created: Some(Utc::now()),
-    //     expires: Utc::now().checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
+    //     expires:
+    // Utc::now().checked_add_signed(TimeDelta::try_hours(1).unwrap_or_default()),
     //     ..Proof::default()
     // };
 

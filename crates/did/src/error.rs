@@ -15,8 +15,8 @@ pub enum Error {
     #[error("notFound")]
     NotFound(String),
 
-    /// The representation requested via the accept input metadata property is not
-    /// supported by the DID method and/or DID resolver.
+    /// The representation requested via the accept input metadata property is
+    /// not supported by the DID method and/or DID resolver.
     #[error("representationNotSupported")]
     RepresentationNotSupported(String),
 

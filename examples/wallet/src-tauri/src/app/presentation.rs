@@ -10,7 +10,8 @@ use crate::provider::Provider;
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions)]
 pub struct PresentationState {
-    /// Presentation flow identifier to pass to the vercre-holder crate for state management.
+    /// Presentation flow identifier to pass to the vercre-holder crate for
+    /// state management.
     pub id: String,
 
     /// Status of the presentation flow.

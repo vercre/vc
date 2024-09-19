@@ -54,7 +54,7 @@ mod tests {
     use vercre_test_utils::snapshot;
 
     use super::*;
-    use crate::state::{Expire, Step, Token};
+    use crate::state::{Expire, Stage, Token};
 
     #[tokio::test]
     async fn registration_ok() {
@@ -70,7 +70,7 @@ mod tests {
             ..State::default()
         };
 
-        state.current_step = Step::Token(Token {
+        state.stage = Stage::Validated(Token {
             access_token: access_token.to_string(),
             ..Token::default()
         });
