@@ -34,7 +34,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     // return error for any unexpected fields
     input.check_consumed()?;
 
-    let path = quote! {vercre_openid::issuer};
+    let path = quote! {vercre_issuer};
 
     Ok(quote! {
         #path::CreateOfferRequest {

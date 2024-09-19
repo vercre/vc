@@ -23,7 +23,7 @@ use syn::{parse_macro_input, Error};
 ///
 /// ```rust
 /// use vercre_macros::create_offer_request;
-/// use vercre_openid::issuer::SendType;
+/// use vercre_issuer::SendType;
 ///
 /// const CREDENTIAL_ISSUER: &str = "http://vercre.io";
 /// let subject_id = "normal_user";

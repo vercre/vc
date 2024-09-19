@@ -81,6 +81,7 @@ mod tests {
 
     use super::*;
     use crate::state::{AuthorizedCredential, Deferrance, Expire, Token};
+    extern crate self as vercre_issuer;
 
     #[tokio::test]
     async fn deferred_ok() {

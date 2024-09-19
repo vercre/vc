@@ -402,6 +402,7 @@ mod tests {
 
     use super::*;
     use crate::state::{AuthorizedCredential, Token};
+    extern crate self as vercre_issuer;
 
     #[tokio::test]
     async fn identifier() {

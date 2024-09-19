@@ -6,9 +6,9 @@ use anyhow::{anyhow, bail};
 use tracing::instrument;
 use vercre_core::Kind;
 use vercre_datasec::jose::jws::{self, Type};
+use vercre_macros::{credential_request, token_request};
 use vercre_openid::issuer::{
-    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialResponseType,
-    CredentialSpec, Proof, ProofClaims, SingleProof, TokenGrantType, TokenRequest,
+    CredentialConfiguration, CredentialResponse, CredentialResponseType, ProofClaims, TokenRequest,
 };
 use vercre_w3c_vc::proof::{Payload, Verify};
 
@@ -48,7 +48,7 @@ pub async fn get_credentials(
     let auth = authorized[0].clone();
 
     // Request each credential offered.
-    // TODO: concurrent requests. Would that be possible if wallet is WASM/WASI?
+    // TODO: Is it possible/desirable to do concurrent requests?
     for cfg in issuance.offered.values() {
         // Construct a proof to be used in credential requests.
         let claims = ProofClaims {
@@ -64,19 +64,16 @@ pub async fn get_credentials(
                 return Err(e);
             }
         };
-        let proof = Proof::Single {
-            proof_type: SingleProof::Jwt { jwt },
-        };
 
-        let request = CredentialRequest {
-            credential_issuer: issuance.offer.credential_issuer.clone(),
-            access_token: issuance.token.access_token.clone(),
-            specification: CredentialSpec::Identifier {
-                credential_identifier: auth.credential_identifiers[0].clone(),
-            },
-            proof: Some(proof.clone()),
-            credential_response_encryption: None,
-        };
+        let request = credential_request!({
+            "credential_issuer": issuance.offer.credential_issuer.clone(),
+            "access_token": issuance.token.access_token.clone(),
+            "credential_identifier": auth.credential_identifiers[0].clone(),
+            "proof": {
+                "proof_type": "jwt",
+                "jwt": jwt
+            }
+        });
 
         let cred_res = match Issuer::get_credential(&provider, &issuance.id, request).await {
             Ok(cred_res) => cred_res,
@@ -135,15 +132,25 @@ fn token_request(issuance: &Issuance) -> TokenRequest {
     let pre_auth_code =
         grants.pre_authorized_code.as_ref().expect("pre-authorized code exists on offer");
 
-    TokenRequest {
-        credential_issuer: issuance.offer.credential_issuer.clone(),
-        client_id: Some(issuance.client_id.clone()),
-        grant_type: TokenGrantType::PreAuthorizedCode {
-            pre_authorized_code: pre_auth_code.pre_authorized_code.clone(),
-            tx_code: issuance.pin.clone(),
+    issuance.pin.as_ref().map_or_else(
+        || {
+            token_request!({
+               "credential_issuer": issuance.offer.credential_issuer.clone(),
+                "client_id": issuance.client_id.clone(),
+                "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+                "pre-authorized_code": pre_auth_code.pre_authorized_code.clone(),
+            })
         },
-        ..TokenRequest::default()
-    }
+        |pin| {
+            token_request!({
+                "credential_issuer": issuance.offer.credential_issuer.clone(),
+                "client_id": issuance.client_id.clone(),
+                "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
+                "pre-authorized_code": pre_auth_code.pre_authorized_code.clone(),
+                "tx_code": pin,
+            })
+        },
+    )
 }
 
 /// Construct a credential from a credential response.
