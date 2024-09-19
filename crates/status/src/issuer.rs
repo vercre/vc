@@ -18,7 +18,7 @@ pub trait Status: Send + Sync {
     /// A default implementation is provided that just returns `None` for cases
     /// where the issuer will not be providing a status endpoint.
     fn status(
-        &self, _holder_subject: &str, _credential_identifier: &str,
+        &self, _subject_id: &str, _credential_identifier: &str,
     ) -> impl Future<Output = provider::Result<Option<Quota<CredentialStatus>>>> + Send {
         async { Ok(None) }
     }

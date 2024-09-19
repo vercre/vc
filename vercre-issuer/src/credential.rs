@@ -17,8 +17,8 @@ use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialResponseType,
-    CredentialSpec, Format, Issuer, Metadata, MultipleProofs, Proof, ProofClaims, Provider,
-    SingleProof, StateStore, Subject,
+    CredentialSpec, Dataset, Format, Issuer, Metadata, MultipleProofs, Proof, ProofClaims,
+    Provider, SingleProof, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_status::issuer::Status;
@@ -50,7 +50,9 @@ pub async fn credential(
             .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?,
         ..Context::default()
     };
-    ctx.credential_config = ctx.configuration(&request.specification)?;
+
+    let (_config_id, config) = ctx.configuration(&request.specification)?;
+    ctx.credential_config = config;
 
     ctx.verify(&provider, &request).await?;
     ctx.process(&provider, request).await
@@ -260,31 +262,7 @@ impl Context {
     ) -> Result<Option<VerifiableCredential>> {
         tracing::debug!("credential::generate_vc");
 
-        // let Some(credential_identifier) = &request.specification.as_identifier() else
-        // {     return Err(Error::InvalidCredentialRequest("invalid credential
-        // request".into())); };
-
-        // --------------------------------------------------------------------
-        // Get dataset
-        //   TODO: support request by credential format (e.g. jwt_vc_json, etc.)
-        //   need to get dataset by credential_configuration_id??
-        // --------------------------------------------------------------------
-        // get credential identifier and configuration
-        let CredentialSpec::Identifier {
-            credential_identifier,
-        } = &request.specification
-        else {
-            return Err(Error::InvalidCredentialRequest("invalid credential request".into()));
-        };
-
-        // get claims dataset for `credential_identifier`
-        let Some(subject_id) = &self.state.subject_id else {
-            return Err(Error::AccessDenied("invalid subject id".into()));
-        };
-        let dataset = Subject::dataset(provider, subject_id, credential_identifier)
-            .await
-            .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
-        // --------------------------------------------------------------------
+        let dataset = self.dataset(provider, request).await?;
 
         // defer issuance if claims are pending (approval),
         if dataset.pending {
@@ -303,7 +281,11 @@ impl Context {
         };
 
         // Provider supplies status lookup information
-        let status = Status::status(provider, subject_id, credential_identifier)
+        let Some(subject_id) = &self.state.subject_id else {
+            return Err(Error::AccessDenied("invalid subject id".into()));
+        };
+        // let status = Status::status(provider, subject_id, credential_identifier)
+        let status = Status::status(provider, subject_id, "credential_identifier")
             .await
             .map_err(|e| Error::ServerError(format!("issue populating credential status: {e}")))?;
 
@@ -324,8 +306,51 @@ impl Context {
         Ok(Some(vc))
     }
 
+    // Get credential dataset for the request
+    async fn dataset(
+        &self, provider: &impl Provider, request: &CredentialRequest,
+    ) -> Result<Dataset> {
+        // get credential_identifier from request or from state
+        let identifier = if let CredentialSpec::Identifier {
+            credential_identifier,
+        } = &request.specification
+        {
+            credential_identifier
+        } else {
+            // get credential_identifier from state by matching configuration
+            let (config_id, _config) = self.configuration(&request.specification)?;
+            let Stage::Validated(token_state) = &self.state.stage else {
+                return Err(Error::AccessDenied("invalid access token state".into()));
+            };
+
+            let Some(authorized) = token_state
+                .credentials
+                .values()
+                .find(|c| c.credential_configuration_id == config_id)
+            else {
+                return Err(Error::InvalidCredentialRequest(
+                    "unauthorized credential requested".into(),
+                ));
+            };
+
+            &authorized.credential_identifier
+        };
+
+        // get claims dataset for `credential_identifier`
+        let Some(subject_id) = &self.state.subject_id else {
+            return Err(Error::AccessDenied("invalid subject id".into()));
+        };
+        let dataset = Subject::dataset(provider, subject_id, identifier)
+            .await
+            .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
+
+        Ok(dataset)
+    }
+
     // Get configuration metadata for requested credential
-    fn configuration(&self, specification: &CredentialSpec) -> Result<CredentialConfiguration> {
+    fn configuration(
+        &self, specification: &CredentialSpec,
+    ) -> Result<(String, CredentialConfiguration)> {
         match specification {
             CredentialSpec::Identifier {
                 credential_identifier,
@@ -338,15 +363,18 @@ impl Context {
                         "unauthorized credential requested".into(),
                     ));
                 };
-                self.issuer
+                let Some(configuration) = self
+                    .issuer
                     .credential_configurations_supported
                     .get(&authorized.credential_configuration_id)
-                    .cloned()
-                    .ok_or_else(|| {
-                        Error::InvalidCredentialRequest("unsupported credential requested".into())
-                    })
-            }
+                else {
+                    return Err(Error::InvalidCredentialRequest(
+                        "unsupported credential requested".into(),
+                    ));
+                };
 
+                Ok((authorized.credential_configuration_id.clone(), configuration.clone()))
+            }
             CredentialSpec::Format(Format::JwtVcJson { .. }) => {
                 todo!("Format::JwtVcJson");
             }
