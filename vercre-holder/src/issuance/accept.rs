@@ -34,6 +34,12 @@ pub struct AcceptRequest {
 pub async fn accept(provider: impl HolderProvider, request: &AcceptRequest) -> anyhow::Result<Status> {
     tracing::debug!("Endpoint::accept");
 
+    // Abandon the issuance if no credentials are accepted.
+    if request.credential_configuration_ids.is_empty() {
+        tracing::debug!(target: "Endpoint::accept", "no credentials accepted");
+        return Ok(Status::Inactive);
+    }
+
     let mut issuance = match super::get_issuance(provider.clone(), &request.issuance_id).await {
         Ok(issuance) => issuance,
         Err(e) => {
@@ -57,6 +63,8 @@ pub async fn accept(provider: impl HolderProvider, request: &AcceptRequest) -> a
         tracing::error!(target: "Endpoint::accept", ?e);
         return Err(e);
     };
+    issuance.accepted = request.credential_configuration_ids.clone();
+
     if pre_auth_code.tx_code.is_some() {
         issuance.status = Status::PendingPin;
     } else {
