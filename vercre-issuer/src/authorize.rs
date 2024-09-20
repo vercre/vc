@@ -78,7 +78,7 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    ClaimEntry, ClaimSpecification, Configuration, Format, GrantType, Issuer, Metadata, Provider,
+    ClaimEntry, Configuration, Format, FormatSpec, GrantType, Issuer, Metadata, Provider,
     StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
@@ -248,7 +248,7 @@ impl Context {
 
                     // verify requested claims are supported
                     if let Some(claim_spec) = specification {
-                        let ClaimSpecification::Definition(cred_def) = claim_spec else {
+                        let FormatSpec::Definition(cred_def) = claim_spec else {
                             return Err(Error::InvalidRequest(
                                 "unsupported claim specification".into(),
                             ));
@@ -269,7 +269,7 @@ impl Context {
                 }
                 Configuration::Format(Format {
                     format,
-                    specification: ClaimSpecification::Definition(credential_definition),
+                    specification: FormatSpec::Definition(credential_definition),
                 }) => {
                     //  find supported credential by `format` and `type`
                     let Some((config_id, _)) = supported.iter().find(|(_, v)| {

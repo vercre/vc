@@ -51,7 +51,7 @@ fn credential_specification(input: &mut Json) -> Result<TokenStream> {
             Some("jwt_vc_json") => Ok(quote! {
                 #path::CredentialSpec::Format(#path::Format {
                     format: #path::FormatProfile::JwtVcJson,
-                    specification: #path::ClaimSpecification::Definition(#credential_definition),
+                    specification: #path::FormatSpec::Definition(#credential_definition),
                 })
             }),
             _ => return Err(Error::new(span, "unsupported format")),

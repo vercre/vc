@@ -561,7 +561,7 @@ pub enum Configuration {
         /// An optional subset of claims to include in the Credential.
         #[serde(flatten)]
         #[serde(skip_serializing_if = "Option::is_none")]
-        specification: Option<ClaimSpecification>,
+        specification: Option<FormatSpec>,
     },
 
     /// Determines the format of the Credential to be issued, which may
@@ -586,18 +586,39 @@ impl Default for Configuration {
 ///
 /// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub enum ClaimSpecification {
+pub enum FormatSpec {
     /// Requested Credential is specified by `credential_configuration_id` and
     /// optionally, `CredentialDefinition`.
     #[serde(rename = "credential_definition")]
     Definition(CredentialDefinition),
 
-    /// Requested Credential is specified by `credential_configuration_id` and
-    /// optionally, `ClaimsDefinition`.
-    Claims(HashMap<String, ClaimEntry>),
+    /// Credentials complying with [ISO.18013-5]
+    MsoMdoc {
+        /// The Credential type, as defined in [ISO.18013-5].
+        #[serde(skip_serializing_if = "Option::is_none")]
+        doctype: Option<String>,
+
+        /// A list of claims to include in the issued credential.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        claims: Option<HashMap<String, ClaimEntry>>,
+    },
+
+    /// Selective Disclosure JWT ([SD-JWT]).
+    /// [SD-JWT]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-04
+    SdJwt {
+        /// Verifiable credential type. The vct value MUST be a case-sensitive
+        /// String or URI serving as an identifier for the type of the SD-JWT
+        /// VC.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        vct: Option<String>,
+
+        /// A list of claims to include in the issued credential.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        claims: Option<HashMap<String, ClaimEntry>>,
+    },
 }
 
-impl Default for ClaimSpecification {
+impl Default for FormatSpec {
     fn default() -> Self {
         Self::Definition(CredentialDefinition::default())
     }
@@ -619,7 +640,7 @@ pub struct Format {
     /// Requested Credential is specified by `credential_configuration_id` and
     /// optionally, `CredentialDefinition`.
     #[serde(flatten)]
-    pub specification: ClaimSpecification,
+    pub specification: FormatSpec,
 }
 
 /// Authorization Response as defined in [RFC6749].
@@ -1217,14 +1238,17 @@ impl Issuer {
     /// TODO: add error handling
     pub fn credential_configuration_id(&self, f: &Format) -> Result<&String> {
         if let Some((id, _)) = match &f.specification {
-            ClaimSpecification::Definition(credential_definition) => {
+            FormatSpec::Definition(credential_definition) => {
                 self.credential_configurations_supported.iter().find(|(_, cfg)| {
                     cfg.format == f.format
                         && cfg.credential_definition.type_ == credential_definition.type_
                 })
             }
-            ClaimSpecification::Claims(_) => {
-                todo!("ClaimSpecification::Claims");
+            FormatSpec::MsoMdoc { .. } => {
+                todo!("FormatSpec::MsoMdoc");
+            }
+            FormatSpec::SdJwt { .. } => {
+                todo!("FormatSpec::SdJwt");
             }
         } {
             Ok(id)
@@ -1691,7 +1715,7 @@ mod tests {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 configuration: Configuration::Id {
                     credential_configuration_id: "EmployeeID_JWT".into(),
-                    specification: Some(ClaimSpecification::Definition(CredentialDefinition {
+                    specification: Some(FormatSpec::Definition(CredentialDefinition {
                         credential_subject: Some(HashMap::from([
                             (
                                 "given_name".to_string(),
@@ -1746,7 +1770,7 @@ mod tests {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 configuration: Configuration::Format(Format {
                     format: FormatProfile::JwtVcJson,
-                    specification: ClaimSpecification::Definition(CredentialDefinition {
+                    specification: FormatSpec::Definition(CredentialDefinition {
                         type_: Some(vec![
                             "VerifiableCredential".into(),
                             "EmployeeIDCredential".into(),
@@ -1834,7 +1858,7 @@ mod tests {
             access_token: "1234".into(),
             specification: CredentialSpec::Format(Format {
                 format: FormatProfile::JwtVcJson,
-                specification: ClaimSpecification::Definition(CredentialDefinition {
+                specification: FormatSpec::Definition(CredentialDefinition {
                     type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
                     ..CredentialDefinition::default()
                 }),

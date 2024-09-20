@@ -16,9 +16,9 @@ use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
-    ClaimSpecification, CredentialRequest, CredentialResponse, CredentialResponseType,
-    CredentialSpec, Dataset, Issuer, Metadata, MultipleProofs, Proof, ProofClaims, Provider,
-    SingleProof, StateStore, Subject,
+    CredentialRequest, CredentialResponse, CredentialResponseType, CredentialSpec, Dataset,
+    FormatSpec, Issuer, Metadata, MultipleProofs, Proof, ProofClaims, Provider, SingleProof,
+    StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_status::issuer::Status;
@@ -367,12 +367,15 @@ impl Context {
         // narrow of claimset from format/credential_definition
         if let CredentialSpec::Format(f) = &request.specification {
             let claim_ids = match &f.specification {
-                ClaimSpecification::Definition(credential_definition) => credential_definition
+                FormatSpec::Definition(credential_definition) => credential_definition
                     .credential_subject
                     .as_ref()
                     .map(|subj| subj.keys().cloned().collect::<Vec<String>>()),
-                ClaimSpecification::Claims(_) => {
-                    todo!("Format::VcSdJwt, Format::MsoMdoc");
+                FormatSpec::MsoMdoc { .. } => {
+                    todo!("FormatSpec::MsoMdoc");
+                }
+                FormatSpec::SdJwt { .. } => {
+                    todo!("FormatSpec::SdJwt");
                 }
             };
 

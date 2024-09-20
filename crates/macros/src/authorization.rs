@@ -109,7 +109,7 @@ fn credential_configuration(detail: &HashMap<String, Value>) -> Result<TokenStre
         // credential_definition is optional
         let specification = if let Some(defn_value) = detail.get("credential_definition") {
             let credential_definition = configuration_definition(defn_value)?;
-            quote! {Some(#path::ClaimSpecification::Definition(#credential_definition))}
+            quote! {Some(#path::FormatSpec::Definition(#credential_definition))}
         } else {
             quote! {None}
         };
@@ -132,7 +132,7 @@ fn credential_configuration(detail: &HashMap<String, Value>) -> Result<TokenStre
                 #path::Configuration::Format (
                     #path::Format {
                         format: #path::FormatProfile::JwtVcJson,
-                        specification: #path::ClaimSpecification::Definition(#credential_definition),
+                        specification: #path::FormatSpec::Definition(#credential_definition),
                     },
                 )
             }),

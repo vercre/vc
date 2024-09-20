@@ -341,7 +341,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use vercre_macros::token_request;
     use vercre_openid::issuer::{
-        AuthorizationDetail, AuthorizationDetailType, ClaimSpecification, Configuration,
+        AuthorizationDetail, AuthorizationDetailType, FormatSpec, Configuration,
         CredentialDefinition, Format, FormatProfile,
     };
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -499,7 +499,7 @@ mod tests {
                         type_: AuthorizationDetailType::OpenIdCredential,
                         configuration: Configuration::Format(Format {
                             format: FormatProfile::JwtVcJson,
-                            specification: ClaimSpecification::Definition(CredentialDefinition {
+                            specification: FormatSpec::Definition(CredentialDefinition {
                                 type_: Some(vec![
                                     "VerifiableCredential".into(),
                                     "EmployeeIDCredential".into(),
