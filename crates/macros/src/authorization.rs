@@ -107,20 +107,18 @@ fn credential_configuration(detail: &HashMap<String, Value>) -> Result<TokenStre
     // credential_configuration_id or format?
     if let Some(credential_configuration_id) = detail.get("credential_configuration_id") {
         // credential_definition is optional
-        let credential_definition = if let Some(defn_value) = detail.get("credential_definition") {
+        let specification = if let Some(defn_value) = detail.get("credential_definition") {
             let credential_definition = configuration_definition(defn_value)?;
-            quote! {Some(#credential_definition)}
+            quote! {Some(#path::ClaimSpecification::Definition(#credential_definition))}
         } else {
             quote! {None}
         };
 
         Ok(quote! {
-            #path::Configuration::Id (
-                #path::ConfigurationId::Definition {
-                    credential_configuration_id: #credential_configuration_id,
-                    credential_definition: #credential_definition,
-                },
-            )
+            #path::Configuration::Id {
+                credential_configuration_id: #credential_configuration_id,
+                specification: #specification,
+            }
         })
     } else if let Some(format) = detail.get("format") {
         // credential_definition is required
@@ -132,8 +130,9 @@ fn credential_configuration(detail: &HashMap<String, Value>) -> Result<TokenStre
         match format.as_str() {
             Some("jwt_vc_json") => Ok(quote! {
                 #path::Configuration::Format (
-                    #path::Format::JwtVcJson {
-                        credential_definition: #credential_definition,
+                    #path::Format {
+                        format: #path::FormatProfile::JwtVcJson,
+                        specification: #path::ClaimSpecification::Definition(#credential_definition),
                     },
                 )
             }),

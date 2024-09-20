@@ -78,8 +78,8 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    Configuration, ClaimEntry, ConfigurationId, Format, FormatProfile, GrantType, Issuer,
-    Metadata, Provider, StateStore, Subject,
+    ClaimEntry, ClaimSpecification, Configuration, Format, GrantType, Issuer, Metadata, Provider,
+    StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 
@@ -235,10 +235,10 @@ impl Context {
 
             // verify requested credentials are supported
             match &auth_det.configuration {
-                Configuration::Id(ConfigurationId::Definition {
+                Configuration::Id {
                     credential_configuration_id,
-                    credential_definition,
-                }) => {
+                    specification,
+                } => {
                     //  find supported credential by `credential_configuration_id`
                     if !supported.contains_key(credential_configuration_id) {
                         return Err(Error::InvalidRequest(
@@ -247,11 +247,19 @@ impl Context {
                     }
 
                     // verify requested claims are supported
-                    if let Some(requested_cd) = credential_definition
-                        && let Some(claims) = &requested_cd.credential_subject
-                    {
+                    if let Some(claim_spec) = specification {
+                        let ClaimSpecification::Definition(cred_def) = claim_spec else {
+                            return Err(Error::InvalidRequest(
+                                "unsupported claim specification".into(),
+                            ));
+                        };
+                        let Some(claims) = &cred_def.credential_subject else {
+                            return Err(Error::InvalidRequest("missing credential_subject".into()));
+                        };
+
                         let supported_cd =
                             &supported[credential_configuration_id].credential_definition;
+
                         Self::verify_claims(claims, &supported_cd.credential_subject)?;
                         self.claims = Some(claims.clone());
                     }
@@ -259,12 +267,13 @@ impl Context {
                     // save `credential_configuration_id` for later use
                     self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
                 }
-                Configuration::Format(Format::JwtVcJson {
-                    credential_definition,
+                Configuration::Format(Format {
+                    format,
+                    specification: ClaimSpecification::Definition(credential_definition),
                 }) => {
                     //  find supported credential by `format` and `type`
                     let Some((config_id, _)) = supported.iter().find(|(_, v)| {
-                        v.format == FormatProfile::JwtVcJson
+                        &v.format == format
                             && v.credential_definition.type_ == credential_definition.type_
                     }) else {
                         return Err(Error::InvalidRequest(
@@ -282,20 +291,9 @@ impl Context {
                     // save `credential_configuration_id` for later use
                     self.auth_dets.insert(config_id.clone(), auth_det.clone());
                 }
-                Configuration::Id(ConfigurationId::Claims { .. }) => {
-                    todo!("ConfigurationId::Claims");
-                }
-                Configuration::Format(Format::LdpVc { .. }) => {
-                    todo!("Format::LdpVc");
-                }
-                Configuration::Format(Format::JwtVcJsonLd { .. }) => {
-                    todo!("Format::JwtVcJsonLd");
-                }
-                Configuration::Format(Format::MsoMdoc { .. }) => {
-                    todo!("Format::MsoMdoc");
-                }
-                Configuration::Format(Format::VcSdJwt { .. }) => {
-                    todo!("Format::VcSdJwt");
+
+                Configuration::Format(_) => {
+                    todo!("Configuration::Format");
                 }
             };
         }
