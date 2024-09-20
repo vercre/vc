@@ -16,8 +16,9 @@ use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
-    CredentialRequest, CredentialResponse, CredentialResponseType, CredentialSpec, Dataset, Issuer,
-    Metadata, MultipleProofs, Proof, ProofClaims, Provider, SingleProof, StateStore, Subject,
+    CredentialRequest, CredentialResponse, CredentialResponseType, CredentialSpec, Dataset, Format,
+    Issuer, Metadata, MultipleProofs, Proof, ProofClaims, Provider, SingleProof, StateStore,
+    Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_status::issuer::Status;
@@ -37,21 +38,20 @@ use crate::state::{AuthorizedCredential, Credential, Deferrance, Expire, Stage, 
 pub async fn credential(
     provider: impl Provider, request: CredentialRequest,
 ) -> Result<CredentialResponse> {
-    // get token state
     let Ok(state) = StateStore::get::<State>(&provider, &request.access_token).await else {
         return Err(Error::AccessDenied("invalid access token".into()));
     };
+    let issuer = Metadata::issuer(&provider, &request.credential_issuer)
+        .await
+        .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
 
+    // save data accessed more than once for later use
     let mut ctx = Context {
         state,
-        issuer: Metadata::issuer(&provider, &request.credential_issuer)
-            .await
-            .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?,
+        issuer,
         ..Context::default()
     };
-
-    // save authorized credential data for later use
-    ctx.authorized = ctx.authorized(&request.specification)?;
+    ctx.authorized = ctx.authorized(&request)?;
 
     ctx.verify(&provider, &request).await?;
     ctx.process(&provider, request).await
@@ -190,84 +190,23 @@ impl Context {
     ) -> Result<CredentialResponse> {
         tracing::debug!("credential::process");
 
-        // attempt to generate VC
-        let maybe_vc = self.generate_vc(provider, &request).await?;
-
-        // sign and return VC (**OR** defer issuance)
-        if let Some(vc) = maybe_vc {
-            let signer = SecOps::signer(provider, &request.credential_issuer)
-                .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
-
-            // TODO: add support for other formats
-            let jwt = vercre_w3c_vc::proof::create(
-                proof::Format::JwtVcJson,
-                Payload::Vc(vc.clone()),
-                signer,
-            )
-            .await
-            .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
-
-            // update token state
-            let mut state = self.state.clone();
-            state.expires_at = Utc::now() + Expire::Access.duration();
-
-            let Stage::Validated(mut token_state) = state.stage else {
-                return Err(Error::AccessDenied("invalid access token state".into()));
-            };
-            token_state.c_nonce = gen::nonce();
-            token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
-            state.stage = Stage::Validated(token_state.clone());
-
-            StateStore::put(provider, &token_state.access_token, &state, state.expires_at)
-                .await
-                .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
-
-            // create issuance state for notification endpoint
-            state.stage = Stage::Issued(Credential { credential: vc });
-            let notification_id = gen::notification_id();
-
-            StateStore::put(provider, &notification_id, &state, state.expires_at)
-                .await
-                .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
-
-            return Ok(CredentialResponse {
-                response: CredentialResponseType::Credential(Kind::String(jwt)),
-                c_nonce: Some(token_state.c_nonce.clone()),
-                c_nonce_expires_in: Some(token_state.c_nonce_expires_in()),
-                notification_id: Some(notification_id),
-            });
+        // sign and return VC or defer issuance
+        if let Some(vc) = self.issue_vc(provider, &request).await? {
+            self.issue_response(provider, request, vc).await
+        } else {
+            self.defer_response(provider, request).await
         }
-
-        // defer issuance
-        let txn_id = gen::transaction_id();
-
-        let state = State {
-            stage: Stage::Deferred(Deferrance {
-                transaction_id: txn_id.clone(),
-                credential_request: request,
-            }),
-            subject_id: None,
-            expires_at: Utc::now() + Expire::Access.duration(),
-        };
-        StateStore::put(provider, &txn_id, &state, state.expires_at)
-            .await
-            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
-
-        Ok(CredentialResponse {
-            response: CredentialResponseType::TransactionId(txn_id),
-            ..CredentialResponse::default()
-        })
     }
 
     // Attempt to generate a Verifiable Credential from information provided in
     // the Credential Request. May return `None` if the credential is not ready
     // to be issued because the request for Subject is pending.
-    async fn generate_vc(
+    async fn issue_vc(
         &self, provider: &impl Provider, request: &CredentialRequest,
     ) -> Result<Option<VerifiableCredential>> {
         tracing::debug!("credential::generate_vc");
 
-        let dataset = self.dataset(provider).await?;
+        let dataset = self.dataset(provider, request).await?;
 
         // defer issuance if claims are pending (approval),
         if dataset.pending {
@@ -316,14 +255,82 @@ impl Context {
         Ok(Some(vc))
     }
 
+    // Issue the requested credential.
+    async fn issue_response(
+        &self, provider: &impl Provider, request: CredentialRequest, vc: VerifiableCredential,
+    ) -> Result<CredentialResponse> {
+        let signer = SecOps::signer(provider, &request.credential_issuer)
+            .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
+
+        // TODO: add support for other formats
+        let jwt =
+            vercre_w3c_vc::proof::create(proof::Format::JwtVcJson, Payload::Vc(vc.clone()), signer)
+                .await
+                .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
+
+        // update token state with new `c_nonce`
+        let mut state = self.state.clone();
+        state.expires_at = Utc::now() + Expire::Access.duration();
+
+        let Stage::Validated(mut token_state) = state.stage else {
+            return Err(Error::AccessDenied("invalid access token state".into()));
+        };
+        token_state.c_nonce = gen::nonce();
+        token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
+        state.stage = Stage::Validated(token_state.clone());
+
+        StateStore::put(provider, &token_state.access_token, &state, state.expires_at)
+            .await
+            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
+
+        // create issuance state for notification endpoint
+        state.stage = Stage::Issued(Credential { credential: vc });
+        let notification_id = gen::notification_id();
+
+        StateStore::put(provider, &notification_id, &state, state.expires_at)
+            .await
+            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
+
+        Ok(CredentialResponse {
+            response: CredentialResponseType::Credential(Kind::String(jwt)),
+            c_nonce: Some(token_state.c_nonce.clone()),
+            c_nonce_expires_in: Some(token_state.c_nonce_expires_in()),
+            notification_id: Some(notification_id),
+        })
+    }
+
+    // Defer issuance of the requested credential.
+    async fn defer_response(
+        &self, provider: &impl Provider, request: CredentialRequest,
+    ) -> Result<CredentialResponse> {
+        let txn_id = gen::transaction_id();
+
+        let state = State {
+            subject_id: None,
+            stage: Stage::Deferred(Deferrance {
+                transaction_id: txn_id.clone(),
+                credential_request: request,
+            }),
+            expires_at: Utc::now() + Expire::Access.duration(),
+        };
+        StateStore::put(provider, &txn_id, &state, state.expires_at)
+            .await
+            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
+
+        Ok(CredentialResponse {
+            response: CredentialResponseType::TransactionId(txn_id),
+            ..CredentialResponse::default()
+        })
+    }
+
     // Get `AuthorizedCredential` for `credential_identifier` and
     // `credential_configuration_id`.
-    fn authorized(&self, specification: &CredentialSpec) -> Result<AuthorizedCredential> {
+    fn authorized(&self, request: &CredentialRequest) -> Result<AuthorizedCredential> {
         let Stage::Validated(token) = &self.state.stage else {
             return Err(Error::AccessDenied("invalid access token state".into()));
         };
 
-        match &specification {
+        match &request.specification {
             CredentialSpec::Identifier {
                 credential_identifier,
             } => token.credentials.get(credential_identifier),
@@ -339,16 +346,51 @@ impl Context {
     }
 
     // Get credential dataset for the request
-    async fn dataset(&self, provider: &impl Provider) -> Result<Dataset> {
+    async fn dataset(
+        &self, provider: &impl Provider, request: &CredentialRequest,
+    ) -> Result<Dataset> {
         let identifier = &self.authorized.credential_identifier;
 
         // get claims dataset for `credential_identifier`
         let Some(subject_id) = &self.state.subject_id else {
             return Err(Error::AccessDenied("invalid subject id".into()));
         };
-        let dataset = Subject::dataset(provider, subject_id, identifier)
+        let mut dataset = Subject::dataset(provider, subject_id, identifier)
             .await
             .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
+
+        // narrow claimset from AuthorizedCredential
+        if let Some(claim_ids) = &self.authorized.claim_ids {
+            dataset.claims.retain(|k, _| claim_ids.contains(k));
+        }
+
+        // narrow of claimset from format/credential_definition
+        if let CredentialSpec::Format(f) = &request.specification {
+            let claim_ids = match f {
+                Format::JwtVcJson {
+                    credential_definition,
+                }
+                | Format::LdpVc {
+                    credential_definition,
+                }
+                | Format::JwtVcJsonLd {
+                    credential_definition,
+                } => credential_definition
+                    .credential_subject
+                    .as_ref()
+                    .map(|subj| subj.keys().cloned().collect::<Vec<String>>()),
+                Format::MsoDoc { .. } => {
+                    todo!("Format::MsoDoc");
+                }
+                Format::VcSdJwt { .. } => {
+                    todo!("Format::VcSdJwt");
+                }
+            };
+
+            if let Some(claim_ids) = &claim_ids {
+                dataset.claims.retain(|k, _| claim_ids.contains(k));
+            }
+        };
 
         Ok(dataset)
     }

@@ -1361,7 +1361,7 @@ impl Issuer {
     /// # Errors
     /// TODO: add error handling
     pub fn credential_configuration_id(&self, f: &Format) -> Result<&String> {
-        match f {
+        if let Some((id, _)) = match f {
             Format::JwtVcJson {
                 credential_definition,
             }
@@ -1370,21 +1370,20 @@ impl Issuer {
             }
             | Format::JwtVcJsonLd {
                 credential_definition,
-            } => self
-                .credential_configurations_supported
-                .iter()
-                .find(|(_, cfg)| {
-                    cfg.format.to_string() == f.to_string()
-                        && cfg.credential_definition.type_ == credential_definition.type_
-                })
-                .map(|(id, _)| id)
-                .ok_or_else(|| anyhow!("Credential Configuration not found")),
+            } => self.credential_configurations_supported.iter().find(|(_, cfg)| {
+                cfg.format.to_string() == f.to_string()
+                    && cfg.credential_definition.type_ == credential_definition.type_
+            }),
             Format::MsoDoc { .. } => {
                 todo!("Format::MsoDoc");
             }
             Format::VcSdJwt { .. } => {
                 todo!("Format::VcSdJwt");
             }
+        } {
+            Ok(id)
+        } else {
+            Err(anyhow!("Credential Configuration not found"))
         }
     }
 }
