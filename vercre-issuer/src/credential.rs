@@ -379,11 +379,8 @@ impl Context {
                     .credential_subject
                     .as_ref()
                     .map(|subj| subj.keys().cloned().collect::<Vec<String>>()),
-                Format::MsoDoc { .. } => {
-                    todo!("Format::MsoDoc");
-                }
-                Format::VcSdJwt { .. } => {
-                    todo!("Format::VcSdJwt");
+                Format::MsoDoc { .. } | Format::VcSdJwt { .. } => {
+                    todo!("Format::VcSdJwt, Format::MsoDoc");
                 }
             };
 
