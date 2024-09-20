@@ -697,7 +697,7 @@ pub enum Format {
     ///
     /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
     #[serde(rename = "mso_mdoc")]
-    MsoDoc {
+    MsoMdoc {
         /// Identifies the Credential type, as defined in [ISO.18013-5].
         doctype: String,
 
@@ -739,7 +739,7 @@ impl fmt::Display for Format {
             Self::JwtVcJson { .. } => write!(f, "jwt_vc_json"),
             Self::LdpVc { .. } => write!(f, "ldp_vc"),
             Self::JwtVcJsonLd { .. } => write!(f, "jwt_vc_json-ld"),
-            Self::MsoDoc { .. } => write!(f, "mso_mdoc"),
+            Self::MsoMdoc { .. } => write!(f, "mso_mdoc"),
             Self::VcSdJwt { .. } => write!(f, "vc+sd-jwt"),
         }
     }
@@ -1374,8 +1374,8 @@ impl Issuer {
                 cfg.format.to_string() == f.to_string()
                     && cfg.credential_definition.type_ == credential_definition.type_
             }),
-            Format::MsoDoc { .. } => {
-                todo!("Format::MsoDoc");
+            Format::MsoMdoc { .. } => {
+                todo!("Format::MsoMdoc");
             }
             Format::VcSdJwt { .. } => {
                 todo!("Format::VcSdJwt");

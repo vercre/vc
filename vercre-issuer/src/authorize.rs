@@ -291,8 +291,8 @@ impl Context {
                 AuthorizationSpec::Format(Format::JwtVcJsonLd { .. }) => {
                     todo!("Format::JwtVcJsonLd");
                 }
-                AuthorizationSpec::Format(Format::MsoDoc { .. }) => {
-                    todo!("Format::MsoDoc");
+                AuthorizationSpec::Format(Format::MsoMdoc { .. }) => {
+                    todo!("Format::MsoMdoc");
                 }
                 AuthorizationSpec::Format(Format::VcSdJwt { .. }) => {
                     todo!("Format::VcSdJwt");

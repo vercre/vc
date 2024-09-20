@@ -70,7 +70,7 @@ pub enum FormatProfile {
     ///
     /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
     #[serde(rename = "mso_mdoc")]
-    MsoDoc,
+    MsoMdoc,
 
     /// IETF SD-JWT VC.
     ///
@@ -93,7 +93,7 @@ impl Display for FormatProfile {
             Self::JwtVcJson => write!(f, "jwt_vc_json"),
             Self::LdpVc => write!(f, "ldp_vc"),
             Self::JwtVcJsonLd => write!(f, "jwt_vc_json-ld"),
-            Self::MsoDoc => write!(f, "mso_mdoc"),
+            Self::MsoMdoc => write!(f, "mso_mdoc"),
             Self::VcSdJwt => write!(f, "vc+sd-jwt"),
             Self::JwtVpJson => write!(f, "jwt_vp_json"),
         }
