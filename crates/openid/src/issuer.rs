@@ -531,7 +531,7 @@ pub struct AuthorizationDetail {
     /// Identifies Credentials requested using either `credential_identifier` or
     /// supported credential `format`.
     #[serde(flatten)]
-    pub specification: AuthorizationSpec,
+    pub configuration: Configuration,
 
     // TODO: integrate locations
     /// If the Credential Issuer metadata contains an `authorization_servers`
@@ -552,11 +552,11 @@ pub struct AuthorizationDetail {
 /// Means used to identifiy a Credential's type when requesting a Credential.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(untagged)]
-pub enum AuthorizationSpec {
+pub enum Configuration {
     /// Specifies the unique identifier of the Credential being described in the
     /// `credential_configurations_supported` map in the Credential Issuer
     /// Metadata.
-    ConfigurationId(ConfigurationId),
+    Id(ConfigurationId),
 
     /// Determines the format of the Credential to be issued, which may
     /// determine the type and other information related to the Credential
@@ -566,9 +566,9 @@ pub enum AuthorizationSpec {
     Format(Format),
 }
 
-impl Default for AuthorizationSpec {
+impl Default for Configuration {
     fn default() -> Self {
-        Self::ConfigurationId(ConfigurationId::default())
+        Self::Id(ConfigurationId::default())
     }
 }
 
@@ -1843,7 +1843,7 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                specification: AuthorizationSpec::ConfigurationId(ConfigurationId::Definition {
+                configuration: Configuration::Id(ConfigurationId::Definition {
                     credential_configuration_id: "EmployeeID_JWT".into(),
                     credential_definition: Some(CredentialDefinition {
                         credential_subject: Some(HashMap::from([
@@ -1891,7 +1891,7 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                specification: AuthorizationSpec::Format(Format::JwtVcJson {
+                configuration: Configuration::Format(Format::JwtVcJson {
                     credential_definition: CredentialDefinition {
                         type_: Some(vec![
                             "VerifiableCredential".into(),

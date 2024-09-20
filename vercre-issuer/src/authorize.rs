@@ -78,7 +78,7 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    AuthorizationSpec, ClaimEntry, ConfigurationId, Format, FormatProfile, GrantType, Issuer,
+    Configuration, ClaimEntry, ConfigurationId, Format, FormatProfile, GrantType, Issuer,
     Metadata, Provider, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
@@ -234,8 +234,8 @@ impl Context {
             }
 
             // verify requested credentials are supported
-            match &auth_det.specification {
-                AuthorizationSpec::ConfigurationId(ConfigurationId::Definition {
+            match &auth_det.configuration {
+                Configuration::Id(ConfigurationId::Definition {
                     credential_configuration_id,
                     credential_definition,
                 }) => {
@@ -259,7 +259,7 @@ impl Context {
                     // save `credential_configuration_id` for later use
                     self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
                 }
-                AuthorizationSpec::Format(Format::JwtVcJson {
+                Configuration::Format(Format::JwtVcJson {
                     credential_definition,
                 }) => {
                     //  find supported credential by `format` and `type`
@@ -282,19 +282,19 @@ impl Context {
                     // save `credential_configuration_id` for later use
                     self.auth_dets.insert(config_id.clone(), auth_det.clone());
                 }
-                AuthorizationSpec::ConfigurationId(ConfigurationId::Claims { .. }) => {
+                Configuration::Id(ConfigurationId::Claims { .. }) => {
                     todo!("ConfigurationId::Claims");
                 }
-                AuthorizationSpec::Format(Format::LdpVc { .. }) => {
+                Configuration::Format(Format::LdpVc { .. }) => {
                     todo!("Format::LdpVc");
                 }
-                AuthorizationSpec::Format(Format::JwtVcJsonLd { .. }) => {
+                Configuration::Format(Format::JwtVcJsonLd { .. }) => {
                     todo!("Format::JwtVcJsonLd");
                 }
-                AuthorizationSpec::Format(Format::MsoMdoc { .. }) => {
+                Configuration::Format(Format::MsoMdoc { .. }) => {
                     todo!("Format::MsoMdoc");
                 }
-                AuthorizationSpec::Format(Format::VcSdJwt { .. }) => {
+                Configuration::Format(Format::VcSdJwt { .. }) => {
                     todo!("Format::VcSdJwt");
                 }
             };

@@ -111,12 +111,12 @@ fn authorization_details(details: &Value) -> Result<TokenStream> {
         }
 
         // credential_configuration_id or format?
-        let specification = credential_specification(detail)?;
+        let configuration = credential_configuration(detail)?;
 
         tokens.extend(quote! {
             #path::AuthorizationDetail {
                 type_: #path::AuthorizationDetailType::OpenIdCredential,
-                specification: #specification,
+                configuration: #configuration,
                 locations: None
             }
         });
@@ -125,7 +125,7 @@ fn authorization_details(details: &Value) -> Result<TokenStream> {
     Ok(quote! {vec![#tokens]})
 }
 
-fn credential_specification(detail: &HashMap<String, Value>) -> Result<TokenStream> {
+fn credential_configuration(detail: &HashMap<String, Value>) -> Result<TokenStream> {
     let span = Span::call_site();
     let path = quote! {vercre_issuer};
 
@@ -140,7 +140,7 @@ fn credential_specification(detail: &HashMap<String, Value>) -> Result<TokenStre
         };
 
         Ok(quote! {
-            #path::AuthorizationSpec::ConfigurationId (
+            #path::Configuration::Id (
                 #path::ConfigurationId::Definition {
                     credential_configuration_id: #credential_configuration_id,
                     credential_definition: #credential_definition,
@@ -156,7 +156,7 @@ fn credential_specification(detail: &HashMap<String, Value>) -> Result<TokenStre
 
         match format.as_str() {
             Some("jwt_vc_json") => Ok(quote! {
-                #path::AuthorizationSpec::Format (
+                #path::Configuration::Format (
                     #path::Format::JwtVcJson {
                         credential_definition: #credential_definition,
                     },
