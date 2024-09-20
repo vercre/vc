@@ -1355,6 +1355,39 @@ pub struct Issuer {
     pub credential_configurations_supported: HashMap<String, CredentialConfiguration>,
 }
 
+impl Issuer {
+    /// Returns the `credential_configuration_id` for a given format.
+    ///
+    /// # Errors
+    /// TODO: add error handling
+    pub fn credential_configuration_id(&self, f: &Format) -> Result<&String> {
+        if let Some((id, _)) = match f {
+            Format::JwtVcJson {
+                credential_definition,
+            }
+            | Format::LdpVc {
+                credential_definition,
+            }
+            | Format::JwtVcJsonLd {
+                credential_definition,
+            } => self.credential_configurations_supported.iter().find(|(_, cfg)| {
+                cfg.format.to_string() == f.to_string()
+                    && cfg.credential_definition.type_ == credential_definition.type_
+            }),
+            Format::MsoDoc { .. } => {
+                todo!("Format::MsoDoc");
+            }
+            Format::VcSdJwt { .. } => {
+                todo!("Format::VcSdJwt");
+            }
+        } {
+            Ok(id)
+        } else {
+            Err(anyhow!("Credential Configuration not found"))
+        }
+    }
+}
+
 /// `SupportedCredentialResponseEncryption` contains information about whether
 /// the Credential Issuer supports encryption of the Credential and Batch
 /// Credential Response on top of TLS.
