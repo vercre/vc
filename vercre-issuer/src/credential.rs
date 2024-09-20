@@ -16,9 +16,8 @@ use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
-    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialResponseType,
-    CredentialSpec, Dataset, Format, Issuer, Metadata, MultipleProofs, Proof, ProofClaims,
-    Provider, SingleProof, StateStore, Subject,
+    CredentialRequest, CredentialResponse, CredentialResponseType, CredentialSpec, Dataset, Issuer,
+    Metadata, MultipleProofs, Proof, ProofClaims, Provider, SingleProof, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_status::issuer::Status;
@@ -26,7 +25,7 @@ use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{self, Payload};
 use vercre_w3c_vc::verify_key;
 
-use crate::state::{Credential, Deferrance, Expire, Stage, State};
+use crate::state::{AuthorizedCredential, Credential, Deferrance, Expire, Stage, State};
 
 /// Credential request handler.
 ///
@@ -51,8 +50,8 @@ pub async fn credential(
         ..Context::default()
     };
 
-    let (_config_id, config) = ctx.configuration(&request.specification)?;
-    ctx.credential_config = config;
+    // save authorized credential data for later use
+    ctx.authorized = ctx.authorized(&request.specification)?;
 
     ctx.verify(&provider, &request).await?;
     ctx.process(&provider, request).await
@@ -60,9 +59,9 @@ pub async fn credential(
 
 #[derive(Debug, Default)]
 struct Context {
-    issuer: Issuer,
-    credential_config: CredentialConfiguration,
     state: State,
+    issuer: Issuer,
+    authorized: AuthorizedCredential,
     holder_did: String,
 }
 
@@ -94,7 +93,13 @@ impl Context {
         }
 
         // TODO: refactor into separate function.
-        if let Some(supported_types) = &self.credential_config.proof_types_supported {
+        let config_id = &self.authorized.credential_configuration_id;
+        let config =
+            self.issuer.credential_configurations_supported.get(config_id).ok_or_else(|| {
+                Error::InvalidCredentialRequest("unsupported credential requested".into())
+            })?;
+
+        if let Some(supported_types) = &config.proof_types_supported {
             let Some(proof) = &request.proof else {
                 return Err(Error::InvalidCredentialRequest("proof not set".into()));
             };
@@ -262,7 +267,7 @@ impl Context {
     ) -> Result<Option<VerifiableCredential>> {
         tracing::debug!("credential::generate_vc");
 
-        let dataset = self.dataset(provider, request).await?;
+        let dataset = self.dataset(provider).await?;
 
         // defer issuance if claims are pending (approval),
         if dataset.pending {
@@ -272,8 +277,13 @@ impl Context {
         let credential_issuer = &request.credential_issuer.clone();
 
         // TODO: improve `types` handling
-        let definition = &self.credential_config.credential_definition;
-        let Some(types) = &definition.type_ else {
+        let config_id = &self.authorized.credential_configuration_id;
+        let config =
+            self.issuer.credential_configurations_supported.get(config_id).ok_or_else(|| {
+                Error::InvalidCredentialRequest("unsupported credential requested".into())
+            })?;
+
+        let Some(types) = &config.credential_definition.type_ else {
             return Err(Error::ServerError("Credential type not set".into()));
         };
         let Some(credential_type) = types.get(1) else {
@@ -306,35 +316,31 @@ impl Context {
         Ok(Some(vc))
     }
 
-    // Get credential dataset for the request
-    async fn dataset(
-        &self, provider: &impl Provider, request: &CredentialRequest,
-    ) -> Result<Dataset> {
-        // get credential_identifier from request or from state
-        let identifier = if let CredentialSpec::Identifier {
-            credential_identifier,
-        } = &request.specification
-        {
-            credential_identifier
-        } else {
-            // get credential_identifier from state by matching configuration
-            let (config_id, _config) = self.configuration(&request.specification)?;
-            let Stage::Validated(token_state) = &self.state.stage else {
-                return Err(Error::AccessDenied("invalid access token state".into()));
-            };
-
-            let Some(authorized) = token_state
-                .credentials
-                .values()
-                .find(|c| c.credential_configuration_id == config_id)
-            else {
-                return Err(Error::InvalidCredentialRequest(
-                    "unauthorized credential requested".into(),
-                ));
-            };
-
-            &authorized.credential_identifier
+    // Get `AuthorizedCredential` for `credential_identifier` and
+    // `credential_configuration_id`.
+    fn authorized(&self, specification: &CredentialSpec) -> Result<AuthorizedCredential> {
+        let Stage::Validated(token) = &self.state.stage else {
+            return Err(Error::AccessDenied("invalid access token state".into()));
         };
+
+        match &specification {
+            CredentialSpec::Identifier {
+                credential_identifier,
+            } => token.credentials.get(credential_identifier),
+            CredentialSpec::Format(f) => {
+                let config_id = self.issuer.credential_configuration_id(f).map_err(|e| {
+                    Error::InvalidCredentialRequest(format!("unsupported credential format: {e}"))
+                })?;
+                token.credentials.values().find(|c| &c.credential_configuration_id == config_id)
+            }
+        }
+        .ok_or_else(|| Error::InvalidCredentialRequest("unauthorized credential requested".into()))
+        .cloned()
+    }
+
+    // Get credential dataset for the request
+    async fn dataset(&self, provider: &impl Provider) -> Result<Dataset> {
+        let identifier = &self.authorized.credential_identifier;
 
         // get claims dataset for `credential_identifier`
         let Some(subject_id) = &self.state.subject_id else {
@@ -345,52 +351,6 @@ impl Context {
             .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
 
         Ok(dataset)
-    }
-
-    // Get configuration metadata for requested credential
-    fn configuration(
-        &self, specification: &CredentialSpec,
-    ) -> Result<(String, CredentialConfiguration)> {
-        match specification {
-            CredentialSpec::Identifier {
-                credential_identifier,
-            } => {
-                let Stage::Validated(token_state) = &self.state.stage else {
-                    return Err(Error::AccessDenied("invalid access token state".into()));
-                };
-                let Some(authorized) = token_state.credentials.get(credential_identifier) else {
-                    return Err(Error::InvalidCredentialRequest(
-                        "unauthorized credential requested".into(),
-                    ));
-                };
-                let Some(configuration) = self
-                    .issuer
-                    .credential_configurations_supported
-                    .get(&authorized.credential_configuration_id)
-                else {
-                    return Err(Error::InvalidCredentialRequest(
-                        "unsupported credential requested".into(),
-                    ));
-                };
-
-                Ok((authorized.credential_configuration_id.clone(), configuration.clone()))
-            }
-            CredentialSpec::Format(Format::JwtVcJson { .. }) => {
-                todo!("Format::JwtVcJson");
-            }
-            CredentialSpec::Format(Format::LdpVc { .. }) => {
-                todo!("Format::LdpVc");
-            }
-            CredentialSpec::Format(Format::JwtVcJsonLd { .. }) => {
-                todo!("Format::JwtVcJsonLd");
-            }
-            CredentialSpec::Format(Format::MsoDoc { .. }) => {
-                todo!("Format::MsoDoc");
-            }
-            CredentialSpec::Format(Format::VcSdJwt { .. }) => {
-                todo!("Format::VcSdJwt");
-            }
-        }
     }
 
     // Creates, stores, and returns new `c_nonce` and `c_nonce_expires`_in values
