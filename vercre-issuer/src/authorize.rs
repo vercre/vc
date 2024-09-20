@@ -354,10 +354,9 @@ impl Context {
         // authorization_detail
         let mut authzd_details = vec![];
         for (config_id, auth_det) in &self.auth_dets {
-            let identifiers =
-                Subject::authorize(provider, &request.subject_id, config_id)
-                    .await
-                    .map_err(|e| Error::ServerError(format!("issue authorizing subject: {e}")))?;
+            let identifiers = Subject::authorize(provider, &request.subject_id, config_id)
+                .await
+                .map_err(|e| Error::ServerError(format!("issue authorizing subject: {e}")))?;
 
             authzd_details.push(DetailItem {
                 authorization_detail: auth_det.clone(),
