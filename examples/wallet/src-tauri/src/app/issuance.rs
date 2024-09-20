@@ -60,7 +60,7 @@ impl AppState {
         // to select which credentials to accept.
         let req = AcceptRequest {
             issuance_id: self.issuance.id.clone(),
-            credential_configuration_ids: self.issuance.offered.keys().cloned().collect(),
+            accept: None, // implies accept all
         };
         let status = vercre_holder::accept(provider, &req).await?;
         self.issuance.status = status;

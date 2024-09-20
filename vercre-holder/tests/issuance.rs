@@ -52,14 +52,10 @@ async fn e2e_pre_auth() {
         ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
     });
 
-    // Accept offer
+    // Accept all credentials on offer
     let accept_req = AcceptRequest {
         issuance_id: issuance.issuance_id.clone(),
-        credential_configuration_ids: issuance
-            .offered
-            .keys()
-            .cloned()
-            .collect::<Vec<String>>(),
+        accept: None,
     };
     let status = vercre_holder::accept(HOLDER_PROVIDER.clone(), &accept_req)
         .await

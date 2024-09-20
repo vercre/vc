@@ -6,7 +6,7 @@ use anyhow::{anyhow, bail};
 use tracing::instrument;
 use vercre_core::Kind;
 use vercre_datasec::jose::jws::{self, Type};
-use vercre_issuer::TokenGrantType;
+use vercre_issuer::{AuthorizationSpec, ConfigurationId, TokenGrantType};
 use vercre_macros::credential_request;
 use vercre_openid::issuer::{
     CredentialConfiguration, CredentialResponse, CredentialResponseType, ProofClaims, TokenRequest,
@@ -48,9 +48,32 @@ pub async fn get_credentials(
     };
     let auth = authorized[0].clone();
 
-    // Request each credential offered.
+    // Request each credential accepted.
     // TODO: Is it possible/desirable to do concurrent requests?
-    for cfg in issuance.offered.values() {
+    for cfg_id in issuance.offered.keys() {
+        if let Some(accepted) = &issuance.accepted {
+            let mut accepted = accepted.iter();
+            if accepted
+                .any(|a| match &a.specification {
+                    AuthorizationSpec::ConfigurationId(config_id) => match config_id {
+                        ConfigurationId::Definition {
+                            credential_configuration_id,
+                            ..
+                        }
+                        | ConfigurationId::Claims {
+                            credential_configuration_id,
+                            ..
+                        } => credential_configuration_id == cfg_id,
+                    },
+                    AuthorizationSpec::Format(_) => false,
+                })
+            {
+                continue;
+            }
+        }
+
+        let cfg = issuance.offered.get(cfg_id).expect("offered credential exists");
+
         // Construct a proof to be used in credential requests.
         let claims = ProofClaims {
             iss: Some(issuance.client_id.clone()),
@@ -133,9 +156,6 @@ fn token_request(issuance: &Issuance) -> TokenRequest {
     let pre_auth_code =
         grants.pre_authorized_code.as_ref().expect("pre-authorized code exists on offer");
 
-    // If the accepted credentials are not all the offered ones, we need to construct
-    // authorization details.
- 
     TokenRequest {
         credential_issuer: issuance.offer.credential_issuer.clone(),
         client_id: Some(issuance.client_id.clone()),

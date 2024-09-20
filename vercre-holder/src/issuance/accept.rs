@@ -4,10 +4,16 @@
 //! issuance offer with the issuance flow. If a PIN is required, this endpoint
 //! will simply update the state to indicate that, otherwise it will proceed
 //! with the token request and credential requests.
+//! 
+//! The holder is not obligated to accept all credentials offered. Use the
+//! `accept` field to limit the scope of the acceptance. This will be used
+//! downstream in the flow to specialize the access token and credential
+//! requests which are honored by the respective `vercre-issuer` endpoints.
 
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};use serde::{Deserialize, Serialize};
 use tracing::instrument;
+use vercre_issuer::AuthorizationDetail;
 
 use super::{Issuance, Status};
 use crate::provider::{HolderProvider, StateStore};
@@ -24,13 +30,15 @@ pub struct AcceptRequest {
     /// The issuance flow identifier.
     pub issuance_id: String,
 
-    /// The list of credential configuration IDs to accept.
+    /// The list of credentials to accept out of the ones offered.
     ///
-    /// None implies the holder wants all credentials and all claims on offer.
+    /// The structure allows the holder to narrow the scope of the credentials
+    /// and also the claims contained in the credential. Send `None` to imply
+    /// the holder wants all credentials and all claims on offer.
     ///
     /// Use the cancel endpoint to abandon the issuance and accept no
     /// credentials on offer.
-    pub credential_configuration_ids: Vec<String>,
+    pub accept: Option<Vec<AuthorizationDetail>>,
 }
 
 /// Progresses the issuance flow triggered by a holder accepting a credential
@@ -40,12 +48,6 @@ pub async fn accept(
     provider: impl HolderProvider, request: &AcceptRequest,
 ) -> anyhow::Result<Status> {
     tracing::debug!("Endpoint::accept");
-
-    // Abandon the issuance if no credentials are accepted.
-    if request.credential_configuration_ids.is_empty() {
-        tracing::debug!(target: "Endpoint::accept", "no credentials accepted");
-        return Ok(Status::Inactive);
-    }
 
     let mut issuance: Issuance = match StateStore::get(&provider, &request.issuance_id).await {
         Ok(issuance) => issuance,
@@ -70,7 +72,15 @@ pub async fn accept(
         tracing::error!(target: "Endpoint::accept", ?e);
         return Err(e);
     };
-    issuance.accepted = None;
+    if let Some(accepted) = &request.accept {
+        if accepted.is_empty() {
+            let e = anyhow!("if accept is provided it cannot be empty");
+            tracing::error!(target: "Endpoint::accept", ?e);
+            return Err(e);
+        }
+    };
+
+    issuance.accepted.clone_from(&request.accept);
 
     if pre_auth_code.tx_code.is_some() {
         issuance.status = Status::PendingPin;
