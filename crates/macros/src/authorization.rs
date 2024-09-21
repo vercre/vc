@@ -130,7 +130,7 @@ fn credential_authorization(detail: &HashMap<String, Value>) -> Result<TokenStre
         match format.as_str() {
             Some("jwt_vc_json") => Ok(quote! {
                 #path::CredentialAuthorization::Format (
-                    #path::RequestedFormat {
+                    #path::CredentialFormat {
                         format: #path::Format::JwtVcJson,
                         profile: #path::FormatProfile::Definition(#credential_definition),
                     },
