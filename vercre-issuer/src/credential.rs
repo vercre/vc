@@ -16,7 +16,7 @@ use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
-    CredentialRequest, CredentialResponse, CredentialResponseType, CredentialSpec, Dataset,
+    CredentialIssuance, CredentialRequest, CredentialResponse, CredentialResponseType, Dataset,
     FormatProfile, Issuer, Metadata, MultipleProofs, Proof, ProofClaims, Provider, SingleProof,
     StateStore, Subject,
 };
@@ -330,11 +330,11 @@ impl Context {
             return Err(Error::AccessDenied("invalid access token state".into()));
         };
 
-        match &request.specification {
-            CredentialSpec::Identifier {
+        match &request.credential {
+            CredentialIssuance::Identifier {
                 credential_identifier,
             } => token.credentials.get(credential_identifier),
-            CredentialSpec::Format(f) => {
+            CredentialIssuance::Format(f) => {
                 let config_id = self.issuer.credential_configuration_id(f).map_err(|e| {
                     Error::InvalidCredentialRequest(format!("unsupported credential format: {e}"))
                 })?;
@@ -365,7 +365,7 @@ impl Context {
         }
 
         // narrow of claimset from format/credential_definition
-        if let CredentialSpec::Format(f) = &request.specification {
+        if let CredentialIssuance::Format(f) = &request.credential {
             let claim_ids = match &f.profile {
                 FormatProfile::Definition(credential_definition) => credential_definition
                     .credential_subject

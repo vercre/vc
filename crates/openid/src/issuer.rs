@@ -868,7 +868,7 @@ pub struct CredentialRequest {
     /// type. If `credential_identifiers` were returned in the Token
     /// Response, they MUST be used here. Otherwise, they MUST NOT be used.
     #[serde(flatten)]
-    pub specification: CredentialSpec,
+    pub credential: CredentialIssuance,
 
     /// Wallet's proof of possession of cryptographic key material the issued
     /// Credential will be bound to.
@@ -889,7 +889,7 @@ pub struct CredentialRequest {
 /// Credential.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(untagged)]
-pub enum CredentialSpec {
+pub enum CredentialIssuance {
     /// Credential is requested by `credential_identifier`.
     /// REQUIRED when an Authorization Details of type `openid_credential` was
     /// returned from the Token Response.
@@ -905,7 +905,7 @@ pub enum CredentialSpec {
     Format(RequestedFormat),
 }
 
-impl Default for CredentialSpec {
+impl Default for CredentialIssuance {
     fn default() -> Self {
         Self::Identifier {
             credential_identifier: String::new(),
@@ -1814,7 +1814,7 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            specification: CredentialSpec::Identifier {
+            credential: CredentialIssuance::Identifier {
                 credential_identifier: "EngineeringDegree2023".into(),
             },
             proof: Some(Proof::Single {
@@ -1854,7 +1854,7 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            specification: CredentialSpec::Format(RequestedFormat {
+            credential: CredentialIssuance::Format(RequestedFormat {
                 format: Format::JwtVcJson,
                 profile: FormatProfile::Definition(CredentialDefinition {
                     type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
@@ -1894,7 +1894,7 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            specification: CredentialSpec::Identifier {
+            credential: CredentialIssuance::Identifier {
                 credential_identifier: "EngineeringDegree2023".into(),
             },
             proof: Some(Proof::Multiple(MultipleProofs::Jwt(vec![
