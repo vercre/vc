@@ -531,7 +531,7 @@ pub struct AuthorizationDetail {
     /// Identifies Credentials requested using either `credential_identifier` or
     /// supported credential `format`.
     #[serde(flatten)]
-    pub configuration: Configuration,
+    pub credential: CredentialAuthorization,
 
     // TODO: integrate locations
     /// If the Credential Issuer metadata contains an `authorization_servers`
@@ -552,16 +552,16 @@ pub struct AuthorizationDetail {
 /// Means used to identifiy a Credential's type when requesting a Credential.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(untagged)]
-pub enum Configuration {
+pub enum CredentialAuthorization {
     /// When `credential_configuration_id` is used in authorization details
-    Id {
+    ConfigurationId {
         /// The ID of the Supported Credential Configuration in Issuer metadata.
         credential_configuration_id: String,
 
         /// An optional subset of claims to include in the Credential.
         #[serde(flatten)]
         #[serde(skip_serializing_if = "Option::is_none")]
-        specification: Option<FormatSpec>,
+        claims: Option<FormatSpec>,
     },
 
     /// Determines the format of the Credential to be issued, which may
@@ -571,11 +571,11 @@ pub enum Configuration {
     Format(Format),
 }
 
-impl Default for Configuration {
+impl Default for CredentialAuthorization {
     fn default() -> Self {
-        Self::Id {
+        Self::ConfigurationId {
             credential_configuration_id: String::new(),
-            specification: None,
+            claims: None,
         }
     }
 }
@@ -595,8 +595,7 @@ pub enum FormatSpec {
     /// Credentials complying with [ISO.18013-5]
     MsoMdoc {
         /// The Credential type, as defined in [ISO.18013-5].
-        #[serde(skip_serializing_if = "Option::is_none")]
-        doctype: Option<String>,
+        doctype: String,
 
         /// A list of claims to include in the issued credential.
         #[serde(skip_serializing_if = "Option::is_none")]
@@ -604,13 +603,12 @@ pub enum FormatSpec {
     },
 
     /// Selective Disclosure JWT ([SD-JWT]).
-    /// [SD-JWT]: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-04
+    /// [SD-JWT]: <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-04>
     SdJwt {
         /// Verifiable credential type. The vct value MUST be a case-sensitive
         /// String or URI serving as an identifier for the type of the SD-JWT
         /// VC.
-        #[serde(skip_serializing_if = "Option::is_none")]
-        vct: Option<String>,
+        vct: String,
 
         /// A list of claims to include in the issued credential.
         #[serde(skip_serializing_if = "Option::is_none")]
@@ -844,9 +842,9 @@ pub struct Authorized {
 
     /// Credential Identifiers uniquely identify Credential Datasets that can
     /// be issued. Each Dataset corresponds to a Credential Configuration in the
-    /// `credential_configurations_supported` parameter of the Credential Issuer
-    /// metadata.
-    /// The Wallet MUST use these identifiers in Credential Requests.
+    /// `credential_configurations_supported` parameter of the Credential
+    /// Issuer metadata. The Wallet MUST use these identifiers in Credential
+    /// Requests.
     pub credential_identifiers: Vec<String>,
 }
 
@@ -1253,7 +1251,7 @@ impl Issuer {
         } {
             Ok(id)
         } else {
-            Err(anyhow!("Credential Configuration not found"))
+            Err(anyhow!("Credential CredentialAuthorization not found"))
         }
     }
 }
@@ -1713,9 +1711,9 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                configuration: Configuration::Id {
+                credential: CredentialAuthorization::ConfigurationId {
                     credential_configuration_id: "EmployeeID_JWT".into(),
-                    specification: Some(FormatSpec::Definition(CredentialDefinition {
+                    claims: Some(FormatSpec::Definition(CredentialDefinition {
                         credential_subject: Some(HashMap::from([
                             (
                                 "given_name".to_string(),
@@ -1768,7 +1766,7 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                configuration: Configuration::Format(Format {
+                credential: CredentialAuthorization::Format(Format {
                     format: FormatProfile::JwtVcJson,
                     specification: FormatSpec::Definition(CredentialDefinition {
                         type_: Some(vec![

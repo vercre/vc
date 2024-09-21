@@ -78,7 +78,7 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    ClaimEntry, Configuration, Format, FormatSpec, GrantType, Issuer, Metadata, Provider,
+    ClaimEntry, CredentialAuthorization, Format, FormatSpec, GrantType, Issuer, Metadata, Provider,
     StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
@@ -234,10 +234,10 @@ impl Context {
             }
 
             // verify requested credentials are supported
-            match &auth_det.configuration {
-                Configuration::Id {
+            match &auth_det.credential {
+                CredentialAuthorization::ConfigurationId {
                     credential_configuration_id,
-                    specification,
+                    claims,
                 } => {
                     //  find supported credential by `credential_configuration_id`
                     if !supported.contains_key(credential_configuration_id) {
@@ -247,7 +247,7 @@ impl Context {
                     }
 
                     // verify requested claims are supported
-                    if let Some(claim_spec) = specification {
+                    if let Some(claim_spec) = claims {
                         let FormatSpec::Definition(cred_def) = claim_spec else {
                             return Err(Error::InvalidRequest(
                                 "unsupported claim specification".into(),
@@ -267,7 +267,7 @@ impl Context {
                     // save `credential_configuration_id` for later use
                     self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
                 }
-                Configuration::Format(Format {
+                CredentialAuthorization::Format(Format {
                     format,
                     specification: FormatSpec::Definition(credential_definition),
                 }) => {
@@ -292,8 +292,8 @@ impl Context {
                     self.auth_dets.insert(config_id.clone(), auth_det.clone());
                 }
 
-                Configuration::Format(_) => {
-                    todo!("Configuration::Format");
+                CredentialAuthorization::Format(_) => {
+                    todo!("CredentialAuthorization::Format");
                 }
             };
         }

@@ -1,4 +1,4 @@
-# Vercre's Configuration of `cargo vet`
+# Vercre's CredentialAuthorization of `cargo vet`
 
 > [!CAUTION]
 >

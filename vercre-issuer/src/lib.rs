@@ -127,7 +127,7 @@ pub use vercre_macros::create_offer_request;
 pub use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     AuthorizationResponse, Authorized, ClaimDefinition, ClaimEntry, FormatSpec,
-    Configuration, CreateOfferRequest, CreateOfferResponse, CredentialConfiguration,
+    CredentialAuthorization, CreateOfferRequest, CreateOfferResponse, CredentialConfiguration,
     CredentialDefinition, CredentialOffer, CredentialOfferRequest, CredentialOfferResponse,
     CredentialRequest, CredentialResponse, CredentialResponseType, CredentialSpec,
     DeferredCredentialRequest, DeferredCredentialResponse, Format, FormatProfile, Grants,

@@ -116,7 +116,7 @@ fn authorization_details(details: &Value) -> Result<TokenStream> {
         tokens.extend(quote! {
             #path::AuthorizationDetail {
                 type_: #path::AuthorizationDetailType::OpenIdCredential,
-                configuration: #configuration,
+                credential: #configuration,
                 locations: None
             }
         });
@@ -132,7 +132,7 @@ fn credential_configuration(detail: &HashMap<String, Value>) -> Result<TokenStre
     // credential_configuration_id or format?
     if let Some(credential_configuration_id) = detail.get("credential_configuration_id") {
         // credential_definition is optional
-        let specification = if let Some(defn_value) = detail.get("credential_definition") {
+        let claims = if let Some(defn_value) = detail.get("credential_definition") {
             let credential_definition = configuration_definition(defn_value)?;
             quote! {Some(#path::FormatSpec::Definition(#credential_definition))}
         } else {
@@ -140,9 +140,9 @@ fn credential_configuration(detail: &HashMap<String, Value>) -> Result<TokenStre
         };
 
         Ok(quote! {
-            #path::Configuration::Id {
+            #path::CredentialAuthorization::ConfigurationId {
                 credential_configuration_id: #credential_configuration_id,
-                specification: #specification,
+                claims: #claims,
             }
         })
     } else if let Some(format) = detail.get("format") {
@@ -154,7 +154,7 @@ fn credential_configuration(detail: &HashMap<String, Value>) -> Result<TokenStre
 
         match format.as_str() {
             Some("jwt_vc_json") => Ok(quote! {
-                #path::Configuration::Format (
+                #path::CredentialAuthorization::Format (
                     #path::Format {
                         format: #path::FormatProfile::JwtVcJson,
                         specification: #path::FormatSpec::Definition(#credential_definition),
