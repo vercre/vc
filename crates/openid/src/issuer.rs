@@ -509,7 +509,7 @@ pub struct AuthorizationRequest {
     pub issuer_state: Option<String>,
 }
 
-/// Authorization details type.
+/// Authorization detail type (we only support `openid_credential`).
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub enum AuthorizationDetailType {
     /// OpenID Credential authorization detail type.
@@ -528,8 +528,8 @@ pub struct AuthorizationDetail {
     #[serde(rename = "type")]
     pub type_: AuthorizationDetailType,
 
-    /// Identifies Credentials requested using either `credential_identifier` or
-    /// supported credential `format`.
+    /// Identifies credential to authorize for issuance using either
+    /// `credential_configuration_id` or a supported credential `format`.
     #[serde(flatten)]
     pub credential: CredentialAuthorization,
 
@@ -553,21 +553,22 @@ pub struct AuthorizationDetail {
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[serde(untagged)]
 pub enum CredentialAuthorization {
-    /// When `credential_configuration_id` is used in authorization details
+    /// Identifes the credential to authorize by `credential_configuration_id`.
     ConfigurationId {
-        /// The ID of the Supported Credential Configuration in Issuer metadata.
+        /// The unique identifier of the Credential being requested in the
+        /// `credential_configurations_supported` map in  Issuer Metadata.
         credential_configuration_id: String,
 
-        /// An optional subset of claims to include in the Credential.
+        /// A subset of supported claims to authorize for the  issued
+        /// credential.
         #[serde(flatten)]
         #[serde(skip_serializing_if = "Option::is_none")]
         claims: Option<FormatProfile>,
     },
 
-    /// Determines the format of the Credential to be issued, which may
-    /// determine the type and other information related to the Credential
-    /// to be issued. REQUIRED when `credential_identifiers` was not
-    /// returned from the Token Response. MUST NOT be used otherwise.
+    /// Identifies the credential to authorize using format-specific parameters.
+    /// The requested format should resolve to a single supported credential in
+    /// the `credential_configurations_supported` map in the Issuer Metadata.
     Format(RequestedFormat),
 }
 
@@ -580,11 +581,26 @@ impl Default for CredentialAuthorization {
     }
 }
 
-/// The `OpenID4VCI` specification defines commonly used [Credential Format
-/// Profiles] to support. The profiles define Credential format specific
-/// parameters or claims used to support a particular format.
+/// When authorization or issuance is requested by format, the format identifier
+/// and format profile-specific parameters are required in order to uniquely
+/// identify the credential requested.
 ///
-/// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
+/// See <https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles>.
+#[derive(Clone, Default, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct RequestedFormat {
+    /// The format's identifier
+    pub format: Format,
+
+    /// Format profile-specific parameters.
+    #[serde(flatten)]
+    pub profile: FormatProfile,
+}
+
+/// The `OpenID4VCI` specification defines commonly used [Format Profiles] to
+/// support. The profiles define Credential profile-specific parameters or
+/// claims used to support a particular format.
+///
+/// [Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum FormatProfile {
     /// Requested Credential is specified by `credential_configuration_id` and
@@ -620,25 +636,6 @@ impl Default for FormatProfile {
     fn default() -> Self {
         Self::Definition(CredentialDefinition::default())
     }
-}
-
-/// The `OpenID4VCI` specification defines commonly used [Credential Format
-/// Profiles] to support. The profiles define Credential format specific
-/// parameters or claims used to support a particular format.
-///
-///
-/// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
-#[derive(Clone, Default, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct RequestedFormat {
-    /// The format of the Credential described as specified in the
-    /// `credential_configurations_supported` map in the Credential
-    /// Issuer metadata.
-    pub format: Format,
-
-    /// Requested Credential is specified by `credential_configuration_id` and
-    /// optionally, `CredentialDefinition`.
-    #[serde(flatten)]
-    pub profile: FormatProfile,
 }
 
 /// Authorization Response as defined in [RFC6749].
@@ -863,9 +860,10 @@ pub struct CredentialRequest {
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub access_token: String,
 
-    /// Specifies the Credential requested using either a
-    /// `credential_identifier` or a combination of supported format and
-    /// type. If `credential_identifiers` were returned in the Token
+    /// Identifies the credential requested for issuance using either a
+    /// `credential_identifier` or a supported format.
+    ///
+    /// If `credential_identifiers` were returned in the Token
     /// Response, they MUST be used here. Otherwise, they MUST NOT be used.
     #[serde(flatten)]
     pub credential: CredentialIssuance,
