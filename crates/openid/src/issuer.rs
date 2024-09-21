@@ -1058,7 +1058,7 @@ pub enum CredentialResponseType {
 
     /// Contains an array of issued Credentials. The values in the array MAY be
     /// a string or an object, depending on the Credential Format.
-    Credentials(Kind<VerifiableCredential>),
+    Credentials(Vec<Kind<VerifiableCredential>>),
 
     /// String identifying a Deferred Issuance transaction. This claim is
     /// contained in the response if the Credential Issuer cannot
