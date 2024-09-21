@@ -12,7 +12,7 @@ use vercre_issuer::{
     TokenRequest, TokenResponse,
 };
 use vercre_macros::{authorization_request, credential_request};
-use vercre_openid::{Error, FormatProfile, Result};
+use vercre_openid::{Error, Format, Result};
 use vercre_test_utils::holder;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_w3c_vc::proof::{self, Payload, Verify};
@@ -23,7 +23,7 @@ pub const REDIRECT_URI: &str = "http://localhost:3000/callback";
 #[derive(Default)]
 pub struct Wallet {
     pub provider: issuer::Provider,
-    pub format: FormatProfile,
+    pub format: Format,
     pub tx_code: Option<String>,
 }
 

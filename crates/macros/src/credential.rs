@@ -11,7 +11,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
 
     let credential_issuer = input.expect("credential_issuer")?;
     let access_token = input.expect("access_token")?;
-    let specification = credential_specification(&mut input)?;
+    let credential = credential_issuance(&mut input)?;
     let proof = proof(&mut input)?;
     let credential_response_encryption = input.option("credential_response_encryption");
 
@@ -24,20 +24,20 @@ pub fn request(input: &Json) -> Result<TokenStream> {
         #path::CredentialRequest {
             credential_issuer: #credential_issuer,
             access_token: #access_token,
-            specification: #specification,
+            credential: #credential,
             proof: #proof,
             credential_response_encryption: #credential_response_encryption,
         }
     })
 }
 
-fn credential_specification(input: &mut Json) -> Result<TokenStream> {
+fn credential_issuance(input: &mut Json) -> Result<TokenStream> {
     let path = quote! {vercre_issuer};
     let span = Span::call_site();
 
     if let Some(identifier) = input.get("credential_identifier") {
         Ok(quote! {
-            #path::CredentialSpec::Identifier {
+            #path::CredentialIssuance::Identifier {
                 credential_identifier: #identifier.into(),
             }
         })
@@ -49,8 +49,9 @@ fn credential_specification(input: &mut Json) -> Result<TokenStream> {
 
         match format.as_str() {
             Some("jwt_vc_json") => Ok(quote! {
-                #path::CredentialSpec::Format(#path::Format::JwtVcJson {
-                    credential_definition: #credential_definition,
+                #path::CredentialIssuance::Format(#path::RequestedFormat {
+                    format: #path::Format::JwtVcJson,
+                    profile: #path::FormatProfile::Definition(#credential_definition),
                 })
             }),
             _ => return Err(Error::new(span, "unsupported format")),

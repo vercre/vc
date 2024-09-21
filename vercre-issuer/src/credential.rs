@@ -16,9 +16,9 @@ use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
-    CredentialRequest, CredentialResponse, CredentialResponseType, CredentialSpec, Dataset, Format,
-    Issuer, Metadata, MultipleProofs, Proof, ProofClaims, Provider, SingleProof, StateStore,
-    Subject,
+    CredentialIssuance, CredentialRequest, CredentialResponse, CredentialResponseType, Dataset,
+    FormatProfile, Issuer, Metadata, MultipleProofs, Proof, ProofClaims, Provider, SingleProof,
+    StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_status::issuer::Status;
@@ -330,11 +330,11 @@ impl Context {
             return Err(Error::AccessDenied("invalid access token state".into()));
         };
 
-        match &request.specification {
-            CredentialSpec::Identifier {
+        match &request.credential {
+            CredentialIssuance::Identifier {
                 credential_identifier,
             } => token.credentials.get(credential_identifier),
-            CredentialSpec::Format(f) => {
+            CredentialIssuance::Format(f) => {
                 let config_id = self.issuer.credential_configuration_id(f).map_err(|e| {
                     Error::InvalidCredentialRequest(format!("unsupported credential format: {e}"))
                 })?;
@@ -365,22 +365,17 @@ impl Context {
         }
 
         // narrow of claimset from format/credential_definition
-        if let CredentialSpec::Format(f) = &request.specification {
-            let claim_ids = match f {
-                Format::JwtVcJson {
-                    credential_definition,
-                }
-                | Format::LdpVc {
-                    credential_definition,
-                }
-                | Format::JwtVcJsonLd {
-                    credential_definition,
-                } => credential_definition
+        if let CredentialIssuance::Format(f) = &request.credential {
+            let claim_ids = match &f.profile {
+                FormatProfile::Definition(credential_definition) => credential_definition
                     .credential_subject
                     .as_ref()
                     .map(|subj| subj.keys().cloned().collect::<Vec<String>>()),
-                Format::MsoDoc { .. } | Format::VcSdJwt { .. } => {
-                    todo!("Format::VcSdJwt, Format::MsoDoc");
+                FormatProfile::MsoMdoc { .. } => {
+                    todo!("FormatProfile::MsoMdoc");
+                }
+                FormatProfile::SdJwt { .. } => {
+                    todo!("FormatProfile::SdJwt");
                 }
             };
 

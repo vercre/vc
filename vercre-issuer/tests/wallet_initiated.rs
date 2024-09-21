@@ -5,7 +5,7 @@ mod wallet;
 
 use rstest::rstest;
 use utils::{provider, Issuance};
-use vercre_openid::FormatProfile;
+use vercre_openid::Format;
 use vercre_test_utils::issuer::Provider;
 use vercre_test_utils::snapshot;
 
@@ -18,7 +18,7 @@ async fn issuance(provider: Provider, #[case] issue: Issuance) {
 
     let wallet = wallet::Wallet {
         provider,
-        format: FormatProfile::JwtVcJson,
+        format: Format::JwtVcJson,
         ..Default::default()
     };
 
