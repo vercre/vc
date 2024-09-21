@@ -1235,8 +1235,6 @@ impl Issuer {
     pub fn credential_configuration_id(&self, cfmt: &CredentialFormat) -> Result<&String> {
         if let Some((id, _)) = match &cfmt.profile {
             FormatProfile::Definition(cfmt_defn) => {
-                println!("cfmt_defn: {:?}", cfmt_defn);
-
                 self.credential_configurations_supported.iter().find(|(_, cfg)| {
                     if let FormatProfile::Definition(cfg_defn) = &cfg.profile {
                         cfg.format == cfmt.format && cfg_defn.type_ == cfmt_defn.type_
