@@ -9,7 +9,7 @@ use rstest::rstest;
 use utils::{provider, Issuance};
 use vercre_issuer::SendType;
 use vercre_macros::create_offer_request;
-use vercre_openid::FormatProfile;
+use vercre_openid::Format;
 use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER};
 use vercre_test_utils::snapshot;
 
@@ -40,7 +40,7 @@ async fn issuance(provider: Provider, #[case] issue: Issuance) {
     let wallet = wallet::Wallet {
         provider,
         tx_code: response.tx_code,
-        format: FormatProfile::JwtVcJson,
+        format: Format::JwtVcJson,
     };
 
     wallet.issuer_initiated(response.offer_type).await.expect("should get credential");
@@ -48,8 +48,8 @@ async fn issuance(provider: Provider, #[case] issue: Issuance) {
 
 /// Credential format variants
 #[rstest]
-#[case(FormatProfile::JwtVcJson)]
-async fn format(provider: Provider, #[case] credential_format: FormatProfile) {
+#[case(Format::JwtVcJson)]
+async fn format(provider: Provider, #[case] credential_format: Format) {
     vercre_test_utils::init_tracer();
     snapshot!("issuer:{credential_format}");
 
@@ -93,7 +93,7 @@ async fn authorization(provider: Provider) {
     let wallet = wallet::Wallet {
         provider: provider.clone(),
         tx_code: response.tx_code,
-        format: FormatProfile::JwtVcJson,
+        format: Format::JwtVcJson,
     };
 
     wallet.issuer_initiated(response.offer_type).await.expect("should get credential");
@@ -121,7 +121,7 @@ async fn offer_type(provider: Provider, #[case] send_type: SendType) {
     let wallet = wallet::Wallet {
         provider: provider.clone(),
         tx_code: response.tx_code,
-        format: FormatProfile::JwtVcJson,
+        format: Format::JwtVcJson,
     };
 
     wallet.issuer_initiated(response.offer_type).await.expect("should get credential");

@@ -22,8 +22,8 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec, Authorized, ConfigurationId,
-    Format, Metadata, Provider, StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
+    AuthorizationDetail, AuthorizationDetailType, Authorized, CredentialAuthorization, Metadata,
+    Provider, RequestedFormat, StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
 
@@ -166,14 +166,12 @@ impl Context {
                     authorization_details.push(Authorized {
                         authorization_detail: AuthorizationDetail {
                             type_: AuthorizationDetailType::OpenIdCredential,
-                            specification: AuthorizationSpec::ConfigurationId(
-                                ConfigurationId::Definition {
-                                    credential_configuration_id: authorized
-                                        .credential_configuration_id
-                                        .clone(),
-                                    credential_definition: None,
-                                },
-                            ),
+                            credential: CredentialAuthorization::ConfigurationId {
+                                credential_configuration_id: authorized
+                                    .credential_configuration_id
+                                    .clone(),
+                                claims: None,
+                            },
                             ..AuthorizationDetail::default()
                         },
                         credential_identifiers: vec![identifier.clone()],
@@ -305,28 +303,35 @@ fn narrow_auth(
 }
 
 fn is_match(a: &AuthorizationDetail, b: &AuthorizationDetail) -> bool {
-    match &a.specification {
-        AuthorizationSpec::ConfigurationId(a_config) => {
-            let AuthorizationSpec::ConfigurationId(b_config) = &b.specification else {
-                return false;
-            };
-            a_config == b_config
-        }
-
-        AuthorizationSpec::Format(Format::JwtVcJson {
-            credential_definition: a_def,
-        }) => {
-            let AuthorizationSpec::Format(Format::JwtVcJson {
-                credential_definition: b_def,
-            }) = &b.specification
+    match &a.credential {
+        CredentialAuthorization::ConfigurationId {
+            credential_configuration_id: a,
+            ..
+        } => {
+            let CredentialAuthorization::ConfigurationId {
+                credential_configuration_id: b,
+                ..
+            } = &b.credential
             else {
                 return false;
             };
-            a_def == b_def
+            a == b
         }
 
-        // TODO: add remaining match arms
-        AuthorizationSpec::Format(_) => todo!("remaining match arms"),
+        CredentialAuthorization::Format(RequestedFormat {
+            format,
+            profile: a_def,
+        }) => {
+            let CredentialAuthorization::Format(RequestedFormat {
+                format: b_format,
+                profile: b_def,
+            }) = &b.credential
+            else {
+                return false;
+            };
+
+            format == b_format && a_def == b_def
+        }
     }
 }
 
@@ -336,8 +341,8 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use vercre_macros::token_request;
     use vercre_openid::issuer::{
-        AuthorizationDetail, AuthorizationDetailType, AuthorizationSpec, ConfigurationId,
-        CredentialDefinition, Format,
+        AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization,
+        CredentialDefinition, Format, FormatProfile, RequestedFormat,
     };
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
@@ -423,12 +428,10 @@ mod tests {
                 details: Some(vec![DetailItem {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
-                        specification: AuthorizationSpec::ConfigurationId(
-                            ConfigurationId::Definition {
-                                credential_configuration_id: "EmployeeID_JWT".into(),
-                                credential_definition: None,
-                            },
-                        ),
+                        credential: CredentialAuthorization::ConfigurationId {
+                            credential_configuration_id: "EmployeeID_JWT".into(),
+                            claims: None,
+                        },
                         ..AuthorizationDetail::default()
                     },
                     credential_configuration_id: "EmployeeID_JWT".into(),
@@ -494,14 +497,15 @@ mod tests {
                 details: Some(vec![DetailItem {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
-                        specification: AuthorizationSpec::Format(Format::JwtVcJson {
-                            credential_definition: CredentialDefinition {
+                        credential: CredentialAuthorization::Format(RequestedFormat {
+                            format: Format::JwtVcJson,
+                            profile: FormatProfile::Definition(CredentialDefinition {
                                 type_: Some(vec![
                                     "VerifiableCredential".into(),
                                     "EmployeeIDCredential".into(),
                                 ]),
                                 ..CredentialDefinition::default()
-                            },
+                            }),
                         }),
                         ..AuthorizationDetail::default()
                     },

@@ -126,14 +126,14 @@ pub use token::token;
 pub use vercre_macros::create_offer_request;
 pub use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
-    AuthorizationResponse, AuthorizationSpec, Authorized, ClaimDefinition, ClaimEntry,
-    ConfigurationId, CreateOfferRequest, CreateOfferResponse, CredentialConfiguration,
-    CredentialDefinition, CredentialOffer, CredentialOfferRequest, CredentialOfferResponse,
-    CredentialRequest, CredentialResponse, CredentialResponseType, CredentialSpec,
-    DeferredCredentialRequest, DeferredCredentialResponse, Format, Grants, MetadataRequest,
-    MetadataResponse, OfferType, PreAuthorizedCodeGrant, Proof, ProofClaims, RegistrationRequest,
-    RegistrationResponse, SendType, SingleProof, TokenGrantType, TokenRequest, TokenResponse,
-    TxCode,
+    AuthorizationResponse, Authorized, ClaimDefinition, ClaimEntry, CreateOfferRequest,
+    CreateOfferResponse, CredentialAuthorization, CredentialConfiguration, CredentialDefinition,
+    CredentialIssuance, CredentialOffer, CredentialOfferRequest, CredentialOfferResponse,
+    CredentialRequest, CredentialResponse, CredentialResponseType, DeferredCredentialRequest,
+    DeferredCredentialResponse, Format, FormatProfile, Grants, MetadataRequest, MetadataResponse,
+    OfferType, PreAuthorizedCodeGrant, Proof, ProofClaims, RegistrationRequest,
+    RegistrationResponse, RequestedFormat, SendType, SingleProof, TokenGrantType, TokenRequest,
+    TokenResponse, TxCode,
 };
 pub use vercre_openid::Result;
 pub use vercre_w3c_vc::model::{

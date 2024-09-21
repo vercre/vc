@@ -18,7 +18,7 @@ use vercre_did::DidResolver;
 use vercre_dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 use vercre_w3c_vc::model::VerifiablePresentation;
 
-pub use super::FormatProfile;
+pub use super::Format;
 pub use crate::oauth::{OAuthClient, OAuthServer};
 pub use crate::provider::{self, Result, StateStore};
 
@@ -629,7 +629,7 @@ pub struct Verifier {
     /// }
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub vp_formats: Option<HashMap<FormatProfile, VpFormat>>,
+    pub vp_formats: Option<HashMap<Format, VpFormat>>,
 }
 
 /// OAuth 2.0 Authorization Server metadata.

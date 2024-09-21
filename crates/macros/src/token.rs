@@ -111,12 +111,12 @@ fn authorization_details(details: &Value) -> Result<TokenStream> {
         }
 
         // credential_configuration_id or format?
-        let specification = credential_specification(detail)?;
+        let configuration = credential_configuration(detail)?;
 
         tokens.extend(quote! {
             #path::AuthorizationDetail {
                 type_: #path::AuthorizationDetailType::OpenIdCredential,
-                specification: #specification,
+                credential: #configuration,
                 locations: None
             }
         });
@@ -125,27 +125,25 @@ fn authorization_details(details: &Value) -> Result<TokenStream> {
     Ok(quote! {vec![#tokens]})
 }
 
-fn credential_specification(detail: &HashMap<String, Value>) -> Result<TokenStream> {
+fn credential_configuration(detail: &HashMap<String, Value>) -> Result<TokenStream> {
     let span = Span::call_site();
     let path = quote! {vercre_issuer};
 
     // credential_configuration_id or format?
     if let Some(credential_configuration_id) = detail.get("credential_configuration_id") {
         // credential_definition is optional
-        let credential_definition = if let Some(defn_value) = detail.get("credential_definition") {
+        let claims = if let Some(defn_value) = detail.get("credential_definition") {
             let credential_definition = configuration_definition(defn_value)?;
-            quote! {Some(#credential_definition)}
+            quote! {Some(#path::FormatProfile::Definition(#credential_definition))}
         } else {
             quote! {None}
         };
 
         Ok(quote! {
-            #path::AuthorizationSpec::ConfigurationId (
-                #path::ConfigurationId::Definition {
-                    credential_configuration_id: #credential_configuration_id,
-                    credential_definition: #credential_definition,
-                },
-            )
+            #path::CredentialAuthorization::ConfigurationId {
+                credential_configuration_id: #credential_configuration_id,
+                claims: #claims,
+            }
         })
     } else if let Some(format) = detail.get("format") {
         // credential_definition is required
@@ -156,9 +154,10 @@ fn credential_specification(detail: &HashMap<String, Value>) -> Result<TokenStre
 
         match format.as_str() {
             Some("jwt_vc_json") => Ok(quote! {
-                #path::AuthorizationSpec::Format (
-                    #path::Format::JwtVcJson {
-                        credential_definition: #credential_definition,
+                #path::CredentialAuthorization::Format (
+                    #path::RequestedFormat {
+                        format: #path::Format::JwtVcJson,
+                        profile: #path::FormatProfile::Definition(#credential_definition),
                     },
                 )
             }),
