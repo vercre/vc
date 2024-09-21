@@ -17,7 +17,7 @@ use vercre_did::DidResolver;
 use vercre_status::issuer::Status;
 use vercre_w3c_vc::model::VerifiableCredential;
 
-pub use super::FormatProfile;
+pub use super::Format;
 pub use crate::oauth::{GrantType, OAuthClient, OAuthServer};
 pub use crate::provider::{self, Result, StateStore};
 
@@ -561,14 +561,14 @@ pub enum CredentialAuthorization {
         /// An optional subset of claims to include in the Credential.
         #[serde(flatten)]
         #[serde(skip_serializing_if = "Option::is_none")]
-        claims: Option<FormatSpec>,
+        claims: Option<FormatProfile>,
     },
 
     /// Determines the format of the Credential to be issued, which may
     /// determine the type and other information related to the Credential
     /// to be issued. REQUIRED when `credential_identifiers` was not
     /// returned from the Token Response. MUST NOT be used otherwise.
-    Format(Format),
+    Format(RequestedFormat),
 }
 
 impl Default for CredentialAuthorization {
@@ -586,7 +586,7 @@ impl Default for CredentialAuthorization {
 ///
 /// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub enum FormatSpec {
+pub enum FormatProfile {
     /// Requested Credential is specified by `credential_configuration_id` and
     /// optionally, `CredentialDefinition`.
     #[serde(rename = "credential_definition")]
@@ -616,7 +616,7 @@ pub enum FormatSpec {
     },
 }
 
-impl Default for FormatSpec {
+impl Default for FormatProfile {
     fn default() -> Self {
         Self::Definition(CredentialDefinition::default())
     }
@@ -629,16 +629,16 @@ impl Default for FormatSpec {
 ///
 /// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Default, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Format {
+pub struct RequestedFormat {
     /// The format of the Credential described as specified in the
     /// `credential_configurations_supported` map in the Credential
     /// Issuer metadata.
-    pub format: FormatProfile,
+    pub format: Format,
 
     /// Requested Credential is specified by `credential_configuration_id` and
     /// optionally, `CredentialDefinition`.
     #[serde(flatten)]
-    pub specification: FormatSpec,
+    pub profile: FormatProfile,
 }
 
 /// Authorization Response as defined in [RFC6749].
@@ -902,7 +902,7 @@ pub enum CredentialSpec {
 
     /// Defines the format and type of of the Credential to be issued.  REQUIRED
     /// when `credential_identifiers` was not returned from the Token Response.
-    Format(Format),
+    Format(RequestedFormat),
 }
 
 impl Default for CredentialSpec {
@@ -1234,19 +1234,19 @@ impl Issuer {
     ///
     /// # Errors
     /// TODO: add error handling
-    pub fn credential_configuration_id(&self, f: &Format) -> Result<&String> {
-        if let Some((id, _)) = match &f.specification {
-            FormatSpec::Definition(credential_definition) => {
+    pub fn credential_configuration_id(&self, f: &RequestedFormat) -> Result<&String> {
+        if let Some((id, _)) = match &f.profile {
+            FormatProfile::Definition(credential_definition) => {
                 self.credential_configurations_supported.iter().find(|(_, cfg)| {
                     cfg.format == f.format
                         && cfg.credential_definition.type_ == credential_definition.type_
                 })
             }
-            FormatSpec::MsoMdoc { .. } => {
-                todo!("FormatSpec::MsoMdoc");
+            FormatProfile::MsoMdoc { .. } => {
+                todo!("FormatProfile::MsoMdoc");
             }
-            FormatSpec::SdJwt { .. } => {
-                todo!("FormatSpec::SdJwt");
+            FormatProfile::SdJwt { .. } => {
+                todo!("FormatProfile::SdJwt");
             }
         } {
             Ok(id)
@@ -1312,7 +1312,7 @@ pub struct CredentialConfiguration {
     /// See OpenID4VCI [Credential Format Profiles] for mopre detail.
     ///
     /// [Credential Format Profiles]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles
-    pub format: FormatProfile,
+    pub format: Format,
 
     /// The `scope` value that this Credential Issuer supports for this
     /// credential. The value can be the same accross multiple
@@ -1713,7 +1713,7 @@ mod tests {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: CredentialAuthorization::ConfigurationId {
                     credential_configuration_id: "EmployeeID_JWT".into(),
-                    claims: Some(FormatSpec::Definition(CredentialDefinition {
+                    claims: Some(FormatProfile::Definition(CredentialDefinition {
                         credential_subject: Some(HashMap::from([
                             (
                                 "given_name".to_string(),
@@ -1766,9 +1766,9 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                credential: CredentialAuthorization::Format(Format {
-                    format: FormatProfile::JwtVcJson,
-                    specification: FormatSpec::Definition(CredentialDefinition {
+                credential: CredentialAuthorization::Format(RequestedFormat {
+                    format: Format::JwtVcJson,
+                    profile: FormatProfile::Definition(CredentialDefinition {
                         type_: Some(vec![
                             "VerifiableCredential".into(),
                             "EmployeeIDCredential".into(),
@@ -1854,9 +1854,9 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            specification: CredentialSpec::Format(Format {
-                format: FormatProfile::JwtVcJson,
-                specification: FormatSpec::Definition(CredentialDefinition {
+            specification: CredentialSpec::Format(RequestedFormat {
+                format: Format::JwtVcJson,
+                profile: FormatProfile::Definition(CredentialDefinition {
                     type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
                     ..CredentialDefinition::default()
                 }),

@@ -49,9 +49,9 @@ fn credential_specification(input: &mut Json) -> Result<TokenStream> {
 
         match format.as_str() {
             Some("jwt_vc_json") => Ok(quote! {
-                #path::CredentialSpec::Format(#path::Format {
-                    format: #path::FormatProfile::JwtVcJson,
-                    specification: #path::FormatSpec::Definition(#credential_definition),
+                #path::CredentialSpec::Format(#path::RequestedFormat {
+                    format: #path::Format::JwtVcJson,
+                    profile: #path::FormatProfile::Definition(#credential_definition),
                 })
             }),
             _ => return Err(Error::new(span, "unsupported format")),

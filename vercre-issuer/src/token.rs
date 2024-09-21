@@ -22,8 +22,8 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationDetail, AuthorizationDetailType, Authorized, CredentialAuthorization, Format,
-    Metadata, Provider, StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
+    AuthorizationDetail, AuthorizationDetailType, Authorized, CredentialAuthorization, Metadata,
+    Provider, RequestedFormat, StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
 
@@ -318,13 +318,13 @@ fn is_match(a: &AuthorizationDetail, b: &AuthorizationDetail) -> bool {
             a == b
         }
 
-        CredentialAuthorization::Format(Format {
+        CredentialAuthorization::Format(RequestedFormat {
             format,
-            specification: a_def,
+            profile: a_def,
         }) => {
-            let CredentialAuthorization::Format(Format {
+            let CredentialAuthorization::Format(RequestedFormat {
                 format: b_format,
-                specification: b_def,
+                profile: b_def,
             }) = &b.credential
             else {
                 return false;
@@ -342,7 +342,7 @@ mod tests {
     use vercre_macros::token_request;
     use vercre_openid::issuer::{
         AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization,
-        CredentialDefinition, Format, FormatProfile, FormatSpec,
+        CredentialDefinition, Format, FormatProfile, RequestedFormat,
     };
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
@@ -497,9 +497,9 @@ mod tests {
                 details: Some(vec![DetailItem {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
-                        credential: CredentialAuthorization::Format(Format {
-                            format: FormatProfile::JwtVcJson,
-                            specification: FormatSpec::Definition(CredentialDefinition {
+                        credential: CredentialAuthorization::Format(RequestedFormat {
+                            format: Format::JwtVcJson,
+                            profile: FormatProfile::Definition(CredentialDefinition {
                                 type_: Some(vec![
                                     "VerifiableCredential".into(),
                                     "EmployeeIDCredential".into(),
