@@ -237,7 +237,6 @@ impl Context {
         let Some(subject_id) = &self.state.subject_id else {
             return Err(Error::AccessDenied("invalid subject id".into()));
         };
-        // let status = Status::status(provider, subject_id, credential_identifier)
         let status = Status::status(provider, subject_id, "credential_identifier")
             .await
             .map_err(|e| Error::ServerError(format!("issue populating credential status: {e}")))?;
