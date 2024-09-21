@@ -49,7 +49,7 @@ fn credential_issuance(input: &mut Json) -> Result<TokenStream> {
 
         match format.as_str() {
             Some("jwt_vc_json") => Ok(quote! {
-                #path::CredentialIssuance::Format(#path::RequestedFormat {
+                #path::CredentialIssuance::Format(#path::CredentialFormat {
                     format: #path::Format::JwtVcJson,
                     profile: #path::FormatProfile::Definition(#credential_definition),
                 })

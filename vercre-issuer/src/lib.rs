@@ -128,11 +128,11 @@ pub use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     AuthorizationResponse, Authorized, ClaimDefinition, ClaimEntry, CreateOfferRequest,
     CreateOfferResponse, CredentialAuthorization, CredentialConfiguration, CredentialDefinition,
-    CredentialIssuance, CredentialOffer, CredentialOfferRequest, CredentialOfferResponse,
-    CredentialRequest, CredentialResponse, CredentialResponseType, DeferredCredentialRequest,
-    DeferredCredentialResponse, Format, FormatProfile, Grants, MetadataRequest, MetadataResponse,
-    OfferType, PreAuthorizedCodeGrant, Proof, ProofClaims, RegistrationRequest,
-    RegistrationResponse, RequestedFormat, SendType, SingleProof, TokenGrantType, TokenRequest,
+    CredentialFormat, CredentialIssuance, CredentialOffer, CredentialOfferRequest,
+    CredentialOfferResponse, CredentialRequest, CredentialResponse, CredentialResponseType,
+    DeferredCredentialRequest, DeferredCredentialResponse, Format, FormatProfile, Grants,
+    MetadataRequest, MetadataResponse, OfferType, PreAuthorizedCodeGrant, Proof, ProofClaims,
+    RegistrationRequest, RegistrationResponse, SendType, SingleProof, TokenGrantType, TokenRequest,
     TokenResponse, TxCode,
 };
 pub use vercre_openid::Result;

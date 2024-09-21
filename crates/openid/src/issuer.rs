@@ -569,7 +569,7 @@ pub enum CredentialAuthorization {
     /// Identifies the credential to authorize using format-specific parameters.
     /// The requested format should resolve to a single supported credential in
     /// the `credential_configurations_supported` map in the Issuer Metadata.
-    Format(RequestedFormat),
+    Format(CredentialFormat),
 }
 
 impl Default for CredentialAuthorization {
@@ -587,7 +587,7 @@ impl Default for CredentialAuthorization {
 ///
 /// See <https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles>.
 #[derive(Clone, Default, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct RequestedFormat {
+pub struct CredentialFormat {
     /// The format's identifier
     pub format: Format,
 
@@ -900,7 +900,7 @@ pub enum CredentialIssuance {
 
     /// Defines the format and type of of the Credential to be issued.  REQUIRED
     /// when `credential_identifiers` was not returned from the Token Response.
-    Format(RequestedFormat),
+    Format(CredentialFormat),
 }
 
 impl Default for CredentialIssuance {
@@ -1232,19 +1232,40 @@ impl Issuer {
     ///
     /// # Errors
     /// TODO: add error handling
-    pub fn credential_configuration_id(&self, f: &RequestedFormat) -> Result<&String> {
-        if let Some((id, _)) = match &f.profile {
-            FormatProfile::Definition(credential_definition) => {
+    pub fn credential_configuration_id(&self, cfmt: &CredentialFormat) -> Result<&String> {
+        if let Some((id, _)) = match &cfmt.profile {
+            FormatProfile::Definition(cfmt_defn) => {
+                println!("cfmt_defn: {:?}", cfmt_defn);
+
                 self.credential_configurations_supported.iter().find(|(_, cfg)| {
-                    cfg.format == f.format
-                        && cfg.credential_definition.type_ == credential_definition.type_
+                    if let FormatProfile::Definition(cfg_defn) = &cfg.profile {
+                        cfg.format == cfmt.format && cfg_defn.type_ == cfmt_defn.type_
+                    } else {
+                        false
+                    }
                 })
             }
-            FormatProfile::MsoMdoc { .. } => {
-                todo!("FormatProfile::MsoMdoc");
-            }
-            FormatProfile::SdJwt { .. } => {
-                todo!("FormatProfile::SdJwt");
+            FormatProfile::MsoMdoc {
+                doctype: cfmt_doctype,
+                ..
+            } => self.credential_configurations_supported.iter().find(|(_, cfg)| {
+                if let FormatProfile::MsoMdoc {
+                    doctype: cfg_doctype, ..
+                } = &cfg.profile
+                {
+                    cfg.format == cfmt.format && cfg_doctype == cfmt_doctype
+                } else {
+                    false
+                }
+            }),
+            FormatProfile::SdJwt { vct: cfmt_vct, .. } => {
+                self.credential_configurations_supported.iter().find(|(_, cfg)| {
+                    if let FormatProfile::SdJwt { vct: cfg_vct, .. } = &cfg.profile {
+                        cfg.format == cfmt.format && cfg_vct == cfmt_vct
+                    } else {
+                        false
+                    }
+                })
             }
         } {
             Ok(id)
@@ -1404,8 +1425,33 @@ pub struct CredentialConfiguration {
 
     /// Language-based display properties for the associated Credential
     /// Definition.
-    pub credential_definition: CredentialDefinition,
+    #[serde(flatten)]
+    pub profile: FormatProfile,
 }
+
+/*
+impl CredentialConfiguration {
+    /// Returns the `CredentialDefinition` if the format is
+    /// `jwt_vc_json`,`ldp-vc`, or `jwt_vc_json-ld`.
+    fn credential_definition(&self) -> Option<&CredentialDefinition> {
+        if let FormatProfile::Definition(credential_definition) = &self.profile {
+            Some(credential_definition)
+        } else {
+            None
+        }
+    }
+
+    /// Returns the `CredentialDefinition` if the format is `jwt_vc_json`,
+    /// `ldp-vc`, or `jwt_vc_json-ld`.
+    fn mso_mdoc(&self) -> Option<&CredentialDefinition> {
+        if let FormatProfile::Definition(credential_definition) = &self.profile {
+            Some(credential_definition)
+        } else {
+            None
+        }
+    }
+}
+*/
 
 /// `ProofTypesSupported` describes specifics of the key proof(s) that the
 /// Credential Issuer supports.
@@ -1764,7 +1810,7 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                credential: CredentialAuthorization::Format(RequestedFormat {
+                credential: CredentialAuthorization::Format(CredentialFormat {
                     format: Format::JwtVcJson,
                     profile: FormatProfile::Definition(CredentialDefinition {
                         type_: Some(vec![
@@ -1852,7 +1898,7 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            credential: CredentialIssuance::Format(RequestedFormat {
+            credential: CredentialIssuance::Format(CredentialFormat {
                 format: Format::JwtVcJson,
                 profile: FormatProfile::Definition(CredentialDefinition {
                     type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),

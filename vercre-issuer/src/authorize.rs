@@ -78,8 +78,8 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    ClaimEntry, CredentialAuthorization, FormatProfile, GrantType, Issuer, Metadata, Provider,
-    RequestedFormat, StateStore, Subject,
+    ClaimEntry, CredentialAuthorization, CredentialFormat, FormatProfile, GrantType, Issuer,
+    Metadata, Provider, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 
@@ -257,34 +257,45 @@ impl Context {
                             return Err(Error::InvalidRequest("missing credential_subject".into()));
                         };
 
-                        let supported_cd =
-                            &supported[credential_configuration_id].credential_definition;
+                        // TODO: support other FormatProfiles
+                        let config = &supported[credential_configuration_id];
+                        let FormatProfile::Definition(definition) = &config.profile else {
+                            return Err(Error::InvalidRequest(
+                                "unsupported credential_definition".into(),
+                            ));
+                        };
 
-                        Self::verify_claims(claims, &supported_cd.credential_subject)?;
+                        Self::verify_claims(claims, &definition.credential_subject)?;
                         self.claims = Some(claims.clone());
                     }
 
                     // save `credential_configuration_id` for later use
                     self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
                 }
-                CredentialAuthorization::Format(RequestedFormat {
+
+                CredentialAuthorization::Format(CredentialFormat {
                     format,
-                    profile: FormatProfile::Definition(credential_definition),
+                    profile: FormatProfile::Definition(requested_defn),
                 }) => {
-                    //  find supported credential by `format` and `type`
-                    let Some((config_id, _)) = supported.iter().find(|(_, v)| {
-                        &v.format == format
-                            && v.credential_definition.type_ == credential_definition.type_
-                    }) else {
+                    // find supported `credential_definition` by `format` and `profile`
+                    let config_id = self
+                        .issuer
+                        .credential_configuration_id(&CredentialFormat {
+                            format: format.clone(),
+                            profile: FormatProfile::Definition(requested_defn.clone()),
+                        })
+                        .map_err(|e| Error::ServerError(format!("issuer issue: {e}")))?;
+
+                    let FormatProfile::Definition(supported_defn) = &supported[config_id].profile
+                    else {
                         return Err(Error::InvalidRequest(
-                            "unsupported credential `format` or `type`".into(),
+                            "unsupported credential_definition".into(),
                         ));
                     };
 
                     // verify requested claims are supported
-                    if let Some(claims) = &credential_definition.credential_subject {
-                        let supported_cd = &supported[config_id].credential_definition;
-                        Self::verify_claims(claims, &supported_cd.credential_subject)?;
+                    if let Some(claims) = &requested_defn.credential_subject {
+                        Self::verify_claims(claims, &supported_defn.credential_subject)?;
                         self.claims = Some(claims.clone());
                     }
 

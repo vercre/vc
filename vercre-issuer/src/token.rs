@@ -22,8 +22,9 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationDetail, AuthorizationDetailType, Authorized, CredentialAuthorization, Metadata,
-    Provider, RequestedFormat, StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
+    AuthorizationDetail, AuthorizationDetailType, Authorized, CredentialAuthorization,
+    CredentialFormat, Metadata, Provider, StateStore, TokenGrantType, TokenRequest, TokenResponse,
+    TokenType,
 };
 use vercre_openid::{Error, Result};
 
@@ -318,11 +319,11 @@ fn is_match(a: &AuthorizationDetail, b: &AuthorizationDetail) -> bool {
             a == b
         }
 
-        CredentialAuthorization::Format(RequestedFormat {
+        CredentialAuthorization::Format(CredentialFormat {
             format,
             profile: a_def,
         }) => {
-            let CredentialAuthorization::Format(RequestedFormat {
+            let CredentialAuthorization::Format(CredentialFormat {
                 format: b_format,
                 profile: b_def,
             }) = &b.credential
@@ -342,7 +343,7 @@ mod tests {
     use vercre_macros::token_request;
     use vercre_openid::issuer::{
         AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization,
-        CredentialDefinition, Format, FormatProfile, RequestedFormat,
+        CredentialDefinition, CredentialFormat, Format, FormatProfile,
     };
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
@@ -497,7 +498,7 @@ mod tests {
                 details: Some(vec![DetailItem {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
-                        credential: CredentialAuthorization::Format(RequestedFormat {
+                        credential: CredentialAuthorization::Format(CredentialFormat {
                             format: Format::JwtVcJson,
                             profile: FormatProfile::Definition(CredentialDefinition {
                                 type_: Some(vec![

@@ -222,7 +222,11 @@ impl Context {
                 Error::InvalidCredentialRequest("unsupported credential requested".into())
             })?;
 
-        let Some(types) = &config.credential_definition.type_ else {
+        let FormatProfile::Definition(definition) = &config.profile else {
+            return Err(Error::InvalidRequest("unsupported credential_definition".into()));
+        };
+
+        let Some(types) = &definition.type_ else {
             return Err(Error::ServerError("Credential type not set".into()));
         };
         let Some(credential_type) = types.get(1) else {
