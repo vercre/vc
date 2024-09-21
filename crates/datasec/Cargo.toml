@@ -27,7 +27,7 @@ crypto_box = { version = "0.9.1", features = ["chacha20", "heapless"] }
 ecdsa.workspace = true
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 futures.workspace = true
-k256 = "0.13.3"
+k256 = "0.13.4"
 serde.workspace = true
 serde_json.workspace = true
 tracing.workspace = true
