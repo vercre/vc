@@ -225,7 +225,6 @@ impl Context {
     fn verify_authorization_details(
         &mut self, authorization_details: &[AuthorizationDetail],
     ) -> Result<()> {
-        let supported = &self.issuer.credential_configurations_supported;
 
         // check each credential requested is supported by the issuer
         for auth_det in authorization_details {
@@ -239,38 +238,11 @@ impl Context {
                     credential_configuration_id,
                     claims: profile,
                 } => {
-                    //  find supported credential by `credential_configuration_id`
-                    let Some(config) = supported.get(credential_configuration_id) else {
-                        return Err(Error::InvalidRequest(
-                            "unsupported credential_configuration_id".into(),
-                        ));
-                    };
-
-                    // verify requested claims are supported
-                    if let Some(profile) = profile {
-                        let FormatProfile::Definition(requested_defn) = profile else {
-                            return Err(Error::InvalidRequest(
-                                "unsupported credential_definition".into(),
-                            ));
-                        };
-                        let FormatProfile::Definition(supported_defn) = &config.profile else {
-                            return Err(Error::InvalidRequest(
-                                "unsupported credential_definition".into(),
-                            ));
-                        };
-
-                        if let Some(requested) = &requested_defn.credential_subject {
-                            if let Some(supported) = &supported_defn.credential_subject {
-                                Self::verify_claims(requested, supported)?;
-                                self.claims = Some(requested.clone());
-                            }
-                        }
-                    }
-
-                    // save `credential_configuration_id` for later use
                     self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
+                    if let Some(profile) = profile {
+                        self.claims = self.verify_claims(credential_configuration_id, profile)?;
+                    }
                 }
-
                 CredentialAuthorization::Format(CredentialFormat { format, profile }) => {
                     // find supported `credential_definition` by `format` and `profile`
                     let credential_configuration_id = self
@@ -281,59 +253,8 @@ impl Context {
                         })
                         .map_err(|e| Error::ServerError(format!("issuer issue: {e}")))?;
 
-                    // save `credential_configuration_id` for later use
                     self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
-
-                    let Some(config) = supported.get(credential_configuration_id) else {
-                        return Err(Error::InvalidRequest(
-                            "unsupported credential_configuration_id".into(),
-                        ));
-                    };
-
-                    let (req_claims, sup_claims) = match profile {
-                        FormatProfile::Definition(requested_defn) => {
-                            let FormatProfile::Definition(supported_defn) = &config.profile else {
-                                return Err(Error::InvalidRequest(
-                                    "unsupported credential_definition".into(),
-                                ));
-                            };
-                            (&requested_defn.credential_subject, &supported_defn.credential_subject)
-                        }
-                        FormatProfile::MsoMdoc {
-                            claims: req_claims, ..
-                        } => {
-                            let FormatProfile::MsoMdoc {
-                                claims: sup_claims, ..
-                            } = &config.profile
-                            else {
-                                return Err(Error::InvalidRequest(
-                                    "unsupported credential_definition".into(),
-                                ));
-                            };
-                            (req_claims, sup_claims)
-                        }
-                        FormatProfile::SdJwt {
-                            claims: req_claims, ..
-                        } => {
-                            let FormatProfile::SdJwt {
-                                claims: sup_claims, ..
-                            } = &config.profile
-                            else {
-                                return Err(Error::InvalidRequest(
-                                    "unsupported credential_definition".into(),
-                                ));
-                            };
-                            (req_claims, sup_claims)
-                        }
-                    };
-
-                    // verify requested claims are supported
-                    if let Some(requested) = req_claims {
-                        if let Some(supported) = sup_claims {
-                            Self::verify_claims(requested, supported)?;
-                            self.claims = Some(requested.clone());
-                        }
-                    }
+                    self.claims = self.verify_claims(credential_configuration_id, profile)?;
                 }
             };
         }
@@ -342,15 +263,61 @@ impl Context {
     }
 
     fn verify_claims(
-        requested: &HashMap<String, ClaimEntry>, supported: &HashMap<String, ClaimEntry>,
-    ) -> Result<()> {
-        // TODO: check for mandatory claims!
-        for key in requested.keys() {
-            if !supported.contains_key(key) {
-                return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
+        &self, credential_configuration_id: &str, profile: &FormatProfile,
+    ) -> Result<Option<HashMap<String, ClaimEntry>>> {
+        let supported = &self.issuer.credential_configurations_supported;
+
+        let Some(config) = supported.get(credential_configuration_id) else {
+            return Err(Error::InvalidRequest("unsupported credential_configuration_id".into()));
+        };
+
+        let (req_claims, sup_claims) = match profile {
+            FormatProfile::Definition(requested_defn) => {
+                let FormatProfile::Definition(supported_defn) = &config.profile else {
+                    return Err(Error::InvalidRequest("unsupported credential_definition".into()));
+                };
+                (&requested_defn.credential_subject, &supported_defn.credential_subject)
             }
-        }
-        Ok(())
+            FormatProfile::MsoMdoc {
+                claims: req_claims, ..
+            } => {
+                let FormatProfile::MsoMdoc {
+                    claims: sup_claims, ..
+                } = &config.profile
+                else {
+                    return Err(Error::InvalidRequest("unsupported credential_definition".into()));
+                };
+                (req_claims, sup_claims)
+            }
+            FormatProfile::SdJwt {
+                claims: req_claims, ..
+            } => {
+                let FormatProfile::SdJwt {
+                    claims: sup_claims, ..
+                } = &config.profile
+                else {
+                    return Err(Error::InvalidRequest("unsupported credential_definition".into()));
+                };
+                (req_claims, sup_claims)
+            }
+        };
+
+        let claims = if let Some(requested) = req_claims {
+            if let Some(supported) = sup_claims {
+                for key in requested.keys() {
+                    if !supported.contains_key(key) {
+                        return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
+                    }
+                }
+                Some(requested.clone())
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
+        Ok(claims)
     }
 
     // Verify Credentials requested in `scope` are supported.
