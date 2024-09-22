@@ -33,16 +33,15 @@ pub struct OfferRequest {
     pub offer: CredentialOffer,
 }
 
-/// `OfferResponse` is the response from the `offer` endpoint. The agent
-/// application can use this to present the offer to the holder for acceptance.
+/// `OfferResponse` is the response from the `offer` endpoint.
+///
+/// The agent application can use this to present the offer to the holder for
+/// acceptance.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions)]
 pub struct OfferResponse {
     /// The issuance flow identifier.
     pub issuance_id: String,
-
-    /// The status of the issuance flow.
-    pub status: Status,
 
     /// The identifer of the credential issuer.
     pub issuer: String,
@@ -55,7 +54,12 @@ pub struct OfferResponse {
     pub tx_code: Option<TxCode>,
 }
 
-/// Initiates the issuance flow triggered by a new credential offer.
+/// Initiates the issuance flow triggered by a new credential offer
+/// ("issuer-initiated issuance").
+///
+/// Returns a set of credential configurations that allow a display to the
+/// holder for acceptance or rejection of some or all of the offered
+/// credentials.
 #[instrument(level = "debug", skip(provider))]
 pub async fn offer(
     provider: impl HolderProvider, request: &OfferRequest,
@@ -86,7 +90,7 @@ pub async fn offer(
         ..Default::default()
     };
 
-    // Set up a credential configuration for each credential offered
+    // Set up a credential configuration for each credential offered.
     issuance.offer = request.offer.clone();
     for id in &request.offer.credential_configuration_ids {
         issuance.offered.insert(id.into(), CredentialConfiguration::default());
@@ -132,7 +136,6 @@ pub async fn offer(
 
     let res = OfferResponse {
         issuance_id: issuance.id,
-        status: issuance.status,
         issuer: request.offer.credential_issuer.clone(),
         offered: issuance.offered.clone(),
         tx_code: pre_authorized_code.tx_code.clone(),

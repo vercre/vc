@@ -23,9 +23,12 @@ pub struct PinRequest {
 }
 
 /// Progresses the issuance flow triggered by a holder setting a PIN.
-/// The request is the issuance flow ID.
+/// 
+/// The request is the issuance flow ID and the PIN to set.
+/// 
+/// Returns the issuance flow identifier.
 #[instrument(level = "debug", skip(provider))]
-pub async fn pin(provider: impl HolderProvider, request: &PinRequest) -> anyhow::Result<Status> {
+pub async fn pin(provider: impl HolderProvider, request: &PinRequest) -> anyhow::Result<String> {
     tracing::debug!("Endpoint::pin");
 
     let mut issuance: Issuance = match StateStore::get(&provider, &request.issuance_id).await {
@@ -53,5 +56,5 @@ pub async fn pin(provider: impl HolderProvider, request: &PinRequest) -> anyhow:
         return Err(e);
     };
 
-    Ok(issuance.status)
+    Ok(issuance.id)
 }

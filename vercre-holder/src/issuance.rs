@@ -5,6 +5,7 @@
 
 pub mod accept;
 pub mod cancel;
+pub mod token;
 pub mod credential;
 pub mod offer;
 pub mod pin;
@@ -18,23 +19,24 @@ use vercre_openid::issuer::{
 };
 
 /// `Issuance` represents app state across the steps of the issuance flow.
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Issuance {
     /// The unique identifier for the issuance flow. Not used internally but
     /// passed to providers so that wallet clients can track interactions
     /// with specific flows.
     pub id: String,
 
-    /// Client ID of the holder's agent (eg. wallet)
+    /// Client ID of the holder's agent (wallet)
     pub client_id: String,
 
-    /// The current status of the issuance flow.
+    /// Current status of the issuance flow.
     pub status: Status,
 
     /// The `CredentialOffer` received from the issuer.
     pub offer: CredentialOffer,
 
-    /// A list of `CredentialConfiguration`s, one for each credential offered.
+    /// A list of `CredentialConfiguration`s, one for each credential offered,
+    /// keyed by the credential configuration ID.
     pub offered: HashMap<String, CredentialConfiguration>,
 
     /// The list of credentials and claims the wallet wants to obtain from those
@@ -55,7 +57,6 @@ pub struct Issuance {
 /// TODO: Revisit and replace in alignment with Notification endpoint
 /// implementation.
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename = "IssuanceStatus")]
 pub enum Status {
     /// No credential offer is being processed.
     #[default]
@@ -70,8 +71,12 @@ pub enum Status {
     /// The offer requires a user pin to progress.
     PendingPin,
 
-    /// The offer has been accepted and the credential is being issued.
+    /// The offer has been accepted and is ready to get an access token.
     Accepted,
+
+    /// The token response has been received. The user has selected some or all
+    /// of the credential identifiers in the token response to progress.
+    TokenReceived,
 
     /// A credential has been requested.
     Requested,

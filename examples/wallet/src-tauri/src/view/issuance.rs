@@ -9,56 +9,11 @@ use vercre_holder::TxCode;
 use crate::app::IssuanceState;
 use crate::view::credential::CredentialDisplay;
 
-/// Status of the issuance flow
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-#[typeshare]
-#[allow(clippy::module_name_repetitions)]
-pub enum IssuanceStatus {
-    /// No credential offer is being processed.
-    #[default]
-    Inactive,
-
-    /// A new credential offer has been received.
-    Offered,
-
-    /// Metadata has been retrieved and the offer is ready to be viewed.
-    Ready,
-
-    /// The offer requires a user pin to progress.
-    PendingPin,
-
-    /// The offer has been accepted and the credential is being issued.
-    Accepted,
-
-    /// A credential has been requested.
-    Requested,
-
-    /// The credential offer has failed, with an error message.
-    Failed,
-}
-
-/// Convert from `vercre_holder::issuance::Status` to `IssuanceStatus`
-impl From<vercre_holder::IssuanceStatus> for IssuanceStatus {
-    fn from(status: vercre_holder::IssuanceStatus) -> Self {
-        match status {
-            vercre_holder::IssuanceStatus::Inactive => Self::Inactive,
-            vercre_holder::IssuanceStatus::Offered => Self::Offered,
-            vercre_holder::IssuanceStatus::Ready => Self::Ready,
-            vercre_holder::IssuanceStatus::PendingPin => Self::PendingPin,
-            vercre_holder::IssuanceStatus::Accepted => Self::Accepted,
-            vercre_holder::IssuanceStatus::Requested => Self::Requested,
-            vercre_holder::IssuanceStatus::Failed(_) => Self::Failed,
-        }
-    }
-}
-
 /// Issuance flow viewable state
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
 #[allow(clippy::module_name_repetitions)]
 pub struct IssuanceView {
-    /// Credential offer status
-    pub status: IssuanceStatus,
     /// Credentials on offer
     pub credentials: HashMap<String, CredentialDisplay>,
     /// PIN
@@ -78,7 +33,6 @@ impl From<IssuanceState> for IssuanceView {
         }
         let schema = state.tx_code.clone().map(Into::into);
         Self {
-            status: state.status.into(),
             credentials: creds,
             pin: state.pin,
             pin_schema: schema,
