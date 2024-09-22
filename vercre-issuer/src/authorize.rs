@@ -225,7 +225,6 @@ impl Context {
     fn verify_authorization_details(
         &mut self, authorization_details: &[AuthorizationDetail],
     ) -> Result<()> {
-
         // check each credential requested is supported by the issuer
         for auth_det in authorization_details {
             if auth_det.type_ != AuthorizationDetailType::OpenIdCredential {
@@ -262,15 +261,18 @@ impl Context {
         Ok(())
     }
 
+    // Verify requested claims exist as supported claims and all mandatory claims
+    // are requested.
     fn verify_claims(
         &self, credential_configuration_id: &str, profile: &FormatProfile,
     ) -> Result<Option<HashMap<String, ClaimEntry>>> {
+        // get `CredentialConfiguration` from issuer metadata
         let supported = &self.issuer.credential_configurations_supported;
-
         let Some(config) = supported.get(credential_configuration_id) else {
             return Err(Error::InvalidRequest("unsupported credential_configuration_id".into()));
         };
 
+        // get requested claims and supported claims for format profile
         let (req_claims, sup_claims) = match profile {
             FormatProfile::Definition(requested_defn) => {
                 let FormatProfile::Definition(supported_defn) = &config.profile else {
@@ -281,41 +283,42 @@ impl Context {
             FormatProfile::MsoMdoc {
                 claims: req_claims, ..
             } => {
-                let FormatProfile::MsoMdoc {
-                    claims: sup_claims, ..
-                } = &config.profile
-                else {
+                let FormatProfile::MsoMdoc { claims, .. } = &config.profile else {
                     return Err(Error::InvalidRequest("unsupported credential_definition".into()));
                 };
-                (req_claims, sup_claims)
+                (req_claims, claims)
             }
             FormatProfile::SdJwt {
                 claims: req_claims, ..
             } => {
-                let FormatProfile::SdJwt {
-                    claims: sup_claims, ..
-                } = &config.profile
-                else {
+                let FormatProfile::SdJwt { claims, .. } = &config.profile else {
                     return Err(Error::InvalidRequest("unsupported credential_definition".into()));
                 };
-                (req_claims, sup_claims)
+                (req_claims, claims)
             }
         };
 
-        let claims = if let Some(requested) = req_claims {
+        // check requested claims are exist and mandatory claims have been requested
+        let mut claims = None;
+        if let Some(requested) = req_claims {
             if let Some(supported) = sup_claims {
                 for key in requested.keys() {
                     if !supported.contains_key(key) {
                         return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
                     }
+
+                    // check mandatory claims have been requested
+                    let ClaimEntry::Claim(entry) = &supported[key] else {
+                        // TODO: handle nested claims
+                        todo!("nested claims");
+                    };
+                    if entry.mandatory.unwrap_or_default() && !requested.contains_key(key) {
+                        return Err(Error::InvalidRequest(format!("{key} claim is mandatory")));
+                    }
                 }
-                Some(requested.clone())
-            } else {
-                None
+                claims = Some(requested.clone());
             }
-        } else {
-            None
-        };
+        }
 
         Ok(claims)
     }
