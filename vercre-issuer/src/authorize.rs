@@ -298,16 +298,19 @@ impl Context {
             }
         };
 
-        // check requested claims are exist and mandatory claims have been requested
+        // check requested claims exist and all mandatory claims have been requested
         let mut claims = None;
         if let Some(requested) = req_claims {
             if let Some(supported) = sup_claims {
+                // check requested claims are supported
                 for key in requested.keys() {
                     if !supported.contains_key(key) {
                         return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
                     }
+                }
 
-                    // check mandatory claims have been requested
+                // check mandatory claims have been requested
+                for key in supported.keys() {
                     let ClaimEntry::Claim(entry) = &supported[key] else {
                         // TODO: handle nested claims
                         todo!("nested claims");
@@ -316,6 +319,7 @@ impl Context {
                         return Err(Error::InvalidRequest(format!("{key} claim is mandatory")));
                     }
                 }
+
                 claims = Some(requested.clone());
             }
         }
@@ -441,28 +445,27 @@ mod tests {
     extern crate self as vercre_issuer;
 
     #[rstest]
-    #[case("configuration_id", configuration_id)]
-    #[case("credential_definition", credential_definition)]
-    #[case("format", format)]
-    #[case("scope", scope)]
-    async fn request(#[case] name: &str, #[case] f: fn() -> AuthorizationRequest) {
+    #[case::configuration_id("configuration_id", configuration_id)]
+    #[case::format("format", format)]
+    #[case::scope("scope", scope)]
+    #[case::claims("claims", claims)]
+    #[should_panic(expected = "ok")]
+    #[case::claims_err("claims_err", claims_err)]
+    async fn authorize_tests(#[case] name: &str, #[case] request: fn() -> AuthorizationRequest) {
         vercre_test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();
 
-        // create request
-        let request = f();
-        let response = authorize(provider.clone(), request).await.expect("response is ok");
-
+        // execute request
+        let response = authorize(provider.clone(), request()).await.expect("ok");
         assert_snapshot!("authorize:configuration_id:response", &response, {
             ".code" => "[code]",
         });
 
-        // compare response with saved state
+        // check saved state
         let state =
             StateStore::get::<State>(&provider, &response.code).await.expect("state exists");
-
         assert_snapshot!(format!("authorize:{name}:state"), state, {
             ".expires_at" => "[expires_at]",
             ".stage.details[].authorization_detail.credential_definition.credentialSubject" => insta::sorted_redaction(),
@@ -487,30 +490,6 @@ mod tests {
         })
     }
 
-    fn credential_definition() -> AuthorizationRequest {
-        authorization_request!({
-            "credential_issuer": CREDENTIAL_ISSUER,
-            "response_type": "code",
-            "client_id": CLIENT_ID,
-            "redirect_uri": "http://localhost:3000/callback",
-            "state": "1234",
-            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
-            "code_challenge_method": "S256",
-            "authorization_details": [{
-                "type": "openid_credential",
-                "credential_configuration_id": "EmployeeID_JWT",
-                "credential_definition": {
-                    "credentialSubject": {
-                        "given_name": {},
-                        "family_name": {},
-                    }
-                }
-            }],
-            "subject_id": NORMAL_USER,
-            "wallet_issuer": CREDENTIAL_ISSUER
-        })
-    }
-
     fn format() -> AuthorizationRequest {
         authorization_request!({
             "credential_issuer": CREDENTIAL_ISSUER,
@@ -524,15 +503,10 @@ mod tests {
                 "type": "openid_credential",
                 "format": "jwt_vc_json",
                 "credential_definition": {
-                    "@context": [
-                        "https://www.w3.org/2018/credentials/v1",
-                        "https://www.w3.org/2018/credentials/examples/v1"
-                    ],
                     "type": [
                         "VerifiableCredential",
                         "EmployeeIDCredential"
-                    ],
-                    "credentialSubject": {}
+                    ]
                 }
             }],
             "subject_id": NORMAL_USER,
@@ -550,6 +524,60 @@ mod tests {
             "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
             "code_challenge_method": "S256",
             "scope": "EmployeeIDCredential",
+            "subject_id": NORMAL_USER,
+            "wallet_issuer": CREDENTIAL_ISSUER
+        })
+    }
+
+    fn claims() -> AuthorizationRequest {
+        authorization_request!({
+            "credential_issuer": CREDENTIAL_ISSUER,
+            "response_type": "code",
+            "client_id": CLIENT_ID,
+            "redirect_uri": "http://localhost:3000/callback",
+            "state": "1234",
+            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+            "code_challenge_method": "S256",
+            "authorization_details": [{
+                "type": "openid_credential",
+                "credential_configuration_id": "EmployeeID_JWT",
+                "credential_definition": {
+                    "credentialSubject": {
+                        "email": {},
+                        "given_name": {},
+                        "family_name": {},
+                    }
+                }
+            }],
+            "subject_id": NORMAL_USER,
+            "wallet_issuer": CREDENTIAL_ISSUER
+        })
+    }
+
+    fn claims_err() -> AuthorizationRequest {
+        authorization_request!({
+            "credential_issuer": CREDENTIAL_ISSUER,
+            "response_type": "code",
+            "client_id": CLIENT_ID,
+            "redirect_uri": "http://localhost:3000/callback",
+            "state": "1234",
+            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+            "code_challenge_method": "S256",
+            "authorization_details": [{
+                "type": "openid_credential",
+                "format": "jwt_vc_json",
+                "credential_definition": {
+                    "type": [
+                        "VerifiableCredential",
+                        "EmployeeIDCredential"
+                    ],
+                    "credentialSubject": {
+                        "given_name": {},
+                        "family_name": {},
+                        "employee_id": {}
+                    }
+                }
+            }],
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
         })

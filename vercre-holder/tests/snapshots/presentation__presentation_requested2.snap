@@ -1,6 +1,6 @@
 ---
 source: vercre-holder/tests/presentation.rs
-assertion_line: 159
+assertion_line: 161
 expression: presentation
 ---
 presentation_id: "[presentation_id]"
@@ -49,9 +49,6 @@ credentials:
             alt_text: Vercre Background
           text_color: "#ffffff"
       credential_definition:
-        "@context":
-          - "https://www.w3.org/2018/credentials/v1"
-          - "https://www.w3.org/2018/credentials/examples/v1"
         type:
           - VerifiableCredential
           - EmployeeIDCredential
