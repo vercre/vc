@@ -247,25 +247,31 @@ impl Context {
                     }
 
                     // verify requested claims are supported
-                    if let Some(claim_spec) = claims {
-                        let FormatProfile::Definition(cred_def) = claim_spec else {
+                    if let Some(profile) = claims {
+                        let FormatProfile::Definition {
+                            credential_definition,
+                        } = profile
+                        else {
                             return Err(Error::InvalidRequest(
                                 "unsupported claim specification".into(),
                             ));
                         };
-                        let Some(claims) = &cred_def.credential_subject else {
+                        let Some(claims) = &credential_definition.credential_subject else {
                             return Err(Error::InvalidRequest("missing credential_subject".into()));
                         };
 
                         // TODO: support other FormatProfiles
                         let config = &supported[credential_configuration_id];
-                        let FormatProfile::Definition(definition) = &config.profile else {
+                        let FormatProfile::Definition {
+                            credential_definition,
+                        } = &config.profile
+                        else {
                             return Err(Error::InvalidRequest(
                                 "unsupported credential_definition".into(),
                             ));
                         };
 
-                        Self::verify_claims(claims, &definition.credential_subject)?;
+                        Self::verify_claims(claims, &credential_definition.credential_subject)?;
                         self.claims = Some(claims.clone());
                     }
 
@@ -275,18 +281,25 @@ impl Context {
 
                 CredentialAuthorization::Format(CredentialFormat {
                     format,
-                    profile: FormatProfile::Definition(requested_defn),
+                    profile:
+                        FormatProfile::Definition {
+                            credential_definition: requested_defn,
+                        },
                 }) => {
                     // find supported `credential_definition` by `format` and `profile`
                     let config_id = self
                         .issuer
                         .credential_configuration_id(&CredentialFormat {
                             format: format.clone(),
-                            profile: FormatProfile::Definition(requested_defn.clone()),
+                            profile: FormatProfile::Definition {
+                                credential_definition: requested_defn.clone(),
+                            },
                         })
                         .map_err(|e| Error::ServerError(format!("issuer issue: {e}")))?;
 
-                    let FormatProfile::Definition(supported_defn) = &supported[config_id].profile
+                    let FormatProfile::Definition {
+                        credential_definition: supported_defn,
+                    } = &supported[config_id].profile
                     else {
                         return Err(Error::InvalidRequest(
                             "unsupported credential_definition".into(),
