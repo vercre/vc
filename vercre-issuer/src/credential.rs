@@ -222,11 +222,14 @@ impl Context {
                 Error::InvalidCredentialRequest("unsupported credential requested".into())
             })?;
 
-        let FormatProfile::Definition(definition) = &config.profile else {
+        let FormatProfile::Definition {
+            credential_definition,
+        } = &config.profile
+        else {
             return Err(Error::InvalidRequest("unsupported credential_definition".into()));
         };
 
-        let Some(types) = &definition.type_ else {
+        let Some(types) = &credential_definition.type_ else {
             return Err(Error::ServerError("Credential type not set".into()));
         };
         let Some(credential_type) = types.get(1) else {
@@ -370,7 +373,9 @@ impl Context {
         // narrow of claimset from format/credential_definition
         if let CredentialIssuance::Format(f) = &request.credential {
             let claim_ids = match &f.profile {
-                FormatProfile::Definition(credential_definition) => credential_definition
+                FormatProfile::Definition {
+                    credential_definition,
+                } => credential_definition
                     .credential_subject
                     .as_ref()
                     .map(|subj| subj.keys().cloned().collect::<Vec<String>>()),

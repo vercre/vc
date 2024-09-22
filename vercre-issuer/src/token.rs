@@ -500,13 +500,15 @@ mod tests {
                         type_: AuthorizationDetailType::OpenIdCredential,
                         credential: CredentialAuthorization::Format(CredentialFormat {
                             format: Format::JwtVcJson,
-                            profile: FormatProfile::Definition(CredentialDefinition {
-                                type_: Some(vec![
-                                    "VerifiableCredential".into(),
-                                    "EmployeeIDCredential".into(),
-                                ]),
-                                ..CredentialDefinition::default()
-                            }),
+                            profile: FormatProfile::Definition {
+                                credential_definition: CredentialDefinition {
+                                    type_: Some(vec![
+                                        "VerifiableCredential".into(),
+                                        "EmployeeIDCredential".into(),
+                                    ]),
+                                    ..CredentialDefinition::default()
+                                },
+                            },
                         }),
                         ..AuthorizationDetail::default()
                     },
