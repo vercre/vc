@@ -78,8 +78,7 @@ async fn sample_credential() -> Credential {
     let signer = SecOps::signer(&provider, VERIFIER_ID).expect("should get verifier");
 
     let payload = Payload::Vc(vc.clone());
-    let jwt =
-        proof::create(Format::JwtVcJson, payload, signer).await.expect("should encode");
+    let jwt = proof::create(Format::JwtVcJson, payload, signer).await.expect("should encode");
 
     let config = vercre_test_utils::sample::credential_configuration();
     Credential {

@@ -52,7 +52,9 @@ impl Issuer for Provider {
         Ok(response)
     }
 
-    async fn get_token(&self, _issuance_id: &str, req: TokenRequest) -> anyhow::Result<TokenResponse> {
+    async fn get_token(
+        &self, _issuance_id: &str, req: TokenRequest,
+    ) -> anyhow::Result<TokenResponse> {
         let response = vercre_issuer::token(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }

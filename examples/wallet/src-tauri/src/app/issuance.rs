@@ -4,7 +4,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use vercre_holder::{
-    AcceptRequest, CredentialConfiguration, CredentialOffer, CredentialsRequest, OfferRequest, PinRequest, TxCode
+    AcceptRequest, CredentialConfiguration, CredentialOffer, CredentialsRequest, OfferRequest,
+    PinRequest, TxCode,
 };
 
 use super::{AppState, SubApp};

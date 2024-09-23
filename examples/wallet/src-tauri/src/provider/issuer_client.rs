@@ -28,7 +28,9 @@ impl Issuer for Provider {
     }
 
     /// Get an access token.
-    async fn get_token(&self, _issuance_id: &str, req: TokenRequest) -> anyhow::Result<TokenResponse> {
+    async fn get_token(
+        &self, _issuance_id: &str, req: TokenRequest,
+    ) -> anyhow::Result<TokenResponse> {
         let client = reqwest::Client::new();
         let url = format!("{}/token", req.credential_issuer);
         let result = client

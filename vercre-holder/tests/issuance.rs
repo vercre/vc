@@ -57,9 +57,7 @@ async fn e2e_pre_auth() {
         issuance_id: issuance.issuance_id.clone(),
         accept: None,
     };
-    vercre_holder::accept(HOLDER_PROVIDER.clone(), &accept_req)
-        .await
-        .expect("should accept offer");
+    vercre_holder::accept(HOLDER_PROVIDER.clone(), &accept_req).await.expect("should accept offer");
 
     // Enter PIN
     let pin_req = PinRequest {

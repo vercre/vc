@@ -31,7 +31,7 @@ pub struct CredentialsRequest {
 }
 
 /// Progresses the issuance flow by requesting the credentials from the issuer.
-/// 
+///
 /// Returns the issuance flow identifier.
 #[instrument(level = "debug", skip(provider))]
 pub async fn credentials(
@@ -62,9 +62,10 @@ pub async fn credentials(
     // TODO: Is it possible/desirable to do concurrent requests?
     for auth in authorized {
         let cfg_id = match &auth.authorization_detail.credential {
-            CredentialAuthorization::ConfigurationId{credential_configuration_id, .. } => {
-                credential_configuration_id
-            },
+            CredentialAuthorization::ConfigurationId {
+                credential_configuration_id,
+                ..
+            } => credential_configuration_id,
             CredentialAuthorization::Format(_) => {
                 // TODO: Implement this
                 let e = anyhow!("unsupported credential configuration format");
@@ -167,7 +168,6 @@ async fn credential(
     credential_configuration: &CredentialConfiguration, resp: &CredentialResponse,
     resolver: &impl DidResolver,
 ) -> anyhow::Result<Credential> {
-
     // TODO: Handle response types other than single credential.
     let vc_kind = match &resp.response {
         CredentialResponseType::Credential(vc_kind) => vc_kind,

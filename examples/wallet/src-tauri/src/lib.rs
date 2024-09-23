@@ -200,9 +200,7 @@ async fn pin(
 /// The `credentials` command gets the credentials for the accepted issuance
 /// offer using the `credentials` endpoint in the `vercre-holder` crate.
 #[tauri::command]
-async fn credentials(
-    state: State<'_, StateModel>, app: AppHandle,
-) -> Result<(), error::AppError> {
+async fn credentials(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("get_credentials invoked");
     let mut app_state = state.app_state.lock().await;
     let provider = Provider::new(&app, state.state_store.clone());

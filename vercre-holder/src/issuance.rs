@@ -5,10 +5,10 @@
 
 pub mod accept;
 pub mod cancel;
-pub mod token;
 pub mod credential;
 pub mod offer;
 pub mod pin;
+pub mod token;
 
 use std::collections::HashMap;
 use std::fmt::Debug;

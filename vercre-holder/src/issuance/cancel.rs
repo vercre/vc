@@ -1,5 +1,5 @@
 //! # Cancel Issuance Endpoint
-//! 
+//!
 //! Enables the holder to cancel an issuance flow.
 
 use tracing::instrument;
@@ -8,9 +8,9 @@ use super::Issuance;
 use crate::provider::{HolderProvider, StateStore};
 
 /// Cancels the issuance flow.
-/// 
+///
 /// Notifies the issuer if configured to do so and clears state.
-/// 
+///
 /// Returns the issuance flow identifier.
 #[instrument(level = "debug", skip(provider))]
 pub async fn cancel(provider: impl HolderProvider, issuance_id: &str) -> anyhow::Result<String> {

@@ -23,9 +23,9 @@ pub struct PinRequest {
 }
 
 /// Progresses the issuance flow triggered by a holder setting a PIN.
-/// 
+///
 /// The request is the issuance flow ID and the PIN to set.
-/// 
+///
 /// Returns the issuance flow identifier.
 #[instrument(level = "debug", skip(provider))]
 pub async fn pin(provider: impl HolderProvider, request: &PinRequest) -> anyhow::Result<String> {
