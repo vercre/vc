@@ -267,46 +267,16 @@ impl Context {
         &self, credential_configuration_id: &str, profile: &FormatProfile,
     ) -> Result<Option<HashMap<String, ClaimEntry>>> {
         // get `CredentialConfiguration` from issuer metadata
-        let supported = &self.issuer.credential_configurations_supported;
-        let Some(config) = supported.get(credential_configuration_id) else {
-            return Err(Error::InvalidRequest("unsupported credential_configuration_id".into()));
-        };
-
-        // get requested claims and supported claims for format profile
-        let (req_claims, sup_claims) = match profile {
-            FormatProfile::W3c {
-                credential_definition: requested,
-            } => {
-                let FormatProfile::W3c {
-                    credential_definition: supported,
-                } = &config.profile
-                else {
-                    return Err(Error::InvalidRequest("unsupported credential_definition".into()));
-                };
-                (&requested.credential_subject, &supported.credential_subject)
-            }
-            FormatProfile::IsoMdl {
-                claims: req_claims, ..
-            } => {
-                let FormatProfile::IsoMdl { claims, .. } = &config.profile else {
-                    return Err(Error::InvalidRequest("unsupported credential_definition".into()));
-                };
-                (req_claims, claims)
-            }
-            FormatProfile::SdJwt {
-                claims: req_claims, ..
-            } => {
-                let FormatProfile::SdJwt { claims, .. } = &config.profile else {
-                    return Err(Error::InvalidRequest("unsupported credential_definition".into()));
-                };
-                (req_claims, claims)
-            }
+        let Some(config) =
+            self.issuer.credential_configurations_supported.get(credential_configuration_id)
+        else {
+            return Err(Error::InvalidRequest("invalid credential_configuration_id".into()));
         };
 
         // check requested claims exist and all mandatory claims have been requested
         let mut claims = None;
-        if let Some(requested) = req_claims {
-            if let Some(supported) = sup_claims {
+        if let Some(requested) = profile.claims() {
+            if let Some(supported) = config.profile.claims() {
                 // check requested claims are supported
                 for key in requested.keys() {
                     if !supported.contains_key(key) {
@@ -325,7 +295,7 @@ impl Context {
                     }
                 }
 
-                claims = Some(requested.clone());
+                claims = Some(requested);
             }
         }
 
