@@ -550,7 +550,7 @@ pub struct AuthorizationDetail {
 }
 
 /// Means used to identifiy a Credential's type when requesting a Credential.
-#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Eq)]
 #[serde(untagged)]
 pub enum CredentialAuthorization {
     /// Identifes the credential to authorize by `credential_configuration_id`.
@@ -581,6 +581,34 @@ impl Default for CredentialAuthorization {
     }
 }
 
+/// PartialEq for `CredentialAuthorization` checks for equivalence using
+/// `credential_configuration_id` or `format`, ecluding claims.
+impl PartialEq for CredentialAuthorization {
+    fn eq(&self, other: &Self) -> bool {
+        match self {
+            CredentialAuthorization::ConfigurationId {
+                credential_configuration_id,
+                ..
+            } => {
+                let CredentialAuthorization::ConfigurationId {
+                    credential_configuration_id: other_id,
+                    ..
+                } = &other
+                else {
+                    return false;
+                };
+                credential_configuration_id == other_id
+            }
+            CredentialAuthorization::Format(format) => {
+                let CredentialAuthorization::Format(other_format) = &other else {
+                    return false;
+                };
+                format == other_format
+            }
+        }
+    }
+}
+
 /// When authorization or issuance is requested by format, the format identifier
 /// and format profile-specific parameters are required in order to uniquely
 /// identify the credential requested.
@@ -601,7 +629,7 @@ pub struct CredentialFormat {
 /// claims used to support a particular format.
 ///
 /// [Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Eq)]
 #[serde(untagged)]
 pub enum FormatProfile {
     /// W3C Verifiiable Credential format.
@@ -638,6 +666,40 @@ impl Default for FormatProfile {
     fn default() -> Self {
         Self::W3c {
             credential_definition: CredentialDefinition::default(),
+        }
+    }
+}
+
+impl PartialEq for FormatProfile {
+    fn eq(&self, other: &Self) -> bool {
+        match &self {
+            FormatProfile::W3c {
+                credential_definition,
+            } => {
+                let FormatProfile::W3c {
+                    credential_definition: other_cd,
+                } = &other
+                else {
+                    return false;
+                };
+                credential_definition.type_ == other_cd.type_
+            }
+            FormatProfile::IsoMdl { doctype, .. } => {
+                let FormatProfile::IsoMdl {
+                    doctype: other_doctype,
+                    ..
+                } = &other
+                else {
+                    return false;
+                };
+                doctype == other_doctype
+            }
+            FormatProfile::SdJwt { vct, .. } => {
+                let FormatProfile::SdJwt { vct: other_vct, .. } = &other else {
+                    return false;
+                };
+                vct == other_vct
+            }
         }
     }
 }
@@ -1249,46 +1311,12 @@ impl Issuer {
     ///
     /// # Errors
     /// TODO: add error handling
-    pub fn credential_configuration_id(&self, cfmt: &CredentialFormat) -> Result<&String> {
-        if let Some((id, _)) = match &cfmt.profile {
-            FormatProfile::W3c {
-                credential_definition,
-            } => self.credential_configurations_supported.iter().find(|(_, cfg)| {
-                if let FormatProfile::W3c {
-                    credential_definition: cfg_defn,
-                } = &cfg.profile
-                {
-                    cfg.format == cfmt.format && cfg_defn.type_ == credential_definition.type_
-                } else {
-                    false
-                }
-            }),
-            FormatProfile::IsoMdl { doctype, .. } => {
-                self.credential_configurations_supported.iter().find(|(_, cfg)| {
-                    if let FormatProfile::IsoMdl {
-                        doctype: cfg_doctype, ..
-                    } = &cfg.profile
-                    {
-                        cfg.format == cfmt.format && cfg_doctype == doctype
-                    } else {
-                        false
-                    }
-                })
-            }
-            FormatProfile::SdJwt { vct, .. } => {
-                self.credential_configurations_supported.iter().find(|(_, cfg)| {
-                    if let FormatProfile::SdJwt { vct: cfg_vct, .. } = &cfg.profile {
-                        cfg.format == cfmt.format && cfg_vct == vct
-                    } else {
-                        false
-                    }
-                })
-            }
-        } {
-            Ok(id)
-        } else {
-            Err(anyhow!("Credential CredentialAuthorization not found"))
-        }
+    pub fn credential_configuration_id(&self, fmt: &CredentialFormat) -> Result<&String> {
+        self.credential_configurations_supported
+            .iter()
+            .find(|(_, cfg)| cfg.format == fmt.format && cfg.profile == fmt.profile)
+            .map(|(id, _)| id)
+            .ok_or(anyhow!("Credential Configuration not found"))
     }
 }
 

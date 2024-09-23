@@ -22,8 +22,8 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationDetail, Authorized, CredentialAuthorization, CredentialFormat, Metadata, Provider,
-    StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
+    AuthorizationDetail, Authorized, Metadata, Provider, StateStore,
+    TokenGrantType, TokenRequest, TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
 
@@ -159,7 +159,7 @@ impl Context {
                     return Err(Error::ServerError("pre-authorized state not set".into()));
                 };
 
-                let (authorization_details, authorized) = retain(
+                let (authorization_details, authorized) = retain_auth(
                     request.authorization_details.as_ref().unwrap_or(&vec![]),
                     &auth_state.details,
                 )?;
@@ -174,7 +174,7 @@ impl Context {
                 };
 
                 let authorization_details = if let Some(detail_items) = &auth_state.details {
-                    let (authorization_details, authorized) = retain(
+                    let (authorization_details, authorized) = retain_auth(
                         request.authorization_details.as_ref().unwrap_or(&vec![]),
                         detail_items,
                     )?;
@@ -239,7 +239,7 @@ impl Context {
 
 // TODO: potentially, reduce claimset to requested claims
 
-fn retain(
+fn retain_auth(
     requested: &[AuthorizationDetail], authorized: &[DetailItem],
 ) -> Result<(Vec<Authorized>, HashMap<String, AuthorizedCredential>)> {
     // retain only the requested authorization details
@@ -249,9 +249,11 @@ fn retain(
         let filtered = authorized
             .iter()
             .filter(|authd| {
-                requested.iter().any(|reqd| is_match(&authd.authorization_detail, reqd))
+                requested
+                    .iter()
+                    .any(|reqd| authd.authorization_detail.credential == reqd.credential)
             })
-            .map(|f| f.clone())
+            .cloned()
             .collect::<Vec<_>>();
 
         if filtered.is_empty() {
@@ -285,38 +287,30 @@ fn retain(
     Ok((authorization_details, authorized))
 }
 
-fn is_match(a: &AuthorizationDetail, b: &AuthorizationDetail) -> bool {
-    match &a.credential {
-        CredentialAuthorization::ConfigurationId {
-            credential_configuration_id: a,
-            ..
-        } => {
-            let CredentialAuthorization::ConfigurationId {
-                credential_configuration_id: b,
-                ..
-            } = &b.credential
-            else {
-                return false;
-            };
-            a == b
-        }
+// fn is_match(a: &AuthorizationDetail, b: &AuthorizationDetail) -> bool {
+//     match &a.credential {
+//         CredentialAuthorization::ConfigurationId {
+//             credential_configuration_id: a_id,
+//             ..
+//         } => {
+//             let CredentialAuthorization::ConfigurationId {
+//                 credential_configuration_id: b_id,
+//                 ..
+//             } = &b.credential
+//             else {
+//                 return false;
+//             };
+//             a_id == b_id
+//         }
 
-        CredentialAuthorization::Format(CredentialFormat {
-            format,
-            profile: a_def,
-        }) => {
-            let CredentialAuthorization::Format(CredentialFormat {
-                format: b_format,
-                profile: b_def,
-            }) = &b.credential
-            else {
-                return false;
-            };
-
-            format == b_format && a_def == b_def
-        }
-    }
-}
+//         CredentialAuthorization::Format(a_fmt) => {
+//             let CredentialAuthorization::Format(b_fmt) = &b.credential else {
+//                 return false;
+//             };
+//             a_fmt == b_fmt
+//         }
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
