@@ -33,9 +33,6 @@ offered:
           alt_text: Vercre Background
         text_color: "#ffffff"
     credential_definition:
-      "@context":
-        - "https://www.w3.org/2018/credentials/v1"
-        - "https://www.w3.org/2018/credentials/examples/v1"
       type:
         - VerifiableCredential
         - DeveloperCredential
@@ -85,9 +82,6 @@ offered:
           alt_text: Vercre Background
         text_color: "#ffffff"
     credential_definition:
-      "@context":
-        - "https://www.w3.org/2018/credentials/v1"
-        - "https://www.w3.org/2018/credentials/examples/v1"
       type:
         - VerifiableCredential
         - EmployeeIDCredential
