@@ -222,7 +222,7 @@ impl Context {
                 Error::InvalidCredentialRequest("unsupported credential requested".into())
             })?;
 
-        let FormatProfile::Definition {
+        let FormatProfile::W3c {
             credential_definition,
         } = &config.profile
         else {
@@ -269,10 +269,13 @@ impl Context {
             .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
 
         // TODO: add support for other formats
-        let jwt =
-            vercre_w3c_vc::proof::create(proof::Format::JwtVcJson, Payload::Vc(vc.clone()), signer)
-                .await
-                .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
+        let jwt = vercre_w3c_vc::proof::create(
+            proof::Format::JwtVcJson,
+            Payload::Vc(vc.clone()),
+            signer,
+        )
+        .await
+        .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
 
         // update token state with new `c_nonce`
         let mut state = self.state.clone();
@@ -373,14 +376,14 @@ impl Context {
         // narrow of claimset from format/credential_definition
         if let CredentialIssuance::Format(f) = &request.credential {
             let claim_ids = match &f.profile {
-                FormatProfile::Definition {
+                FormatProfile::W3c {
                     credential_definition,
                 } => credential_definition
                     .credential_subject
                     .as_ref()
                     .map(|subj| subj.keys().cloned().collect::<Vec<String>>()),
-                FormatProfile::MsoMdoc { .. } => {
-                    todo!("FormatProfile::MsoMdoc");
+                FormatProfile::IsoMdl { .. } => {
+                    todo!("FormatProfile::IsoMdl");
                 }
                 FormatProfile::SdJwt { .. } => {
                     todo!("FormatProfile::SdJwt");

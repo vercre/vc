@@ -132,8 +132,8 @@ fn narrow_scope(
                     return Err(anyhow!("credential configuration accepted not found in offer"));
                 };
                 let profile = match &offered_config.profile {
-                    FormatProfile::Definition { credential_definition } => {
-                        FormatProfile::Definition {
+                    FormatProfile::W3c { credential_definition } => {
+                        FormatProfile::W3c {
                             credential_definition: CredentialDefinition {
                                 context: credential_definition.context.clone(),
                                 type_: credential_definition.type_.clone(),
@@ -141,8 +141,8 @@ fn narrow_scope(
                             }
                         }
                     },
-                    FormatProfile::MsoMdoc { doctype, .. } => {
-                        FormatProfile::MsoMdoc {
+                    FormatProfile::IsoMdl { doctype, .. } => {
+                        FormatProfile::IsoMdl {
                             doctype: doctype.clone(),
                             claims: Some(claims),
                         }
