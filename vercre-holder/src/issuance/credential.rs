@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_core::Kind;
 use vercre_datasec::jose::jws::{self, Type};
-use vercre_issuer::{AuthorizationSpec, ConfigurationId};
+use vercre_issuer::CredentialAuthorization;
 use vercre_macros::credential_request;
 use vercre_openid::issuer::{
     CredentialConfiguration, CredentialResponse, CredentialResponseType, ProofClaims,
@@ -61,24 +61,16 @@ pub async fn credentials(
     // the token response so we don't need to re-construct from state.
     // TODO: Is it possible/desirable to do concurrent requests?
     for auth in authorized {
-        let cfg_spec = match &auth.authorization_detail.specification {
-            AuthorizationSpec::ConfigurationId(config_id) => config_id,
-            AuthorizationSpec::Format(_) => {
+        let cfg_id = match &auth.authorization_detail.credential {
+            CredentialAuthorization::ConfigurationId{credential_configuration_id, .. } => {
+                credential_configuration_id
+            },
+            CredentialAuthorization::Format(_) => {
                 // TODO: Implement this
                 let e = anyhow!("unsupported credential configuration format");
                 tracing::error!(target: "Endpoint::credentials", ?e);
                 return Err(e);
             }
-        };
-        let cfg_id = match cfg_spec {
-            ConfigurationId::Definition {
-                credential_configuration_id,
-                ..
-            }
-            | ConfigurationId::Claims {
-                credential_configuration_id,
-                ..
-            } => credential_configuration_id,
         };
         let Some(cfg) = issuance.offered.get(cfg_id) else {
             let e = anyhow!("authorized credential configuration not found in offer");

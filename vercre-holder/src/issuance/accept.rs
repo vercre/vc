@@ -10,14 +10,31 @@
 //! downstream in the flow to specialize the access token and credential
 //! requests which are honored by the respective `vercre-issuer` endpoints.
 
+use std::collections::HashMap;
+
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use vercre_issuer::{AuthorizationDetail, AuthorizationSpec, ConfigurationId};
+use vercre_issuer::{
+    AuthorizationDetail, ClaimEntry, CredentialAuthorization, CredentialConfiguration, CredentialDefinition, FormatProfile
+};
 
 use super::{Issuance, Status};
 use crate::provider::{HolderProvider, StateStore};
+
+/// A configuration ID and a list of claims that can be used by the holder to
+/// narrow the scope of the acceptance from the full set on offer.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct AuthorizationSpec {
+    /// The credential configuration ID to include.
+    pub credential_configuration_id: String,
+
+    /// The list of claims to include.
+    ///
+    /// If `None`, all claims are included.
+    pub claims: Option<HashMap<String, ClaimEntry>>,
+}
 
 /// `AcceptRequest` is the request to the `accept` endpoint to accept a
 /// credential issuance offer.
@@ -31,12 +48,12 @@ pub struct AcceptRequest {
     ///
     /// Send `None` to imply the holder wants all credentials and all claims on
     /// offer.
-    pub accept: Option<Vec<ConfigurationId>>,
+    pub accept: Option<Vec<AuthorizationSpec>>,
 }
 
 /// Progresses the issuance flow triggered by a holder accepting a credential
 /// offer.
-/// 
+///
 /// Returns the issuance flow identifier.
 #[instrument(level = "debug", skip(provider))]
 pub async fn accept(
@@ -75,7 +92,13 @@ pub async fn accept(
         }
     };
 
-    issuance.accepted = narrow_scope(&request.accept);
+    issuance.accepted = match narrow_scope(&issuance.offered, &request.accept) {
+        Ok(accepted) => accepted,
+        Err(e) => {
+            tracing::error!(target: "Endpoint::accept", ?e);
+            return Err(e);
+        }
+    };
 
     if pre_auth_code.tx_code.is_some() {
         issuance.status = Status::PendingPin;
@@ -94,16 +117,58 @@ pub async fn accept(
     Ok(issuance.id)
 }
 
-fn narrow_scope(accept: &Option<Vec<ConfigurationId>>) -> Option<Vec<AuthorizationDetail>> {
-    let accept = accept.clone()?;
+fn narrow_scope(
+    offered: &HashMap<String, CredentialConfiguration>, accept: &Option<Vec<AuthorizationSpec>>,
+) -> anyhow::Result<Option<Vec<AuthorizationDetail>>> {
+    // Just return None if the holder wants all credential configurations.
+    let Some(accept) = accept.clone() else {
+        return Ok(None);
+    };
     let mut auth_details = Vec::new();
-    for config in accept {
+    for auth_spec in accept {
+        let format_profile: Option<FormatProfile> = match auth_spec.claims {
+            Some(claims) => {
+                let Some(offered_config) = offered.get(&auth_spec.credential_configuration_id) else {
+                    return Err(anyhow!("credential configuration accepted not found in offer"));
+                };
+                let profile = match &offered_config.profile {
+                    FormatProfile::Definition { credential_definition } => {
+                        FormatProfile::Definition {
+                            credential_definition: CredentialDefinition {
+                                context: credential_definition.context.clone(),
+                                type_: credential_definition.type_.clone(),
+                                credential_subject: Some(claims),
+                            }
+                        }
+                    },
+                    FormatProfile::MsoMdoc { doctype, .. } => {
+                        FormatProfile::MsoMdoc {
+                            doctype: doctype.clone(),
+                            claims: Some(claims),
+                        }
+                    },
+                    FormatProfile::SdJwt { vct, .. } => {
+                        FormatProfile::SdJwt {
+                            vct: vct.clone(),
+                            claims: Some(claims),
+                        }
+                    },
+                };
+                Some(profile)
+            },
+            None => None,
+        };
+
+        // TODO: Support CredentialAuthorization::Format
         let detail = AuthorizationDetail {
-            specification: AuthorizationSpec::ConfigurationId(config),
+            credential: CredentialAuthorization::ConfigurationId{
+                credential_configuration_id: auth_spec.credential_configuration_id,
+                claims: format_profile,
+            },
             ..Default::default()
         };
         auth_details.push(detail);
     }
 
-    Some(auth_details)
+    Ok(Some(auth_details))
 }
