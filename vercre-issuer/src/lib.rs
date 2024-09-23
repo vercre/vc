@@ -97,6 +97,7 @@ mod credential_offer;
 mod deferred;
 mod metadata;
 mod notification;
+// mod par;
 mod register;
 mod state;
 mod token;
