@@ -64,11 +64,6 @@
 //! [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
 //! [RFC9396]: (https://www.rfc-editor.org/rfc/rfc9396)
 
-// TODO: add support for "ldp_vc" format
-// TODO: add support for "jwt_vc_json-ld" format
-// TODO: add support for "vc+sd-jwt" format
-// LATER: add support for "mso_mdoc" format
-
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::vec;
@@ -78,8 +73,8 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    ClaimEntry, CredentialAuthorization, CredentialFormat, FormatProfile, GrantType, Issuer,
-    Metadata, Provider, StateStore, Subject,
+    ClaimEntry, CredentialAuthorization, CredentialFormat, GrantType, Issuer, Metadata, Provider,
+    StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 
@@ -238,12 +233,15 @@ impl Context {
                     claims: profile,
                 } => {
                     self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
+
                     if let Some(profile) = profile {
-                        self.claims = self.verify_claims(credential_configuration_id, profile)?;
+                        let claims = profile.claims();
+                        self.verify_claims(credential_configuration_id, &claims)?;
+                        self.claims = claims;
                     }
                 }
+
                 CredentialAuthorization::Format(CredentialFormat { format, profile }) => {
-                    // find supported `credential_definition` by `format` and `profile`
                     let credential_configuration_id = self
                         .issuer
                         .credential_configuration_id(&CredentialFormat {
@@ -253,7 +251,10 @@ impl Context {
                         .map_err(|e| Error::ServerError(format!("issuer issue: {e}")))?;
 
                     self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
-                    self.claims = self.verify_claims(credential_configuration_id, profile)?;
+
+                    let claims = profile.claims();
+                    self.verify_claims(credential_configuration_id, &claims)?;
+                    self.claims = claims;
                 }
             };
         }
@@ -264,8 +265,8 @@ impl Context {
     // Verify requested claims exist as supported claims and all mandatory claims
     // are requested.
     fn verify_claims(
-        &self, credential_configuration_id: &str, profile: &FormatProfile,
-    ) -> Result<Option<HashMap<String, ClaimEntry>>> {
+        &self, credential_configuration_id: &str, claims: &Option<HashMap<String, ClaimEntry>>,
+    ) -> Result<()> {
         // get `CredentialConfiguration` from issuer metadata
         let Some(config) =
             self.issuer.credential_configurations_supported.get(credential_configuration_id)
@@ -274,8 +275,7 @@ impl Context {
         };
 
         // check requested claims exist and all mandatory claims have been requested
-        let mut claims = None;
-        if let Some(requested) = profile.claims() {
+        if let Some(requested) = claims {
             if let Some(supported) = config.profile.claims() {
                 // check requested claims are supported
                 for key in requested.keys() {
@@ -285,21 +285,24 @@ impl Context {
                 }
 
                 // check mandatory claims have been requested
-                for key in supported.keys() {
-                    let ClaimEntry::Claim(entry) = &supported[key] else {
-                        // TODO: handle nested claims
-                        todo!("nested claims");
-                    };
-                    if entry.mandatory.unwrap_or_default() && !requested.contains_key(key) {
-                        return Err(Error::InvalidRequest(format!("{key} claim is mandatory")));
+                for (key, entry) in &supported {
+                    match entry {
+                        ClaimEntry::Claim(claim) => {
+                            if claim.mandatory.unwrap_or_default() && !requested.contains_key(key) {
+                                return Err(Error::InvalidRequest(format!(
+                                    "{key} claim is mandatory"
+                                )));
+                            }
+                        }
+                        ClaimEntry::Nested(_nested) => {
+                            todo!("support nested claims");
+                        }
                     }
                 }
-
-                claims = Some(requested);
             }
         }
 
-        Ok(claims)
+        Ok(())
     }
 
     // Verify Credentials requested in `scope` are supported.
@@ -421,7 +424,7 @@ mod tests {
 
     #[rstest]
     #[case::configuration_id("configuration_id", configuration_id)]
-    #[case::format("format", format)]
+    #[case::format("format", format_w3c)]
     #[case::scope("scope", scope)]
     #[case::claims("claims", claims)]
     #[should_panic(expected = "ok")]
@@ -465,7 +468,7 @@ mod tests {
         })
     }
 
-    fn format() -> AuthorizationRequest {
+    fn format_w3c() -> AuthorizationRequest {
         authorization_request!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
