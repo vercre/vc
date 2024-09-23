@@ -242,12 +242,25 @@ impl Context {
 fn retain(
     requested: &[AuthorizationDetail], authorized: &[DetailItem],
 ) -> Result<(Vec<Authorized>, HashMap<String, AuthorizedCredential>)> {
+    // retain only the requested authorization details
     let detail_items = if requested.is_empty() {
         authorized.to_vec()
     } else {
-        narrow_auth(authorized, requested)?
+        let filtered = authorized
+            .iter()
+            .filter(|authd| {
+                requested.iter().any(|reqd| is_match(&authd.authorization_detail, reqd))
+            })
+            .map(|f| f.clone())
+            .collect::<Vec<_>>();
+
+        if filtered.is_empty() {
+            return Err(Error::InvalidRequest("no matching authorization details".into()));
+        }
+        filtered
     };
 
+    // convert retained detail_items to authorization_details + authorized
     let mut authorization_details = vec![];
     let mut authorized = HashMap::new();
 
@@ -270,29 +283,6 @@ fn retain(
     }
 
     Ok((authorization_details, authorized))
-}
-
-// Narrow previously authorized credentials to requested ones.
-fn narrow_auth(
-    authorized: &[DetailItem], requested: &[AuthorizationDetail],
-) -> Result<Vec<DetailItem>> {
-    let mut subset = vec![];
-
-    for reqd in requested {
-        // find `auth_det` in previously authorized
-        let Some(detail_item) =
-            authorized.iter().find(|authd| is_match(&authd.authorization_detail, reqd))
-        else {
-            continue;
-        };
-        subset.push(detail_item.clone());
-    }
-
-    if subset.is_empty() {
-        return Err(Error::InvalidRequest("no matching authorization details".into()));
-    }
-
-    Ok(subset)
 }
 
 fn is_match(a: &AuthorizationDetail, b: &AuthorizationDetail) -> bool {
