@@ -109,7 +109,9 @@ fn credential_authorization(detail: &HashMap<String, Value>) -> Result<TokenStre
         // credential_definition is optional
         let claims = if let Some(defn_value) = detail.get("credential_definition") {
             let credential_definition = configuration_definition(defn_value)?;
-            quote! {Some(#path::FormatProfile::Definition(#credential_definition))}
+            quote! {Some(#path::FormatProfile::Definition{
+                credential_definition: #credential_definition
+            })}
         } else {
             quote! {None}
         };
@@ -132,7 +134,9 @@ fn credential_authorization(detail: &HashMap<String, Value>) -> Result<TokenStre
                 #path::CredentialAuthorization::Format (
                     #path::CredentialFormat {
                         format: #path::Format::JwtVcJson,
-                        profile: #path::FormatProfile::Definition(#credential_definition),
+                        profile: #path::FormatProfile::Definition {
+                            credential_definition: #credential_definition
+                        },
                     },
                 )
             }),
@@ -168,9 +172,9 @@ fn configuration_definition(defn_value: &Value) -> Result<TokenStream> {
 
     Ok(quote! {
         #path::CredentialDefinition {
-            credential_subject: #subject,
             context: None,
             type_: #type_,
+            credential_subject: #subject,
         }
     })
 }
@@ -196,9 +200,9 @@ fn format_definition(defn_value: &Value) -> Result<TokenStream> {
 
     Ok(quote! {
         #path::CredentialDefinition {
-            credential_subject: #subject,
             context: None,
             type_: Some(#type_array),
+            credential_subject: #subject,
         }
     })
 }

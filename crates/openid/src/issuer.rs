@@ -602,11 +602,14 @@ pub struct CredentialFormat {
 ///
 /// [Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(untagged)]
 pub enum FormatProfile {
-    /// Requested Credential is specified by `credential_configuration_id` and
-    /// optionally, `CredentialDefinition`.
-    #[serde(rename = "credential_definition")]
-    Definition(CredentialDefinition),
+    /// Credentials with format profile of `jwt_vc_json`, `jwt_vc_json-ld`, or
+    /// by Wallets.
+    Definition {
+        /// The Credential's definition.
+        credential_definition: CredentialDefinition,
+    },
 
     /// Credentials complying with [ISO.18013-5]
     MsoMdoc {
@@ -621,9 +624,9 @@ pub enum FormatProfile {
     /// Selective Disclosure JWT ([SD-JWT]).
     /// [SD-JWT]: <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-04>
     SdJwt {
-        /// Verifiable credential type. The vct value MUST be a case-sensitive
-        /// String or URI serving as an identifier for the type of the SD-JWT
-        /// VC.
+        /// The Verifiable Credential type. The `vct` value MUST be a
+        /// case-sensitive String or URI serving as an identifier for
+        /// the type of the SD-JWT VC.
         vct: String,
 
         /// A list of claims to include in the issued credential.
@@ -634,7 +637,9 @@ pub enum FormatProfile {
 
 impl Default for FormatProfile {
     fn default() -> Self {
-        Self::Definition(CredentialDefinition::default())
+        Self::Definition {
+            credential_definition: CredentialDefinition::default(),
+        }
     }
 }
 
@@ -1234,15 +1239,18 @@ impl Issuer {
     /// TODO: add error handling
     pub fn credential_configuration_id(&self, cfmt: &CredentialFormat) -> Result<&String> {
         if let Some((id, _)) = match &cfmt.profile {
-            FormatProfile::Definition(cfmt_defn) => {
-                self.credential_configurations_supported.iter().find(|(_, cfg)| {
-                    if let FormatProfile::Definition(cfg_defn) = &cfg.profile {
-                        cfg.format == cfmt.format && cfg_defn.type_ == cfmt_defn.type_
-                    } else {
-                        false
-                    }
-                })
-            }
+            FormatProfile::Definition {
+                credential_definition: cfmt_defn,
+            } => self.credential_configurations_supported.iter().find(|(_, cfg)| {
+                if let FormatProfile::Definition {
+                    credential_definition: cfg_defn,
+                } = &cfg.profile
+                {
+                    cfg.format == cfmt.format && cfg_defn.type_ == cfmt_defn.type_
+                } else {
+                    false
+                }
+            }),
             FormatProfile::MsoMdoc {
                 doctype: cfmt_doctype,
                 ..
@@ -1426,30 +1434,6 @@ pub struct CredentialConfiguration {
     #[serde(flatten)]
     pub profile: FormatProfile,
 }
-
-/*
-impl CredentialConfiguration {
-    /// Returns the `CredentialDefinition` if the format is
-    /// `jwt_vc_json`,`ldp-vc`, or `jwt_vc_json-ld`.
-    fn credential_definition(&self) -> Option<&CredentialDefinition> {
-        if let FormatProfile::Definition(credential_definition) = &self.profile {
-            Some(credential_definition)
-        } else {
-            None
-        }
-    }
-
-    /// Returns the `CredentialDefinition` if the format is `jwt_vc_json`,
-    /// `ldp-vc`, or `jwt_vc_json-ld`.
-    fn mso_mdoc(&self) -> Option<&CredentialDefinition> {
-        if let FormatProfile::Definition(credential_definition) = &self.profile {
-            Some(credential_definition)
-        } else {
-            None
-        }
-    }
-}
-*/
 
 /// `ProofTypesSupported` describes specifics of the key proof(s) that the
 /// Credential Issuer supports.
@@ -1755,20 +1739,25 @@ mod tests {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: CredentialAuthorization::ConfigurationId {
                     credential_configuration_id: "EmployeeID_JWT".into(),
-                    claims: Some(FormatProfile::Definition(CredentialDefinition {
-                        credential_subject: Some(HashMap::from([
-                            (
-                                "given_name".to_string(),
-                                ClaimEntry::Claim(ClaimDefinition::default()),
-                            ),
-                            (
-                                "family_name".to_string(),
-                                ClaimEntry::Claim(ClaimDefinition::default()),
-                            ),
-                            ("email".to_string(), ClaimEntry::Claim(ClaimDefinition::default())),
-                        ])),
-                        ..CredentialDefinition::default()
-                    })),
+                    claims: Some(FormatProfile::Definition {
+                        credential_definition: CredentialDefinition {
+                            credential_subject: Some(HashMap::from([
+                                (
+                                    "given_name".to_string(),
+                                    ClaimEntry::Claim(ClaimDefinition::default()),
+                                ),
+                                (
+                                    "family_name".to_string(),
+                                    ClaimEntry::Claim(ClaimDefinition::default()),
+                                ),
+                                (
+                                    "email".to_string(),
+                                    ClaimEntry::Claim(ClaimDefinition::default()),
+                                ),
+                            ])),
+                            ..CredentialDefinition::default()
+                        },
+                    }),
                 },
                 ..AuthorizationDetail::default()
             }]),
@@ -1810,13 +1799,15 @@ mod tests {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: CredentialAuthorization::Format(CredentialFormat {
                     format: Format::JwtVcJson,
-                    profile: FormatProfile::Definition(CredentialDefinition {
-                        type_: Some(vec![
-                            "VerifiableCredential".into(),
-                            "EmployeeIDCredential".into(),
-                        ]),
-                        ..CredentialDefinition::default()
-                    }),
+                    profile: FormatProfile::Definition {
+                        credential_definition: CredentialDefinition {
+                            type_: Some(vec![
+                                "VerifiableCredential".into(),
+                                "EmployeeIDCredential".into(),
+                            ]),
+                            ..CredentialDefinition::default()
+                        },
+                    },
                 }),
 
                 ..AuthorizationDetail::default()
@@ -1898,10 +1889,15 @@ mod tests {
             access_token: "1234".into(),
             credential: CredentialIssuance::Format(CredentialFormat {
                 format: Format::JwtVcJson,
-                profile: FormatProfile::Definition(CredentialDefinition {
-                    type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
-                    ..CredentialDefinition::default()
-                }),
+                profile: FormatProfile::Definition {
+                    credential_definition: CredentialDefinition {
+                        type_: Some(vec![
+                            "VerifiableCredential".into(),
+                            "EmployeeIDCredential".into(),
+                        ]),
+                        ..CredentialDefinition::default()
+                    },
+                },
             }),
             proof: Some(Proof::Single {
                 proof_type: SingleProof::Jwt {
