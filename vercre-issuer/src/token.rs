@@ -22,8 +22,8 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationDetail, Authorized, Metadata, Provider, StateStore,
-    TokenGrantType, TokenRequest, TokenResponse, TokenType,
+    AuthorizationDetail, Authorized, Metadata, Provider, StateStore, TokenGrantType, TokenRequest,
+    TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
 

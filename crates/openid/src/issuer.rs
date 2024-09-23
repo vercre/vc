@@ -581,16 +581,16 @@ impl Default for CredentialAuthorization {
     }
 }
 
-/// PartialEq for `CredentialAuthorization` checks for equivalence using
+/// `PartialEq` for `CredentialAuthorization` checks for equivalence using
 /// `credential_configuration_id` or `format`, ecluding claims.
 impl PartialEq for CredentialAuthorization {
     fn eq(&self, other: &Self) -> bool {
         match self {
-            CredentialAuthorization::ConfigurationId {
+            Self::ConfigurationId {
                 credential_configuration_id,
                 ..
             } => {
-                let CredentialAuthorization::ConfigurationId {
+                let Self::ConfigurationId {
                     credential_configuration_id: other_id,
                     ..
                 } = &other
@@ -599,8 +599,8 @@ impl PartialEq for CredentialAuthorization {
                 };
                 credential_configuration_id == other_id
             }
-            CredentialAuthorization::Format(format) => {
-                let CredentialAuthorization::Format(other_format) = &other else {
+            Self::Format(format) => {
+                let Self::Format(other_format) = &other else {
                     return false;
                 };
                 format == other_format
@@ -673,10 +673,10 @@ impl Default for FormatProfile {
 impl PartialEq for FormatProfile {
     fn eq(&self, other: &Self) -> bool {
         match &self {
-            FormatProfile::W3c {
+            Self::W3c {
                 credential_definition,
             } => {
-                let FormatProfile::W3c {
+                let Self::W3c {
                     credential_definition: other_cd,
                 } = &other
                 else {
@@ -684,8 +684,8 @@ impl PartialEq for FormatProfile {
                 };
                 credential_definition.type_ == other_cd.type_
             }
-            FormatProfile::IsoMdl { doctype, .. } => {
-                let FormatProfile::IsoMdl {
+            Self::IsoMdl { doctype, .. } => {
+                let Self::IsoMdl {
                     doctype: other_doctype,
                     ..
                 } = &other
@@ -694,8 +694,8 @@ impl PartialEq for FormatProfile {
                 };
                 doctype == other_doctype
             }
-            FormatProfile::SdJwt { vct, .. } => {
-                let FormatProfile::SdJwt { vct: other_vct, .. } = &other else {
+            Self::SdJwt { vct, .. } => {
+                let Self::SdJwt { vct: other_vct, .. } = &other else {
                     return false;
                 };
                 vct == other_vct
@@ -1316,7 +1316,7 @@ impl Issuer {
             .iter()
             .find(|(_, cfg)| cfg.format == fmt.format && cfg.profile == fmt.profile)
             .map(|(id, _)| id)
-            .ok_or(anyhow!("Credential Configuration not found"))
+            .ok_or_else(|| anyhow!("Credential Configuration not found"))
     }
 }
 
