@@ -22,9 +22,8 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationDetail, AuthorizationDetailType, Authorized, CredentialAuthorization,
-    CredentialFormat, Metadata, Provider, StateStore, TokenGrantType, TokenRequest, TokenResponse,
-    TokenType,
+    AuthorizationDetail, Authorized, CredentialAuthorization, CredentialFormat, Metadata, Provider,
+    StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
 
@@ -151,55 +150,49 @@ impl Context {
     ) -> Result<TokenResponse> {
         tracing::debug!("token::process");
 
-        let mut credentials = HashMap::new();
+        // the subset of requested credentials retained from those previously authorized
+        let mut retained = HashMap::new();
 
         let (authorization_details, scope) = match &request.grant_type {
             TokenGrantType::PreAuthorizedCode { .. } => {
-                let Stage::PreAuthorized(pre_auth_state) = &self.state.stage else {
+                let Stage::PreAuthorized(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("pre-authorized state not set".into()));
                 };
 
-                credentials.clone_from(&pre_auth_state.credentials);
-
-                let mut authorization_details = vec![];
-
-                for (identifier, authorized) in &pre_auth_state.credentials {
-                    authorization_details.push(Authorized {
-                        authorization_detail: AuthorizationDetail {
-                            type_: AuthorizationDetailType::OpenIdCredential,
-                            credential: CredentialAuthorization::ConfigurationId {
-                                credential_configuration_id: authorized
-                                    .credential_configuration_id
-                                    .clone(),
-                                claims: None,
-                            },
-                            ..AuthorizationDetail::default()
-                        },
-                        credential_identifiers: vec![identifier.clone()],
-                    });
-                }
+                let (authorization_details, authorized) = retain(
+                    request.authorization_details.as_ref().unwrap_or(&vec![]),
+                    &auth_state.details,
+                )?;
+                retained = authorized;
 
                 (Some(authorization_details), None)
-
-                // TODO: if narrowing is requested, narrow the authorization and
-                // return authorization_details (or scope?)
             }
 
             TokenGrantType::AuthorizationCode { .. } => {
-                let Stage::Authorized(authzn_state) = &self.state.stage else {
+                let Stage::Authorized(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("authorization state not set".into()));
                 };
 
-                // TODO: reduce scope if requested scope
+                let authorization_details = if let Some(detail_items) = &auth_state.details {
+                    let (authorization_details, authorized) = retain(
+                        request.authorization_details.as_ref().unwrap_or(&vec![]),
+                        detail_items,
+                    )?;
+                    retained = authorized;
 
-                let scope = authzn_state.scope.as_ref().map(|scope_items| {
+                    Some(authorization_details)
+                } else {
+                    None
+                };
+
+                let scope = auth_state.scope.as_ref().map(|scope_items| {
                     let mut scope_str = String::new();
 
                     for item in scope_items {
                         scope_str.push_str(&item.item);
 
                         for identifier in &item.credential_identifiers {
-                            credentials.insert(
+                            retained.insert(
                                 identifier.clone(),
                                 AuthorizedCredential {
                                     credential_identifier: identifier.clone(),
@@ -214,40 +207,6 @@ impl Context {
                     scope_str
                 });
 
-                // narrow token's authorization if requested by wallet
-                let authorization_details = if let Some(detail_items) = &authzn_state.details {
-                    let detail_items = if let Some(requested) = &request.authorization_details {
-                        narrow_auth(detail_items, requested)?
-                    } else {
-                        detail_items.clone()
-                    };
-
-                    let mut authorization_details = vec![];
-                    for item in &detail_items {
-                        authorization_details.push(Authorized {
-                            authorization_detail: item.authorization_detail.clone(),
-                            credential_identifiers: item.credential_identifiers.clone(),
-                        });
-
-                        for identifier in &item.credential_identifiers {
-                            credentials.insert(
-                                identifier.clone(),
-                                AuthorizedCredential {
-                                    credential_identifier: identifier.clone(),
-                                    credential_configuration_id: item
-                                        .credential_configuration_id
-                                        .clone(),
-                                    claim_ids: None,
-                                },
-                            );
-                        }
-                    }
-
-                    Some(authorization_details)
-                } else {
-                    None
-                };
-
                 (authorization_details, scope)
             }
         };
@@ -258,7 +217,7 @@ impl Context {
         let mut state = self.state.clone();
         state.stage = Stage::Validated(Token {
             access_token: access_token.clone(),
-            credentials,
+            credentials: retained,
             c_nonce: c_nonce.clone(),
             c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
         });
@@ -279,6 +238,39 @@ impl Context {
 }
 
 // TODO: potentially, reduce claimset to requested claims
+
+fn retain(
+    requested: &[AuthorizationDetail], authorized: &[DetailItem],
+) -> Result<(Vec<Authorized>, HashMap<String, AuthorizedCredential>)> {
+    let detail_items = if requested.is_empty() {
+        authorized.to_vec()
+    } else {
+        narrow_auth(authorized, requested)?
+    };
+
+    let mut authorization_details = vec![];
+    let mut authorized = HashMap::new();
+
+    for item in &detail_items {
+        authorization_details.push(Authorized {
+            authorization_detail: item.authorization_detail.clone(),
+            credential_identifiers: item.credential_identifiers.clone(),
+        });
+
+        for identifier in &item.credential_identifiers {
+            authorized.insert(
+                identifier.clone(),
+                AuthorizedCredential {
+                    credential_identifier: identifier.clone(),
+                    credential_configuration_id: item.credential_configuration_id.clone(),
+                    claim_ids: None,
+                },
+            );
+        }
+    }
+
+    Ok((authorization_details, authorized))
+}
 
 // Narrow previously authorized credentials to requested ones.
 fn narrow_auth(
@@ -349,7 +341,7 @@ mod tests {
     use vercre_test_utils::snapshot;
 
     use super::*;
-    use crate::state::{Authorization, AuthorizedCredential, DetailItem, PreAuthorization};
+    use crate::state::{Authorization, DetailItem, PreAuthorization};
     extern crate self as vercre_issuer;
 
     #[tokio::test]
@@ -362,14 +354,18 @@ mod tests {
         // set up PreAuthorized state
         let state = State {
             stage: Stage::PreAuthorized(PreAuthorization {
-                credentials: HashMap::from([(
-                    "PHLEmployeeID".into(),
-                    AuthorizedCredential {
-                        credential_identifier: "PHLEmployeeID".into(),
-                        credential_configuration_id: "EmployeeID_JWT".into(),
-                        claim_ids: None,
+                details: vec![DetailItem {
+                    authorization_detail: AuthorizationDetail {
+                        type_: AuthorizationDetailType::OpenIdCredential,
+                        credential: CredentialAuthorization::ConfigurationId {
+                            credential_configuration_id: "EmployeeID_JWT".into(),
+                            claims: None,
+                        },
+                        locations: None,
                     },
-                )]),
+                    credential_configuration_id: "EmployeeID_JWT".into(),
+                    credential_identifiers: vec!["PHLEmployeeID".into()],
+                }],
                 tx_code: Some("1234".into()),
             }),
             subject_id: Some(NORMAL_USER.into()),

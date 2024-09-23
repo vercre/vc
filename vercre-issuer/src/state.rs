@@ -97,8 +97,9 @@ pub struct Offer {
     /// Credential Offer, ready for the client to retrieve.
     pub credential_offer: CredentialOffer,
 
-    /// Credentials (configuration id and identifier) authorized for issuance.
-    pub credentials: HashMap<CredentialIdentifier, AuthorizedCredential>,
+    /// A list of `authorization_details` entries referencing credentials the
+    /// Wallet is authorized to request.
+    pub details: Vec<DetailItem>,
 
     /// Transaction code for pre-authorized offers.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -108,8 +109,9 @@ pub struct Offer {
 /// Pre-authorization state from the `create_offer` endpoint.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PreAuthorization {
-    /// Authorized credentials (configuration id and identifier).
-    pub credentials: HashMap<CredentialIdentifier, AuthorizedCredential>,
+    /// A list of `authorization_details` entries referencing credentials the
+    /// Wallet is authorized to request.
+    pub details: Vec<DetailItem>,
 
     /// Transaction code sent to the holder to use (if present)when requesting
     /// an access token.
