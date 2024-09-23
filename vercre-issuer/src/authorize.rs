@@ -64,11 +64,6 @@
 //! [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
 //! [RFC9396]: (https://www.rfc-editor.org/rfc/rfc9396)
 
-// TODO: add support for "ldp_vc" format
-// TODO: add support for "jwt_vc_json-ld" format
-// TODO: add support for "vc+sd-jwt" format
-// LATER: add support for "mso_mdoc" format
-
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::vec;
@@ -78,8 +73,8 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    ClaimEntry, CredentialAuthorization, CredentialFormat, FormatProfile, GrantType, Issuer,
-    Metadata, Provider, StateStore, Subject,
+    ClaimEntry, CredentialAuthorization, CredentialFormat, GrantType, Issuer, Metadata, Provider,
+    StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 
@@ -225,8 +220,6 @@ impl Context {
     fn verify_authorization_details(
         &mut self, authorization_details: &[AuthorizationDetail],
     ) -> Result<()> {
-        let supported = &self.issuer.credential_configurations_supported;
-
         // check each credential requested is supported by the issuer
         for auth_det in authorization_details {
             if auth_det.type_ != AuthorizationDetailType::OpenIdCredential {
@@ -237,87 +230,31 @@ impl Context {
             match &auth_det.credential {
                 CredentialAuthorization::ConfigurationId {
                     credential_configuration_id,
-                    claims,
+                    claims: profile,
                 } => {
-                    //  find supported credential by `credential_configuration_id`
-                    if !supported.contains_key(credential_configuration_id) {
-                        return Err(Error::InvalidRequest(
-                            "unsupported credential_configuration_id".into(),
-                        ));
-                    }
-
-                    // verify requested claims are supported
-                    if let Some(profile) = claims {
-                        let FormatProfile::W3c {
-                            credential_definition,
-                        } = profile
-                        else {
-                            return Err(Error::InvalidRequest(
-                                "unsupported claim specification".into(),
-                            ));
-                        };
-                        let Some(claims) = &credential_definition.credential_subject else {
-                            return Err(Error::InvalidRequest("missing credential_subject".into()));
-                        };
-
-                        // TODO: support other FormatProfiles
-                        let config = &supported[credential_configuration_id];
-                        let FormatProfile::W3c {
-                            credential_definition,
-                        } = &config.profile
-                        else {
-                            return Err(Error::InvalidRequest(
-                                "unsupported credential_definition".into(),
-                            ));
-                        };
-
-                        Self::verify_claims(claims, &credential_definition.credential_subject)?;
-                        self.claims = Some(claims.clone());
-                    }
-
-                    // save `credential_configuration_id` for later use
                     self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
+
+                    if let Some(profile) = profile {
+                        let claims = profile.claims();
+                        self.verify_claims(credential_configuration_id, &claims)?;
+                        self.claims = claims;
+                    }
                 }
 
-                CredentialAuthorization::Format(CredentialFormat {
-                    format,
-                    profile:
-                        FormatProfile::W3c {
-                            credential_definition: requested_defn,
-                        },
-                }) => {
-                    // find supported `credential_definition` by `format` and `profile`
-                    let config_id = self
+                CredentialAuthorization::Format(CredentialFormat { format, profile }) => {
+                    let credential_configuration_id = self
                         .issuer
                         .credential_configuration_id(&CredentialFormat {
                             format: format.clone(),
-                            profile: FormatProfile::W3c {
-                                credential_definition: requested_defn.clone(),
-                            },
+                            profile: profile.clone(),
                         })
                         .map_err(|e| Error::ServerError(format!("issuer issue: {e}")))?;
 
-                    let FormatProfile::W3c {
-                        credential_definition: supported_defn,
-                    } = &supported[config_id].profile
-                    else {
-                        return Err(Error::InvalidRequest(
-                            "unsupported credential_definition".into(),
-                        ));
-                    };
+                    self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
 
-                    // verify requested claims are supported
-                    if let Some(claims) = &requested_defn.credential_subject {
-                        Self::verify_claims(claims, &supported_defn.credential_subject)?;
-                        self.claims = Some(claims.clone());
-                    }
-
-                    // save `credential_configuration_id` for later use
-                    self.auth_dets.insert(config_id.clone(), auth_det.clone());
-                }
-
-                CredentialAuthorization::Format(_) => {
-                    todo!("CredentialAuthorization::Format");
+                    let claims = profile.claims();
+                    self.verify_claims(credential_configuration_id, &claims)?;
+                    self.claims = claims;
                 }
             };
         }
@@ -325,16 +262,43 @@ impl Context {
         Ok(())
     }
 
+    // Verify requested claims exist as supported claims and all mandatory claims
+    // are requested.
     fn verify_claims(
-        requested: &HashMap<String, ClaimEntry>, supported: &Option<HashMap<String, ClaimEntry>>,
+        &self, credential_configuration_id: &str, claims: &Option<HashMap<String, ClaimEntry>>,
     ) -> Result<()> {
-        let Some(supp_claims) = &supported else {
-            return Ok(());
+        // get `CredentialConfiguration` from issuer metadata
+        let Some(config) =
+            self.issuer.credential_configurations_supported.get(credential_configuration_id)
+        else {
+            return Err(Error::InvalidRequest("invalid credential_configuration_id".into()));
         };
 
-        for key in requested.keys() {
-            if !supp_claims.contains_key(key) {
-                return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
+        // check requested claims exist and all mandatory claims have been requested
+        if let Some(requested) = claims {
+            if let Some(supported) = config.profile.claims() {
+                // check requested claims are supported
+                for key in requested.keys() {
+                    if !supported.contains_key(key) {
+                        return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
+                    }
+                }
+
+                // check mandatory claims have been requested
+                for (key, entry) in &supported {
+                    match entry {
+                        ClaimEntry::Claim(claim) => {
+                            if claim.mandatory.unwrap_or_default() && !requested.contains_key(key) {
+                                return Err(Error::InvalidRequest(format!(
+                                    "{key} claim is mandatory"
+                                )));
+                            }
+                        }
+                        ClaimEntry::Nested(_nested) => {
+                            todo!("support nested claims");
+                        }
+                    }
+                }
             }
         }
 
@@ -459,28 +423,27 @@ mod tests {
     extern crate self as vercre_issuer;
 
     #[rstest]
-    #[case("configuration_id", configuration_id)]
-    #[case("credential_definition", credential_definition)]
-    #[case("format", format)]
-    #[case("scope", scope)]
-    async fn request(#[case] name: &str, #[case] f: fn() -> AuthorizationRequest) {
+    #[case::configuration_id("configuration_id", configuration_id)]
+    #[case::format("format", format_w3c)]
+    #[case::scope("scope", scope)]
+    #[case::claims("claims", claims)]
+    #[should_panic(expected = "ok")]
+    #[case::claims_err("claims_err", claims_err)]
+    async fn authorize_tests(#[case] name: &str, #[case] request: fn() -> AuthorizationRequest) {
         vercre_test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();
 
-        // create request
-        let request = f();
-        let response = authorize(provider.clone(), request).await.expect("response is ok");
-
+        // execute request
+        let response = authorize(provider.clone(), request()).await.expect("ok");
         assert_snapshot!("authorize:configuration_id:response", &response, {
             ".code" => "[code]",
         });
 
-        // compare response with saved state
+        // check saved state
         let state =
             StateStore::get::<State>(&provider, &response.code).await.expect("state exists");
-
         assert_snapshot!(format!("authorize:{name}:state"), state, {
             ".expires_at" => "[expires_at]",
             ".stage.details[].authorization_detail.credential_definition.credentialSubject" => insta::sorted_redaction(),
@@ -505,31 +468,7 @@ mod tests {
         })
     }
 
-    fn credential_definition() -> AuthorizationRequest {
-        authorization_request!({
-            "credential_issuer": CREDENTIAL_ISSUER,
-            "response_type": "code",
-            "client_id": CLIENT_ID,
-            "redirect_uri": "http://localhost:3000/callback",
-            "state": "1234",
-            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
-            "code_challenge_method": "S256",
-            "authorization_details": [{
-                "type": "openid_credential",
-                "credential_configuration_id": "EmployeeID_JWT",
-                "credential_definition": {
-                    "credentialSubject": {
-                        "given_name": {},
-                        "family_name": {},
-                    }
-                }
-            }],
-            "subject_id": NORMAL_USER,
-            "wallet_issuer": CREDENTIAL_ISSUER
-        })
-    }
-
-    fn format() -> AuthorizationRequest {
+    fn format_w3c() -> AuthorizationRequest {
         authorization_request!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
@@ -542,15 +481,10 @@ mod tests {
                 "type": "openid_credential",
                 "format": "jwt_vc_json",
                 "credential_definition": {
-                    "@context": [
-                        "https://www.w3.org/2018/credentials/v1",
-                        "https://www.w3.org/2018/credentials/examples/v1"
-                    ],
                     "type": [
                         "VerifiableCredential",
                         "EmployeeIDCredential"
-                    ],
-                    "credentialSubject": {}
+                    ]
                 }
             }],
             "subject_id": NORMAL_USER,
@@ -568,6 +502,60 @@ mod tests {
             "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
             "code_challenge_method": "S256",
             "scope": "EmployeeIDCredential",
+            "subject_id": NORMAL_USER,
+            "wallet_issuer": CREDENTIAL_ISSUER
+        })
+    }
+
+    fn claims() -> AuthorizationRequest {
+        authorization_request!({
+            "credential_issuer": CREDENTIAL_ISSUER,
+            "response_type": "code",
+            "client_id": CLIENT_ID,
+            "redirect_uri": "http://localhost:3000/callback",
+            "state": "1234",
+            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+            "code_challenge_method": "S256",
+            "authorization_details": [{
+                "type": "openid_credential",
+                "credential_configuration_id": "EmployeeID_JWT",
+                "credential_definition": {
+                    "credentialSubject": {
+                        "email": {},
+                        "given_name": {},
+                        "family_name": {},
+                    }
+                }
+            }],
+            "subject_id": NORMAL_USER,
+            "wallet_issuer": CREDENTIAL_ISSUER
+        })
+    }
+
+    fn claims_err() -> AuthorizationRequest {
+        authorization_request!({
+            "credential_issuer": CREDENTIAL_ISSUER,
+            "response_type": "code",
+            "client_id": CLIENT_ID,
+            "redirect_uri": "http://localhost:3000/callback",
+            "state": "1234",
+            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+            "code_challenge_method": "S256",
+            "authorization_details": [{
+                "type": "openid_credential",
+                "format": "jwt_vc_json",
+                "credential_definition": {
+                    "type": [
+                        "VerifiableCredential",
+                        "EmployeeIDCredential"
+                    ],
+                    "credentialSubject": {
+                        "given_name": {},
+                        "family_name": {},
+                        "employee_id": {}
+                    }
+                }
+            }],
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
         })

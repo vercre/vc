@@ -642,6 +642,19 @@ impl Default for FormatProfile {
     }
 }
 
+impl FormatProfile {
+    /// Claims for the format profile.
+    #[must_use]
+    pub fn claims(&self) -> Option<HashMap<String, ClaimEntry>> {
+        match self {
+            Self::W3c {
+                credential_definition,
+            } => credential_definition.credential_subject.clone(),
+            Self::IsoMdl { claims, .. } | Self::SdJwt { claims, .. } => claims.clone(),
+        }
+    }
+}
+
 /// Authorization Response as defined in [RFC6749].
 ///
 /// [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
@@ -1239,34 +1252,33 @@ impl Issuer {
     pub fn credential_configuration_id(&self, cfmt: &CredentialFormat) -> Result<&String> {
         if let Some((id, _)) = match &cfmt.profile {
             FormatProfile::W3c {
-                credential_definition: cfmt_defn,
+                credential_definition,
             } => self.credential_configurations_supported.iter().find(|(_, cfg)| {
                 if let FormatProfile::W3c {
                     credential_definition: cfg_defn,
                 } = &cfg.profile
                 {
-                    cfg.format == cfmt.format && cfg_defn.type_ == cfmt_defn.type_
+                    cfg.format == cfmt.format && cfg_defn.type_ == credential_definition.type_
                 } else {
                     false
                 }
             }),
-            FormatProfile::IsoMdl {
-                doctype: cfmt_doctype,
-                ..
-            } => self.credential_configurations_supported.iter().find(|(_, cfg)| {
-                if let FormatProfile::IsoMdl {
-                    doctype: cfg_doctype, ..
-                } = &cfg.profile
-                {
-                    cfg.format == cfmt.format && cfg_doctype == cfmt_doctype
-                } else {
-                    false
-                }
-            }),
-            FormatProfile::SdJwt { vct: cfmt_vct, .. } => {
+            FormatProfile::IsoMdl { doctype, .. } => {
+                self.credential_configurations_supported.iter().find(|(_, cfg)| {
+                    if let FormatProfile::IsoMdl {
+                        doctype: cfg_doctype, ..
+                    } = &cfg.profile
+                    {
+                        cfg.format == cfmt.format && cfg_doctype == doctype
+                    } else {
+                        false
+                    }
+                })
+            }
+            FormatProfile::SdJwt { vct, .. } => {
                 self.credential_configurations_supported.iter().find(|(_, cfg)| {
                     if let FormatProfile::SdJwt { vct: cfg_vct, .. } = &cfg.profile {
-                        cfg.format == cfmt.format && cfg_vct == cfmt_vct
+                        cfg.format == cfmt.format && cfg_vct == vct
                     } else {
                         false
                     }

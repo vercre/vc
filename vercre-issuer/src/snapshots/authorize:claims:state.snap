@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/authorize.rs
-assertion_line: 462
+assertion_line: 473
 expression: state
 ---
 subject_id: normal_user
@@ -16,6 +16,7 @@ stage:
           credential_configuration_id: EmployeeID_JWT
           credential_definition:
             credentialSubject:
+              email: {}
               family_name: {}
               given_name: {}
         credential_configuration_id: EmployeeID_JWT

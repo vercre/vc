@@ -269,13 +269,10 @@ impl Context {
             .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
 
         // TODO: add support for other formats
-        let jwt = vercre_w3c_vc::proof::create(
-            proof::Format::JwtVcJson,
-            Payload::Vc(vc.clone()),
-            signer,
-        )
-        .await
-        .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
+        let jwt =
+            vercre_w3c_vc::proof::create(proof::Format::JwtVcJson, Payload::Vc(vc.clone()), signer)
+                .await
+                .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
 
         // update token state with new `c_nonce`
         let mut state = self.state.clone();
