@@ -17,7 +17,7 @@ use vercre_did::DidResolver;
 use vercre_status::issuer::Status;
 use vercre_w3c_vc::model::VerifiableCredential;
 
-pub use super::Format;
+pub use super::FormatIdentifier;
 pub use crate::oauth::{GrantType, OAuthClient, OAuthServer};
 pub use crate::provider::{self, Result, StateStore};
 
@@ -589,7 +589,7 @@ impl Default for CredentialAuthorization {
 #[derive(Clone, Default, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredentialFormat {
     /// The format's identifier
-    pub format: Format,
+    pub format: FormatIdentifier,
 
     /// Format profile-specific parameters.
     #[serde(flatten)]
@@ -604,15 +604,14 @@ pub struct CredentialFormat {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum FormatProfile {
-    /// Credentials with format profile of `jwt_vc_json`, `jwt_vc_json-ld`, or
-    /// by Wallets.
-    Definition {
+    /// W3C Verifiiable Credential format.
+    W3c {
         /// The Credential's definition.
         credential_definition: CredentialDefinition,
     },
 
-    /// Credentials complying with [ISO.18013-5]
-    MsoMdoc {
+    /// Credentials complying with [ISO.18013-5] (Mobile Driving License).
+    IsoMdl {
         /// The Credential type, as defined in [ISO.18013-5].
         doctype: String,
 
@@ -637,7 +636,7 @@ pub enum FormatProfile {
 
 impl Default for FormatProfile {
     fn default() -> Self {
-        Self::Definition {
+        Self::W3c {
             credential_definition: CredentialDefinition::default(),
         }
     }
@@ -1239,10 +1238,10 @@ impl Issuer {
     /// TODO: add error handling
     pub fn credential_configuration_id(&self, cfmt: &CredentialFormat) -> Result<&String> {
         if let Some((id, _)) = match &cfmt.profile {
-            FormatProfile::Definition {
+            FormatProfile::W3c {
                 credential_definition: cfmt_defn,
             } => self.credential_configurations_supported.iter().find(|(_, cfg)| {
-                if let FormatProfile::Definition {
+                if let FormatProfile::W3c {
                     credential_definition: cfg_defn,
                 } = &cfg.profile
                 {
@@ -1251,11 +1250,11 @@ impl Issuer {
                     false
                 }
             }),
-            FormatProfile::MsoMdoc {
+            FormatProfile::IsoMdl {
                 doctype: cfmt_doctype,
                 ..
             } => self.credential_configurations_supported.iter().find(|(_, cfg)| {
-                if let FormatProfile::MsoMdoc {
+                if let FormatProfile::IsoMdl {
                     doctype: cfg_doctype, ..
                 } = &cfg.profile
                 {
@@ -1337,7 +1336,7 @@ pub struct CredentialConfiguration {
     /// See OpenID4VCI [Credential Format Profiles] for mopre detail.
     ///
     /// [Credential Format Profiles]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles
-    pub format: Format,
+    pub format: FormatIdentifier,
 
     /// The `scope` value that this Credential Issuer supports for this
     /// credential. The value can be the same accross multiple
@@ -1739,7 +1738,7 @@ mod tests {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: CredentialAuthorization::ConfigurationId {
                     credential_configuration_id: "EmployeeID_JWT".into(),
-                    claims: Some(FormatProfile::Definition {
+                    claims: Some(FormatProfile::W3c {
                         credential_definition: CredentialDefinition {
                             credential_subject: Some(HashMap::from([
                                 (
@@ -1798,8 +1797,8 @@ mod tests {
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: CredentialAuthorization::Format(CredentialFormat {
-                    format: Format::JwtVcJson,
-                    profile: FormatProfile::Definition {
+                    format: FormatIdentifier::JwtVcJson,
+                    profile: FormatProfile::W3c {
                         credential_definition: CredentialDefinition {
                             type_: Some(vec![
                                 "VerifiableCredential".into(),
@@ -1888,8 +1887,8 @@ mod tests {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
             credential: CredentialIssuance::Format(CredentialFormat {
-                format: Format::JwtVcJson,
-                profile: FormatProfile::Definition {
+                format: FormatIdentifier::JwtVcJson,
+                profile: FormatProfile::W3c {
                     credential_definition: CredentialDefinition {
                         type_: Some(vec![
                             "VerifiableCredential".into(),

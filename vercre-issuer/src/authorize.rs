@@ -274,10 +274,10 @@ impl Context {
 
         // get requested claims and supported claims for format profile
         let (req_claims, sup_claims) = match profile {
-            FormatProfile::Definition {
+            FormatProfile::W3c {
                 credential_definition: requested,
             } => {
-                let FormatProfile::Definition {
+                let FormatProfile::W3c {
                     credential_definition: supported,
                 } = &config.profile
                 else {
@@ -285,10 +285,10 @@ impl Context {
                 };
                 (&requested.credential_subject, &supported.credential_subject)
             }
-            FormatProfile::MsoMdoc {
+            FormatProfile::IsoMdl {
                 claims: req_claims, ..
             } => {
-                let FormatProfile::MsoMdoc { claims, .. } = &config.profile else {
+                let FormatProfile::IsoMdl { claims, .. } = &config.profile else {
                     return Err(Error::InvalidRequest("unsupported credential_definition".into()));
                 };
                 (req_claims, claims)
