@@ -237,8 +237,6 @@ impl Context {
     }
 }
 
-// TODO: potentially, reduce claimset to requested claims
-
 fn retain_auth(
     requested: &[AuthorizationDetail], authorized: &[DetailItem],
 ) -> Result<(Vec<Authorized>, HashMap<String, AuthorizedCredential>)> {
@@ -286,31 +284,6 @@ fn retain_auth(
 
     Ok((authorization_details, authorized))
 }
-
-// fn is_match(a: &AuthorizationDetail, b: &AuthorizationDetail) -> bool {
-//     match &a.credential {
-//         CredentialAuthorization::ConfigurationId {
-//             credential_configuration_id: a_id,
-//             ..
-//         } => {
-//             let CredentialAuthorization::ConfigurationId {
-//                 credential_configuration_id: b_id,
-//                 ..
-//             } = &b.credential
-//             else {
-//                 return false;
-//             };
-//             a_id == b_id
-//         }
-
-//         CredentialAuthorization::Format(a_fmt) => {
-//             let CredentialAuthorization::Format(b_fmt) = &b.credential else {
-//                 return false;
-//             };
-//             a_fmt == b_fmt
-//         }
-//     }
-// }
 
 #[cfg(test)]
 mod tests {
