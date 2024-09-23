@@ -12,7 +12,6 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use uuid::Uuid;
 use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, MetadataRequest, TxCode};
 
 use super::{Issuance, Status};
@@ -83,18 +82,11 @@ pub async fn offer(
     };
 
     // Establish a new issuance flow state
-    let mut issuance = Issuance {
-        id: Uuid::new_v4().to_string(),
-        client_id: request.client_id.clone(),
-        status: Status::Offered,
-        ..Default::default()
-    };
+    let mut issuance = Issuance::new(&request.client_id);
+    issuance.status = Status::Offered;
 
     // Set up a credential configuration for each credential offered.
     issuance.offer = request.offer.clone();
-    for id in &request.offer.credential_configuration_ids {
-        issuance.offered.insert(id.into(), CredentialConfiguration::default());
-    }
 
     // Process the offer and establish a metadata request, passing that to the
     // provider to use.
@@ -111,19 +103,8 @@ pub async fn offer(
             return Err(e);
         }
     };
-
     // Update the flow state with issuer's metadata.
-    let creds_supported = &md_response.credential_issuer.credential_configurations_supported;
-
-    for (cfg_id, cred_cfg) in &mut issuance.offered {
-        // find supported credential in metadata and copy to state object.
-        let Some(found) = creds_supported.get(cfg_id) else {
-            let e = anyhow!("unsupported credential type in offer");
-            tracing::error!(target: "Endpoint::offer", ?e);
-            return Err(e);
-        };
-        *cred_cfg = found.clone();
-    }
+    issuance.issuer = md_response.credential_issuer.clone();    
     issuance.status = Status::Ready;
 
     // Stash the state for the next step.
@@ -134,10 +115,25 @@ pub async fn offer(
         return Err(e);
     };
 
+    // Trim the supported credentials to just those on offer so that the holder
+    // can decide which to accept.
+    let mut offered = HashMap::<String, CredentialConfiguration>::new();
+    let creds_supported = &md_response.credential_issuer.credential_configurations_supported;
+    for cfg_id in &request.offer.credential_configuration_ids {
+        // find supported credential in metadata and copy to state object.
+        let Some(found) = creds_supported.get(cfg_id) else {
+            let e = anyhow!("unsupported credential type in offer");
+            tracing::error!(target: "Endpoint::offer", ?e);
+            return Err(e);
+        };
+        offered.insert(cfg_id.clone(), found.clone());
+    }
+
+
     let res = OfferResponse {
         issuance_id: issuance.id,
         issuer: request.offer.credential_issuer.clone(),
-        offered: issuance.offered.clone(),
+        offered,
         tx_code: pre_authorized_code.tx_code.clone(),
     };
 

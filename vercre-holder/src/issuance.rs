@@ -10,12 +10,12 @@ pub mod offer;
 pub mod pin;
 pub mod token;
 
-use std::collections::HashMap;
 use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use vercre_openid::issuer::{
-    AuthorizationDetail, CredentialConfiguration, CredentialOffer, TokenResponse,
+    AuthorizationDetail, CredentialOffer, Issuer, TokenResponse
 };
 
 /// `Issuance` represents app state across the steps of the issuance flow.
@@ -35,9 +35,8 @@ pub struct Issuance {
     /// The `CredentialOffer` received from the issuer.
     pub offer: CredentialOffer,
 
-    /// A list of `CredentialConfiguration`s, one for each credential offered,
-    /// keyed by the credential configuration ID.
-    pub offered: HashMap<String, CredentialConfiguration>,
+    /// Cached issuer metadata.
+    pub issuer: Issuer,
 
     /// The list of credentials and claims the wallet wants to obtain from those
     /// offered.
@@ -52,6 +51,19 @@ pub struct Issuance {
     pub token: TokenResponse,
 }
 
+/// Helper functions for using issuance state.
+impl Issuance {
+    /// Creates a new issuance flow.
+    #[must_use]
+    pub fn new(client_id: &str) -> Self {
+        Self {
+            id: Uuid::new_v4().to_string(),
+            client_id: client_id.to_string(),
+            ..Default::default()
+        }
+    }
+}
+
 /// Issuance Status values.
 ///
 /// TODO: Revisit and replace in alignment with Notification endpoint
@@ -62,7 +74,10 @@ pub enum Status {
     #[default]
     Inactive,
 
-    /// A new credential offer has been received.
+    /// Authorization has been requested.
+    AuthRequested,
+
+    /// A new credential offer has been received (issuer-initiated only).
     Offered,
 
     /// Metadata has been retrieved and the offer is ready to be viewed.

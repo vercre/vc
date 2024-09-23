@@ -73,7 +73,7 @@ pub async fn credentials(
                 return Err(e);
             }
         };
-        let Some(cfg) = issuance.offered.get(cfg_id) else {
+        let Some(cfg) = issuance.issuer.credential_configurations_supported.get(cfg_id) else {
             let e = anyhow!("authorized credential configuration not found in offer");
             tracing::error!(target: "Endpoint::credentials", ?e);
             return Err(e);

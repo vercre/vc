@@ -93,13 +93,14 @@ pub async fn accept(
         }
     };
 
-    issuance.accepted = match narrow_scope(&issuance.offered, &request.accept) {
-        Ok(accepted) => accepted,
-        Err(e) => {
-            tracing::error!(target: "Endpoint::accept", ?e);
-            return Err(e);
-        }
-    };
+    issuance.accepted =
+        match narrow_scope(&issuance.issuer.credential_configurations_supported, &request.accept) {
+            Ok(accepted) => accepted,
+            Err(e) => {
+                tracing::error!(target: "Endpoint::accept", ?e);
+                return Err(e);
+            }
+        };
 
     if pre_auth_code.tx_code.is_some() {
         issuance.status = Status::PendingPin;

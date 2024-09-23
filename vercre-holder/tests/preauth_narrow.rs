@@ -2,11 +2,12 @@
 
 mod provider;
 
+use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
-use vercre_holder::provider::CredentialStorer;
-use vercre_holder::{AcceptRequest, CredentialsRequest, OfferRequest, PinRequest};
+// use vercre_holder::provider::CredentialStorer;
+use vercre_holder::{AcceptRequest, AuthorizationSpec, ClaimEntry, OfferRequest};
 use vercre_issuer::{OfferType, SendType};
 use vercre_macros::create_offer_request;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -17,16 +18,19 @@ static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provi
 static HOLDER_PROVIDER: LazyLock<holder::Provider> =
     LazyLock::new(|| holder::Provider::new(Some(ISSUER_PROVIDER.clone()), None));
 
+// Test end-to-end pre-authorized issuance flow, with acceptance of subset of
+// credential configurations on offer, a subset of possible credential
+// identifiers, and a subset of claims.
 #[tokio::test]
-async fn e2e_pre_auth() {
+async fn preauth_narrow() {
     // Use the issuance service endpoint to create a sample offer so we can get a
     // valid pre-authorized code.
     let request = create_offer_request!({
         "credential_issuer": CREDENTIAL_ISSUER,
-        "credential_configuration_ids": ["EmployeeID_JWT"],
+        "credential_configuration_ids": ["EmployeeID_JWT", "Developer_JWT"],
         "subject_id": NORMAL_USER,
         "pre_authorize": true,
-        "tx_code_required": true,
+        "tx_code_required": false, // no user PIN required
         "send_type": SendType::ByVal,
     });
 
@@ -47,52 +51,33 @@ async fn e2e_pre_auth() {
         .await
         .expect("should process offer");
 
-    assert_snapshot!("pre_auth_created", issuance, {
+    assert_snapshot!("created", issuance, {
         ".issuance_id" => "[issuance_id]",
+        ".offered" => insta::sorted_redaction(),
         ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
+        ".offered.Developer_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
     });
 
-    // Accept all credentials on offer
+    // Accept only the Developer credential on offer, and only the proficiency
+    // claim.
     let accept_req = AcceptRequest {
         issuance_id: issuance.issuance_id.clone(),
-        accept: None,
+        accept: Some(vec![AuthorizationSpec {
+            credential_configuration_id: "Developer_JWT".into(),
+            claims: Some(HashMap::from([("proficiency".to_string(), ClaimEntry::default())])),
+        }]),
     };
     vercre_holder::accept(HOLDER_PROVIDER.clone(), &accept_req).await.expect("should accept offer");
 
-    // Enter PIN
-    let pin_req = PinRequest {
-        issuance_id: issuance.issuance_id.clone(),
-        pin: offer_resp.tx_code.expect("should have user code"),
-    };
-    vercre_holder::pin(HOLDER_PROVIDER.clone(), &pin_req).await.expect("should apply pin");
-
     // Get available credential identifiers.
-    vercre_holder::token(HOLDER_PROVIDER.clone(), &issuance.issuance_id)
+    let token_response = vercre_holder::token(HOLDER_PROVIDER.clone(), &issuance.issuance_id)
         .await
         .expect("should get token");
 
-    // Get (and store) credentials. Accept all on offer.
-    let cred_req = CredentialsRequest {
-        issuance_id: issuance.issuance_id.clone(),
-        credential_identifiers: None,
-    };
-    vercre_holder::credentials(HOLDER_PROVIDER.clone(), &cred_req)
-        .await
-        .expect("should get credentials");
-
-    let credentials = CredentialStorer::find(&HOLDER_PROVIDER.clone(), None)
-        .await
-        .expect("should retrieve all credentials");
-
-    assert_eq!(credentials.len(), 1);
-
-    assert_snapshot!("pre_auth_credentials", credentials, {
-        "[0].vc.issuanceDate" => "[issuanceDate]",
-        "[0].vc" => insta::sorted_redaction(),
-        "[0].vc.credentialSubject" => insta::sorted_redaction(),
-        "[0].metadata" => insta::sorted_redaction(),
-        "[0].metadata.credential_definition" => insta::sorted_redaction(),
-        "[0].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
-        "[0].issued" => "[issued]",
+    // Check the token response has only the Developer credential and only the
+    // proficiency claim.
+    assert_snapshot!("token", token_response, {
+        ".issuance_id" => "[issuance_id]",
+        ".authorized" => insta::sorted_redaction(),
     });
 }

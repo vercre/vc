@@ -44,21 +44,21 @@ pub mod issuance;
 pub mod presentation;
 pub mod provider;
 
-pub use issuance::accept::{accept, AcceptRequest};
+pub use issuance::accept::{accept, AcceptRequest, AuthorizationSpec};
 pub use issuance::cancel::cancel;
 pub use issuance::credential::{credentials, CredentialsRequest};
 pub use issuance::offer::{offer, OfferRequest, OfferResponse};
 pub use issuance::pin::{pin, PinRequest};
-pub use issuance::token::{token, AvailableIdentifiers};
+pub use issuance::token::{token, AuthorizedCredentials};
 pub use presentation::authorize::authorize;
 pub use presentation::present::present;
 pub use presentation::request::request;
 pub use vercre_core::Quota;
 pub use vercre_dif_exch::Constraints;
 pub use vercre_openid::issuer::{
-    CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse, GrantType,
-    Issuer, MetadataRequest, MetadataResponse, Proof, ProofClaims, TokenRequest, TokenResponse,
-    TxCode,
+    ClaimEntry, CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse,
+    GrantType, Issuer, MetadataRequest, MetadataResponse, Proof, ProofClaims, TokenRequest,
+    TokenResponse, TxCode,
 };
 pub use vercre_openid::verifier::{
     RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
