@@ -1,10 +1,9 @@
 ---
-source: vercre-holder/tests/issuance.rs
-assertion_line: 49
+source: vercre-holder/tests/preauth.rs
+assertion_line: 50
 expression: issuance
 ---
 issuance_id: "[issuance_id]"
-status: Ready
 issuer: "http://vercre.io"
 offered:
   EmployeeID_JWT:

@@ -44,7 +44,7 @@ export const Issuance = (props: IssuanceProps) => {
         if (issuance.status === "Accepted") {
             const requestEndpoint = async () => {
                 try {
-                    await invoke("get_credentials");
+                    await invoke("credentials");
                 } catch {
                     setMode("error");
                 }

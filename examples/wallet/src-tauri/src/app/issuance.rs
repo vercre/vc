@@ -4,7 +4,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use vercre_holder::{
-    CredentialConfiguration, CredentialOffer, IssuanceStatus, OfferRequest, PinRequest, TxCode,
+    AcceptRequest, CredentialConfiguration, CredentialOffer, CredentialsRequest, OfferRequest,
+    PinRequest, TxCode,
 };
 
 use super::{AppState, SubApp};
@@ -18,8 +19,6 @@ pub struct IssuanceState {
     /// Issuance flow identifier to pass to the vercre-holder crate for state
     /// management.
     pub id: String,
-    /// Status of the issuance flow.
-    pub status: IssuanceStatus,
     /// Issuer of the credential(s)
     pub issuer: String,
     /// Description of the credential(s) offered, keyed by credential
@@ -43,7 +42,6 @@ impl AppState {
         let res = vercre_holder::offer(provider, &request).await?;
         self.issuance = IssuanceState {
             id: res.issuance_id,
-            status: res.status,
             issuer: res.issuer,
             offered: res.offered,
             tx_code: res.tx_code,
@@ -54,39 +52,39 @@ impl AppState {
     }
 
     /// Accept a credential issuance offer.
-    pub async fn accept(&mut self, provider: Provider) -> anyhow::Result<()> {
-        let status = vercre_holder::accept(provider, self.issuance.id.clone()).await?;
-        self.issuance.status = status;
+    pub async fn accept(&self, provider: Provider) -> anyhow::Result<()> {
+        // Just accept whatever is offered. In a real app, the user would need
+        // to select which credentials to accept.
+        let req = AcceptRequest {
+            issuance_id: self.issuance.id.clone(),
+            accept: None, // implies accept all
+        };
+        vercre_holder::accept(provider, &req).await?;
         Ok(())
     }
 
     /// Set a PIN
     pub async fn pin(&mut self, provider: Provider, pin: &str) -> anyhow::Result<()> {
         let request = PinRequest {
-            id: self.issuance.id.clone(),
+            issuance_id: self.issuance.id.clone(),
             pin: pin.into(),
         };
-        let status = vercre_holder::pin(provider, &request).await?;
-        self.issuance.status = status;
+        vercre_holder::pin(provider, &request).await?;
         self.issuance.pin = Some(pin.into());
         Ok(())
     }
 
     /// Get the credentials for the accepted issuance offer.
-    pub async fn get_credentials(&mut self, provider: Provider) -> anyhow::Result<()> {
-        log::info!("Getting credentials for issuance {}", self.issuance.id);
+    pub async fn credentials(&self, provider: Provider) -> anyhow::Result<()> {
+        log::info!("Getting an access token for issuance {}", self.issuance.id);
+        vercre_holder::token(provider.clone(), &self.issuance.id).await?;
 
-        match vercre_holder::get_credentials(provider, self.issuance.id.clone()).await {
-            Ok(status) => {
-                log::info!("Received status: {:?}", status);
-                self.issuance.status = status;
-                self.sub_app = SubApp::Credential;
-                Ok(())
-            }
-            Err(e) => {
-                log::error!("Error getting credentials: {:?}", e);
-                Err(e)
-            }
-        }
+        log::info!("Getting credentials for issuance {}", self.issuance.id);
+        let request = CredentialsRequest {
+            issuance_id: self.issuance.id.clone(),
+            credential_identifiers: None,
+        };
+        vercre_holder::credentials(provider, &request).await?;
+        Ok(())
     }
 }

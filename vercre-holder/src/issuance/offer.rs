@@ -9,13 +9,13 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 use anyhow::anyhow;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use uuid::Uuid;
 use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, MetadataRequest, TxCode};
 
 use super::{Issuance, Status};
-use crate::provider::{HolderProvider, Issuer};
+use crate::provider::{HolderProvider, Issuer, StateStore};
 
 /// `OfferRequest` is the request to the `offer` endpoint to initiate an
 /// issuance flow.
@@ -32,16 +32,15 @@ pub struct OfferRequest {
     pub offer: CredentialOffer,
 }
 
-/// `OfferResponse` is the response from the `offer` endpoint. The agent
-/// application can use this to present the offer to the holder for acceptance.
+/// `OfferResponse` is the response from the `offer` endpoint.
+///
+/// The agent application can use this to present the offer to the holder for
+/// acceptance.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[allow(clippy::module_name_repetitions)]
 pub struct OfferResponse {
     /// The issuance flow identifier.
     pub issuance_id: String,
-
-    /// The status of the issuance flow.
-    pub status: Status,
 
     /// The identifer of the credential issuer.
     pub issuer: String,
@@ -54,7 +53,12 @@ pub struct OfferResponse {
     pub tx_code: Option<TxCode>,
 }
 
-/// Initiates the issuance flow triggered by a new credential offer.
+/// Initiates the issuance flow triggered by a new credential offer
+/// ("issuer-initiated issuance").
+///
+/// Returns a set of credential configurations that allow a display to the
+/// holder for acceptance or rejection of some or all of the offered
+/// credentials.
 #[instrument(level = "debug", skip(provider))]
 pub async fn offer(
     provider: impl HolderProvider, request: &OfferRequest,
@@ -78,18 +82,11 @@ pub async fn offer(
     };
 
     // Establish a new issuance flow state
-    let mut issuance = Issuance {
-        id: Uuid::new_v4().to_string(),
-        client_id: request.client_id.clone(),
-        status: Status::Offered,
-        ..Default::default()
-    };
+    let mut issuance = Issuance::new(&request.client_id);
+    issuance.status = Status::Offered;
 
-    // Set up a credential configuration for each credential offered
+    // Set up a credential configuration for each credential offered.
     issuance.offer = request.offer.clone();
-    for id in &request.offer.credential_configuration_ids {
-        issuance.offered.insert(id.into(), CredentialConfiguration::default());
-    }
 
     // Process the offer and establish a metadata request, passing that to the
     // provider to use.
@@ -106,32 +103,37 @@ pub async fn offer(
             return Err(e);
         }
     };
-
     // Update the flow state with issuer's metadata.
-    let creds_supported = &md_response.credential_issuer.credential_configurations_supported;
+    issuance.issuer = md_response.credential_issuer.clone();    
+    issuance.status = Status::Ready;
 
-    for (cfg_id, cred_cfg) in &mut issuance.offered {
+    // Stash the state for the next step.
+    if let Err(e) =
+        StateStore::put(&provider, &issuance.id, &issuance, DateTime::<Utc>::MAX_UTC).await
+    {
+        tracing::error!(target: "Endpoint::offer", ?e);
+        return Err(e);
+    };
+
+    // Trim the supported credentials to just those on offer so that the holder
+    // can decide which to accept.
+    let mut offered = HashMap::<String, CredentialConfiguration>::new();
+    let creds_supported = &md_response.credential_issuer.credential_configurations_supported;
+    for cfg_id in &request.offer.credential_configuration_ids {
         // find supported credential in metadata and copy to state object.
         let Some(found) = creds_supported.get(cfg_id) else {
             let e = anyhow!("unsupported credential type in offer");
             tracing::error!(target: "Endpoint::offer", ?e);
             return Err(e);
         };
-        *cred_cfg = found.clone();
+        offered.insert(cfg_id.clone(), found.clone());
     }
-    issuance.status = Status::Ready;
 
-    // Stash the state for the next step.
-    if let Err(e) = super::put_issuance(provider, &issuance).await {
-        tracing::error!(target: "Endpoint::offer", ?e);
-        return Err(e);
-    };
 
     let res = OfferResponse {
         issuance_id: issuance.id,
-        status: issuance.status,
         issuer: request.offer.credential_issuer.clone(),
-        offered: issuance.offered.clone(),
+        offered,
         tx_code: pre_authorized_code.tx_code.clone(),
     };
 

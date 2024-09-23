@@ -6,8 +6,9 @@ use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::provider::CredentialStorer;
-use vercre_holder::{IssuanceStatus, OfferRequest, PinRequest};
-use vercre_issuer::{CreateOfferRequest, OfferType, SendType};
+use vercre_holder::{AcceptRequest, CredentialsRequest, OfferRequest, PinRequest};
+use vercre_issuer::{OfferType, SendType};
+use vercre_macros::create_offer_request;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
 use crate::provider as holder;
@@ -16,20 +17,22 @@ static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provi
 static HOLDER_PROVIDER: LazyLock<holder::Provider> =
     LazyLock::new(|| holder::Provider::new(Some(ISSUER_PROVIDER.clone()), None));
 
-static OFFER_REQUEST: LazyLock<CreateOfferRequest> = LazyLock::new(|| CreateOfferRequest {
-    credential_issuer: CREDENTIAL_ISSUER.into(),
-    credential_configuration_ids: vec!["EmployeeID_JWT".into()],
-    subject_id: Some(NORMAL_USER.into()),
-    pre_authorize: true,
-    tx_code_required: true,
-    send_type: SendType::ByVal,
-});
-
+// Test end-to-end pre-authorized issuance flow, with acceptance of all
+// credentials on offer.
 #[tokio::test]
-async fn e2e_issuance() {
+async fn preauth() {
     // Use the issuance service endpoint to create a sample offer so we can get a
-    // valid pre-auhorized code.
-    let offer_resp = vercre_issuer::create_offer(ISSUER_PROVIDER.clone(), OFFER_REQUEST.to_owned())
+    // valid pre-authorized code.
+    let request = create_offer_request!({
+        "credential_issuer": CREDENTIAL_ISSUER,
+        "credential_configuration_ids": ["EmployeeID_JWT"],
+        "subject_id": NORMAL_USER,
+        "pre_authorize": true,
+        "tx_code_required": true,
+        "send_type": SendType::ByVal,
+    });
+
+    let offer_resp = vercre_issuer::create_offer(ISSUER_PROVIDER.clone(), request)
         .await
         .expect("should get offer");
 
@@ -46,30 +49,36 @@ async fn e2e_issuance() {
         .await
         .expect("should process offer");
 
-    assert_snapshot!("issuance_created", issuance, {
+    assert_snapshot!("created", issuance, {
         ".issuance_id" => "[issuance_id]",
         ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
     });
 
-    // Accept offer
-    let status = vercre_holder::accept(HOLDER_PROVIDER.clone(), issuance.issuance_id.clone())
-        .await
-        .expect("should accept offer");
-
-    assert_eq!(status, IssuanceStatus::PendingPin);
+    // Accept all credentials on offer
+    let accept_req = AcceptRequest {
+        issuance_id: issuance.issuance_id.clone(),
+        accept: None,
+    };
+    vercre_holder::accept(HOLDER_PROVIDER.clone(), &accept_req).await.expect("should accept offer");
 
     // Enter PIN
     let pin_req = PinRequest {
-        id: issuance.issuance_id.clone(),
+        issuance_id: issuance.issuance_id.clone(),
         pin: offer_resp.tx_code.expect("should have user code"),
     };
-    let status =
-        vercre_holder::pin(HOLDER_PROVIDER.clone(), &pin_req).await.expect("should apply pin");
+    vercre_holder::pin(HOLDER_PROVIDER.clone(), &pin_req).await.expect("should apply pin");
 
-    assert_eq!(status, IssuanceStatus::Accepted);
+    // Get available credential identifiers.
+    vercre_holder::token(HOLDER_PROVIDER.clone(), &issuance.issuance_id)
+        .await
+        .expect("should get token");
 
-    // Get (and store) credentials
-    vercre_holder::get_credentials(HOLDER_PROVIDER.clone(), issuance.issuance_id.clone())
+    // Get (and store) credentials. Accept all on offer.
+    let cred_req = CredentialsRequest {
+        issuance_id: issuance.issuance_id.clone(),
+        credential_identifiers: None,
+    };
+    vercre_holder::credentials(HOLDER_PROVIDER.clone(), &cred_req)
         .await
         .expect("should get credentials");
 

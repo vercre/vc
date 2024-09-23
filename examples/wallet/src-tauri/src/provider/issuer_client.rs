@@ -12,7 +12,7 @@ use super::Provider;
 impl Issuer for Provider {
     /// Get issuer metadata.
     async fn get_metadata(
-        &self, _flow_id: &str, req: MetadataRequest,
+        &self, _issuance_id: &str, req: MetadataRequest,
     ) -> anyhow::Result<MetadataResponse> {
         let client = reqwest::Client::new();
         let url = format!("{}/.well-known/openid-credential-issuer", req.credential_issuer);
@@ -28,7 +28,9 @@ impl Issuer for Provider {
     }
 
     /// Get an access token.
-    async fn get_token(&self, _flow_id: &str, req: TokenRequest) -> anyhow::Result<TokenResponse> {
+    async fn get_token(
+        &self, _issuance_id: &str, req: TokenRequest,
+    ) -> anyhow::Result<TokenResponse> {
         let client = reqwest::Client::new();
         let url = format!("{}/token", req.credential_issuer);
         let result = client
@@ -44,7 +46,7 @@ impl Issuer for Provider {
 
     /// Get a credential.
     async fn get_credential(
-        &self, _flow_id: &str, req: CredentialRequest,
+        &self, _issuance_id: &str, req: CredentialRequest,
     ) -> anyhow::Result<CredentialResponse> {
         let client = reqwest::Client::new();
         let url = format!("{}/credential", req.credential_issuer);
@@ -61,7 +63,7 @@ impl Issuer for Provider {
     }
 
     /// Get a base64 encoded form of the credential logo.
-    async fn get_logo(&self, _flow_id: &str, logo_url: &str) -> anyhow::Result<Logo> {
+    async fn get_logo(&self, _issuance_id: &str, logo_url: &str) -> anyhow::Result<Logo> {
         let client = reqwest::Client::new();
         let result = client.get(logo_url).header(ACCEPT, "image/*").send().await?;
         let headers = result.headers().clone();
