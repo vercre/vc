@@ -130,7 +130,7 @@ pub use vercre_openid::issuer::{
     CreateOfferResponse, CredentialAuthorization, CredentialConfiguration, CredentialDefinition,
     CredentialFormat, CredentialIssuance, CredentialOffer, CredentialOfferRequest,
     CredentialOfferResponse, CredentialRequest, CredentialResponse, CredentialResponseType,
-    DeferredCredentialRequest, DeferredCredentialResponse, Format, FormatProfile, Grants,
+    DeferredCredentialRequest, DeferredCredentialResponse, FormatIdentifier, FormatProfile, Grants,
     MetadataRequest, MetadataResponse, OfferType, PreAuthorizedCodeGrant, Proof, ProofClaims,
     RegistrationRequest, RegistrationResponse, SendType, SingleProof, TokenGrantType, TokenRequest,
     TokenResponse, TxCode,

@@ -248,7 +248,7 @@ impl Context {
 
                     // verify requested claims are supported
                     if let Some(profile) = claims {
-                        let FormatProfile::Definition {
+                        let FormatProfile::W3c {
                             credential_definition,
                         } = profile
                         else {
@@ -262,7 +262,7 @@ impl Context {
 
                         // TODO: support other FormatProfiles
                         let config = &supported[credential_configuration_id];
-                        let FormatProfile::Definition {
+                        let FormatProfile::W3c {
                             credential_definition,
                         } = &config.profile
                         else {
@@ -282,7 +282,7 @@ impl Context {
                 CredentialAuthorization::Format(CredentialFormat {
                     format,
                     profile:
-                        FormatProfile::Definition {
+                        FormatProfile::W3c {
                             credential_definition: requested_defn,
                         },
                 }) => {
@@ -291,13 +291,13 @@ impl Context {
                         .issuer
                         .credential_configuration_id(&CredentialFormat {
                             format: format.clone(),
-                            profile: FormatProfile::Definition {
+                            profile: FormatProfile::W3c {
                                 credential_definition: requested_defn.clone(),
                             },
                         })
                         .map_err(|e| Error::ServerError(format!("issuer issue: {e}")))?;
 
-                    let FormatProfile::Definition {
+                    let FormatProfile::W3c {
                         credential_definition: supported_defn,
                     } = &supported[config_id].profile
                     else {

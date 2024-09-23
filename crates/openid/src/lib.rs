@@ -32,7 +32,7 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 ///
 /// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq, Hash)]
-pub enum Format {
+pub enum FormatIdentifier {
     /// A W3C Verifiable Credential.
     ///
     /// When this format is specified, Credential Offer, Authorization Details,
@@ -72,7 +72,7 @@ pub enum Format {
     ///
     /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
     #[serde(rename = "mso_mdoc")]
-    MsoMdoc,
+    IsoMdl,
 
     /// IETF SD-JWT VC.
     ///
@@ -89,13 +89,13 @@ pub enum Format {
     JwtVpJson,
 }
 
-impl Display for Format {
+impl Display for FormatIdentifier {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::JwtVcJson => write!(f, "jwt_vc_json"),
             Self::LdpVc => write!(f, "ldp_vc"),
             Self::JwtVcJsonLd => write!(f, "jwt_vc_json-ld"),
-            Self::MsoMdoc => write!(f, "mso_mdoc"),
+            Self::IsoMdl => write!(f, "mso_mdoc"),
             Self::VcSdJwt => write!(f, "vc+sd-jwt"),
             Self::JwtVpJson => write!(f, "jwt_vp_json"),
         }

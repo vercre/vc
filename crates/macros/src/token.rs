@@ -134,7 +134,7 @@ fn credential_configuration(detail: &HashMap<String, Value>) -> Result<TokenStre
         // credential_definition is optional
         let claims = if let Some(defn_value) = detail.get("credential_definition") {
             let credential_definition = configuration_definition(defn_value)?;
-            quote! {Some(#path::FormatProfile::Definition{
+            quote! {Some(#path::FormatProfile::W3c{
                 credential_definition:#credential_definition
             })}
         } else {
@@ -158,8 +158,8 @@ fn credential_configuration(detail: &HashMap<String, Value>) -> Result<TokenStre
             Some("jwt_vc_json") => Ok(quote! {
                 #path::CredentialAuthorization::Format (
                     #path::CredentialFormat {
-                        format: #path::Format::JwtVcJson,
-                        profile: #path::FormatProfile::Definition{
+                        format: #path::FormatIdentifier::JwtVcJson,
+                        profile: #path::FormatProfile::W3c{
                             credential_definition: #credential_definition
                         },
                     },
