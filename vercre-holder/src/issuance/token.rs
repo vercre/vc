@@ -46,8 +46,24 @@ pub async fn token(
             return Err(e);
         }
     };
-    if issuance.status != Status::Accepted {
-        let e = anyhow!("invalid issuance state");
+
+    // Can't make a token request for an unauthorized issuance. The flow must
+    // be pre-authorized and accepted or an authorization must have occurred.
+    //
+    // TODO: The wallet is supposed to handle the case where there are no
+    // grants by using issuer metadata to determine the required grants. However,
+    // the metata specification does not currently include this information. Until
+    // it does, we return an error here.
+    let Some(grants) = issuance.offer.grants.clone() else {
+        let e = anyhow!("no grants in offer is not supported");
+        tracing::error!(target: "Endpoint::token", ?e);
+        return Err(e);
+    };
+    if !(issuance.status == Status::Authorized
+        || (grants.pre_authorized_code.is_some() && issuance.status == Status::Accepted))
+    {
+        let e =
+            anyhow!("invalid issuance state. Must be pre-authorized and accepted or authorized");
         tracing::error!(target: "Endpoint::token", ?e);
         return Err(e);
     }

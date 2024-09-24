@@ -75,7 +75,7 @@ pub async fn offer(
     // the metata specification does not currently include this information. Until
     // it does, we return an error here.
     let Some(grants) = request.offer.grants.clone() else {
-        let e = anyhow!("no grants");
+        let e = anyhow!("no grants in offer is not supported");
         tracing::error!(target: "Endpoint::offer", ?e);
         return Err(e);
     };

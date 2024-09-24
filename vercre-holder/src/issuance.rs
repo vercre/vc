@@ -62,18 +62,18 @@ impl Issuance {
     }
 }
 
-/// Issuance Status values.
+/// Issuance flow status values.
 ///
-/// TODO: Revisit and replace in alignment with Notification endpoint
-/// implementation.
+/// Used to verify the state of a flow before executing the logic for an
+/// endpoint.
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub enum Status {
     /// No credential offer is being processed.
     #[default]
     Inactive,
 
-    /// Authorization has been requested.
-    AuthRequested,
+    /// Authorization has been achieved.
+    Authorized,
 
     /// A new credential offer has been received (issuer-initiated only).
     Offered,
