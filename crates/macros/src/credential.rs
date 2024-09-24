@@ -50,10 +50,9 @@ fn credential_issuance(input: &mut Json) -> Result<TokenStream> {
         match format.as_str() {
             Some("jwt_vc_json") => Ok(quote! {
                 #path::CredentialIssuance::Format(#path::CredentialFormat {
-                    format: #path::FormatIdentifier::JwtVcJson,
-                    profile: #path::FormatProfile::W3c {
+                    format: #path::FormatIdentifier::JwtVcJson(#path::ProfileW3c {
                         credential_definition: #credential_definition,
-                    },
+                    }),
                 })
             }),
             _ => return Err(Error::new(span, "unsupported format")),

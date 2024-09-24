@@ -1,15 +1,11 @@
 ---
-source: vercre-issuer/src/metadata.rs
-assertion_line: 75
-expression: response
+source: vercre-holder/tests/preauth_narrow.rs
+assertion_line: 54
+expression: issuance
 ---
-credential_issuer: "http://vercre.io"
-credential_endpoint: "http://vercre.io/credential"
-deferred_credential_endpoint: "http://vercre.io/deferred"
-display:
-  name: Vercre
-  locale: en-NZ
-credential_configurations_supported:
+issuance_id: "[issuance_id]"
+issuer: "http://vercre.io"
+offered:
   Developer_JWT:
     format: jwt_vc_json
     credential_definition:
@@ -108,3 +104,4 @@ credential_configurations_supported:
           uri: "https://vercre.github.io/assets/vercre-background.png"
           alt_text: Vercre Background
         text_color: "#ffffff"
+tx_code: ~

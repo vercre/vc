@@ -71,17 +71,17 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            start,           // called by the shell on load.
-            reset,           // called when the shell application has finished it's initialisation.
-            select,          // select a credential to view the detail.
-            delete,          // delete a credential.
-            offer,           // submit a credential issuance offer directly from shell input.
-            accept,          // accept a credential issuance offer.
-            pin,             // set a user PIN on the token request.
-            get_credentials, // get the credentials for the accepted issuance offer.
-            request,         // process a presentation request.
-            authorize,       // authorize the presentation request.
-            present,         // present the authorized presentation request.
+            start,       // called by the shell on load.
+            reset,       // called when the shell application has finished it's initialisation.
+            select,      // select a credential to view the detail.
+            delete,      // delete a credential.
+            offer,       // submit a credential issuance offer directly from shell input.
+            accept,      // accept a credential issuance offer.
+            pin,         // set a user PIN on the token request.
+            credentials, // get the credentials for the accepted issuance offer.
+            request,     // process a presentation request.
+            authorize,   // authorize the presentation request.
+            present,     // present the authorized presentation request.
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -171,7 +171,7 @@ async fn offer(
 #[tauri::command]
 async fn accept(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("accept invoked");
-    let mut app_state = state.app_state.lock().await;
+    let app_state = state.app_state.lock().await;
     let provider = Provider::new(&app, state.state_store.clone());
     app_state.accept(provider).await?;
     let view: ViewModel = app_state.clone().into();
@@ -197,16 +197,14 @@ async fn pin(
     Ok(())
 }
 
-/// The `get_credentials` command gets the credentials for the accepted issuance
-/// offer using the `get_credentials` endpoint in the `vercre-holder` crate.
+/// The `credentials` command gets the credentials for the accepted issuance
+/// offer using the `credentials` endpoint in the `vercre-holder` crate.
 #[tauri::command]
-async fn get_credentials(
-    state: State<'_, StateModel>, app: AppHandle,
-) -> Result<(), error::AppError> {
+async fn credentials(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("get_credentials invoked");
     let mut app_state = state.app_state.lock().await;
     let provider = Provider::new(&app, state.state_store.clone());
-    app_state.get_credentials(provider.clone()).await?;
+    app_state.credentials(provider.clone()).await?;
     app_state.reset(provider.clone()).await?;
     let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");

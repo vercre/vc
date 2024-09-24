@@ -17,8 +17,8 @@ use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
     CredentialIssuance, CredentialRequest, CredentialResponse, CredentialResponseType, Dataset,
-    FormatProfile, Issuer, Metadata, MultipleProofs, Proof, ProofClaims, Provider, SingleProof,
-    StateStore, Subject,
+    FormatIdentifier, Issuer, Metadata, MultipleProofs, ProfileW3c, Proof, ProofClaims, Provider,
+    SingleProof, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_status::issuer::Status;
@@ -222,9 +222,9 @@ impl Context {
                 Error::InvalidCredentialRequest("unsupported credential requested".into())
             })?;
 
-        let FormatProfile::W3c {
+        let FormatIdentifier::JwtVcJson(ProfileW3c {
             credential_definition,
-        } = &config.profile
+        }) = &config.format
         else {
             return Err(Error::InvalidRequest("unsupported credential_definition".into()));
         };
@@ -372,18 +372,19 @@ impl Context {
 
         // narrow of claimset from format/credential_definition
         if let CredentialIssuance::Format(f) = &request.credential {
-            let claim_ids = match &f.profile {
-                FormatProfile::W3c {
-                    credential_definition,
-                } => credential_definition
+            let claim_ids = match &f.format {
+                FormatIdentifier::JwtVcJson(w3c)
+                | FormatIdentifier::JwtVcJsonLd(w3c)
+                | FormatIdentifier::LdpVc(w3c) => w3c
+                    .credential_definition
                     .credential_subject
                     .as_ref()
                     .map(|subj| subj.keys().cloned().collect::<Vec<String>>()),
-                FormatProfile::IsoMdl { .. } => {
-                    todo!("FormatProfile::IsoMdl");
+                FormatIdentifier::IsoMdl(_) => {
+                    todo!("ProfileClaims::IsoMdl");
                 }
-                FormatProfile::SdJwt { .. } => {
-                    todo!("FormatProfile::SdJwt");
+                FormatIdentifier::VcSdJwt(_) => {
+                    todo!("ProfileClaims::SdJwt");
                 }
             };
 

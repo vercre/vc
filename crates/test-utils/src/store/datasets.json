@@ -9,6 +9,15 @@
                 "proficiency": "3"
             },
             "pending": false
+        },
+        "PHLDeveloper": {
+            "configuration_id": "Developer_JWT",
+            "claims": {
+                "given_name": "Normal",
+                "family_name": "Person",
+                "proficiency": "3"
+            },
+            "pending": false
         }
     },
     "pending_user": {

@@ -11,7 +11,7 @@ response_types:
   - id_token vp_token
 client_name: Verifier
 vp_formats:
-  jwt_vc_json:
+  jwt_vp_json:
     alg:
       - ES256K
     proof_type:

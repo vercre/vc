@@ -1,14 +1,36 @@
 ---
-source: vercre-holder/tests/issuance.rs
-assertion_line: 49
+source: vercre-holder/tests/preauth.rs
+assertion_line: 50
 expression: issuance
 ---
 issuance_id: "[issuance_id]"
-status: Ready
 issuer: "http://vercre.io"
 offered:
   EmployeeID_JWT:
     format: jwt_vc_json
+    credential_definition:
+      type:
+        - VerifiableCredential
+        - EmployeeIDCredential
+      credentialSubject:
+        email:
+          mandatory: true
+          value_type: string
+          display:
+            - name: Email
+              locale: en-NZ
+        family_name:
+          mandatory: true
+          value_type: string
+          display:
+            - name: Family name
+              locale: en-NZ
+        given_name:
+          mandatory: true
+          value_type: string
+          display:
+            - name: Given name
+              locale: en-NZ
     scope: EmployeeIDCredential
     cryptographic_binding_methods_supported:
       - "did:key"
@@ -33,29 +55,6 @@ offered:
           uri: "https://vercre.github.io/assets/vercre-background.png"
           alt_text: Vercre Background
         text_color: "#ffffff"
-    credential_definition:
-      type:
-        - VerifiableCredential
-        - EmployeeIDCredential
-      credentialSubject:
-        email:
-          mandatory: true
-          value_type: string
-          display:
-            - name: Email
-              locale: en-NZ
-        family_name:
-          mandatory: true
-          value_type: string
-          display:
-            - name: Family name
-              locale: en-NZ
-        given_name:
-          mandatory: true
-          value_type: string
-          display:
-            - name: Given name
-              locale: en-NZ
 tx_code:
   input_mode: numeric
   length: 6

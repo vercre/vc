@@ -46,32 +46,34 @@ impl HolderProvider for Provider {}
 
 impl Issuer for Provider {
     async fn get_metadata(
-        &self, _flow_id: &str, req: MetadataRequest,
+        &self, _issuance_id: &str, req: MetadataRequest,
     ) -> anyhow::Result<MetadataResponse> {
         let response = vercre_issuer::metadata(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 
-    async fn get_token(&self, _flow_id: &str, req: TokenRequest) -> anyhow::Result<TokenResponse> {
+    async fn get_token(
+        &self, _issuance_id: &str, req: TokenRequest,
+    ) -> anyhow::Result<TokenResponse> {
         let response = vercre_issuer::token(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 
     async fn get_credential(
-        &self, _flow_id: &str, req: CredentialRequest,
+        &self, _issuance_id: &str, req: CredentialRequest,
     ) -> anyhow::Result<CredentialResponse> {
         let response = vercre_issuer::credential(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 
-    async fn get_logo(&self, _flow_id: &str, _logo_url: &str) -> anyhow::Result<Logo> {
+    async fn get_logo(&self, _issuance_id: &str, _logo_url: &str) -> anyhow::Result<Logo> {
         Ok(Logo::default())
     }
 }
 
 impl Verifier for Provider {
     async fn get_request_object(
-        &self, _flow_id: &str, req: &str,
+        &self, _presentation_id: &str, req: &str,
     ) -> anyhow::Result<RequestObjectResponse> {
         let parts = req.rsplitn(3, '/').collect::<Vec<&str>>();
         if parts.len() < 3 {
@@ -85,7 +87,7 @@ impl Verifier for Provider {
     }
 
     async fn present(
-        &self, _flow_id: &str, _uri: Option<&str>, req: &ResponseRequest,
+        &self, _presentation_id: &str, _uri: Option<&str>, req: &ResponseRequest,
     ) -> anyhow::Result<ResponseResponse> {
         Ok(vercre_verifier::response(self.verifier.clone().unwrap(), req).await?)
     }
