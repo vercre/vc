@@ -157,10 +157,10 @@ impl Context {
                     return Err(Error::ServerError("pre-authorized state not set".into()));
                 };
 
+                // pre-authorized credentials use authorization_details
                 let (authorization_details, authorized) =
                     retain_auth(&request.authorization_details, &auth_state.details)?;
                 retained = authorized;
-
                 (Some(authorization_details), None)
             }
             TokenGrantType::AuthorizationCode { .. } => {
@@ -168,16 +168,17 @@ impl Context {
                     return Err(Error::ServerError("authorization state not set".into()));
                 };
 
+                // credentials requested using authorization_details
                 let authorization_details = if let Some(detail_items) = &auth_state.details {
                     let (authorization_details, authorized) =
                         retain_auth(&request.authorization_details, detail_items)?;
                     retained = authorized;
-
                     Some(authorization_details)
                 } else {
                     None
                 };
 
+                // credentials requested using scope
                 let (scope, authorized) = retain_scope(&auth_state.scope);
                 retained.extend(authorized);
 
@@ -216,9 +217,8 @@ impl Context {
 fn retain_auth(
     requested: &Option<Vec<AuthorizationDetail>>, details: &[DetailItem],
 ) -> Result<(Vec<Authorized>, HashMap<String, AuthorizedCredential>)> {
-    // retain only the requested authorization details
-
-    let detail_items = if let Some(req_dets) = requested.as_ref() {
+    // filter previously authorized DetailItems by requested authorization_details
+    let detail_items = if let Some(req_dets) = requested {
         let filtered = details
             .iter()
             .filter(|authd| {
@@ -235,12 +235,13 @@ fn retain_auth(
         details.to_vec()
     };
 
-    // convert retained detail_items to authorization_details + authorized
-    let mut retained = vec![];
+    // convert retained detail_items to Authorized token response 
+    // + state AuthorizedCredential
+    let mut retained_auth = vec![];
     let mut authorized = HashMap::new();
 
     for item in &detail_items {
-        retained.push(Authorized {
+        retained_auth.push(Authorized {
             authorization_detail: item.authorization_detail.clone(),
             credential_identifiers: item.credential_identifiers.clone(),
         });
@@ -257,7 +258,7 @@ fn retain_auth(
         }
     }
 
-    Ok((retained, authorized))
+    Ok((retained_auth, authorized))
 }
 
 fn retain_scope(
@@ -265,7 +266,7 @@ fn retain_scope(
 ) -> (Option<String>, HashMap<String, AuthorizedCredential>) {
     let mut authorized = HashMap::new();
 
-    let retained = scope.as_ref().map(|scope_items| {
+    let retained_scope = scope.as_ref().map(|scope_items| {
         let mut scope_str = String::new();
 
         for item in scope_items {
@@ -285,7 +286,7 @@ fn retain_scope(
         scope_str
     });
 
-    (retained, authorized)
+    (retained_scope, authorized)
 }
 
 #[cfg(test)]
