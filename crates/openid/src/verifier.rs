@@ -18,7 +18,6 @@ use vercre_did::DidResolver;
 use vercre_dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 use vercre_w3c_vc::model::VerifiablePresentation;
 
-pub use super::FormatIdentifier;
 pub use crate::oauth::{OAuthClient, OAuthServer};
 pub use crate::provider::{self, Result, StateStore};
 
@@ -630,6 +629,18 @@ pub struct Verifier {
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vp_formats: Option<HashMap<FormatIdentifier, VpFormat>>,
+}
+
+/// The `OpenID4VCI` specification defines commonly used [Credential Format
+/// Profiles] to support.  The profiles define Credential format specific
+/// parameters or claims used to support a particular format.
+///
+/// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Hash)]
+pub enum FormatIdentifier {
+    /// W3C Verifiable Credential.
+    #[serde(rename = "jwt_vp_json")]
+    JwtVpJson,
 }
 
 /// OAuth 2.0 Authorization Server metadata.

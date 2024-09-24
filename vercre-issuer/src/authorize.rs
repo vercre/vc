@@ -241,18 +241,17 @@ impl Context {
                     }
                 }
 
-                CredentialAuthorization::Format(CredentialFormat { format, profile }) => {
+                CredentialAuthorization::Format(CredentialFormat { format }) => {
                     let credential_configuration_id = self
                         .issuer
                         .credential_configuration_id(&CredentialFormat {
                             format: format.clone(),
-                            profile: profile.clone(),
                         })
                         .map_err(|e| Error::ServerError(format!("issuer issue: {e}")))?;
 
                     self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
 
-                    let claims = profile.claims();
+                    let claims = format.claims();
                     self.verify_claims(credential_configuration_id, &claims)?;
                     self.claims = claims;
                 }
@@ -276,7 +275,7 @@ impl Context {
 
         // check requested claims exist and all mandatory claims have been requested
         if let Some(requested) = claims {
-            if let Some(supported) = config.profile.claims() {
+            if let Some(supported) = config.format.claims() {
                 // check requested claims are supported
                 for key in requested.keys() {
                     if !supported.contains_key(key) {
