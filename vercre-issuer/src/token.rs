@@ -22,7 +22,7 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationDetail, Metadata, Provider, StateStore, TokenAuthorizationDetail, TokenGrantType,
+    AuthorizationDetail, AuthorizedDetail, Metadata, Provider, StateStore, TokenGrantType,
     TokenRequest, TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
@@ -216,7 +216,7 @@ impl Context {
 
 fn retain_auth(
     requested: &Option<Vec<AuthorizationDetail>>, details: &[DetailItem],
-) -> Result<(Vec<TokenAuthorizationDetail>, HashMap<String, Authorized>)> {
+) -> Result<(Vec<AuthorizedDetail>, HashMap<String, Authorized>)> {
     // filter previously authorized DetailItems by requested authorization_details
     let detail_items = if let Some(req_dets) = requested {
         let filtered = details
@@ -241,7 +241,7 @@ fn retain_auth(
     let mut authorized = HashMap::new();
 
     for item in &detail_items {
-        retained_auth.push(TokenAuthorizationDetail {
+        retained_auth.push(AuthorizedDetail {
             authorization_detail: item.authorization_detail.clone(),
             credential_identifiers: item.credential_identifiers.clone(),
         });
