@@ -27,7 +27,7 @@ use vercre_openid::issuer::{
 };
 use vercre_openid::{Error, Result};
 
-use crate::state::{AuthorizedCredential, DetailItem, Expire, Stage, State, Token};
+use crate::state::{AuthorizedCredential, DetailItem, Expire, ScopeItem, Stage, State, Token};
 
 /// Token request handler.
 ///
@@ -140,11 +140,9 @@ impl Context {
         Ok(())
     }
 
-    // FIXME: process authorization_details/scope request parameters
     // TODO: add `client_assertion` JWT verification
 
     // Exchange authorization/pre-authorized code for access token.
-    #[allow(clippy::too_many_lines)]
     async fn process(
         &self, provider: &impl Provider, request: TokenRequest,
     ) -> Result<TokenResponse> {
@@ -159,25 +157,20 @@ impl Context {
                     return Err(Error::ServerError("pre-authorized state not set".into()));
                 };
 
-                let (authorization_details, authorized) = retain_auth(
-                    request.authorization_details.as_ref().unwrap_or(&vec![]),
-                    &auth_state.details,
-                )?;
+                let (authorization_details, authorized) =
+                    retain_auth(&request.authorization_details, &auth_state.details)?;
                 retained = authorized;
 
                 (Some(authorization_details), None)
             }
-
             TokenGrantType::AuthorizationCode { .. } => {
                 let Stage::Authorized(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("authorization state not set".into()));
                 };
 
                 let authorization_details = if let Some(detail_items) = &auth_state.details {
-                    let (authorization_details, authorized) = retain_auth(
-                        request.authorization_details.as_ref().unwrap_or(&vec![]),
-                        detail_items,
-                    )?;
+                    let (authorization_details, authorized) =
+                        retain_auth(&request.authorization_details, detail_items)?;
                     retained = authorized;
 
                     Some(authorization_details)
@@ -185,27 +178,8 @@ impl Context {
                     None
                 };
 
-                let scope = auth_state.scope.as_ref().map(|scope_items| {
-                    let mut scope_str = String::new();
-
-                    for item in scope_items {
-                        scope_str.push_str(&item.item);
-
-                        for identifier in &item.credential_identifiers {
-                            retained.insert(
-                                identifier.clone(),
-                                AuthorizedCredential {
-                                    credential_identifier: identifier.clone(),
-                                    credential_configuration_id: item
-                                        .credential_configuration_id
-                                        .clone(),
-                                    claim_ids: None,
-                                },
-                            );
-                        }
-                    }
-                    scope_str
-                });
+                let (scope, authorized) = retain_scope(&auth_state.scope);
+                retained.extend(authorized);
 
                 (authorization_details, scope)
             }
@@ -214,6 +188,7 @@ impl Context {
         let access_token = gen::token();
         let c_nonce = gen::nonce();
 
+        // update state
         let mut state = self.state.clone();
         state.stage = Stage::Validated(Token {
             access_token: access_token.clone(),
@@ -225,6 +200,7 @@ impl Context {
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
+        // return response
         Ok(TokenResponse {
             access_token,
             token_type: TokenType::Bearer,
@@ -238,18 +214,15 @@ impl Context {
 }
 
 fn retain_auth(
-    requested: &[AuthorizationDetail], authorized: &[DetailItem],
+    requested: &Option<Vec<AuthorizationDetail>>, details: &[DetailItem],
 ) -> Result<(Vec<Authorized>, HashMap<String, AuthorizedCredential>)> {
     // retain only the requested authorization details
-    let detail_items = if requested.is_empty() {
-        authorized.to_vec()
-    } else {
-        let filtered = authorized
+
+    let detail_items = if let Some(req_dets) = requested.as_ref() {
+        let filtered = details
             .iter()
             .filter(|authd| {
-                requested
-                    .iter()
-                    .any(|reqd| authd.authorization_detail.credential == reqd.credential)
+                req_dets.iter().any(|reqd| authd.authorization_detail.credential == reqd.credential)
             })
             .cloned()
             .collect::<Vec<_>>();
@@ -258,14 +231,16 @@ fn retain_auth(
             return Err(Error::InvalidRequest("no matching authorization details".into()));
         }
         filtered
+    } else {
+        details.to_vec()
     };
 
     // convert retained detail_items to authorization_details + authorized
-    let mut authorization_details = vec![];
+    let mut retained = vec![];
     let mut authorized = HashMap::new();
 
     for item in &detail_items {
-        authorization_details.push(Authorized {
+        retained.push(Authorized {
             authorization_detail: item.authorization_detail.clone(),
             credential_identifiers: item.credential_identifiers.clone(),
         });
@@ -282,7 +257,35 @@ fn retain_auth(
         }
     }
 
-    Ok((authorization_details, authorized))
+    Ok((retained, authorized))
+}
+
+fn retain_scope(
+    scope: &Option<Vec<ScopeItem>>,
+) -> (Option<String>, HashMap<String, AuthorizedCredential>) {
+    let mut authorized = HashMap::new();
+
+    let retained = scope.as_ref().map(|scope_items| {
+        let mut scope_str = String::new();
+
+        for item in scope_items {
+            scope_str.push_str(&item.item);
+
+            for identifier in &item.credential_identifiers {
+                authorized.insert(
+                    identifier.clone(),
+                    AuthorizedCredential {
+                        credential_identifier: identifier.clone(),
+                        credential_configuration_id: item.credential_configuration_id.clone(),
+                        claim_ids: None,
+                    },
+                );
+            }
+        }
+        scope_str
+    });
+
+    (retained, authorized)
 }
 
 #[cfg(test)]
