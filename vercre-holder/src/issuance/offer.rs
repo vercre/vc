@@ -12,6 +12,7 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
+use vercre_issuer::{AuthorizationCodeGrant, PreAuthorizedCodeGrant};
 use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, MetadataRequest, TxCode};
 
 use super::{Issuance, Status};
@@ -51,6 +52,17 @@ pub struct OfferResponse {
 
     /// Details of any PIN required by the holder to accept the offer.
     pub tx_code: Option<TxCode>,
+}
+
+/// `AuthType` indicates whether the offer is pre-authorized or requires the
+/// holder to make an authorization request.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub enum AuthType {
+    /// The offer is pre-authorized.
+    PreAuthorized(PreAuthorizedCodeGrant),
+
+    /// The offer requires an authorization request.
+    Authorization(AuthorizationCodeGrant),
 }
 
 /// Initiates the issuance flow triggered by a new credential offer
