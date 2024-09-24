@@ -70,7 +70,7 @@ pub enum Stage {
 
 /// Holds data used during the issuance of a credential.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct AuthorizedCredential {
+pub struct Authorized {
     /// Identifies the dataset associated with the credential to be issued.
     /// Dataset is unique by issuer not by subject.
     ///
@@ -190,7 +190,7 @@ pub struct Token {
 
     /// Credentials (configuration id and identifier) validated for issuance
     /// using the accompanying access token.
-    pub credentials: HashMap<CredentialIdentifier, AuthorizedCredential>,
+    pub credentials: HashMap<CredentialIdentifier, Authorized>,
 }
 
 impl Token {

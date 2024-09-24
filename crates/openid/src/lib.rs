@@ -20,4 +20,3 @@ pub use self::error::Error;
 /// Result type for `OpenID` for Verifiable Credential Issuance and Verifiable
 /// Presentations.
 pub type Result<T, E = Error> = std::result::Result<T, E>;
-

@@ -22,12 +22,12 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationDetail, Authorized, Metadata, Provider, StateStore, TokenGrantType, TokenRequest,
-    TokenResponse, TokenType,
+    AuthorizationDetail, Metadata, Provider, StateStore, TokenAuthorizationDetail, TokenGrantType,
+    TokenRequest, TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
 
-use crate::state::{AuthorizedCredential, DetailItem, Expire, ScopeItem, Stage, State, Token};
+use crate::state::{Authorized, DetailItem, Expire, ScopeItem, Stage, State, Token};
 
 /// Token request handler.
 ///
@@ -216,7 +216,7 @@ impl Context {
 
 fn retain_auth(
     requested: &Option<Vec<AuthorizationDetail>>, details: &[DetailItem],
-) -> Result<(Vec<Authorized>, HashMap<String, AuthorizedCredential>)> {
+) -> Result<(Vec<TokenAuthorizationDetail>, HashMap<String, Authorized>)> {
     // filter previously authorized DetailItems by requested authorization_details
     let detail_items = if let Some(req_dets) = requested {
         let filtered = details
@@ -235,13 +235,13 @@ fn retain_auth(
         details.to_vec()
     };
 
-    // convert retained detail_items to Authorized token response 
-    // + state AuthorizedCredential
+    // convert retained detail_items to Authorized token response
+    // + state Authorized
     let mut retained_auth = vec![];
     let mut authorized = HashMap::new();
 
     for item in &detail_items {
-        retained_auth.push(Authorized {
+        retained_auth.push(TokenAuthorizationDetail {
             authorization_detail: item.authorization_detail.clone(),
             credential_identifiers: item.credential_identifiers.clone(),
         });
@@ -249,7 +249,7 @@ fn retain_auth(
         for identifier in &item.credential_identifiers {
             authorized.insert(
                 identifier.clone(),
-                AuthorizedCredential {
+                Authorized {
                     credential_identifier: identifier.clone(),
                     credential_configuration_id: item.credential_configuration_id.clone(),
                     claim_ids: None,
@@ -261,9 +261,7 @@ fn retain_auth(
     Ok((retained_auth, authorized))
 }
 
-fn retain_scope(
-    scope: &Option<Vec<ScopeItem>>,
-) -> (Option<String>, HashMap<String, AuthorizedCredential>) {
+fn retain_scope(scope: &Option<Vec<ScopeItem>>) -> (Option<String>, HashMap<String, Authorized>) {
     let mut authorized = HashMap::new();
 
     let retained_scope = scope.as_ref().map(|scope_items| {
@@ -275,7 +273,7 @@ fn retain_scope(
             for identifier in &item.credential_identifiers {
                 authorized.insert(
                     identifier.clone(),
-                    AuthorizedCredential {
+                    Authorized {
                         credential_identifier: identifier.clone(),
                         credential_configuration_id: item.credential_configuration_id.clone(),
                         claim_ids: None,

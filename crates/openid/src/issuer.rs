@@ -965,7 +965,7 @@ pub struct TokenResponse {
     /// The Authorization Details `credential_identifiers` parameter may be
     /// populated for use in subsequent Credential Requests.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub authorization_details: Option<Vec<Authorized>>,
+    pub authorization_details: Option<Vec<TokenAuthorizationDetail>>,
 
     /// OPTIONAL if identical to the requested scope, otherwise REQUIRED.
     ///
@@ -992,7 +992,7 @@ pub enum TokenType {
 /// It wraps the `AuthorizationDetail` struct and adds `credential_identifiers`
 /// parameter for use in Credential requests.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Authorized {
+pub struct TokenAuthorizationDetail {
     /// Reuse (and flatten) the existing [`AuthorizationDetail`] object used in
     /// authorization requests.
     #[serde(flatten)]

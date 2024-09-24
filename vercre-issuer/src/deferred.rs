@@ -80,7 +80,7 @@ mod tests {
     use vercre_w3c_vc::proof::{self, Payload, Verify};
 
     use super::*;
-    use crate::state::{AuthorizedCredential, Deferrance, Expire, Token};
+    use crate::state::{Authorized, Deferrance, Expire, Token};
     extern crate self as vercre_issuer;
 
     #[tokio::test]
@@ -118,7 +118,7 @@ mod tests {
                 access_token: access_token.into(),
                 credentials: HashMap::from([(
                     "PHLEmployeeID".into(),
-                    AuthorizedCredential {
+                    Authorized {
                         credential_identifier: "PHLEmployeeID".into(),
                         credential_configuration_id: "EmployeeID_JWT".into(),
                         claim_ids: None,

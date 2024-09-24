@@ -27,14 +27,16 @@ pub struct AuthorizedCredentials {
 
     /// The list of credential identifiers the holder is authorized to request,
     /// keyed by credential configuration ID.
-    pub authorized: Option<HashMap<String, Vec<String>>>
+    pub authorized: Option<HashMap<String, Vec<String>>>,
 }
 
 /// Progresses the issuance flow by getting an access token.
 ///
 /// Returns the issuance flow identifier.
 #[instrument(level = "debug", skip(provider))]
-pub async fn token(provider: impl HolderProvider, issuance_id: &str) -> anyhow::Result<AuthorizedCredentials> {
+pub async fn token(
+    provider: impl HolderProvider, issuance_id: &str,
+) -> anyhow::Result<AuthorizedCredentials> {
     tracing::debug!("Endpoint::token");
 
     let mut issuance: Issuance = match StateStore::get(&provider, issuance_id).await {
@@ -61,7 +63,6 @@ pub async fn token(provider: impl HolderProvider, issuance_id: &str) -> anyhow::
     };
     issuance.status = Status::TokenReceived;
 
-
     let mut response = AuthorizedCredentials {
         issuance_id: issuance.id.clone(),
         authorized: None,
@@ -81,7 +82,8 @@ pub async fn token(provider: impl HolderProvider, issuance_id: &str) -> anyhow::
                             tracing::error!(target: "Endpoint::token", ?e);
                             return Err(e);
                         }
-                    }.to_string()
+                    }
+                    .to_string()
                 }
             };
             authorized.insert(cfg_id, auth.credential_identifiers.clone());
