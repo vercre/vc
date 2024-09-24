@@ -12,8 +12,7 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use vercre_issuer::{AuthorizationCodeGrant, PreAuthorizedCodeGrant};
-use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, MetadataRequest, TxCode};
+use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, Grants, MetadataRequest};
 
 use super::{Issuance, Status};
 use crate::provider::{HolderProvider, Issuer, StateStore};
@@ -50,19 +49,8 @@ pub struct OfferResponse {
     /// credential configuration ID.
     pub offered: HashMap<String, CredentialConfiguration>,
 
-    /// Details of any PIN required by the holder to accept the offer.
-    pub tx_code: Option<TxCode>,
-}
-
-/// `AuthType` indicates whether the offer is pre-authorized or requires the
-/// holder to make an authorization request.
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub enum AuthType {
-    /// The offer is pre-authorized.
-    PreAuthorized(PreAuthorizedCodeGrant),
-
-    /// The offer requires an authorization request.
-    Authorization(AuthorizationCodeGrant),
+    /// Authorization requirements.
+    pub grants: Grants,
 }
 
 /// Initiates the issuance flow triggered by a new credential offer
@@ -82,13 +70,12 @@ pub async fn offer(
         tracing::error!(target: "Endpoint::offer", ?e);
         return Err(e);
     }
-    let Some(grants) = &request.offer.grants else {
+    // TODO: The wallet is supposed to handle the case where there are no
+    // grants by using issuer metadata to determine the required grants. However,
+    // the metata specification does not currently include this information. Until
+    // it does, we return an error here.
+    let Some(grants) = request.offer.grants.clone() else {
         let e = anyhow!("no grants");
-        tracing::error!(target: "Endpoint::offer", ?e);
-        return Err(e);
-    };
-    let Some(pre_authorized_code) = &grants.pre_authorized_code else {
-        let e = anyhow!("no pre-authorized code");
         tracing::error!(target: "Endpoint::offer", ?e);
         return Err(e);
     };
@@ -116,7 +103,7 @@ pub async fn offer(
         }
     };
     // Update the flow state with issuer's metadata.
-    issuance.issuer = md_response.credential_issuer.clone();    
+    issuance.issuer = md_response.credential_issuer.clone();
     issuance.status = Status::Ready;
 
     // Stash the state for the next step.
@@ -141,12 +128,11 @@ pub async fn offer(
         offered.insert(cfg_id.clone(), found.clone());
     }
 
-
     let res = OfferResponse {
         issuance_id: issuance.id,
         issuer: request.offer.credential_issuer.clone(),
         offered,
-        tx_code: pre_authorized_code.tx_code.clone(),
+        grants,
     };
 
     Ok(res)

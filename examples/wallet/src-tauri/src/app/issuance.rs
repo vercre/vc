@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 
+use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 use vercre_holder::{
     AcceptRequest, CredentialConfiguration, CredentialOffer, CredentialsRequest, OfferRequest,
@@ -40,11 +41,18 @@ impl AppState {
             offer,
         };
         let res = vercre_holder::offer(provider, &request).await?;
+
+        // This example can only process an issuer-initiated, pre-authorized issuance
+        // flow.
+        let Some(pre_auth) = res.grants.pre_authorized_code else {
+            return Err(anyhow!("This example only supports pre-authorized issuance"));
+        };
+
         self.issuance = IssuanceState {
             id: res.issuance_id,
             issuer: res.issuer,
             offered: res.offered,
-            tx_code: res.tx_code,
+            tx_code: pre_auth.tx_code,
             pin: None,
         };
         self.sub_app = SubApp::Issuance;

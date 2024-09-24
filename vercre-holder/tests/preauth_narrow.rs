@@ -56,6 +56,7 @@ async fn preauth_narrow() {
         ".offered" => insta::sorted_redaction(),
         ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
         ".offered.Developer_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
+        ".grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
     });
 
     // Accept only the Developer credential on offer, and only the proficiency
