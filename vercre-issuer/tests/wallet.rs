@@ -12,7 +12,8 @@ use vercre_issuer::{
     TokenRequest, TokenResponse,
 };
 use vercre_macros::{authorization_request, credential_request};
-use vercre_openid::{Error, FormatIdentifier, Result};
+use vercre_openid::issuer::FormatIdentifier;
+use vercre_openid::{Error, Result};
 use vercre_test_utils::holder;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_w3c_vc::proof::{self, Payload, Verify};

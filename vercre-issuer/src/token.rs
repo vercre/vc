@@ -319,19 +319,13 @@ fn is_match(a: &AuthorizationDetail, b: &AuthorizationDetail) -> bool {
             a == b
         }
 
-        CredentialAuthorization::Format(CredentialFormat {
-            format,
-            profile: a_def,
-        }) => {
-            let CredentialAuthorization::Format(CredentialFormat {
-                format: b_format,
-                profile: b_def,
-            }) = &b.credential
+        CredentialAuthorization::Format(CredentialFormat { format }) => {
+            let CredentialAuthorization::Format(CredentialFormat { format: b_format }) =
+                &b.credential
             else {
                 return false;
             };
-
-            format == b_format && a_def == b_def
+            format == b_format
         }
     }
 }
@@ -343,7 +337,7 @@ mod tests {
     use vercre_macros::token_request;
     use vercre_openid::issuer::{
         AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization,
-        CredentialDefinition, CredentialFormat, FormatIdentifier, FormatProfile,
+        CredentialDefinition, CredentialFormat, FormatIdentifier, ProfileW3c,
     };
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
@@ -499,8 +493,7 @@ mod tests {
                     authorization_detail: AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
                         credential: CredentialAuthorization::Format(CredentialFormat {
-                            format: FormatIdentifier::JwtVcJson,
-                            profile: FormatProfile::W3c {
+                            format: FormatIdentifier::JwtVcJson(ProfileW3c {
                                 credential_definition: CredentialDefinition {
                                     type_: Some(vec![
                                         "VerifiableCredential".into(),
@@ -508,7 +501,7 @@ mod tests {
                                     ]),
                                     ..CredentialDefinition::default()
                                 },
-                            },
+                            }),
                         }),
                         ..AuthorizationDetail::default()
                     },

@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_issuer::{
     AuthorizationDetail, ClaimEntry, CredentialAuthorization, CredentialConfiguration,
-    CredentialDefinition, FormatProfile,
+    CredentialDefinition, FormatIdentifier, ProfileClaims,
 };
 
 use super::{Issuance, Status};
@@ -128,30 +128,23 @@ fn narrow_scope(
     };
     let mut auth_details = Vec::new();
     for auth_spec in accept {
-        let format_profile: Option<FormatProfile> = match auth_spec.claims {
+        let claims: Option<ProfileClaims> = match auth_spec.claims {
             Some(claims) => {
-                let Some(offered_config) = offered.get(&auth_spec.credential_configuration_id)
+                let Some(credential_configuration) =
+                    offered.get(&auth_spec.credential_configuration_id)
                 else {
                     return Err(anyhow!("credential configuration accepted not found in offer"));
                 };
-                let profile = match &offered_config.profile {
-                    FormatProfile::W3c {
-                        credential_definition,
-                    } => FormatProfile::W3c {
-                        credential_definition: CredentialDefinition {
-                            context: credential_definition.context.clone(),
-                            type_: credential_definition.type_.clone(),
-                            credential_subject: Some(claims),
-                        },
-                    },
-                    FormatProfile::IsoMdl { doctype, .. } => FormatProfile::IsoMdl {
-                        doctype: doctype.clone(),
-                        claims: Some(claims),
-                    },
-                    FormatProfile::SdJwt { vct, .. } => FormatProfile::SdJwt {
-                        vct: vct.clone(),
-                        claims: Some(claims),
-                    },
+
+                let profile = match &credential_configuration.format {
+                    FormatIdentifier::JwtVcJson(_)
+                    | FormatIdentifier::JwtVcJsonLd(_)
+                    | FormatIdentifier::LdpVc(_) => ProfileClaims::W3c(CredentialDefinition {
+                        credential_subject: Some(claims),
+                        ..CredentialDefinition::default()
+                    }),
+                    FormatIdentifier::IsoMdl(_) => ProfileClaims::IsoMdl(claims),
+                    FormatIdentifier::VcSdJwt(_) => ProfileClaims::SdJwt(claims),
                 };
                 Some(profile)
             }
@@ -162,7 +155,7 @@ fn narrow_scope(
         let detail = AuthorizationDetail {
             credential: CredentialAuthorization::ConfigurationId {
                 credential_configuration_id: auth_spec.credential_configuration_id,
-                claims: format_profile,
+                claims,
             },
             ..Default::default()
         };

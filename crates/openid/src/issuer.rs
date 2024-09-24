@@ -17,7 +17,6 @@ use vercre_did::DidResolver;
 use vercre_status::issuer::Status;
 use vercre_w3c_vc::model::VerifiableCredential;
 
-pub use super::FormatIdentifier;
 pub use crate::oauth::{GrantType, OAuthClient, OAuthServer};
 pub use crate::provider::{self, Result, StateStore};
 
@@ -563,7 +562,7 @@ pub enum CredentialAuthorization {
         /// credential.
         #[serde(flatten)]
         #[serde(skip_serializing_if = "Option::is_none")]
-        claims: Option<FormatProfile>,
+        claims: Option<ProfileClaims>,
     },
 
     /// Identifies the credential to authorize using format-specific parameters.
@@ -589,69 +588,186 @@ impl Default for CredentialAuthorization {
 #[derive(Clone, Default, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredentialFormat {
     /// The format's identifier
-    pub format: FormatIdentifier,
-
-    /// Format profile-specific parameters.
     #[serde(flatten)]
-    pub profile: FormatProfile,
+    pub format: FormatIdentifier,
 }
 
-/// The `OpenID4VCI` specification defines commonly used [Format Profiles] to
-/// support. The profiles define Credential profile-specific parameters or
-/// claims used to support a particular format.
+/// The `OpenID4VCI` specification defines commonly used [Credential Format
+/// Profiles] to support.  The profiles define Credential format specific
+/// parameters or claims used to support a particular format.
 ///
-/// [Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
+/// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum FormatProfile {
-    /// W3C Verifiiable Credential format.
-    W3c {
-        /// The Credential's definition.
-        credential_definition: CredentialDefinition,
-    },
+#[serde(tag = "format")]
+pub enum FormatIdentifier {
+    /// A W3C Verifiable Credential.
+    ///
+    /// When this format is specified, Credential Offer, Authorization Details,
+    /// Credential Request, and Credential Issuer metadata, including
+    /// `credential_definition` object, MUST NOT be processed using JSON-LD
+    /// rules.
+    #[serde(rename = "jwt_vc_json")]
+    JwtVcJson(ProfileW3c),
 
-    /// Credentials complying with [ISO.18013-5] (Mobile Driving License).
-    IsoMdl {
-        /// The Credential type, as defined in [ISO.18013-5].
-        doctype: String,
+    /// A W3C Verifiable Credential.
+    ///
+    /// When using this format, data MUST NOT be processed using JSON-LD rules.
+    ///
+    /// N.B. The `@context` value in the `credential_definition` object can be
+    /// used by the Wallet to check whether it supports a certain VC. If
+    /// necessary, the Wallet could apply JSON-LD processing to the
+    /// Credential issued.
+    #[serde(rename = "ldp-vc")]
+    LdpVc(ProfileW3c),
 
-        /// A list of claims to include in the issued credential.
-        #[serde(skip_serializing_if = "Option::is_none")]
-        claims: Option<HashMap<String, ClaimEntry>>,
-    },
+    /// A W3C Verifiable Credential.
+    ///
+    /// When using this format, data MUST NOT be processed using JSON-LD rules.
+    ///
+    /// N.B. The `@context` value in the `credential_definition` object can be
+    /// used by the Wallet to check whether it supports a certain VC. If
+    /// necessary, the Wallet could apply JSON-LD processing to the
+    /// Credential issued.
+    #[serde(rename = "jwt_vc_json-ld")]
+    JwtVcJsonLd(ProfileW3c),
 
-    /// Selective Disclosure JWT ([SD-JWT]).
-    /// [SD-JWT]: <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-04>
-    SdJwt {
-        /// The Verifiable Credential type. The `vct` value MUST be a
-        /// case-sensitive String or URI serving as an identifier for
-        /// the type of the SD-JWT VC.
-        vct: String,
+    /// ISO mDL.
+    ///
+    /// A Credential Format Profile for Credentials complying with [ISO.18013-5]
+    /// — ISO-compliant driving licence specification.
+    ///
+    /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
+    #[serde(rename = "mso_mdoc")]
+    IsoMdl(ProfileIsoMdl),
 
-        /// A list of claims to include in the issued credential.
-        #[serde(skip_serializing_if = "Option::is_none")]
-        claims: Option<HashMap<String, ClaimEntry>>,
-    },
+    /// IETF SD-JWT VC.
+    ///
+    /// A Credential Format Profile for Credentials complying with
+    /// [I-D.ietf-oauth-sd-jwt-vc] — SD-JWT-based Verifiable Credentials for
+    /// selective disclosure.
+    ///
+    /// [I-D.ietf-oauth-sd-jwt-vc]: (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-01)
+    #[serde(rename = "vc+sd-jwt")]
+    VcSdJwt(ProfileSdJwt),
 }
 
-impl Default for FormatProfile {
-    fn default() -> Self {
-        Self::W3c {
-            credential_definition: CredentialDefinition::default(),
-        }
-    }
-}
-
-impl FormatProfile {
+impl FormatIdentifier {
     /// Claims for the format profile.
     #[must_use]
     pub fn claims(&self) -> Option<HashMap<String, ClaimEntry>> {
         match self {
-            Self::W3c {
-                credential_definition,
-            } => credential_definition.credential_subject.clone(),
-            Self::IsoMdl { claims, .. } | Self::SdJwt { claims, .. } => claims.clone(),
+            Self::JwtVcJson(w3c) | Self::JwtVcJsonLd(w3c) | Self::LdpVc(w3c) => {
+                w3c.credential_definition.credential_subject.clone()
+            }
+            Self::IsoMdl(iso_mdl) => iso_mdl.claims.clone(),
+            Self::VcSdJwt(sd_jwt) => sd_jwt.claims.clone(),
         }
+    }
+}
+
+impl Default for FormatIdentifier {
+    fn default() -> Self {
+        Self::JwtVcJson(ProfileW3c::default())
+    }
+}
+
+impl std::fmt::Display for FormatIdentifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::JwtVcJson(_) => write!(f, "jwt_vc_json"),
+            Self::LdpVc(_) => write!(f, "ldp_vc"),
+            Self::JwtVcJsonLd(_) => write!(f, "jwt_vc_json-ld"),
+            Self::IsoMdl(_) => write!(f, "mso_mdoc"),
+            Self::VcSdJwt(_) => write!(f, "vc+sd-jwt"),
+        }
+    }
+}
+
+/// Supported [Credential Format Profiles].
+///
+/// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub enum ProfileClaims {
+    /// W3C Verifiable Credential profile claims.
+    #[serde(rename = "credential_definition")]
+    W3c(CredentialDefinition),
+
+    /// `ISO.18013-5` (Mobile Driving License) profile claims
+    #[serde(rename = "claims")]
+    IsoMdl(HashMap<String, ClaimEntry>),
+
+    /// Selective Disclosure JWT ([SD-JWT]) profile claims.
+    #[serde(rename = "claims")]
+    SdJwt(HashMap<String, ClaimEntry>),
+}
+
+impl Default for ProfileClaims {
+    fn default() -> Self {
+        Self::W3c(CredentialDefinition::default())
+    }
+}
+
+impl ProfileClaims {
+    /// Claims for the format profile.
+    #[must_use]
+    pub fn claims(&self) -> Option<HashMap<String, ClaimEntry>> {
+        match self {
+            Self::W3c(credential_definition) => credential_definition.credential_subject.clone(),
+            Self::IsoMdl(claims) | Self::SdJwt(claims) => Some(claims.clone()),
+        }
+    }
+}
+
+/// Credential Format Profile for W3C Verifiable Credentials.
+#[derive(Clone, Default, Debug, Deserialize, Serialize, Eq)]
+pub struct ProfileW3c {
+    /// The Credential's definition.
+    pub credential_definition: CredentialDefinition,
+}
+
+impl PartialEq for ProfileW3c {
+    fn eq(&self, other: &Self) -> bool {
+        self.credential_definition.type_ == other.credential_definition.type_
+    }
+}
+
+/// Credential Format Profile for `ISO.18013-5` (Mobile Driving License)
+/// credentials.
+#[derive(Clone, Default, Debug, Deserialize, Serialize, Eq)]
+pub struct ProfileIsoMdl {
+    /// The Credential type, as defined in [ISO.18013-5].
+    doctype: String,
+
+    /// A list of claims to include in the issued credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    claims: Option<HashMap<String, ClaimEntry>>,
+}
+
+impl PartialEq for ProfileIsoMdl {
+    fn eq(&self, other: &Self) -> bool {
+        self.doctype == other.doctype
+    }
+}
+
+/// Credential Format Profile for Selective Disclosure JWT ([SD-JWT])
+/// credentials.
+///
+/// [SD-JWT]: <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-04>
+#[derive(Clone, Default, Debug, Deserialize, Serialize, Eq)]
+pub struct ProfileSdJwt {
+    /// The Verifiable Credential type. The `vct` value MUST be a
+    /// case-sensitive String or URI serving as an identifier for
+    /// the type of the SD-JWT VC.
+    vct: String,
+
+    /// A list of claims to include in the issued credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    claims: Option<HashMap<String, ClaimEntry>>,
+}
+
+impl PartialEq for ProfileSdJwt {
+    fn eq(&self, other: &Self) -> bool {
+        self.vct == other.vct
     }
 }
 
@@ -1248,47 +1364,14 @@ impl Issuer {
     /// Returns the `credential_configuration_id` for a given format.
     ///
     /// # Errors
+    ///
     /// TODO: add error handling
-    pub fn credential_configuration_id(&self, cfmt: &CredentialFormat) -> Result<&String> {
-        if let Some((id, _)) = match &cfmt.profile {
-            FormatProfile::W3c {
-                credential_definition,
-            } => self.credential_configurations_supported.iter().find(|(_, cfg)| {
-                if let FormatProfile::W3c {
-                    credential_definition: cfg_defn,
-                } = &cfg.profile
-                {
-                    cfg.format == cfmt.format && cfg_defn.type_ == credential_definition.type_
-                } else {
-                    false
-                }
-            }),
-            FormatProfile::IsoMdl { doctype, .. } => {
-                self.credential_configurations_supported.iter().find(|(_, cfg)| {
-                    if let FormatProfile::IsoMdl {
-                        doctype: cfg_doctype, ..
-                    } = &cfg.profile
-                    {
-                        cfg.format == cfmt.format && cfg_doctype == doctype
-                    } else {
-                        false
-                    }
-                })
-            }
-            FormatProfile::SdJwt { vct, .. } => {
-                self.credential_configurations_supported.iter().find(|(_, cfg)| {
-                    if let FormatProfile::SdJwt { vct: cfg_vct, .. } = &cfg.profile {
-                        cfg.format == cfmt.format && cfg_vct == vct
-                    } else {
-                        false
-                    }
-                })
-            }
-        } {
-            Ok(id)
-        } else {
-            Err(anyhow!("Credential CredentialAuthorization not found"))
-        }
+    pub fn credential_configuration_id(&self, fmt: &CredentialFormat) -> Result<&String> {
+        self.credential_configurations_supported
+            .iter()
+            .find(|(_, cfg)| cfg.format == fmt.format)
+            .map(|(id, _)| id)
+            .ok_or_else(|| anyhow!("Credential Configuration not found"))
     }
 }
 
@@ -1348,6 +1431,7 @@ pub struct CredentialConfiguration {
     /// See OpenID4VCI [Credential Format Profiles] for mopre detail.
     ///
     /// [Credential Format Profiles]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles
+    #[serde(flatten)]
     pub format: FormatIdentifier,
 
     /// The `scope` value that this Credential Issuer supports for this
@@ -1439,11 +1523,6 @@ pub struct CredentialConfiguration {
     /// Language-based display properties of the supported credential.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display: Option<Vec<CredentialDisplay>>,
-
-    /// Language-based display properties for the associated Credential
-    /// Definition.
-    #[serde(flatten)]
-    pub profile: FormatProfile,
 }
 
 /// `ProofTypesSupported` describes specifics of the key proof(s) that the
@@ -1750,25 +1829,20 @@ mod tests {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: CredentialAuthorization::ConfigurationId {
                     credential_configuration_id: "EmployeeID_JWT".into(),
-                    claims: Some(FormatProfile::W3c {
-                        credential_definition: CredentialDefinition {
-                            credential_subject: Some(HashMap::from([
-                                (
-                                    "given_name".to_string(),
-                                    ClaimEntry::Claim(ClaimDefinition::default()),
-                                ),
-                                (
-                                    "family_name".to_string(),
-                                    ClaimEntry::Claim(ClaimDefinition::default()),
-                                ),
-                                (
-                                    "email".to_string(),
-                                    ClaimEntry::Claim(ClaimDefinition::default()),
-                                ),
-                            ])),
-                            ..CredentialDefinition::default()
-                        },
-                    }),
+                    claims: Some(ProfileClaims::W3c(CredentialDefinition {
+                        credential_subject: Some(HashMap::from([
+                            (
+                                "given_name".to_string(),
+                                ClaimEntry::Claim(ClaimDefinition::default()),
+                            ),
+                            (
+                                "family_name".to_string(),
+                                ClaimEntry::Claim(ClaimDefinition::default()),
+                            ),
+                            ("email".to_string(), ClaimEntry::Claim(ClaimDefinition::default())),
+                        ])),
+                        ..CredentialDefinition::default()
+                    })),
                 },
                 ..AuthorizationDetail::default()
             }]),
@@ -1809,8 +1883,7 @@ mod tests {
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: CredentialAuthorization::Format(CredentialFormat {
-                    format: FormatIdentifier::JwtVcJson,
-                    profile: FormatProfile::W3c {
+                    format: FormatIdentifier::JwtVcJson(ProfileW3c {
                         credential_definition: CredentialDefinition {
                             type_: Some(vec![
                                 "VerifiableCredential".into(),
@@ -1818,7 +1891,7 @@ mod tests {
                             ]),
                             ..CredentialDefinition::default()
                         },
-                    },
+                    }),
                 }),
 
                 ..AuthorizationDetail::default()
@@ -1899,8 +1972,7 @@ mod tests {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
             credential: CredentialIssuance::Format(CredentialFormat {
-                format: FormatIdentifier::JwtVcJson,
-                profile: FormatProfile::W3c {
+                format: FormatIdentifier::JwtVcJson(ProfileW3c {
                     credential_definition: CredentialDefinition {
                         type_: Some(vec![
                             "VerifiableCredential".into(),
@@ -1908,7 +1980,7 @@ mod tests {
                         ]),
                         ..CredentialDefinition::default()
                     },
-                },
+                }),
             }),
             proof: Some(Proof::Single {
                 proof_type: SingleProof::Jwt {
