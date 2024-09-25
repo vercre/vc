@@ -148,15 +148,16 @@ impl Context {
     ) -> Result<TokenResponse> {
         tracing::debug!("token::process");
 
-        // the subset of requested credentials retained from those previously authorized
-
         let (authorization_details, authorized) = match &request.grant_type {
             TokenGrantType::PreAuthorizedCode { .. } => {
                 let Stage::PreAuthorized(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("pre-authorized state not set".into()));
                 };
+
+                // get the subset of requested credentials from those previously authorized
                 let retained_items =
                     retain_details(&request.authorization_details, &auth_state.items)?;
+                    
                 let authorized_details = authorized_details(&retained_items);
                 let authorized = authorized_credentials(&retained_items);
 
