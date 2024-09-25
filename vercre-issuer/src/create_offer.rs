@@ -75,7 +75,7 @@ use vercre_openid::issuer::{
 };
 use vercre_openid::{Error, Result};
 
-use crate::state::{DetailItem, Expire, Offer, PreAuthorization, Stage, State};
+use crate::state::{AuthorizedItem, Expire, ItemType, Offer, PreAuthorization, Stage, State};
 
 /// Invoke request handler generates and returns a Credential Offer.
 ///
@@ -133,7 +133,7 @@ async fn process(
 ) -> Result<CreateOfferResponse> {
     tracing::debug!("create_offer::process");
 
-    let authorized = authorize(provider, &request).await?;
+    let authorized_items = authorize(provider, &request).await?;
     let credential_offer = credential_offer(&request);
     let tx_code =
         if request.pre_authorize && request.tx_code_required { Some(gen::tx_code()) } else { None };
@@ -153,13 +153,13 @@ async fn process(
     // save state
     let state_stage = if request.send_type == SendType::ByVal && request.pre_authorize {
         Stage::PreAuthorized(PreAuthorization {
-            details: authorized,
+            items: authorized_items,
             tx_code: tx_code.clone(),
         })
     } else {
         Stage::Offered(Offer {
             credential_offer,
-            details: authorized,
+            items: authorized_items,
             tx_code: tx_code.clone(),
         })
     };
@@ -179,7 +179,7 @@ async fn process(
 /// Authorize requested credentials for the subject.
 async fn authorize(
     provider: &impl Provider, request: &CreateOfferRequest,
-) -> Result<Vec<DetailItem>> {
+) -> Result<Vec<AuthorizedItem>> {
     // skip authorization if not pre-authorized
     if !request.pre_authorize {
         return Ok(vec![]);
@@ -198,15 +198,15 @@ async fn authorize(
             .await
             .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
 
-        authorized.push(DetailItem {
-            authorization_detail: AuthorizationDetail {
+        authorized.push(AuthorizedItem {
+            item: ItemType::AuthorizationDetail(AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: CredentialAuthorization::ConfigurationId {
                     credential_configuration_id: config_id.clone(),
                     claims: None,
                 },
                 locations: None,
-            },
+            }),
             credential_configuration_id: config_id.clone(),
             credential_identifiers: identifiers,
         });

@@ -6,8 +6,8 @@ expression: "&state"
 subject_id: normal_user
 stage:
   pre_authorized:
-    details:
-      - authorization_detail:
+    items:
+      - AuthorizationDetail:
           type: openid_credential
           credential_configuration_id: EmployeeID_JWT
         credential_configuration_id: EmployeeID_JWT

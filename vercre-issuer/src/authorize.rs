@@ -79,7 +79,7 @@ use vercre_openid::issuer::{
 use vercre_openid::{Error, Result};
 
 // use crate::shell;
-use crate::state::{Authorization, DetailItem, Expire, ScopeItem, Stage, State};
+use crate::state::{Authorization, AuthorizedItem, Expire, ItemType, Stage, State};
 
 /// Authorization request handler.
 ///
@@ -337,38 +337,34 @@ impl Context {
         tracing::debug!("authorize::process");
 
         // authorization_detail
-        let mut authzd_details = vec![];
+        let mut authorized_items = vec![];
         for (config_id, auth_det) in &self.auth_dets {
             let identifiers = Subject::authorize(provider, &request.subject_id, config_id)
                 .await
                 .map_err(|e| Error::ServerError(format!("issue authorizing subject: {e}")))?;
 
-            authzd_details.push(DetailItem {
-                authorization_detail: auth_det.clone(),
+            authorized_items.push(AuthorizedItem {
+                item: ItemType::AuthorizationDetail(auth_det.clone()),
                 credential_configuration_id: config_id.clone(),
                 credential_identifiers: identifiers.clone(),
             });
         }
 
-        let details = if authzd_details.is_empty() { None } else { Some(authzd_details) };
-
         // scope
-        let mut authzd_scope = vec![];
         for (config_id, scope_item) in &self.scope_items {
             let identifiers = Subject::authorize(provider, &request.subject_id, config_id)
                 .await
                 .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
 
-            authzd_scope.push(ScopeItem {
-                item: scope_item.clone(),
+            authorized_items.push(AuthorizedItem {
+                item: ItemType::Scope(scope_item.clone()),
                 credential_configuration_id: config_id.clone(),
                 credential_identifiers: identifiers.clone(),
             });
         }
-        let scope = if authzd_scope.is_empty() { None } else { Some(authzd_scope) };
 
         // return an error if holder is not authorized for any requested credentials
-        if details.is_none() && scope.is_none() {
+        if authorized_items.is_empty() {
             return Err(Error::AccessDenied(
                 "holder is not authorized for requested credentials".into(),
             ));
@@ -381,8 +377,7 @@ impl Context {
             stage: Stage::Authorized(Authorization {
                 code_challenge: request.code_challenge,
                 code_challenge_method: request.code_challenge_method,
-                details,
-                scope,
+                items: authorized_items,
                 client_id: request.client_id,
                 redirect_uri: request.redirect_uri.clone(),
             }),
@@ -445,7 +440,8 @@ mod tests {
             StateStore::get::<State>(&provider, &response.code).await.expect("state exists");
         assert_snapshot!(format!("authorize:{name}:state"), state, {
             ".expires_at" => "[expires_at]",
-            ".stage.details[].authorization_detail.credential_definition.credentialSubject" => insta::sorted_redaction(),
+            ".**.credentialSubject" => insta::sorted_redaction(),
+            // ".items.*.credential_definition.credentialSubject" => insta::sorted_redaction(),
         });
     }
 

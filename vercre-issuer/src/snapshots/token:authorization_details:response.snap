@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/token.rs
-assertion_line: 546
+assertion_line: 478
 expression: "&response"
 ---
 access_token: "[access_token]"
