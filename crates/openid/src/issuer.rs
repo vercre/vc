@@ -549,7 +549,7 @@ pub struct AuthorizationDetail {
 }
 
 /// Means used to identifiy a Credential's type when requesting a Credential.
-#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, Eq)]
 #[serde(untagged)]
 pub enum CredentialAuthorization {
     /// Identifes the credential to authorize by `credential_configuration_id`.
@@ -576,6 +576,34 @@ impl Default for CredentialAuthorization {
         Self::ConfigurationId {
             credential_configuration_id: String::new(),
             claims: None,
+        }
+    }
+}
+
+/// `PartialEq` for `CredentialAuthorization` checks for equivalence using
+/// `credential_configuration_id` or `format`, ecluding claims.
+impl PartialEq for CredentialAuthorization {
+    fn eq(&self, other: &Self) -> bool {
+        match self {
+            Self::ConfigurationId {
+                credential_configuration_id,
+                ..
+            } => {
+                let Self::ConfigurationId {
+                    credential_configuration_id: other_id,
+                    ..
+                } = &other
+                else {
+                    return false;
+                };
+                credential_configuration_id == other_id
+            }
+            Self::Format(format) => {
+                let Self::Format(other_format) = &other else {
+                    return false;
+                };
+                format == other_format
+            }
         }
     }
 }
@@ -937,7 +965,7 @@ pub struct TokenResponse {
     /// The Authorization Details `credential_identifiers` parameter may be
     /// populated for use in subsequent Credential Requests.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub authorization_details: Option<Vec<Authorized>>,
+    pub authorization_details: Option<Vec<AuthorizedDetail>>,
 
     /// OPTIONAL if identical to the requested scope, otherwise REQUIRED.
     ///
@@ -964,7 +992,7 @@ pub enum TokenType {
 /// It wraps the `AuthorizationDetail` struct and adds `credential_identifiers`
 /// parameter for use in Credential requests.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Authorized {
+pub struct AuthorizedDetail {
     /// Reuse (and flatten) the existing [`AuthorizationDetail`] object used in
     /// authorization requests.
     #[serde(flatten)]

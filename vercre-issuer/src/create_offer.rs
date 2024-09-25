@@ -65,18 +65,17 @@
 //!
 //! See <https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-offer-endpoint>
 
-use std::collections::HashMap;
-
 use chrono::Utc;
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationCodeGrant, CreateOfferRequest, CreateOfferResponse, CredentialOffer, Grants,
-    Metadata, OfferType, PreAuthorizedCodeGrant, Provider, SendType, StateStore, Subject, TxCode,
+    AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, CreateOfferRequest,
+    CreateOfferResponse, CredentialAuthorization, CredentialOffer, Grants, Metadata, OfferType,
+    PreAuthorizedCodeGrant, Provider, SendType, StateStore, Subject, TxCode,
 };
 use vercre_openid::{Error, Result};
 
-use crate::state::{AuthorizedCredential, Expire, Offer, PreAuthorization, Stage, State};
+use crate::state::{AuthorizedItem, Expire, ItemType, Offer, PreAuthorization, Stage, State};
 
 /// Invoke request handler generates and returns a Credential Offer.
 ///
@@ -134,7 +133,7 @@ async fn process(
 ) -> Result<CreateOfferResponse> {
     tracing::debug!("create_offer::process");
 
-    let authorized = authorize(provider, &request).await?;
+    let authorized_items = authorize(provider, &request).await?;
     let credential_offer = credential_offer(&request);
     let tx_code =
         if request.pre_authorize && request.tx_code_required { Some(gen::tx_code()) } else { None };
@@ -154,13 +153,13 @@ async fn process(
     // save state
     let state_stage = if request.send_type == SendType::ByVal && request.pre_authorize {
         Stage::PreAuthorized(PreAuthorization {
-            credentials: authorized,
+            items: authorized_items,
             tx_code: tx_code.clone(),
         })
     } else {
         Stage::Offered(Offer {
             credential_offer,
-            credentials: authorized,
+            items: authorized_items,
             tx_code: tx_code.clone(),
         })
     };
@@ -180,10 +179,10 @@ async fn process(
 /// Authorize requested credentials for the subject.
 async fn authorize(
     provider: &impl Provider, request: &CreateOfferRequest,
-) -> Result<HashMap<String, AuthorizedCredential>> {
+) -> Result<Vec<AuthorizedItem>> {
     // skip authorization if not pre-authorized
     if !request.pre_authorize {
-        return Ok(HashMap::new());
+        return Ok(vec![]);
     }
 
     let Some(subject_id) = &request.subject_id else {
@@ -192,23 +191,25 @@ async fn authorize(
         ));
     };
 
-    let mut authorized = HashMap::new();
+    let mut authorized = vec![];
 
     for config_id in request.credential_configuration_ids.clone() {
         let identifiers = Subject::authorize(provider, subject_id, &config_id)
             .await
             .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
 
-        for identifier in &identifiers {
-            authorized.insert(
-                identifier.clone(),
-                AuthorizedCredential {
-                    credential_identifier: identifier.clone(),
+        authorized.push(AuthorizedItem {
+            item: ItemType::AuthorizationDetail(AuthorizationDetail {
+                type_: AuthorizationDetailType::OpenIdCredential,
+                credential: CredentialAuthorization::ConfigurationId {
                     credential_configuration_id: config_id.clone(),
-                    claim_ids: None,
+                    claims: None,
                 },
-            );
-        }
+                locations: None,
+            }),
+            credential_configuration_id: config_id.clone(),
+            credential_identifiers: identifiers,
+        });
     }
 
     Ok(authorized)

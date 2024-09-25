@@ -26,7 +26,7 @@ use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{self, Payload};
 use vercre_w3c_vc::verify_key;
 
-use crate::state::{AuthorizedCredential, Credential, Deferrance, Expire, Stage, State};
+use crate::state::{Authorized, Credential, Deferrance, Expire, Stage, State};
 
 /// Credential request handler.
 ///
@@ -61,7 +61,7 @@ pub async fn credential(
 struct Context {
     state: State,
     issuer: Issuer,
-    authorized: AuthorizedCredential,
+    authorized: Authorized,
     holder_did: String,
 }
 
@@ -329,9 +329,9 @@ impl Context {
         })
     }
 
-    // Get `AuthorizedCredential` for `credential_identifier` and
+    // Get `Authorized` for `credential_identifier` and
     // `credential_configuration_id`.
-    fn authorized(&self, request: &CredentialRequest) -> Result<AuthorizedCredential> {
+    fn authorized(&self, request: &CredentialRequest) -> Result<Authorized> {
         let Stage::Validated(token) = &self.state.stage else {
             return Err(Error::AccessDenied("invalid access token state".into()));
         };
@@ -432,7 +432,7 @@ mod tests {
     use vercre_w3c_vc::proof::{self, Verify};
 
     use super::*;
-    use crate::state::{AuthorizedCredential, Token};
+    use crate::state::{Authorized, Token};
     extern crate self as vercre_issuer;
 
     #[tokio::test]
@@ -450,7 +450,7 @@ mod tests {
                 access_token: access_token.into(),
                 credentials: HashMap::from([(
                     "PHLEmployeeID".into(),
-                    AuthorizedCredential {
+                    Authorized {
                         credential_identifier: "PHLEmployeeID".into(),
                         credential_configuration_id: "EmployeeID_JWT".into(),
                         claim_ids: None,
@@ -531,7 +531,7 @@ mod tests {
                 access_token: access_token.into(),
                 credentials: HashMap::from([(
                     "PHLEmployeeID".into(),
-                    AuthorizedCredential {
+                    Authorized {
                         credential_identifier: "PHLEmployeeID".into(),
                         credential_configuration_id: "EmployeeID_JWT".into(),
                         claim_ids: None,
