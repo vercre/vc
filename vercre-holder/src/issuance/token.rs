@@ -38,9 +38,6 @@ pub struct AuthorizedCredentials {
 pub async fn token(
     provider: impl HolderProvider, issuance_id: &str,
 ) -> anyhow::Result<AuthorizedCredentials> {
-pub async fn token(
-    provider: impl HolderProvider, issuance_id: &str,
-) -> anyhow::Result<AuthorizedCredentials> {
     tracing::debug!("Endpoint::token");
 
     let mut issuance: Issuance = match StateStore::get(&provider, issuance_id).await {
@@ -101,8 +98,6 @@ pub async fn token(
                             tracing::error!(target: "Endpoint::token", ?e);
                             return Err(e);
                         }
-                    }
-                    .to_string()
                     }
                     .to_string()
                 }
