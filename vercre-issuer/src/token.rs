@@ -151,38 +151,39 @@ impl Context {
         // the subset of requested credentials retained from those previously authorized
         let mut retained = HashMap::new();
 
-        let (authorization_details, scope) = match &request.grant_type {
+        let authorization_details = match &request.grant_type {
             TokenGrantType::PreAuthorizedCode { .. } => {
                 let Stage::PreAuthorized(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("pre-authorized state not set".into()));
                 };
 
-                // pre-authorized credentials use authorization_details
-                let (authorization_details, authorized) =
-                    retain_auth(&request.authorization_details, &auth_state.details)?;
+                // pre-authorized credentials use `authorization_details`
+                let detail_items =
+                    retain_details(&request.authorization_details, &auth_state.details)?;
+
+                let (authorization_details, authorized) = to_authorized_details(&detail_items)?;
                 retained = authorized;
-                (Some(authorization_details), None)
+
+                Some(authorization_details)
             }
             TokenGrantType::AuthorizationCode { .. } => {
                 let Stage::Authorized(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("authorization state not set".into()));
                 };
 
-                // credentials requested using authorization_details
-                let authorization_details = if let Some(detail_items) = &auth_state.details {
-                    let (authorization_details, authorized) =
-                        retain_auth(&request.authorization_details, detail_items)?;
+                // credentials authorized using `authorization_details`
+                if let Some(detail_items) = &auth_state.details {
+                    let (_, authorized) = to_authorized_details(detail_items)?;
                     retained = authorized;
-                    Some(authorization_details)
-                } else {
-                    None
                 };
 
-                // credentials requested using scope
-                let (scope, authorized) = retain_scope(&auth_state.scope);
-                retained.extend(authorized);
+                // credentials authorized using `scope`
+                if let Some(scope_items) = &auth_state.scope {
+                    let authorized = to_authorized(scope_items);
+                    retained.extend(authorized);
+                }
 
-                (authorization_details, scope)
+                None
             }
         };
 
@@ -209,38 +210,41 @@ impl Context {
             c_nonce: Some(c_nonce),
             c_nonce_expires_in: Some(Expire::Nonce.duration().num_seconds()),
             authorization_details,
-            scope,
+            scope: None,
         })
     }
 }
 
-fn retain_auth(
+fn retain_details(
     requested: &Option<Vec<AuthorizationDetail>>, details: &[DetailItem],
-) -> Result<(Vec<AuthorizedDetail>, HashMap<String, Authorized>)> {
+) -> Result<Vec<DetailItem>> {
     // filter previously authorized DetailItems by requested authorization_details
-    let detail_items = if let Some(req_dets) = requested {
-        let filtered = details
-            .iter()
-            .filter(|authd| {
-                req_dets.iter().any(|reqd| authd.authorization_detail.credential == reqd.credential)
-            })
-            .cloned()
-            .collect::<Vec<_>>();
+    let Some(req_dets) = requested else { return Ok(details.to_vec()) };
 
-        if filtered.is_empty() {
-            return Err(Error::InvalidRequest("no matching authorization details".into()));
-        }
-        filtered
-    } else {
-        details.to_vec()
-    };
+    let filtered = details
+        .iter()
+        .filter(|authd| {
+            req_dets.iter().any(|reqd| authd.authorization_detail.credential == reqd.credential)
+        })
+        .cloned()
+        .collect::<Vec<_>>();
 
+    if filtered.is_empty() {
+        return Err(Error::InvalidRequest("no matching authorization details".into()));
+    }
+
+    Ok(filtered)
+}
+
+fn to_authorized_details(
+    detail_items: &[DetailItem],
+) -> Result<(Vec<AuthorizedDetail>, HashMap<String, Authorized>)> {
     // convert retained detail_items to Authorized token response
     // + state Authorized
     let mut retained_auth = vec![];
     let mut authorized = HashMap::new();
 
-    for item in &detail_items {
+    for item in detail_items {
         retained_auth.push(AuthorizedDetail {
             authorization_detail: item.authorization_detail.clone(),
             credential_identifiers: item.credential_identifiers.clone(),
@@ -261,30 +265,23 @@ fn retain_auth(
     Ok((retained_auth, authorized))
 }
 
-fn retain_scope(scope: &Option<Vec<ScopeItem>>) -> (Option<String>, HashMap<String, Authorized>) {
+fn to_authorized(scope_items: &[ScopeItem]) -> HashMap<String, Authorized> {
     let mut authorized = HashMap::new();
 
-    let retained_scope = scope.as_ref().map(|scope_items| {
-        let mut scope_str = String::new();
-
-        for item in scope_items {
-            scope_str.push_str(&item.item);
-
-            for identifier in &item.credential_identifiers {
-                authorized.insert(
-                    identifier.clone(),
-                    Authorized {
-                        credential_identifier: identifier.clone(),
-                        credential_configuration_id: item.credential_configuration_id.clone(),
-                        claim_ids: None,
-                    },
-                );
-            }
+    for item in scope_items {
+        for identifier in &item.credential_identifiers {
+            authorized.insert(
+                identifier.clone(),
+                Authorized {
+                    credential_identifier: identifier.clone(),
+                    credential_configuration_id: item.credential_configuration_id.clone(),
+                    claim_ids: None,
+                },
+            );
         }
-        scope_str
-    });
+    }
 
-    (retained_scope, authorized)
+    authorized
 }
 
 #[cfg(test)]
