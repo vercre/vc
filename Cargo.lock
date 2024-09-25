@@ -6097,6 +6097,7 @@ dependencies = [
  "fastrand",
  "serde",
  "serde_json",
+ "sha2",
 ]
 
 [[package]]
@@ -6158,6 +6159,7 @@ name = "vercre-holder"
 version = "0.1.0-alpha.6"
 dependencies = [
  "anyhow",
+ "base64ct",
  "chrono",
  "insta",
  "serde",

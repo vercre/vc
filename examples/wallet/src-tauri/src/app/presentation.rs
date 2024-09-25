@@ -24,7 +24,7 @@ pub struct PresentationState {
 impl AppState {
     /// Process a presentation request.
     pub async fn request(&mut self, request: &str, provider: Provider) -> anyhow::Result<()> {
-        let response = vercre_holder::request(provider, &request.into()).await?;
+        let response = vercre_holder::presentation::request(provider, &request.into()).await?;
         self.presentation = PresentationState {
             id: response.presentation_id,
             status: response.status,
@@ -36,14 +36,16 @@ impl AppState {
 
     /// Authorize the presentation request.
     pub async fn authorize(&mut self, provider: Provider) -> anyhow::Result<()> {
-        let status = vercre_holder::authorize(provider, self.presentation.id.clone()).await?;
+        let status =
+            vercre_holder::presentation::authorize(provider, self.presentation.id.clone()).await?;
         self.presentation.status = status;
         Ok(())
     }
 
     /// Present the authorized presentation request.
     pub async fn present(&self, provider: Provider) -> anyhow::Result<()> {
-        let _response = vercre_holder::present(provider, self.presentation.id.clone()).await?;
+        let _response =
+            vercre_holder::presentation::present(provider, self.presentation.id.clone()).await?;
         Ok(())
     }
 }

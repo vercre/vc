@@ -3,16 +3,24 @@
 //! The Issuance endpoints implement the vercre-holder's credential issuance
 //! flow.
 
-pub mod accept;
-pub mod cancel;
-pub mod credential;
-pub mod offer;
-pub mod pin;
-pub mod token;
+pub(crate) mod accept;
+pub(crate) mod authorize;
+pub(crate) mod cancel;
+pub(crate) mod credential;
+pub(crate) mod offer;
+pub(crate) mod pin;
+pub(crate) mod token;
 
 use std::fmt::Debug;
 
+pub use accept::{accept, AcceptRequest, AuthorizationSpec};
+pub use authorize::{authorize, AuthorizeRequest};
+pub use cancel::cancel;
+pub use credential::{credentials, CredentialsRequest};
+pub use offer::{offer, OfferRequest, OfferResponse};
+pub use pin::{pin, PinRequest};
 use serde::{Deserialize, Serialize};
+pub use token::{token, AuthorizedCredentials};
 use uuid::Uuid;
 use vercre_openid::issuer::{AuthorizationDetail, CredentialOffer, Issuer, TokenResponse};
 
@@ -26,6 +34,9 @@ pub struct Issuance {
 
     /// Client ID of the holder's agent (wallet)
     pub client_id: String,
+
+    /// ID of the holder
+    pub subject_id: String,
 
     /// Current status of the issuance flow.
     pub status: Status,

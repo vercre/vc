@@ -3,8 +3,8 @@ use http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use tauri_plugin_http::reqwest;
 use vercre_holder::provider::Issuer;
 use vercre_holder::{
-    CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse, TokenRequest,
-    TokenResponse,
+    AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse, Logo,
+    MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,
 };
 
 use super::Provider;
@@ -25,6 +25,14 @@ impl Issuer for Provider {
             }
         };
         Ok(md)
+    }
+
+    /// Get an authorization code. Not implemented for this example that assumes
+    /// issuer-initiated pre-authorized issuance.
+    async fn get_authorization(
+        &self, _issuance_id: &str, _req: AuthorizationRequest,
+    ) -> anyhow::Result<AuthorizationResponse> {
+        unimplemented!()
     }
 
     /// Get an access token.

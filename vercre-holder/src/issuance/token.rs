@@ -27,6 +27,7 @@ pub struct AuthorizedCredentials {
 
     /// The list of credential identifiers the holder is authorized to request,
     /// keyed by credential configuration ID.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub authorized: Option<HashMap<String, Vec<String>>>,
 }
 
@@ -51,9 +52,8 @@ pub async fn token(
     // be pre-authorized and accepted or an authorization must have occurred.
     //
     // TODO: The wallet is supposed to handle the case where there are no
-    // grants by using issuer metadata to determine the required grants. However,
-    // the metata specification does not currently include this information. Until
-    // it does, we return an error here.
+    // grants by using issuer metadata to determine the required grants. Look
+    // up server metadata to determine the required grants.
     let Some(grants) = issuance.offer.grants.clone() else {
         let e = anyhow!("no grants in offer is not supported");
         tracing::error!(target: "Endpoint::token", ?e);

@@ -109,7 +109,7 @@ async fn e2e_presentation_uri() {
 
     // Intiate the presentation flow using a url
     let url = init_request.request_uri.expect("should have request uri");
-    let presentation = vercre_holder::request(HOLDER_PROVIDER.clone(), &url)
+    let presentation = vercre_holder::presentation::request(HOLDER_PROVIDER.clone(), &url)
         .await
         .expect("should process request");
 
@@ -120,17 +120,21 @@ async fn e2e_presentation_uri() {
     });
 
     // Authorize the presentation
-    let status =
-        vercre_holder::authorize(HOLDER_PROVIDER.clone(), presentation.presentation_id.clone())
-            .await
-            .expect("should authorize presentation");
+    let status = vercre_holder::presentation::authorize(
+        HOLDER_PROVIDER.clone(),
+        presentation.presentation_id.clone(),
+    )
+    .await
+    .expect("should authorize presentation");
     assert_eq!(status, Status::Authorized);
 
     // Process the presentation
-    let response =
-        vercre_holder::present(HOLDER_PROVIDER.clone(), presentation.presentation_id.clone())
-            .await
-            .expect("should process present");
+    let response = vercre_holder::presentation::present(
+        HOLDER_PROVIDER.clone(),
+        presentation.presentation_id.clone(),
+    )
+    .await
+    .expect("should process present");
     assert_snapshot!("response_response", response);
 }
 
@@ -154,8 +158,9 @@ async fn e2e_presentation_obj() {
     // Intiate the presentation flow using an object
     let obj = init_request.request_object.expect("should have request object");
     let qs = serde_qs::to_string(&obj).expect("should serialize");
-    let presentation =
-        vercre_holder::request(HOLDER_PROVIDER.clone(), &qs).await.expect("should process request");
+    let presentation = vercre_holder::presentation::request(HOLDER_PROVIDER.clone(), &qs)
+        .await
+        .expect("should process request");
 
     assert_eq!(presentation.status, Status::Requested);
     assert_snapshot!("presentation_requested2", presentation, {
@@ -164,16 +169,20 @@ async fn e2e_presentation_obj() {
     });
 
     // Authorize the presentation
-    let status =
-        vercre_holder::authorize(HOLDER_PROVIDER.clone(), presentation.presentation_id.clone())
-            .await
-            .expect("should authorize presentation");
+    let status = vercre_holder::presentation::authorize(
+        HOLDER_PROVIDER.clone(),
+        presentation.presentation_id.clone(),
+    )
+    .await
+    .expect("should authorize presentation");
     assert_eq!(status, Status::Authorized);
 
     // Process the presentation
-    let response =
-        vercre_holder::present(HOLDER_PROVIDER.clone(), presentation.presentation_id.clone())
-            .await
-            .expect("should process present");
+    let response = vercre_holder::presentation::present(
+        HOLDER_PROVIDER.clone(),
+        presentation.presentation_id.clone(),
+    )
+    .await
+    .expect("should process present");
     assert_snapshot!("response_response2", response);
 }

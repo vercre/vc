@@ -28,6 +28,9 @@ pub struct OfferRequest {
     /// case of headless, multi-tenant agents.
     pub client_id: String,
 
+    /// Holder's identifer.
+    pub subject_id: String,
+
     /// The credential offer from the issuer.
     pub offer: CredentialOffer,
 }
@@ -82,6 +85,7 @@ pub async fn offer(
 
     // Establish a new issuance flow state
     let mut issuance = Issuance::new(&request.client_id);
+    issuance.subject_id.clone_from(&request.subject_id);
     issuance.status = Status::Offered;
 
     // Set up a credential configuration for each credential offered.

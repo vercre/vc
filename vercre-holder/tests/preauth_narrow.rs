@@ -7,7 +7,8 @@ use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
 // use vercre_holder::provider::CredentialStorer;
-use vercre_holder::{AcceptRequest, AuthorizationSpec, ClaimEntry, OfferRequest};
+use vercre_holder::issuance::{AcceptRequest, AuthorizationSpec, OfferRequest};
+use vercre_holder::ClaimEntry;
 use vercre_issuer::{OfferType, SendType};
 use vercre_macros::create_offer_request;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -45,9 +46,10 @@ async fn preauth_narrow() {
     // Initiate the pre-authorized code flow
     let offer_req = OfferRequest {
         client_id: CLIENT_ID.into(),
+        subject_id: NORMAL_USER.into(),
         offer,
     };
-    let issuance = vercre_holder::offer(HOLDER_PROVIDER.clone(), &offer_req)
+    let issuance = vercre_holder::issuance::offer(HOLDER_PROVIDER.clone(), &offer_req)
         .await
         .expect("should process offer");
 
@@ -68,10 +70,10 @@ async fn preauth_narrow() {
             claims: Some(HashMap::from([("proficiency".to_string(), ClaimEntry::default())])),
         }]),
     };
-    vercre_holder::accept(HOLDER_PROVIDER.clone(), &accept_req).await.expect("should accept offer");
+    vercre_holder::issuance::accept(HOLDER_PROVIDER.clone(), &accept_req).await.expect("should accept offer");
 
     // Get available credential identifiers.
-    let token_response = vercre_holder::token(HOLDER_PROVIDER.clone(), &issuance.issuance_id)
+    let token_response = vercre_holder::issuance::token(HOLDER_PROVIDER.clone(), &issuance.issuance_id)
         .await
         .expect("should get token");
 

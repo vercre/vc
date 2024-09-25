@@ -5,8 +5,8 @@ mod provider;
 use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
+use vercre_holder::issuance::{AcceptRequest, CredentialsRequest, OfferRequest, PinRequest};
 use vercre_holder::provider::CredentialStorer;
-use vercre_holder::{AcceptRequest, CredentialsRequest, OfferRequest, PinRequest};
 use vercre_issuer::{OfferType, SendType};
 use vercre_macros::create_offer_request;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -43,9 +43,10 @@ async fn preauth() {
     // Initiate the pre-authorized code flow
     let offer_req = OfferRequest {
         client_id: CLIENT_ID.into(),
+        subject_id: NORMAL_USER.into(),
         offer,
     };
-    let issuance = vercre_holder::offer(HOLDER_PROVIDER.clone(), &offer_req)
+    let issuance = vercre_holder::issuance::offer(HOLDER_PROVIDER.clone(), &offer_req)
         .await
         .expect("should process offer");
 
@@ -60,17 +61,21 @@ async fn preauth() {
         issuance_id: issuance.issuance_id.clone(),
         accept: None,
     };
-    vercre_holder::accept(HOLDER_PROVIDER.clone(), &accept_req).await.expect("should accept offer");
+    vercre_holder::issuance::accept(HOLDER_PROVIDER.clone(), &accept_req)
+        .await
+        .expect("should accept offer");
 
     // Enter PIN
     let pin_req = PinRequest {
         issuance_id: issuance.issuance_id.clone(),
         pin: offer_resp.tx_code.expect("should have user code"),
     };
-    vercre_holder::pin(HOLDER_PROVIDER.clone(), &pin_req).await.expect("should apply pin");
+    vercre_holder::issuance::pin(HOLDER_PROVIDER.clone(), &pin_req)
+        .await
+        .expect("should apply pin");
 
     // Get available credential identifiers.
-    vercre_holder::token(HOLDER_PROVIDER.clone(), &issuance.issuance_id)
+    vercre_holder::issuance::token(HOLDER_PROVIDER.clone(), &issuance.issuance_id)
         .await
         .expect("should get token");
 
@@ -79,7 +84,7 @@ async fn preauth() {
         issuance_id: issuance.issuance_id.clone(),
         credential_identifiers: None,
     };
-    vercre_holder::credentials(HOLDER_PROVIDER.clone(), &cred_req)
+    vercre_holder::issuance::credentials(HOLDER_PROVIDER.clone(), &cred_req)
         .await
         .expect("should get credentials");
 

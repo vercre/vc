@@ -27,5 +27,6 @@ base64ct.workspace = true
 fastrand = "2.1.1"
 serde.workspace = true
 serde_json.workspace = true
+sha2 = "0.10.8"
 
 [dev-dependencies]

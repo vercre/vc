@@ -4,10 +4,8 @@ use std::collections::HashMap;
 
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
-use vercre_holder::{
-    AcceptRequest, CredentialConfiguration, CredentialOffer, CredentialsRequest, OfferRequest,
-    PinRequest, TxCode,
-};
+use vercre_holder::issuance::{AcceptRequest, CredentialsRequest, OfferRequest, PinRequest};
+use vercre_holder::{CredentialConfiguration, CredentialOffer, TxCode};
 
 use super::{AppState, SubApp};
 use crate::provider::Provider;
@@ -38,9 +36,10 @@ impl AppState {
         let offer = serde_json::from_str::<CredentialOffer>(&offer_str)?;
         let request = OfferRequest {
             client_id: CLIENT_ID.into(),
+            subject_id: vercre_test_utils::issuer::NORMAL_USER.into(),
             offer,
         };
-        let res = vercre_holder::offer(provider, &request).await?;
+        let res = vercre_holder::issuance::offer(provider, &request).await?;
 
         // This example can only process an issuer-initiated, pre-authorized issuance
         // flow.
@@ -67,7 +66,7 @@ impl AppState {
             issuance_id: self.issuance.id.clone(),
             accept: None, // implies accept all
         };
-        vercre_holder::accept(provider, &req).await?;
+        vercre_holder::issuance::accept(provider, &req).await?;
         Ok(())
     }
 
@@ -77,7 +76,7 @@ impl AppState {
             issuance_id: self.issuance.id.clone(),
             pin: pin.into(),
         };
-        vercre_holder::pin(provider, &request).await?;
+        vercre_holder::issuance::pin(provider, &request).await?;
         self.issuance.pin = Some(pin.into());
         Ok(())
     }
@@ -85,14 +84,14 @@ impl AppState {
     /// Get the credentials for the accepted issuance offer.
     pub async fn credentials(&self, provider: Provider) -> anyhow::Result<()> {
         log::info!("Getting an access token for issuance {}", self.issuance.id);
-        vercre_holder::token(provider.clone(), &self.issuance.id).await?;
+        vercre_holder::issuance::token(provider.clone(), &self.issuance.id).await?;
 
         log::info!("Getting credentials for issuance {}", self.issuance.id);
         let request = CredentialsRequest {
             issuance_id: self.issuance.id.clone(),
             credential_identifiers: None,
         };
-        vercre_holder::credentials(provider, &request).await?;
+        vercre_holder::issuance::credentials(provider, &request).await?;
         Ok(())
     }
 }

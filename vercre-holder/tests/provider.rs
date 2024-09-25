@@ -14,7 +14,7 @@ use vercre_holder::provider::{
     StateStore, Verifier,
 };
 use vercre_holder::{
-    Credential, CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse,
+    AuthorizationRequest, AuthorizationResponse, Credential, CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse,
     RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse, TokenRequest,
     TokenResponse,
 };
@@ -49,6 +49,13 @@ impl Issuer for Provider {
         &self, _issuance_id: &str, req: MetadataRequest,
     ) -> anyhow::Result<MetadataResponse> {
         let response = vercre_issuer::metadata(self.issuer.clone().unwrap(), req).await?;
+        Ok(response)
+    }
+
+    async fn get_authorization(
+        &self, _issuance_id: &str, req: AuthorizationRequest,
+    ) -> anyhow::Result<AuthorizationResponse> {
+        let response = vercre_issuer::authorize(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 
