@@ -81,6 +81,23 @@ impl Context {
 
         // grant_type
         match &request.grant_type {
+            TokenGrantType::PreAuthorizedCode { tx_code, .. } => {
+                let Stage::PreAuthorized(auth_state) = &self.state.stage else {
+                    return Err(Error::ServerError("pre-authorized state not set".into()));
+                };
+
+                // anonymous access allowed?
+                if request.client_id.as_ref().is_none()
+                    || request.client_id.as_ref().is_some_and(String::is_empty)
+                        && !server.pre_authorized_grant_anonymous_access_supported
+                {
+                    return Err(Error::InvalidClient("anonymous access is not supported".into()));
+                }
+                // tx_code
+                if tx_code != &auth_state.tx_code {
+                    return Err(Error::InvalidGrant("invalid tx_code provided".into()));
+                }
+            }
             TokenGrantType::AuthorizationCode {
                 redirect_uri,
                 code_verifier,
@@ -116,23 +133,6 @@ impl Context {
 
                 if challenge != auth_state.code_challenge {
                     return Err(Error::AccessDenied("code_verifier is invalid".into()));
-                }
-            }
-            TokenGrantType::PreAuthorizedCode { tx_code, .. } => {
-                let Stage::PreAuthorized(auth_state) = &self.state.stage else {
-                    return Err(Error::ServerError("pre-authorized state not set".into()));
-                };
-
-                // anonymous access allowed?
-                if request.client_id.as_ref().is_none()
-                    || request.client_id.as_ref().is_some_and(String::is_empty)
-                        && !server.pre_authorized_grant_anonymous_access_supported
-                {
-                    return Err(Error::InvalidClient("anonymous access is not supported".into()));
-                }
-                // tx_code
-                if tx_code != &auth_state.tx_code {
-                    return Err(Error::InvalidGrant("invalid tx_code provided".into()));
                 }
             }
         }
