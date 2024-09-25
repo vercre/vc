@@ -14,9 +14,7 @@ use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use vercre_openid::issuer::{
-    AuthorizationDetail, CredentialOffer, Issuer, TokenResponse
-};
+use vercre_openid::issuer::{AuthorizationDetail, CredentialOffer, Issuer, TokenResponse};
 
 /// `Issuance` represents app state across the steps of the issuance flow.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]

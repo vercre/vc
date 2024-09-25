@@ -104,7 +104,7 @@ pub async fn offer(
         }
     };
     // Update the flow state with issuer's metadata.
-    issuance.issuer = md_response.credential_issuer.clone();    
+    issuance.issuer = md_response.credential_issuer.clone();
     issuance.status = Status::Ready;
 
     // Stash the state for the next step.
@@ -128,7 +128,6 @@ pub async fn offer(
         };
         offered.insert(cfg_id.clone(), found.clone());
     }
-
 
     let res = OfferResponse {
         issuance_id: issuance.id,

@@ -70,7 +70,7 @@ pub enum Stage {
 
 /// Holds data used during the issuance of a credential.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct AuthorizedCredential {
+pub struct Authorized {
     /// Identifies the dataset associated with the credential to be issued.
     /// Dataset is unique by issuer not by subject.
     ///
@@ -97,8 +97,9 @@ pub struct Offer {
     /// Credential Offer, ready for the client to retrieve.
     pub credential_offer: CredentialOffer,
 
-    /// Credentials (configuration id and identifier) authorized for issuance.
-    pub credentials: HashMap<CredentialIdentifier, AuthorizedCredential>,
+    /// A list of `authorization_details` entries referencing credentials the
+    /// Wallet is authorized to request.
+    pub items: Vec<AuthorizedItem>,
 
     /// Transaction code for pre-authorized offers.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -108,8 +109,9 @@ pub struct Offer {
 /// Pre-authorization state from the `create_offer` endpoint.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PreAuthorization {
-    /// Authorized credentials (configuration id and identifier).
-    pub credentials: HashMap<CredentialIdentifier, AuthorizedCredential>,
+    /// A list of `authorization_details` entries referencing credentials the
+    /// Wallet is authorized to request.
+    pub items: Vec<AuthorizedItem>,
 
     /// Transaction code sent to the holder to use (if present)when requesting
     /// an access token.
@@ -133,43 +135,39 @@ pub struct Authorization {
     /// PKCE code challenge method from the Authorization Request.
     pub code_challenge_method: String,
 
-    /// Lists credentials (as `authorization_details` entries) that the Wallet
-    /// is authorized to request.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub details: Option<Vec<DetailItem>>,
-
-    /// Lists credentials (as scope items) that the Wallet is authorized to
-    /// request.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub scope: Option<Vec<ScopeItem>>,
+    /// A list of authorized `scope` or `authorization_details` entries along
+    /// with credential metadata and dataset identifiers.
+    pub items: Vec<AuthorizedItem>,
 }
 
-/// Authorized `authorization_detail` item and attendant
-/// `credential_configuration_id`.
+/// Authorized `authorization_detail` or `scope` item along with
+/// `credential_configuration_id` and `credential_identifier`s.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct DetailItem {
-    /// Authorized `authorization_detail`
-    pub authorization_detail: AuthorizationDetail,
+pub struct AuthorizedItem {
+    /// Authorized item.
+    #[serde(flatten)]
+    pub item: ItemType,
 
-    /// Corresponding `credential_configuration_id` for the detail item.
+    /// Credential configuration metadata for the item.
     pub credential_configuration_id: String,
 
-    /// Authorized credential datasets for the scope item.
+    /// Authorized credential datasets for the item.
     pub credential_identifiers: Vec<String>,
 }
 
-/// Authorized scope item with attendant `credential_configuration_id` and
-/// `credential_identifier`s.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct ScopeItem {
-    /// Authorized scope
-    pub item: String,
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub enum ItemType {
+    /// Authorized item is of type `authorization_detail`
+    AuthorizationDetail(AuthorizationDetail),
 
-    /// Authorized `credential_configuration_id` for the scope item.
-    pub credential_configuration_id: String,
+    /// Authorized item is of type `scope`
+    Scope(String),
+}
 
-    /// Authorized credential datasets for the scope item.
-    pub credential_identifiers: Vec<String>,
+impl Default for ItemType {
+    fn default() -> Self {
+        Self::AuthorizationDetail(AuthorizationDetail::default())
+    }
 }
 
 /// Token state.
@@ -188,7 +186,7 @@ pub struct Token {
 
     /// Credentials (configuration id and identifier) validated for issuance
     /// using the accompanying access token.
-    pub credentials: HashMap<CredentialIdentifier, AuthorizedCredential>,
+    pub credentials: HashMap<CredentialIdentifier, Authorized>,
 }
 
 impl Token {

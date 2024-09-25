@@ -127,7 +127,7 @@ pub use token::token;
 pub use vercre_macros::create_offer_request;
 pub use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
-    AuthorizationResponse, Authorized, ClaimDefinition, ClaimEntry, CreateOfferRequest,
+    AuthorizationResponse, AuthorizedDetail, ClaimDefinition, ClaimEntry, CreateOfferRequest,
     CreateOfferResponse, CredentialAuthorization, CredentialConfiguration, CredentialDefinition,
     CredentialFormat, CredentialIssuance, CredentialOffer, CredentialOfferRequest,
     CredentialOfferResponse, CredentialRequest, CredentialResponse, CredentialResponseType,

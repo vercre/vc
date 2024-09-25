@@ -62,7 +62,7 @@ async fn process(
     if let Some(grants) = &credential_offer.grants {
         if grants.pre_authorized_code.is_some() {
             state.stage = Stage::PreAuthorized(PreAuthorization {
-                credentials: offer.credentials.clone(),
+                items: offer.items.clone(),
                 tx_code: offer.tx_code.clone(),
             });
         }
