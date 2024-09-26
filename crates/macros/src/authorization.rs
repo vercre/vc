@@ -130,11 +130,9 @@ fn credential_authorization(detail: &HashMap<String, Value>) -> Result<TokenStre
         match format.as_str() {
             Some("jwt_vc_json") => Ok(quote! {
                 #path::CredentialAuthorization::Format (
-                    #path::CredentialFormat {
-                        format: #path::FormatIdentifier::JwtVcJson(#path::ProfileW3c {
-                            credential_definition: #credential_definition
-                        }),
-                    },
+                    #path::FormatIdentifier::JwtVcJson(#path::ProfileW3c {
+                        credential_definition: #credential_definition
+                    }),
                 )
             }),
             _ => Err(Error::new(span, "unknown `format`")),

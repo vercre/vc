@@ -568,7 +568,7 @@ pub enum CredentialAuthorization {
     /// Identifies the credential to authorize using format-specific parameters.
     /// The requested format should resolve to a single supported credential in
     /// the `credential_configurations_supported` map in the Issuer Metadata.
-    Format(CredentialFormat),
+    Format(FormatIdentifier),
 }
 
 impl Default for CredentialAuthorization {
@@ -606,18 +606,6 @@ impl PartialEq for CredentialAuthorization {
             }
         }
     }
-}
-
-/// When authorization or issuance is requested by format, the format identifier
-/// and format profile-specific parameters are required in order to uniquely
-/// identify the credential requested.
-///
-/// See <https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles>.
-#[derive(Clone, Default, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct CredentialFormat {
-    /// The format's identifier
-    #[serde(flatten)]
-    pub format: FormatIdentifier,
 }
 
 /// The `OpenID4VCI` specification defines commonly used [Credential Format
@@ -1061,7 +1049,7 @@ pub enum CredentialIssuance {
 
     /// Defines the format and type of of the Credential to be issued.  REQUIRED
     /// when `credential_identifiers` was not returned from the Token Response.
-    Format(CredentialFormat),
+    Format(FormatIdentifier),
 }
 
 impl Default for CredentialIssuance {
@@ -1394,10 +1382,10 @@ impl Issuer {
     /// # Errors
     ///
     /// TODO: add error handling
-    pub fn credential_configuration_id(&self, fmt: &CredentialFormat) -> Result<&String> {
+    pub fn credential_configuration_id(&self, fmt: &FormatIdentifier) -> Result<&String> {
         self.credential_configurations_supported
             .iter()
-            .find(|(_, cfg)| cfg.format == fmt.format)
+            .find(|(_, cfg)| &cfg.format == fmt)
             .map(|(id, _)| id)
             .ok_or_else(|| anyhow!("Credential Configuration not found"))
     }
@@ -1892,8 +1880,8 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                credential: CredentialAuthorization::Format(CredentialFormat {
-                    format: FormatIdentifier::JwtVcJson(ProfileW3c {
+                credential: CredentialAuthorization::Format(FormatIdentifier::JwtVcJson(
+                    ProfileW3c {
                         credential_definition: CredentialDefinition {
                             type_: Some(vec![
                                 "VerifiableCredential".into(),
@@ -1901,8 +1889,8 @@ mod tests {
                             ]),
                             ..CredentialDefinition::default()
                         },
-                    }),
-                }),
+                    },
+                )),
 
                 ..AuthorizationDetail::default()
             }]),
@@ -1981,17 +1969,12 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            credential: CredentialIssuance::Format(CredentialFormat {
-                format: FormatIdentifier::JwtVcJson(ProfileW3c {
-                    credential_definition: CredentialDefinition {
-                        type_: Some(vec![
-                            "VerifiableCredential".into(),
-                            "EmployeeIDCredential".into(),
-                        ]),
-                        ..CredentialDefinition::default()
-                    },
-                }),
-            }),
+            credential: CredentialIssuance::Format(FormatIdentifier::JwtVcJson(ProfileW3c {
+                credential_definition: CredentialDefinition {
+                    type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
+                    ..CredentialDefinition::default()
+                },
+            })),
             proof: Some(Proof::Single {
                 proof_type: SingleProof::Jwt {
                     jwt: "SomeJWT".into(),

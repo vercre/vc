@@ -269,7 +269,7 @@ mod tests {
     use vercre_macros::token_request;
     use vercre_openid::issuer::{
         AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization,
-        CredentialDefinition, CredentialFormat, FormatIdentifier, ProfileW3c,
+        CredentialDefinition, FormatIdentifier, ProfileW3c,
     };
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
@@ -428,8 +428,8 @@ mod tests {
                 items: vec![AuthorizedItem {
                     item: ItemType::AuthorizationDetail(AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
-                        credential: CredentialAuthorization::Format(CredentialFormat {
-                            format: FormatIdentifier::JwtVcJson(ProfileW3c {
+                        credential: CredentialAuthorization::Format(FormatIdentifier::JwtVcJson(
+                            ProfileW3c {
                                 credential_definition: CredentialDefinition {
                                     type_: Some(vec![
                                         "VerifiableCredential".into(),
@@ -437,8 +437,8 @@ mod tests {
                                     ]),
                                     ..CredentialDefinition::default()
                                 },
-                            }),
-                        }),
+                            },
+                        )),
                         ..AuthorizationDetail::default()
                     }),
                     credential_configuration_id: "EmployeeID_JWT".into(),

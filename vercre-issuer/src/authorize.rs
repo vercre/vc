@@ -73,8 +73,8 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    ClaimDefinition, CredentialAuthorization, CredentialFormat, GrantType, Issuer, Metadata,
-    Provider, StateStore, Subject,
+    ClaimDefinition, CredentialAuthorization, GrantType, Issuer, Metadata, Provider, StateStore,
+    Subject,
 };
 use vercre_openid::{Error, Result};
 
@@ -240,18 +240,15 @@ impl Context {
                         self.claims = claims;
                     }
                 }
-
-                CredentialAuthorization::Format(CredentialFormat { format }) => {
+                CredentialAuthorization::Format(fmt) => {
                     let credential_configuration_id = self
                         .issuer
-                        .credential_configuration_id(&CredentialFormat {
-                            format: format.clone(),
-                        })
+                        .credential_configuration_id(fmt)
                         .map_err(|e| Error::ServerError(format!("issuer issue: {e}")))?;
 
                     self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
 
-                    let claims = format.claims();
+                    let claims = fmt.claims();
                     self.verify_claims(credential_configuration_id, &claims)?;
                     self.claims = claims;
                 }
@@ -536,7 +533,7 @@ mod tests {
     }
 
     fn claims() -> AuthorizationRequest {
-        let value = serde_json::json!({
+        authorization_request!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
@@ -561,9 +558,7 @@ mod tests {
             }],
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
-        });
-
-        serde_json::from_value(value).expect("should deserialize")
+        })
     }
 
     fn claims_err() -> AuthorizationRequest {
