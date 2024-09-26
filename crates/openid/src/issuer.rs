@@ -568,7 +568,7 @@ pub enum CredentialAuthorization {
     /// Identifies the credential to authorize using format-specific parameters.
     /// The requested format should resolve to a single supported credential in
     /// the `credential_configurations_supported` map in the Issuer Metadata.
-    Format(CredentialFormat),
+    Format(FormatIdentifier),
 }
 
 impl Default for CredentialAuthorization {
@@ -606,18 +606,6 @@ impl PartialEq for CredentialAuthorization {
             }
         }
     }
-}
-
-/// When authorization or issuance is requested by format, the format identifier
-/// and format profile-specific parameters are required in order to uniquely
-/// identify the credential requested.
-///
-/// See <https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles>.
-#[derive(Clone, Default, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct CredentialFormat {
-    /// The format's identifier
-    #[serde(flatten)]
-    pub format: FormatIdentifier,
 }
 
 /// The `OpenID4VCI` specification defines commonly used [Credential Format
@@ -682,7 +670,7 @@ pub enum FormatIdentifier {
 impl FormatIdentifier {
     /// Claims for the format profile.
     #[must_use]
-    pub fn claims(&self) -> Option<HashMap<String, ClaimEntry>> {
+    pub fn claims(&self) -> Option<HashMap<String, ClaimDefinition>> {
         match self {
             Self::JwtVcJson(w3c) | Self::JwtVcJsonLd(w3c) | Self::LdpVc(w3c) => {
                 w3c.credential_definition.credential_subject.clone()
@@ -722,11 +710,11 @@ pub enum ProfileClaims {
 
     /// `ISO.18013-5` (Mobile Driving License) profile claims
     #[serde(rename = "claims")]
-    IsoMdl(HashMap<String, ClaimEntry>),
+    IsoMdl(HashMap<String, ClaimDefinition>),
 
     /// Selective Disclosure JWT ([SD-JWT]) profile claims.
     #[serde(rename = "claims")]
-    SdJwt(HashMap<String, ClaimEntry>),
+    SdJwt(HashMap<String, ClaimDefinition>),
 }
 
 impl Default for ProfileClaims {
@@ -738,7 +726,7 @@ impl Default for ProfileClaims {
 impl ProfileClaims {
     /// Claims for the format profile.
     #[must_use]
-    pub fn claims(&self) -> Option<HashMap<String, ClaimEntry>> {
+    pub fn claims(&self) -> Option<HashMap<String, ClaimDefinition>> {
         match self {
             Self::W3c(credential_definition) => credential_definition.credential_subject.clone(),
             Self::IsoMdl(claims) | Self::SdJwt(claims) => Some(claims.clone()),
@@ -768,7 +756,7 @@ pub struct ProfileIsoMdl {
 
     /// A list of claims to include in the issued credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    claims: Option<HashMap<String, ClaimEntry>>,
+    claims: Option<HashMap<String, ClaimDefinition>>,
 }
 
 impl PartialEq for ProfileIsoMdl {
@@ -790,7 +778,7 @@ pub struct ProfileSdJwt {
 
     /// A list of claims to include in the issued credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    claims: Option<HashMap<String, ClaimEntry>>,
+    claims: Option<HashMap<String, ClaimDefinition>>,
 }
 
 impl PartialEq for ProfileSdJwt {
@@ -1061,7 +1049,7 @@ pub enum CredentialIssuance {
 
     /// Defines the format and type of of the Credential to be issued.  REQUIRED
     /// when `credential_identifiers` was not returned from the Token Response.
-    Format(CredentialFormat),
+    Format(FormatIdentifier),
 }
 
 impl Default for CredentialIssuance {
@@ -1394,10 +1382,10 @@ impl Issuer {
     /// # Errors
     ///
     /// TODO: add error handling
-    pub fn credential_configuration_id(&self, fmt: &CredentialFormat) -> Result<&String> {
+    pub fn credential_configuration_id(&self, fmt: &FormatIdentifier) -> Result<&String> {
         self.credential_configurations_supported
             .iter()
-            .find(|(_, cfg)| cfg.format == fmt.format)
+            .find(|(_, cfg)| &cfg.format == fmt)
             .map(|(id, _)| id)
             .ok_or_else(|| anyhow!("Credential Configuration not found"))
     }
@@ -1666,24 +1654,7 @@ pub struct CredentialDefinition {
     /// minimization).
     #[serde(rename = "credentialSubject")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_subject: Option<HashMap<String, ClaimEntry>>,
-}
-
-/// Determines whether a claim entry is a claim or a nested set of claims.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum ClaimEntry {
-    /// A single claim
-    Claim(ClaimDefinition),
-
-    /// A set of nested claims.
-    Nested(HashMap<String, ClaimEntry>),
-}
-
-impl Default for ClaimEntry {
-    fn default() -> Self {
-        Self::Claim(ClaimDefinition::default())
-    }
+    pub credential_subject: Option<HashMap<String, ClaimDefinition>>,
 }
 
 /// Claim is used to hold language-based display properties for a
@@ -1712,6 +1683,11 @@ pub struct ClaimDefinition {
     /// Language-based display properties of the field.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display: Option<Vec<Display>>,
+
+    /// Nested claims.
+    #[serde(flatten)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nested: Option<HashMap<String, ClaimDefinition>>,
 }
 
 /// `ValueType` is used to define a claim's value type.
@@ -1859,15 +1835,9 @@ mod tests {
                     credential_configuration_id: "EmployeeID_JWT".into(),
                     claims: Some(ProfileClaims::W3c(CredentialDefinition {
                         credential_subject: Some(HashMap::from([
-                            (
-                                "given_name".to_string(),
-                                ClaimEntry::Claim(ClaimDefinition::default()),
-                            ),
-                            (
-                                "family_name".to_string(),
-                                ClaimEntry::Claim(ClaimDefinition::default()),
-                            ),
-                            ("email".to_string(), ClaimEntry::Claim(ClaimDefinition::default())),
+                            ("given_name".to_string(), ClaimDefinition::default()),
+                            ("family_name".to_string(), ClaimDefinition::default()),
+                            ("email".to_string(), ClaimDefinition::default()),
                         ])),
                         ..CredentialDefinition::default()
                     })),
@@ -1910,8 +1880,8 @@ mod tests {
             code_challenge_method: "S256".into(),
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                credential: CredentialAuthorization::Format(CredentialFormat {
-                    format: FormatIdentifier::JwtVcJson(ProfileW3c {
+                credential: CredentialAuthorization::Format(FormatIdentifier::JwtVcJson(
+                    ProfileW3c {
                         credential_definition: CredentialDefinition {
                             type_: Some(vec![
                                 "VerifiableCredential".into(),
@@ -1919,8 +1889,8 @@ mod tests {
                             ]),
                             ..CredentialDefinition::default()
                         },
-                    }),
-                }),
+                    },
+                )),
 
                 ..AuthorizationDetail::default()
             }]),
@@ -1999,17 +1969,12 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            credential: CredentialIssuance::Format(CredentialFormat {
-                format: FormatIdentifier::JwtVcJson(ProfileW3c {
-                    credential_definition: CredentialDefinition {
-                        type_: Some(vec![
-                            "VerifiableCredential".into(),
-                            "EmployeeIDCredential".into(),
-                        ]),
-                        ..CredentialDefinition::default()
-                    },
-                }),
-            }),
+            credential: CredentialIssuance::Format(FormatIdentifier::JwtVcJson(ProfileW3c {
+                credential_definition: CredentialDefinition {
+                    type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
+                    ..CredentialDefinition::default()
+                },
+            })),
             proof: Some(Proof::Single {
                 proof_type: SingleProof::Jwt {
                     jwt: "SomeJWT".into(),

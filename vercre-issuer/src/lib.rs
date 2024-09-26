@@ -108,8 +108,8 @@ pub mod provider {
     pub use vercre_datasec::{Algorithm, Decryptor, Encryptor, SecOps, Signer};
     pub use vercre_did::{DidResolver, Document};
     pub use vercre_openid::issuer::{
-        ClaimDefinition, ClaimEntry, Client, Credentials, Dataset, GrantType, Issuer, Metadata,
-        Provider, Result, Server, StateStore, Subject,
+        ClaimDefinition, Client, Credentials, Dataset, GrantType, Issuer, Metadata, Provider,
+        Result, Server, StateStore, Subject,
     };
     pub use vercre_status::issuer::Status;
 }
@@ -127,27 +127,16 @@ pub use token::token;
 pub use vercre_macros::create_offer_request;
 pub use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
-    AuthorizationResponse, AuthorizedDetail, ClaimDefinition, ClaimEntry, CreateOfferRequest,
+    AuthorizationResponse, AuthorizedDetail, ClaimDefinition, CreateOfferRequest,
     CreateOfferResponse, CredentialAuthorization, CredentialConfiguration, CredentialDefinition,
-    CredentialFormat, CredentialIssuance, CredentialOffer, CredentialOfferRequest,
-    CredentialOfferResponse, CredentialRequest, CredentialResponse, CredentialResponseType,
-    DeferredCredentialRequest, DeferredCredentialResponse, FormatIdentifier, Grants,
-    MetadataRequest, MetadataResponse, OfferType, PreAuthorizedCodeGrant, ProfileClaims,
-    ProfileIsoMdl, ProfileSdJwt, ProfileW3c, Proof, ProofClaims, RegistrationRequest,
-    RegistrationResponse, SendType, SingleProof, TokenGrantType, TokenRequest, TokenResponse,
-    TxCode,
+    CredentialIssuance, CredentialOffer, CredentialOfferRequest, CredentialOfferResponse,
+    CredentialRequest, CredentialResponse, CredentialResponseType, DeferredCredentialRequest,
+    DeferredCredentialResponse, FormatIdentifier, Grants, MetadataRequest, MetadataResponse,
+    OfferType, PreAuthorizedCodeGrant, ProfileClaims, ProfileIsoMdl, ProfileSdJwt, ProfileW3c,
+    Proof, ProofClaims, RegistrationRequest, RegistrationResponse, SendType, SingleProof,
+    TokenGrantType, TokenRequest, TokenResponse, TxCode,
 };
 pub use vercre_openid::Result;
 pub use vercre_w3c_vc::model::{
     Bitstring, CredentialStatus, CredentialStatusType, StatusMessage, StatusPurpose,
 };
-
-// async fn shell<'a, P, R, U, E, F, Fut>(provider: P, request: &'a R, handler:
-// F) -> Result<U, E> where
-//     P: Provider,
-//     R: Request + Sync,
-//     F: FnOnce(P, &'a R) -> Fut + Send,
-//     Fut: Future<Output = Result<U, E>> + Send,
-// {
-//     handler(provider, request).await
-// }

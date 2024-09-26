@@ -73,8 +73,8 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    ClaimEntry, CredentialAuthorization, CredentialFormat, GrantType, Issuer, Metadata, Provider,
-    StateStore, Subject,
+    ClaimDefinition, CredentialAuthorization, GrantType, Issuer, Metadata, Provider, StateStore,
+    Subject,
 };
 use vercre_openid::{Error, Result};
 
@@ -109,7 +109,7 @@ struct Context {
     issuer: Issuer,
     auth_dets: HashMap<String, AuthorizationDetail>,
     scope_items: HashMap<String, String>,
-    claims: Option<HashMap<String, ClaimEntry>>,
+    claims: Option<HashMap<String, ClaimDefinition>>,
 }
 
 impl Context {
@@ -240,18 +240,15 @@ impl Context {
                         self.claims = claims;
                     }
                 }
-
-                CredentialAuthorization::Format(CredentialFormat { format }) => {
+                CredentialAuthorization::Format(fmt) => {
                     let credential_configuration_id = self
                         .issuer
-                        .credential_configuration_id(&CredentialFormat {
-                            format: format.clone(),
-                        })
+                        .credential_configuration_id(fmt)
                         .map_err(|e| Error::ServerError(format!("issuer issue: {e}")))?;
 
                     self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
 
-                    let claims = format.claims();
+                    let claims = fmt.claims();
                     self.verify_claims(credential_configuration_id, &claims)?;
                     self.claims = claims;
                 }
@@ -262,9 +259,9 @@ impl Context {
     }
 
     // Verify requested claims exist as supported claims and all mandatory claims
-    // are requested.
+    // have been requested.
     fn verify_claims(
-        &self, credential_configuration_id: &str, claims: &Option<HashMap<String, ClaimEntry>>,
+        &self, credential_configuration_id: &str, claims: &Option<HashMap<String, ClaimDefinition>>,
     ) -> Result<()> {
         // get `CredentialConfiguration` from issuer metadata
         let Some(config) =
@@ -275,29 +272,12 @@ impl Context {
 
         // check requested claims exist and all mandatory claims have been requested
         if let Some(requested) = claims {
-            if let Some(supported) = config.format.claims() {
+            if let Some(supported) = &config.format.claims() {
                 // check requested claims are supported
-                for key in requested.keys() {
-                    if !supported.contains_key(key) {
-                        return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
-                    }
-                }
+                claims_exist(requested, supported)?;
 
                 // check mandatory claims have been requested
-                for (key, entry) in &supported {
-                    match entry {
-                        ClaimEntry::Claim(claim) => {
-                            if claim.mandatory.unwrap_or_default() && !requested.contains_key(key) {
-                                return Err(Error::InvalidRequest(format!(
-                                    "{key} claim is mandatory"
-                                )));
-                            }
-                        }
-                        ClaimEntry::Nested(_nested) => {
-                            todo!("support nested claims");
-                        }
-                    }
-                }
+                mandatory_claims(requested, supported)?;
             }
         }
 
@@ -403,6 +383,55 @@ impl Context {
     }
 }
 
+fn claims_exist(
+    requested: &HashMap<String, ClaimDefinition>, supported: &HashMap<String, ClaimDefinition>,
+) -> Result<()> {
+    for (key, entry) in requested {
+        if !supported.contains_key(key) {
+            return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
+        }
+
+        // check nested claims
+        if let Some(req_nested) = &entry.nested {
+            if let Some(sup_nested) = &supported[key].nested {
+                claims_exist(req_nested, sup_nested)?;
+            } else {
+                return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
+            }
+        };
+    }
+
+    Ok(())
+}
+
+fn mandatory_claims(
+    requested: &HashMap<String, ClaimDefinition>, supported: &HashMap<String, ClaimDefinition>,
+) -> Result<()> {
+    for (key, entry) in supported {
+        // no need to go any further if claim not mandatory
+        if !entry.mandatory.unwrap_or_default() {
+            return Ok(());
+        }
+
+        // error if requested claim is missing
+        let Some(entry) = requested.get(key) else {
+            return Err(Error::InvalidRequest(format!("{key} claim is mandatory")));
+        };
+
+        // does this claim have any nested claims to check?
+        let Some(sup_nested) = &entry.nested else { return Ok(()) };
+
+        // check nested claims
+        if let Some(req_nested) = &entry.nested {
+            mandatory_claims(req_nested, sup_nested)?;
+        } else {
+            return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
+        }
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use base64ct::{Base64UrlUnpadded, Encoding};
@@ -441,6 +470,7 @@ mod tests {
         assert_snapshot!(format!("authorize:{name}:state"), state, {
             ".expires_at" => "[expires_at]",
             ".**.credentialSubject" => insta::sorted_redaction(),
+            ".**.credentialSubject.address" => insta::sorted_redaction(),
             // ".items.*.credential_definition.credentialSubject" => insta::sorted_redaction(),
         });
     }
@@ -519,6 +549,10 @@ mod tests {
                         "email": {},
                         "given_name": {},
                         "family_name": {},
+                        "address": {
+                            "street_address": {},
+                            "locality": {}
+                        }
                     }
                 }
             }],

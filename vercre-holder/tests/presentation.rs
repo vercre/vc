@@ -116,7 +116,8 @@ async fn e2e_presentation_uri() {
     assert_eq!(presentation.status, Status::Requested);
     assert_snapshot!("presentation_requested", presentation, {
         ".presentation_id" => "[presentation_id]",
-        ".credentials[0].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
+        ".credentials[].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
+        ".credentials[].metadata.credential_definition.credentialSubject.address" => insta::sorted_redaction(),
     });
 
     // Authorize the presentation
@@ -160,7 +161,8 @@ async fn e2e_presentation_obj() {
     assert_eq!(presentation.status, Status::Requested);
     assert_snapshot!("presentation_requested2", presentation, {
         ".presentation_id" => "[presentation_id]",
-        ".credentials[0].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
+        ".credentials[].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
+        ".credentials[].metadata.credential_definition.credentialSubject.address" => insta::sorted_redaction(),
     });
 
     // Authorize the presentation

@@ -130,11 +130,9 @@ fn credential_authorization(detail: &HashMap<String, Value>) -> Result<TokenStre
         match format.as_str() {
             Some("jwt_vc_json") => Ok(quote! {
                 #path::CredentialAuthorization::Format (
-                    #path::CredentialFormat {
-                        format: #path::FormatIdentifier::JwtVcJson(#path::ProfileW3c {
-                            credential_definition: #credential_definition
-                        }),
-                    },
+                    #path::FormatIdentifier::JwtVcJson(#path::ProfileW3c {
+                        credential_definition: #credential_definition
+                    }),
                 )
             }),
             _ => Err(Error::new(span, "unknown `format`")),
@@ -206,7 +204,6 @@ fn format_definition(defn_value: &Value) -> Result<TokenStream> {
 
 fn subject(definition: &HashMap<String, Value>) -> Result<TokenStream> {
     let span = Span::call_site();
-    let path = quote! {vercre_issuer};
 
     if let Some(subject_value) = definition.get("credentialSubject") {
         let Some(credential_subject) = subject_value.as_object() else {
@@ -214,14 +211,26 @@ fn subject(definition: &HashMap<String, Value>) -> Result<TokenStream> {
         };
 
         // build claims map
-        let claims = credential_subject.iter().map(|(k, _)| {
-            quote! {(#k.to_string(), #path::ClaimEntry::Claim(#path::ClaimDefinition::default()))}
-        });
+        let claims = claims(credential_subject);
 
-        Ok(quote! {
-            Some(std::collections::HashMap::from([#(#claims),*]))
-        })
+        Ok(quote! {#claims})
     } else {
         Ok(quote! {None})
+    }
+}
+
+fn claims(claimset: &HashMap<String, Value>) -> TokenStream {
+    let path = quote! {vercre_issuer};
+
+    let claims = claimset.iter().map(|(k, v)| {
+        let nested = v.as_object().map_or_else(|| None, |obj| Some(claims(obj)));
+        quote! {(#k.to_string(), #path::ClaimDefinition{
+            nested: #nested,
+            ..#path::ClaimDefinition::default()
+        })}
+    });
+
+    quote! {
+        Some(std::collections::HashMap::from([#(#claims),*]))
     }
 }

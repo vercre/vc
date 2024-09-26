@@ -157,11 +157,9 @@ fn credential_configuration(detail: &HashMap<String, Value>) -> Result<TokenStre
         match format.as_str() {
             Some("jwt_vc_json") => Ok(quote! {
                 #path::CredentialAuthorization::Format (
-                    #path::CredentialFormat {
-                        format: #path::FormatIdentifier::JwtVcJson(#path::ProfileW3c{
-                            credential_definition: #credential_definition
-                        }),
-                    },
+                    #path::FormatIdentifier::JwtVcJson(#path::ProfileW3c{
+                        credential_definition: #credential_definition
+                    }),
                 )
             }),
             _ => Err(Error::new(span, "unknown `format`")),
@@ -238,7 +236,7 @@ fn subject(definition: &HashMap<String, Value>) -> Result<TokenStream> {
 
         // build claims map
         let claims = credential_subject.iter().map(|(k, _)| {
-            quote! {(#k.to_string(), #path::ClaimEntry::Claim(#path::ClaimDefinition::default()))}
+            quote! {(#k.to_string(), #path::ClaimDefinition::Claim(#path::ClaimDefinition::default()))}
         });
 
         Ok(quote! {

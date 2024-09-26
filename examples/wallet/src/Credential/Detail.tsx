@@ -37,12 +37,12 @@ const Detail = (props: DetailProps) => {
             title: credential.display.name || "Credential Detail",
             action: (
                 <IconButton onClick={onClose} size="large">
-                    <ArrowBackIosIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
+                    <ArrowBackIosIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText }} />
                 </IconButton>
             ),
             secondaryAction: (
                 <IconButton onClick={() => setConfirmDelete(true)} size="large">
-                    <DeleteForeverIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText}} />
+                    <DeleteForeverIcon fontSize="large" sx={{ color: theme.palette.primary.contrastText }} />
                 </IconButton>
             ),
         });
@@ -63,15 +63,15 @@ const Detail = (props: DetailProps) => {
             <Typography variant="h5">
                 Verified Info
             </Typography>
-            <ClaimEntry name="Description" value={credential.description} />
+            <ClaimDefinition name="Description" value={credential.description} />
             {Object.entries(credential.claims).map(([key, value]) => (
-                <ClaimEntry key={key} name={value} value={value} />
+                <ClaimDefinition key={key} name={value} value={value} />
             ))}
-            <ClaimEntry name="Issued on" value={dateFromIso(credential.issuance_date)} />
-            <ClaimEntry name="Expires on" value={
+            <ClaimDefinition name="Issued on" value={dateFromIso(credential.issuance_date)} />
+            <ClaimDefinition name="Expires on" value={
                 credential.expiration_date ? dateFromIso(credential.expiration_date) : 'Never'
             } />
-            <ClaimEntry name="Issued by" value={domainFromUrl(credential.display.issuer)} />
+            <ClaimDefinition name="Issued by" value={domainFromUrl(credential.display.issuer)} />
         </Stack>
         <Delete
             name={credential.display.name || 'Credential'}
@@ -84,7 +84,7 @@ const Detail = (props: DetailProps) => {
 
 export default Detail;
 
-const ClaimEntry = (props: { name: string, value?: string }) => {
+const ClaimDefinition = (props: { name: string, value?: string }) => {
     return (<>
         {props.name === 'id' ? null :
             <Box>
