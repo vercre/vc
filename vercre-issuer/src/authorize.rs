@@ -411,20 +411,25 @@ fn mandatory_claims(
     requested: &HashMap<String, ClaimDefinition>, supported: &HashMap<String, ClaimDefinition>,
 ) -> Result<()> {
     for (key, entry) in supported {
-        if entry.mandatory.unwrap_or_default() && !requested.contains_key(key) {
-            return Err(Error::InvalidRequest(format!("{key} claim is mandatory")));
+        // no need to go any further if claim not mandatory
+        if !entry.mandatory.unwrap_or_default() {
+            return Ok(());
         }
 
-        // check nested claims
-        if let Some(sup_nested) = &entry.nested {
-            if let Some(entry) = requested.get(key) {
-                if let Some(req_nested) = &entry.nested {
-                    claims_exist(req_nested, sup_nested)?;
-                } else {
-                    return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
-                }
-            }
+        // error if requested claim is missing
+        let Some(entry) = requested.get(key) else {
+            return Err(Error::InvalidRequest(format!("{key} claim is mandatory")));
         };
+
+        // does this claim have any nested claims to check?
+        let Some(sup_nested) = &entry.nested else { return Ok(()) };
+
+        // check nested claims
+        if let Some(req_nested) = &entry.nested {
+            mandatory_claims(req_nested, sup_nested)?;
+        } else {
+            return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
+        }
     }
 
     Ok(())
