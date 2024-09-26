@@ -73,8 +73,8 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    ClaimEntry, CredentialAuthorization, CredentialFormat, GrantType, Issuer, Metadata, Provider,
-    StateStore, Subject,
+    ClaimDefinition, CredentialAuthorization, CredentialFormat, GrantType, Issuer, Metadata,
+    Provider, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 
@@ -109,7 +109,7 @@ struct Context {
     issuer: Issuer,
     auth_dets: HashMap<String, AuthorizationDetail>,
     scope_items: HashMap<String, String>,
-    claims: Option<HashMap<String, ClaimEntry>>,
+    claims: Option<HashMap<String, ClaimDefinition>>,
 }
 
 impl Context {
@@ -264,7 +264,7 @@ impl Context {
     // Verify requested claims exist as supported claims and all mandatory claims
     // are requested.
     fn verify_claims(
-        &self, credential_configuration_id: &str, claims: &Option<HashMap<String, ClaimEntry>>,
+        &self, credential_configuration_id: &str, claims: &Option<HashMap<String, ClaimDefinition>>,
     ) -> Result<()> {
         // get `CredentialConfiguration` from issuer metadata
         let Some(config) =
@@ -275,29 +275,12 @@ impl Context {
 
         // check requested claims exist and all mandatory claims have been requested
         if let Some(requested) = claims {
-            if let Some(supported) = config.format.claims() {
+            if let Some(supported) = &config.format.claims() {
                 // check requested claims are supported
-                for key in requested.keys() {
-                    if !supported.contains_key(key) {
-                        return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
-                    }
-                }
+                claims_exist(requested, supported)?;
 
                 // check mandatory claims have been requested
-                for (key, entry) in &supported {
-                    match entry {
-                        ClaimEntry::Claim(claim) => {
-                            if claim.mandatory.unwrap_or_default() && !requested.contains_key(key) {
-                                return Err(Error::InvalidRequest(format!(
-                                    "{key} claim is mandatory"
-                                )));
-                            }
-                        }
-                        ClaimEntry::Nested(_nested) => {
-                            todo!("support nested claims");
-                        }
-                    }
-                }
+                mandatory_claims(requested, supported)?;
             }
         }
 
@@ -403,6 +386,50 @@ impl Context {
     }
 }
 
+fn claims_exist(
+    requested: &HashMap<String, ClaimDefinition>, supported: &HashMap<String, ClaimDefinition>,
+) -> Result<()> {
+    for (key, entry) in requested {
+        if !supported.contains_key(key) {
+            return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
+        }
+
+        // check nested claims
+        if let Some(req_nested) = &entry.nested {
+            if let Some(sup_nested) = &supported[key].nested {
+                claims_exist(req_nested, sup_nested)?;
+            } else {
+                return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
+            }
+        };
+    }
+
+    Ok(())
+}
+
+fn mandatory_claims(
+    requested: &HashMap<String, ClaimDefinition>, supported: &HashMap<String, ClaimDefinition>,
+) -> Result<()> {
+    for (key, entry) in supported {
+        if entry.mandatory.unwrap_or_default() && !requested.contains_key(key) {
+            return Err(Error::InvalidRequest(format!("{key} claim is mandatory")));
+        }
+
+        // check nested claims
+        if let Some(sup_nested) = &entry.nested {
+            if let Some(entry) = requested.get(key) {
+                if let Some(req_nested) = &entry.nested {
+                    claims_exist(req_nested, sup_nested)?;
+                } else {
+                    return Err(Error::InvalidRequest(format!("{key} claim is not supported")));
+                }
+            }
+        };
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use base64ct::{Base64UrlUnpadded, Encoding};
@@ -441,6 +468,7 @@ mod tests {
         assert_snapshot!(format!("authorize:{name}:state"), state, {
             ".expires_at" => "[expires_at]",
             ".**.credentialSubject" => insta::sorted_redaction(),
+            ".**.credentialSubject.address" => insta::sorted_redaction(),
             // ".items.*.credential_definition.credentialSubject" => insta::sorted_redaction(),
         });
     }
@@ -503,7 +531,7 @@ mod tests {
     }
 
     fn claims() -> AuthorizationRequest {
-        authorization_request!({
+        let value = serde_json::json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
@@ -519,12 +547,18 @@ mod tests {
                         "email": {},
                         "given_name": {},
                         "family_name": {},
+                        "address": {
+                            "street_address": {},
+                            "locality": {}
+                        }
                     }
                 }
             }],
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
-        })
+        });
+
+        serde_json::from_value(value).expect("should deserialize")
     }
 
     fn claims_err() -> AuthorizationRequest {

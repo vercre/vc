@@ -238,7 +238,7 @@ fn subject(definition: &HashMap<String, Value>) -> Result<TokenStream> {
 
         // build claims map
         let claims = credential_subject.iter().map(|(k, _)| {
-            quote! {(#k.to_string(), #path::ClaimEntry::Claim(#path::ClaimDefinition::default()))}
+            quote! {(#k.to_string(), #path::ClaimDefinition::Claim(#path::ClaimDefinition::default()))}
         });
 
         Ok(quote! {

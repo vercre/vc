@@ -682,7 +682,7 @@ pub enum FormatIdentifier {
 impl FormatIdentifier {
     /// Claims for the format profile.
     #[must_use]
-    pub fn claims(&self) -> Option<HashMap<String, ClaimEntry>> {
+    pub fn claims(&self) -> Option<HashMap<String, ClaimDefinition>> {
         match self {
             Self::JwtVcJson(w3c) | Self::JwtVcJsonLd(w3c) | Self::LdpVc(w3c) => {
                 w3c.credential_definition.credential_subject.clone()
@@ -722,11 +722,11 @@ pub enum ProfileClaims {
 
     /// `ISO.18013-5` (Mobile Driving License) profile claims
     #[serde(rename = "claims")]
-    IsoMdl(HashMap<String, ClaimEntry>),
+    IsoMdl(HashMap<String, ClaimDefinition>),
 
     /// Selective Disclosure JWT ([SD-JWT]) profile claims.
     #[serde(rename = "claims")]
-    SdJwt(HashMap<String, ClaimEntry>),
+    SdJwt(HashMap<String, ClaimDefinition>),
 }
 
 impl Default for ProfileClaims {
@@ -738,7 +738,7 @@ impl Default for ProfileClaims {
 impl ProfileClaims {
     /// Claims for the format profile.
     #[must_use]
-    pub fn claims(&self) -> Option<HashMap<String, ClaimEntry>> {
+    pub fn claims(&self) -> Option<HashMap<String, ClaimDefinition>> {
         match self {
             Self::W3c(credential_definition) => credential_definition.credential_subject.clone(),
             Self::IsoMdl(claims) | Self::SdJwt(claims) => Some(claims.clone()),
@@ -768,7 +768,7 @@ pub struct ProfileIsoMdl {
 
     /// A list of claims to include in the issued credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    claims: Option<HashMap<String, ClaimEntry>>,
+    claims: Option<HashMap<String, ClaimDefinition>>,
 }
 
 impl PartialEq for ProfileIsoMdl {
@@ -790,7 +790,7 @@ pub struct ProfileSdJwt {
 
     /// A list of claims to include in the issued credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    claims: Option<HashMap<String, ClaimEntry>>,
+    claims: Option<HashMap<String, ClaimDefinition>>,
 }
 
 impl PartialEq for ProfileSdJwt {
@@ -1666,24 +1666,7 @@ pub struct CredentialDefinition {
     /// minimization).
     #[serde(rename = "credentialSubject")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_subject: Option<HashMap<String, ClaimEntry>>,
-}
-
-/// Determines whether a claim entry is a claim or a nested set of claims.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum ClaimEntry {
-    /// A single claim
-    Claim(ClaimDefinition),
-
-    /// A set of nested claims.
-    Nested(HashMap<String, ClaimEntry>),
-}
-
-impl Default for ClaimEntry {
-    fn default() -> Self {
-        Self::Claim(ClaimDefinition::default())
-    }
+    pub credential_subject: Option<HashMap<String, ClaimDefinition>>,
 }
 
 /// Claim is used to hold language-based display properties for a
@@ -1712,6 +1695,11 @@ pub struct ClaimDefinition {
     /// Language-based display properties of the field.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display: Option<Vec<Display>>,
+
+    /// Nested claims.
+    #[serde(flatten)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nested: Option<HashMap<String, ClaimDefinition>>,
 }
 
 /// `ValueType` is used to define a claim's value type.
@@ -1859,15 +1847,9 @@ mod tests {
                     credential_configuration_id: "EmployeeID_JWT".into(),
                     claims: Some(ProfileClaims::W3c(CredentialDefinition {
                         credential_subject: Some(HashMap::from([
-                            (
-                                "given_name".to_string(),
-                                ClaimEntry::Claim(ClaimDefinition::default()),
-                            ),
-                            (
-                                "family_name".to_string(),
-                                ClaimEntry::Claim(ClaimDefinition::default()),
-                            ),
-                            ("email".to_string(), ClaimEntry::Claim(ClaimDefinition::default())),
+                            ("given_name".to_string(), ClaimDefinition::default()),
+                            ("family_name".to_string(), ClaimDefinition::default()),
+                            ("email".to_string(), ClaimDefinition::default()),
                         ])),
                         ..CredentialDefinition::default()
                     })),

@@ -7,7 +7,7 @@ use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
 // use vercre_holder::provider::CredentialStorer;
-use vercre_holder::{AcceptRequest, AuthorizationSpec, ClaimEntry, OfferRequest};
+use vercre_holder::{AcceptRequest, AuthorizationSpec, ClaimDefinition, OfferRequest};
 use vercre_issuer::{OfferType, SendType};
 use vercre_macros::create_offer_request;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -55,6 +55,7 @@ async fn preauth_narrow() {
         ".issuance_id" => "[issuance_id]",
         ".offered" => insta::sorted_redaction(),
         ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
+        ".offered.EmployeeID_JWT.credential_definition.credentialSubject.address" => insta::sorted_redaction(),
         ".offered.Developer_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
     });
 
@@ -64,7 +65,7 @@ async fn preauth_narrow() {
         issuance_id: issuance.issuance_id.clone(),
         accept: Some(vec![AuthorizationSpec {
             credential_configuration_id: "Developer_JWT".into(),
-            claims: Some(HashMap::from([("proficiency".to_string(), ClaimEntry::default())])),
+            claims: Some(HashMap::from([("proficiency".to_string(), ClaimDefinition::default())])),
         }]),
     };
     vercre_holder::accept(HOLDER_PROVIDER.clone(), &accept_req).await.expect("should accept offer");
