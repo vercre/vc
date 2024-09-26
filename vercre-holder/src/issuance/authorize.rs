@@ -42,20 +42,6 @@ pub struct AuthorizeRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
-
-    /// The Credential Issuer's identifier to allow the Authorization Server to
-    /// differentiate between Issuers. [RFC8707]: The target resource to which
-    /// access is being requested. MUST be an absolute URI.
-    ///
-    /// [RFC8707]: (https://www.rfc-editor.org/rfc/rfc8707)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub resource: Option<String>,
-
-    /// Identifies a pre-existing Credential Issuer processing context. A value
-    /// for this parameter may be passed in the Credential Offer to the
-    /// Wallet.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub issuer_state: Option<String>,
 }
 
 /// Initiator of the issuance flow determines the fields required in the
@@ -167,7 +153,13 @@ pub async fn authorize(
     issuance.code_verifier = Some(verifier);
 
     // Request authorization from the issuer.
-    let authorization_request = authorization_request(&issuance, request);
+    let authorization_request = match authorization_request(&issuance, request) {
+        Ok(auth_request) => auth_request,
+        Err(e) => {
+            tracing::error!(target: "Endpoint::authorize", ?e);
+            return Err(e);
+        }
+    };
     let auth_response =
         match Issuer::get_authorization(&provider, &issuance.id, authorization_request).await {
             Ok(auth) => auth,
@@ -217,9 +209,45 @@ pub async fn authorize(
 
 /// Construct an authorization request.
 fn authorization_request(
-    _issuance: &Issuance, _request: &AuthorizeRequest,
-) -> AuthorizationRequest {
-    todo!()
+    issuance: &Issuance, request: &AuthorizeRequest,
+) -> anyhow::Result<AuthorizationRequest> {
+
+    let Some(code_challenge) = issuance.code_challenge.clone() else {
+        return Err(anyhow!("missing code challenge"));
+    };
+    let issuer_state = match request.initiator {
+        Initiator::Issuer { .. } => {
+            // TODO: If there are no grants in the offer, the wallet should
+            // look up server metadata to get authorized code grant information.
+            let Some(grants) = issuance.offer.grants.clone() else {
+                return Err(anyhow!("no grants in offer is not supported"));
+            };
+            let Some(auth_code) = &grants.authorization_code else {
+                return Err(anyhow!("no authorization code grant in offer"));
+            };
+            auth_code.issuer_state.clone()
+        },
+        Initiator::Wallet { .. } => None,
+    };
+
+    Ok(AuthorizationRequest {
+        credential_issuer: issuance.issuer.credential_issuer.clone(),
+        response_type: "code".into(),
+        client_id: issuance.client_id.clone(),
+        redirect_uri: request.redirect_uri.clone(),
+        state: Some(issuance.id.clone()),
+        code_challenge,
+        code_challenge_method: "S256".into(),
+        authorization_details: issuance.accepted.clone(),
+        // TODO: support this
+        scope: None,
+        resource: Some(issuance.issuer.credential_issuer.clone()),
+        subject_id: issuance.subject_id.clone(),
+        // TODO: support this
+        wallet_issuer: None,
+        user_hint: Some(issuance.id.clone()),
+        issuer_state,
+    })
 }
 
 /// Construct a token request.
