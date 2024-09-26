@@ -27,6 +27,7 @@ use vercre_verifier::{
 
 use crate::provider::Provider;
 
+#[allow(clippy::needless_return)]
 #[tokio::main]
 async fn main() {
     let subscriber = FmtSubscriber::builder().with_max_level(Level::ERROR).finish();

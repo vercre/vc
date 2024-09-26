@@ -262,7 +262,7 @@ impl Context {
     }
 
     // Verify requested claims exist as supported claims and all mandatory claims
-    // are requested.
+    // have been requested.
     fn verify_claims(
         &self, credential_configuration_id: &str, claims: &Option<HashMap<String, ClaimDefinition>>,
     ) -> Result<()> {

@@ -59,13 +59,6 @@ pub struct Document {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub verification_method: Option<Vec<VerificationMethod>>,
 
-    /// -----------------------------------------------------------------------
-    /// Verification Relationships
-    ///
-    /// A verification relationship expresses the relationship between the DID
-    /// subject and a verification method.
-    /// -----------------------------------------------------------------------
-
     /// The `authentication` verification relationship is used to specify how
     /// the DID subject is expected to be authenticated, for purposes such
     /// as logging into a website or engaging in any sort of
