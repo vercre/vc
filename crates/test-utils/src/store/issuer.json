@@ -78,6 +78,44 @@
                                 "locale": "en-NZ"
                             }
                         ]
+                    },
+                    "address": {
+                        "street_address": {
+                            "value_type": "string",
+                            "display": [
+                                {
+                                    "name": "Address",
+                                    "locale": "en-NZ"
+                                }
+                            ]
+                        },
+                        "locality": {
+                            "value_type": "string",
+                            "display": [
+                                {
+                                    "name": "Address",
+                                    "locale": "en-NZ"
+                                }
+                            ]
+                        },
+                        "region": {
+                            "value_type": "string",
+                            "display": [
+                                {
+                                    "name": "Address",
+                                    "locale": "en-NZ"
+                                }
+                            ]
+                        },
+                        "country": {
+                            "value_type": "string",
+                            "display": [
+                                {
+                                    "name": "Address",
+                                    "locale": "en-NZ"
+                                }
+                            ]
+                        }
                     }
                 }
             }

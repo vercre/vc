@@ -17,7 +17,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_issuer::{
-    AuthorizationDetail, ClaimEntry, CredentialAuthorization, CredentialConfiguration,
+    AuthorizationDetail, ClaimDefinition, CredentialAuthorization, CredentialConfiguration,
     CredentialDefinition, FormatIdentifier, ProfileClaims,
 };
 
@@ -34,7 +34,7 @@ pub struct AuthorizationSpec {
     /// The list of claims to include.
     ///
     /// If `None`, all claims are included.
-    pub claims: Option<HashMap<String, ClaimEntry>>,
+    pub claims: Option<HashMap<String, ClaimDefinition>>,
 }
 
 /// `AcceptRequest` is the request to the `accept` endpoint to accept a

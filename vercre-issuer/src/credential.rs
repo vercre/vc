@@ -371,8 +371,8 @@ impl Context {
         }
 
         // narrow of claimset from format/credential_definition
-        if let CredentialIssuance::Format(f) = &request.credential {
-            let claim_ids = match &f.format {
+        if let CredentialIssuance::Format(fmt) = &request.credential {
+            let claim_ids = match &fmt {
                 FormatIdentifier::JwtVcJson(w3c)
                 | FormatIdentifier::JwtVcJsonLd(w3c)
                 | FormatIdentifier::LdpVc(w3c) => w3c

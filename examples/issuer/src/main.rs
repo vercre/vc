@@ -36,6 +36,7 @@ use crate::provider::Provider;
 static AUTHORIZED: LazyLock<RwLock<HashMap<String, AuthorizationRequest>>> =
     LazyLock::new(|| RwLock::new(HashMap::new()));
 
+#[allow(clippy::needless_return)]
 #[tokio::main]
 async fn main() {
     let subscriber = FmtSubscriber::builder().with_max_level(Level::ERROR).finish();

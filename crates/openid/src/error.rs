@@ -85,12 +85,6 @@ pub enum Error {
     #[error(r#"{{"error": "temporarily_unavailable", "error_description": "{0}"}}"#)]
     TemporarilyUnavailable(String),
 
-    /// ------------------------------
-    /// Verifiable Credential Issuance
-    /// ------------------------------
-
-    /// Credential Endpoint:
-
     /// The Credential Request is missing a required parameter, includes an
     /// unsupported parameter or parameter value, repeats the same
     /// parameter, or is otherwise malformed.
@@ -122,8 +116,6 @@ pub enum Error {
     #[error(r#"{{"error": "invalid_encryption_parameters", "error_description": "{0}"}}"#)]
     InvalidEncryptionParameters(String),
 
-    /// Deferred Issuance Endpoint:
-
     /// The Credential issuance is still pending. The error response SHOULD also
     /// contain the interval member, determining the minimum amount of time
     /// in seconds that the Wallet needs to wait before providing a new
@@ -139,10 +131,6 @@ pub enum Error {
     /// Credential.
     #[error(r#"{{"error": "invalid_transaction_id", "error_description": "{0}"}}"#)]
     InvalidTransactionId(String),
-
-    /// ------------------------------
-    /// Verifiable Presentation
-    /// ------------------------------
 
     /// The Wallet does not support any of the formats requested by the
     /// Verifier, such as those included in the `vp_formats` registration

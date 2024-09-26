@@ -66,6 +66,27 @@ credential_configurations_supported:
         - VerifiableCredential
         - EmployeeIDCredential
       credentialSubject:
+        address:
+          country:
+            value_type: string
+            display:
+              - name: Address
+                locale: en-NZ
+          locality:
+            value_type: string
+            display:
+              - name: Address
+                locale: en-NZ
+          region:
+            value_type: string
+            display:
+              - name: Address
+                locale: en-NZ
+          street_address:
+            value_type: string
+            display:
+              - name: Address
+                locale: en-NZ
         email:
           mandatory: true
           value_type: string

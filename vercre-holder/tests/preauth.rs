@@ -54,6 +54,7 @@ async fn preauth() {
         ".issuance_id" => "[issuance_id]",
         ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
         ".grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
+        ".offered.EmployeeID_JWT.credential_definition.credentialSubject.address" => insta::sorted_redaction(),
     });
 
     // Accept all credentials on offer
@@ -95,12 +96,13 @@ async fn preauth() {
     assert_eq!(credentials.len(), 1);
 
     assert_snapshot!("credentials", credentials, {
-        "[0].vc.issuanceDate" => "[issuanceDate]",
-        "[0].vc" => insta::sorted_redaction(),
-        "[0].vc.credentialSubject" => insta::sorted_redaction(),
-        "[0].metadata" => insta::sorted_redaction(),
-        "[0].metadata.credential_definition" => insta::sorted_redaction(),
-        "[0].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
-        "[0].issued" => "[issued]",
+        "[].vc.issuanceDate" => "[issuanceDate]",
+        "[].vc" => insta::sorted_redaction(),
+        "[].vc.credentialSubject" => insta::sorted_redaction(),
+        "[].metadata" => insta::sorted_redaction(),
+        "[].metadata.credential_definition" => insta::sorted_redaction(),
+        "[].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
+        "[].metadata.credential_definition.credentialSubject.address" => insta::sorted_redaction(),
+        "[].issued" => "[issued]",
     });
 }
