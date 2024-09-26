@@ -12,10 +12,10 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, Grants, MetadataRequest};
+use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, Grants};
 
 use super::{Issuance, Status};
-use crate::provider::{HolderProvider, Issuer, StateStore};
+use crate::provider::{HolderProvider, StateStore};
 
 /// `OfferRequest` is the request to the `offer` endpoint to initiate an
 /// issuance flow.
@@ -90,24 +90,13 @@ pub async fn offer(
 
     // Set up a credential configuration for each credential offered.
     issuance.offer = request.offer.clone();
-
-    // Process the offer and establish a metadata request, passing that to the
-    // provider to use.
-    let md_request = MetadataRequest {
-        credential_issuer: request.offer.credential_issuer.clone(),
-        languages: None, // The wallet client should provide any specific languages required.
-    };
-
-    // The wallet client's provider makes the metadata request to the issuer.
-    let md_response = match Issuer::get_metadata(&provider, &issuance.id, md_request).await {
-        Ok(md) => md,
+    match issuance.set_issuer(&provider, &request.offer.credential_issuer).await {
+        Ok(()) => (),
         Err(e) => {
             tracing::error!(target: "Endpoint::offer", ?e);
             return Err(e);
         }
     };
-    // Update the flow state with issuer's metadata.
-    issuance.issuer = md_response.credential_issuer.clone();
     issuance.status = Status::Ready;
 
     // Stash the state for the next step.
@@ -121,7 +110,7 @@ pub async fn offer(
     // Trim the supported credentials to just those on offer so that the holder
     // can decide which to accept.
     let mut offered = HashMap::<String, CredentialConfiguration>::new();
-    let creds_supported = &md_response.credential_issuer.credential_configurations_supported;
+    let creds_supported = &issuance.issuer.credential_configurations_supported;
     for cfg_id in &request.offer.credential_configuration_ids {
         // find supported credential in metadata and copy to state object.
         let Some(found) = creds_supported.get(cfg_id) else {

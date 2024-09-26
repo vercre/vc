@@ -10,13 +10,17 @@
 //! The endpoint is also used in the case where the issuer initiates the flow
 //! but in the offer, inidicates to the holder that authorization is required.
 
+use anyhow::anyhow;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use vercre_core::stringify;
-use vercre_issuer::{AuthorizationDetail, AuthorizationRequest, AuthorizationResponse, MetadataRequest, TokenRequest};
+use vercre_core::{pkce, stringify};
+use vercre_issuer::{
+    AuthorizationDetail, AuthorizationRequest, AuthorizationResponse, TokenGrantType, TokenRequest
+};
 
 use super::{Issuance, Status};
-use crate::issuance::token::AuthorizedCredentials;
+use crate::issuance::token::{authorized_credentials, AuthorizedCredentials};
 use crate::provider::{HolderProvider, Issuer, StateStore};
 
 /// `AuthorizeRequest` is the request to the `authorize` endpoint to initiate an
@@ -78,9 +82,9 @@ pub enum Initiator {
         #[serde(skip_serializing_if = "Option::is_none")]
         scope: Option<String>,
 
-        /// A Holder identifier provided by the Wallet. It must have meaning to the
-        /// Credential Issuer in order that credentialSubject claims can be
-        /// populated.
+        /// A Holder identifier provided by the Wallet. It must have meaning to
+        /// the Credential Issuer in order that credentialSubject claims
+        /// can be populated.
         subject_id: String,
     },
 
@@ -94,6 +98,10 @@ pub enum Initiator {
 /// Makes an authorization request to the issuer to describe the credential(s)
 /// and claims the holder wants to obtain.
 ///
+/// On receiving an authorization response, this function will immediately make
+/// a token request to the issuer, so the holder's agent (wallet) can make
+/// credential requests directly after calling this function.
+///
 /// Initiates an issuance flow in the case of a wallet-initiated flow, or
 /// carries out the authorization step in the case of an issuer-initiated flow
 /// that requires authorization.
@@ -104,73 +112,131 @@ pub async fn authorize(
     tracing::debug!("Endpoint::authorize");
 
     // If the request is issuer-initiated, retrieve the issuance flow state,
-    // otherwise create a new one.
+    // and check the flow status. Otherwise, create a new flow state.
     let mut issuance = match &request.initiator {
-        Initiator::Issuer{ issuance_id } => match StateStore::get(&provider, issuance_id).await {
-            Ok(issuance) => issuance,
-            Err(e) => {
-                tracing::error!(target: "Endpoint::authorize", ?e);
-                return Err(e);
-            }
-        },
-        Initiator::Wallet{ client_id, issuer, subject_id, .. } => {
-            // Create a new issuance flow.
-            let mut issuance = Issuance::new(client_id);
-            issuance.subject_id.clone_from(subject_id);
-
-            // Attach issuer metadata to state
-            let md_request = MetadataRequest {
-                credential_issuer: issuer.clone(),
-                languages: None, /* The wallet client should provide any specific languages
-                                  * required. */
-            };
-            let md_response = match Issuer::get_metadata(&provider, &issuance.id, md_request).await
-            {
-                Ok(md) => md,
+        Initiator::Issuer { issuance_id } => {
+            match StateStore::get::<Issuance>(&provider, issuance_id).await {
+                Ok(issuance) => {
+                    // The grants must support authorized flow.
+                    //
+                    // TODO: The wallet is supposed to handle the case where there are no
+                    // grants by using issuer metadata to determine the required grants. Look
+                    // up server metadata to determine the required grants.
+                    let Some(grants) = issuance.offer.grants.clone() else {
+                        let e = anyhow!("no grants in offer is not supported");
+                        tracing::error!(target: "Endpoint::authorize", ?e);
+                        return Err(e);
+                    };
+                    if grants.authorization_code.is_none() || issuance.status != Status::Accepted {
+                        let e = anyhow!("invalid issuance state. Must be accepted and support authorization issuance flow");
+                        tracing::error!(target: "Endpoint::authorize", ?e);
+                        return Err(e);
+                    }
+                    issuance
+                }
                 Err(e) => {
                     tracing::error!(target: "Endpoint::authorize", ?e);
                     return Err(e);
                 }
+            }
+        }
+        Initiator::Wallet {
+            client_id,
+            issuer,
+            subject_id,
+            ..
+        } => {
+            // Create a new issuance flow.
+            let mut issuance = Issuance::new(client_id);
+            issuance.subject_id.clone_from(subject_id);
+            match issuance.set_issuer(&provider, issuer).await {
+                Ok(()) => (),
+                Err(e) => {
+                    tracing::error!(target: "Endpoint::offer", ?e);
+                    return Err(e);
+                }
             };
-            issuance.issuer = md_response.credential_issuer;
-
             issuance
         }
     };
     issuance.accepted.clone_from(&request.authorization_details);
 
+    // PKCE pair
+    let verifier = pkce::code_verifier();
+    issuance.code_challenge = Some(pkce::code_challenge(&verifier));
+    issuance.code_verifier = Some(verifier);
+
     // Request authorization from the issuer.
     let authorization_request = authorization_request(&issuance, request);
-    let auth_response = match Issuer::get_authorization(
-        &provider,
-        &issuance.id,
-        authorization_request,
-    )
-    .await
-    {
-        Ok(auth) => auth,
+    let auth_response =
+        match Issuer::get_authorization(&provider, &issuance.id, authorization_request).await {
+            Ok(auth) => auth,
+            Err(e) => {
+                tracing::error!(target: "Endpoint::authorize", ?e);
+                return Err(e);
+            }
+        };
+
+    // Construct a token request using the authorization response and request an
+    // access token from the issuer.
+    let token_request = token_request(&issuance, request, &auth_response);
+    issuance.token = match Issuer::get_token(&provider, &issuance.id, token_request).await {
+        Ok(token) => token,
         Err(e) => {
             tracing::error!(target: "Endpoint::authorize", ?e);
             return Err(e);
         }
     };
-    issuance.status = Status::Authorized;
+    issuance.status = Status::TokenReceived;
 
-    // Construct a token request using the authorization response and request an
-    // access token from the issuer.
-    token_request(&issuance, request, &auth_response);
+    let mut response = AuthorizedCredentials {
+        issuance_id: issuance.id.clone(),
+        authorized: None,
+    };
+    if let Some(auth_details) = issuance.token.authorization_details.clone() {
+        let authorized = match authorized_credentials(&auth_details, &issuance) {
+            Ok(authorized) => authorized,
+            Err(e) => {
+                tracing::error!(target: "Endpoint::token", ?e);
+                return Err(e);
+            }
+        };
+        response.authorized = Some(authorized);
+    }
 
-    todo!()
+    // Stash the state for the next step.
+    if let Err(e) =
+        StateStore::put(&provider, &issuance.id, &issuance, DateTime::<Utc>::MAX_UTC).await
+    {
+        tracing::error!(target: "Endpoint::accept", ?e);
+        return Err(e);
+    };
+
+    Ok(response)
 }
 
 /// Construct an authorization request.
-fn authorization_request(_issuance: &Issuance, _request: &AuthorizeRequest) -> AuthorizationRequest {
+fn authorization_request(
+    _issuance: &Issuance, _request: &AuthorizeRequest,
+) -> AuthorizationRequest {
     todo!()
 }
 
 /// Construct a token request.
 fn token_request(
-    _issuance: &Issuance, _auth_request: &AuthorizeRequest, _auth_response: &AuthorizationResponse,
+    issuance: &Issuance, auth_request: &AuthorizeRequest, auth_response: &AuthorizationResponse,
 ) -> TokenRequest {
-    todo!()
+
+    TokenRequest {
+        credential_issuer: issuance.issuer.credential_issuer.clone(),
+        client_id: Some(issuance.client_id.clone()),
+        grant_type: TokenGrantType::AuthorizationCode {
+            code: auth_response.code.clone(),
+            redirect_uri: auth_request.redirect_uri.clone(),
+            code_verifier: issuance.code_verifier.clone(),
+        },
+        authorization_details: issuance.accepted.clone(),
+        // TODO: support this
+        client_assertion: None,
+    }
 }

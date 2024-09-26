@@ -22,7 +22,10 @@ pub use pin::{pin, PinRequest};
 use serde::{Deserialize, Serialize};
 pub use token::{token, AuthorizedCredentials};
 use uuid::Uuid;
+use vercre_issuer::MetadataRequest;
 use vercre_openid::issuer::{AuthorizationDetail, CredentialOffer, Issuer, TokenResponse};
+
+use crate::provider::{HolderProvider, Issuer as IssuerProvider};
 
 /// `Issuance` represents app state across the steps of the issuance flow.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -56,6 +59,12 @@ pub struct Issuance {
     /// The user's pin, as set from the shell.
     pub pin: Option<String>,
 
+    /// PKCE code verifier for the authorization code flow.
+    pub code_verifier: Option<String>,
+
+    /// PKCE code challenge for the authorization code flow.
+    pub code_challenge: Option<String>,
+
     /// The `TokenResponse` received from the issuer.
     pub token: TokenResponse,
 }
@@ -71,6 +80,24 @@ impl Issuance {
             ..Default::default()
         }
     }
+
+    /// Gets issuer metadata from the provider and sets that information on
+    /// the issuance flow state.
+    /// 
+    /// # Errors
+    /// 
+    /// Returns an error if the provider's metadata request fails.
+    pub async fn set_issuer(
+        &mut self, provider: &impl HolderProvider, credential_issuer: &str,
+    ) -> anyhow::Result<()> {
+        let md_request = MetadataRequest {
+            credential_issuer: credential_issuer.into(),
+            languages: None, // The wallet client should provide any specific languages required.
+        };
+        let md_response = IssuerProvider::get_metadata(provider, &self.id, md_request).await?;
+        self.issuer = md_response.credential_issuer;
+        Ok(())
+    }
 }
 
 /// Issuance flow status values.
@@ -82,9 +109,6 @@ pub enum Status {
     /// No credential offer is being processed.
     #[default]
     Inactive,
-
-    /// Authorization has been achieved.
-    Authorized,
 
     /// A new credential offer has been received (issuer-initiated only).
     Offered,
