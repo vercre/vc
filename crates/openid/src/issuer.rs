@@ -670,7 +670,7 @@ pub enum FormatIdentifier {
 impl FormatIdentifier {
     /// Claims for the format profile.
     #[must_use]
-    pub fn claims(&self) -> Option<HashMap<String, ClaimDefinition>> {
+    pub fn claims(&self) -> Option<HashMap<String, Claim>> {
         match self {
             Self::JwtVcJson(w3c) | Self::JwtVcJsonLd(w3c) | Self::LdpVc(w3c) => {
                 w3c.credential_definition.credential_subject.clone()
@@ -710,11 +710,11 @@ pub enum ProfileClaims {
 
     /// `ISO.18013-5` (Mobile Driving License) profile claims
     #[serde(rename = "claims")]
-    IsoMdl(HashMap<String, ClaimDefinition>),
+    IsoMdl(HashMap<String, Claim>),
 
     /// Selective Disclosure JWT ([SD-JWT]) profile claims.
     #[serde(rename = "claims")]
-    SdJwt(HashMap<String, ClaimDefinition>),
+    SdJwt(HashMap<String, Claim>),
 }
 
 impl Default for ProfileClaims {
@@ -726,7 +726,7 @@ impl Default for ProfileClaims {
 impl ProfileClaims {
     /// Claims for the format profile.
     #[must_use]
-    pub fn claims(&self) -> Option<HashMap<String, ClaimDefinition>> {
+    pub fn claims(&self) -> Option<HashMap<String, Claim>> {
         match self {
             Self::W3c(credential_definition) => credential_definition.credential_subject.clone(),
             Self::IsoMdl(claims) | Self::SdJwt(claims) => Some(claims.clone()),
@@ -756,7 +756,7 @@ pub struct ProfileIsoMdl {
 
     /// A list of claims to include in the issued credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    claims: Option<HashMap<String, ClaimDefinition>>,
+    claims: Option<HashMap<String, Claim>>,
 }
 
 impl PartialEq for ProfileIsoMdl {
@@ -778,7 +778,7 @@ pub struct ProfileSdJwt {
 
     /// A list of claims to include in the issued credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    claims: Option<HashMap<String, ClaimDefinition>>,
+    claims: Option<HashMap<String, Claim>>,
 }
 
 impl PartialEq for ProfileSdJwt {
@@ -1541,6 +1541,88 @@ pub struct CredentialConfiguration {
     pub display: Option<Vec<CredentialDisplay>>,
 }
 
+impl CredentialConfiguration {
+    /// Verifies that the `claimset` contains required claims and they are
+    /// supported for the Credential.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the `claimset` contains unsupported claims or does
+    /// not contain required (mandatory) claims.
+    pub fn verify_claims(&self, claimset: &HashMap<String, Claim>) -> Result<()> {
+        // ensure `claimset` claims exist in the supported claims
+        if !claimset.is_empty() {
+            if let Some(claims) = &self.format.claims() {
+                let _ = Self::claims_supported(claimset, claims);
+            }
+        }
+
+        // ensure all mandatory claims are present
+        if let Some(claims) = &self.format.claims() {
+            return Self::claims_required(claimset, claims);
+        }
+
+        Ok(())
+    }
+
+    /// Verifies `claimset` claims are supported by the Credential
+    fn claims_supported(
+        claimset: &HashMap<String, Claim>, supported: &HashMap<String, Claim>,
+    ) -> Result<()> {
+        for (key, entry) in claimset {
+            if !supported.contains_key(key) {
+                return Err(anyhow!("{key} claim is not supported"));
+            }
+
+            // check nested claims
+            if let Claim::Set(req_nested) = &entry
+                && !req_nested.is_empty()
+            {
+                if let Claim::Set(sup_nested) = &supported[key] {
+                    Self::claims_supported(req_nested, sup_nested)?;
+                } else {
+                    return Err(anyhow!("{key} claimset is not supported "));
+                }
+            };
+        }
+
+        Ok(())
+    }
+
+    /// Verifies `claimset` contains all requierd claims
+    fn claims_required(
+        requested: &HashMap<String, Claim>, supported: &HashMap<String, Claim>,
+    ) -> Result<()> {
+        for (key, entry) in supported {
+            // no need to go any further if claim not mandatory
+            if let Claim::Entry(def) = entry {
+                if !def.mandatory.unwrap_or_default() {
+                    return Ok(());
+                }
+            }
+
+            // error if requested claim is missing
+            let Some(entry) = requested.get(key) else {
+                return Err(anyhow!("{key} claim is required"));
+            };
+
+            // does this claim have any nested claims to check?
+            let Claim::Set(sup_nested) = &entry else { return Ok(()) };
+
+            // check nested claims
+            if let Claim::Set(req_nested) = &entry
+                && !req_nested.is_empty()
+            {
+                Self::claims_required(req_nested, sup_nested)?;
+            } else {
+                return Err(anyhow!("{key} claim is not supported"));
+            }
+        }
+
+        Ok(())
+    }
+}
+
 /// `ProofTypesSupported` describes specifics of the key proof(s) that the
 /// Credential Issuer supports.
 ///
@@ -1654,7 +1736,25 @@ pub struct CredentialDefinition {
     /// minimization).
     #[serde(rename = "credentialSubject")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_subject: Option<HashMap<String, ClaimDefinition>>,
+    pub credential_subject: Option<HashMap<String, Claim>>,
+}
+
+/// Claim entry. Either a set of nested `Claim`s or a single `ClaimDefinition`.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum Claim {
+    // HACK: must be the first variant to avoid deserializing as `Entry`
+    /// Nested claims.
+    Set(HashMap<String, Claim>),
+
+    /// A single claim definition.
+    Entry(ClaimDefinition),
+}
+
+impl Default for Claim {
+    fn default() -> Self {
+        Self::Entry(ClaimDefinition::default())
+    }
 }
 
 /// Claim is used to hold language-based display properties for a
@@ -1683,11 +1783,11 @@ pub struct ClaimDefinition {
     /// Language-based display properties of the field.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display: Option<Vec<Display>>,
-
-    /// Nested claims.
-    #[serde(flatten)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub nested: Option<HashMap<String, ClaimDefinition>>,
+    //
+    // /// Nested claims.
+    // #[serde(flatten)]
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub nested: Option<HashMap<String, Claim>>,
 }
 
 /// `ValueType` is used to define a claim's value type.
@@ -1835,9 +1935,9 @@ mod tests {
                     credential_configuration_id: "EmployeeID_JWT".into(),
                     claims: Some(ProfileClaims::W3c(CredentialDefinition {
                         credential_subject: Some(HashMap::from([
-                            ("given_name".to_string(), ClaimDefinition::default()),
-                            ("family_name".to_string(), ClaimDefinition::default()),
-                            ("email".to_string(), ClaimDefinition::default()),
+                            ("given_name".to_string(), Claim::default()),
+                            ("family_name".to_string(), Claim::default()),
+                            ("email".to_string(), Claim::default()),
                         ])),
                         ..CredentialDefinition::default()
                     })),

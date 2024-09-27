@@ -48,7 +48,7 @@ pub use vercre_core::Quota;
 pub use vercre_dif_exch::Constraints;
 pub use vercre_macros::authorization_request;
 pub use vercre_openid::issuer::{
-    AuthorizationCodeGrant, AuthorizationRequest, AuthorizationResponse, ClaimDefinition,
+    AuthorizationCodeGrant, AuthorizationRequest, AuthorizationResponse, Claim, ClaimDefinition,
     CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse, Grants,
     Issuer, MetadataRequest, MetadataResponse, PreAuthorizedCodeGrant, Proof, ProofClaims,
     TokenRequest, TokenResponse, TxCode,
