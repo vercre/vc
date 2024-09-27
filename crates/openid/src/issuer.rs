@@ -1144,9 +1144,8 @@ pub struct ProofClaims {
     pub nonce: Option<String>,
 }
 
-/// `CredentialResponseEncryption` contains information about whether the
-/// Credential Issuer supports encryption of the Credential Response on top of
-/// TLS.
+/// Contains information about whether the Credential Issuer supports encryption
+/// of the Credential Response on top of TLS.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredentialResponseEncryption {
     /// The public key used for encrypting the Credential Response.
@@ -1340,12 +1339,13 @@ pub struct Issuer {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_response_encryption: Option<SupportedCredentialResponseEncryption>,
 
-    /// Specifies whether the Credential Issuer supports returning
-    /// `credential_identifiers` parameter in the `authorization_details`
-    /// Token Response parameter, with true indicating support. The default
-    /// value is "false".
+    /// Information about the Issuer's support for batch issuance of
+    /// Credentials. The presence of this parameter means that the issuer
+    /// supports the proofs parameter in the Credential Request so can issue
+    /// more than one Verifiable Credential for the same Credential Dataset in a
+    /// single request/response.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_identifiers_supported: Option<bool>,
+    pub batch_credential_issuance: Option<BatchCredentialIssuance>,
 
     /// A signed JWT containing Credential Issuer metadata parameters as claims.
     /// The signed metadata MUST be secured using JSON Web Signature (JWS)
@@ -1392,9 +1392,8 @@ impl Issuer {
     }
 }
 
-/// `SupportedCredentialResponseEncryption` contains information about whether
-/// the Credential Issuer supports encryption of the Credential and Batch
-/// Credential Response on top of TLS.
+/// Contains information about whether the Credential Issuer supports encryption
+/// of the Credential and Batch Credential Response on top of TLS.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct SupportedCredentialResponseEncryption {
     /// JWE [RFC7516] alg algorithm [RFC7518] REQUIRED for encrypting Credential
@@ -1419,6 +1418,17 @@ pub struct SupportedCredentialResponseEncryption {
     /// keys in the Credential Request. If the value is false, the Wallet
     /// MAY chose whether it provides encryption keys or not.
     pub encryption_required: bool,
+}
+
+/// Contains information about the Credential Issuer's support for batch
+/// issuance of Credentials on the Credential Endpoint. The presence of this
+/// parameter means that the issuer supports the proofs parameter in the
+/// Credential Request so can issue more than one Verifiable Credential for the
+/// same Credential Dataset in a single request/response.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct BatchCredentialIssuance {
+    /// The maximum array size for the proofs parameter in a Credential Request.
+    pub batch_size: u64,
 }
 
 /// Language-based display properties for Issuer or Claim.
