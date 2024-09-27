@@ -1740,7 +1740,7 @@ pub struct CredentialDefinition {
 }
 
 /// Claim entry. Either a set of nested `Claim`s or a single `ClaimDefinition`.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Claim {
     // HACK: must be the first variant to avoid deserializing as `Entry`
@@ -1754,6 +1754,38 @@ pub enum Claim {
 impl Default for Claim {
     fn default() -> Self {
         Self::Entry(ClaimDefinition::default())
+    }
+}
+
+use serde::de::{self, Deserializer, SeqAccess, Visitor};
+
+impl<'de> de::Deserialize<'de> for Claim {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        struct ClaimVisitor;
+
+        impl<'de> Visitor<'de> for ClaimVisitor {
+            type Value = Claim;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct Claim")
+            }
+
+            fn visit_seq<V>(self, mut seq: V) -> Result<Claim, V::Error>
+            where
+                V: SeqAccess<'de>,
+            {
+                let secs =
+                    seq.next_element()?.ok_or_else(|| de::Error::invalid_length(0, &self))?;
+                let nanos =
+                    seq.next_element()?.ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                Ok(Claim::default())
+            }
+        }
+        const FIELDS: &[&str] = &["secs", "nanos"];
+        deserializer.deserialize_struct("Duration", FIELDS, ClaimVisitor)
     }
 }
 
