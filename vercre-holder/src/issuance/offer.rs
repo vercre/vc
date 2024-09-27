@@ -12,10 +12,10 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, MetadataRequest, TxCode};
+use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, Grants};
 
 use super::{Issuance, Status};
-use crate::provider::{HolderProvider, Issuer, StateStore};
+use crate::provider::{HolderProvider, StateStore};
 
 /// `OfferRequest` is the request to the `offer` endpoint to initiate an
 /// issuance flow.
@@ -27,6 +27,9 @@ pub struct OfferRequest {
     /// should be taken to ensure this is not shared across holders in the
     /// case of headless, multi-tenant agents.
     pub client_id: String,
+
+    /// Holder's identifer.
+    pub subject_id: String,
 
     /// The credential offer from the issuer.
     pub offer: CredentialOffer,
@@ -49,8 +52,8 @@ pub struct OfferResponse {
     /// credential configuration ID.
     pub offered: HashMap<String, CredentialConfiguration>,
 
-    /// Details of any PIN required by the holder to accept the offer.
-    pub tx_code: Option<TxCode>,
+    /// Authorization requirements.
+    pub grants: Grants,
 }
 
 /// Initiates the issuance flow triggered by a new credential offer
@@ -70,41 +73,30 @@ pub async fn offer(
         tracing::error!(target: "Endpoint::offer", ?e);
         return Err(e);
     }
-    let Some(grants) = &request.offer.grants else {
-        let e = anyhow!("no grants");
-        tracing::error!(target: "Endpoint::offer", ?e);
-        return Err(e);
-    };
-    let Some(pre_authorized_code) = &grants.pre_authorized_code else {
-        let e = anyhow!("no pre-authorized code");
+    // TODO: The wallet is supposed to handle the case where there are no
+    // grants by using issuer metadata to determine the required grants. However,
+    // the metata specification does not currently include this information. Until
+    // it does, we return an error here.
+    let Some(grants) = request.offer.grants.clone() else {
+        let e = anyhow!("no grants in offer is not supported");
         tracing::error!(target: "Endpoint::offer", ?e);
         return Err(e);
     };
 
     // Establish a new issuance flow state
     let mut issuance = Issuance::new(&request.client_id);
+    issuance.subject_id.clone_from(&request.subject_id);
     issuance.status = Status::Offered;
 
     // Set up a credential configuration for each credential offered.
     issuance.offer = request.offer.clone();
-
-    // Process the offer and establish a metadata request, passing that to the
-    // provider to use.
-    let md_request = MetadataRequest {
-        credential_issuer: request.offer.credential_issuer.clone(),
-        languages: None, // The wallet client should provide any specific languages required.
-    };
-
-    // The wallet client's provider makes the metadata request to the issuer.
-    let md_response = match Issuer::get_metadata(&provider, &issuance.id, md_request).await {
-        Ok(md) => md,
+    match issuance.set_issuer(&provider, &request.offer.credential_issuer).await {
+        Ok(()) => (),
         Err(e) => {
             tracing::error!(target: "Endpoint::offer", ?e);
             return Err(e);
         }
     };
-    // Update the flow state with issuer's metadata.
-    issuance.issuer = md_response.credential_issuer.clone();
     issuance.status = Status::Ready;
 
     // Stash the state for the next step.
@@ -118,7 +110,7 @@ pub async fn offer(
     // Trim the supported credentials to just those on offer so that the holder
     // can decide which to accept.
     let mut offered = HashMap::<String, CredentialConfiguration>::new();
-    let creds_supported = &md_response.credential_issuer.credential_configurations_supported;
+    let creds_supported = &issuance.issuer.credential_configurations_supported;
     for cfg_id in &request.offer.credential_configuration_ids {
         // find supported credential in metadata and copy to state object.
         let Some(found) = creds_supported.get(cfg_id) else {
@@ -133,7 +125,7 @@ pub async fn offer(
         issuance_id: issuance.id,
         issuer: request.offer.credential_issuer.clone(),
         offered,
-        tx_code: pre_authorized_code.tx_code.clone(),
+        grants,
     };
 
     Ok(res)

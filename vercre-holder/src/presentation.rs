@@ -7,6 +7,10 @@ pub(crate) mod authorize;
 pub(crate) mod present;
 pub(crate) mod request;
 
+pub use authorize::authorize;
+pub use present::present;
+pub use request::request;
+
 use std::fmt::{Debug, Display};
 use std::str::FromStr;
 
