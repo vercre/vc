@@ -16,7 +16,9 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_core::{pkce, stringify};
 use vercre_issuer::{
-    AuthorizationDetail, AuthorizationRequest, AuthorizationResponse, TokenGrantType, TokenRequest
+    AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
+    CredentialAuthorization, CredentialDefinition, FormatIdentifier, ProfileClaims, TokenGrantType,
+    TokenRequest,
 };
 
 use super::{Issuance, Status};
@@ -211,7 +213,6 @@ pub async fn authorize(
 fn authorization_request(
     issuance: &Issuance, request: &AuthorizeRequest,
 ) -> anyhow::Result<AuthorizationRequest> {
-
     let Some(code_challenge) = issuance.code_challenge.clone() else {
         return Err(anyhow!("missing code challenge"));
     };
@@ -226,8 +227,19 @@ fn authorization_request(
                 return Err(anyhow!("no authorization code grant in offer"));
             };
             auth_code.issuer_state.clone()
-        },
+        }
         Initiator::Wallet { .. } => None,
+    };
+
+    // If the request contains None for authorization details, the wallet wants
+    // all credentials on offer. For the authorization endpoint, we will need
+    // to explicitly build the authorization details.
+    let auth_details = match authorization_details(issuance, request) {
+        Ok(auth_details) => auth_details,
+        Err(e) => {
+            tracing::error!(target: "Endpoint::authorize", ?e);
+            return Err(e);
+        }
     };
 
     Ok(AuthorizationRequest {
@@ -238,7 +250,7 @@ fn authorization_request(
         state: Some(issuance.id.clone()),
         code_challenge,
         code_challenge_method: "S256".into(),
-        authorization_details: issuance.accepted.clone(),
+        authorization_details: Some(auth_details),
         // TODO: support this
         scope: None,
         resource: Some(issuance.issuer.credential_issuer.clone()),
@@ -254,7 +266,6 @@ fn authorization_request(
 fn token_request(
     issuance: &Issuance, auth_request: &AuthorizeRequest, auth_response: &AuthorizationResponse,
 ) -> TokenRequest {
-
     TokenRequest {
         credential_issuer: issuance.issuer.credential_issuer.clone(),
         client_id: Some(issuance.client_id.clone()),
@@ -267,4 +278,43 @@ fn token_request(
         // TODO: support this
         client_assertion: None,
     }
+}
+
+/// Construct authorization details from the issuance flow state.
+fn authorization_details(
+    issuance: &Issuance, request: &AuthorizeRequest,
+) -> anyhow::Result<Vec<AuthorizationDetail>> {
+    if issuance.accepted.is_some() {
+        return Ok(issuance.accepted.clone().unwrap());
+    }
+    if matches!(request.initiator, Initiator::Wallet { .. }) {
+        return Err(anyhow!("authorization details are required for wallet-initiated issuance"));
+    }
+    let mut auth_details = Vec::new();
+    let creds_supported = &issuance.issuer.credential_configurations_supported;
+    for cfg_id in &issuance.offer.credential_configuration_ids {
+        let Some(credential_config) = creds_supported.get(cfg_id) else {
+            return Err(anyhow!("unsupported credential type in offer"));
+        };
+        let claims: Option<ProfileClaims> =
+            credential_config.format.claims().map(|claims| match &credential_config.format {
+                FormatIdentifier::JwtVcJson(w3c)
+                | FormatIdentifier::LdpVc(w3c)
+                | FormatIdentifier::JwtVcJsonLd(w3c) => ProfileClaims::W3c(CredentialDefinition {
+                    credential_subject: w3c.credential_definition.credential_subject.clone(),
+                    ..Default::default()
+                }),
+                FormatIdentifier::IsoMdl(_) => ProfileClaims::IsoMdl(claims),
+                FormatIdentifier::VcSdJwt(_) => ProfileClaims::SdJwt(claims),
+            });
+        auth_details.push(AuthorizationDetail {
+            type_: AuthorizationDetailType::OpenIdCredential,
+            credential: CredentialAuthorization::ConfigurationId {
+                credential_configuration_id: cfg_id.clone(),
+                claims,
+            },
+            ..Default::default()
+        });
+    }
+    Ok(auth_details)
 }

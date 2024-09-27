@@ -15,6 +15,7 @@ pub const CREDENTIAL_ISSUER: &str = "http://vercre.io";
 pub const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
 pub const NORMAL_USER: &str = "normal_user";
 pub const PENDING_USER: &str = "pending_user";
+pub const REDIRECT_URI: &str = "http://localhost:3000/callback";
 
 #[derive(Default, Clone, Debug)]
 pub struct Provider {

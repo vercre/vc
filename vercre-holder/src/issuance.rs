@@ -14,7 +14,7 @@ pub(crate) mod token;
 use std::fmt::Debug;
 
 pub use accept::{accept, AcceptRequest, AuthorizationSpec};
-pub use authorize::{authorize, AuthorizeRequest};
+pub use authorize::{authorize, AuthorizeRequest, Initiator};
 pub use cancel::cancel;
 pub use credential::{credentials, CredentialsRequest};
 pub use offer::{offer, OfferRequest, OfferResponse};
