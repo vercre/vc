@@ -1766,7 +1766,7 @@ impl<'de> de::Deserialize<'de> for Claim {
                 formatter.write_str("Claim")
             }
 
-            fn visit_map<A>(self, mut map: A) -> std::result::Result<Self::Value, A::Error>
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
             where
                 A: de::MapAccess<'de>,
             {
@@ -1775,19 +1775,11 @@ impl<'de> de::Deserialize<'de> for Claim {
 
                 while let Some(key) = map.next_key::<&str>()? {
                     match key {
-                        "mandatory" => {
-                            entry.mandatory = Some(map.next_value()?);
-                        }
-                        "value_type" => {
-                            entry.value_type = Some(map.next_value()?);
-                        }
-                        "display" => {
-                            entry.display = Some(map.next_value()?);
-                        }
-                        _ => {
-                            set.insert(key.to_string(), map.next_value::<Claim>()?);
-                        }
-                    };
+                        "mandatory" => entry.mandatory = Some(map.next_value()?),
+                        "value_type" => entry.value_type = Some(map.next_value()?),
+                        "display" => entry.display = Some(map.next_value()?),
+                        _ => _ = set.insert(key.to_string(), map.next_value::<Claim>()?),
+                    }
                 }
 
                 if set.is_empty() {
