@@ -22,8 +22,8 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationDetail, AuthorizedDetail, Metadata, Provider, StateStore, TokenGrantType,
-    TokenRequest, TokenResponse, TokenType,
+    AuthorizedDetail, CredentialAuthorization, Issuer, Metadata, Provider, StateStore,
+    TokenGrantType, TokenRequest, TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
 
@@ -155,8 +155,7 @@ impl Context {
                 };
 
                 // get the subset of requested credentials from those previously authorized
-                let retained_items =
-                    retain_details(&request.authorization_details, &auth_state.items)?;
+                let retained_items = retain_details(provider, &request, &auth_state.items).await?;
                 let authorized_details = authorized_details(&retained_items);
                 let authorized = authorized_credentials(&retained_items);
 
@@ -201,29 +200,79 @@ impl Context {
     }
 }
 
-fn retain_details(
-    requested: &Option<Vec<AuthorizationDetail>>, items: &[AuthorizedItem],
+// Filter previously authorized DetailItems by requested
+// `authorization_details`.
+async fn retain_details(
+    provider: &impl Provider, request: &TokenRequest, items: &[AuthorizedItem],
 ) -> Result<Vec<AuthorizedItem>> {
-    // filter previously authorized DetailItems by requested authorization_details
-    let Some(req_dets) = requested else { return Ok(items.to_vec()) };
+    // no `authorization_details` in request, return all previously authorized
+    let Some(req_auth_dets) = request.authorization_details.as_ref() else {
+        return Ok(items.to_vec());
+    };
 
-    let filtered = items
-        .iter()
-        .filter(|item| {
+    let Ok(issuer) = Metadata::issuer(provider, &request.credential_issuer).await else {
+        return Err(Error::InvalidRequest("unknown authorization server".into()));
+    };
+
+    // filter by requested authorization_details
+    let mut retained = vec![];
+
+    'next: for auth_det in req_auth_dets {
+        // check requested `authorization_detail` has been previously authorized
+        for item in items {
             if let ItemType::AuthorizationDetail(ad) = &item.item {
-                req_dets.iter().any(|reqd| ad.credential == reqd.credential)
-            } else {
-                false
+                if ad.credential == auth_det.credential {
+                    verify_claims(&issuer, &auth_det.credential)?;
+                    retained.push(item.clone());
+                    break 'next;
+                }
             }
-        })
-        .cloned()
-        .collect::<Vec<_>>();
+        }
 
-    if filtered.is_empty() {
-        return Err(Error::InvalidRequest("no matching authorization details".into()));
+        // we're here if requested `authorization_detail` has not been authorized
+        return Err(Error::InvalidRequest("requested credential has not been authorized".into()));
     }
 
-    Ok(filtered)
+    Ok(retained)
+}
+
+// Verify requested claims exist as supported claims and all mandatory claims
+// have been requested.
+fn verify_claims(issuer: &Issuer, credential: &CredentialAuthorization) -> Result<()> {
+    let (config_id, claims) = match credential {
+        CredentialAuthorization::ConfigurationId {
+            credential_configuration_id,
+            claims: profile,
+        } => {
+            let claims = if let Some(profile) = profile { profile.claims() } else { None };
+            if claims.is_none() {
+                return Ok(());
+            }
+
+            (credential_configuration_id, claims)
+        }
+        CredentialAuthorization::Format(fmt) => {
+            if fmt.claims().is_none() {
+                return Ok(());
+            }
+
+            let credential_configuration_id = issuer
+                .credential_configuration_id(fmt)
+                .map_err(|e| Error::ServerError(format!("issuer issue: {e}")))?;
+            (credential_configuration_id, fmt.claims())
+        }
+    };
+
+    if let Some(requested) = claims {
+        let config = issuer
+            .credential_configurations_supported
+            .get(config_id)
+            .ok_or_else(|| Error::InvalidRequest("invalid credential_configuration_id".into()))?;
+
+        config.verify_claims(&requested).map_err(|e| Error::InvalidRequest(e.to_string()))?;
+    }
+
+    Ok(())
 }
 
 fn authorized_details(items: &[AuthorizedItem]) -> Vec<AuthorizedDetail> {

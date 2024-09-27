@@ -1542,8 +1542,8 @@ pub struct CredentialConfiguration {
 }
 
 impl CredentialConfiguration {
-    /// Verifies that the `claimset` contains the required claims and that the
-    /// claims are supported by the Credential Issuer.
+    /// Verifies that the `claimset` contains required claims and they are
+    /// supported for the Credential.
     pub fn verify_claims(&self, claimset: &HashMap<String, Claim>) -> Result<()> {
         // ensure `claimset` claims exist in the supported claims
         if !claimset.is_empty() {
@@ -1560,16 +1560,19 @@ impl CredentialConfiguration {
         Ok(())
     }
 
+    /// Verifies `claimset` claims are supported by the Credential
     fn claims_supported(
-        &self, requested: &HashMap<String, Claim>, supported: &HashMap<String, Claim>,
+        &self, claimset: &HashMap<String, Claim>, supported: &HashMap<String, Claim>,
     ) -> Result<()> {
-        for (key, entry) in requested {
+        for (key, entry) in claimset {
             if !supported.contains_key(key) {
                 return Err(anyhow!("{key} claim is not supported"));
             }
 
             // check nested claims
-            if let Claim::Set(req_nested) = &entry {
+            if let Claim::Set(req_nested) = &entry
+                && !req_nested.is_empty()
+            {
                 if let Claim::Set(sup_nested) = &supported[key] {
                     self.claims_supported(req_nested, sup_nested)?;
                 } else {
@@ -1581,6 +1584,7 @@ impl CredentialConfiguration {
         Ok(())
     }
 
+    /// Verifies `claimset` contains all requierd claims
     fn claims_required(
         &self, requested: &HashMap<String, Claim>, supported: &HashMap<String, Claim>,
     ) -> Result<()> {
@@ -1601,7 +1605,9 @@ impl CredentialConfiguration {
             let Claim::Set(sup_nested) = &entry else { return Ok(()) };
 
             // check nested claims
-            if let Claim::Set(req_nested) = &entry {
+            if let Claim::Set(req_nested) = &entry
+                && !req_nested.is_empty()
+            {
                 self.claims_required(req_nested, sup_nested)?;
             } else {
                 return Err(anyhow!("{key} claim is not supported"));
