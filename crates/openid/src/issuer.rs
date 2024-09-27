@@ -1594,28 +1594,23 @@ impl CredentialConfiguration {
         requested: &HashMap<String, Claim>, supported: &HashMap<String, Claim>,
     ) -> Result<()> {
         for (key, entry) in supported {
-            // no need to go any further if claim not mandatory
-            if let Claim::Entry(def) = entry {
-                if !def.mandatory.unwrap_or_default() {
-                    return Ok(());
+            match entry {
+                Claim::Set(sup_nested) => {
+                    if !sup_nested.is_empty() {
+                        if let Claim::Set(req_nested) =
+                            requested.get(key).unwrap_or(&Claim::Set(HashMap::new()))
+                        {
+                            Self::claims_required(req_nested, sup_nested)?;
+                        } else {
+                            return Err(anyhow!("{key} claim is not supported"));
+                        }
+                    }
                 }
-            }
-
-            // error if requested claim is missing
-            let Some(entry) = requested.get(key) else {
-                return Err(anyhow!("{key} claim is required"));
-            };
-
-            // does this claim have any nested claims to check?
-            let Claim::Set(sup_nested) = &entry else { return Ok(()) };
-
-            // check nested claims
-            if let Claim::Set(req_nested) = &entry
-                && !req_nested.is_empty()
-            {
-                Self::claims_required(req_nested, sup_nested)?;
-            } else {
-                return Err(anyhow!("{key} claim is not supported"));
+                Claim::Entry(def) => {
+                    if def.mandatory.unwrap_or_default() && requested.get(key).is_none() {
+                        return Err(anyhow!("{key} claim is required"));
+                    }
+                }
             }
         }
 
