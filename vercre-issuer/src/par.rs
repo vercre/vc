@@ -8,14 +8,14 @@
 
 use tracing::instrument;
 use vercre_openid::issuer::{
-    PushedAuthorizationRequest, PushedAuthorizationResponse, Provider, StateStore,
+    Provider, PushedAuthorizationRequest, PushedAuthorizationResponse, StateStore,
 };
 use vercre_openid::{Error, Result};
 
 use crate::state::{PushedAuthorization, Stage, State};
 
-/// Endpoint for the Wallet to request the Issuer's Credential Offer when
-/// engaged in a cross-device flow.
+/// Endpoint for the Wallet to push an Authorization Request when using Pushed
+/// Authorization Requests.
 ///
 /// # Errors
 ///
@@ -39,7 +39,6 @@ async fn process(
     StateStore::put(provider, &state_key, &state, state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
-
 
     Ok(PushedAuthorizationResponse { .. })
 }
