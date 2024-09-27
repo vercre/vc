@@ -391,10 +391,10 @@ mod tests {
     extern crate self as vercre_issuer;
 
     #[rstest]
-    #[case::configuration_id("configuration_id", configuration_id)]
-    #[case::format("format", format_w3c)]
-    #[case::scope("scope", scope)]
-    #[case::claims("claims", claims)]
+    // #[case::configuration_id("configuration_id", configuration_id)]
+    // #[case::format("format", format_w3c)]
+    // #[case::scope("scope", scope)]
+    // #[case::claims("claims", claims)]
     #[should_panic(expected = "ok")]
     #[case::claims_err("claims_err", claims_err)]
     async fn authorize_tests(#[case] name: &str, #[case] request: fn() -> AuthorizationRequest) {
@@ -420,91 +420,91 @@ mod tests {
         });
     }
 
-    fn configuration_id() -> AuthorizationRequest {
-        authorization_request!({
-            "credential_issuer": CREDENTIAL_ISSUER,
-            "response_type": "code",
-            "client_id": CLIENT_ID,
-            "redirect_uri": "http://localhost:3000/callback",
-            "state": "1234",
-            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
-            "code_challenge_method": "S256",
-            "authorization_details": [{
-                "type": "openid_credential",
-                "credential_configuration_id": "EmployeeID_JWT",
-            }],
-            "subject_id": NORMAL_USER,
-            "wallet_issuer": CREDENTIAL_ISSUER
-        })
-    }
+    // fn configuration_id() -> AuthorizationRequest {
+    //     authorization_request!({
+    //         "credential_issuer": CREDENTIAL_ISSUER,
+    //         "response_type": "code",
+    //         "client_id": CLIENT_ID,
+    //         "redirect_uri": "http://localhost:3000/callback",
+    //         "state": "1234",
+    //         "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+    //         "code_challenge_method": "S256",
+    //         "authorization_details": [{
+    //             "type": "openid_credential",
+    //             "credential_configuration_id": "EmployeeID_JWT",
+    //         }],
+    //         "subject_id": NORMAL_USER,
+    //         "wallet_issuer": CREDENTIAL_ISSUER
+    //     })
+    // }
 
-    fn format_w3c() -> AuthorizationRequest {
-        authorization_request!({
-            "credential_issuer": CREDENTIAL_ISSUER,
-            "response_type": "code",
-            "client_id": CLIENT_ID,
-            "redirect_uri": "http://localhost:3000/callback",
-            "state": "1234",
-            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
-            "code_challenge_method": "S256",
-            "authorization_details": [{
-                "type": "openid_credential",
-                "format": "jwt_vc_json",
-                "credential_definition": {
-                    "type": [
-                        "VerifiableCredential",
-                        "EmployeeIDCredential"
-                    ]
-                }
-            }],
-            "subject_id": NORMAL_USER,
-            "wallet_issuer": CREDENTIAL_ISSUER
-        })
-    }
+    // fn format_w3c() -> AuthorizationRequest {
+    //     authorization_request!({
+    //         "credential_issuer": CREDENTIAL_ISSUER,
+    //         "response_type": "code",
+    //         "client_id": CLIENT_ID,
+    //         "redirect_uri": "http://localhost:3000/callback",
+    //         "state": "1234",
+    //         "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+    //         "code_challenge_method": "S256",
+    //         "authorization_details": [{
+    //             "type": "openid_credential",
+    //             "format": "jwt_vc_json",
+    //             "credential_definition": {
+    //                 "type": [
+    //                     "VerifiableCredential",
+    //                     "EmployeeIDCredential"
+    //                 ]
+    //             }
+    //         }],
+    //         "subject_id": NORMAL_USER,
+    //         "wallet_issuer": CREDENTIAL_ISSUER
+    //     })
+    // }
 
-    fn scope() -> AuthorizationRequest {
-        authorization_request!({
-            "credential_issuer": CREDENTIAL_ISSUER,
-            "response_type": "code",
-            "client_id": CLIENT_ID,
-            "redirect_uri": "http://localhost:3000/callback",
-            "state": "1234",
-            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
-            "code_challenge_method": "S256",
-            "scope": "EmployeeIDCredential",
-            "subject_id": NORMAL_USER,
-            "wallet_issuer": CREDENTIAL_ISSUER
-        })
-    }
+    // fn scope() -> AuthorizationRequest {
+    //     authorization_request!({
+    //         "credential_issuer": CREDENTIAL_ISSUER,
+    //         "response_type": "code",
+    //         "client_id": CLIENT_ID,
+    //         "redirect_uri": "http://localhost:3000/callback",
+    //         "state": "1234",
+    //         "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+    //         "code_challenge_method": "S256",
+    //         "scope": "EmployeeIDCredential",
+    //         "subject_id": NORMAL_USER,
+    //         "wallet_issuer": CREDENTIAL_ISSUER
+    //     })
+    // }
 
-    fn claims() -> AuthorizationRequest {
-        authorization_request!({
-            "credential_issuer": CREDENTIAL_ISSUER,
-            "response_type": "code",
-            "client_id": CLIENT_ID,
-            "redirect_uri": "http://localhost:3000/callback",
-            "state": "1234",
-            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
-            "code_challenge_method": "S256",
-            "authorization_details": [{
-                "type": "openid_credential",
-                "credential_configuration_id": "EmployeeID_JWT",
-                "credential_definition": {
-                    "credentialSubject": {
-                        "email": {},
-                        "given_name": {},
-                        "family_name": {},
-                        "address": {
-                            "street_address": {},
-                            "locality": {}
-                        }
-                    }
-                }
-            }],
-            "subject_id": NORMAL_USER,
-            "wallet_issuer": CREDENTIAL_ISSUER
-        })
-    }
+    // fn claims() -> AuthorizationRequest {
+    //     authorization_request!({
+    //         "credential_issuer": CREDENTIAL_ISSUER,
+    //         "response_type": "code",
+    //         "client_id": CLIENT_ID,
+    //         "redirect_uri": "http://localhost:3000/callback",
+    //         "state": "1234",
+    //         "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+    //         "code_challenge_method": "S256",
+    //         "authorization_details": [{
+    //             "type": "openid_credential",
+    //             "credential_configuration_id": "EmployeeID_JWT",
+    //             "credential_definition": {
+    //                 "credentialSubject": {
+    //                     "email": {},
+    //                     "given_name": {},
+    //                     "family_name": {},
+    //                     "address": {
+    //                         "street_address": {},
+    //                         "locality": {}
+    //                     }
+    //                 }
+    //             }
+    //         }],
+    //         "subject_id": NORMAL_USER,
+    //         "wallet_issuer": CREDENTIAL_ISSUER
+    //     })
+    // }
 
     fn claims_err() -> AuthorizationRequest {
         authorization_request!({

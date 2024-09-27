@@ -18,13 +18,11 @@ credential_configurations_supported:
         - DeveloperCredential
       credentialSubject:
         family_name:
-          mandatory: true
           value_type: string
           display:
             - name: Family name
               locale: en-NZ
         given_name:
-          mandatory: true
           value_type: string
           display:
             - name: Given name
