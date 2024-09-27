@@ -56,7 +56,7 @@ pub use presentation::request::request;
 pub use vercre_core::Quota;
 pub use vercre_dif_exch::Constraints;
 pub use vercre_openid::issuer::{
-    ClaimDefinition, CredentialConfiguration, CredentialOffer, CredentialRequest,
+    Claim, ClaimDefinition, CredentialConfiguration, CredentialOffer, CredentialRequest,
     CredentialResponse, GrantType, Issuer, MetadataRequest, MetadataResponse, Proof, ProofClaims,
     TokenRequest, TokenResponse, TxCode,
 };

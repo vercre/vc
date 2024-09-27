@@ -223,11 +223,14 @@ fn claims(claimset: &HashMap<String, Value>) -> TokenStream {
     let path = quote! {vercre_issuer};
 
     let claims = claimset.iter().map(|(k, v)| {
-        let nested = v.as_object().map_or_else(|| None, |obj| Some(claims(obj)));
-        quote! {(#k.to_string(), #path::ClaimDefinition{
-            nested: #nested,
-            ..#path::ClaimDefinition::default()
-        })}
+        if let Some(nested) = v.as_object()
+            && !nested.is_empty()
+        {
+            let claims = claims(nested);
+            quote! {(#k.to_string(), #path::Claim::Set(#claims.unwrap()))}
+        } else {
+            quote! {(#k.to_string(), #path::Claim::Entry(#path::ClaimDefinition::default()))}
+        }
     });
 
     quote! {
