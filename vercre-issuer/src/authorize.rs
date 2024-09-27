@@ -225,7 +225,7 @@ impl Context {
                 return Err(Error::InvalidRequest("invalid authorization_details type".into()));
             }
 
-            // verify requested credentials are supported
+            // verify requested claims
             let (config_id, claims) = match &auth_det.credential {
                 CredentialAuthorization::ConfigurationId {
                     credential_configuration_id,
@@ -242,8 +242,7 @@ impl Context {
                 }
             };
 
-            // verify requested claims exist as supported claims and all mandatory claims
-            // have been requested.
+            // check claims are supported and include all mandatory claims
             if let Some(requested) = &claims {
                 let config =
                     self.issuer.credential_configurations_supported.get(config_id).ok_or_else(

@@ -6,7 +6,10 @@
                 "given_name": "Normal",
                 "family_name": "Person",
                 "email": "normal.user@example.com",
-                "proficiency": "3"
+                "address": {
+                    "street_address": "123 Fake St",
+                    "locality": "Wellington"
+                }
             },
             "pending": false
         },
@@ -27,7 +30,10 @@
                 "given_name": "Pending",
                 "family_name": "Person",
                 "email": "pending.user@example.com",
-                "proficiency": "1"
+                "address": {
+                    "street_address": "123 Fake St",
+                    "locality": "Wellington"
+                }
             },
             "pending": true
         }

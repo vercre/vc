@@ -245,23 +245,13 @@ async fn retain_details(
 // Verify requested claims exist as supported claims and all mandatory claims
 // have been requested.
 fn verify_claims(issuer: &Issuer, credential: &CredentialAuthorization) -> Result<()> {
+    // verify requested claims
     let (config_id, claims) = match credential {
         CredentialAuthorization::ConfigurationId {
             credential_configuration_id,
             claims: profile,
-        } => {
-            let claims = profile.as_ref().and_then(ProfileClaims::claims);
-            if claims.is_none() {
-                return Ok(());
-            }
-
-            (credential_configuration_id, claims)
-        }
+        } => (credential_configuration_id, profile.as_ref().and_then(ProfileClaims::claims)),
         CredentialAuthorization::Format(fmt) => {
-            if fmt.claims().is_none() {
-                return Ok(());
-            }
-
             let credential_configuration_id = issuer
                 .credential_configuration_id(fmt)
                 .map_err(|e| Error::ServerError(format!("issuer issue: {e}")))?;
@@ -269,12 +259,12 @@ fn verify_claims(issuer: &Issuer, credential: &CredentialAuthorization) -> Resul
         }
     };
 
+    // check claims are supported and include all mandatory claims
     if let Some(requested) = claims {
         let config = issuer
             .credential_configurations_supported
             .get(config_id)
             .ok_or_else(|| Error::InvalidRequest("invalid credential_configuration_id".into()))?;
-
         config.verify_claims(&requested).map_err(|e| Error::InvalidRequest(e.to_string()))?;
     }
 
