@@ -6,10 +6,9 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
-// use vercre_holder::provider::CredentialStorer;
 use vercre_holder::issuance::{AcceptRequest, AuthorizationSpec, CredentialsRequest, OfferRequest};
 use vercre_holder::provider::CredentialStorer;
-use vercre_holder::{Claim, ClaimDefinition};
+use vercre_holder::Claim;
 use vercre_issuer::{OfferType, SendType};
 use vercre_macros::create_offer_request;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -92,15 +91,8 @@ async fn preauth_narrow() {
         1
     );
     assert_eq!(token_response.authorized.clone().unwrap().get("Developer_JWT").unwrap().len(), 1);
-    let credential_configs = token_response
-        .authorized
-        .clone()
-        .unwrap();
-    let credential_identifier = credential_configs
-        .get("Developer_JWT")
-        .unwrap()
-        .get(0)
-        .unwrap();
+    let credential_configs = token_response.authorized.clone().unwrap();
+    let credential_identifier = credential_configs.get("Developer_JWT").unwrap().get(0).unwrap();
 
     // Get the credential
     let cred_req = CredentialsRequest {

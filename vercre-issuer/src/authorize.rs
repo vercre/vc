@@ -269,7 +269,8 @@ impl Context {
             return Err(Error::InvalidRequest("invalid credential_configuration_id".into()));
         };
 
-        // check requested claims are supported and all requierd claims have been requested
+        // check requested claims are supported and all requierd claims have been
+        // requested
         if let Some(requested) = claims {
             config.verify_claims(requested).map_err(|e| Error::InvalidRequest(e.to_string()))?;
         }

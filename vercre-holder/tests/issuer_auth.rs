@@ -5,7 +5,10 @@ mod provider;
 use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
-use vercre_holder::{issuance::{AcceptRequest, AuthorizeRequest, CredentialsRequest, Initiator, OfferRequest}, provider::CredentialStorer};
+use vercre_holder::issuance::{
+    AcceptRequest, AuthorizeRequest, CredentialsRequest, Initiator, OfferRequest,
+};
+use vercre_holder::provider::CredentialStorer;
 use vercre_issuer::{OfferType, SendType};
 use vercre_macros::create_offer_request;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, REDIRECT_URI};
@@ -76,7 +79,8 @@ async fn issuer_auth() {
             issuance_id: issuance.issuance_id.clone(),
         },
         redirect_uri: Some(REDIRECT_URI.into()), // Must match client registration.
-        authorization_details: None, // None implies the wallet wants all offered credentials.
+        authorization_details: None,             /* None implies the wallet wants all offered
+                                                  * credentials. */
     };
     vercre_holder::issuance::authorize(HOLDER_PROVIDER.clone(), &auth_request)
         .await

@@ -7,15 +7,14 @@ pub(crate) mod authorize;
 pub(crate) mod present;
 pub(crate) mod request;
 
-pub use authorize::authorize;
-pub use present::present;
-pub use request::request;
-
 use std::fmt::{Debug, Display};
 use std::str::FromStr;
 
 use anyhow::anyhow;
+pub use authorize::authorize;
 use chrono::{DateTime, Utc};
+pub use present::present;
+pub use request::request;
 use serde::{Deserialize, Serialize};
 use vercre_dif_exch::{Constraints, PresentationSubmission};
 use vercre_openid::verifier::RequestObject;
