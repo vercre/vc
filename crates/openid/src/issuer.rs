@@ -1782,6 +1782,7 @@ impl<'de> de::Deserialize<'de> for Claim {
                     }
                 }
 
+                // empty claims (e.g. "given_name": {}) will always be an `entry`
                 if set.is_empty() {
                     Ok(Claim::Entry(entry))
                 } else {
