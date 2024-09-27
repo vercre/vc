@@ -56,10 +56,9 @@ async fn preauth_narrow() {
     assert_snapshot!("created", issuance, {
         ".issuance_id" => "[issuance_id]",
         ".offered" => insta::sorted_redaction(),
-        ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
-        ".offered.EmployeeID_JWT.credential_definition.credentialSubject.address" => insta::sorted_redaction(),
-        ".offered.Developer_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
         ".grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
+        ".**.credentialSubject.address" => insta::sorted_redaction(),
+        ".**.credentialSubject" => insta::sorted_redaction(),
     });
 
     // Accept only the Developer credential on offer, and only the proficiency

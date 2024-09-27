@@ -398,7 +398,6 @@ mod tests {
             ".expires_at" => "[expires_at]",
             ".**.credentialSubject" => insta::sorted_redaction(),
             ".**.credentialSubject.address" => insta::sorted_redaction(),
-            // ".items.*.credential_definition.credentialSubject" => insta::sorted_redaction(),
         });
     }
 

@@ -54,9 +54,9 @@ async fn issuer_auth() {
 
     assert_snapshot!("created", issuance, {
         ".issuance_id" => "[issuance_id]",
-        ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
         ".grants.authorization_code.issuer_state" => "[issuer_state]",
-        ".offered.EmployeeID_JWT.credential_definition.credentialSubject.address" => insta::sorted_redaction(),
+        ".**.credentialSubject" => insta::sorted_redaction(),
+        ".**.credentialSubject.address" => insta::sorted_redaction(),
     });
 
     // Accept all credentials on offer
