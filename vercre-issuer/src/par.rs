@@ -34,7 +34,7 @@ async fn process(
     tracing::debug!("par::process");
 
     let Stage::Par(par) = &state.stage else {
-        return Err(Error::InvalidRequest("no credential offer found".into()));
+        return Err(Error::InvalidRequest("no offer found".into()));
     };
     StateStore::put(provider, &state_key, &state, state.expires_at)
         .await
