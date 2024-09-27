@@ -125,4 +125,6 @@ offered:
           uri: "https://vercre.github.io/assets/vercre-background.png"
           alt_text: Vercre Background
         text_color: "#ffffff"
-tx_code: ~
+grants:
+  "urn:ietf:params:oauth:grant-type:pre-authorized_code":
+    pre-authorized_code: "[pre-authorized_code]"

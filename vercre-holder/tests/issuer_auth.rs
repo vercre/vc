@@ -5,11 +5,10 @@ mod provider;
 use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
-use vercre_holder::issuance::{AcceptRequest, CredentialsRequest, OfferRequest, PinRequest};
-use vercre_holder::provider::CredentialStorer;
+use vercre_holder::{issuance::{AcceptRequest, AuthorizeRequest, CredentialsRequest, Initiator, OfferRequest}, provider::CredentialStorer};
 use vercre_issuer::{OfferType, SendType};
 use vercre_macros::create_offer_request;
-use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, REDIRECT_URI};
 
 use crate::provider as holder;
 
@@ -17,18 +16,17 @@ static ISSUER_PROVIDER: LazyLock<issuer::Provider> = LazyLock::new(issuer::Provi
 static HOLDER_PROVIDER: LazyLock<holder::Provider> =
     LazyLock::new(|| holder::Provider::new(Some(ISSUER_PROVIDER.clone()), None));
 
-// Test end-to-end pre-authorized issuance flow, with acceptance of all
-// credentials on offer.
+// Test end-to-end issuer-initiated flow that requires authorization.
 #[tokio::test]
-async fn preauth() {
+async fn issuer_auth() {
     // Use the issuance service endpoint to create a sample offer so we can get a
     // valid pre-authorized code.
     let request = create_offer_request!({
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": NORMAL_USER,
-        "pre_authorize": true,
-        "tx_code_required": true,
+        "pre_authorize": false,
+        "tx_code_required": false,
         "send_type": SendType::ByVal,
     });
 
@@ -40,6 +38,7 @@ async fn preauth() {
         panic!("expected CredentialOfferType::Object");
     };
 
+    // Initiate the authorization code flow
     // Initiate the pre-authorized code flow
     let offer_req = OfferRequest {
         client_id: CLIENT_ID.into(),
@@ -53,7 +52,7 @@ async fn preauth() {
     assert_snapshot!("created", issuance, {
         ".issuance_id" => "[issuance_id]",
         ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
-        ".grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
+        ".grants.authorization_code.issuer_state" => "[issuer_state]",
         ".offered.EmployeeID_JWT.credential_definition.credentialSubject.address" => insta::sorted_redaction(),
     });
 
@@ -66,19 +65,22 @@ async fn preauth() {
         .await
         .expect("should accept offer");
 
-    // Enter PIN
-    let pin_req = PinRequest {
-        issuance_id: issuance.issuance_id.clone(),
-        pin: offer_resp.tx_code.expect("should have user code"),
-    };
-    vercre_holder::issuance::pin(HOLDER_PROVIDER.clone(), &pin_req)
-        .await
-        .expect("should apply pin");
-
-    // Get available credential identifiers.
+    // Making a token request should thow an error
     vercre_holder::issuance::token(HOLDER_PROVIDER.clone(), &issuance.issuance_id)
         .await
-        .expect("should get token");
+        .expect_err("should not accept token request");
+
+    // Authorization request
+    let auth_request = AuthorizeRequest {
+        initiator: Initiator::Issuer {
+            issuance_id: issuance.issuance_id.clone(),
+        },
+        redirect_uri: Some(REDIRECT_URI.into()), // Must match client registration.
+        authorization_details: None, // None implies the wallet wants all offered credentials.
+    };
+    vercre_holder::issuance::authorize(HOLDER_PROVIDER.clone(), &auth_request)
+        .await
+        .expect("should authorize");
 
     // Get (and store) credentials. Accept all on offer.
     let cred_req = CredentialsRequest {

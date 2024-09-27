@@ -8,6 +8,7 @@
 #![feature(error_generic_member_access)]
 
 pub mod gen;
+pub mod pkce;
 pub mod stringify;
 
 use serde::{Deserialize, Serialize};

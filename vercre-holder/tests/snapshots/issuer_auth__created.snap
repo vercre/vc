@@ -1,5 +1,5 @@
 ---
-source: vercre-holder/tests/preauth.rs
+source: vercre-holder/tests/issuer_auth.rs
 assertion_line: 52
 expression: issuance
 ---
@@ -77,9 +77,5 @@ offered:
           alt_text: Vercre Background
         text_color: "#ffffff"
 grants:
-  "urn:ietf:params:oauth:grant-type:pre-authorized_code":
-    pre-authorized_code: "[pre-authorized_code]"
-    tx_code:
-      input_mode: numeric
-      length: 6
-      description: Please provide the one-time code received
+  authorization_code:
+    issuer_state: "[issuer_state]"

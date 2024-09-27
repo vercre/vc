@@ -76,12 +76,7 @@ pub async fn accept(
         return Err(e);
     }
     let Some(grants) = &issuance.offer.grants else {
-        let e = anyhow!("no grants");
-        tracing::error!(target: "Endpoint::accept", ?e);
-        return Err(e);
-    };
-    let Some(pre_auth_code) = &grants.pre_authorized_code else {
-        let e = anyhow!("no pre-authorized code");
+        let e = anyhow!("no grants on offer");
         tracing::error!(target: "Endpoint::accept", ?e);
         return Err(e);
     };
@@ -102,10 +97,11 @@ pub async fn accept(
             }
         };
 
-    if pre_auth_code.tx_code.is_some() {
-        issuance.status = Status::PendingPin;
-    } else {
-        issuance.status = Status::Accepted;
+    issuance.status = Status::Accepted;
+    if let Some(pre_auth_code) = &grants.pre_authorized_code {
+        if pre_auth_code.tx_code.is_some() {
+            issuance.status = Status::PendingPin;
+        }
     }
 
     // Stash the state for the next step.
