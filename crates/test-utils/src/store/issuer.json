@@ -173,7 +173,6 @@
                         ]
                     },
                     "family_name": {
-                        "mandatory": true,
                         "value_type": "string",
                         "display": [
                             {
@@ -183,7 +182,6 @@
                         ]
                     },
                     "given_name": {
-                        "mandatory": true,
                         "value_type": "string",
                         "display": [
                             {

@@ -9,7 +9,7 @@ use insta::assert_yaml_snapshot as assert_snapshot;
 // use vercre_holder::provider::CredentialStorer;
 use vercre_holder::issuance::{AcceptRequest, AuthorizationSpec, CredentialsRequest, OfferRequest};
 use vercre_holder::provider::CredentialStorer;
-use vercre_holder::{Claim, ClaimDefinition};
+use vercre_holder::Claim;
 use vercre_issuer::{OfferType, SendType};
 use vercre_macros::create_offer_request;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
