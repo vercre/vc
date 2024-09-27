@@ -503,7 +503,8 @@ mod tests {
 
         assert_snapshot!("credential:identifier:vc", vc, {
             ".issuanceDate" => "[issuanceDate]",
-            ".credentialSubject" => insta::sorted_redaction()
+            ".credentialSubject" => insta::sorted_redaction(),
+            ".credentialSubject.address" => insta::sorted_redaction()
         });
 
         // token state should remain unchanged

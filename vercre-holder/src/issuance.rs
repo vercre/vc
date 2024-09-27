@@ -83,9 +83,9 @@ impl Issuance {
 
     /// Gets issuer metadata from the provider and sets that information on
     /// the issuance flow state.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// Returns an error if the provider's metadata request fails.
     pub async fn set_issuer(
         &mut self, provider: &impl HolderProvider, credential_issuer: &str,

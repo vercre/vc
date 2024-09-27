@@ -6,7 +6,6 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
-// use vercre_holder::provider::CredentialStorer;
 use vercre_holder::issuance::{AcceptRequest, AuthorizationSpec, CredentialsRequest, OfferRequest};
 use vercre_holder::provider::CredentialStorer;
 use vercre_holder::Claim;
@@ -57,10 +56,9 @@ async fn preauth_narrow() {
     assert_snapshot!("created", issuance, {
         ".issuance_id" => "[issuance_id]",
         ".offered" => insta::sorted_redaction(),
-        ".offered.EmployeeID_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
-        ".offered.EmployeeID_JWT.credential_definition.credentialSubject.address" => insta::sorted_redaction(),
-        ".offered.Developer_JWT.credential_definition.credentialSubject" => insta::sorted_redaction(),
         ".grants[\"urn:ietf:params:oauth:grant-type:pre-authorized_code\"][\"pre-authorized_code\"]" => "[pre-authorized_code]",
+        ".**.credentialSubject.address" => insta::sorted_redaction(),
+        ".**.credentialSubject" => insta::sorted_redaction(),
     });
 
     // Accept only the Developer credential on offer, and only the proficiency
@@ -92,15 +90,8 @@ async fn preauth_narrow() {
         1
     );
     assert_eq!(token_response.authorized.clone().unwrap().get("Developer_JWT").unwrap().len(), 1);
-    let credential_configs = token_response
-        .authorized
-        .clone()
-        .unwrap();
-    let credential_identifier = credential_configs
-        .get("Developer_JWT")
-        .unwrap()
-        .get(0)
-        .unwrap();
+    let credential_configs = token_response.authorized.clone().unwrap();
+    let credential_identifier = credential_configs.get("Developer_JWT").unwrap().get(0).unwrap();
 
     // Get the credential
     let cred_req = CredentialsRequest {

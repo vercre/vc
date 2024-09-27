@@ -19,8 +19,8 @@ credentials:
       issuer: "https://example.com/issuers/14"
       issuanceDate: "2023-11-20T23:21:55Z"
       credentialSubject:
-        id: "did:example:ebfeb1f712ebc6f1c276e12ec21"
         employeeId: "1234567890"
+        id: "did:example:ebfeb1f712ebc6f1c276e12ec21"
       expirationDate: "2033-12-20T23:21:55Z"
     metadata:
       format: jwt_vc_json

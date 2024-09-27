@@ -14,9 +14,9 @@ use vercre_holder::provider::{
     StateStore, Verifier,
 };
 use vercre_holder::{
-    AuthorizationRequest, AuthorizationResponse, Credential, CredentialRequest, CredentialResponse, Logo, MetadataRequest, MetadataResponse,
-    RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse, TokenRequest,
-    TokenResponse,
+    AuthorizationRequest, AuthorizationResponse, Credential, CredentialRequest, CredentialResponse,
+    Logo, MetadataRequest, MetadataResponse, RequestObjectRequest, RequestObjectResponse,
+    ResponseRequest, ResponseResponse, TokenRequest, TokenResponse,
 };
 use vercre_test_utils::store::keystore::HolderKeystore;
 use vercre_test_utils::store::{resolver, state};

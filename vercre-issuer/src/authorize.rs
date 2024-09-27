@@ -73,11 +73,11 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    Claim, CredentialAuthorization, GrantType, Issuer, Metadata, Provider, StateStore, Subject,
+    Claim, CredentialAuthorization, GrantType, Issuer, Metadata, ProfileClaims, Provider,
+    StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 
-// use crate::shell;
 use crate::state::{Authorization, AuthorizedItem, Expire, ItemType, Stage, State};
 
 /// Authorization request handler.
@@ -225,53 +225,36 @@ impl Context {
                 return Err(Error::InvalidRequest("invalid authorization_details type".into()));
             }
 
-            // verify requested credentials are supported
-            match &auth_det.credential {
+            // verify requested claims
+            let (config_id, claims) = match &auth_det.credential {
                 CredentialAuthorization::ConfigurationId {
                     credential_configuration_id,
                     claims: profile,
                 } => {
-                    self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
-
-                    if let Some(profile) = profile {
-                        let claims = profile.claims();
-                        self.verify_claims(credential_configuration_id, &claims)?;
-                        self.claims = claims;
-                    }
+                    (credential_configuration_id, profile.as_ref().and_then(ProfileClaims::claims))
                 }
                 CredentialAuthorization::Format(fmt) => {
                     let credential_configuration_id = self
                         .issuer
                         .credential_configuration_id(fmt)
                         .map_err(|e| Error::ServerError(format!("issuer issue: {e}")))?;
-
-                    self.auth_dets.insert(credential_configuration_id.clone(), auth_det.clone());
-
-                    let claims = fmt.claims();
-                    self.verify_claims(credential_configuration_id, &claims)?;
-                    self.claims = claims;
+                    (credential_configuration_id, fmt.claims())
                 }
             };
-        }
 
-        Ok(())
-    }
+            // check claims are supported and include all mandatory claims
+            if let Some(requested) = &claims {
+                let config =
+                    self.issuer.credential_configurations_supported.get(config_id).ok_or_else(
+                        || Error::InvalidRequest("invalid credential_configuration_id".into()),
+                    )?;
+                config
+                    .verify_claims(requested)
+                    .map_err(|e| Error::InvalidRequest(e.to_string()))?;
+            }
 
-    // Verify requested claims exist as supported claims and all mandatory claims
-    // have been requested.
-    fn verify_claims(
-        &self, credential_configuration_id: &str, claims: &Option<HashMap<String, Claim>>,
-    ) -> Result<()> {
-        // get `CredentialConfiguration` from issuer metadata
-        let Some(config) =
-            self.issuer.credential_configurations_supported.get(credential_configuration_id)
-        else {
-            return Err(Error::InvalidRequest("invalid credential_configuration_id".into()));
-        };
-
-        // check requested claims are supported and all requierd claims have been requested
-        if let Some(requested) = claims {
-            config.verify_claims(requested).map_err(|e| Error::InvalidRequest(e.to_string()))?;
+            self.auth_dets.insert(config_id.clone(), auth_det.clone());
+            self.claims = claims;
         }
 
         Ok(())
@@ -415,7 +398,6 @@ mod tests {
             ".expires_at" => "[expires_at]",
             ".**.credentialSubject" => insta::sorted_redaction(),
             ".**.credentialSubject.address" => insta::sorted_redaction(),
-            // ".items.*.credential_definition.credentialSubject" => insta::sorted_redaction(),
         });
     }
 
@@ -426,7 +408,8 @@ mod tests {
     //         "client_id": CLIENT_ID,
     //         "redirect_uri": "http://localhost:3000/callback",
     //         "state": "1234",
-    //         "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+    //         "code_challenge":
+    // Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
     //         "code_challenge_method": "S256",
     //         "authorization_details": [{
     //             "type": "openid_credential",
@@ -444,7 +427,8 @@ mod tests {
     //         "client_id": CLIENT_ID,
     //         "redirect_uri": "http://localhost:3000/callback",
     //         "state": "1234",
-    //         "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+    //         "code_challenge":
+    // Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
     //         "code_challenge_method": "S256",
     //         "authorization_details": [{
     //             "type": "openid_credential",
@@ -468,7 +452,8 @@ mod tests {
     //         "client_id": CLIENT_ID,
     //         "redirect_uri": "http://localhost:3000/callback",
     //         "state": "1234",
-    //         "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+    //         "code_challenge":
+    // Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
     //         "code_challenge_method": "S256",
     //         "scope": "EmployeeIDCredential",
     //         "subject_id": NORMAL_USER,
@@ -483,7 +468,8 @@ mod tests {
     //         "client_id": CLIENT_ID,
     //         "redirect_uri": "http://localhost:3000/callback",
     //         "state": "1234",
-    //         "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+    //         "code_challenge":
+    // Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
     //         "code_challenge_method": "S256",
     //         "authorization_details": [{
     //             "type": "openid_credential",

@@ -8,6 +8,7 @@ use std::io::Cursor;
 use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
 use qrcode::QrCode;
+use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use vercre_core::{stringify, Kind};
@@ -1575,9 +1576,7 @@ impl CredentialConfiguration {
             }
 
             // check nested claims
-            if let Claim::Set(req_nested) = &entry
-                && !req_nested.is_empty()
-            {
+            if let Claim::Set(req_nested) = &entry {
                 if let Claim::Set(sup_nested) = &supported[key] {
                     Self::claims_supported(req_nested, sup_nested)?;
                 } else {
@@ -1589,21 +1588,20 @@ impl CredentialConfiguration {
         Ok(())
     }
 
-    /// Verifies `claimset` contains all requierd claims
+    /// Verifies `claimset` contains all required claims
     fn claims_required(
         requested: &HashMap<String, Claim>, supported: &HashMap<String, Claim>,
     ) -> Result<()> {
         for (key, entry) in supported {
             match entry {
                 Claim::Set(sup_nested) => {
-                    if !sup_nested.is_empty() {
-                        if let Claim::Set(req_nested) =
-                            requested.get(key).unwrap_or(&Claim::Set(HashMap::new()))
-                        {
-                            Self::claims_required(req_nested, sup_nested)?;
-                        } else {
-                            return Err(anyhow!("{key} claim is not supported"));
-                        }
+                    #[allow(clippy::or_fun_call)]
+                    if let Claim::Set(req_nested) =
+                        requested.get(key).unwrap_or(&Claim::Set(HashMap::new()))
+                    {
+                        Self::claims_required(req_nested, sup_nested)?;
+                    } else {
+                        return Err(anyhow!("{key} claim is not supported"));
                     }
                 }
                 Claim::Entry(def) => {
@@ -1735,20 +1733,65 @@ pub struct CredentialDefinition {
 }
 
 /// Claim entry. Either a set of nested `Claim`s or a single `ClaimDefinition`.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Claim {
-    // HACK: must be the first variant to avoid deserializing as `Entry`
-    /// Nested claims.
-    Set(HashMap<String, Claim>),
-
     /// A single claim definition.
     Entry(ClaimDefinition),
+
+    /// Nested claims.
+    Set(HashMap<String, Claim>),
 }
 
 impl Default for Claim {
     fn default() -> Self {
         Self::Entry(ClaimDefinition::default())
+    }
+}
+
+/// `Claim` requires a custom deserializer as JSON claims are always objects.
+/// The A `Claim::Entry` is a single claim definition, while a `Claim::Set` is a
+/// set of nested claims.
+impl<'de> de::Deserialize<'de> for Claim {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct ClaimVisitor;
+
+        impl<'de> Visitor<'de> for ClaimVisitor {
+            type Value = Claim;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("Claim")
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: de::MapAccess<'de>,
+            {
+                let mut entry = ClaimDefinition::default();
+                let mut set = HashMap::<String, Claim>::new();
+
+                while let Some(key) = map.next_key::<&str>()? {
+                    match key {
+                        "mandatory" => entry.mandatory = Some(map.next_value()?),
+                        "value_type" => entry.value_type = Some(map.next_value()?),
+                        "display" => entry.display = Some(map.next_value()?),
+                        _ => _ = set.insert(key.to_string(), map.next_value::<Claim>()?),
+                    }
+                }
+
+                // empty claims (e.g. "given_name": {}) will always be an `entry`
+                if set.is_empty() {
+                    Ok(Claim::Entry(entry))
+                } else {
+                    Ok(Claim::Set(set))
+                }
+            }
+        }
+
+        deserializer.deserialize_map(ClaimVisitor)
     }
 }
 

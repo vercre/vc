@@ -116,8 +116,8 @@ async fn e2e_presentation_uri() {
     assert_eq!(presentation.status, Status::Requested);
     assert_snapshot!("presentation_requested", presentation, {
         ".presentation_id" => "[presentation_id]",
-        ".credentials[].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
-        ".credentials[].metadata.credential_definition.credentialSubject.address" => insta::sorted_redaction(),
+        ".**.credentialSubject" => insta::sorted_redaction(),
+        ".**.credentialSubject.address" => insta::sorted_redaction(),
     });
 
     // Authorize the presentation
