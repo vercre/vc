@@ -22,8 +22,8 @@ use sha2::{Digest, Sha256};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizedDetail, CredentialAuthorization, Issuer, Metadata, Provider, StateStore,
-    TokenGrantType, TokenRequest, TokenResponse, TokenType,
+    AuthorizedDetail, CredentialAuthorization, Issuer, Metadata, ProfileClaims, Provider,
+    StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
 };
 use vercre_openid::{Error, Result};
 
@@ -217,20 +217,26 @@ async fn retain_details(
     // filter by requested authorization_details
     let mut retained = vec![];
 
-    'next: for auth_det in req_auth_dets {
+    for auth_det in req_auth_dets {
         // check requested `authorization_detail` has been previously authorized
+        let mut found = false;
         for item in items {
             if let ItemType::AuthorizationDetail(ad) = &item.item {
                 if ad.credential == auth_det.credential {
                     verify_claims(&issuer, &auth_det.credential)?;
                     retained.push(item.clone());
-                    break 'next;
+                    found = true;
+                    break;
                 }
             }
         }
 
-        // we're here if requested `authorization_detail` has not been authorized
-        return Err(Error::InvalidRequest("requested credential has not been authorized".into()));
+        if !found {
+            // we're here if requested `authorization_detail` has not been authorized
+            return Err(Error::InvalidRequest(
+                "requested credential has not been authorized".into(),
+            ));
+        }
     }
 
     Ok(retained)
@@ -244,7 +250,7 @@ fn verify_claims(issuer: &Issuer, credential: &CredentialAuthorization) -> Resul
             credential_configuration_id,
             claims: profile,
         } => {
-            let claims = if let Some(profile) = profile { profile.claims() } else { None };
+            let claims = profile.as_ref().and_then(ProfileClaims::claims);
             if claims.is_none() {
                 return Ok(());
             }

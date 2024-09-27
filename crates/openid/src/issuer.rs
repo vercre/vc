@@ -1544,17 +1544,22 @@ pub struct CredentialConfiguration {
 impl CredentialConfiguration {
     /// Verifies that the `claimset` contains required claims and they are
     /// supported for the Credential.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the `claimset` contains unsupported claims or does
+    /// not contain required (mandatory) claims.
     pub fn verify_claims(&self, claimset: &HashMap<String, Claim>) -> Result<()> {
         // ensure `claimset` claims exist in the supported claims
         if !claimset.is_empty() {
             if let Some(claims) = &self.format.claims() {
-                return self.claims_supported(claimset, claims);
+                let _ = Self::claims_supported(claimset, claims);
             }
         }
 
         // ensure all mandatory claims are present
         if let Some(claims) = &self.format.claims() {
-            return self.claims_required(claimset, claims);
+            return Self::claims_required(claimset, claims);
         }
 
         Ok(())
@@ -1562,7 +1567,7 @@ impl CredentialConfiguration {
 
     /// Verifies `claimset` claims are supported by the Credential
     fn claims_supported(
-        &self, claimset: &HashMap<String, Claim>, supported: &HashMap<String, Claim>,
+        claimset: &HashMap<String, Claim>, supported: &HashMap<String, Claim>,
     ) -> Result<()> {
         for (key, entry) in claimset {
             if !supported.contains_key(key) {
@@ -1574,7 +1579,7 @@ impl CredentialConfiguration {
                 && !req_nested.is_empty()
             {
                 if let Claim::Set(sup_nested) = &supported[key] {
-                    self.claims_supported(req_nested, sup_nested)?;
+                    Self::claims_supported(req_nested, sup_nested)?;
                 } else {
                     return Err(anyhow!("{key} claimset is not supported "));
                 }
@@ -1586,7 +1591,7 @@ impl CredentialConfiguration {
 
     /// Verifies `claimset` contains all requierd claims
     fn claims_required(
-        &self, requested: &HashMap<String, Claim>, supported: &HashMap<String, Claim>,
+        requested: &HashMap<String, Claim>, supported: &HashMap<String, Claim>,
     ) -> Result<()> {
         for (key, entry) in supported {
             // no need to go any further if claim not mandatory
@@ -1608,7 +1613,7 @@ impl CredentialConfiguration {
             if let Claim::Set(req_nested) = &entry
                 && !req_nested.is_empty()
             {
-                self.claims_required(req_nested, sup_nested)?;
+                Self::claims_required(req_nested, sup_nested)?;
             } else {
                 return Err(anyhow!("{key} claim is not supported"));
             }
