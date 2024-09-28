@@ -18,7 +18,11 @@ use vercre_did::DidResolver;
 use vercre_status::issuer::Status;
 use vercre_w3c_vc::model::VerifiableCredential;
 
-pub use crate::oauth::{GrantType, OAuthClient, OAuthServer};
+use crate::oauth;
+pub use crate::oauth::{
+    CodeChallengeMethod, GrantType, OAuthClient, OAuthServer, ResponseMode, ResponseType,
+    TokenEndpointAuth, TokenEndpointAuthSigningAlg,
+};
 pub use crate::provider::{self, Result, StateStore};
 
 // TODO: find a home for shared types
@@ -436,7 +440,7 @@ pub struct AuthorizationRequest {
     pub credential_issuer: String,
 
     /// Authorization Server's response type. Must be "code".
-    pub response_type: String,
+    pub response_type: oauth::ResponseType,
 
     /// OAuth 2.0 Client ID used by the Wallet.
     pub client_id: String,
@@ -456,7 +460,7 @@ pub struct AuthorizationRequest {
     pub code_challenge: String,
 
     /// PKCE code challenge method. Must be "S256".
-    pub code_challenge_method: String,
+    pub code_challenge_method: oauth::CodeChallengeMethod,
 
     /// Authorization Details may used to convey the details about credentials
     /// the Wallet wants to obtain.
@@ -1471,7 +1475,7 @@ pub struct CredentialConfiguration {
     /// type and claims the credential MAY contain, as well as information
     /// on how to display the credential.
     ///
-    /// See OpenID4VCI [Credential Format Profiles] for mopre detail.
+    /// See OpenID4VCI [Credential Format Profiles] for more detail.
     ///
     /// [Credential Format Profiles]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles
     #[serde(flatten)]
@@ -1987,12 +1991,12 @@ mod tests {
     fn authorization_configuration_id() {
         let request = AuthorizationRequest {
             credential_issuer: "https://example.com".into(),
-            response_type: "code".into(),
+            response_type: oauth::ResponseType::Code,
             client_id: "1234".into(),
             redirect_uri: Some("http://localhost:3000/callback".into()),
             state: Some("1234".into()),
             code_challenge: "1234".into(),
-            code_challenge_method: "S256".into(),
+            code_challenge_method: oauth::CodeChallengeMethod::S256,
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: CredentialAuthorization::ConfigurationId {
@@ -2036,12 +2040,12 @@ mod tests {
     fn authorization_format() {
         let request = AuthorizationRequest {
             credential_issuer: "https://example.com".into(),
-            response_type: "code".into(),
+            response_type: oauth::ResponseType::Code,
             client_id: "1234".into(),
             redirect_uri: Some("http://localhost:3000/callback".into()),
             state: Some("1234".into()),
             code_challenge: "1234".into(),
-            code_challenge_method: "S256".into(),
+            code_challenge_method: oauth::CodeChallengeMethod::S256,
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: CredentialAuthorization::Format(FormatIdentifier::JwtVcJson(

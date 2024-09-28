@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 use vercre_openid::issuer::{
-    AuthorizationDetail, AuthorizationRequest, CredentialOffer, CredentialRequest,
+    AuthorizationDetail, AuthorizationRequest, CredentialOffer, CredentialRequest,CodeChallengeMethod,
 };
 use vercre_w3c_vc::model::VerifiableCredential;
 
@@ -138,7 +138,7 @@ pub struct Authorization {
     pub code_challenge: String,
 
     /// PKCE code challenge method from the Authorization Request.
-    pub code_challenge_method: String,
+    pub code_challenge_method: CodeChallengeMethod,
 
     /// A list of authorized `scope` or `authorization_details` entries along
     /// with credential metadata and dataset identifiers.
