@@ -73,48 +73,50 @@ async fn process(
 
 #[cfg(test)]
 mod tests {
+    use base64ct::{Base64UrlUnpadded, Encoding};
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use vercre_openid::issuer::{AuthorizationRequest, CreateOfferRequest, OfferType, SendType};
-    use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    // use rstest::rstest;
+    use sha2::{Digest, Sha256};
+    use vercre_macros::authorization_request;
+    use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
 
     use super::*;
+    extern crate self as vercre_issuer;
 
     #[tokio::test]
-    #[ignore]
     async fn request() {
         vercre_test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();
-        let create_req = CreateOfferRequest {
-            credential_issuer: CREDENTIAL_ISSUER.to_string(),
-            credential_configuration_ids: vec!["EmployeeID_JWT".to_string()],
-            subject_id: Some(NORMAL_USER.to_string()),
-            pre_authorize: true,
-            tx_code_required: true,
-            send_type: SendType::ByRef,
-        };
-        let create_resp =
-            crate::create_offer(provider.clone(), create_req).await.expect("should create offer");
 
-        let OfferType::Uri(uri) = create_resp.offer_type else {
-            panic!("no URI found in response");
-        };
-        let Some(_id) = uri.strip_prefix(&format!("{CREDENTIAL_ISSUER}/credential_offer/")) else {
-            panic!("should have prefix");
-        };
+        let request = authorization_request!({
+            "credential_issuer": CREDENTIAL_ISSUER,
+            "response_type": "code",
+            "client_id": CLIENT_ID,
+            "redirect_uri": "http://localhost:3000/callback",
+            "state": "1234",
+            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+            "code_challenge_method": "S256",
+            "authorization_details": [{
+                "type": "openid_credential",
+                "credential_configuration_id": "EmployeeID_JWT",
+            }],
+            "subject_id": NORMAL_USER,
+            "wallet_issuer": CREDENTIAL_ISSUER
+        });
+        let response = par(provider.clone(), request).await.expect("response is valid");
+        assert_snapshot!("par:request:response", response, {
+            ".request_uri" => "[request_uri]",
+        });
 
-        let offer_req = AuthorizationRequest {
-            credential_issuer: CREDENTIAL_ISSUER.to_string(),
-            // id: id.to_string(),
-            ..Default::default()
-        };
-        let response = par(provider, offer_req).await.expect("response is valid");
-
-        assert_snapshot!("par:request:response", response,  {
-            // ".credential_offer.grants.authorization_code.issuer_state" => "[issuer_state]",
-            r#".**["pre-authorized_code"]"# => "[pre-authorized_code]",
+        // check saved state
+        let state =
+            StateStore::get::<State>(&provider, &response.request_uri).await.expect("state exists");
+        assert_snapshot!(format!("par:request:state"), state, {
+            ".expires_at" => "[expires_at]",
+            ".stage.expires_at" => "[expires_at]"
         });
     }
 }
