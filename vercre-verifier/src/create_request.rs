@@ -122,7 +122,7 @@ async fn process(
         format: Some(HashMap::from([("jwt_vc".into(), fmt)])),
         name: None,
     };
-    let state_key = gen::state_key();
+    let uri_token = gen::uri_token();
 
     // get client metadata
     let Ok(verifier_meta) = Metadata::verifier(&provider, &request.client_id).await else {
@@ -131,7 +131,7 @@ async fn process(
 
     let mut req_obj = RequestObject {
         response_type: ResponseType::VpToken,
-        state: Some(state_key.clone()),
+        state: Some(uri_token.clone()),
         nonce: gen::nonce(),
         presentation_definition: Kind::Object(pres_def),
         client_metadata: verifier_meta,
@@ -147,7 +147,7 @@ async fn process(
         req_obj.response_mode = Some("direct_post".into());
         req_obj.client_id = format!("{}/post", request.client_id);
         req_obj.response_uri = Some(format!("{}/post", request.client_id));
-        response.request_uri = Some(format!("{}/request/{state_key}", request.client_id));
+        response.request_uri = Some(format!("{}/request/{uri_token}", request.client_id));
     } else {
         req_obj.client_id = format!("{}/callback", request.client_id);
         response.request_object = Some(req_obj.clone());
@@ -159,7 +159,7 @@ async fn process(
         request_object: req_obj,
     };
 
-    StateStore::put(&provider, &state_key, &state, state.expires_at)
+    StateStore::put(&provider, &uri_token, &state, state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 

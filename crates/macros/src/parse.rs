@@ -54,7 +54,7 @@ pub enum Value {
     #[default]
     Null,
     Bool(bool),
-    Number(u64),
+    Number(i64),
     String(String),
     Array(Vec<Self>),
     Object(HashMap<String, Self>),
@@ -109,7 +109,7 @@ impl Parse for Value {
             let string = input.parse::<syn::LitStr>()?.value();
             Self::String(string)
         } else if l.peek(syn::LitInt) {
-            Self::Number(input.parse::<syn::LitInt>()?.base10_parse::<u64>()?)
+            Self::Number(input.parse::<syn::LitInt>()?.base10_parse::<i64>()?)
         } else if l.peek(syn::LitBool) {
             Self::Bool(input.parse::<syn::LitBool>()?.value())
         } else if l.peek(token::Brace) {

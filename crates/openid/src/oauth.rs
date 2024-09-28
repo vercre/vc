@@ -123,6 +123,12 @@ pub struct OAuthClient {
     /// `software_id`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub software_version: Option<String>,
+
+    /// Indicates whether the only means of initiating an authorization request
+    /// the client is allowed to use is PAR. If omitted, the default value is
+    /// false.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub require_pushed_authorization_requests: Option<bool>,
 }
 
 impl OAuthClient {
@@ -270,6 +276,17 @@ pub struct OAuthServer {
     /// authorization server as a bundle.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub signed_metadata: Option<String>,
+
+    /// The URL of the pushed authorization request endpoint at which a client
+    /// can post an authorization request to exchange for a `request_uri` value
+    /// usable at the authorization server.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pushed_authorization_request_endpoint: Option<String>,
+
+    /// Indicates whether the authorization server accepts authorization request
+    /// data only via PAR. If omitted, the default value is false.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub require_pushed_authorization_requests: Option<bool>,
 }
 
 /// Grant Types supported by the Authorization Server.

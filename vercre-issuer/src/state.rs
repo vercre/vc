@@ -5,7 +5,9 @@ use std::collections::HashMap;
 
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
-use vercre_openid::issuer::{AuthorizationDetail, CredentialOffer, CredentialRequest};
+use vercre_openid::issuer::{
+    AuthorizationDetail, AuthorizationRequest, CredentialOffer, CredentialRequest,
+};
 use vercre_w3c_vc::model::VerifiableCredential;
 
 type CredentialIdentifier = String;
@@ -50,6 +52,9 @@ pub enum Stage {
     /// Holds pre-authorized offer data as presented to the Wallet. This data is
     /// used when validating the Wallet's request for an access token.
     PreAuthorized(PreAuthorization),
+
+    /// Holds a Pushed Authorization Request awaiting retrieval by the Wallet.
+    PushedAuthorization(PushedAuthorization),
 
     /// Holds authorization data in cases where the Wallet requests and is
     /// granted authorization to request credential issuance. As with
@@ -138,6 +143,15 @@ pub struct Authorization {
     /// A list of authorized `scope` or `authorization_details` entries along
     /// with credential metadata and dataset identifiers.
     pub items: Vec<AuthorizedItem>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct PushedAuthorization {
+    /// The Authorization Request pushed to the PAR endpoint.
+    pub request: AuthorizationRequest,
+
+    /// The time the request URI should expire at.
+    pub expires_at: DateTime<Utc>,
 }
 
 /// Authorized `authorization_detail` or `scope` item along with

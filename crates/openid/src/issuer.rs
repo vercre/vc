@@ -805,6 +805,21 @@ pub struct AuthorizationResponse {
     pub redirect_uri: String,
 }
 
+/// Pushed Authorization Request (PAR) response as defined in [RFC9126].
+///
+/// [RFC9126]: (https://www.rfc-editor.org/rfc/rfc9126.html)
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct PushedAuthorizationResponse {
+    /// The request URI corresponding to the authorization request posted. This
+    /// URI is a single-use reference to the respective request data in the
+    /// subsequent authorization request.
+    pub request_uri: String,
+
+    /// The lifetime of the request URI in seconds. Typically a relatively short
+    /// duration (e.g., between 5 and 600 seconds).
+    pub expires_in: i64,
+}
+
 /// Upon receiving a successful Authorization Response, a Token Request is made
 /// as defined in [RFC6749] with extensions to support the Pre-Authorized Code
 /// Flow.
@@ -1421,14 +1436,15 @@ pub struct SupportedCredentialResponseEncryption {
 }
 
 /// Contains information about the Credential Issuer's support for batch
-/// issuance of Credentials on the Credential Endpoint. The presence of this
-/// parameter means that the issuer supports the proofs parameter in the
-/// Credential Request so can issue more than one Verifiable Credential for the
-/// same Credential Dataset in a single request/response.
+/// issuance of Credentials on the Credential Endpoint.
+///
+/// The presence of this parameter means that the issuer supports the proofs
+/// parameter in the Credential Request so can issue more than one Verifiable
+/// Credential for the same Credential Dataset in a single request/response.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct BatchCredentialIssuance {
     /// The maximum array size for the proofs parameter in a Credential Request.
-    pub batch_size: u64,
+    pub batch_size: i64,
 }
 
 /// Language-based display properties for Issuer or Claim.
