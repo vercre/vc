@@ -10,10 +10,11 @@ use chrono::{Duration, Utc};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    Provider, PushedAuthorizationRequest, PushedAuthorizationResponse, StateStore,
+    Metadata, Provider, PushedAuthorizationRequest, PushedAuthorizationResponse, StateStore,
 };
 use vercre_openid::{Error, Result};
 
+use crate::authorize;
 use crate::state::{PushedAuthorization, Stage, State};
 
 /// Endpoint for the Wallet to push an Authorization Request when using Pushed
@@ -31,20 +32,30 @@ pub async fn par(
     process(&provider, request).await
 }
 
-#[allow(dead_code)]
+// Verify the pushed Authorization Request.
 #[allow(clippy::unused_async)]
-async fn verify(_provider: &impl Provider, _request: &PushedAuthorizationRequest) -> Result<()> {
+async fn verify(provider: &impl Provider, request: &PushedAuthorizationRequest) -> Result<()> {
     tracing::debug!("par::verify");
 
     // TODO: authenticate the client in the same way as at the token endpoint
     //       (client assertion)
-    // TODO: validate the pushed request as for authorization endpoint
-    // TODO: check that the client is allowed to use PAR
-    // TODO: check `request_uri` is not set
+
+    let req_obj = &request.request;
+
+    // verify the pushed RequestObject using `/authorize` endpoint logic
+    let Ok(issuer) = Metadata::issuer(provider, &req_obj.credential_issuer).await else {
+        return Err(Error::InvalidClient("invalid `credential_issuer`".into()));
+    };
+    let mut ctx = authorize::Context {
+        issuer,
+        ..authorize::Context::default()
+    };
+    ctx.verify(provider, &request.request).await?;
 
     Ok(())
 }
 
+// Process the pushed Authorization Request.
 #[allow(dead_code)]
 async fn process(
     provider: &impl Provider, request: PushedAuthorizationRequest,
@@ -78,7 +89,6 @@ async fn process(
 mod tests {
     use base64ct::{Base64UrlUnpadded, Encoding};
     use insta::assert_yaml_snapshot as assert_snapshot;
-    // use rstest::rstest;
     use sha2::{Digest, Sha256};
     use vercre_macros::authorization_request;
     use vercre_openid::issuer::AuthorizationRequest;

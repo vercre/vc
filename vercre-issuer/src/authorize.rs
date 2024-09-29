@@ -122,15 +122,17 @@ pub async fn authorize(
 }
 
 #[derive(Debug, Default)]
-struct Context {
-    issuer: Issuer,
-    auth_dets: HashMap<String, AuthorizationDetail>,
-    scope_items: HashMap<String, String>,
-    claims: Option<HashMap<String, Claim>>,
+pub struct Context {
+    pub issuer: Issuer,
+    pub auth_dets: HashMap<String, AuthorizationDetail>,
+    pub scope_items: HashMap<String, String>,
+    pub claims: Option<HashMap<String, Claim>>,
 }
 
 impl Context {
-    async fn verify(&mut self, provider: &impl Provider, request: &RequestObject) -> Result<()> {
+    pub async fn verify(
+        &mut self, provider: &impl Provider, request: &RequestObject,
+    ) -> Result<()> {
         tracing::debug!("authorize::verify");
 
         // client and server metadata

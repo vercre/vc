@@ -28,12 +28,15 @@ use tracing_subscriber::FmtSubscriber;
 use vercre_issuer::{
     AuthorizationRequest, CreateOfferRequest, CreateOfferResponse, CredentialOfferRequest,
     CredentialOfferResponse, CredentialRequest, CredentialResponse, DeferredCredentialRequest,
-    DeferredCredentialResponse, MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,
+    DeferredCredentialResponse, MetadataRequest, MetadataResponse, PushedAuthorizationRequest,
+    PushedAuthorizationResponse, TokenRequest, TokenResponse,
 };
 
 use crate::provider::Provider;
 
-static AUTHORIZED: LazyLock<RwLock<HashMap<String, AuthorizationRequest>>> =
+static AUTH_REQUESTS: LazyLock<RwLock<HashMap<String, AuthorizationRequest>>> =
+    LazyLock::new(|| RwLock::new(HashMap::new()));
+static PAR_REQUESTS: LazyLock<RwLock<HashMap<String, PushedAuthorizationRequest>>> =
     LazyLock::new(|| RwLock::new(HashMap::new()));
 
 #[allow(clippy::needless_return)]
@@ -49,7 +52,8 @@ async fn main() {
         .route("/credential_offer/:offer_id", get(credential_offer))
         .route("/.well-known/openid-credential-issuer", get(metadata))
         .route("/auth", get(authorize))
-        .route("/login", post(login))
+        .route("/par", get(par))
+        .route("/login", post(handle_login))
         .route("/token", post(token))
         .route("/credential", post(credential))
         .route("/deferred_credential", post(deferred_credential))
@@ -127,12 +131,12 @@ async fn authorize(
 
     // show login form if subject_id is unauthorized
     // (subject is authorized if they can be found in the 'authorized' HashMap)
-    if AUTHORIZED.read().await.get(&object.subject_id).is_none() {
+    if AUTH_REQUESTS.read().await.get(&object.subject_id).is_none() {
         // save request
         let csrf = CsrfToken::new_random();
         let token = csrf.secret();
 
-        AUTHORIZED.write().await.insert(token.clone(), req);
+        AUTH_REQUESTS.write().await.insert(token.clone(), req);
 
         // prompt user to login
         let login_form = format!(
@@ -167,6 +171,55 @@ async fn authorize(
     }
 }
 
+/// Authorize endpoint
+/// RFC 6749: https://tools.ietf.org/html/rfc6749#section-4.1.2
+///
+/// The authorization server issues an authorization code and delivers it to the
+/// client by adding the response parameters to the query component of the
+/// redirection URI using the "application/x-www-form-urlencoded" format.
+#[axum::debug_handler]
+async fn par(
+    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    Form(mut req): Form<PushedAuthorizationRequest>,
+) -> impl IntoResponse {
+    let object = &req.request;
+
+    // return error if no subject_id
+    if object.subject_id.is_empty() {
+        return (StatusCode::UNAUTHORIZED, Json(json!({"error": "no subject_id"}))).into_response();
+    }
+
+    // show login form if subject_id is unauthorized
+    // (subject is authorized if they can be found in the 'authorized' HashMap)
+    if PAR_REQUESTS.read().await.get(&object.subject_id).is_none() {
+        // save request
+        let csrf = CsrfToken::new_random();
+        let token = csrf.secret();
+
+        PAR_REQUESTS.write().await.insert(token.clone(), req.clone());
+
+        // prompt user to login
+        let login_form = format!(
+            r#"
+            <form method="post" action="/login">
+                <input type="text" name="username" placeholder="username" value="normal_user" />
+                <input type="password" name="password" placeholder="password" value="password" />
+                <input type="hidden" name="csrf_token" value="{token}" />
+                <input type="submit" value="Login" />
+            </form>
+            "#
+        );
+        return (StatusCode::UNAUTHORIZED, Html(login_form)).into_response();
+    }
+
+    // process request
+    req.request.credential_issuer = format!("http://{host}");
+
+    let axresponse: AxResult<PushedAuthorizationResponse> =
+        vercre_issuer::par(provider, req).await.into();
+    axresponse.into_response()
+}
+
 #[derive(Deserialize)]
 struct LoginRequest {
     username: String,
@@ -175,7 +228,7 @@ struct LoginRequest {
 }
 
 #[axum::debug_handler]
-async fn login(
+async fn handle_login(
     TypedHeader(host): TypedHeader<Host>, Form(req): Form<LoginRequest>,
 ) -> impl IntoResponse {
     // check username and password
@@ -189,11 +242,11 @@ async fn login(
     }
 
     // update 'authorized' HashMap with subject as key
-    let Some(auth_req) = AUTHORIZED.write().await.remove(&req.csrf_token) else {
+    let Some(auth_req) = AUTH_REQUESTS.write().await.remove(&req.csrf_token) else {
         return (StatusCode::UNAUTHORIZED, Json(json!({"error": "invalid csrf_token"})))
             .into_response();
     };
-    AUTHORIZED.write().await.insert(req.username.clone(), auth_req.clone());
+    AUTH_REQUESTS.write().await.insert(req.username.clone(), auth_req.clone());
 
     // redirect back to authorize endpoint
     let qs = serde_urlencoded::to_string(&auth_req).expect("should serialize");

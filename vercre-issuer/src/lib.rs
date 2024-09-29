@@ -114,14 +114,13 @@ pub mod provider {
     pub use vercre_status::issuer::Status;
 }
 
-// use std::future::Future;
-
 pub use authorize::authorize;
 pub use create_offer::create_offer;
 pub use credential::credential;
 pub use credential_offer::credential_offer;
 pub use deferred::deferred;
 pub use metadata::metadata;
+pub use par::par;
 pub use register::register;
 pub use token::token;
 pub use vercre_macros::create_offer_request;
@@ -133,8 +132,9 @@ pub use vercre_openid::issuer::{
     CredentialRequest, CredentialResponse, CredentialResponseType, DeferredCredentialRequest,
     DeferredCredentialResponse, FormatIdentifier, Grants, MetadataRequest, MetadataResponse,
     OfferType, PreAuthorizedCodeGrant, ProfileClaims, ProfileIsoMdl, ProfileSdJwt, ProfileW3c,
-    Proof, ProofClaims, RegistrationRequest, RegistrationResponse, RequestObject, SendType,
-    SingleProof, TokenGrantType, TokenRequest, TokenResponse, TxCode,
+    Proof, ProofClaims, PushedAuthorizationRequest, PushedAuthorizationResponse,
+    RegistrationRequest, RegistrationResponse, RequestObject, SendType, SingleProof,
+    TokenGrantType, TokenRequest, TokenResponse, TxCode,
 };
 pub use vercre_openid::Result;
 pub use vercre_w3c_vc::model::{

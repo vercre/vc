@@ -75,7 +75,10 @@ pub fn create_offer_request(input: TokenStream) -> TokenStream {
 ///     "wallet_issuer": CREDENTIAL_ISSUER
 /// });
 ///
-/// assert_eq!(request.credential_issuer, CREDENTIAL_ISSUER);
+/// let AuthorizationRequest::Object(object) = request else {
+///    panic!("Invalid Authorization Request");
+/// };
+/// assert_eq!(object.credential_issuer, CREDENTIAL_ISSUER);
 /// ```
 #[proc_macro]
 pub fn authorization_request(input: TokenStream) -> TokenStream {
