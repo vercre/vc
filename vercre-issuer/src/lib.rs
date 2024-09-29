@@ -133,8 +133,8 @@ pub use vercre_openid::issuer::{
     CredentialRequest, CredentialResponse, CredentialResponseType, DeferredCredentialRequest,
     DeferredCredentialResponse, FormatIdentifier, Grants, MetadataRequest, MetadataResponse,
     OfferType, PreAuthorizedCodeGrant, ProfileClaims, ProfileIsoMdl, ProfileSdJwt, ProfileW3c,
-    Proof, ProofClaims, RegistrationRequest, RegistrationResponse, SendType, SingleProof,
-    TokenGrantType, TokenRequest, TokenResponse, TxCode,
+    Proof, ProofClaims, RegistrationRequest, RegistrationResponse, RequestObject, SendType,
+    SingleProof, TokenGrantType, TokenRequest, TokenResponse, TxCode,
 };
 pub use vercre_openid::Result;
 pub use vercre_w3c_vc::model::{

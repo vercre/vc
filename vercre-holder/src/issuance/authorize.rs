@@ -17,8 +17,8 @@ use tracing::instrument;
 use vercre_core::{pkce, stringify};
 use vercre_issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    CredentialAuthorization, CredentialDefinition, FormatIdentifier, ProfileClaims, TokenGrantType,
-    TokenRequest,
+    CredentialAuthorization, CredentialDefinition, FormatIdentifier, ProfileClaims, RequestObject,
+    TokenGrantType, TokenRequest,
 };
 
 use super::{Issuance, Status};
@@ -242,7 +242,7 @@ fn authorization_request(
         }
     };
 
-    Ok(AuthorizationRequest {
+    Ok(AuthorizationRequest::Object(RequestObject {
         credential_issuer: issuance.issuer.credential_issuer.clone(),
         response_type: "code".into(),
         client_id: issuance.client_id.clone(),
@@ -259,8 +259,7 @@ fn authorization_request(
         wallet_issuer: None,
         user_hint: Some(issuance.id.clone()),
         issuer_state,
-        request_uri: None,
-    })
+    }))
 }
 
 /// Construct a token request.

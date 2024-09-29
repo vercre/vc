@@ -6,7 +6,8 @@ use std::collections::HashMap;
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 use vercre_openid::issuer::{
-    AuthorizationDetail, AuthorizationRequest, CredentialOffer, CredentialRequest,CodeChallengeMethod,
+    AuthorizationDetail, AuthorizationRequest, CodeChallengeMethod, CredentialOffer,
+    CredentialRequest,
 };
 use vercre_w3c_vc::model::VerifiableCredential;
 

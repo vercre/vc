@@ -114,16 +114,20 @@ async fn metadata(
 #[axum::debug_handler]
 async fn authorize(
     State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
-    Form(mut req): Form<AuthorizationRequest>,
+    Form(req): Form<AuthorizationRequest>,
 ) -> impl IntoResponse {
+    let AuthorizationRequest::Object(mut object) = req.clone() else {
+        panic!("should be an object request");
+    };
+
     // return error if no subject_id
-    if req.subject_id.is_empty() {
+    if object.subject_id.is_empty() {
         return (StatusCode::UNAUTHORIZED, Json(json!({"error": "no subject_id"}))).into_response();
     }
 
     // show login form if subject_id is unauthorized
     // (subject is authorized if they can be found in the 'authorized' HashMap)
-    if AUTHORIZED.read().await.get(&req.subject_id).is_none() {
+    if AUTHORIZED.read().await.get(&object.subject_id).is_none() {
         // save request
         let csrf = CsrfToken::new_random();
         let token = csrf.secret();
@@ -145,9 +149,9 @@ async fn authorize(
     }
 
     // process request
-    req.credential_issuer = format!("http://{host}");
+    object.credential_issuer = format!("http://{host}");
 
-    let Some(redirect_uri) = req.redirect_uri.clone() else {
+    let Some(redirect_uri) = object.redirect_uri.clone() else {
         return (StatusCode::UNAUTHORIZED, Json(json!({"error": "no redirect_uri"})))
             .into_response();
     };
@@ -192,7 +196,7 @@ async fn login(
     AUTHORIZED.write().await.insert(req.username.clone(), auth_req.clone());
 
     // redirect back to authorize endpoint
-    let qs = serde_qs::to_string(&auth_req).expect("should serialize");
+    let qs = serde_urlencoded::to_string(&auth_req).expect("should serialize");
     (StatusCode::FOUND, Redirect::to(&format!("http://{host}/auth?{qs}"))).into_response()
 }
 

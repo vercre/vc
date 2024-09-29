@@ -74,7 +74,7 @@ use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
     Claim, CredentialAuthorization, GrantType, Issuer, Metadata, ProfileClaims, Provider,
-    StateStore, Subject,
+    RequestObject, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 
@@ -90,6 +90,10 @@ use crate::state::{Authorization, AuthorizedItem, Expire, ItemType, Stage, State
 pub async fn authorize(
     provider: impl Provider, request: AuthorizationRequest,
 ) -> Result<AuthorizationResponse> {
+    let AuthorizationRequest::Object(request) = request else {
+        return Err(Error::InvalidRequest("invalid request".into()));
+    };
+
     // get issuer metadata
     let Ok(issuer) = Metadata::issuer(&provider, &request.credential_issuer).await else {
         return Err(Error::InvalidClient("invalid `credential_issuer`".into()));
@@ -112,9 +116,7 @@ struct Context {
 }
 
 impl Context {
-    async fn verify(
-        &mut self, provider: &impl Provider, request: &AuthorizationRequest,
-    ) -> Result<()> {
+    async fn verify(&mut self, provider: &impl Provider, request: &RequestObject) -> Result<()> {
         tracing::debug!("authorize::verify");
 
         // client and server metadata
@@ -288,7 +290,7 @@ impl Context {
     //   authorized for
     // - save related auth_dets/scope items in state
     async fn process(
-        &self, provider: &impl Provider, request: AuthorizationRequest,
+        &self, provider: &impl Provider, request: RequestObject,
     ) -> Result<AuthorizationResponse> {
         tracing::debug!("authorize::process");
 

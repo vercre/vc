@@ -56,7 +56,7 @@ pub async fn request(
 
     // Parse or get-then-parse the presentation request
     let req_obj = if request.contains("&presentation_definition") {
-        match serde_qs::from_str::<RequestObject>(request) {
+        match serde_urlencoded::from_str::<RequestObject>(request) {
             Ok(req_obj) => req_obj,
             Err(e) => {
                 tracing::error!(target: "Endpoint::request", ?e);
