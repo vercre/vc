@@ -104,7 +104,7 @@ pub async fn credentials(
 
             // Construct a credential request.
             let request = credential_request!({
-                "credential_issuer": issuance.offer.credential_issuer.clone(),
+                "credential_issuer": issuance.issuer.credential_issuer.clone(),
                 "access_token": issuance.token.access_token.clone(),
                 "credential_identifier": cred_id.clone(),
                 "proof": {

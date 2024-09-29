@@ -46,12 +46,12 @@ pub mod provider;
 
 pub use vercre_core::Quota;
 pub use vercre_dif_exch::Constraints;
-pub use vercre_macros::authorization_request;
 pub use vercre_openid::issuer::{
-    AuthorizationCodeGrant, AuthorizationRequest, AuthorizationResponse, Claim, ClaimDefinition,
-    CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse, Grants,
-    Issuer, MetadataRequest, MetadataResponse, PreAuthorizedCodeGrant, Proof, ProofClaims,
-    TokenRequest, TokenResponse, TxCode,
+    AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
+    AuthorizationResponse, Claim, ClaimDefinition, CredentialAuthorization,
+    CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse,
+    FormatIdentifier, Grants, Issuer, MetadataRequest, MetadataResponse, PreAuthorizedCodeGrant,
+    ProfileClaims, Proof, ProofClaims, TokenRequest, TokenResponse, TxCode,
 };
 pub use vercre_openid::verifier::{
     RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,

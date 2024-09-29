@@ -140,7 +140,7 @@ pub async fn authorize(
             match issuance.set_issuer(&provider, issuer).await {
                 Ok(()) => (),
                 Err(e) => {
-                    tracing::error!(target: "Endpoint::offer", ?e);
+                    tracing::error!(target: "Endpoint::authorize", ?e);
                     return Err(e);
                 }
             };

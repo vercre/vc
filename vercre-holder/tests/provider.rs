@@ -1,4 +1,4 @@
-#![allow(missing_docs)]
+//! Provider implementation for tests
 
 use std::collections::HashMap;
 use std::str;
@@ -23,6 +23,7 @@ use vercre_test_utils::store::{resolver, state};
 use vercre_test_utils::{issuer, verifier};
 
 #[derive(Default, Clone, Debug)]
+#[allow(missing_docs)]
 pub struct Provider {
     issuer: Option<issuer::Provider>,
     verifier: Option<verifier::Provider>,
@@ -32,6 +33,7 @@ pub struct Provider {
 
 impl Provider {
     #[must_use]
+    #[allow(missing_docs)]
     pub fn new(issuer: Option<issuer::Provider>, verifier: Option<verifier::Provider>) -> Self {
         Self {
             issuer,
