@@ -1,8 +1,9 @@
-#![allow(missing_docs)]
-
-mod provider;
+//! End to end tests for issuer-initiated issuance flow that requires
+//! authorization.
 
 use std::sync::LazyLock;
+
+mod provider;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::issuance::{
@@ -42,7 +43,6 @@ async fn issuer_auth() {
     };
 
     // Initiate the authorization code flow
-    // Initiate the pre-authorized code flow
     let offer_req = OfferRequest {
         client_id: CLIENT_ID.into(),
         subject_id: NORMAL_USER.into(),

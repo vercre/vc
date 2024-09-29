@@ -1,4 +1,4 @@
-#![allow(missing_docs)]
+//! End-to-end tests for the presentation (verification) flow.
 
 mod provider;
 

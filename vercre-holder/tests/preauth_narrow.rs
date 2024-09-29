@@ -1,4 +1,6 @@
-#![allow(missing_docs)]
+//! Tests for issuer-initiated pre-authorized issuance flow where the holder
+//! decides to only accept a subset of the credentials on offer and a subset of
+//! claims within the credential.
 
 mod provider;
 
