@@ -143,10 +143,10 @@ async fn process(
         let state_key = state_key(&credential_offer)?;
         (OfferType::Object(credential_offer.clone()), state_key)
     } else {
-        let state_key = gen::state_key();
+        let uri_token = gen::uri_token();
         (
-            OfferType::Uri(format!("{}/credential_offer/{state_key}", request.credential_issuer)),
-            state_key,
+            OfferType::Uri(format!("{}/credential_offer/{uri_token}", request.credential_issuer)),
+            uri_token,
         )
     };
 
@@ -261,7 +261,7 @@ fn credential_offer(request: &CreateOfferRequest) -> CredentialOffer {
     } else {
         Grants {
             authorization_code: Some(AuthorizationCodeGrant {
-                issuer_state: Some(gen::state_key()),
+                issuer_state: Some(gen::issuer_state()),
                 authorization_server: None,
             }),
             pre_authorized_code: None,

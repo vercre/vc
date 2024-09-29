@@ -23,17 +23,16 @@ pub fn auth_code() -> String {
     Base64UrlUnpadded::encode_string(rnd.as_bytes())
 }
 
-/// Generates a base64 encoded random string for token
+/// Generates a base64 encoded random string for `issuer_state`
 #[must_use]
-pub fn token() -> String {
+pub fn issuer_state() -> String {
     let rnd = random_string(STATE_LEN, SAFE_CHARS);
     Base64UrlUnpadded::encode_string(rnd.as_bytes())
 }
 
-/// Generates a base64 encoded random string for deferred issuance
-/// `transaction_id`.
+/// Generates a base64 encoded random string for nonce
 #[must_use]
-pub fn transaction_id() -> String {
+pub fn nonce() -> String {
     let rnd = random_string(STATE_LEN, SAFE_CHARS);
     Base64UrlUnpadded::encode_string(rnd.as_bytes())
 }
@@ -46,16 +45,24 @@ pub fn notification_id() -> String {
     Base64UrlUnpadded::encode_string(rnd.as_bytes())
 }
 
-/// Generates a base64 encoded random string for nonce
+/// Generates a base64 encoded random string for `issuer_state`
 #[must_use]
-pub fn nonce() -> String {
+pub fn uri_token() -> String {
     let rnd = random_string(STATE_LEN, SAFE_CHARS);
     Base64UrlUnpadded::encode_string(rnd.as_bytes())
 }
 
-/// Generates a base64 encoded random string for `issuer_state`
+/// Generates a base64 encoded random string for token
 #[must_use]
-pub fn state_key() -> String {
+pub fn token() -> String {
+    let rnd = random_string(STATE_LEN, SAFE_CHARS);
+    Base64UrlUnpadded::encode_string(rnd.as_bytes())
+}
+
+/// Generates a base64 encoded random string for deferred issuance
+/// `transaction_id`.
+#[must_use]
+pub fn transaction_id() -> String {
     let rnd = random_string(STATE_LEN, SAFE_CHARS);
     Base64UrlUnpadded::encode_string(rnd.as_bytes())
 }

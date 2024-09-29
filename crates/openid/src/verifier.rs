@@ -202,6 +202,7 @@ pub struct RequestObject {
     pub state: Option<String>,
 
     /// The Presentation Definition
+    #[serde(with = "stringify")]
     pub presentation_definition: Kind<PresentationDefinition>,
 
     /// The `client_id_scheme` is used to specify how the Wallet should to
@@ -384,7 +385,7 @@ impl RequestObject {
     /// Returns an `Error::ServerError` error if the Request Object cannot be
     /// serialized.
     pub fn to_querystring(&self) -> Result<String> {
-        serde_qs::to_string(&self).map_err(|e| anyhow!("issue creating query string: {e}"))
+        serde_urlencoded::to_string(self).map_err(|e| anyhow!("issue creating query string: {e}"))
     }
 }
 

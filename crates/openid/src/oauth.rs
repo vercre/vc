@@ -43,27 +43,18 @@ pub struct OAuthClient {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redirect_uris: Option<Vec<String>>,
 
-    /// Authentication method for the token endpoint.
-    /// Values are:
-    /// - "`none`": The client is public and does not have a secret
-    /// - ~~"`client_secret_post`": The client uses RFC6749 HTTP POST
-    ///   parameters.~~
-    /// - ~~"`client_secret_basic`": The client uses HTTP Basic.~~
+    /// Client's authentication method for the token endpoint.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub token_endpoint_auth_method: Option<String>,
+    pub token_endpoint_auth_method: Option<TokenEndpointAuth>,
 
     /// OAuth 2.0 grant types the client can use at the token endpoint.
-    /// Supported grant types are:
-    /// - "`authorization_code`" = RFC6749 Authorization Code Grant
-    /// - "`urn:ietf:params:oauth:grant-type:pre-authorized_code`" =
-    ///   Pre-Authorized Code Grant
     #[serde(skip_serializing_if = "Option::is_none")]
     pub grant_types: Option<Vec<GrantType>>,
 
     /// OAuth 2.0 response types the client can use at the authorization
-    /// endpoint. MUST be "code".
+    /// endpoint.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub response_types: Option<Vec<String>>,
+    pub response_types: Option<Vec<ResponseType>>,
 
     /// Human-readable name of the client shown to the end-user during
     /// authorization.
@@ -123,6 +114,12 @@ pub struct OAuthClient {
     /// `software_id`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub software_version: Option<String>,
+
+    /// Indicates whether the only means of initiating an authorization request
+    /// the client is allowed to use is PAR. If omitted, the default value is
+    /// false.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub require_pushed_authorization_requests: Option<bool>,
 }
 
 impl OAuthClient {
@@ -184,11 +181,11 @@ pub struct OAuthServer {
     pub scopes_supported: Option<Vec<String>>,
 
     /// List of `response_type` values the authorization server supports.
-    pub response_types_supported: Vec<String>,
+    pub response_types_supported: Vec<ResponseType>,
 
     /// A list of `response_mode` values the authorization server supports.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub response_modes_supported: Option<Vec<String>>,
+    pub response_modes_supported: Option<Vec<ResponseMode>>,
 
     /// A list of grant types supported. Values are the same as the Dynamic
     /// Client Registration `grant_types`.
@@ -198,17 +195,15 @@ pub struct OAuthServer {
     /// A list of client authentication methods supported by the token endpoint.
     /// The same as those used with the `grant_types` parameter defined by the
     /// OAuth 2.0 Dynamic Client Registration Protocol specification.
-    /// Values can be one of: "`none`", "`client_secret_post`",
-    /// "`client_secret_basic`".
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub token_endpoint_auth_methods_supported: Option<Vec<String>>,
+    pub token_endpoint_auth_methods_supported: Option<Vec<TokenEndpointAuth>>,
 
     /// A list of the JWS algorithms supported by the token endpoint for the
     /// signature on the JWT used to authenticate the client at the endpoint
     /// for the `private_key_jwt` and `client_secret_jwt` authentication
     /// methods.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub token_endpoint_auth_signing_alg_values_supported: Option<Vec<String>>,
+    pub token_endpoint_auth_signing_alg_values_supported: Option<Vec<TokenEndpointAuthSigningAlg>>,
 
     /// URL to information developers might need when using the authorization
     /// server.
@@ -263,13 +258,24 @@ pub struct OAuthServer {
 
     /// Proof Key for Code Exchange (PKCE) code challenge methods supported.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub code_challenge_methods_supported: Option<Vec<String>>,
+    pub code_challenge_methods_supported: Option<Vec<CodeChallengeMethod>>,
 
     /// Metadata values MAY also be provided as a `signed_metadata` value, which
     /// is a JSON Web Token (JWT) that asserts metadata values about the
     /// authorization server as a bundle.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub signed_metadata: Option<String>,
+
+    /// The URL of the pushed authorization request endpoint at which a client
+    /// can post an authorization request to exchange for a `request_uri` value
+    /// usable at the authorization server.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pushed_authorization_request_endpoint: Option<String>,
+
+    /// Indicates whether the authorization server accepts authorization request
+    /// data only via PAR. If omitted, the default value is false.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub require_pushed_authorization_requests: Option<bool>,
 }
 
 /// Grant Types supported by the Authorization Server.
@@ -283,4 +289,116 @@ pub enum GrantType {
     #[default]
     #[serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")]
     PreAuthorizedCode,
+}
+
+/// Response types supported by the authorization endpoint.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub enum ResponseType {
+    /// Authorization Code flow response.
+    #[default]
+    #[serde(rename = "code")]
+    Code,
+
+    /// Verifiable Presentation Token response.
+    #[serde(rename = "vp_token")]
+    VpToken,
+
+    /// ID Token response for SIOPv2
+    #[serde(rename = "id_token vp_token")]
+    IdToken,
+}
+
+impl From<String> for ResponseType {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "code" => Self::Code,
+            _ => Self::default(),
+        }
+    }
+}
+
+impl From<&str> for ResponseType {
+    fn from(s: &str) -> Self {
+        match s {
+            "code" => Self::Code,
+            _ => Self::default(),
+        }
+    }
+}
+
+/// Response modes supported by the authorization server.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum ResponseMode {
+    /// Authorization Code flow response.
+    #[default]
+    Query,
+
+    /// JWT Secured Authorization Response Mode
+    Jarm,
+}
+
+/// Supported authentication methods for the token endpoint.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum TokenEndpointAuth {
+    /// The client is public and does not have a secret
+    #[default]
+    None,
+
+    /// JWT Profile for OAuth 2.0 Client Authentication and Authorization
+    /// Grants [RFC7523].
+    ///
+    /// [RFC7523]: (https://www.rfc-editor.org/rfc/rfc7523.html)
+    ClientSecretJwt,
+
+    /// The client uses JWT for client authentication.
+    PrivateKeyJwt,
+    //
+    // /// The client uses RFC6749 HTTP POST
+    // ClientSecretPost,
+    //
+    // /// The client uses HTTP Basic.
+    // ClientSecretBasic,
+}
+
+/// JWS algorithms supported by the token endpoint for the signature on the JWT
+/// used to authenticate the client at the endpoint for `private_key_jwt` and
+/// `client_secret_jwt` authentication methods.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub enum TokenEndpointAuthSigningAlg {
+    /// Algorithm for the secp256k1 curve
+    #[serde(rename = "ES256K")]
+    ES256K,
+
+    /// Algorithm for the Ed25519 curve
+    #[default]
+    #[serde(rename = "EdDSA")]
+    EdDSA,
+}
+
+/// Proof Key for Code Exchange (PKCE) code challenge methods supported.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub enum CodeChallengeMethod {
+    /// The S256 code challenge method.
+    #[default]
+    S256,
+}
+
+impl From<&str> for CodeChallengeMethod {
+    fn from(s: &str) -> Self {
+        match s {
+            "S256" => Self::S256,
+            _ => Self::default(),
+        }
+    }
+}
+
+impl From<String> for CodeChallengeMethod {
+    fn from(s: String) -> Self {
+        match s.as_str() {
+            "S256" => Self::S256,
+            _ => Self::default(),
+        }
+    }
 }

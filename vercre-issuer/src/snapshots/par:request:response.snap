@@ -1,0 +1,7 @@
+---
+source: vercre-issuer/src/par.rs
+assertion_line: 113
+expression: response
+---
+request_uri: "[request_uri]"
+expires_in: 600

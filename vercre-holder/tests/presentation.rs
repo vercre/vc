@@ -158,7 +158,7 @@ async fn e2e_presentation_obj() {
 
     // Intiate the presentation flow using an object
     let obj = init_request.request_object.expect("should have request object");
-    let qs = serde_qs::to_string(&obj).expect("should serialize");
+    let qs = serde_urlencoded::to_string(&obj).expect("should serialize");
     let presentation = vercre_holder::presentation::request(HOLDER_PROVIDER.clone(), &qs)
         .await
         .expect("should process request");
