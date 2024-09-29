@@ -81,6 +81,7 @@ mod tests {
     // use rstest::rstest;
     use sha2::{Digest, Sha256};
     use vercre_macros::authorization_request;
+    use vercre_openid::issuer::AuthorizationRequest;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
 
@@ -94,22 +95,28 @@ mod tests {
 
         let provider = Provider::new();
 
+        let auth_req = authorization_request!({
+            "credential_issuer": CREDENTIAL_ISSUER,
+            "response_type": "code",
+            "client_id": CLIENT_ID,
+            "redirect_uri": "http://localhost:3000/callback",
+            "state": "1234",
+            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+            "code_challenge_method": "S256",
+            "authorization_details": [{
+                "type": "openid_credential",
+                "credential_configuration_id": "EmployeeID_JWT",
+            }],
+            "subject_id": NORMAL_USER,
+            "wallet_issuer": CREDENTIAL_ISSUER
+        });
+
+        let AuthorizationRequest::Object(req_obj) = auth_req else {
+            panic!("Invalid Authorization Request");
+        };
+
         let request = PushedAuthorizationRequest {
-            request: authorization_request!({
-                "credential_issuer": CREDENTIAL_ISSUER,
-                "response_type": "code",
-                "client_id": CLIENT_ID,
-                "redirect_uri": "http://localhost:3000/callback",
-                "state": "1234",
-                "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
-                "code_challenge_method": "S256",
-                "authorization_details": [{
-                    "type": "openid_credential",
-                    "credential_configuration_id": "EmployeeID_JWT",
-                }],
-                "subject_id": NORMAL_USER,
-                "wallet_issuer": CREDENTIAL_ISSUER
-            }),
+            request: req_obj,
             client_assertion: None,
         };
         let response = par(provider.clone(), request).await.expect("response is valid");

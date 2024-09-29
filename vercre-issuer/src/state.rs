@@ -6,8 +6,7 @@ use std::collections::HashMap;
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 use vercre_openid::issuer::{
-    AuthorizationDetail, AuthorizationRequest, CodeChallengeMethod, CredentialOffer,
-    CredentialRequest,
+    AuthorizationDetail, CodeChallengeMethod, CredentialOffer, CredentialRequest, RequestObject,
 };
 use vercre_w3c_vc::model::VerifiableCredential;
 
@@ -149,7 +148,7 @@ pub struct Authorization {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PushedAuthorization {
     /// The Authorization Request pushed to the PAR endpoint.
-    pub request: AuthorizationRequest,
+    pub request: RequestObject,
 
     /// The time the request URI should expire at.
     pub expires_at: DateTime<Utc>,

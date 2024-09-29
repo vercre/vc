@@ -90,8 +90,22 @@ use crate::state::{Authorization, AuthorizedItem, Expire, ItemType, Stage, State
 pub async fn authorize(
     provider: impl Provider, request: AuthorizationRequest,
 ) -> Result<AuthorizationResponse> {
-    let AuthorizationRequest::Object(request) = request else {
-        return Err(Error::InvalidRequest("invalid request".into()));
+    // request object or URI (Pushed Authorization Request)
+    let request = match request {
+        AuthorizationRequest::Object(request) => request,
+        AuthorizationRequest::Uri(uri) => {
+            let state: State = StateStore::get(&provider, &uri.request_uri)
+                .await
+                .map_err(|e| Error::ServerError(format!("state issue: {e}")))?;
+            let Stage::PushedAuthorization(par) = &state.stage else {
+                return Err(Error::InvalidRequest("invalid state".into()));
+            };
+
+            if par.expires_at < Utc::now() {
+                return Err(Error::InvalidRequest("expired state".into()));
+            }
+            par.request.clone()
+        }
     };
 
     // get issuer metadata

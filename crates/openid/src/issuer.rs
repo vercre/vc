@@ -550,7 +550,7 @@ impl Default for AuthorizationRequest {
 #[serde(default)]
 pub struct RequestUri {
     /// The URI of the authorization request.
-    request_uri: String,
+    pub request_uri: String,
 }
 
 /// An Authorization Request is an OAuth 2.0 Authorization Request as defined in
@@ -943,7 +943,7 @@ pub struct AuthorizationResponse {
 pub struct PushedAuthorizationRequest {
     /// The authorization request posted.
     #[serde(flatten)]
-    pub request: AuthorizationRequest,
+    pub request: RequestObject,
 
     /// Client identity assertion using JWT instead of credentials to
     /// authenticate.
