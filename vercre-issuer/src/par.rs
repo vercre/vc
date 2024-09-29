@@ -10,7 +10,7 @@ use chrono::{Duration, Utc};
 use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
-    AuthorizationRequest, Provider, PushedAuthorizationResponse, StateStore,
+    Provider, PushedAuthorizationRequest, PushedAuthorizationResponse, StateStore,
 };
 use vercre_openid::{Error, Result};
 
@@ -25,7 +25,7 @@ use crate::state::{PushedAuthorization, Stage, State};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn par(
-    provider: impl Provider, request: AuthorizationRequest,
+    provider: impl Provider, request: PushedAuthorizationRequest,
 ) -> Result<PushedAuthorizationResponse> {
     verify(&provider, &request).await?;
     process(&provider, request).await
@@ -33,18 +33,21 @@ pub async fn par(
 
 #[allow(dead_code)]
 #[allow(clippy::unused_async)]
-async fn verify(_provider: &impl Provider, _request: &AuthorizationRequest) -> Result<()> {
+async fn verify(_provider: &impl Provider, _request: &PushedAuthorizationRequest) -> Result<()> {
     tracing::debug!("par::verify");
 
-    // TODO: Authenticate the client in the same way as at the token endpoint
-    // TODO: Validate the pushed request as for authorization endpoint
+    // TODO: authenticate the client in the same way as at the token endpoint
+    //       (client assertion)
+    // TODO: validate the pushed request as for authorization endpoint
+    // TODO: check that the client is allowed to use PAR
+    // TODO: check `request_uri` is not set
 
     Ok(())
 }
 
 #[allow(dead_code)]
 async fn process(
-    provider: &impl Provider, request: AuthorizationRequest,
+    provider: &impl Provider, request: PushedAuthorizationRequest,
 ) -> Result<PushedAuthorizationResponse> {
     tracing::debug!("par::process");
 
@@ -56,7 +59,7 @@ async fn process(
     let state = State {
         subject_id: None,
         stage: Stage::PushedAuthorization(PushedAuthorization {
-            request: request.clone(),
+            request: request.request.clone(),
             expires_at: Utc::now() + expires_in,
         }),
         expires_at: Utc::now() + expires_in,
@@ -91,21 +94,24 @@ mod tests {
 
         let provider = Provider::new();
 
-        let request = authorization_request!({
-            "credential_issuer": CREDENTIAL_ISSUER,
-            "response_type": "code",
-            "client_id": CLIENT_ID,
-            "redirect_uri": "http://localhost:3000/callback",
-            "state": "1234",
-            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
-            "code_challenge_method": "S256",
-            "authorization_details": [{
-                "type": "openid_credential",
-                "credential_configuration_id": "EmployeeID_JWT",
-            }],
-            "subject_id": NORMAL_USER,
-            "wallet_issuer": CREDENTIAL_ISSUER
-        });
+        let request = PushedAuthorizationRequest {
+            request: authorization_request!({
+                "credential_issuer": CREDENTIAL_ISSUER,
+                "response_type": "code",
+                "client_id": CLIENT_ID,
+                "redirect_uri": "http://localhost:3000/callback",
+                "state": "1234",
+                "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+                "code_challenge_method": "S256",
+                "authorization_details": [{
+                    "type": "openid_credential",
+                    "credential_configuration_id": "EmployeeID_JWT",
+                }],
+                "subject_id": NORMAL_USER,
+                "wallet_issuer": CREDENTIAL_ISSUER
+            }),
+            client_assertion: None,
+        };
         let response = par(provider.clone(), request).await.expect("response is valid");
         assert_snapshot!("par:request:response", response, {
             ".request_uri" => "[request_uri]",

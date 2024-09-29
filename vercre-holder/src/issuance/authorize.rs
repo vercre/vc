@@ -259,6 +259,7 @@ fn authorization_request(
         wallet_issuer: None,
         user_hint: Some(issuance.id.clone()),
         issuer_state,
+        request_uri: None,
     })
 }
 

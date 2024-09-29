@@ -439,7 +439,7 @@ pub struct AuthorizationRequest {
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub credential_issuer: String,
 
-    /// Authorization Server's response type. Must be "code".
+    /// Authorization Server's response type.
     pub response_type: oauth::ResponseType,
 
     /// OAuth 2.0 Client ID used by the Wallet.
@@ -511,7 +511,121 @@ pub struct AuthorizationRequest {
     /// Wallet.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub issuer_state: Option<String>,
+
+    /// A URI referencing the authorization request previously stored at the PAR
+    /// endpoint.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub request_uri: Option<String>,
 }
+
+// /// An Authorization Request v2.
+// #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+// pub struct AuthorizationRequest2{
+//     #[serde(flatten)]
+//     request: AuthorizationRequestType
+// }
+// /// An Authorization Request type.
+// #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+// #[serde(untagged)]
+// pub enum AuthorizationRequestType {
+//     /// An Authorization Request object.
+//     Object {
+//         /// The URL of the Credential Issuer the Wallet can use obtain
+// offered         /// Credentials.
+//         #[serde(skip_serializing_if = "String::is_empty", default)]
+//         credential_issuer: String,
+
+//         /// Authorization Server's response type.
+//         response_type: oauth::ResponseType,
+
+//         /// OAuth 2.0 Client ID used by the Wallet.
+//         client_id: String,
+
+//         /// The client's redirection endpoint as previously established
+// during         /// the client registration.
+//         #[serde(skip_serializing_if = "Option::is_none")]
+//         redirect_uri: Option<String>,
+
+//         /// Client state is used by the client to maintain state between the
+//         /// request and callback.
+//         #[serde(skip_serializing_if = "Option::is_none")]
+//         state: Option<String>,
+
+//         /// PKCE code challenge, used to prevent authorization code
+// interception         /// attacks and mitigate the need for client secrets.
+//         code_challenge: String,
+
+//         /// PKCE code challenge method. Must be "S256".
+//         code_challenge_method: oauth::CodeChallengeMethod,
+
+//         /// Authorization Details may used to convey the details about
+//         /// credentials the Wallet wants to obtain.
+//         #[serde(skip_serializing_if = "Option::is_none")]
+//         #[serde(with = "stringify::option")]
+//         authorization_details: Option<Vec<AuthorizationDetail>>,
+
+//         /// Credential Issuers MAY support requesting authorization to issue
+// a         /// credential using OAuth 2.0 scope values.
+//         /// A scope value and its mapping to a credential type is defined by
+// the         /// Issuer. A description of scope value semantics or machine
+// readable         /// definitions could be defined in Issuer metadata. For
+// example,         /// mapping a scope value to an authorization details
+// object.         #[serde(skip_serializing_if = "Option::is_none")]
+//         scope: Option<String>,
+
+//         /// The Credential Issuer's identifier to allow the Authorization
+// Server         /// to differentiate between Issuers. [RFC8707]: The target
+//         /// resource to which access is being requested. MUST be an
+//         /// absolute URI.
+//         ///
+//         /// [RFC8707]: (https://www.rfc-editor.org/rfc/rfc8707)
+//         #[serde(skip_serializing_if = "Option::is_none")]
+//         resource: Option<String>,
+
+//         // TODO: replace `subject_id` with support for authentication
+//         // <https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest>
+//         /// A Holder identifier provided by the Wallet. It must have meaning
+// to         /// the Credential Issuer in order that credentialSubject claims
+//         /// can be populated.
+//         subject_id: String,
+
+//         /// The Wallet's `OpenID` Connect issuer URL. The Credential Issuer
+// can         /// use the discovery process as defined in [SIOPv2] to
+//         /// determine the Wallet's capabilities and endpoints.
+//         /// RECOMMENDED in Dynamic Credential Requests.
+//         ///
+//         /// [SIOPv2]: (https://openid.net/specs/openid-connect-self-issued-v2-1_0.html)
+//         #[serde(skip_serializing_if = "Option::is_none")]
+//         wallet_issuer: Option<String>,
+
+//         /// An opaque user hint the Wallet MAY use in subsequent callbacks to
+//         /// optimize the user's experience. RECOMMENDED in Dynamic Credential
+//         /// Requests.
+//         #[serde(skip_serializing_if = "Option::is_none")]
+//         user_hint: Option<String>,
+
+//         /// Identifies a pre-existing Credential Issuer processing context. A
+//         /// value for this parameter may be passed in the Credential
+//         /// Offer to the Wallet.
+//         #[serde(skip_serializing_if = "Option::is_none")]
+//         issuer_state: Option<String>,
+//     },
+
+//     /// A URI referencing the authorization request previously stored at the
+// PAR     /// endpoint.
+//     Uri {
+//         /// The URI of the authorization request.
+//         request_uri: String,
+//     },
+// }
+
+// impl Default for AuthorizationRequestType {
+//     fn default() -> Self {
+//         Self::Uri {
+//             request_uri: String::new(),
+//         }
+//     }
+// }
 
 /// Authorization detail type (we only support `openid_credential`).
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
@@ -813,6 +927,22 @@ pub struct AuthorizationResponse {
 ///
 /// [RFC9126]: (https://www.rfc-editor.org/rfc/rfc9126.html)
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct PushedAuthorizationRequest {
+    /// The authorization request posted.
+    #[serde(flatten)]
+    pub request: AuthorizationRequest,
+
+    /// Client identity assertion using JWT instead of credentials to
+    /// authenticate.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(flatten)]
+    pub client_assertion: Option<ClientAssertion>,
+}
+
+/// Pushed Authorization Request (PAR) response as defined in [RFC9126].
+///
+/// [RFC9126]: (https://www.rfc-editor.org/rfc/rfc9126.html)
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct PushedAuthorizationResponse {
     /// The request URI corresponding to the authorization request posted. This
     /// URI is a single-use reference to the respective request data in the
@@ -861,17 +991,6 @@ pub struct TokenRequest {
     #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
 
-    // ---
-    // // TODO: add support for `scope` parameter
-    // /// Credential Issuers MAY support requesting authorization to issue a
-    // /// credential using OAuth 2.0 scope values.
-    // /// A scope value and its mapping to a credential type is defined by the
-    // /// Issuer. A description of scope value semantics or machine readable
-    // /// definitions could be defined in Issuer metadata. For example,
-    // /// mapping a scope value to an authorization details object.
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub scope: Option<String>,
-    // ---
     /// Client identity assertion using JWT instead of credentials to
     /// authenticate.
     #[serde(skip_serializing_if = "Option::is_none")]

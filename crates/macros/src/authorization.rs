@@ -55,6 +55,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
             wallet_issuer: #wallet_issuer,
             user_hint: #user_hint,
             issuer_state: #issuer_state,
+            request_uri: None,
         }
     })
 }
