@@ -54,6 +54,7 @@ pub fn create_offer_request(input: TokenStream) -> TokenStream {
 /// use base64ct::{Base64UrlUnpadded, Encoding};
 /// use sha2::{Digest, Sha256};
 /// use vercre_macros::authorization_request;
+/// use vercre_issuer::AuthorizationRequest;
 ///
 /// const CREDENTIAL_ISSUER: &str = "http://vercre.io";
 /// const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
