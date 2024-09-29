@@ -15,7 +15,7 @@ chrono.workspace = true
 oauth2 = { version = "4.4.2" }
 serde.workspace = true
 serde_json.workspace = true
-serde_qs.workspace = true
+serde_urlencoded.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
 tracing-subscriber.workspace = true

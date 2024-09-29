@@ -40,7 +40,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     let path = quote! {vercre_issuer};
 
     Ok(quote! {
-        #path::AuthorizationRequest {
+        #path::AuthorizationRequest::Object(#path::RequestObject {
             credential_issuer: #credential_issuer,
             response_type: #response_type,
             client_id: #client_id,
@@ -55,7 +55,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
             wallet_issuer: #wallet_issuer,
             user_hint: #user_hint,
             issuer_state: #issuer_state,
-        }
+        })
     })
 }
 

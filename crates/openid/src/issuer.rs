@@ -18,7 +18,11 @@ use vercre_did::DidResolver;
 use vercre_status::issuer::Status;
 use vercre_w3c_vc::model::VerifiableCredential;
 
-pub use crate::oauth::{GrantType, OAuthClient, OAuthServer};
+use crate::oauth;
+pub use crate::oauth::{
+    CodeChallengeMethod, GrantType, OAuthClient, OAuthServer, ResponseMode, ResponseType,
+    TokenEndpointAuth, TokenEndpointAuthSigningAlg,
+};
 pub use crate::provider::{self, Result, StateStore};
 
 // TODO: find a home for shared types
@@ -276,7 +280,7 @@ impl CredentialOffer {
     /// Returns an `Error::ServerError` error if error if the Credential Offer
     /// cannot be serialized.
     pub fn to_querystring(&self) -> anyhow::Result<String> {
-        serde_qs::to_string(&self).map_err(|e| anyhow!("issue creating query string: {e}"))
+        serde_urlencoded::to_string(self).map_err(|e| anyhow!("issue creating query string: {e}"))
     }
 }
 
@@ -422,6 +426,133 @@ pub struct CredentialOfferResponse {
     pub credential_offer: CredentialOffer,
 }
 
+// /// An Authorization Request is an OAuth 2.0 Authorization Request as defined
+// in /// section 4.1.1 of [RFC6749], which requests to grant access to the
+// Credential /// Endpoint.
+// ///
+// /// [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
+// #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+// #[serde(default)]
+// pub struct AuthorizationRequest {
+//     /// The URL of the Credential Issuer the Wallet can use obtain offered
+//     /// Credentials.
+//     #[serde(skip_serializing_if = "String::is_empty", default)]
+//     pub credential_issuer: String,
+
+//     /// Authorization Server's response type.
+//     pub response_type: oauth::ResponseType,
+
+//     /// OAuth 2.0 Client ID used by the Wallet.
+//     pub client_id: String,
+
+//     /// The client's redirection endpoint as previously established during
+// the     /// client registration.
+//     #[serde(skip_serializing_if = "Option::is_none")]
+//     pub redirect_uri: Option<String>,
+
+//     /// Client state is used by the client to maintain state between the
+// request     /// and callback.
+//     #[serde(skip_serializing_if = "Option::is_none")]
+//     pub state: Option<String>,
+
+//     /// PKCE code challenge, used to prevent authorization code interception
+//     /// attacks and mitigate the need for client secrets.
+//     pub code_challenge: String,
+
+//     /// PKCE code challenge method. Must be "S256".
+//     pub code_challenge_method: oauth::CodeChallengeMethod,
+
+//     /// Authorization Details may used to convey the details about
+// credentials     /// the Wallet wants to obtain.
+//     #[serde(skip_serializing_if = "Option::is_none")]
+//     #[serde(with = "stringify::option")]
+//     pub authorization_details: Option<Vec<AuthorizationDetail>>,
+
+//     /// Credential Issuers MAY support requesting authorization to issue a
+//     /// credential using OAuth 2.0 scope values.
+//     /// A scope value and its mapping to a credential type is defined by the
+//     /// Issuer. A description of scope value semantics or machine readable
+//     /// definitions could be defined in Issuer metadata. For example,
+//     /// mapping a scope value to an authorization details object.
+//     #[serde(skip_serializing_if = "Option::is_none")]
+//     pub scope: Option<String>,
+
+//     /// The Credential Issuer's identifier to allow the Authorization Server
+// to     /// differentiate between Issuers. [RFC8707]: The target resource to
+// which     /// access is being requested. MUST be an absolute URI.
+//     ///
+//     /// [RFC8707]: (https://www.rfc-editor.org/rfc/rfc8707)
+//     #[serde(skip_serializing_if = "Option::is_none")]
+//     pub resource: Option<String>,
+
+//     // TODO: replace `subject_id` with support for authentication
+//     // <https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest>
+//     /// A Holder identifier provided by the Wallet. It must have meaning to
+// the     /// Credential Issuer in order that credentialSubject claims can be
+//     /// populated.
+//     pub subject_id: String,
+
+//     /// The Wallet's `OpenID` Connect issuer URL. The Credential Issuer can
+// use     /// the discovery process as defined in [SIOPv2] to determine the
+// Wallet's     /// capabilities and endpoints. RECOMMENDED in Dynamic
+// Credential Requests.     ///
+//     /// [SIOPv2]: (https://openid.net/specs/openid-connect-self-issued-v2-1_0.html)
+//     #[serde(skip_serializing_if = "Option::is_none")]
+//     pub wallet_issuer: Option<String>,
+
+//     /// An opaque user hint the Wallet MAY use in subsequent callbacks to
+//     /// optimize the user's experience. RECOMMENDED in Dynamic Credential
+//     /// Requests.
+//     #[serde(skip_serializing_if = "Option::is_none")]
+//     pub user_hint: Option<String>,
+
+//     /// Identifies a pre-existing Credential Issuer processing context. A
+// value     /// for this parameter may be passed in the Credential Offer to the
+//     /// Wallet.
+//     #[serde(skip_serializing_if = "Option::is_none")]
+//     pub issuer_state: Option<String>,
+
+//     /// A URI referencing the authorization request previously stored at the
+// PAR     /// endpoint.
+//     #[serde(skip_serializing_if = "Option::is_none")]
+//     pub request_uri: Option<String>,
+// }
+
+// /// An Authorization Request.
+// #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+// pub struct AuthorizationRequest {
+//     #[serde(flatten)]
+//     request: AuthorizationRequestType,
+// }
+
+/// An Authorization Request type.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(untagged)]
+#[allow(clippy::large_enum_variant)]
+pub enum AuthorizationRequest {
+    /// An Authorization Request object.
+    Object(RequestObject),
+
+    /// A URI referencing the authorization request previously stored at the PAR
+    /// endpoint.
+    Uri(RequestUri),
+}
+
+impl Default for AuthorizationRequest {
+    fn default() -> Self {
+        Self::Object(RequestObject::default())
+    }
+}
+
+/// A URI referencing the authorization request previously stored at the PAR
+/// endpoint.
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(default)]
+pub struct RequestUri {
+    /// The URI of the authorization request.
+    pub request_uri: String,
+}
+
 /// An Authorization Request is an OAuth 2.0 Authorization Request as defined in
 /// section 4.1.1 of [RFC6749], which requests to grant access to the Credential
 /// Endpoint.
@@ -429,14 +560,14 @@ pub struct CredentialOfferResponse {
 /// [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(default)]
-pub struct AuthorizationRequest {
+pub struct RequestObject {
     /// The URL of the Credential Issuer the Wallet can use obtain offered
     /// Credentials.
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub credential_issuer: String,
 
-    /// Authorization Server's response type. Must be "code".
-    pub response_type: String,
+    /// Authorization Server's response type.
+    pub response_type: oauth::ResponseType,
 
     /// OAuth 2.0 Client ID used by the Wallet.
     pub client_id: String,
@@ -456,7 +587,7 @@ pub struct AuthorizationRequest {
     pub code_challenge: String,
 
     /// PKCE code challenge method. Must be "S256".
-    pub code_challenge_method: String,
+    pub code_challenge_method: oauth::CodeChallengeMethod,
 
     /// Authorization Details may used to convey the details about credentials
     /// the Wallet wants to obtain.
@@ -805,6 +936,37 @@ pub struct AuthorizationResponse {
     pub redirect_uri: String,
 }
 
+/// Pushed Authorization Request (PAR) response as defined in [RFC9126].
+///
+/// [RFC9126]: (https://www.rfc-editor.org/rfc/rfc9126.html)
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct PushedAuthorizationRequest {
+    /// The authorization request posted.
+    #[serde(flatten)]
+    pub request: RequestObject,
+
+    /// Client identity assertion using JWT instead of credentials to
+    /// authenticate.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(flatten)]
+    pub client_assertion: Option<ClientAssertion>,
+}
+
+/// Pushed Authorization Request (PAR) response as defined in [RFC9126].
+///
+/// [RFC9126]: (https://www.rfc-editor.org/rfc/rfc9126.html)
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct PushedAuthorizationResponse {
+    /// The request URI corresponding to the authorization request posted. This
+    /// URI is a single-use reference to the respective request data in the
+    /// subsequent authorization request.
+    pub request_uri: String,
+
+    /// The lifetime of the request URI in seconds. Typically a relatively short
+    /// duration (e.g., between 5 and 600 seconds).
+    pub expires_in: i64,
+}
+
 /// Upon receiving a successful Authorization Response, a Token Request is made
 /// as defined in [RFC6749] with extensions to support the Pre-Authorized Code
 /// Flow.
@@ -842,17 +1004,6 @@ pub struct TokenRequest {
     #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
 
-    // ---
-    // // TODO: add support for `scope` parameter
-    // /// Credential Issuers MAY support requesting authorization to issue a
-    // /// credential using OAuth 2.0 scope values.
-    // /// A scope value and its mapping to a credential type is defined by the
-    // /// Issuer. A description of scope value semantics or machine readable
-    // /// definitions could be defined in Issuer metadata. For example,
-    // /// mapping a scope value to an authorization details object.
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub scope: Option<String>,
-    // ---
     /// Client identity assertion using JWT instead of credentials to
     /// authenticate.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1144,9 +1295,8 @@ pub struct ProofClaims {
     pub nonce: Option<String>,
 }
 
-/// `CredentialResponseEncryption` contains information about whether the
-/// Credential Issuer supports encryption of the Credential Response on top of
-/// TLS.
+/// Contains information about whether the Credential Issuer supports encryption
+/// of the Credential Response on top of TLS.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredentialResponseEncryption {
     /// The public key used for encrypting the Credential Response.
@@ -1340,12 +1490,13 @@ pub struct Issuer {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_response_encryption: Option<SupportedCredentialResponseEncryption>,
 
-    /// Specifies whether the Credential Issuer supports returning
-    /// `credential_identifiers` parameter in the `authorization_details`
-    /// Token Response parameter, with true indicating support. The default
-    /// value is "false".
+    /// Information about the Issuer's support for batch issuance of
+    /// Credentials. The presence of this parameter means that the issuer
+    /// supports the proofs parameter in the Credential Request so can issue
+    /// more than one Verifiable Credential for the same Credential Dataset in a
+    /// single request/response.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub credential_identifiers_supported: Option<bool>,
+    pub batch_credential_issuance: Option<BatchCredentialIssuance>,
 
     /// A signed JWT containing Credential Issuer metadata parameters as claims.
     /// The signed metadata MUST be secured using JSON Web Signature (JWS)
@@ -1392,9 +1543,8 @@ impl Issuer {
     }
 }
 
-/// `SupportedCredentialResponseEncryption` contains information about whether
-/// the Credential Issuer supports encryption of the Credential and Batch
-/// Credential Response on top of TLS.
+/// Contains information about whether the Credential Issuer supports encryption
+/// of the Credential and Batch Credential Response on top of TLS.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct SupportedCredentialResponseEncryption {
     /// JWE [RFC7516] alg algorithm [RFC7518] REQUIRED for encrypting Credential
@@ -1421,6 +1571,18 @@ pub struct SupportedCredentialResponseEncryption {
     pub encryption_required: bool,
 }
 
+/// Contains information about the Credential Issuer's support for batch
+/// issuance of Credentials on the Credential Endpoint.
+///
+/// The presence of this parameter means that the issuer supports the proofs
+/// parameter in the Credential Request so can issue more than one Verifiable
+/// Credential for the same Credential Dataset in a single request/response.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct BatchCredentialIssuance {
+    /// The maximum array size for the proofs parameter in a Credential Request.
+    pub batch_size: i64,
+}
+
 /// Language-based display properties for Issuer or Claim.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Display {
@@ -1445,7 +1607,7 @@ pub struct CredentialConfiguration {
     /// type and claims the credential MAY contain, as well as information
     /// on how to display the credential.
     ///
-    /// See OpenID4VCI [Credential Format Profiles] for mopre detail.
+    /// See OpenID4VCI [Credential Format Profiles] for more detail.
     ///
     /// [Credential Format Profiles]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles
     #[serde(flatten)]
@@ -1959,14 +2121,14 @@ mod tests {
 
     #[test]
     fn authorization_configuration_id() {
-        let request = AuthorizationRequest {
+        let request = AuthorizationRequest::Object(RequestObject {
             credential_issuer: "https://example.com".into(),
-            response_type: "code".into(),
+            response_type: oauth::ResponseType::Code,
             client_id: "1234".into(),
             redirect_uri: Some("http://localhost:3000/callback".into()),
             state: Some("1234".into()),
             code_challenge: "1234".into(),
-            code_challenge_method: "S256".into(),
+            code_challenge_method: oauth::CodeChallengeMethod::S256,
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: CredentialAuthorization::ConfigurationId {
@@ -1985,22 +2147,22 @@ mod tests {
             subject_id: "1234".into(),
             wallet_issuer: Some("1234".into()),
 
-            ..AuthorizationRequest::default()
-        };
-
-        // let serialized = serde_json::to_string_pretty(&request.authorization_details)
-        //     .expect("should serialize to string");
-        // println!("{}", serialized);
+            ..RequestObject::default()
+        });
 
         assert_snapshot!("authorization_configuration_id", request, {
             ".authorization_details" => "[authorization_details]",
         });
-        assert_snapshot!("authorization_details", request.authorization_details, {
+
+        let AuthorizationRequest::Object(object) = &request else {
+            panic!("should be an object request");
+        };
+        assert_snapshot!("authorization_details", object.authorization_details, {
             "[].credential_definition.credentialSubject" => insta::sorted_redaction(),
         });
 
-        let serialized = serde_qs::to_string(&request).expect("should serialize to string");
-        let deserialized = serde_qs::from_str::<AuthorizationRequest>(&serialized)
+        let serialized = serde_urlencoded::to_string(&request).expect("should serialize to string");
+        let deserialized = serde_urlencoded::from_str::<AuthorizationRequest>(&serialized)
             .expect("should deserialize from string");
 
         assert_eq!(request, deserialized);
@@ -2008,14 +2170,14 @@ mod tests {
 
     #[test]
     fn authorization_format() {
-        let request = AuthorizationRequest {
+        let request = AuthorizationRequest::Object(RequestObject {
             credential_issuer: "https://example.com".into(),
-            response_type: "code".into(),
+            response_type: oauth::ResponseType::Code,
             client_id: "1234".into(),
             redirect_uri: Some("http://localhost:3000/callback".into()),
             state: Some("1234".into()),
             code_challenge: "1234".into(),
-            code_challenge_method: "S256".into(),
+            code_challenge_method: oauth::CodeChallengeMethod::S256,
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: CredentialAuthorization::Format(FormatIdentifier::JwtVcJson(
@@ -2035,15 +2197,15 @@ mod tests {
             subject_id: "1234".into(),
             wallet_issuer: Some("1234".into()),
 
-            ..AuthorizationRequest::default()
-        };
+            ..RequestObject::default()
+        });
 
-        let serialized = serde_qs::to_string(&request).expect("should serialize to string");
+        let serialized = serde_urlencoded::to_string(&request).expect("should serialize to string");
         assert_snapshot!("authorization_format", &serialized, {
             ".code" => "[code]",
         });
 
-        let deserialized = serde_qs::from_str::<AuthorizationRequest>(&serialized)
+        let deserialized = serde_urlencoded::from_str::<AuthorizationRequest>(&serialized)
             .expect("should deserialize from string");
         assert_eq!(request, deserialized);
     }

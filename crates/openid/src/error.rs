@@ -204,7 +204,7 @@ impl Error {
     /// string responses.
     #[must_use]
     pub fn to_querystring(self) -> String {
-        serde_qs::to_string(&self).unwrap_or_default()
+        serde_urlencoded::to_string(&self).unwrap_or_default()
     }
 }
 
@@ -226,7 +226,7 @@ mod test {
     #[test]
     fn err_querystring() {
         let err = Error::InvalidRequest("Invalid request description".into());
-        let ser = serde_qs::to_string(&err).unwrap();
+        let ser = serde_urlencoded::to_string(&err).unwrap();
         assert_eq!(ser, "error=invalid_request&error_description=Invalid+request+description");
     }
 
