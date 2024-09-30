@@ -66,6 +66,11 @@ pub enum Error {
     #[error(r#"{{"error": "invalid_scope", "error_description": "{0}"}}"#)]
     InvalidScope(String),
 
+    /// Unknown authorization details type or authorization details not
+    /// conforming to the respective type definition
+    #[error(r#"{{"error": "invalid_authorization_details", "error_description": "{0}"}}"#)]
+    InvalidAuthorizationDetails(String),
+
     /// The resource owner or authorization server denied the request.
     #[error(r#"{{"error": "access_denied", "error_description": "{0}"}}"#)]
     AccessDenied(String),
