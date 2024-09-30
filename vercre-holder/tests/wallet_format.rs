@@ -1,5 +1,5 @@
 //! Tests for wallet-initiated issuance flow where the authorization request is
-//! made using a credential definition.
+//! made using a format.
 
 mod provider;
 
@@ -7,9 +7,9 @@ use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::issuance::{AuthorizeRequest, CredentialsRequest, Initiator};
 use vercre_holder::provider::{CredentialStorer, Issuer, MetadataRequest};
 use vercre_holder::{
-    AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization, FormatIdentifier,
-    ProfileClaims,
+    AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization, FormatIdentifier
 };
+use vercre_issuer::ProfileW3c;
 use vercre_test_utils::issuer::{CLIENT_ID, CREDENTIAL_ISSUER, REDIRECT_URI};
 
 use crate::provider::Provider;
@@ -18,9 +18,9 @@ use crate::provider::Provider;
 const SUBJECT_ID: &str = "normal_user";
 
 // Test end-to-end wallet-initiated issuance flow, with authorization request
-// using a credential definition.
+// using a format.
 #[tokio::test]
-async fn wallet_credential_definition() {
+async fn wallet_format() {
     let issuer_provider = vercre_test_utils::issuer::Provider::new();
     let provider = Provider::new(Some(issuer_provider.clone()), None);
 
@@ -33,18 +33,18 @@ async fn wallet_credential_definition() {
         .await
         .expect("should get issuer metadata");
 
-    // Construct an authorization request using the credential definition for
-    // the employee ID credential.
+    // Construct an authorization request using the format for the employee ID
+    // credential.
     let issuer = issuer_metadata.credential_issuer;
     let credential_config = issuer
         .credential_configurations_supported
         .get("EmployeeID_JWT")
         .expect("should have credential configuration");
-    let claims = match &credential_config.format {
-        FormatIdentifier::JwtVcJson(def) => ProfileClaims::W3c(def.credential_definition.clone()),
+    let credential_def = match &credential_config.format {
+        FormatIdentifier::JwtVcJson(def) => def.credential_definition.clone(),
         _ => panic!("unexpected format"),
     };
-    assert_snapshot!("claims", claims, {
+    assert_snapshot!("credential_def", credential_def, {
         ".credentialSubject" => insta::sorted_redaction(),
         ".credentialSubject.address" => insta::sorted_redaction(),
     });
@@ -59,12 +59,13 @@ async fn wallet_credential_definition() {
         redirect_uri: Some(REDIRECT_URI.into()), // Must match client registration.
         authorization_details: Some(vec![AuthorizationDetail {
             type_: AuthorizationDetailType::OpenIdCredential,
-            credential: CredentialAuthorization::ConfigurationId {
-                credential_configuration_id: "EmployeeID_JWT".into(),
-                claims: Some(claims),
-            },
+            credential: CredentialAuthorization::Format(
+                FormatIdentifier::JwtVcJson(ProfileW3c {
+                    credential_definition: credential_def,
+                }),
+            ),
             locations: None,
-        }]),
+        }])
     };
     let auth_credentials = vercre_holder::issuance::authorize(provider.clone(), &authorization_request)
         .await
