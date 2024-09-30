@@ -10,7 +10,8 @@
 
 use tracing::instrument;
 use vercre_openid::issuer::{
-    DeferredCredentialRequest, DeferredCredentialResponse, Provider, StateStore,
+    CredentialResponseType, DeferredCredentialRequest, DeferredCredentialResponse, Provider,
+    StateStore,
 };
 use vercre_openid::{Error, Result};
 
@@ -39,7 +40,6 @@ async fn process(
     let Ok(state) = StateStore::get::<State>(provider, &request.transaction_id).await else {
         return Err(Error::InvalidTransactionId("deferred state not found".into()));
     };
-
     if state.is_expired() {
         return Err(Error::InvalidRequest("state expired".into()));
     }
@@ -59,6 +59,12 @@ async fn process(
     cred_req.access_token.clone_from(&request.access_token);
 
     let response = credential(provider.clone(), cred_req).await?;
+
+    // is issuance still pending?
+    if let CredentialResponseType::TransactionId(_) = response.response {
+        // TODO: make retry interval configurable
+        return Err(Error::IssuancePending(5));
+    };
 
     Ok(DeferredCredentialResponse {
         credential_response: response,

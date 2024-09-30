@@ -72,7 +72,7 @@ impl Context {
         tracing::debug!("token::verify");
 
         if self.state.is_expired() {
-            return Err(Error::InvalidRequest("state expired".into()));
+            return Err(Error::InvalidRequest("authorization state expired".into()));
         }
 
         let Ok(server) = Metadata::server(provider, &request.credential_issuer).await else {
@@ -95,7 +95,7 @@ impl Context {
                 }
                 // tx_code
                 if tx_code != &auth_state.tx_code {
-                    return Err(Error::InvalidGrant("invalid tx_code provided".into()));
+                    return Err(Error::InvalidGrant("invalid `tx_code` provided".into()));
                 }
             }
             TokenGrantType::AuthorizationCode {
@@ -109,8 +109,8 @@ impl Context {
 
                 // client_id is the same as the one used to obtain the authorization code
                 if request.client_id.as_ref() != Some(&auth_state.client_id) {
-                    return Err(Error::InvalidGrant(
-                        "client_id differs from authorized one".into(),
+                    return Err(Error::InvalidClient(
+                        "`client_id` differs from authorized one".into(),
                     ));
                 }
 
@@ -118,13 +118,13 @@ impl Context {
                 // i.e. either 'None' or 'Some(redirect_uri)'
                 if redirect_uri != &auth_state.redirect_uri {
                     return Err(Error::InvalidGrant(
-                        "redirect_uri differs from authorized one".into(),
+                        "`redirect_uri` differs from authorized one".into(),
                     ));
                 }
 
                 // code_verifier
                 let Some(verifier) = &code_verifier else {
-                    return Err(Error::AccessDenied("code_verifier is missing".into()));
+                    return Err(Error::AccessDenied("`code_verifier` is missing".into()));
                 };
 
                 // code_verifier matches code_challenge
@@ -132,7 +132,7 @@ impl Context {
                 let challenge = Base64UrlUnpadded::encode_string(&hash);
 
                 if challenge != auth_state.code_challenge {
-                    return Err(Error::AccessDenied("code_verifier is invalid".into()));
+                    return Err(Error::AccessDenied("`code_verifier` is invalid".into()));
                 }
             }
         }
@@ -158,7 +158,6 @@ impl Context {
                 let retained_items = retain_details(provider, &request, &auth_state.items).await?;
                 let authorized_details = authorized_details(&retained_items);
                 let authorized = authorized_credentials(&retained_items);
-
                 (authorized_details, authorized)
             }
             TokenGrantType::AuthorizationCode { .. } => {
@@ -167,7 +166,6 @@ impl Context {
                 };
                 let authorized_details = authorized_details(&auth_state.items);
                 let authorized = authorized_credentials(&auth_state.items);
-
                 (authorized_details, authorized)
             }
         };
@@ -233,9 +231,7 @@ async fn retain_details(
 
         if !found {
             // we're here if requested `authorization_detail` has not been authorized
-            return Err(Error::InvalidRequest(
-                "requested credential has not been authorized".into(),
-            ));
+            return Err(Error::AccessDenied("requested credential has not been authorized".into()));
         }
     }
 
@@ -261,11 +257,13 @@ fn verify_claims(issuer: &Issuer, credential: &CredentialAuthorization) -> Resul
 
     // check claims are supported and include all mandatory claims
     if let Some(requested) = claims {
-        let config = issuer
-            .credential_configurations_supported
-            .get(config_id)
-            .ok_or_else(|| Error::InvalidRequest("invalid credential_configuration_id".into()))?;
-        config.verify_claims(&requested).map_err(|e| Error::InvalidRequest(e.to_string()))?;
+        let config =
+            issuer.credential_configurations_supported.get(config_id).ok_or_else(|| {
+                Error::InvalidAuthorizationDetails("invalid `credential_configuration_id`".into())
+            })?;
+        config
+            .verify_claims(&requested)
+            .map_err(|e| Error::InvalidAuthorizationDetails(e.to_string()))?;
     }
 
     Ok(())
