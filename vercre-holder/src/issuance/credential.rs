@@ -66,11 +66,14 @@ pub async fn credentials(
                 credential_configuration_id,
                 ..
             } => credential_configuration_id,
-            CredentialAuthorization::Format(_) => {
-                // TODO: Implement this
-                let e = anyhow!("unsupported credential configuration format");
-                tracing::error!(target: "Endpoint::credentials", ?e);
-                return Err(e);
+            CredentialAuthorization::Format(format_identifier) => {
+                match issuance.issuer.credential_configuration_id(&format_identifier) {
+                    Ok(cfg_id) => cfg_id,
+                    Err(e) => {
+                        tracing::error!(target: "Endpoint::credentials", ?e);
+                        return Err(e);
+                    }
+                }
             }
         };
         let Some(cfg) = issuance.issuer.credential_configurations_supported.get(cfg_id) else {
