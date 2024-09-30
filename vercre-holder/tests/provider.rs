@@ -47,43 +47,35 @@ impl Provider {
 impl HolderProvider for Provider {}
 
 impl Issuer for Provider {
-    async fn get_metadata(
-        &self, _issuance_id: &str, req: MetadataRequest,
-    ) -> anyhow::Result<MetadataResponse> {
+    async fn metadata(&self, req: MetadataRequest) -> anyhow::Result<MetadataResponse> {
         let response = vercre_issuer::metadata(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 
-    async fn get_authorization(
-        &self, _issuance_id: &str, req: AuthorizationRequest,
+    async fn authorization(
+        &self, req: AuthorizationRequest,
     ) -> anyhow::Result<AuthorizationResponse> {
         let response = vercre_issuer::authorize(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 
-    async fn get_token(
-        &self, _issuance_id: &str, req: TokenRequest,
-    ) -> anyhow::Result<TokenResponse> {
+    async fn token(&self, req: TokenRequest) -> anyhow::Result<TokenResponse> {
         let response = vercre_issuer::token(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 
-    async fn get_credential(
-        &self, _issuance_id: &str, req: CredentialRequest,
-    ) -> anyhow::Result<CredentialResponse> {
+    async fn credential(&self, req: CredentialRequest) -> anyhow::Result<CredentialResponse> {
         let response = vercre_issuer::credential(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 
-    async fn get_logo(&self, _issuance_id: &str, _logo_url: &str) -> anyhow::Result<Logo> {
+    async fn logo(&self, _logo_url: &str) -> anyhow::Result<Logo> {
         Ok(Logo::default())
     }
 }
 
 impl Verifier for Provider {
-    async fn get_request_object(
-        &self, _presentation_id: &str, req: &str,
-    ) -> anyhow::Result<RequestObjectResponse> {
+    async fn request_object(&self, req: &str) -> anyhow::Result<RequestObjectResponse> {
         let parts = req.rsplitn(3, '/').collect::<Vec<&str>>();
         if parts.len() < 3 {
             return Err(anyhow::anyhow!("invalid request string"));
@@ -96,7 +88,7 @@ impl Verifier for Provider {
     }
 
     async fn present(
-        &self, _presentation_id: &str, _uri: Option<&str>, req: &ResponseRequest,
+        &self, _uri: Option<&str>, req: &ResponseRequest,
     ) -> anyhow::Result<ResponseResponse> {
         Ok(vercre_verifier::response(self.verifier.clone().unwrap(), req).await?)
     }

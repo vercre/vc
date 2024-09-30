@@ -94,7 +94,7 @@ impl Issuance {
             credential_issuer: credential_issuer.into(),
             languages: None, // The wallet client should provide any specific languages required.
         };
-        let md_response = IssuerProvider::get_metadata(provider, &self.id, md_request).await?;
+        let md_response = IssuerProvider::metadata(provider, md_request).await?;
         self.issuer = md_response.credential_issuer;
         Ok(())
     }

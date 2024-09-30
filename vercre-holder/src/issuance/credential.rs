@@ -116,7 +116,7 @@ pub async fn credentials(
                 }
             });
 
-            let cred_res = match Issuer::get_credential(&provider, &issuance.id, request).await {
+            let cred_res = match Issuer::credential(&provider, request).await {
                 Ok(cred_res) => cred_res,
                 Err(e) => {
                     tracing::error!(target: "Endpoint::credentials", ?e);
@@ -144,7 +144,7 @@ pub async fn credentials(
                 // TODO: Locale?
                 if let Some(logo_info) = &display[0].logo {
                     if let Some(uri) = &logo_info.uri {
-                        if let Ok(logo) = Issuer::get_logo(&provider, &issuance.id, uri).await {
+                        if let Ok(logo) = Issuer::logo(&provider, uri).await {
                             credential.logo = Some(logo);
                         }
                     }

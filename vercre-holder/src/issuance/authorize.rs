@@ -162,19 +162,18 @@ pub async fn authorize(
             return Err(e);
         }
     };
-    let auth_response =
-        match Issuer::get_authorization(&provider, &issuance.id, authorization_request).await {
-            Ok(auth) => auth,
-            Err(e) => {
-                tracing::error!(target: "Endpoint::authorize", ?e);
-                return Err(e);
-            }
-        };
+    let auth_response = match Issuer::authorization(&provider, authorization_request).await {
+        Ok(auth) => auth,
+        Err(e) => {
+            tracing::error!(target: "Endpoint::authorize", ?e);
+            return Err(e);
+        }
+    };
 
     // Construct a token request using the authorization response and request an
     // access token from the issuer.
     let token_request = token_request(&issuance, request, &auth_response);
-    issuance.token = match Issuer::get_token(&provider, &issuance.id, token_request).await {
+    issuance.token = match Issuer::token(&provider, token_request).await {
         Ok(token) => token,
         Err(e) => {
             tracing::error!(target: "Endpoint::authorize", ?e);

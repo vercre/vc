@@ -12,10 +12,9 @@ pub use vercre_datasec::{Algorithm, Signer};
 pub use vercre_did::{DidResolver, Document};
 pub use vercre_dif_exch::Constraints;
 pub use vercre_openid::issuer::{
-    AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse,
-    MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,
+    AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse, Metadata,
+    MetadataRequest, MetadataResponse, TokenRequest, TokenResponse, TxCode,
 };
-pub use vercre_openid::issuer::{Metadata, TxCode};
 pub use vercre_openid::provider::{Result, StateStore};
 use vercre_openid::verifier::{RequestObjectResponse, ResponseRequest, ResponseResponse};
 
@@ -38,33 +37,31 @@ pub trait HolderProvider:
 pub trait Issuer {
     /// Get issuer metadata. If an error is returned, the wallet will cancel the
     /// issuance flow.
-    fn get_metadata(
-        &self, issuance_id: &str, req: MetadataRequest,
+    fn metadata(
+        &self, req: MetadataRequest,
     ) -> impl Future<Output = anyhow::Result<MetadataResponse>> + Send;
 
     /// Get an authorization code. If an error is returned, the wallet will
     /// cancel the issuance flow.
-    fn get_authorization(
-        &self, issuance_id: &str, req: AuthorizationRequest,
+    fn authorization(
+        &self, req: AuthorizationRequest,
     ) -> impl Future<Output = anyhow::Result<AuthorizationResponse>> + Send;
 
     /// Get an access token. If an error is returned, the wallet will cancel the
     /// issuance flow.
-    fn get_token(
-        &self, issuance_id: &str, req: TokenRequest,
+    fn token(
+        &self, req: TokenRequest,
     ) -> impl Future<Output = anyhow::Result<TokenResponse>> + Send;
 
     /// Get a credential. If an error is returned, the wallet will cancel the
     /// issuance flow.
-    fn get_credential(
-        &self, issuance_id: &str, req: CredentialRequest,
+    fn credential(
+        &self, req: CredentialRequest,
     ) -> impl Future<Output = anyhow::Result<CredentialResponse>> + Send;
 
     /// Get a base64 encoded form of the credential logo. If an error is
     /// returned the wallet library will ignore.
-    fn get_logo(
-        &self, issuance_id: &str, logo_url: &str,
-    ) -> impl Future<Output = anyhow::Result<Logo>> + Send;
+    fn logo(&self, logo_url: &str) -> impl Future<Output = anyhow::Result<Logo>> + Send;
 }
 
 /// Allows the wallet to interact with a verifier's services that are compliant
@@ -75,13 +72,13 @@ pub trait Issuer {
 pub trait Verifier {
     /// Get a request object. If an error is returned, the wallet will cancel
     /// the presentation flow.
-    fn get_request_object(
-        &self, presentation_id: &str, req: &str,
+    fn request_object(
+        &self, req: &str,
     ) -> impl Future<Output = anyhow::Result<RequestObjectResponse>> + Send;
 
     /// Send the presentation to the verifier.
     fn present(
-        &self, presentation_id: &str, uri: Option<&str>, presentation: &ResponseRequest,
+        &self, uri: Option<&str>, presentation: &ResponseRequest,
     ) -> impl Future<Output = anyhow::Result<ResponseResponse>> + Send;
 }
 
