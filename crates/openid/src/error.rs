@@ -127,8 +127,8 @@ pub enum Error {
     /// request to the Deferred Credential Endpoint. If interval member is
     /// missing or its value is not provided, the Wallet MUST use 5 as the
     /// default value.
-    #[error(r#"{{"error": "issuance_pending", "error_description": "{0}"}}"#)]
-    IssuancePending(String),
+    #[error(r#"{{"error": "issuance_pending", "interval": {0}}}"#)]
+    IssuancePending(i64),
 
     /// The Deferred Credential Request contains an invalid `transaction_id`.
     /// This error occurs when the `transaction_id` was not issued by the

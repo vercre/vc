@@ -323,7 +323,7 @@ impl Context {
             } => token.credentials.get(credential_identifier),
             CredentialIssuance::Format(f) => {
                 let config_id = self.issuer.credential_configuration_id(f).map_err(|e| {
-                    Error::InvalidCredentialRequest(format!("unsupported credential format: {e}"))
+                    Error::UnsupportedFormat(format!("invalid credential format: {e}"))
                 })?;
                 token.credentials.values().find(|c| &c.credential_configuration_id == config_id)
             }
@@ -346,7 +346,7 @@ impl Context {
             .await
             .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
 
-        // narrow claimset from AuthorizedCredential
+        // narrow claimset to those previously authorized
         if let Some(claim_ids) = &self.authorized.claim_ids {
             dataset.claims.retain(|k, _| claim_ids.contains(k));
         }
@@ -379,19 +379,11 @@ impl Context {
 
     // Creates, stores, and returns new `c_nonce` and `c_nonce_expires`_in values
     // for use in `Error::InvalidProof` errors, as per specification.
-
-    // return Err(Error::InvalidProof {
-    //                     hint: "Proof JWT DID is invalid".into(),
-    //                     c_nonce,
-    //                     c_nonce_expires_in,
-    //                 });
-
     async fn invalid_proof(
         &self, provider: &impl Provider, hint: impl Into<String> + Send,
     ) -> Result<Error> {
-        // generate nonce and update state
+        // generate nonce and update token state
         let c_nonce = gen::nonce();
-
         let mut state = self.state.clone();
         state.expires_at = Utc::now() + Expire::Access.duration();
 
