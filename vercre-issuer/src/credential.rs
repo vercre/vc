@@ -80,7 +80,7 @@ impl Context {
         tracing::debug!("credential::verify");
 
         if self.state.is_expired() {
-            return Err(Error::InvalidRequest("state expired".into()));
+            return Err(Error::InvalidCredentialRequest("token state expired".into()));
         }
 
         let Stage::Validated(token_state) = &self.state.stage else {
@@ -101,7 +101,7 @@ impl Context {
 
         if let Some(supported_types) = &config.proof_types_supported {
             let Some(proof) = &request.proof else {
-                return Err(Error::InvalidCredentialRequest("proof not set".into()));
+                return Err(self.invalid_proof(provider, "proof not set").await?);
             };
 
             // TODO: cater for non-JWT proofs - use w3c-vc::decode method
@@ -125,55 +125,34 @@ impl Context {
                     match jws::decode(proof_jwt, verify_key!(provider)).await {
                         Ok(jwt) => jwt,
                         Err(e) => {
-                            let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
-                            return Err(Error::InvalidProof {
-                                hint: format!("issue decoding JWT: {e}"),
-                                c_nonce,
-                                c_nonce_expires_in,
-                            });
+                            return Err(self
+                                .invalid_proof(provider, format!("issue decoding JWT: {e}"))
+                                .await?);
                         }
                     };
 
                 // proof type
                 if jwt.header.typ != Type::Proof {
-                    let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
-                    return Err(Error::InvalidProof {
-                        hint: format!("Proof JWT 'typ' is not {}", Type::Proof),
-                        c_nonce,
-                        c_nonce_expires_in,
-                    });
+                    return Err(self
+                        .invalid_proof(provider, format!("Proof JWT 'typ' is not {}", Type::Proof))
+                        .await?);
                 }
 
                 // previously issued c_nonce
                 if jwt.claims.nonce.as_ref() != Some(&token_state.c_nonce) {
-                    let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
-                    return Err(Error::InvalidProof {
-                        hint: "Proof JWT nonce claim is invalid".into(),
-                        c_nonce,
-                        c_nonce_expires_in,
-                    });
+                    return Err(self
+                        .invalid_proof(provider, "Proof JWT nonce claim is invalid")
+                        .await?);
                 }
 
                 // Key ID
                 let KeyType::KeyId(kid) = &jwt.header.key else {
-                    let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
-
-                    return Err(Error::InvalidProof {
-                        hint: "Proof JWT 'kid' is missing".into(),
-                        c_nonce,
-                        c_nonce_expires_in,
-                    });
+                    return Err(self.invalid_proof(provider, "Proof JWT 'kid' is missing").await?);
                 };
 
                 // HACK: save extracted DID for later use when issuing credential
                 let Some(did) = kid.split('#').next() else {
-                    let (c_nonce, c_nonce_expires_in) = self.err_nonce(provider).await?;
-
-                    return Err(Error::InvalidProof {
-                        hint: "Proof JWT DID is invalid".into(),
-                        c_nonce,
-                        c_nonce_expires_in,
-                    });
+                    return Err(self.invalid_proof(provider, "Proof JWT DID is invalid").await?);
                 };
 
                 // TODO: support multiple DID bindings
@@ -226,7 +205,9 @@ impl Context {
             credential_definition,
         }) = &config.format
         else {
-            return Err(Error::InvalidRequest("unsupported credential_definition".into()));
+            return Err(Error::InvalidCredentialRequest(
+                "unsupported credential_definition".into(),
+            ));
         };
 
         let Some(types) = &credential_definition.type_ else {
@@ -398,7 +379,16 @@ impl Context {
 
     // Creates, stores, and returns new `c_nonce` and `c_nonce_expires`_in values
     // for use in `Error::InvalidProof` errors, as per specification.
-    async fn err_nonce(&self, provider: &impl Provider) -> Result<(String, i64)> {
+
+    // return Err(Error::InvalidProof {
+    //                     hint: "Proof JWT DID is invalid".into(),
+    //                     c_nonce,
+    //                     c_nonce_expires_in,
+    //                 });
+
+    async fn invalid_proof(
+        &self, provider: &impl Provider, hint: impl Into<String> + Send,
+    ) -> Result<Error> {
         // generate nonce and update state
         let c_nonce = gen::nonce();
 
@@ -416,7 +406,11 @@ impl Context {
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
-        Ok((c_nonce, Expire::Nonce.duration().num_seconds()))
+        Ok(Error::InvalidProof {
+            hint: hint.into(),
+            c_nonce,
+            c_nonce_expires_in: Expire::Nonce.duration().num_seconds(),
+        })
     }
 }
 

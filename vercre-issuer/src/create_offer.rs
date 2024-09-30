@@ -119,9 +119,7 @@ async fn verify(provider: &impl Provider, request: &CreateOfferRequest) -> Resul
 
     // subject_id is required
     if request.pre_authorize && request.subject_id.is_none() {
-        return Err(Error::InvalidRequest(
-            "`subject_id` is required for pre-authorization".into(),
-        ));
+        return Err(Error::InvalidRequest("`subject_id` is required for pre-authorization".into()));
     };
 
     Ok(())

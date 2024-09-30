@@ -66,9 +66,10 @@ async fn wallet_credential_definition() {
             locations: None,
         }]),
     };
-    let auth_credentials = vercre_holder::issuance::authorize(provider.clone(), &authorization_request)
-        .await
-        .expect("should authorize");
+    let auth_credentials =
+        vercre_holder::issuance::authorize(provider.clone(), &authorization_request)
+            .await
+            .expect("should authorize");
     let credential_identifiers = auth_credentials.authorized.unwrap();
     assert_eq!(credential_identifiers.len(), 1);
     assert_eq!(credential_identifiers.get("EmployeeID_JWT").unwrap()[0], "PHLEmployeeID");
@@ -82,9 +83,8 @@ async fn wallet_credential_definition() {
         .await
         .expect("should get credentials");
 
-    let credentials = CredentialStorer::find(&provider, None)
-        .await
-        .expect("should retrieve all credentials");
+    let credentials =
+        CredentialStorer::find(&provider, None).await.expect("should retrieve all credentials");
 
     assert_eq!(credentials.len(), 1);
 
