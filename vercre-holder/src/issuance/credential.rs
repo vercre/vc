@@ -67,7 +67,7 @@ pub async fn credentials(
                 ..
             } => credential_configuration_id,
             CredentialAuthorization::Format(format_identifier) => {
-                match issuance.issuer.credential_configuration_id(&format_identifier) {
+                match issuance.issuer.credential_configuration_id(format_identifier) {
                     Ok(cfg_id) => cfg_id,
                     Err(e) => {
                         tracing::error!(target: "Endpoint::credentials", ?e);
