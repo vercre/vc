@@ -16,11 +16,9 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
-use sha2::{Digest, Sha256};
 use tracing::instrument;
-use vercre_core::gen;
+use vercre_core::{gen, pkce};
 use vercre_openid::issuer::{
     AuthorizedDetail, CredentialAuthorization, Issuer, Metadata, ProfileClaims, Provider,
     StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
@@ -128,8 +126,7 @@ impl Context {
                 };
 
                 // code_verifier matches code_challenge
-                let hash = Sha256::digest(verifier);
-                let challenge = Base64UrlUnpadded::encode_string(&hash);
+                let challenge = pkce::code_challenge(verifier);
 
                 if challenge != auth_state.code_challenge {
                     return Err(Error::AccessDenied("code_verifier is invalid".into()));
@@ -399,7 +396,7 @@ mod tests {
         // set up Authorization state
         let state = State {
             stage: Stage::Authorized(Authorization {
-                code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
+                code_challenge: pkce::code_challenge(verifier),
                 code_challenge_method: "S256".into(),
                 items: vec![AuthorizedItem {
                     item: ItemType::AuthorizationDetail(AuthorizationDetail {
@@ -468,7 +465,7 @@ mod tests {
             stage: Stage::Authorized(Authorization {
                 client_id: CLIENT_ID.into(),
                 redirect_uri: Some("https://example.com".into()),
-                code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
+                code_challenge: pkce::code_challenge(verifier),
                 code_challenge_method: "S256".into(),
                 items: vec![AuthorizedItem {
                     item: ItemType::AuthorizationDetail(AuthorizationDetail {

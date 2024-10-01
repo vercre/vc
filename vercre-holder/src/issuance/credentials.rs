@@ -7,10 +7,11 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_core::Kind;
 use vercre_datasec::jose::jws::{self, Type};
-use vercre_issuer::CredentialAuthorization;
+use vercre_issuer::{CredentialAuthorization, CredentialIssuance, SingleProof};
 use vercre_macros::credential_request;
 use vercre_openid::issuer::{
-    CredentialConfiguration, CredentialResponse, CredentialResponseType, ProofClaims,
+    CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialResponseType, Proof,
+    ProofClaims,
 };
 use vercre_w3c_vc::proof::{Payload, Verify};
 
@@ -21,6 +22,7 @@ use crate::provider::{CredentialStorer, DidResolver, HolderProvider, Issuer, Sta
 /// `CredentialsRequest` provides the issuance flow ID and an optional set of
 /// credential identifiers to the `credentials` endpoint.
 #[derive(Clone, Debug, Deserialize, Serialize)]
+#[allow(clippy::module_name_repetitions)]
 pub struct CredentialsRequest {
     /// The issuance flow identifier.
     pub issuance_id: String,
@@ -37,7 +39,7 @@ pub struct CredentialsRequest {
 pub async fn credentials(
     provider: impl HolderProvider, request: &CredentialsRequest,
 ) -> anyhow::Result<String> {
-    tracing::debug!("Endpoint::credentials");
+    tracing::debug!("Endpoint::credentials {:?}", request);
 
     let mut issuance: Issuance = match StateStore::get(&provider, &request.issuance_id).await {
         Ok(issuance) => issuance,
@@ -97,66 +99,48 @@ pub async fn credentials(
             }
         };
 
-        for cred_id in &auth.credential_identifiers {
-            // Check the holder wants this credential.
-            if let Some(ref ids) = request.credential_identifiers {
-                if !ids.contains(cred_id) {
-                    continue;
-                }
-            }
-
-            // Construct a credential request.
-            let request = credential_request!({
-                "credential_issuer": issuance.issuer.credential_issuer.clone(),
-                "access_token": issuance.token.access_token.clone(),
-                "credential_identifier": cred_id.clone(),
-                "proof": {
-                    "proof_type": "jwt",
-                    "jwt": jwt.clone()
-                }
-            });
-
-            let cred_res = match Issuer::credential(&provider, request).await {
-                Ok(cred_res) => cred_res,
-                Err(e) => {
-                    tracing::error!(target: "Endpoint::credentials", ?e);
-                    return Err(e);
-                }
-            };
-            if cred_res.c_nonce.is_some() {
-                issuance.token.c_nonce.clone_from(&cred_res.c_nonce);
-            }
-            if cred_res.c_nonce_expires_in.is_some() {
-                issuance.token.c_nonce_expires_in.clone_from(&cred_res.c_nonce_expires_in);
-            }
-
-            // Create a credential in a useful wallet format.
-            let mut credential = match credential(cfg, &cred_res, &provider).await {
-                Ok(credential) => credential,
-                Err(e) => {
-                    tracing::error!(target: "Endpoint::credentials", ?e);
-                    return Err(e);
-                }
-            };
-
-            // Base64-encoded logo if possible.
-            if let Some(display) = &cfg.display {
-                // TODO: Locale?
-                if let Some(logo_info) = &display[0].logo {
-                    if let Some(uri) = &logo_info.uri {
-                        if let Ok(logo) = Issuer::logo(&provider, uri).await {
-                            credential.logo = Some(logo);
-                        }
-                    }
-                }
-            }
-            match CredentialStorer::save(&provider, &credential).await {
+        // If the issuance is by scope, make a credential request based on
+        // credential definition and format, otherwise make request for each
+        // credential identifier.
+        if issuance.scope.is_some() {
+            match get_credentials_by_format(provider.clone(), &issuance, cfg, &jwt).await {
                 Ok(()) => (),
                 Err(e) => {
                     tracing::error!(target: "Endpoint::credentials", ?e);
                     return Err(e);
                 }
             };
+        } else {
+            for cred_id in &auth.credential_identifiers {
+                // Check the holder wants this credential.
+                if let Some(ref ids) = request.credential_identifiers {
+                    if !ids.contains(cred_id) {
+                        continue;
+                    }
+                }
+
+                let cred_res = match get_credential_by_identifier(
+                    provider.clone(),
+                    &issuance,
+                    cfg,
+                    cred_id,
+                    &jwt,
+                )
+                .await
+                {
+                    Ok(cred_res) => cred_res,
+                    Err(e) => {
+                        tracing::error!(target: "Endpoint::credentials", ?e);
+                        return Err(e);
+                    }
+                };
+                if cred_res.c_nonce.is_some() {
+                    issuance.token.c_nonce.clone_from(&cred_res.c_nonce);
+                }
+                if cred_res.c_nonce_expires_in.is_some() {
+                    issuance.token.c_nonce_expires_in.clone_from(&cred_res.c_nonce_expires_in);
+                }
+            }
         }
     }
 
@@ -164,6 +148,78 @@ pub async fn credentials(
     StateStore::purge(&provider, &issuance.id).await?;
 
     Ok(issuance.id)
+}
+
+/// Get credentials by format.
+async fn get_credentials_by_format(
+    provider: impl HolderProvider, issuance: &Issuance, cfg: &CredentialConfiguration, jwt: &str,
+) -> anyhow::Result<()> {
+    let request = CredentialRequest {
+        credential_issuer: issuance.issuer.credential_issuer.clone(),
+        access_token: issuance.token.access_token.clone(),
+        credential: CredentialIssuance::Format(cfg.format.clone()),
+        proof: Some(Proof::Single {
+            proof_type: SingleProof::Jwt { jwt: jwt.into() },
+        }),
+        ..Default::default()
+    };
+    let cred_res = Issuer::credential(&provider, request).await?;
+
+    // Create a credential in a useful wallet format.
+    let mut credential = credential(cfg, &cred_res, &provider).await?;
+
+    // Base64-encoded logo if possible.
+    if let Some(display) = &cfg.display {
+        // TODO: Locale?
+        if let Some(logo_info) = &display[0].logo {
+            if let Some(uri) = &logo_info.uri {
+                if let Ok(logo) = Issuer::logo(&provider, uri).await {
+                    credential.logo = Some(logo);
+                }
+            }
+        }
+    }
+
+    // Save the credential to wallet storage.
+    CredentialStorer::save(&provider, &credential).await?;
+    Ok(())
+}
+
+/// Get a credential by credential identifier.
+async fn get_credential_by_identifier(
+    provider: impl HolderProvider, issuance: &Issuance, cfg: &CredentialConfiguration,
+    cred_id: &str, jwt: &str,
+) -> anyhow::Result<CredentialResponse> {
+    // Construct a credential request.
+    let request = credential_request!({
+        "credential_issuer": issuance.issuer.credential_issuer.clone(),
+        "access_token": issuance.token.access_token.clone(),
+        "credential_identifier": cred_id.to_string(),
+        "proof": {
+            "proof_type": "jwt",
+            "jwt": jwt.to_string()
+        }
+    });
+
+    let cred_res = Issuer::credential(&provider, request).await?;
+
+    // Create a credential in a useful wallet format.
+    let mut credential = credential(cfg, &cred_res, &provider).await?;
+
+    // Base64-encoded logo if possible.
+    if let Some(display) = &cfg.display {
+        // TODO: Locale?
+        if let Some(logo_info) = &display[0].logo {
+            if let Some(uri) = &logo_info.uri {
+                if let Ok(logo) = Issuer::logo(&provider, uri).await {
+                    credential.logo = Some(logo);
+                }
+            }
+        }
+    }
+    CredentialStorer::save(&provider, &credential).await?;
+
+    Ok(cred_res)
 }
 
 /// Construct a credential from a credential response.

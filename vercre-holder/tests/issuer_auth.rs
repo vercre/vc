@@ -80,7 +80,7 @@ async fn issuer_auth() {
         },
         redirect_uri: Some(REDIRECT_URI.into()), // Must match client registration.
         authorization_details: None,             /* None implies the wallet wants all offered
-                                                  * credentials. */
+                                                  * credentials or is using scope. */
     };
     vercre_holder::issuance::authorize(HOLDER_PROVIDER.clone(), &auth_request)
         .await

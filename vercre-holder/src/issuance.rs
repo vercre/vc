@@ -6,7 +6,7 @@
 pub(crate) mod accept;
 pub(crate) mod authorize;
 pub(crate) mod cancel;
-pub(crate) mod credential;
+pub(crate) mod credentials;
 pub(crate) mod offer;
 pub(crate) mod pin;
 pub(crate) mod token;
@@ -16,7 +16,7 @@ use std::fmt::Debug;
 pub use accept::{accept, AcceptRequest, AuthorizationSpec};
 pub use authorize::{authorize, AuthorizeRequest, Initiator};
 pub use cancel::cancel;
-pub use credential::{credentials, CredentialsRequest};
+pub use credentials::{credentials, CredentialsRequest};
 pub use offer::{offer, OfferRequest, OfferResponse};
 pub use pin::{pin, PinRequest};
 use serde::{Deserialize, Serialize};
@@ -70,6 +70,9 @@ pub struct Issuance {
 
     /// The `TokenResponse` received from the issuer.
     pub token: TokenResponse,
+
+    /// Requested scope for scope-based authorization.
+    pub scope: Option<String>,
 }
 
 /// Helper functions for using issuance state.
