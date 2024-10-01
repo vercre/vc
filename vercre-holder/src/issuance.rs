@@ -23,7 +23,7 @@ use serde::{Deserialize, Serialize};
 pub use token::{token, AuthorizedCredentials};
 use uuid::Uuid;
 use vercre_issuer::MetadataRequest;
-use vercre_openid::issuer::{AuthorizationDetail, CredentialOffer, Issuer, TokenResponse};
+use vercre_openid::issuer::{AuthorizationDetail, CredentialOffer, Issuer, Server, TokenResponse};
 
 use crate::provider::{HolderProvider, Issuer as IssuerProvider};
 
@@ -49,6 +49,9 @@ pub struct Issuance {
 
     /// Cached issuer metadata.
     pub issuer: Issuer,
+
+    /// Cached authorization server metadata.
+    pub authorization_server: Server,
 
     /// The list of credentials and claims the wallet wants to obtain from those
     /// offered.
@@ -96,6 +99,7 @@ impl Issuance {
         };
         let md_response = IssuerProvider::metadata(provider, md_request).await?;
         self.issuer = md_response.credential_issuer;
+        self.authorization_server = md_response.authorization_server;
         Ok(())
     }
 }

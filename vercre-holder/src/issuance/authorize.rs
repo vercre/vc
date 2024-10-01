@@ -241,14 +241,20 @@ fn authorization_request(
         }
     };
 
+    let Some(code_challenge_methods) =
+        issuance.authorization_server.oauth.code_challenge_methods_supported.clone()
+    else {
+        return Err(anyhow!("code challenge methods missing from authorization server metadata"));
+    };
+
     Ok(AuthorizationRequest::Object(RequestObject {
         credential_issuer: issuance.issuer.credential_issuer.clone(),
-        response_type: "code".into(),
+        response_type: issuance.authorization_server.oauth.response_types_supported[0].clone(),
         client_id: issuance.client_id.clone(),
         redirect_uri: request.redirect_uri.clone(),
         state: Some(issuance.id.clone()),
         code_challenge,
-        code_challenge_method: "S256".into(),
+        code_challenge_method: code_challenge_methods[0].clone(),
         authorization_details: Some(auth_details),
         // TODO: support this
         scope: None,
