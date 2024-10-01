@@ -387,13 +387,23 @@ mod tests {
     use base64ct::{Base64UrlUnpadded, Encoding};
     use insta::assert_yaml_snapshot as assert_snapshot;
     use rstest::rstest;
+    use serde_json::{json, Value};
     use sha2::{Digest, Sha256};
-    use vercre_macros::authorization_request;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
 
     use super::*;
-    extern crate self as vercre_issuer;
+    // extern crate self as vercre_issuer;
+
+    #[rstest]
+    #[case::claims(claims)]
+    async fn authorize_de(#[case] value: fn() -> Value) {
+        // execute request
+        let request: AuthorizationRequest =
+            serde_json::from_value(value()).expect("should deserialize");
+        let ser = serde_json::to_string_pretty(&request).expect("should serialize to string");
+        println!("{}", ser);
+    }
 
     #[rstest]
     #[case::configuration_id("configuration_id", configuration_id)]
@@ -402,14 +412,15 @@ mod tests {
     #[case::claims("claims", claims)]
     #[should_panic(expected = "ok")]
     #[case::claims_err("claims_err", claims_err)]
-    async fn authorize_tests(#[case] name: &str, #[case] request: fn() -> AuthorizationRequest) {
+    async fn authorize_tests(#[case] name: &str, #[case] value: fn() -> Value) {
         vercre_test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();
 
         // execute request
-        let response = authorize(provider.clone(), request()).await.expect("ok");
+        let request = serde_json::from_value(value()).expect("should deserialize");
+        let response = authorize(provider.clone(), request).await.expect("ok");
         assert_snapshot!("authorize:configuration_id:response", &response, {
             ".code" => "[code]",
         });
@@ -424,8 +435,8 @@ mod tests {
         });
     }
 
-    fn configuration_id() -> AuthorizationRequest {
-        authorization_request!({
+    fn configuration_id() -> Value {
+        json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
@@ -442,8 +453,8 @@ mod tests {
         })
     }
 
-    fn format_w3c() -> AuthorizationRequest {
-        authorization_request!({
+    fn format_w3c() -> Value {
+        json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
@@ -466,8 +477,8 @@ mod tests {
         })
     }
 
-    fn scope() -> AuthorizationRequest {
-        authorization_request!({
+    fn scope() -> Value {
+        json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
@@ -481,8 +492,8 @@ mod tests {
         })
     }
 
-    fn claims() -> AuthorizationRequest {
-        authorization_request!({
+    fn claims() -> Value {
+        json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
@@ -510,8 +521,8 @@ mod tests {
         })
     }
 
-    fn claims_err() -> AuthorizationRequest {
-        authorization_request!({
+    fn claims_err() -> Value {
+        json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,

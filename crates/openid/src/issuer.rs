@@ -426,105 +426,6 @@ pub struct CredentialOfferResponse {
     pub credential_offer: CredentialOffer,
 }
 
-// /// An Authorization Request is an OAuth 2.0 Authorization Request as defined
-// in /// section 4.1.1 of [RFC6749], which requests to grant access to the
-// Credential /// Endpoint.
-// ///
-// /// [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
-// #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
-// #[serde(default)]
-// pub struct AuthorizationRequest {
-//     /// The URL of the Credential Issuer the Wallet can use obtain offered
-//     /// Credentials.
-//     #[serde(skip_serializing_if = "String::is_empty", default)]
-//     pub credential_issuer: String,
-
-//     /// Authorization Server's response type.
-//     pub response_type: oauth::ResponseType,
-
-//     /// OAuth 2.0 Client ID used by the Wallet.
-//     pub client_id: String,
-
-//     /// The client's redirection endpoint as previously established during
-// the     /// client registration.
-//     #[serde(skip_serializing_if = "Option::is_none")]
-//     pub redirect_uri: Option<String>,
-
-//     /// Client state is used by the client to maintain state between the
-// request     /// and callback.
-//     #[serde(skip_serializing_if = "Option::is_none")]
-//     pub state: Option<String>,
-
-//     /// PKCE code challenge, used to prevent authorization code interception
-//     /// attacks and mitigate the need for client secrets.
-//     pub code_challenge: String,
-
-//     /// PKCE code challenge method. Must be "S256".
-//     pub code_challenge_method: oauth::CodeChallengeMethod,
-
-//     /// Authorization Details may used to convey the details about
-// credentials     /// the Wallet wants to obtain.
-//     #[serde(skip_serializing_if = "Option::is_none")]
-//     #[serde(with = "stringify::option")]
-//     pub authorization_details: Option<Vec<AuthorizationDetail>>,
-
-//     /// Credential Issuers MAY support requesting authorization to issue a
-//     /// credential using OAuth 2.0 scope values.
-//     /// A scope value and its mapping to a credential type is defined by the
-//     /// Issuer. A description of scope value semantics or machine readable
-//     /// definitions could be defined in Issuer metadata. For example,
-//     /// mapping a scope value to an authorization details object.
-//     #[serde(skip_serializing_if = "Option::is_none")]
-//     pub scope: Option<String>,
-
-//     /// The Credential Issuer's identifier to allow the Authorization Server
-// to     /// differentiate between Issuers. [RFC8707]: The target resource to
-// which     /// access is being requested. MUST be an absolute URI.
-//     ///
-//     /// [RFC8707]: (https://www.rfc-editor.org/rfc/rfc8707)
-//     #[serde(skip_serializing_if = "Option::is_none")]
-//     pub resource: Option<String>,
-
-//     // TODO: replace `subject_id` with support for authentication
-//     // <https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest>
-//     /// A Holder identifier provided by the Wallet. It must have meaning to
-// the     /// Credential Issuer in order that credentialSubject claims can be
-//     /// populated.
-//     pub subject_id: String,
-
-//     /// The Wallet's `OpenID` Connect issuer URL. The Credential Issuer can
-// use     /// the discovery process as defined in [SIOPv2] to determine the
-// Wallet's     /// capabilities and endpoints. RECOMMENDED in Dynamic
-// Credential Requests.     ///
-//     /// [SIOPv2]: (https://openid.net/specs/openid-connect-self-issued-v2-1_0.html)
-//     #[serde(skip_serializing_if = "Option::is_none")]
-//     pub wallet_issuer: Option<String>,
-
-//     /// An opaque user hint the Wallet MAY use in subsequent callbacks to
-//     /// optimize the user's experience. RECOMMENDED in Dynamic Credential
-//     /// Requests.
-//     #[serde(skip_serializing_if = "Option::is_none")]
-//     pub user_hint: Option<String>,
-
-//     /// Identifies a pre-existing Credential Issuer processing context. A
-// value     /// for this parameter may be passed in the Credential Offer to the
-//     /// Wallet.
-//     #[serde(skip_serializing_if = "Option::is_none")]
-//     pub issuer_state: Option<String>,
-
-//     /// A URI referencing the authorization request previously stored at the
-// PAR     /// endpoint.
-//     #[serde(skip_serializing_if = "Option::is_none")]
-//     pub request_uri: Option<String>,
-// }
-
-// /// An Authorization Request.
-// #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
-// pub struct AuthorizationRequest {
-//     #[serde(flatten)]
-//     request: AuthorizationRequestType,
-// }
-
 /// An Authorization Request type.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
@@ -541,6 +442,34 @@ pub enum AuthorizationRequest {
 impl Default for AuthorizationRequest {
     fn default() -> Self {
         Self::Object(RequestObject::default())
+    }
+}
+
+
+impl AuthorizationRequest {
+    /// Generate a query string for the Authorization Request.
+    ///
+    /// # Errors
+    ///
+    /// Returns an `Error::ServerError` error if error if the Authorization
+    /// Request cannot be serialized.
+    pub fn to_querystring(&self) -> anyhow::Result<String> {
+        match self {
+            Self::Object(req) => {
+                // create map of top-level fields, serializing each to string
+                let mut ser = serde_json::to_value(req)
+                    .map_err(|e| anyhow!("Failed to serialize Authorization Request: {e}"))?;
+
+                let map = ser.as_object_mut().unwrap();
+                let auth_dets = map.get_mut("authorization_details").unwrap();
+                *auth_dets = Value::String(auth_dets.to_string());
+
+                serde_urlencoded::to_string(&map)
+                    .map_err(|e| anyhow!("issue creating query string: {e}"))
+            }
+            Self::Uri(req) => serde_urlencoded::to_string(req)
+                .map_err(|e| anyhow!("issue creating query string: {e}")),
+        }
     }
 }
 
@@ -592,7 +521,7 @@ pub struct RequestObject {
     /// Authorization Details may used to convey the details about credentials
     /// the Wallet wants to obtain.
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "stringify::option")]
+    // #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
 
     /// Credential Issuers MAY support requesting authorization to issue a
@@ -2200,7 +2129,10 @@ mod tests {
             ..RequestObject::default()
         });
 
-        let serialized = serde_urlencoded::to_string(&request).expect("should serialize to string");
+
+        let serialized = request.to_querystring().unwrap();
+        println!("{}", serialized);
+
         assert_snapshot!("authorization_format", &serialized, {
             ".code" => "[code]",
         });
