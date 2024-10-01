@@ -1425,6 +1425,9 @@ pub struct MetadataResponse {
     /// The Credential Issuer metadata for the specified Credential Issuer.
     #[serde(flatten)]
     pub credential_issuer: Issuer,
+
+    /// The OAuth 2.0 Authorization Server metadata for the Issuer.
+    pub authorization_server: Server,
 }
 
 /// The registration request.
