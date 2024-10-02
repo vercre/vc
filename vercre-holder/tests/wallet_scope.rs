@@ -58,6 +58,7 @@ async fn wallet_scope() {
     let cred_req = CredentialsRequest {
         issuance_id: auth_credentials.issuance_id.clone(),
         credential_identifiers: None,
+        format: Some(credential_config.format.clone()),
     };
     vercre_holder::issuance::credentials(provider.clone(), &cred_req)
         .await

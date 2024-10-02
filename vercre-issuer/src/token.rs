@@ -192,7 +192,7 @@ impl Context {
             expires_in: Expire::Access.duration().num_seconds(),
             c_nonce: Some(c_nonce),
             c_nonce_expires_in: Some(Expire::Nonce.duration().num_seconds()),
-            authorization_details: Some(authorization_details),
+            authorization_details,
         })
     }
 }
@@ -268,7 +268,7 @@ fn verify_claims(issuer: &Issuer, credential: &CredentialAuthorization) -> Resul
     Ok(())
 }
 
-fn authorized_details(items: &[AuthorizedItem]) -> Vec<AuthorizedDetail> {
+fn authorized_details(items: &[AuthorizedItem]) -> Option<Vec<AuthorizedDetail>> {
     // convert retained detail_items to Authorized token response
     // + state Authorized
     let mut authorization_details = vec![];
@@ -282,7 +282,10 @@ fn authorized_details(items: &[AuthorizedItem]) -> Vec<AuthorizedDetail> {
         }
     }
 
-    authorization_details
+    if authorization_details.is_empty() {
+        return None;
+    }
+    Some(authorization_details)
 }
 
 fn authorized_credentials(items: &[AuthorizedItem]) -> HashMap<String, Authorized> {

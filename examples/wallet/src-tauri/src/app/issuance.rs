@@ -90,6 +90,7 @@ impl AppState {
         let request = CredentialsRequest {
             issuance_id: self.issuance.id.clone(),
             credential_identifiers: None,
+            format: None,
         };
         vercre_holder::issuance::credentials(provider, &request).await?;
         Ok(())

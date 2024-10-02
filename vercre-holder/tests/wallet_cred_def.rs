@@ -76,7 +76,7 @@ async fn wallet_credential_definition() {
     // Get (and store) credentials. Accept all on offer.
     let cred_req = CredentialsRequest {
         issuance_id: auth_credentials.issuance_id.clone(),
-        credential_identifiers: None,
+        ..Default::default()
     };
     vercre_holder::issuance::credentials(provider.clone(), &cred_req)
         .await

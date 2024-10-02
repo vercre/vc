@@ -199,14 +199,17 @@ pub async fn authorize(
         authorized: None,
     };
     if let Some(auth_details) = issuance.token.authorization_details.clone() {
-        let authorized = match authorized_credentials(&auth_details, &issuance) {
-            Ok(authorized) => authorized,
-            Err(e) => {
-                tracing::error!(target: "Endpoint::token", ?e);
-                return Err(e);
-            }
-        };
-        response.authorized = Some(authorized);
+        if !auth_details.is_empty() {
+            // Get the authorized credentials.
+            let authorized = match authorized_credentials(&auth_details, &issuance) {
+                Ok(authorized) => authorized,
+                Err(e) => {
+                    tracing::error!(target: "Endpoint::token", ?e);
+                    return Err(e);
+                }
+            };
+            response.authorized = Some(authorized);
+        }
     }
 
     // Stash the state for the next step.

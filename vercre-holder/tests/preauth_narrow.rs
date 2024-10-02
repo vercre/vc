@@ -99,6 +99,7 @@ async fn preauth_narrow() {
     let cred_req = CredentialsRequest {
         issuance_id: issuance.issuance_id.clone(),
         credential_identifiers: Some(vec![credential_identifier.to_string()]),
+        format: None,
     };
     vercre_holder::issuance::credentials(HOLDER_PROVIDER.clone(), &cred_req)
         .await

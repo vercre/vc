@@ -89,7 +89,7 @@ async fn issuer_auth() {
     // Get (and store) credentials. Accept all on offer.
     let cred_req = CredentialsRequest {
         issuance_id: issuance.issuance_id.clone(),
-        credential_identifiers: None,
+        ..Default::default()
     };
     vercre_holder::issuance::credentials(HOLDER_PROVIDER.clone(), &cred_req)
         .await
