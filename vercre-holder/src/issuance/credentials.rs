@@ -17,7 +17,7 @@ use vercre_w3c_vc::proof::{Payload, Verify};
 
 use super::{Issuance, Status};
 use crate::credential::Credential;
-use crate::provider::{CredentialStorer, DidResolver, HolderProvider, Issuer, StateStore};
+use crate::provider::{CredentialStorer, HolderProvider, Issuer, StateStore};
 
 /// `CredentialsRequest` provides the issuance flow ID and an optional set of
 /// credential identifiers to the `credentials` endpoint.
@@ -202,19 +202,7 @@ async fn get_credentials_by_format(
     let cred_res = Issuer::credential(&provider, request).await?;
 
     // Create a credential in a useful wallet format.
-    let mut credential = credential(cfg, &cred_res, &provider).await?;
-
-    // Base64-encoded logo if possible.
-    if let Some(display) = &cfg.display {
-        // TODO: Locale?
-        if let Some(logo_info) = &display[0].logo {
-            if let Some(uri) = &logo_info.uri {
-                if let Ok(logo) = Issuer::logo(&provider, uri).await {
-                    credential.logo = Some(logo);
-                }
-            }
-        }
-    }
+    let credential = credential(&provider, cfg, &cred_res).await?;
 
     // Save the credential to wallet storage.
     CredentialStorer::save(&provider, &credential).await?;
@@ -240,7 +228,7 @@ async fn get_credential_by_identifier(
     let cred_res = Issuer::credential(&provider, request).await?;
 
     // Create a credential in a useful wallet format.
-    let mut credential = credential(cfg, &cred_res, &provider).await?;
+    let mut credential = credential(&provider, cfg, &cred_res).await?;
 
     // Base64-encoded logo if possible.
     if let Some(display) = &cfg.display {
@@ -260,8 +248,8 @@ async fn get_credential_by_identifier(
 
 /// Construct a credential from a credential response.
 async fn credential(
+    provider: &impl HolderProvider,
     credential_configuration: &CredentialConfiguration, resp: &CredentialResponse,
-    resolver: &impl DidResolver,
 ) -> anyhow::Result<Credential> {
     // TODO: Handle response types other than single credential.
     let vc_kind = match &resp.response {
@@ -271,7 +259,7 @@ async fn credential(
         }
     };
 
-    let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), resolver)
+    let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), provider)
         .await
         .map_err(|e| anyhow!("issue parsing credential: {e}"))?
     else {
@@ -288,13 +276,27 @@ async fn credential(
         bail!("credential is not a JWT");
     };
 
-    Ok(Credential {
+    let mut storable_credential = Credential {
         id: vc.id.clone(),
         issuer: issuer_id.clone(),
         metadata: credential_configuration.clone(),
-        vc,
+        vc: vc.clone(),
         issued: token.into(),
 
         ..Credential::default()
-    })
+    };
+
+    // Base64-encoded logo if possible.
+    if let Some(display) = &credential_configuration.display {
+        // TODO: Locale?
+        if let Some(logo_info) = &display[0].logo {
+            if let Some(uri) = &logo_info.uri {
+                if let Ok(logo) = Issuer::logo(provider, uri).await {
+                    storable_credential.logo = Some(logo);
+                }
+            }
+        }
+    }
+
+    Ok(storable_credential)
 }
