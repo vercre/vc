@@ -16,7 +16,7 @@ use std::fmt::Debug;
 pub use accept::{accept, AcceptRequest, AuthorizationSpec};
 pub use authorize::{authorize, AuthorizeRequest, Initiator};
 pub use cancel::cancel;
-pub use credentials::{credentials, CredentialsRequest};
+pub use credentials::{credentials, CredentialsRequest, CredentialsResponse};
 pub use offer::{offer, OfferRequest, OfferResponse};
 pub use pin::{pin, PinRequest};
 use serde::{Deserialize, Serialize};

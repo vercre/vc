@@ -13,6 +13,7 @@ use vercre_openid::issuer::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialResponseType, Proof,
     ProofClaims,
 };
+use vercre_w3c_vc::model::VerifiableCredential;
 use vercre_w3c_vc::proof::{Payload, Verify};
 
 use super::{Issuance, Status};
@@ -43,9 +44,22 @@ pub struct CredentialsRequest {
     pub format: Option<FormatIdentifier>,
 }
 
+/// `CredentialsResponse` provides the issuance flow ID and any deferred
+/// transactions IDs returned by the issuer's credential issuance endpoint.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[allow(clippy::module_name_repetitions)]
+pub struct CredentialsResponse {
+    /// Issuance flow identifier.
+    pub issuance_id: String,
+
+    /// Deferred transaction IDs.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deferred: Option<Vec<String>>,
+}
+
 /// Progresses the issuance flow by requesting the credentials from the issuer.
 ///
-/// Returns the issuance flow identifier.
+/// Returns the issuance flow identifier and any deferred transaction IDs.
 ///
 /// # Errors
 /// Will return an error if the request is invalid for the current state and
@@ -53,7 +67,7 @@ pub struct CredentialsRequest {
 #[instrument(level = "debug", skip(provider))]
 pub async fn credentials(
     provider: impl HolderProvider, request: &CredentialsRequest,
-) -> anyhow::Result<String> {
+) -> anyhow::Result<CredentialsResponse> {
     tracing::debug!("Endpoint::credentials {:?}", request);
 
     let mut issuance: Issuance = match StateStore::get(&provider, &request.issuance_id).await {
@@ -84,6 +98,8 @@ pub async fn credentials(
         }
     };
 
+    let mut deferred = Vec::new();
+
     // If the flow is scope-based then we can't examine authorization details
     // but proceed instead to request credentials by format.
     if issuance.scope.is_some() {
@@ -98,7 +114,12 @@ pub async fn credentials(
             return Err(e);
         };
         match get_credentials_by_format(provider.clone(), &issuance, format, &jwt).await {
-            Ok(()) => (),
+            Ok(cred_res) => {
+                if let CredentialResponseType::TransactionId(id) = &cred_res.response {
+                    deferred.push(id.to_string());
+                }
+                cred_res
+            }
             Err(e) => {
                 tracing::error!(target: "Endpoint::credentials", ?e);
                 return Err(e);
@@ -152,7 +173,12 @@ pub async fn credentials(
                 )
                 .await
                 {
-                    Ok(cred_res) => cred_res,
+                    Ok(cred_res) => {
+                        if let CredentialResponseType::TransactionId(id) = &cred_res.response {
+                            deferred.push(id.to_string());
+                        }
+                        cred_res
+                    }
                     Err(e) => {
                         tracing::error!(target: "Endpoint::credentials", ?e);
                         return Err(e);
@@ -167,24 +193,57 @@ pub async fn credentials(
             }
         }
     }
-    // Release issuance state.
-    StateStore::purge(&provider, &issuance.id).await?;
+    // Release issuance state if no deferred transactions.
+    let deferred = if deferred.is_empty() {
+        StateStore::purge(&provider, &issuance.id).await?;
+        None
+    } else {
+        Some(deferred)
+    };
 
-    Ok(issuance.id)
+    Ok(CredentialsResponse {
+        issuance_id: issuance.id,
+        deferred,
+    })
+}
+
+/// Process the credential response.
+///
+/// Unpacks the response and, if one or more credentials are present will
+/// convert into a convenient wallet format and use the provider to store.
+/// If a deferred transaction ID has been returned, this will be immediately
+/// returned instead.
+async fn process_credential_response(
+    provider: impl HolderProvider, config: &CredentialConfiguration, resp: &CredentialResponse,
+) -> anyhow::Result<Option<String>> {
+    match &resp.response {
+        CredentialResponseType::Credential(vc_kind) => {
+            // Create a credential in a useful wallet format and save.
+            let credential = credential(&provider, config, vc_kind).await?;
+            CredentialStorer::save(&provider, &credential).await?;
+            Ok(None)
+        }
+        CredentialResponseType::Credentials(credentials) => {
+            for vc_kind in credentials {
+                let credential = credential(&provider, config, vc_kind).await?;
+                CredentialStorer::save(&provider, &credential).await?;
+            }
+            Ok(None)
+        }
+        CredentialResponseType::TransactionId(id) => Ok(Some(id.clone())),
+    }
 }
 
 /// Get credentials by format.
 async fn get_credentials_by_format(
     provider: impl HolderProvider, issuance: &Issuance, format: &FormatIdentifier, jwt: &str,
-) -> anyhow::Result<()> {
-    // Find the credential configuration for the scope and format or return an
-    // error if not found.
-    let cred_config = issuance
+) -> anyhow::Result<CredentialResponse> {
+    let config = issuance
         .issuer
         .credential_configurations_supported
         .iter()
         .find(|(_, cfg)| cfg.scope == issuance.scope && cfg.format == *format);
-    let Some((_cfg_id, cfg)) = cred_config else {
+    let Some((_cfg_id, config)) = config else {
         let e = anyhow!("credential configuration not found for scope and format");
         tracing::error!(target: "Endpoint::credentials", ?e);
         return Err(e);
@@ -200,21 +259,15 @@ async fn get_credentials_by_format(
         ..Default::default()
     };
     let cred_res = Issuer::credential(&provider, request).await?;
-
-    // Create a credential in a useful wallet format.
-    let credential = credential(&provider, cfg, &cred_res).await?;
-
-    // Save the credential to wallet storage.
-    CredentialStorer::save(&provider, &credential).await?;
-    Ok(())
+    process_credential_response(provider, config, &cred_res).await?;
+    Ok(cred_res)
 }
 
 /// Get a credential by credential identifier.
 async fn get_credential_by_identifier(
-    provider: impl HolderProvider, issuance: &Issuance, cfg: &CredentialConfiguration,
+    provider: impl HolderProvider, issuance: &Issuance, config: &CredentialConfiguration,
     cred_id: &str, jwt: &str,
 ) -> anyhow::Result<CredentialResponse> {
-    // Construct a credential request.
     let request = credential_request!({
         "credential_issuer": issuance.issuer.credential_issuer.clone(),
         "access_token": issuance.token.access_token.clone(),
@@ -224,41 +277,16 @@ async fn get_credential_by_identifier(
             "jwt": jwt.to_string()
         }
     });
-
     let cred_res = Issuer::credential(&provider, request).await?;
-
-    // Create a credential in a useful wallet format.
-    let mut credential = credential(&provider, cfg, &cred_res).await?;
-
-    // Base64-encoded logo if possible.
-    if let Some(display) = &cfg.display {
-        // TODO: Locale?
-        if let Some(logo_info) = &display[0].logo {
-            if let Some(uri) = &logo_info.uri {
-                if let Ok(logo) = Issuer::logo(&provider, uri).await {
-                    credential.logo = Some(logo);
-                }
-            }
-        }
-    }
-    CredentialStorer::save(&provider, &credential).await?;
-
+    process_credential_response(provider, config, &cred_res).await?;
     Ok(cred_res)
 }
 
 /// Construct a credential from a credential response.
 async fn credential(
-    provider: &impl HolderProvider,
-    credential_configuration: &CredentialConfiguration, resp: &CredentialResponse,
+    provider: &impl HolderProvider, config: &CredentialConfiguration,
+    vc_kind: &Kind<VerifiableCredential>,
 ) -> anyhow::Result<Credential> {
-    // TODO: Handle response types other than single credential.
-    let vc_kind = match &resp.response {
-        CredentialResponseType::Credential(vc_kind) => vc_kind,
-        CredentialResponseType::Credentials(_) | CredentialResponseType::TransactionId(_) => {
-            bail!("expected credential in response");
-        }
-    };
-
     let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), provider)
         .await
         .map_err(|e| anyhow!("issue parsing credential: {e}"))?
@@ -279,7 +307,7 @@ async fn credential(
     let mut storable_credential = Credential {
         id: vc.id.clone(),
         issuer: issuer_id.clone(),
-        metadata: credential_configuration.clone(),
+        metadata: config.clone(),
         vc: vc.clone(),
         issued: token.into(),
 
@@ -287,7 +315,7 @@ async fn credential(
     };
 
     // Base64-encoded logo if possible.
-    if let Some(display) = &credential_configuration.display {
+    if let Some(display) = &config.display {
         // TODO: Locale?
         if let Some(logo_info) = &display[0].logo {
             if let Some(uri) = &logo_info.uri {
