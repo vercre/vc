@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::fmt::{self, Debug};
 use std::future::Future;
 use std::io::Cursor;
+use std::str::FromStr;
 
 use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
@@ -445,6 +446,61 @@ impl Default for AuthorizationRequest {
     }
 }
 
+impl std::fmt::Display for AuthorizationRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Self::Object(req) => {
+                // stringify
+                let response_type = serde_json::to_value(&req.response_type)
+                    .map_or_else(|_| None, |v| Some(String::from(v.as_str().unwrap())));
+                let code_challenge_method = serde_json::to_value(&req.code_challenge_method)
+                    .map_or_else(|_| None, |v| Some(String::from(v.as_str().unwrap())));
+                let authorization_details = serde_json::to_string(&req.authorization_details).ok();
+
+                let tuples = [
+                    ("credential_issuer", Some(&req.credential_issuer)),
+                    ("response_type", response_type.as_ref()),
+                    ("client_id", Some(&req.client_id)),
+                    ("redirect_uri", req.redirect_uri.as_ref()),
+                    ("state", req.state.as_ref()),
+                    ("code_challenge", Some(&req.code_challenge)),
+                    ("code_challenge_method", code_challenge_method.as_ref()),
+                    ("authorization_details", authorization_details.as_ref()),
+                    ("scope", req.scope.as_ref()),
+                    ("resource", req.resource.as_ref()),
+                    ("subject_id", Some(&req.subject_id)),
+                    ("wallet_issuer", req.wallet_issuer.as_ref()),
+                    ("user_hint", req.user_hint.as_ref()),
+                    ("issuer_state", req.issuer_state.as_ref()),
+                ];
+
+                serde_urlencoded::to_string(&tuples).unwrap()
+            }
+            Self::Uri(req) => serde_urlencoded::to_string(req).unwrap(),
+        };
+
+        write!(f, "{s}")
+    }
+}
+
+impl FromStr for AuthorizationRequest {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.contains('=') && s.contains('&') {
+            let mut decoded: Value = serde_urlencoded::from_str(s)?;
+            let map = decoded.as_object_mut().ok_or(anyhow!("issue with decoded querystring"))?;
+            if let Some(auth_dets) = map.get_mut("authorization_details") {
+                *auth_dets = serde_json::from_str(auth_dets.as_str().unwrap_or_default())?;
+            }
+
+            Ok(Self::Object(serde_json::from_value(decoded)?))
+        } else {
+            let req = serde_json::from_str(s)?;
+            Ok(Self::Object(req))
+        }
+    }
+}
 
 impl AuthorizationRequest {
     /// Generate a query string for the Authorization Request.
@@ -472,6 +528,56 @@ impl AuthorizationRequest {
         }
     }
 }
+
+// use serde::ser::{self, SerializeStruct, Serializer};
+
+// impl Serialize for AuthorizationRequest {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: Serializer,
+//     {
+//         match self {
+//             Self::Object(req) => {
+//                 let mut s =
+// serializer.serialize_struct("AuthorizationRequest", 3)?;
+// println!("{}", type_name(&s));
+
+//                 s.serialize_field("credential_issuer",
+// &req.credential_issuer)?;                 s.serialize_field("response_type",
+// &req.response_type)?;                 s.serialize_field("client_id",
+// &req.client_id)?;                 s.serialize_field("redirect_uri",
+// &req.redirect_uri)?;                 s.serialize_field("state", &req.state)?;
+//                 s.serialize_field("code_challenge", &req.code_challenge)?;
+//                 s.serialize_field("code_challenge_method",
+// &req.code_challenge_method)?;
+
+//                 // HACK: check serializer typename to determine how  to
+// serialize                 // authorization_details
+//                 if type_name(&s).starts_with("&serde_urlencoded") {
+//                     let string =
+// serde_json::to_string(&req.authorization_details)
+// .map_err(|e| ser::Error::custom(format!("issue 'stringifying':{e}")))?;
+//                     s.serialize_field("authorization_details", &string)?;
+//                 } else {
+//                     s.serialize_field("authorization_details",
+// &req.authorization_details)?;                 }
+
+//                 s.serialize_field("scope", &req.scope)?;
+//                 s.serialize_field("resource", &req.resource)?;
+//                 s.serialize_field("subject_id", &req.subject_id)?;
+//                 s.serialize_field("wallet_issuer", &req.wallet_issuer)?;
+//                 s.serialize_field("user_hint", &req.user_hint)?;
+//                 s.serialize_field("issuer_state", &req.issuer_state)?;
+
+//                 s.end()
+//             }
+//             Self::Uri(req) => req.serialize(serializer),
+//         }
+//     }
+// }
+// fn type_name<T>(_: T) -> &'static str {
+//     std::any::type_name::<T>()
+// }
 
 /// A URI referencing the authorization request previously stored at the PAR
 /// endpoint.
@@ -2129,16 +2235,15 @@ mod tests {
             ..RequestObject::default()
         });
 
-
-        let serialized = request.to_querystring().unwrap();
-        println!("{}", serialized);
-
+        let serialized = request.to_string(); //serde_urlencoded::to_string(&request).expect("should serialize to string");
         assert_snapshot!("authorization_format", &serialized, {
             ".code" => "[code]",
         });
 
-        let deserialized = serde_urlencoded::from_str::<AuthorizationRequest>(&serialized)
-            .expect("should deserialize from string");
+        let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
+
+        //serde_urlencoded::from_str::<AuthorizationRequest>(&serialized).expect("
+        // should deserialize from string");
         assert_eq!(request, deserialized);
     }
 
