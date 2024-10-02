@@ -193,7 +193,6 @@ impl Context {
             c_nonce: Some(c_nonce),
             c_nonce_expires_in: Some(Expire::Nonce.duration().num_seconds()),
             authorization_details: Some(authorization_details),
-            scope: None,
         })
     }
 }

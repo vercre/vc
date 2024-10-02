@@ -1108,15 +1108,6 @@ pub struct TokenResponse {
     /// populated for use in subsequent Credential Requests.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub authorization_details: Option<Vec<AuthorizedDetail>>,
-
-    /// OPTIONAL if identical to the requested scope, otherwise REQUIRED.
-    ///
-    /// The authorization and token endpoints allow the client to specify the
-    /// scope of the access request using the `scope` request parameter.  In
-    /// turn, the authorization server uses the `scope` response parameter
-    /// to inform the client of the scope of the access token issued.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub scope: Option<String>,
 }
 
 /// Access token type as defined in [RFC6749]. Per the specification, the only
