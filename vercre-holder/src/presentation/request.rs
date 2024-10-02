@@ -64,14 +64,13 @@ pub async fn request(
             }
         }
     } else {
-        let req_obj_response =
-            match Verifier::get_request_object(&provider, &presentation.id, &request_str).await {
-                Ok(req_obj_response) => req_obj_response,
-                Err(e) => {
-                    tracing::error!(target: "Endpoint::request", ?e);
-                    return Err(e);
-                }
-            };
+        let req_obj_response = match Verifier::request_object(&provider, &request_str).await {
+            Ok(req_obj_response) => req_obj_response,
+            Err(e) => {
+                tracing::error!(target: "Endpoint::request", ?e);
+                return Err(e);
+            }
+        };
         match parse_request_object_response(&req_obj_response, &provider).await {
             Ok(req_obj) => req_obj,
             Err(e) => {

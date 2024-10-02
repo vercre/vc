@@ -16,11 +16,9 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
-use sha2::{Digest, Sha256};
 use tracing::instrument;
-use vercre_core::gen;
+use vercre_core::{gen, pkce};
 use vercre_openid::issuer::{
     AuthorizedDetail, CredentialAuthorization, Issuer, Metadata, ProfileClaims, Provider,
     StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
@@ -75,7 +73,8 @@ impl Context {
             return Err(Error::InvalidRequest("authorization state expired".into()));
         }
 
-        let Ok(server) = Metadata::server(provider, &request.credential_issuer).await else {
+        // TODO: support optional authorization issuers
+        let Ok(server) = Metadata::server(provider, &request.credential_issuer, None).await else {
             return Err(Error::InvalidRequest("unknown authorization server".into()));
         };
 
@@ -128,8 +127,7 @@ impl Context {
                 };
 
                 // code_verifier matches code_challenge
-                let hash = Sha256::digest(verifier);
-                let challenge = Base64UrlUnpadded::encode_string(&hash);
+                let challenge = pkce::code_challenge(verifier);
 
                 if challenge != auth_state.code_challenge {
                     return Err(Error::AccessDenied("`code_verifier` is invalid".into()));
@@ -192,8 +190,7 @@ impl Context {
             expires_in: Expire::Access.duration().num_seconds(),
             c_nonce: Some(c_nonce),
             c_nonce_expires_in: Some(Expire::Nonce.duration().num_seconds()),
-            authorization_details: Some(authorization_details),
-            scope: None,
+            authorization_details,
         })
     }
 }
@@ -269,7 +266,7 @@ fn verify_claims(issuer: &Issuer, credential: &CredentialAuthorization) -> Resul
     Ok(())
 }
 
-fn authorized_details(items: &[AuthorizedItem]) -> Vec<AuthorizedDetail> {
+fn authorized_details(items: &[AuthorizedItem]) -> Option<Vec<AuthorizedDetail>> {
     // convert retained detail_items to Authorized token response
     // + state Authorized
     let mut authorization_details = vec![];
@@ -283,7 +280,10 @@ fn authorized_details(items: &[AuthorizedItem]) -> Vec<AuthorizedDetail> {
         }
     }
 
-    authorization_details
+    if authorization_details.is_empty() {
+        return None;
+    }
+    Some(authorization_details)
 }
 
 fn authorized_credentials(items: &[AuthorizedItem]) -> HashMap<String, Authorized> {
@@ -397,7 +397,7 @@ mod tests {
         // set up Authorization state
         let state = State {
             stage: Stage::Authorized(Authorization {
-                code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
+                code_challenge: pkce::code_challenge(verifier),
                 code_challenge_method: "S256".into(),
                 items: vec![AuthorizedItem {
                     item: ItemType::AuthorizationDetail(AuthorizationDetail {
@@ -466,7 +466,7 @@ mod tests {
             stage: Stage::Authorized(Authorization {
                 client_id: CLIENT_ID.into(),
                 redirect_uri: Some("https://example.com".into()),
-                code_challenge: Base64UrlUnpadded::encode_string(&Sha256::digest(verifier)),
+                code_challenge: pkce::code_challenge(verifier),
                 code_challenge_method: "S256".into(),
                 items: vec![AuthorizedItem {
                     item: ItemType::AuthorizationDetail(AuthorizationDetail {

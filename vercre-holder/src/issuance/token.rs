@@ -78,7 +78,7 @@ pub async fn token(
             return Err(e);
         }
     };
-    issuance.token = match Issuer::get_token(&provider, &issuance.id, token_request).await {
+    issuance.token = match Issuer::token(&provider, token_request).await {
         Ok(token) => token,
         Err(e) => {
             tracing::error!(target: "Endpoint::token", ?e);

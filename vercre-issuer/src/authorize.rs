@@ -139,7 +139,8 @@ impl Context {
         let Ok(client) = Metadata::client(provider, &request.client_id).await else {
             return Err(Error::InvalidClient("invalid `client_id`".into()));
         };
-        let Ok(server) = Metadata::server(provider, &request.credential_issuer).await else {
+        // TODO: support authorization issuers
+        let Ok(server) = Metadata::server(provider, &request.credential_issuer, None).await else {
             return Err(Error::InvalidRequest("invalid `credential_issuer`".into()));
         };
 
