@@ -29,9 +29,8 @@ async fn wallet_format() {
         credential_issuer: "http://vercre.io".into(),
         languages: None,
     };
-    let issuer_metadata = Issuer::get_metadata(&provider, "", metadata_request)
-        .await
-        .expect("should get issuer metadata");
+    let issuer_metadata =
+        Issuer::metadata(&provider, metadata_request).await.expect("should get issuer metadata");
 
     // Construct an authorization request using the format for the employee ID
     // credential.
@@ -76,7 +75,7 @@ async fn wallet_format() {
     // Get (and store) credentials. Accept all on offer.
     let cred_req = CredentialsRequest {
         issuance_id: auth_credentials.issuance_id.clone(),
-        credential_identifiers: None,
+        ..Default::default()
     };
     vercre_holder::issuance::credentials(provider.clone(), &cred_req)
         .await

@@ -132,8 +132,18 @@ pub async fn authorize(
             client_id,
             issuer,
             subject_id,
-            ..
+            scope,
         } => {
+            // Verify the wallet is making a scope-based request or an
+            // authorization details request, not both.
+            if request.authorization_details.is_some() && scope.is_some() {
+                let e = anyhow!(
+                    "wallet-initiated issuance should use authorization details or scope, not both"
+                );
+                tracing::error!(target: "Endpoint::authorize", ?e);
+                return Err(e);
+            }
+
             // Create a new issuance flow.
             let mut issuance = Issuance::new(client_id);
             issuance.subject_id.clone_from(subject_id);
@@ -144,6 +154,7 @@ pub async fn authorize(
                     return Err(e);
                 }
             };
+            issuance.scope.clone_from(scope);
             issuance
         }
     };
@@ -154,7 +165,7 @@ pub async fn authorize(
     issuance.code_challenge = Some(pkce::code_challenge(&verifier));
     issuance.code_verifier = Some(verifier);
 
-    // Request authorization from the issuer.
+    // Construct an authorization request.
     let authorization_request = match authorization_request(&issuance, request) {
         Ok(auth_request) => auth_request,
         Err(e) => {
@@ -162,19 +173,19 @@ pub async fn authorize(
             return Err(e);
         }
     };
-    let auth_response =
-        match Issuer::get_authorization(&provider, &issuance.id, authorization_request).await {
-            Ok(auth) => auth,
-            Err(e) => {
-                tracing::error!(target: "Endpoint::authorize", ?e);
-                return Err(e);
-            }
-        };
+    // Request authorization from the issuer.
+    let auth_response = match Issuer::authorization(&provider, authorization_request).await {
+        Ok(auth) => auth,
+        Err(e) => {
+            tracing::error!(target: "Endpoint::authorize", ?e);
+            return Err(e);
+        }
+    };
 
     // Construct a token request using the authorization response and request an
     // access token from the issuer.
     let token_request = token_request(&issuance, request, &auth_response);
-    issuance.token = match Issuer::get_token(&provider, &issuance.id, token_request).await {
+    issuance.token = match Issuer::token(&provider, token_request).await {
         Ok(token) => token,
         Err(e) => {
             tracing::error!(target: "Endpoint::authorize", ?e);
@@ -188,14 +199,17 @@ pub async fn authorize(
         authorized: None,
     };
     if let Some(auth_details) = issuance.token.authorization_details.clone() {
-        let authorized = match authorized_credentials(&auth_details, &issuance) {
-            Ok(authorized) => authorized,
-            Err(e) => {
-                tracing::error!(target: "Endpoint::token", ?e);
-                return Err(e);
-            }
-        };
-        response.authorized = Some(authorized);
+        if !auth_details.is_empty() {
+            // Get the authorized credentials.
+            let authorized = match authorized_credentials(&auth_details, &issuance) {
+                Ok(authorized) => authorized,
+                Err(e) => {
+                    tracing::error!(target: "Endpoint::token", ?e);
+                    return Err(e);
+                }
+            };
+            response.authorized = Some(authorized);
+        }
     }
 
     // Stash the state for the next step.
@@ -231,28 +245,43 @@ fn authorization_request(
         Initiator::Wallet { .. } => None,
     };
 
+    let scope = match &request.initiator {
+        Initiator::Issuer { .. } => None,
+        Initiator::Wallet { scope, .. } => scope.clone(),
+    };
+
     // If the request contains None for authorization details, the wallet wants
     // all credentials on offer. For the authorization endpoint, we will need
     // to explicitly build the authorization details.
-    let auth_details = match authorization_details(issuance, request) {
-        Ok(auth_details) => auth_details,
-        Err(e) => {
-            tracing::error!(target: "Endpoint::authorize", ?e);
-            return Err(e);
+    let auth_details = match scope {
+        Some(_) => None,
+        None => {
+            match authorization_details(issuance, request) {
+                Ok(auth_details) => Some(auth_details),
+                Err(e) => {
+                    tracing::error!(target: "Endpoint::authorize", ?e);
+                    return Err(e);
+                }
+            }
         }
+    };
+
+    let Some(code_challenge_methods) =
+        issuance.authorization_server.oauth.code_challenge_methods_supported.clone()
+    else {
+        return Err(anyhow!("code challenge methods missing from authorization server metadata"));
     };
 
     Ok(AuthorizationRequest::Object(RequestObject {
         credential_issuer: issuance.issuer.credential_issuer.clone(),
-        response_type: "code".into(),
+        response_type: issuance.authorization_server.oauth.response_types_supported[0].clone(),
         client_id: issuance.client_id.clone(),
         redirect_uri: request.redirect_uri.clone(),
         state: Some(issuance.id.clone()),
         code_challenge,
-        code_challenge_method: "S256".into(),
-        authorization_details: Some(auth_details),
-        // TODO: support this
-        scope: None,
+        code_challenge_method: code_challenge_methods[0].clone(),
+        authorization_details: auth_details,
+        scope,
         resource: Some(issuance.issuer.credential_issuer.clone()),
         subject_id: issuance.subject_id.clone(),
         // TODO: support this

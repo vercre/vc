@@ -79,14 +79,13 @@ pub async fn present(
     };
     let res_uri =
         presentation.request.response_uri.map(|uri| uri.trim_end_matches('/').to_string());
-    let response =
-        match Verifier::present(&provider, &presentation.id, res_uri.as_deref(), &res_req).await {
-            Ok(response) => response,
-            Err(e) => {
-                tracing::error!(target: "Endpoint::present", ?e);
-                return Err(e);
-            }
-        };
+    let response = match Verifier::present(&provider, res_uri.as_deref(), &res_req).await {
+        Ok(response) => response,
+        Err(e) => {
+            tracing::error!(target: "Endpoint::present", ?e);
+            return Err(e);
+        }
+    };
 
     Ok(response)
 }

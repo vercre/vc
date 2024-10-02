@@ -4,16 +4,15 @@ use tauri_plugin_http::reqwest;
 use vercre_holder::provider::Issuer;
 use vercre_holder::{
     AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse, Logo,
-    MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,
+    MetadataRequest, MetadataResponse, OAuthServerRequest, OAuthServerResponse, TokenRequest,
+    TokenResponse,
 };
 
 use super::Provider;
 
 impl Issuer for Provider {
     /// Get issuer metadata.
-    async fn get_metadata(
-        &self, _issuance_id: &str, req: MetadataRequest,
-    ) -> anyhow::Result<MetadataResponse> {
+    async fn metadata(&self, req: MetadataRequest) -> anyhow::Result<MetadataResponse> {
         let client = reqwest::Client::new();
         let url = format!("{}/.well-known/openid-credential-issuer", req.credential_issuer);
         let result = client.get(&url).header(ACCEPT, "application/json").send().await?;
@@ -27,18 +26,31 @@ impl Issuer for Provider {
         Ok(md)
     }
 
+    /// Get authorization server metadata.
+    async fn oauth_server(&self, req: OAuthServerRequest) -> anyhow::Result<OAuthServerResponse> {
+        let client = reqwest::Client::new();
+        let url = format!("{}/.well-known/oauth-authorization-server", req.credential_issuer);
+        let result = client.get(&url).header(ACCEPT, "application/json").send().await?;
+        let md = match result.json::<OAuthServerResponse>().await {
+            Ok(md) => md,
+            Err(e) => {
+                log::error!("Error getting OAuth server metadata: {}", e);
+                return Err(e.into());
+            }
+        };
+        Ok(md)
+    }
+
     /// Get an authorization code. Not implemented for this example that assumes
     /// issuer-initiated pre-authorized issuance.
-    async fn get_authorization(
-        &self, _issuance_id: &str, _req: AuthorizationRequest,
+    async fn authorization(
+        &self, _req: AuthorizationRequest,
     ) -> anyhow::Result<AuthorizationResponse> {
         unimplemented!()
     }
 
     /// Get an access token.
-    async fn get_token(
-        &self, _issuance_id: &str, req: TokenRequest,
-    ) -> anyhow::Result<TokenResponse> {
+    async fn token(&self, req: TokenRequest) -> anyhow::Result<TokenResponse> {
         let client = reqwest::Client::new();
         let url = format!("{}/token", req.credential_issuer);
         let result = client
@@ -53,9 +65,7 @@ impl Issuer for Provider {
     }
 
     /// Get a credential.
-    async fn get_credential(
-        &self, _issuance_id: &str, req: CredentialRequest,
-    ) -> anyhow::Result<CredentialResponse> {
+    async fn credential(&self, req: CredentialRequest) -> anyhow::Result<CredentialResponse> {
         let client = reqwest::Client::new();
         let url = format!("{}/credential", req.credential_issuer);
         let result = client
@@ -71,7 +81,7 @@ impl Issuer for Provider {
     }
 
     /// Get a base64 encoded form of the credential logo.
-    async fn get_logo(&self, _issuance_id: &str, logo_url: &str) -> anyhow::Result<Logo> {
+    async fn logo(&self, logo_url: &str) -> anyhow::Result<Logo> {
         let client = reqwest::Client::new();
         let result = client.get(logo_url).header(ACCEPT, "image/*").send().await?;
         let headers = result.headers().clone();

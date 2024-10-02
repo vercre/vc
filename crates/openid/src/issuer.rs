@@ -44,7 +44,9 @@ pub trait Metadata: Send + Sync {
     fn issuer(&self, issuer_id: &str) -> impl Future<Output = provider::Result<Issuer>> + Send;
 
     /// Authorization Server metadata for the specified issuer/server.
-    fn server(&self, server_id: &str) -> impl Future<Output = provider::Result<Server>> + Send;
+    fn server(
+        &self, server_id: &str, issuer_id: Option<&str>,
+    ) -> impl Future<Output = provider::Result<Server>> + Send;
 
     /// Used to dynamically register OAuth 2.0 clients with the authorization
     /// server.
@@ -1111,15 +1113,6 @@ pub struct TokenResponse {
     /// populated for use in subsequent Credential Requests.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub authorization_details: Option<Vec<AuthorizedDetail>>,
-
-    /// OPTIONAL if identical to the requested scope, otherwise REQUIRED.
-    ///
-    /// The authorization and token endpoints allow the client to specify the
-    /// scope of the access request using the `scope` request parameter.  In
-    /// turn, the authorization server uses the `scope` response parameter
-    /// to inform the client of the scope of the access token issued.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub scope: Option<String>,
 }
 
 /// Access token type as defined in [RFC6749]. Per the specification, the only
@@ -1430,6 +1423,32 @@ pub struct MetadataResponse {
     /// The Credential Issuer metadata for the specified Credential Issuer.
     #[serde(flatten)]
     pub credential_issuer: Issuer,
+}
+
+/// Request to retrieve the Credential Issuer's authorization server
+/// configuration.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct OAuthServerRequest {
+    /// The Authorization Server identifier for which the configuration is to be
+    /// returned.
+    #[serde(skip_serializing_if = "String::is_empty", default)]
+    pub credential_issuer: String,
+
+    /// Authorization issuer identifier.
+    ///
+    /// This identifier can be obtained from the `authorization_servers`
+    /// parameter in the Credential Issuer metadata. If that parameter is
+    /// not present, the `issuer` parameter should be `None`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub issuer: Option<String>,
+}
+
+/// Response containing the Credential Issuer's authorization server
+/// configuration.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct OAuthServerResponse {
+    /// The OAuth 2.0 Authorization Server metadata for the Issuer.
+    pub authorization_server: Server,
 }
 
 /// The registration request.

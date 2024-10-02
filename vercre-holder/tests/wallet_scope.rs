@@ -1,15 +1,11 @@
 //! Tests for wallet-initiated issuance flow where the authorization request is
-//! made using a credential definition.
+//! made using a format.
 
 mod provider;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::issuance::{AuthorizeRequest, CredentialsRequest, Initiator};
 use vercre_holder::provider::{CredentialStorer, Issuer, MetadataRequest};
-use vercre_holder::{
-    AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization, FormatIdentifier,
-    ProfileClaims,
-};
 use vercre_test_utils::issuer::{CLIENT_ID, CREDENTIAL_ISSUER, REDIRECT_URI};
 
 use crate::provider::Provider;
@@ -18,9 +14,9 @@ use crate::provider::Provider;
 const SUBJECT_ID: &str = "normal_user";
 
 // Test end-to-end wallet-initiated issuance flow, with authorization request
-// using a credential definition.
+// using scope.
 #[tokio::test]
-async fn wallet_credential_definition() {
+async fn wallet_scope() {
     let issuer_provider = vercre_test_utils::issuer::Provider::new();
     let provider = Provider::new(Some(issuer_provider.clone()), None);
 
@@ -29,62 +25,48 @@ async fn wallet_credential_definition() {
         credential_issuer: "http://vercre.io".into(),
         languages: None,
     };
-    let issuer_metadata = Issuer::metadata(&provider, metadata_request)
-        .await
-        .expect("should get issuer metadata");
+    let issuer_metadata =
+        Issuer::metadata(&provider, metadata_request).await.expect("should get issuer metadata");
 
-    // Construct an authorization request using the credential definition for
-    // the employee ID credential.
-    let issuer = issuer_metadata.credential_issuer;
+    // Construct an authorization request using the format for the employee ID
+    // credential.
+        let issuer = issuer_metadata.credential_issuer;
     let credential_config = issuer
         .credential_configurations_supported
         .get("EmployeeID_JWT")
         .expect("should have credential configuration");
-    let claims = match &credential_config.format {
-        FormatIdentifier::JwtVcJson(def) => ProfileClaims::W3c(def.credential_definition.clone()),
-        _ => panic!("unexpected format"),
-    };
-    assert_snapshot!("claims", claims, {
-        ".credentialSubject" => insta::sorted_redaction(),
-        ".credentialSubject.address" => insta::sorted_redaction(),
-    });
+    let scope = credential_config.scope.clone().expect("issuer metadata should have scope");
 
     let authorization_request = AuthorizeRequest {
         initiator: Initiator::Wallet {
             client_id: CLIENT_ID.into(),
-            scope: None,
+            scope: Some(scope),
             issuer: CREDENTIAL_ISSUER.into(),
             subject_id: SUBJECT_ID.into(),
         },
         redirect_uri: Some(REDIRECT_URI.into()), // Must match client registration.
-        authorization_details: Some(vec![AuthorizationDetail {
-            type_: AuthorizationDetailType::OpenIdCredential,
-            credential: CredentialAuthorization::ConfigurationId {
-                credential_configuration_id: "EmployeeID_JWT".into(),
-                claims: Some(claims),
-            },
-            locations: None,
-        }]),
+        authorization_details: None,
     };
-    let auth_credentials =
-        vercre_holder::issuance::authorize(provider.clone(), &authorization_request)
-            .await
-            .expect("should authorize");
-    let credential_identifiers = auth_credentials.authorized.unwrap();
-    assert_eq!(credential_identifiers.len(), 1);
-    assert_eq!(credential_identifiers.get("EmployeeID_JWT").unwrap()[0], "PHLEmployeeID");
+    let auth_credentials = vercre_holder::issuance::authorize(provider.clone(), &authorization_request)
+        .await
+        .expect("should authorize");
+    assert_snapshot!("auth_credentials", auth_credentials, {
+        ".issuance_id" => "[issuance_id]",
+    });
 
     // Get (and store) credentials. Accept all on offer.
     let cred_req = CredentialsRequest {
         issuance_id: auth_credentials.issuance_id.clone(),
-        ..Default::default()
+        credential_identifiers: None,
+        format: Some(credential_config.format.clone()),
     };
     vercre_holder::issuance::credentials(provider.clone(), &cred_req)
         .await
         .expect("should get credentials");
 
-    let credentials =
-        CredentialStorer::find(&provider, None).await.expect("should retrieve all credentials");
+    let credentials = CredentialStorer::find(&provider, None)
+        .await
+        .expect("should retrieve all credentials");
 
     assert_eq!(credentials.len(), 1);
 

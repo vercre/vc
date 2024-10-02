@@ -6,7 +6,7 @@
 pub(crate) mod accept;
 pub(crate) mod authorize;
 pub(crate) mod cancel;
-pub(crate) mod credential;
+pub(crate) mod credentials;
 pub(crate) mod offer;
 pub(crate) mod pin;
 pub(crate) mod token;
@@ -16,14 +16,16 @@ use std::fmt::Debug;
 pub use accept::{accept, AcceptRequest, AuthorizationSpec};
 pub use authorize::{authorize, AuthorizeRequest, Initiator};
 pub use cancel::cancel;
-pub use credential::{credentials, CredentialsRequest};
+pub use credentials::{credentials, CredentialsRequest};
 pub use offer::{offer, OfferRequest, OfferResponse};
 pub use pin::{pin, PinRequest};
 use serde::{Deserialize, Serialize};
 pub use token::{token, AuthorizedCredentials};
 use uuid::Uuid;
-use vercre_issuer::MetadataRequest;
-use vercre_openid::issuer::{AuthorizationDetail, CredentialOffer, Issuer, TokenResponse};
+use vercre_issuer::{
+    AuthorizationDetail, CredentialOffer, MetadataRequest, OAuthServerRequest, TokenResponse,
+};
+use vercre_openid::issuer::{Issuer, Server};
 
 use crate::provider::{HolderProvider, Issuer as IssuerProvider};
 
@@ -50,6 +52,9 @@ pub struct Issuance {
     /// Cached issuer metadata.
     pub issuer: Issuer,
 
+    /// Cached authorization server metadata.
+    pub authorization_server: Server,
+
     /// The list of credentials and claims the wallet wants to obtain from those
     /// offered.
     ///
@@ -67,6 +72,9 @@ pub struct Issuance {
 
     /// The `TokenResponse` received from the issuer.
     pub token: TokenResponse,
+
+    /// Requested scope for scope-based authorization.
+    pub scope: Option<String>,
 }
 
 /// Helper functions for using issuance state.
@@ -94,8 +102,20 @@ impl Issuance {
             credential_issuer: credential_issuer.into(),
             languages: None, // The wallet client should provide any specific languages required.
         };
-        let md_response = IssuerProvider::get_metadata(provider, &self.id, md_request).await?;
+        let md_response = IssuerProvider::metadata(provider, md_request).await?;
         self.issuer = md_response.credential_issuer;
+
+        // Set the authorization server metadata.
+        // TODO: The spec allows the option for the issuer to provide a list of
+        // authorization server identifiers, with the default being the
+        // issuer's own ID.
+        let auth_md_request = OAuthServerRequest {
+            credential_issuer: credential_issuer.into(),
+            issuer: None,
+        };
+        let auth_md_response =
+            IssuerProvider::oauth_server(provider, auth_md_request).await?;
+        self.authorization_server = auth_md_response.authorization_server;
         Ok(())
     }
 }
