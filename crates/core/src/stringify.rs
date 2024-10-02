@@ -16,7 +16,7 @@ use serde::ser::{self, Serialize, Serializer};
 ///
 /// This function will return an `Error::ServerError` error if the string cannot
 /// be serialized into the target type.
-pub fn serialize<T, S>(value: &T, serializer: S) -> std::result::Result<S::Ok, S::Error>
+pub fn serialize<T, S>(value: &T, serializer: S) -> Result<S::Ok, S::Error>
 where
     T: Serialize,
     S: Serializer,

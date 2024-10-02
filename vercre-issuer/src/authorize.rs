@@ -288,20 +288,26 @@ impl Context {
     // Verify Credentials requested in `scope` are supported.
     // N.B. has side effect of saving valid scope items into context for later use.
     fn verify_scope(&mut self, scope: &str) -> Result<()> {
-        'verify_scope: for item in scope.split_whitespace() {
+        if let Some(item) = scope.split_whitespace().next() {
+            let mut scope_map = HashMap::new();
+
+            // find supported configurations that has the requested scope
             for (config_id, cred_cfg) in &self.issuer.credential_configurations_supported {
                 // `authorization_details` credential request takes precedence `scope` request
                 if self.auth_dets.contains_key(config_id) {
                     continue;
                 }
+
+                // save scope item + credential_configuration_id
                 if cred_cfg.scope == Some(item.to_string()) {
-                    // save scope item by `credential_configuration_id` for later use
-                    self.scope_items.insert(config_id.to_string(), item.to_string());
-                    continue 'verify_scope;
+                    scope_map.insert(config_id.to_string(), item.to_string());
                 }
             }
 
-            return Err(Error::InvalidScope(format!("scope item {item} is unsupported")));
+            if scope_map.is_empty() {
+                return Err(Error::InvalidScope(format!("scope item {item} is unsupported")));
+            }
+            self.scope_items.extend(scope_map);
         }
 
         Ok(())
@@ -388,13 +394,26 @@ mod tests {
     use base64ct::{Base64UrlUnpadded, Encoding};
     use insta::assert_yaml_snapshot as assert_snapshot;
     use rstest::rstest;
+    use serde_json::{json, Value};
     use sha2::{Digest, Sha256};
-    use vercre_macros::authorization_request;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
 
     use super::*;
-    extern crate self as vercre_issuer;
+    // extern crate self as vercre_issuer;
+
+    #[tokio::test]
+    async fn authorize_de() {
+        let value = claims();
+
+        let _ = Provider::new();
+
+        // execute request
+        let request: AuthorizationRequest =
+            serde_json::from_value(value).expect("should deserialize");
+        let ser = serde_json::to_string_pretty(&request).expect("should serialize to string");
+        println!("{}", ser);
+    }
 
     #[rstest]
     #[case::configuration_id("configuration_id", configuration_id)]
@@ -403,16 +422,17 @@ mod tests {
     #[case::claims("claims", claims)]
     #[should_panic(expected = "ok")]
     #[case::claims_err("claims_err", claims_err)]
-    async fn authorize_tests(#[case] name: &str, #[case] request: fn() -> AuthorizationRequest) {
+    async fn authorize_tests(#[case] name: &str, #[case] value: fn() -> Value) {
         vercre_test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();
 
         // execute request
-        let response = authorize(provider.clone(), request()).await.expect("ok");
+        let request = serde_json::from_value(value()).expect("should deserialize");
+        let response = authorize(provider.clone(), request).await.expect("ok");
         assert_snapshot!("authorize:configuration_id:response", &response, {
-            ".code" => "[code]",
+            ".code" =>"[code]",
         });
 
         // check saved state
@@ -425,8 +445,8 @@ mod tests {
         });
     }
 
-    fn configuration_id() -> AuthorizationRequest {
-        authorization_request!({
+    fn configuration_id() -> Value {
+        json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
@@ -443,8 +463,8 @@ mod tests {
         })
     }
 
-    fn format_w3c() -> AuthorizationRequest {
-        authorization_request!({
+    fn format_w3c() -> Value {
+        json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
@@ -467,8 +487,8 @@ mod tests {
         })
     }
 
-    fn scope() -> AuthorizationRequest {
-        authorization_request!({
+    fn scope() -> Value {
+        json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
@@ -482,8 +502,8 @@ mod tests {
         })
     }
 
-    fn claims() -> AuthorizationRequest {
-        authorization_request!({
+    fn claims() -> Value {
+        json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
@@ -511,8 +531,8 @@ mod tests {
         })
     }
 
-    fn claims_err() -> AuthorizationRequest {
-        authorization_request!({
+    fn claims_err() -> Value {
+        json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
