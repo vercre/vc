@@ -412,14 +412,13 @@ mod tests {
 
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use vercre_macros::credential_request;
+    use serde_json::json;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::{holder, snapshot};
     use vercre_w3c_vc::proof::{self, Verify};
 
     use super::*;
     use crate::state::{Authorized, Token};
-    extern crate self as vercre_issuer;
 
     #[tokio::test]
     async fn identifier() {
@@ -461,7 +460,7 @@ mod tests {
         };
         let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
 
-        let request = credential_request!({
+        let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "access_token": access_token,
             "credential_identifier": "PHLEmployeeID",
@@ -470,6 +469,8 @@ mod tests {
                 "jwt": jwt
             }
         });
+        let request = serde_json::from_value(value).expect("request is valid");
+
         let response = credential(provider.clone(), request).await.expect("response is valid");
         assert_snapshot!("credential:identifier:response", &response, {
             ".credential" => "[credential]",
@@ -544,7 +545,7 @@ mod tests {
         };
         let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
 
-        let request = credential_request!({
+        let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "access_token": access_token,
             "format": "jwt_vc_json",
@@ -559,6 +560,7 @@ mod tests {
                 "jwt": jwt
             }
         });
+        let request = serde_json::from_value(value).expect("request is valid");
         let response = credential(provider.clone(), request).await.expect("response is valid");
 
         assert_snapshot!("credential:format:response", &response, {

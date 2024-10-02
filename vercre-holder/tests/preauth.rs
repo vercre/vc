@@ -28,7 +28,7 @@ async fn preauth() {
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": NORMAL_USER,
-        "pre_authorize": true,
+        "pre-authorize": true,
         "tx_code_required": true,
         "send_type": SendType::ByVal,
     });

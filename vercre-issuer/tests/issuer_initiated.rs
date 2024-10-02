@@ -6,9 +6,9 @@ mod utils;
 mod wallet;
 
 use rstest::rstest;
+use serde_json::json;
 use utils::{provider, Issuance};
 use vercre_issuer::SendType;
-use vercre_macros::create_offer_request;
 use vercre_openid::issuer::{FormatIdentifier, ProfileW3c};
 use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER};
 use vercre_test_utils::snapshot;
@@ -26,14 +26,15 @@ async fn issuance(provider: Provider, #[case] issue: Issuance) {
         Issuance::Deferred => PENDING_USER,
     };
 
-    let request = create_offer_request! ({
+    let value = json! ({
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": subject_id,
-        "pre_authorize": true,
+        "pre-authorize": true,
         "tx_code_required": true,
         "send_type": SendType::ByVal,
     });
+    let request = serde_json::from_value(value).expect("request is valid");
     let response =
         vercre_issuer::create_offer(provider.clone(), request).await.expect("should create offer");
 
@@ -53,14 +54,15 @@ async fn format(provider: Provider, #[case] credential_format: FormatIdentifier)
     vercre_test_utils::init_tracer();
     snapshot!("issuer:{credential_format}");
 
-    let request = create_offer_request!({
+    let value = json!({
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": NORMAL_USER,
-        "pre_authorize": true,
+        "pre-authorize": true,
         "tx_code_required": true,
         "send_type": SendType::ByVal,
     });
+    let request = serde_json::from_value(value).expect("request is valid");
     let response =
         vercre_issuer::create_offer(provider.clone(), request).await.expect("should create offer");
 
@@ -79,14 +81,15 @@ async fn authorization(provider: Provider) {
     vercre_test_utils::init_tracer();
     snapshot!("issuer:authorization");
 
-    let request = create_offer_request!({
+    let value = json!({
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": NORMAL_USER,
-        "pre_authorize": false,
+        "pre-authorize": false,
         "tx_code_required": true,
         "send_type": SendType::ByVal,
     });
+    let request = serde_json::from_value(value).expect("request is valid");
     let response =
         vercre_issuer::create_offer(provider.clone(), request).await.expect("should create offer");
 
@@ -107,14 +110,15 @@ async fn offer_type(provider: Provider, #[case] send_type: SendType) {
     vercre_test_utils::init_tracer();
     snapshot!("issuer:authorization:{send_type:?}");
 
-    let request = create_offer_request!({
+    let value = json!({
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": NORMAL_USER,
-        "pre_authorize": true,
+        "pre-authorize": true,
         "tx_code_required": true,
         "send_type": send_type,
     });
+    let request = serde_json::from_value(value).expect("request is valid");
     let response =
         vercre_issuer::create_offer(provider.clone(), request).await.expect("should create offer");
 

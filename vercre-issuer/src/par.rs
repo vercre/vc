@@ -89,14 +89,13 @@ async fn process(
 mod tests {
     use base64ct::{Base64UrlUnpadded, Encoding};
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use serde_json::json;
     use sha2::{Digest, Sha256};
-    use vercre_macros::authorization_request;
     use vercre_openid::issuer::AuthorizationRequest;
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
 
     use super::*;
-    extern crate self as vercre_issuer;
 
     #[tokio::test]
     async fn request() {
@@ -105,7 +104,7 @@ mod tests {
 
         let provider = Provider::new();
 
-        let auth_req = authorization_request!({
+        let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
@@ -120,8 +119,9 @@ mod tests {
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
         });
+        let request = serde_json::from_value(value).expect("request is valid");
 
-        let AuthorizationRequest::Object(req_obj) = auth_req else {
+        let AuthorizationRequest::Object(req_obj) = request else {
             panic!("Invalid Authorization Request");
         };
 

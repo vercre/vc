@@ -78,16 +78,15 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use serde_json::json;
     use vercre_datasec::jose::jws::{self, Type};
-    use vercre_macros::credential_request;
-    use vercre_openid::issuer::{CredentialResponseType, ProofClaims};
+    use vercre_openid::issuer::{CredentialRequest, CredentialResponseType, ProofClaims};
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::{holder, snapshot};
     use vercre_w3c_vc::proof::{self, Payload, Verify};
 
     use super::*;
     use crate::state::{Authorized, Deferrance, Expire, Token};
-    extern crate self as vercre_issuer;
 
     #[tokio::test]
     async fn deferred_ok() {
@@ -108,7 +107,7 @@ mod tests {
         };
         let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
 
-        let cred_req = credential_request!({
+        let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "access_token": access_token,
             "credential_identifier": "PHLEmployeeID",
@@ -117,6 +116,7 @@ mod tests {
                 "jwt": jwt
             }
         });
+        let request: CredentialRequest = serde_json::from_value(value).expect("request is valid");
 
         // set up state
         let mut state = State {
@@ -144,7 +144,7 @@ mod tests {
         // state entry 2: deferred state keyed by transaction_id
         state.stage = Stage::Deferred(Deferrance {
             transaction_id: transaction_id.into(),
-            credential_request: cred_req.clone(),
+            credential_request: request.clone(),
         });
         StateStore::put(&provider, transaction_id, &state, state.expires_at)
             .await

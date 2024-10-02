@@ -4,6 +4,7 @@
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
 use insta::assert_yaml_snapshot as assert_snapshot;
+use serde_json::json;
 use sha2::{Digest, Sha256};
 use vercre_datasec::jose::jws::{self, Type};
 use vercre_issuer::{
@@ -11,7 +12,6 @@ use vercre_issuer::{
     DeferredCredentialRequest, DeferredCredentialResponse, OfferType, ProofClaims, TokenGrantType,
     TokenRequest, TokenResponse,
 };
-use vercre_macros::{authorization_request, credential_request};
 use vercre_openid::issuer::FormatIdentifier;
 use vercre_openid::{Error, Result};
 use vercre_test_utils::holder;
@@ -87,7 +87,7 @@ impl Wallet {
     // Simulate Issuer request to '/create_offer' endpoint to get credential offer
     // to use to make credential offer to Wallet.
     pub async fn authorize(&self, state: Option<String>) -> Result<AuthorizationResponse> {
-        let request = authorization_request!({
+        let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "response_type": "code",
             "client_id": CLIENT_ID,
@@ -113,6 +113,7 @@ impl Wallet {
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
         });
+        let request = serde_json::from_value(value).expect("request is valid");
         vercre_issuer::authorize(self.provider.clone(), request).await
     }
 
@@ -147,7 +148,7 @@ impl Wallet {
         let credential_identifier = &auth_dets[0].credential_identifiers[0];
         let access_token = &token_resp.access_token;
 
-        let request = credential_request!({
+        let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "access_token": access_token,
             "credential_identifier": credential_identifier,
@@ -156,6 +157,7 @@ impl Wallet {
                 "jwt": jwt
             }
         });
+        let request = serde_json::from_value(value).expect("request is valid");
         let mut response = vercre_issuer::credential(self.provider.clone(), request).await?;
 
         // fetch credential if response is deferred

@@ -26,7 +26,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     }
 
     // use default values if not set
-    let pre_authorize = input.get("pre_authorize").unwrap_or(Value::Bool(false));
+    let pre_authorize = input.get("pre-authorize").unwrap_or(Value::Bool(false));
     let tx_code_required = input.get("tx_code_required").unwrap_or(Value::Bool(false));
     let send_type =
         input.get("send_type").map_or_else(|| quote! {SendType::ByVal}, |v| quote! {#v.into()});

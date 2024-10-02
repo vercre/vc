@@ -277,12 +277,11 @@ fn credential_offer(request: &CreateOfferRequest) -> CredentialOffer {
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use vercre_macros::create_offer_request;
+    use serde_json::json;
     use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
 
     use super::*;
-    extern crate self as vercre_issuer;
 
     #[tokio::test]
     async fn pre_authorized() {
@@ -292,14 +291,15 @@ mod tests {
         let provider = Provider::new();
 
         // create offer to 'send' to the app
-        let request = create_offer_request!({
+        let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "credential_configuration_ids": ["EmployeeID_JWT"],
             "subject_id": NORMAL_USER,
-            "pre_authorize": true,
+            "pre-authorize": true,
             "tx_code_required": true,
             "send_type": SendType::ByVal,
         });
+        let request = serde_json::from_value(value).expect("request is valid");
 
         let response = create_offer(provider.clone(), request).await.expect("response is ok");
 

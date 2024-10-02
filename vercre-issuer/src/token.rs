@@ -309,7 +309,7 @@ fn authorized_credentials(items: &[AuthorizedItem]) -> HashMap<String, Authorize
 mod tests {
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use vercre_macros::token_request;
+    use serde_json::json;
     use vercre_openid::issuer::{
         AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization,
         CredentialDefinition, FormatIdentifier, ProfileW3c,
@@ -319,7 +319,6 @@ mod tests {
 
     use super::*;
     use crate::state::{Authorization, PreAuthorization};
-    extern crate self as vercre_issuer;
 
     #[tokio::test]
     async fn pre_authorized() {
@@ -356,13 +355,15 @@ mod tests {
             .expect("state exists");
 
         // create TokenRequest to 'send' to the app
-        let request = token_request!({
+        let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "client_id": CLIENT_ID,
             "grant_type": "urn:ietf:params:oauth:grant-type:pre-authorized_code",
             "pre-authorized_code": pre_auth_code,
             "tx_code": "1234"
         });
+        let request = serde_json::from_value(value).expect("request is valid");
+
         let token_resp = token(provider.clone(), request).await.expect("response is valid");
 
         assert_snapshot!("token:pre_authorized:response", &token_resp, {
@@ -423,13 +424,14 @@ mod tests {
         StateStore::put(&provider, code, &state, state.expires_at).await.expect("state exists");
 
         // create TokenRequest to 'send' to the app
-        let request = token_request!({
+        let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "client_id": CLIENT_ID,
             "grant_type": "authorization_code",
             "code": code,
             "code_verifier": verifier,
         });
+        let request = serde_json::from_value(value).expect("request is valid");
         let token_resp = token(provider.clone(), request).await.expect("response is valid");
 
         assert_snapshot!("token:authorized:response", &token_resp, {
@@ -498,7 +500,7 @@ mod tests {
         StateStore::put(&provider, code, &state, state.expires_at).await.expect("state exists");
 
         // create TokenRequest to 'send' to the app
-        let request = token_request!({
+        let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
             "client_id": CLIENT_ID,
             "grant_type": "authorization_code",
@@ -516,6 +518,7 @@ mod tests {
                 }
             }],
         });
+        let request = serde_json::from_value(value).expect("request is valid");
         let response = token(provider.clone(), request).await.expect("response is valid");
 
         assert_snapshot!("token:authorization_details:response", &response, {
