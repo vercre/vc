@@ -11,10 +11,9 @@ pub use vercre_datasec::jose::jwk::PublicKeyJwk;
 pub use vercre_datasec::{Algorithm, Signer};
 pub use vercre_did::{DidResolver, Document};
 pub use vercre_dif_exch::Constraints;
-use vercre_issuer::{OAuthServerRequest, OAuthServerResponse};
 pub use vercre_issuer::{
     AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse,
-    MetadataRequest, MetadataResponse, TokenRequest, TokenResponse, TxCode,
+    MetadataRequest, OAuthServerRequest, OAuthServerResponse, MetadataResponse, TokenRequest, TokenResponse, TxCode,
 };
 pub use vercre_openid::provider::{Result, StateStore};
 use vercre_openid::verifier::{RequestObjectResponse, ResponseRequest, ResponseResponse};

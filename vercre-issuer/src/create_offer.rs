@@ -96,11 +96,11 @@ async fn verify(provider: &impl Provider, request: &CreateOfferRequest) -> Resul
 
     let issuer_meta = Metadata::issuer(provider, &request.credential_issuer)
         .await
-        .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("issue getting issuer metadata: {e}")))?;
 
     // credential_issuer required
     if request.credential_issuer.is_empty() {
-        return Err(Error::InvalidRequest("no credential_issuer specified".into()));
+        return Err(Error::InvalidRequest("no `credential_issuer` specified".into()));
     };
 
     // credentials required
@@ -119,9 +119,7 @@ async fn verify(provider: &impl Provider, request: &CreateOfferRequest) -> Resul
 
     // subject_id is required
     if request.pre_authorize && request.subject_id.is_none() {
-        return Err(Error::InvalidRequest(
-            "`subject_id` must be specified for pre-authorization".into(),
-        ));
+        return Err(Error::InvalidRequest("`subject_id` is required for pre-authorization".into()));
     };
 
     Ok(())
