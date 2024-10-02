@@ -287,20 +287,26 @@ impl Context {
     // Verify Credentials requested in `scope` are supported.
     // N.B. has side effect of saving valid scope items into context for later use.
     fn verify_scope(&mut self, scope: &str) -> Result<()> {
-        'verify_scope: for item in scope.split_whitespace() {
+        if let Some(item) = scope.split_whitespace().next() {
+            let mut scope_map = HashMap::new();
+
+            // find supported configurations that has the requested scope
             for (config_id, cred_cfg) in &self.issuer.credential_configurations_supported {
                 // `authorization_details` credential request takes precedence `scope` request
                 if self.auth_dets.contains_key(config_id) {
                     continue;
                 }
+
+                // save scope item + credential_configuration_id
                 if cred_cfg.scope == Some(item.to_string()) {
-                    // save scope item by `credential_configuration_id` for later use
-                    self.scope_items.insert(config_id.to_string(), item.to_string());
-                    continue 'verify_scope;
+                    scope_map.insert(config_id.to_string(), item.to_string());
                 }
             }
 
-            return Err(Error::InvalidScope(format!("scope item {item} is unsupported")));
+            if scope_map.is_empty() {
+                return Err(Error::InvalidScope(format!("scope item {item} is unsupported")));
+            }
+            self.scope_items.extend(scope_map);
         }
 
         Ok(())
@@ -395,12 +401,15 @@ mod tests {
     use super::*;
     // extern crate self as vercre_issuer;
 
-    #[rstest]
-    #[case::claims(claims)]
-    async fn authorize_de(#[case] value: fn() -> Value) {
+    #[tokio::test]
+    async fn authorize_de() {
+        let value = claims();
+
+        let _ = Provider::new();
+
         // execute request
         let request: AuthorizationRequest =
-            serde_json::from_value(value()).expect("should deserialize");
+            serde_json::from_value(value).expect("should deserialize");
         let ser = serde_json::to_string_pretty(&request).expect("should serialize to string");
         println!("{}", ser);
     }
@@ -422,7 +431,7 @@ mod tests {
         let request = serde_json::from_value(value()).expect("should deserialize");
         let response = authorize(provider.clone(), request).await.expect("ok");
         assert_snapshot!("authorize:configuration_id:response", &response, {
-            ".code" => "[code]",
+            ".code" =>"[code]",
         });
 
         // check saved state

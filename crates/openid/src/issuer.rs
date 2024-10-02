@@ -450,7 +450,7 @@ impl std::fmt::Display for AuthorizationRequest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
             Self::Object(req) => {
-                // stringify
+                // stringify non-string fields
                 let response_type = serde_json::to_value(&req.response_type)
                     .map_or_else(|_| None, |v| Some(String::from(v.as_str().unwrap())));
                 let code_challenge_method = serde_json::to_value(&req.code_challenge_method)
@@ -474,7 +474,7 @@ impl std::fmt::Display for AuthorizationRequest {
                     ("issuer_state", req.issuer_state.as_ref()),
                 ];
 
-                serde_urlencoded::to_string(&tuples).unwrap()
+                serde_urlencoded::to_string(tuples).unwrap()
             }
             Self::Uri(req) => serde_urlencoded::to_string(req).unwrap(),
         };
@@ -489,95 +489,65 @@ impl FromStr for AuthorizationRequest {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.contains('=') && s.contains('&') {
             let mut decoded: Value = serde_urlencoded::from_str(s)?;
-            let map = decoded.as_object_mut().ok_or(anyhow!("issue with decoded querystring"))?;
+            let map =
+                decoded.as_object_mut().ok_or_else(|| anyhow!("issue with decoded querystring"))?;
             if let Some(auth_dets) = map.get_mut("authorization_details") {
                 *auth_dets = serde_json::from_str(auth_dets.as_str().unwrap_or_default())?;
             }
-
             Ok(Self::Object(serde_json::from_value(decoded)?))
         } else {
-            let req = serde_json::from_str(s)?;
-            Ok(Self::Object(req))
+            Ok(Self::Object(serde_json::from_str(s)?))
         }
     }
 }
 
-impl AuthorizationRequest {
-    /// Generate a query string for the Authorization Request.
-    ///
-    /// # Errors
-    ///
-    /// Returns an `Error::ServerError` error if error if the Authorization
-    /// Request cannot be serialized.
-    pub fn to_querystring(&self) -> anyhow::Result<String> {
+/*
+use serde::ser::{self, SerializeStruct, Serializer};
+
+impl Serialize for AuthorizationRequest {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
         match self {
             Self::Object(req) => {
-                // create map of top-level fields, serializing each to string
-                let mut ser = serde_json::to_value(req)
-                    .map_err(|e| anyhow!("Failed to serialize Authorization Request: {e}"))?;
+                let mut s = serializer.serialize_struct("AuthorizationRequest", 3)?;
 
-                let map = ser.as_object_mut().unwrap();
-                let auth_dets = map.get_mut("authorization_details").unwrap();
-                *auth_dets = Value::String(auth_dets.to_string());
+                s.serialize_field("credential_issuer", &req.credential_issuer)?;
+                s.serialize_field("response_type", &req.response_type)?;
+                s.serialize_field("client_id", &req.client_id)?;
+                s.serialize_field("redirect_uri", &req.redirect_uri)?;
+                s.serialize_field("state", &req.state)?;
+                s.serialize_field("code_challenge", &req.code_challenge)?;
+                s.serialize_field("code_challenge_method", &req.code_challenge_method)?;
 
-                serde_urlencoded::to_string(&map)
-                    .map_err(|e| anyhow!("issue creating query string: {e}"))
+                // HACK: check serializer typename to determine how  to serialize
+                // authorization_details
+                // if type_name(&s).starts_with("&serde_urlencoded") {
+                //     let string = serde_json::to_string(&req.authorization_details)
+                //         .map_err(|e| ser::Error::custom(format!("issue
+                // 'stringifying':{e}")))?;     s.serialize_field("
+                // authorization_details", &string)?; } else {
+                s.serialize_field("authorization_details", &req.authorization_details)?;
+                // }
+
+                s.serialize_field("scope", &req.scope)?;
+                s.serialize_field("resource", &req.resource)?;
+                s.serialize_field("subject_id", &req.subject_id)?;
+                s.serialize_field("wallet_issuer", &req.wallet_issuer)?;
+                s.serialize_field("user_hint", &req.user_hint)?;
+                s.serialize_field("issuer_state", &req.issuer_state)?;
+
+                s.end()
             }
-            Self::Uri(req) => serde_urlencoded::to_string(req)
-                .map_err(|e| anyhow!("issue creating query string: {e}")),
+            Self::Uri(req) => req.serialize(serializer),
         }
     }
 }
-
-// use serde::ser::{self, SerializeStruct, Serializer};
-
-// impl Serialize for AuthorizationRequest {
-//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: Serializer,
-//     {
-//         match self {
-//             Self::Object(req) => {
-//                 let mut s =
-// serializer.serialize_struct("AuthorizationRequest", 3)?;
-// println!("{}", type_name(&s));
-
-//                 s.serialize_field("credential_issuer",
-// &req.credential_issuer)?;                 s.serialize_field("response_type",
-// &req.response_type)?;                 s.serialize_field("client_id",
-// &req.client_id)?;                 s.serialize_field("redirect_uri",
-// &req.redirect_uri)?;                 s.serialize_field("state", &req.state)?;
-//                 s.serialize_field("code_challenge", &req.code_challenge)?;
-//                 s.serialize_field("code_challenge_method",
-// &req.code_challenge_method)?;
-
-//                 // HACK: check serializer typename to determine how  to
-// serialize                 // authorization_details
-//                 if type_name(&s).starts_with("&serde_urlencoded") {
-//                     let string =
-// serde_json::to_string(&req.authorization_details)
-// .map_err(|e| ser::Error::custom(format!("issue 'stringifying':{e}")))?;
-//                     s.serialize_field("authorization_details", &string)?;
-//                 } else {
-//                     s.serialize_field("authorization_details",
-// &req.authorization_details)?;                 }
-
-//                 s.serialize_field("scope", &req.scope)?;
-//                 s.serialize_field("resource", &req.resource)?;
-//                 s.serialize_field("subject_id", &req.subject_id)?;
-//                 s.serialize_field("wallet_issuer", &req.wallet_issuer)?;
-//                 s.serialize_field("user_hint", &req.user_hint)?;
-//                 s.serialize_field("issuer_state", &req.issuer_state)?;
-
-//                 s.end()
-//             }
-//             Self::Uri(req) => req.serialize(serializer),
-//         }
-//     }
-// }
-// fn type_name<T>(_: T) -> &'static str {
-//     std::any::type_name::<T>()
-// }
+fn type_name<T>(_: T) -> &'static str {
+    std::any::type_name::<T>()
+}
+*/
 
 /// A URI referencing the authorization request previously stored at the PAR
 /// endpoint.
@@ -1922,8 +1892,7 @@ pub struct CredentialDefinition {
     ///
     /// N.B. This property is used by the Wallet to specify which claims it is
     /// requesting to be issued out of all the claims the Credential Issuer is
-    /// capable of issuing for this particular Credential (data
-    /// minimization).
+    /// capable of issuing for this particular Credential (data minimization).
     #[serde(rename = "credentialSubject")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_subject: Option<HashMap<String, Claim>>,
@@ -1970,12 +1939,12 @@ impl<'de> de::Deserialize<'de> for Claim {
                 let mut entry = ClaimDefinition::default();
                 let mut set = HashMap::<String, Claim>::new();
 
-                while let Some(key) = map.next_key::<&str>()? {
-                    match key {
+                while let Some(key) = map.next_key::<String>()? {
+                    match key.as_str() {
                         "mandatory" => entry.mandatory = Some(map.next_value()?),
                         "value_type" => entry.value_type = Some(map.next_value()?),
                         "display" => entry.display = Some(map.next_value()?),
-                        _ => _ = set.insert(key.to_string(), map.next_value::<Claim>()?),
+                        _ => _ = set.insert(key, map.next_value::<Claim>()?),
                     }
                 }
 
@@ -2196,10 +2165,14 @@ mod tests {
             "[].credential_definition.credentialSubject" => insta::sorted_redaction(),
         });
 
+        /*
         let serialized = serde_urlencoded::to_string(&request).expect("should serialize to string");
         let deserialized = serde_urlencoded::from_str::<AuthorizationRequest>(&serialized)
             .expect("should deserialize from string");
+        */
 
+        let serialized = request.to_string();
+        let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
         assert_eq!(request, deserialized);
     }
 
@@ -2235,16 +2208,18 @@ mod tests {
             ..RequestObject::default()
         });
 
-        let serialized = request.to_string(); //serde_urlencoded::to_string(&request).expect("should serialize to string");
+        let serialized = request.to_string();
         assert_snapshot!("authorization_format", &serialized, {
             ".code" => "[code]",
         });
 
         let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
-
-        //serde_urlencoded::from_str::<AuthorizationRequest>(&serialized).expect("
-        // should deserialize from string");
         assert_eq!(request, deserialized);
+
+        /*
+        let serialized = serde_urlencoded::to_string(&request).expect("should serialize to string");
+        let deserialized =serde_urlencoded::from_str::<AuthorizationRequest>(&serialized).expect("should deserialize from string");
+        */
     }
 
     #[test]

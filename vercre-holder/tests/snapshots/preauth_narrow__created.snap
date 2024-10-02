@@ -1,6 +1,6 @@
 ---
 source: vercre-holder/tests/preauth_narrow.rs
-assertion_line: 57
+assertion_line: 58
 expression: issuance
 ---
 issuance_id: "[issuance_id]"
@@ -64,22 +64,22 @@ offered:
           country:
             value_type: string
             display:
-              - name: Address
+              - name: Country
                 locale: en-NZ
           locality:
             value_type: string
             display:
-              - name: Address
+              - name: Locality
                 locale: en-NZ
           region:
             value_type: string
             display:
-              - name: Address
+              - name: Region
                 locale: en-NZ
           street_address:
             value_type: string
             display:
-              - name: Address
+              - name: Street Address
                 locale: en-NZ
         email:
           mandatory: true
