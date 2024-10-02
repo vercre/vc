@@ -6007,6 +6007,9 @@ version = "0.1.0-alpha.6"
 dependencies = [
  "base64ct",
  "fastrand",
+ "form_urlencoded",
+ "itoa 1.0.11",
+ "ryu",
  "serde",
  "serde_json",
  "sha2",
