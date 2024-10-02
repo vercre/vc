@@ -28,8 +28,9 @@ use tracing_subscriber::FmtSubscriber;
 use vercre_issuer::{
     AuthorizationRequest, CreateOfferRequest, CreateOfferResponse, CredentialOfferRequest,
     CredentialOfferResponse, CredentialRequest, CredentialResponse, DeferredCredentialRequest,
-    DeferredCredentialResponse, MetadataRequest, MetadataResponse, PushedAuthorizationRequest,
-    PushedAuthorizationResponse, TokenRequest, TokenResponse,
+    DeferredCredentialResponse, MetadataRequest, MetadataResponse, OAuthServerRequest,
+    OAuthServerResponse, PushedAuthorizationRequest, PushedAuthorizationResponse, TokenRequest,
+    TokenResponse,
 };
 
 use crate::provider::Provider;
@@ -51,6 +52,7 @@ async fn main() {
         .route("/create_offer", post(create_offer))
         .route("/credential_offer/:offer_id", get(credential_offer))
         .route("/.well-known/openid-credential-issuer", get(metadata))
+        .route("/.well-known/oauth-authorization-server", get(oauth_server))
         .route("/auth", get(authorize))
         .route("/par", get(par))
         .route("/login", post(handle_login))
@@ -107,6 +109,19 @@ async fn metadata(
             .map(ToString::to_string),
     };
     vercre_issuer::metadata(provider.clone(), req).await.into()
+}
+
+// OAuth Server metadata endpoint
+#[axum::debug_handler]
+async fn oauth_server(
+    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+) -> AxResult<OAuthServerResponse> {
+    let req = OAuthServerRequest {
+        credential_issuer: format!("http://{host}"),
+        // Issuer should be derived from path component if necessary
+        issuer: None,
+    };
+    vercre_issuer::oauth_server(provider.clone(), req).await.into()
 }
 
 /// Authorize endpoint

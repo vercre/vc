@@ -49,11 +49,7 @@ async fn process(provider: &impl Provider, request: MetadataRequest) -> Result<M
     let credential_issuer = Metadata::issuer(provider, &request.credential_issuer)
         .await
         .map_err(|e| Error::ServerError(format!("issue getting metadata: {e}")))?;
-    // TODO: use authorization server identifiers and locations if present
-    let authorization_server = Metadata::server(provider, &request.credential_issuer)
-        .await
-        .map_err(|e| Error::ServerError(format!("issue getting authorization server metadata: {e}")))?;
-    Ok(MetadataResponse { credential_issuer, authorization_server })
+    Ok(MetadataResponse { credential_issuer })
 }
 
 #[cfg(test)]

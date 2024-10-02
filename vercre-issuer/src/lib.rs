@@ -97,6 +97,7 @@ mod credential_offer;
 mod deferred;
 mod metadata;
 mod notification;
+mod oauth_server;
 mod par;
 mod register;
 mod state;
@@ -120,6 +121,7 @@ pub use credential::credential;
 pub use credential_offer::credential_offer;
 pub use deferred::deferred;
 pub use metadata::metadata;
+pub use oauth_server::oauth_server;
 pub use par::par;
 pub use register::register;
 pub use token::token;
@@ -131,10 +133,10 @@ pub use vercre_openid::issuer::{
     CredentialIssuance, CredentialOffer, CredentialOfferRequest, CredentialOfferResponse,
     CredentialRequest, CredentialResponse, CredentialResponseType, DeferredCredentialRequest,
     DeferredCredentialResponse, FormatIdentifier, Grants, MetadataRequest, MetadataResponse,
-    OfferType, PreAuthorizedCodeGrant, ProfileClaims, ProfileIsoMdl, ProfileSdJwt, ProfileW3c,
-    Proof, ProofClaims, PushedAuthorizationRequest, PushedAuthorizationResponse,
-    RegistrationRequest, RegistrationResponse, RequestObject, SendType, SingleProof,
-    TokenGrantType, TokenRequest, TokenResponse, TxCode,
+    OAuthServerRequest, OAuthServerResponse, OfferType, PreAuthorizedCodeGrant, ProfileClaims,
+    ProfileIsoMdl, ProfileSdJwt, ProfileW3c, Proof, ProofClaims, PushedAuthorizationRequest,
+    PushedAuthorizationResponse, RegistrationRequest, RegistrationResponse, RequestObject,
+    SendType, SingleProof, TokenGrantType, TokenRequest, TokenResponse, TxCode,
 };
 pub use vercre_openid::Result;
 pub use vercre_w3c_vc::model::{

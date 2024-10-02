@@ -22,8 +22,10 @@ pub use pin::{pin, PinRequest};
 use serde::{Deserialize, Serialize};
 pub use token::{token, AuthorizedCredentials};
 use uuid::Uuid;
-use vercre_issuer::MetadataRequest;
-use vercre_openid::issuer::{AuthorizationDetail, CredentialOffer, Issuer, Server, TokenResponse};
+use vercre_issuer::{
+    AuthorizationDetail, CredentialOffer, MetadataRequest, OAuthServerRequest, TokenResponse,
+};
+use vercre_openid::issuer::{Issuer, Server};
 
 use crate::provider::{HolderProvider, Issuer as IssuerProvider};
 
@@ -102,7 +104,18 @@ impl Issuance {
         };
         let md_response = IssuerProvider::metadata(provider, md_request).await?;
         self.issuer = md_response.credential_issuer;
-        self.authorization_server = md_response.authorization_server;
+
+        // Set the authorization server metadata.
+        // TODO: The spec allows the option for the issuer to provide a list of
+        // authorization server identifiers, with the default being the
+        // issuer's own ID.
+        let auth_md_request = OAuthServerRequest {
+            credential_issuer: credential_issuer.into(),
+            issuer: None,
+        };
+        let auth_md_response =
+            IssuerProvider::oauth_server(provider, auth_md_request).await?;
+        self.authorization_server = auth_md_response.authorization_server;
         Ok(())
     }
 }

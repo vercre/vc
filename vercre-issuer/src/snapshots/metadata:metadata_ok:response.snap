@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/metadata.rs
-assertion_line: 79
+assertion_line: 75
 expression: response
 ---
 credential_issuer: "http://vercre.io"
@@ -127,19 +127,3 @@ credential_configurations_supported:
           uri: "https://vercre.github.io/assets/vercre-background.png"
           alt_text: Vercre Background
         text_color: "#ffffff"
-authorization_server:
-  issuer: "http://vercre.io"
-  authorization_endpoint: /auth
-  token_endpoint: /token
-  scopes_supported:
-    - openid
-  response_types_supported:
-    - code
-  response_modes_supported:
-    - query
-  grant_types_supported:
-    - authorization_code
-    - "urn:ietf:params:oauth:grant-type:pre-authorized_code"
-  code_challenge_methods_supported:
-    - S256
-  pre-authorized_grant_anonymous_access_supported: true

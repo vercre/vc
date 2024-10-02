@@ -11,8 +11,9 @@ pub use vercre_datasec::jose::jwk::PublicKeyJwk;
 pub use vercre_datasec::{Algorithm, Signer};
 pub use vercre_did::{DidResolver, Document};
 pub use vercre_dif_exch::Constraints;
-pub use vercre_openid::issuer::{
-    AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse, Metadata,
+use vercre_issuer::{OAuthServerRequest, OAuthServerResponse};
+pub use vercre_issuer::{
+    AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse,
     MetadataRequest, MetadataResponse, TokenRequest, TokenResponse, TxCode,
 };
 pub use vercre_openid::provider::{Result, StateStore};
@@ -40,6 +41,12 @@ pub trait Issuer {
     fn metadata(
         &self, req: MetadataRequest,
     ) -> impl Future<Output = anyhow::Result<MetadataResponse>> + Send;
+
+    /// Get OAuth authorization configuration. If an error is returned, the
+    /// wallet will cancel the issuance flow.
+    fn oauth_server(
+        &self, req: OAuthServerRequest,
+    ) -> impl Future<Output = anyhow::Result<OAuthServerResponse>> + Send;
 
     /// Get an authorization code. If an error is returned, the wallet will
     /// cancel the issuance flow.

@@ -4,7 +4,8 @@ use tauri_plugin_http::reqwest;
 use vercre_holder::provider::Issuer;
 use vercre_holder::{
     AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse, Logo,
-    MetadataRequest, MetadataResponse, TokenRequest, TokenResponse,
+    MetadataRequest, MetadataResponse, OAuthServerRequest, OAuthServerResponse, TokenRequest,
+    TokenResponse,
 };
 
 use super::Provider;
@@ -19,6 +20,21 @@ impl Issuer for Provider {
             Ok(md) => md,
             Err(e) => {
                 log::error!("Error getting metadata: {}", e);
+                return Err(e.into());
+            }
+        };
+        Ok(md)
+    }
+
+    /// Get authorization server metadata.
+    async fn oauth_server(&self, req: OAuthServerRequest) -> anyhow::Result<OAuthServerResponse> {
+        let client = reqwest::Client::new();
+        let url = format!("{}/.well-known/oauth-authorization-server", req.credential_issuer);
+        let result = client.get(&url).header(ACCEPT, "application/json").send().await?;
+        let md = match result.json::<OAuthServerResponse>().await {
+            Ok(md) => md,
+            Err(e) => {
+                log::error!("Error getting OAuth server metadata: {}", e);
                 return Err(e.into());
             }
         };

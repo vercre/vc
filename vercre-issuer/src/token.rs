@@ -73,7 +73,8 @@ impl Context {
             return Err(Error::InvalidRequest("state expired".into()));
         }
 
-        let Ok(server) = Metadata::server(provider, &request.credential_issuer).await else {
+        // TODO: support optional authorization issuers
+        let Ok(server) = Metadata::server(provider, &request.credential_issuer, None).await else {
             return Err(Error::InvalidRequest("unknown authorization server".into()));
         };
 
