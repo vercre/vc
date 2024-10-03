@@ -132,10 +132,11 @@ pub use vercre_openid::issuer::{
     CredentialIssuance, CredentialOffer, CredentialOfferRequest, CredentialOfferResponse,
     CredentialRequest, CredentialResponse, CredentialResponseType, DeferredCredentialRequest,
     DeferredCredentialResponse, FormatIdentifier, Grants, MetadataRequest, MetadataResponse,
-    OAuthServerRequest, OAuthServerResponse, OfferType, PreAuthorizedCodeGrant, ProfileClaims,
-    ProfileIsoMdl, ProfileSdJwt, ProfileW3c, Proof, ProofClaims, PushedAuthorizationRequest,
-    PushedAuthorizationResponse, RegistrationRequest, RegistrationResponse, RequestObject,
-    SendType, SingleProof, TokenGrantType, TokenRequest, TokenResponse, TxCode,
+    NotificationRequest, NotificationResponse, OAuthServerRequest, OAuthServerResponse, OfferType,
+    PreAuthorizedCodeGrant, ProfileClaims, ProfileIsoMdl, ProfileSdJwt, ProfileW3c, Proof,
+    ProofClaims, PushedAuthorizationRequest, PushedAuthorizationResponse, RegistrationRequest,
+    RegistrationResponse, RequestObject, SendType, SingleProof, TokenGrantType, TokenRequest,
+    TokenResponse, TxCode,
 };
 pub use vercre_openid::Result;
 pub use vercre_w3c_vc::model::{
