@@ -15,9 +15,9 @@ use vercre_holder::provider::{
 };
 use vercre_holder::{
     AuthorizationRequest, AuthorizationResponse, Credential, CredentialRequest, CredentialResponse,
-    Logo, MetadataRequest, MetadataResponse, OAuthServerRequest, OAuthServerResponse,
-    RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse, TokenRequest,
-    TokenResponse,
+    DeferredCredentialRequest, DeferredCredentialResponse, Logo, MetadataRequest, MetadataResponse,
+    OAuthServerRequest, OAuthServerResponse, RequestObjectRequest, RequestObjectResponse,
+    ResponseRequest, ResponseResponse, TokenRequest, TokenResponse,
 };
 use vercre_test_utils::store::keystore::HolderKeystore;
 use vercre_test_utils::store::{resolver, state};
@@ -72,6 +72,13 @@ impl Issuer for Provider {
 
     async fn credential(&self, req: CredentialRequest) -> anyhow::Result<CredentialResponse> {
         let response = vercre_issuer::credential(self.issuer.clone().unwrap(), req).await?;
+        Ok(response)
+    }
+
+    async fn deferred(
+        &self, req: DeferredCredentialRequest,
+    ) -> anyhow::Result<DeferredCredentialResponse> {
+        let response = vercre_issuer::deferred(self.issuer.clone().unwrap(), req).await?;
         Ok(response)
     }
 

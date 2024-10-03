@@ -3,9 +3,9 @@ use http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use tauri_plugin_http::reqwest;
 use vercre_holder::provider::Issuer;
 use vercre_holder::{
-    AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse, Logo,
-    MetadataRequest, MetadataResponse, OAuthServerRequest, OAuthServerResponse, TokenRequest,
-    TokenResponse,
+    AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse,
+    DeferredCredentialRequest, DeferredCredentialResponse, Logo, MetadataRequest, MetadataResponse,
+    OAuthServerRequest, OAuthServerResponse, TokenRequest, TokenResponse,
 };
 
 use super::Provider;
@@ -78,6 +78,13 @@ impl Issuer for Provider {
             .await?;
         let cred = result.json::<CredentialResponse>().await?;
         Ok(cred)
+    }
+
+    /// Get a deferred credential. Not implemented for this example.
+    async fn deferred(
+        &self, _req: DeferredCredentialRequest,
+    ) -> anyhow::Result<DeferredCredentialResponse> {
+        unimplemented!()
     }
 
     /// Get a base64 encoded form of the credential logo.

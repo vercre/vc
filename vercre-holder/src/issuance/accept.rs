@@ -12,7 +12,7 @@
 
 use std::collections::HashMap;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
@@ -62,13 +62,11 @@ pub async fn accept(
 ) -> anyhow::Result<String> {
     tracing::debug!("Endpoint::accept");
 
-    let mut issuance: Issuance = match StateStore::get(&provider, &request.issuance_id).await {
-        Ok(issuance) => issuance,
-        Err(e) => {
+    let mut issuance: Issuance =
+        StateStore::get(&provider, &request.issuance_id).await.map_err(|e| {
             tracing::error!(target: "Endpoint::accept", ?e);
-            return Err(e);
-        }
-    };
+            e
+        })?;
 
     if issuance.status != Status::Ready {
         let e = anyhow!("invalid issuance state");
@@ -89,13 +87,11 @@ pub async fn accept(
     };
 
     issuance.accepted =
-        match narrow_scope(&issuance.issuer.credential_configurations_supported, &request.accept) {
-            Ok(accepted) => accepted,
-            Err(e) => {
+        narrow_scope(&issuance.issuer.credential_configurations_supported, &request.accept)
+            .map_err(|e| {
                 tracing::error!(target: "Endpoint::accept", ?e);
-                return Err(e);
-            }
-        };
+                e
+            })?;
 
     issuance.status = Status::Accepted;
     if let Some(pre_auth_code) = &grants.pre_authorized_code {
@@ -129,7 +125,7 @@ fn narrow_scope(
                 let Some(credential_configuration) =
                     offered.get(&auth_spec.credential_configuration_id)
                 else {
-                    return Err(anyhow!("credential configuration accepted not found in offer"));
+                    bail!("credential configuration accepted not found in offer");
                 };
 
                 let profile = match &credential_configuration.format {

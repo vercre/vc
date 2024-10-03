@@ -1,44 +1,24 @@
-# Wallet
+# Credential Holder Agent
 
-The Vercre wallet is a cross-platform app with a Rust core and native UI integrated
-using Mozilla's Foreign Function Interface (FFI) library,
-[UniFFI](https://mozilla.github.io/uniffi-rs).
+The Vercre holder agent (typically a wallet) provides an opiniated API for
+managing the receipt of credentials via the OpenID for Verifiable Credentials
+(OIDC4VC) protocol and the presentation of credentials via the OpenID for
+Verifiable Presentation (VP) protocol.
 
-This library contains the wallet's core business logic and FFI bindings. Developers can
-use it to build their own UIs in Swift, Kotlin, or TypeScript. Alternatively, simply
-clone the [Vercre Wallet](<https://github.com/vercre/vercre/vercre-wallet/examples/app>) for a quicker start.
-
-## Cross-platform with Crux
-
-Vercre uses [Crux](<https://redbadger.github.io/crux/overview.html>) with its built-in
-FFI support to simplify the creation of wallets.
-
-Crux splits the application into a **Core** built in Rust (this library), containing the
-business logic, and a **Shell**, or UI, built in the platform native language (Swift,
-Kotlin, TypeScript), that provides the interface with the external world.
-
-The **Core : Shell** interface is a Foreign Function Interface (FFI) where simple
-data structures are passed both ways between the Rust **Core** and [Swift|Kotlin|Typescript]
-**Shell**.
-
-[Learn how to use Crux in your project](https://redbadger.github.io/crux).
+It covers most of the possible flows and interaction types defined in the
+specification and the intention is to be up-to-date with the respective
+`vercre-issuer` and `vercre-verifier` endpoints. There may be some use cases
+that are not covered but in general this crate should be a good starting point
+for anyone needing to implement a custom solution by calling standards-compliant
+issuer and verifier services.
 
 ## Getting Started
 
-For an example of the library used as a Tauri application, see the [Vercre App](<https://github.com/vercre/vercre/vercre-wallet/examples/app>).
+No wallet technology or interactions are mandated by this crate, leaving a
+user-interface or service implementation up to the user. However, see the
+[Example Wallet](https://github.com/vercre/vercre/examples/wallet) for a simple,
+naive implementation using this crate.
 
-For an exmaple of the library published as a WebAssembly package and used as a web application, see the [Vercre Web App](<https://github.com/vercre/vercre/vercre-wallet/examples/web>)
-
-## NPM Packages
-
-The wallet is built as a WebAssembly package and published to NPM. To use it in your typescript project, use your favourite package manager to install it:
-
-```bash
-npm i --save @vercre/vercre-wallet
-```
-
-If using TypeScript you will also need to install some shared types that have been generated from the Rust crux application. These provide classes with serialization and deserialization compatibile with the FFI.
-
-```bash
-npm i --save @vercre/shared-types
-```
+The example wallet assumes an issuer-initiated, pre-authorized flow. For
+examples of other possible flows see the `tests` directory for a set of
+end-to-end tests that demonstrate the various flows and interactions.

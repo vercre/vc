@@ -7,16 +7,19 @@ pub(crate) mod accept;
 pub(crate) mod authorize;
 pub(crate) mod cancel;
 pub(crate) mod credentials;
+pub(crate) mod deferred;
 pub(crate) mod offer;
 pub(crate) mod pin;
 pub(crate) mod token;
 
+use std::collections::HashMap;
 use std::fmt::Debug;
 
 pub use accept::{accept, AcceptRequest, AuthorizationSpec};
 pub use authorize::{authorize, AuthorizeRequest, Initiator};
 pub use cancel::cancel;
-pub use credentials::{credentials, CredentialsRequest};
+pub use credentials::{credentials, CredentialsRequest, CredentialsResponse};
+pub use deferred::{deferred, DeferredRequest};
 pub use offer::{offer, OfferRequest, OfferResponse};
 pub use pin::{pin, PinRequest};
 use serde::{Deserialize, Serialize};
@@ -75,6 +78,10 @@ pub struct Issuance {
 
     /// Requested scope for scope-based authorization.
     pub scope: Option<String>,
+
+    /// Outstanding deferred credential transaction IDs (key) and corresponding
+    /// credential configuration IDs (value).
+    pub deferred: Option<HashMap<String, String>>,
 }
 
 /// Helper functions for using issuance state.
@@ -113,8 +120,7 @@ impl Issuance {
             credential_issuer: credential_issuer.into(),
             issuer: None,
         };
-        let auth_md_response =
-            IssuerProvider::oauth_server(provider, auth_md_request).await?;
+        let auth_md_response = IssuerProvider::oauth_server(provider, auth_md_request).await?;
         self.authorization_server = auth_md_response.authorization_server;
         Ok(())
     }
