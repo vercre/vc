@@ -448,39 +448,9 @@ impl Default for AuthorizationRequest {
     }
 }
 
-impl std::fmt::Display for AuthorizationRequest {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::Object(req) => {
-                // stringify non-string fields
-                let response_type = serde_json::to_value(&req.response_type)
-                    .map_or_else(|_| None, |v| Some(String::from(v.as_str().unwrap())));
-                let code_challenge_method = serde_json::to_value(&req.code_challenge_method)
-                    .map_or_else(|_| None, |v| Some(String::from(v.as_str().unwrap())));
-                let authorization_details = serde_json::to_string(&req.authorization_details).ok();
-
-                let tuples = [
-                    ("credential_issuer", Some(&req.credential_issuer)),
-                    ("response_type", response_type.as_ref()),
-                    ("client_id", Some(&req.client_id)),
-                    ("redirect_uri", req.redirect_uri.as_ref()),
-                    ("state", req.state.as_ref()),
-                    ("code_challenge", Some(&req.code_challenge)),
-                    ("code_challenge_method", code_challenge_method.as_ref()),
-                    ("authorization_details", authorization_details.as_ref()),
-                    ("scope", req.scope.as_ref()),
-                    ("resource", req.resource.as_ref()),
-                    ("subject_id", Some(&req.subject_id)),
-                    ("wallet_issuer", req.wallet_issuer.as_ref()),
-                    ("user_hint", req.user_hint.as_ref()),
-                    ("issuer_state", req.issuer_state.as_ref()),
-                ];
-
-                serde_urlencoded::to_string(tuples).unwrap()
-            }
-            Self::Uri(req) => serde_urlencoded::to_string(req).unwrap(),
-        };
-
+impl fmt::Display for AuthorizationRequest {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = vercre_core::urlencode::to_string(self).map_err(|_| fmt::Error)?;
         write!(f, "{s}")
     }
 }
@@ -2232,13 +2202,16 @@ mod tests {
             ".code" => "[code]",
         });
 
-        let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
-        assert_eq!(request, deserialized);
+        let serialized = request.to_string();
+        // let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
 
-        /*
-        let serialized = serde_urlencoded::to_string(&request).expect("should serialize to string");
-        let deserialized =serde_urlencoded::from_str::<AuthorizationRequest>(&serialized).expect("should deserialize from string");
-        */
+        let serialized =
+            vercre_core::urlencode::to_string(&request).expect("should serialize to string");
+        // let deserialized = serde_urlencoded::from_str::<AuthorizationRequest>(&serialized)
+        //     .expect("should deserialize from string");
+        let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
+
+        assert_eq!(request, deserialized);
     }
 
     #[test]

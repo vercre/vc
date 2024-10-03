@@ -1,28 +1,70 @@
+use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
 use serde::{ser, Serialize};
 
 use crate::urlencode::error::{Error, Result};
 
-pub struct Serializer {
-    // This string starts empty and JSON is appended as values are serialized.
-    output: String,
-    nested: bool,
-}
+const TOP_LEVEL: i64 = 1;
+const UNRESERVED: &AsciiSet =
+    &NON_ALPHANUMERIC.remove(b'&').remove(b'=').remove(b'.').remove(b'_').remove(b'-').remove(b'~');
 
-// By convention, the public API of a Serde serializer is one or more `to_abc`
-// functions such as `to_string`, `to_bytes`, or `to_writer` depending on what
-// Rust types the serializer is able to produce as output.
-//
-// This basic serializer supports only `to_string`.
+/// Serializes a value into a `application/x-www-form-urlencoded` `String`
+/// buffer.
+///
+/// ```rust,ignore
+/// use serde::{Deserialize, Serialize};
+///
+/// #[derive(Serialize, Deserialize)]
+/// struct TopLevel {
+///     field_1: String,
+///     field_2: Nested,
+/// }
+///
+/// #[derive(Serialize, Deserialize)]
+/// struct Nested {
+///     field_3: String,
+///     field_4: String,
+/// }
+///
+/// let data = TopLevel {
+///     field_1: "field1".to_owned(),
+///     field_2: "field2".to_owned(),
+///     nested: Nested {
+///         field_3: "field3".to_owned(),
+///         field_4: "field4".to_owned(),
+///     },
+/// };
+///
+/// let serialized = urlencode::to_string(&data).expect("should serialize");
+/// let expected =
+///     r#"field_1=field1&field_2=field2&nested={"field_3":"field3","field_4":"field4"}"#;
+/// assert_eq!(serialized, expected);
+/// ```
 pub fn to_string<T>(value: &T) -> Result<String>
 where
     T: Serialize,
 {
     let mut serializer = Serializer {
         output: String::new(),
-        nested: false,
+        level: 0,
     };
     value.serialize(&mut serializer)?;
-    Ok(serializer.output)
+
+    let encoded = utf8_percent_encode(&serializer.output, UNRESERVED).to_string();
+    Ok(encoded)
+}
+
+/// A serializer for url encoding.
+///
+/// * Supported top-level inputs are structs, maps and sequences of pairs, with
+///   or without a given length.
+///
+/// * Supported keys and values are integers, bytes (if convertible to strings),
+///   unit structs and unit variants.
+///
+/// * Newtype structs defer to their inner values.
+pub struct Serializer {
+    output: String,
+    level: i64,
 }
 
 impl<'a> ser::Serializer for &'a mut Serializer {
@@ -114,7 +156,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     // get the idea. For example it would emit invalid JSON if the input string
     // contains a '"' character.
     fn serialize_str(self, v: &str) -> Result<()> {
-        if self.nested {
+        if self.level > TOP_LEVEL {
             self.output += "\"";
             self.output += v;
             self.output += "\"";
@@ -197,11 +239,15 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     where
         T: ?Sized + Serialize,
     {
+        self.level += 2;
+
         self.output += "{";
         variant.serialize(&mut *self)?;
         self.output += ":";
         value.serialize(&mut *self)?;
         self.output += "}";
+
+        self.level -= 2;
         Ok(())
     }
 
@@ -216,6 +262,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     // explicitly in the serialized form. Some serializers may only be able to
     // support sequences for which the length is known up front.
     fn serialize_seq(self, _len: Option<usize>) -> Result<Self::SerializeSeq> {
+        self.level += 1;
         self.output += "[";
         Ok(self)
     }
@@ -225,6 +272,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     // means that the corresponding `Deserialize implementation will know the
     // length without needing to look at the serialized data.
     fn serialize_tuple(self, len: usize) -> Result<Self::SerializeTuple> {
+        self.level += 1;
         self.serialize_seq(Some(len))
     }
 
@@ -240,18 +288,23 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     fn serialize_tuple_variant(
         self, _name: &'static str, _variant_index: u32, variant: &'static str, _len: usize,
     ) -> Result<Self::SerializeTupleVariant> {
+        self.level += 2;
+
         self.output += "{";
         variant.serialize(&mut *self)?;
         self.output += ":[";
+
         Ok(self)
     }
 
     // Maps are represented in JSON as `{ K: V, K: V, ... }`.
     fn serialize_map(self, _len: Option<usize>) -> Result<Self::SerializeMap> {
-        if !self.output.is_empty() {
+        self.level += 1;
+
+        if self.level > TOP_LEVEL {
             self.output += "{";
-            self.nested = true;
         }
+
         Ok(self)
     }
 
@@ -269,6 +322,8 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     fn serialize_struct_variant(
         self, _name: &'static str, _variant_index: u32, variant: &'static str, _len: usize,
     ) -> Result<Self::SerializeStructVariant> {
+        self.level += 2;
+
         self.output += "{";
         variant.serialize(&mut *self)?;
         self.output += ":{";
@@ -303,6 +358,7 @@ impl<'a> ser::SerializeSeq for &'a mut Serializer {
     // Close the sequence.
     fn end(self) -> Result<()> {
         self.output += "]";
+        self.level -= 1;
         Ok(())
     }
 }
@@ -324,6 +380,7 @@ impl<'a> ser::SerializeTuple for &'a mut Serializer {
 
     fn end(self) -> Result<()> {
         self.output += "]";
+        self.level -= 1;
         Ok(())
     }
 }
@@ -345,6 +402,7 @@ impl<'a> ser::SerializeTupleStruct for &'a mut Serializer {
 
     fn end(self) -> Result<()> {
         self.output += "]";
+        self.level -= 1;
         Ok(())
     }
 }
@@ -374,6 +432,7 @@ impl<'a> ser::SerializeTupleVariant for &'a mut Serializer {
 
     fn end(self) -> Result<()> {
         self.output += "]}";
+        self.level -= 2;
         Ok(())
     }
 }
@@ -421,6 +480,7 @@ impl<'a> ser::SerializeMap for &'a mut Serializer {
 
     fn end(self) -> Result<()> {
         self.output += "}";
+        self.level -= 1;
         Ok(())
     }
 }
@@ -435,7 +495,7 @@ impl<'a> ser::SerializeStruct for &'a mut Serializer {
     where
         T: ?Sized + Serialize,
     {
-        if self.nested {
+        if self.level > TOP_LEVEL {
             if !self.output.ends_with('{') {
                 self.output += ",";
             }
@@ -446,7 +506,7 @@ impl<'a> ser::SerializeStruct for &'a mut Serializer {
         }
 
         key.serialize(&mut **self)?;
-        if self.nested {
+        if self.level > TOP_LEVEL {
             self.output += ":";
         } else {
             self.output += "=";
@@ -455,9 +515,9 @@ impl<'a> ser::SerializeStruct for &'a mut Serializer {
     }
 
     fn end(self) -> Result<()> {
-        if self.nested {
+        if self.level > TOP_LEVEL {
             self.output += "}";
-            self.nested = false
+            self.level -= 1;
         }
         Ok(())
     }
@@ -483,6 +543,7 @@ impl<'a> ser::SerializeStructVariant for &'a mut Serializer {
 
     fn end(self) -> Result<()> {
         self.output += "}}";
+        self.level -= 2;
         Ok(())
     }
 }
