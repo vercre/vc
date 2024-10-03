@@ -73,13 +73,11 @@ pub async fn credentials(
 ) -> anyhow::Result<CredentialsResponse> {
     tracing::debug!("Endpoint::credentials {:?}", request);
 
-    let mut issuance: Issuance = match StateStore::get(&provider, &request.issuance_id).await {
-        Ok(issuance) => issuance,
-        Err(e) => {
+    let mut issuance: Issuance =
+        StateStore::get(&provider, &request.issuance_id).await.map_err(|e| {
             tracing::error!(target: "Endpoint::credentials", ?e);
-            return Err(e);
-        }
-    };
+            e
+        })?;
     if issuance.status != Status::TokenReceived {
         let e = anyhow!("invalid issuance state");
         tracing::error!(target: "Endpoint::credentials", ?e);
@@ -93,13 +91,10 @@ pub async fn credentials(
         iat: chrono::Utc::now().timestamp(),
         nonce: issuance.token.c_nonce.clone(),
     };
-    let jwt = match jws::encode(Type::Proof, &claims, provider.clone()).await {
-        Ok(jwt) => jwt,
-        Err(e) => {
-            tracing::error!(target: "Endpoint::credentials", ?e);
-            return Err(e);
-        }
-    };
+    let jwt = jws::encode(Type::Proof, &claims, provider.clone()).await.map_err(|e| {
+        tracing::error!(target: "Endpoint::credentials", ?e);
+        e
+    })?;
 
     let mut deferred = HashMap::<String, String>::new();
 

@@ -56,40 +56,29 @@ pub async fn request(
 
     // Parse or get-then-parse the presentation request
     let req_obj = if request.contains("&presentation_definition") {
-        match serde_urlencoded::from_str::<RequestObject>(request) {
-            Ok(req_obj) => req_obj,
-            Err(e) => {
-                tracing::error!(target: "Endpoint::request", ?e);
-                return Err(anyhow!("issue parsing RequestObject: {e}"));
-            }
-        }
+        serde_urlencoded::from_str::<RequestObject>(request).map_err(|e| {
+            tracing::error!(target: "Endpoint::request", ?e);
+            anyhow!("issue parsing RequestObject: {e}")
+        })?
     } else {
-        let req_obj_response = match Verifier::request_object(&provider, &request_str).await {
-            Ok(req_obj_response) => req_obj_response,
-            Err(e) => {
+        let req_obj_response =
+            Verifier::request_object(&provider, &request_str).await.map_err(|e| {
                 tracing::error!(target: "Endpoint::request", ?e);
-                return Err(e);
-            }
-        };
-        match parse_request_object_response(&req_obj_response, &provider).await {
-            Ok(req_obj) => req_obj,
-            Err(e) => {
-                tracing::error!(target: "Endpoint::request", ?e);
-                return Err(e);
-            }
-        }
+                e
+            })?;
+        parse_request_object_response(&req_obj_response, &provider).await.map_err(|e| {
+            tracing::error!(target: "Endpoint::request", ?e);
+            e
+        })?
     };
     presentation.request.clone_from(&req_obj);
 
     // Get the credentials from the holder's credential store that match the
     // verifier's request.
-    let filter = match build_filter(&req_obj) {
-        Ok(filter) => filter,
-        Err(e) => {
-            tracing::error!(target: "Endpoint::request", ?e);
-            return Err(e);
-        }
-    };
+    let filter = build_filter(&req_obj).map_err(|e| {
+        tracing::error!(target: "Endpoint::request", ?e);
+        e
+    })?;
     presentation.filter.clone_from(&filter);
     let credentials = CredentialStorer::find(&provider, Some(filter)).await?;
     presentation.credentials.clone_from(&credentials);
@@ -118,10 +107,9 @@ async fn parse_request_object_response(
     let RequestObjectType::Jwt(token) = &res.request_object else {
         bail!("no serialized JWT found in response");
     };
-    let jwt: jws::Jwt<RequestObject> = match jws::decode(token, verify_key!(resolver)).await {
-        Ok(jwt) => jwt,
-        Err(e) => bail!("failed to parse JWT: {e}"),
-    };
+    let jwt: jws::Jwt<RequestObject> = jws::decode(token, verify_key!(resolver))
+        .await
+        .map_err(|e| anyhow!("failed to parse JWT: {e}"))?;
 
     Ok(jwt.claims)
 }
