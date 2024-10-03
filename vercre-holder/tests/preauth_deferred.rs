@@ -7,7 +7,9 @@ mod provider;
 use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
-use vercre_holder::issuance::{AcceptRequest, CredentialsRequest, OfferRequest, PinRequest};
+use vercre_holder::{issuance::{
+    AcceptRequest, CredentialsRequest, DeferredRequest, OfferRequest, PinRequest,
+}, provider::CredentialStorer};
 use vercre_issuer::{OfferType, SendType};
 use vercre_macros::create_offer_request;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, PENDING_USER};
@@ -81,7 +83,8 @@ async fn preauth_deferred() {
         .await
         .expect("should get token");
 
-    // Get (and store) credentials. Accept all on offer.
+    // Attempt to get (and store) credentials. Accept all on offer. It should
+    // return a deferred transaction ID.
     let cred_req = CredentialsRequest {
         issuance_id: issuance.issuance_id.clone(),
         ..Default::default()
@@ -91,4 +94,31 @@ async fn preauth_deferred() {
         .expect("should get credentials");
 
     assert!(response.deferred.is_some());
+    let transaction_ids = response.deferred.unwrap();
+    for (transaction_id, credential_configuration_id) in transaction_ids {
+        let deferred_req = DeferredRequest {
+            issuance_id: issuance.issuance_id.clone(),
+            transaction_id,
+            credential_configuration_id,
+        };
+        vercre_holder::issuance::deferred(HOLDER_PROVIDER.clone(), &deferred_req)
+            .await
+            .expect("should process deferred");
+        let credentials = CredentialStorer::find(&HOLDER_PROVIDER.clone(), None)
+            .await
+            .expect("should retrieve all credentials");
+
+        assert_eq!(credentials.len(), 1);
+
+        assert_snapshot!("credentials", credentials, {
+            "[].vc.issuanceDate" => "[issuanceDate]",
+            "[].vc" => insta::sorted_redaction(),
+            "[].vc.credentialSubject" => insta::sorted_redaction(),
+            "[].metadata" => insta::sorted_redaction(),
+            "[].metadata.credential_definition" => insta::sorted_redaction(),
+            "[].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
+            "[].metadata.credential_definition.credentialSubject.address" => insta::sorted_redaction(),
+            "[].issued" => "[issued]",
+        });
+    }
 }

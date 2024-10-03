@@ -18,3 +18,7 @@ No wallet technology or interactions are mandated by this crate, leaving a
 user-interface or service implementation up to the user. However, see the
 [Example Wallet](https://github.com/vercre/vercre/examples/wallet) for a simple,
 naive implementation using this crate.
+
+The example wallet assumes an issuer-initiated, pre-authorized flow. For
+examples of other possible flows see the `tests` directory for a set of
+end-to-end tests that demonstrate the various flows and interactions.
