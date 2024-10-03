@@ -13,7 +13,8 @@ pub use vercre_did::{DidResolver, Document};
 pub use vercre_dif_exch::Constraints;
 pub use vercre_issuer::{
     AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse,
-    MetadataRequest, OAuthServerRequest, OAuthServerResponse, MetadataResponse, TokenRequest, TokenResponse, TxCode,
+    MetadataRequest, MetadataResponse, OAuthServerRequest, OAuthServerResponse, TokenRequest,
+    TokenResponse, TxCode,
 };
 pub use vercre_openid::provider::{Result, StateStore};
 use vercre_openid::verifier::{RequestObjectResponse, ResponseRequest, ResponseResponse};

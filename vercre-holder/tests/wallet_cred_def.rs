@@ -29,9 +29,8 @@ async fn wallet_credential_definition() {
         credential_issuer: "http://vercre.io".into(),
         languages: None,
     };
-    let issuer_metadata = Issuer::metadata(&provider, metadata_request)
-        .await
-        .expect("should get issuer metadata");
+    let issuer_metadata =
+        Issuer::metadata(&provider, metadata_request).await.expect("should get issuer metadata");
 
     // Construct an authorization request using the credential definition for
     // the employee ID credential.

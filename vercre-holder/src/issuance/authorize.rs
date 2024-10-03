@@ -255,15 +255,13 @@ fn authorization_request(
     // to explicitly build the authorization details.
     let auth_details = match scope {
         Some(_) => None,
-        None => {
-            match authorization_details(issuance, request) {
-                Ok(auth_details) => Some(auth_details),
-                Err(e) => {
-                    tracing::error!(target: "Endpoint::authorize", ?e);
-                    return Err(e);
-                }
+        None => match authorization_details(issuance, request) {
+            Ok(auth_details) => Some(auth_details),
+            Err(e) => {
+                tracing::error!(target: "Endpoint::authorize", ?e);
+                return Err(e);
             }
-        }
+        },
     };
 
     let Some(code_challenge_methods) =

@@ -113,8 +113,7 @@ impl Issuance {
             credential_issuer: credential_issuer.into(),
             issuer: None,
         };
-        let auth_md_response =
-            IssuerProvider::oauth_server(provider, auth_md_request).await?;
+        let auth_md_response = IssuerProvider::oauth_server(provider, auth_md_request).await?;
         self.authorization_server = auth_md_response.authorization_server;
         Ok(())
     }
