@@ -50,6 +50,7 @@ pub use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     AuthorizationResponse, Claim, ClaimDefinition, CredentialAuthorization,
     CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse,
+    CredentialResponseType, DeferredCredentialRequest, DeferredCredentialResponse,
     FormatIdentifier, Grants, Issuer, MetadataRequest, MetadataResponse, OAuthServerRequest,
     OAuthServerResponse, PreAuthorizedCodeGrant, ProfileClaims, Proof, ProofClaims, TokenRequest,
     TokenResponse, TxCode,
