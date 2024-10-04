@@ -92,11 +92,7 @@ pub async fn deferred(
         }
     };
 
-    let deferred = if deferred.is_empty() {
-        None
-    } else {
-        Some(deferred)
-    };
+    let deferred = if deferred.is_empty() { None } else { Some(deferred) };
     issuance.deferred = deferred;
 
     // Release issuance state if no more deferred credentials and no
@@ -106,14 +102,12 @@ pub async fn deferred(
             tracing::error!(target: "Endpoint::credentials", ?e);
             anyhow!("issue purging state: {e}")
         })?;
-    } else {
-        if let Err(e) =
-            StateStore::put(&provider, &issuance.id, &issuance, DateTime::<Utc>::MAX_UTC).await
-        {
-            tracing::error!(target: "Endpoint::credentials", ?e);
-            return Err(e);
-        };
-    }
+    } else if let Err(e) =
+        StateStore::put(&provider, &issuance.id, &issuance, DateTime::<Utc>::MAX_UTC).await
+    {
+        tracing::error!(target: "Endpoint::credentials", ?e);
+        return Err(e);
+    };
 
     Ok(CredentialsResponse {
         issuance_id: issuance.id,
