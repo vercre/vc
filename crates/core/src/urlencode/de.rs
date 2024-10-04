@@ -215,8 +215,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        // let res = if self.level < TOP_LEVEL {
-        let res = if self.first {
+        let res = if self.level < TOP_LEVEL {
             self.first = false;
             self.deserialize_map(visitor)
         } else {
@@ -486,10 +485,14 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             visitor.visit_map(CommaSeparated::new(self))
         } else {
             // Parse the opening brace of the map.
+            println!("deserialize_map 1: {}", self.input);
+
             let next = match self.next_char()? {
                 '=' => self.next_char()?,
                 val => val,
             };
+
+            println!("{next}");
 
             if next == '{' {
                 // Give the visitor access to each entry of the map.
@@ -501,6 +504,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                     Err(Error::ExpectedMapEnd)
                 }
             } else {
+                println!("deserialize_map err: {}", self.input);
                 Err(Error::ExpectedMap)
             }
         };
