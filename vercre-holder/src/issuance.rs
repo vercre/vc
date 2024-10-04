@@ -10,6 +10,7 @@ pub(crate) mod credentials;
 pub(crate) mod deferred;
 pub(crate) mod offer;
 pub(crate) mod pin;
+pub(crate) mod save;
 pub(crate) mod token;
 
 use std::collections::HashMap;
@@ -17,11 +18,12 @@ use std::fmt::Debug;
 
 pub use accept::{accept, AcceptRequest, AuthorizationSpec};
 pub use authorize::{authorize, AuthorizeRequest, Initiator};
-pub use cancel::cancel;
+pub use cancel::{cancel, CancelRequest};
 pub use credentials::{credentials, CredentialsRequest, CredentialsResponse};
 pub use deferred::{deferred, DeferredRequest};
 pub use offer::{offer, OfferRequest, OfferResponse};
 pub use pin::{pin, PinRequest};
+pub use save::{save, SaveRequest};
 use serde::{Deserialize, Serialize};
 pub use token::{token, AuthorizedCredentials};
 use uuid::Uuid;
@@ -30,6 +32,7 @@ use vercre_issuer::{
 };
 use vercre_openid::issuer::{Issuer, Server};
 
+use crate::credential::Credential;
 use crate::provider::{HolderProvider, Issuer as IssuerProvider};
 
 /// `Issuance` represents app state across the steps of the issuance flow.
@@ -82,6 +85,13 @@ pub struct Issuance {
     /// Outstanding deferred credential transaction IDs (key) and corresponding
     /// credential configuration IDs (value).
     pub deferred: Option<HashMap<String, String>>,
+
+    /// Identifier to pass back to the issuer to notify of the success or
+    /// otherwise of the credential issuance.
+    pub notification_id: Option<String>,
+
+    /// The credentials received from the issuer, ready to be saved to storage.
+    pub credentials: Vec<Credential>,
 }
 
 /// Helper functions for using issuance state.
@@ -123,6 +133,11 @@ impl Issuance {
         let auth_md_response = IssuerProvider::oauth_server(provider, auth_md_request).await?;
         self.authorization_server = auth_md_response.authorization_server;
         Ok(())
+    }
+
+    /// Adds a credential to the issuance flow for saving.
+    pub fn add_credential(&mut self, credential: Credential) {
+        self.credentials.push(credential);
     }
 }
 

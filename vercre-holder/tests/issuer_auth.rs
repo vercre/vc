@@ -7,7 +7,7 @@ mod provider;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::issuance::{
-    AcceptRequest, AuthorizeRequest, CredentialsRequest, Initiator, OfferRequest,
+    AcceptRequest, AuthorizeRequest, CredentialsRequest, Initiator, OfferRequest, SaveRequest,
 };
 use vercre_holder::provider::CredentialStorer;
 use vercre_issuer::{OfferType, SendType};
@@ -94,6 +94,14 @@ async fn issuer_auth() {
     vercre_holder::issuance::credentials(HOLDER_PROVIDER.clone(), &cred_req)
         .await
         .expect("should get credentials");
+    vercre_holder::issuance::save(
+        HOLDER_PROVIDER.clone(),
+        &SaveRequest {
+            issuance_id: issuance.issuance_id.clone(),
+        },
+    )
+    .await
+    .expect("should save credentials");
 
     let credentials = CredentialStorer::find(&HOLDER_PROVIDER.clone(), None)
         .await

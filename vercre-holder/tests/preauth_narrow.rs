@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
-use vercre_holder::issuance::{AcceptRequest, AuthorizationSpec, CredentialsRequest, OfferRequest};
+use vercre_holder::issuance::{AcceptRequest, AuthorizationSpec, CredentialsRequest, OfferRequest, SaveRequest};
 use vercre_holder::provider::CredentialStorer;
 use vercre_holder::Claim;
 use vercre_issuer::{OfferType, SendType};
@@ -104,6 +104,14 @@ async fn preauth_narrow() {
     vercre_holder::issuance::credentials(HOLDER_PROVIDER.clone(), &cred_req)
         .await
         .expect("should get credentials");
+    vercre_holder::issuance::save(
+        HOLDER_PROVIDER.clone(),
+        &SaveRequest {
+            issuance_id: issuance.issuance_id.clone(),
+        },
+    )
+    .await
+    .expect("should save credentials");
 
     let credentials = CredentialStorer::find(&HOLDER_PROVIDER.clone(), None)
         .await

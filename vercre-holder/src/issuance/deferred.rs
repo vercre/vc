@@ -3,9 +3,10 @@
 //! Use a previously issued transaction ID to retrieve a credential.
 
 use anyhow::anyhow;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use vercre_issuer::{CredentialResponseType, DeferredCredentialRequest};
+use vercre_issuer::DeferredCredentialRequest;
 
 use super::{Issuance, Status};
 use crate::issuance::credentials::{process_credential_response, CredentialsResponse};
@@ -77,33 +78,45 @@ pub async fn deferred(
     )
     .await
     {
-        Ok(()) => {
-            if let CredentialResponseType::TransactionId(id) =
-                &deferred_response.credential_response.response
-            {
-                deferred.insert(id.clone(), request.credential_configuration_id.clone());
+        Ok((credentials, transaction_id)) => {
+            if let Some(credentials) = credentials {
+                issuance.credentials.extend(credentials);
+            }
+            if let Some(id) = transaction_id {
+                deferred.insert(id, request.credential_configuration_id.clone());
             }
         }
         Err(e) => {
-            tracing::error!(target: "Endpoint::deferred", ?e);
+            tracing::error!(target: "Endpoint::credentials", ?e);
             return Err(e);
         }
     };
 
-    // Release issuance state if no more deferred credentials.
     let deferred = if deferred.is_empty() {
+        None
+    } else {
+        Some(deferred)
+    };
+    issuance.deferred = deferred;
+
+    // Release issuance state if no more deferred credentials and no
+    // credentials to save, otherwise stash the state.
+    if issuance.deferred.is_none() && issuance.credentials.is_empty() {
         StateStore::purge(&provider, &issuance.id).await.map_err(|e| {
             tracing::error!(target: "Endpoint::credentials", ?e);
             anyhow!("issue purging state: {e}")
         })?;
-        None
     } else {
-        issuance.deferred = Some(deferred.clone());
-        Some(deferred)
-    };
+        if let Err(e) =
+            StateStore::put(&provider, &issuance.id, &issuance, DateTime::<Utc>::MAX_UTC).await
+        {
+            tracing::error!(target: "Endpoint::credentials", ?e);
+            return Err(e);
+        };
+    }
 
     Ok(CredentialsResponse {
         issuance_id: issuance.id,
-        deferred,
+        deferred: issuance.deferred.clone(),
     })
 }
