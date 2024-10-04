@@ -87,7 +87,7 @@ pub async fn accept(
     };
 
     issuance.accepted =
-        narrow_scope(&issuance.issuer.credential_configurations_supported, &request.accept)
+        narrow_scope(&issuance.issuer.credential_configurations_supported, request.accept.as_ref())
             .map_err(|e| {
                 tracing::error!(target: "Endpoint::accept", ?e);
                 e
@@ -112,15 +112,15 @@ pub async fn accept(
 }
 
 fn narrow_scope(
-    offered: &HashMap<String, CredentialConfiguration>, accept: &Option<Vec<AuthorizationSpec>>,
+    offered: &HashMap<String, CredentialConfiguration>, accept: Option<&Vec<AuthorizationSpec>>,
 ) -> anyhow::Result<Option<Vec<AuthorizationDetail>>> {
     // Just return None if the holder wants all credential configurations.
-    let Some(accept) = accept.clone() else {
+    let Some(accept) = accept else {
         return Ok(None);
     };
     let mut auth_details = Vec::new();
     for auth_spec in accept {
-        let claims: Option<ProfileClaims> = match auth_spec.claims {
+        let claims: Option<ProfileClaims> = match &auth_spec.claims {
             Some(claims) => {
                 let Some(credential_configuration) =
                     offered.get(&auth_spec.credential_configuration_id)
@@ -132,11 +132,11 @@ fn narrow_scope(
                     FormatIdentifier::JwtVcJson(_)
                     | FormatIdentifier::JwtVcJsonLd(_)
                     | FormatIdentifier::LdpVc(_) => ProfileClaims::W3c(CredentialDefinition {
-                        credential_subject: Some(claims),
+                        credential_subject: Some(claims.clone()),
                         ..CredentialDefinition::default()
                     }),
-                    FormatIdentifier::IsoMdl(_) => ProfileClaims::IsoMdl(claims),
-                    FormatIdentifier::VcSdJwt(_) => ProfileClaims::SdJwt(claims),
+                    FormatIdentifier::IsoMdl(_) => ProfileClaims::IsoMdl(claims.clone()),
+                    FormatIdentifier::VcSdJwt(_) => ProfileClaims::SdJwt(claims.clone()),
                 };
                 Some(profile)
             }
@@ -146,7 +146,7 @@ fn narrow_scope(
         // TODO: Support CredentialAuthorization::Format
         let detail = AuthorizationDetail {
             credential: CredentialAuthorization::ConfigurationId {
-                credential_configuration_id: auth_spec.credential_configuration_id,
+                credential_configuration_id: auth_spec.credential_configuration_id.clone(),
                 claims,
             },
             ..Default::default()
