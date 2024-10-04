@@ -1,6 +1,7 @@
+use std::char;
 use std::ops::{AddAssign, MulAssign, Neg};
 
-use percent_encoding::percent_decode_str;
+use percent_encoding::{percent_decode_str, AsciiSet, PercentDecode, CONTROLS};
 use serde::de::{
     self, DeserializeSeed, EnumAccess, IntoDeserializer, MapAccess, SeqAccess, VariantAccess,
     Visitor,
@@ -28,14 +29,11 @@ const TOP_LEVEL: usize = 1;
 ///     Ok(meal)
 /// );
 /// ```
-///
-/// # Errors
-/// // TODO: Add errors
 pub fn from_str<'a, T>(s: &'a str) -> Result<T>
 where
     T: Deserialize<'a>,
 {
-    let mut deserializer = Deserializer::new(s);
+    let mut deserializer = Deserializer::<'a>::from_str(s);
     let t = T::deserialize(&mut deserializer)?;
     if deserializer.input.is_empty() {
         Ok(t)
@@ -54,51 +52,52 @@ where
 /// * Everything else but `deserialize_seq` and `deserialize_seq_fixed_size`
 ///   defers to `deserialize`.
 pub struct Deserializer<'de> {
-    // This string starts with the input data and characters are truncated off
-    // the beginning as data is parsed.
-    input: String,
+    input: &'de str,
     level: usize,
-    phantom: std::marker::PhantomData<&'de ()>,
 }
 
 impl<'de> Deserializer<'de> {
     /// Returns a new `Deserializer`.
-    #[must_use]
-    pub fn new(input: &'de str) -> Self {
-        // percent decode before deserializing
-        let decoded = percent_decode_str(input).decode_utf8_lossy();
-
-        Deserializer {
-            input: decoded.to_string(),
-            level: 0,
-            phantom: std::marker::PhantomData,
-        }
+    pub fn from_str(input: &'de str) -> Self {
+        Deserializer { input, level: 0 }
     }
 }
 
-// SERDE IS NOT A PARSING LIBRARY. This impl block defines a few basic parsing
-// functions from scratch. More complicated formats may wish to use a dedicated
-// parsing library to help implement their Serde deserializer.
 impl<'de> Deserializer<'de> {
-    // Look at the first character in the input without consuming it.
-    fn peek_char(&self) -> Result<char> {
-        self.input.chars().next().ok_or(Error::Eof)
+    fn peek_char(&mut self) -> Result<char> {
+        match self.input.chars().next() {
+            Some('%') => {
+                let percent = self.input.chars().take(3).collect::<String>();
+                let decoded = percent_decode_str(&percent).decode_utf8_lossy();
+                return Ok(decoded.chars().next().unwrap_or_default());
+            }
+            Some(ch) => Ok(ch),
+            None => Ok(char::REPLACEMENT_CHARACTER),
+        }
     }
 
-    // Consume the first character in the input.
     fn next_char(&mut self) -> Result<char> {
-        let ch = self.peek_char()?;
-        self.input = self.input[ch.len_utf8()..].to_string();
-        Ok(ch)
+        match self.input.chars().next() {
+            Some('%') => {
+                let percent = self.input.chars().take(3).collect::<String>();
+                let decoded = percent_decode_str(&percent).decode_utf8_lossy();
+                self.input = &self.input[3..];
+                return Ok(decoded.chars().next().unwrap_or_default());
+            }
+            Some(ch) => {
+                self.input = &self.input[ch.len_utf8()..];
+                Ok(ch)
+            }
+            None => Ok(char::REPLACEMENT_CHARACTER),
+        }
     }
 
-    // Parse the JSON identifier `true` or `false`.
     fn parse_bool(&mut self) -> Result<bool> {
         if self.input.starts_with("true") {
-            self.input = self.input["true".len()..].to_string();
+            self.input = &self.input["true".len()..];
             Ok(true)
         } else if self.input.starts_with("false") {
-            self.input = self.input["false".len()..].to_string();
+            self.input = &self.input["false".len()..];
             Ok(false)
         } else {
             Err(Error::ExpectedBoolean)
@@ -106,38 +105,30 @@ impl<'de> Deserializer<'de> {
     }
 
     // Parse a group of decimal digits as an unsigned integer of type T.
-    //
-    // This implementation is a bit too lenient, for example `001` is not
-    // allowed in JSON. Also the various arithmetic operations can overflow and
-    // panic or return bogus data. But it is good enough for example code!
     fn parse_unsigned<T>(&mut self) -> Result<T>
     where
         T: AddAssign<T> + MulAssign<T> + From<u8>,
     {
         let mut int = match self.next_char()? {
             ch @ '0'..='9' => T::from(ch as u8 - b'0'),
-            _ => {
-                return Err(Error::ExpectedInteger);
-            }
+            _ => return Err(Error::ExpectedInteger),
         };
+
         loop {
             match self.input.chars().next() {
                 Some(ch @ '0'..='9') => {
-                    self.input = self.input[1..].to_string();
+                    self.input = &self.input[1..];
                     int *= T::from(10);
                     int += T::from(ch as u8 - b'0');
                 }
-                _ => {
-                    return Ok(int);
-                }
+                _ => return Ok(int),
             }
         }
     }
 
     // Parse a possible minus sign followed by a group of decimal digits as a
     // signed integer of type T.
-    #[allow(clippy::unused_self)]
-    fn parse_signed<T>(&self) -> Result<T>
+    fn parse_signed<T>(&mut self) -> Result<T>
     where
         T: Neg<Output = T> + AddAssign<T> + MulAssign<T> + From<i8>,
     {
@@ -146,61 +137,34 @@ impl<'de> Deserializer<'de> {
     }
 
     // Parse a string until the next '"' character.
-    //
-    // Makes no attempt to handle escape sequences. What did you expect? This is
-    // example code!
     fn parse_string(&mut self) -> Result<String> {
-        // let next = self.peek_char()?;
+        let next = self.peek_char()?;
 
-        let s = match self.peek_char()? {
-            '=' => {
-                if let Some(len) = self.input.find('&') {
-                    let s = self.input[1..len].to_string();
-                    self.input = self.input[len..].to_string();
-                    s
-                } else {
-                    // return Err(Error::Eof)},
-                    let s = self.input[1..self.input.len()].to_string();
-                    self.input = String::new();
-                    s
-                }
-            }
-            '&' => match self.input.find('=') {
-                Some(len) => {
-                    let s = self.input[1..len].to_string();
-                    self.input = self.input[len..].to_string();
-                    s
-                }
-                None => return Err(Error::Eof),
-            },
-            '"' => {
-                let _ = self.next_char()?;
-                match self.input.find('"') {
-                    Some(len) => {
-                        let s = self.input[..len].to_string();
-                        self.input = self.input[len + 1..].to_string();
-                        s
-                    }
-                    None => return Err(Error::Eof),
-                }
-            }
-            val => {
-                if val.is_ascii() {
-                    match self.input.find('=') {
-                        Some(len) => {
-                            let s = self.input[..len].to_string();
-                            self.input = self.input[len..].to_string();
-                            s
-                        }
-                        None => return Err(Error::Eof),
-                    }
-                } else {
-                    return Err(Error::ExpectedString);
-                }
-            }
+        println!("next: {}", next);
+
+        let len = if next == '=' {
+            let _ = self.next_char()?;
+            self.input.find('&').unwrap_or(self.input.len())
+        } else if next == '&' || next.is_ascii() {
+            self.input.find('=').unwrap_or(self.input.len())
+        } else if next == '"' {
+            self.input.find('"').unwrap_or(self.input.len()) + 1
+        } else {
+            return Err(Error::ExpectedString);
         };
 
-        Ok(s)
+        let s = &self.input[..len];
+
+        if self.input.starts_with('"') {
+            self.input = &self.input[len + 1..];
+        } else {
+            self.input = &self.input[len..];
+        }
+
+        let decoded = percent_decode_str(s).decode_utf8_lossy().to_string();
+        println!("parse_string: {}", decoded);
+
+        Ok(decoded)
     }
 }
 
@@ -214,25 +178,18 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        if self.level < TOP_LEVEL {
-            self.deserialize_map(visitor)
-        } else {
-            match self.peek_char()? {
-                'n' => self.deserialize_unit(visitor),
-                't' | 'f' => self.deserialize_bool(visitor),
-                '"' | '&' | '=' => self.deserialize_str(visitor),
-                '0'..='9' => self.deserialize_u64(visitor),
-                '-' => self.deserialize_i64(visitor),
-                '[' => self.deserialize_seq(visitor),
-                '{' => self.deserialize_map(visitor),
-                val => {
-                    if val.is_ascii() {
-                        self.deserialize_str(visitor)
-                    } else {
-                        Err(Error::Syntax)
-                    }
-                } // _ => Err(Error::Syntax),
-            }
+        let peeked = self.peek_char()?;
+        println!("peeked: {}", peeked);
+
+        match peeked {
+            'n' => self.deserialize_unit(visitor),
+            't' | 'f' => self.deserialize_bool(visitor),
+            '"' => self.deserialize_str(visitor),
+            '0'..='9' => self.deserialize_u64(visitor),
+            '-' => self.deserialize_i64(visitor),
+            '[' => self.deserialize_seq(visitor),
+            '{' => self.deserialize_map(visitor),
+            _ => Err(Error::Syntax),
         }
     }
 
@@ -386,7 +343,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         V: Visitor<'de>,
     {
         if self.input.starts_with("null") {
-            self.input = self.input["null".len()..].to_string();
+            self.input = &self.input["null".len()..];
             visitor.visit_none()
         } else {
             visitor.visit_some(self)
@@ -399,7 +356,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         V: Visitor<'de>,
     {
         if self.input.starts_with("null") {
-            self.input = self.input["null".len()..].to_string();
+            self.input = &self.input["null".len()..];
             visitor.visit_unit()
         } else {
             Err(Error::ExpectedNull)
@@ -478,20 +435,22 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     {
         self.level += 1;
 
+        // Parse the opening brace of the map.
         if self.level == TOP_LEVEL {
-            visitor.visit_map(CommaSeparated::new(self))
+            let value = visitor.visit_map(CommaSeparated::new(self))?;
+            Ok(value)
         } else {
-            // Parse the opening brace of the map.
-            if self.peek_char()? == '=' {
-                let _ = self.next_char()?;
-            }
+            let _ = self.next_char()?; // chomp '='
             let next = self.next_char()?;
+
             if next == '{' {
                 // Give the visitor access to each entry of the map.
                 let value = visitor.visit_map(CommaSeparated::new(self))?;
+
+                println!("value");
+
                 // Parse the closing brace of the map.
                 if self.next_char()? == '}' {
-                    self.level -= 1;
                     Ok(value)
                 } else {
                     Err(Error::ExpectedMapEnd)
@@ -618,13 +577,13 @@ impl<'de, 'a> MapAccess<'de> for CommaSeparated<'a, 'de> {
     {
         // Check if there are no more entries.
         if self.de.level == TOP_LEVEL {
-            match self.de.peek_char() {
-                Ok(_) => {}
-                Err(Error::Eof) => return Ok(None),
-                Err(e) => return Err(e),
+            if self.de.peek_char()?.REPLACEMENT_CHARACTER() {
+                return Ok(None);
             }
-        } else if self.de.peek_char()? == '}' {
-            return Ok(None);
+        } else {
+            if self.de.peek_char()? == '}' {
+                return Ok(None);
+            }
         }
 
         // Comma is required before every entry except the first.
@@ -632,10 +591,11 @@ impl<'de, 'a> MapAccess<'de> for CommaSeparated<'a, 'de> {
             if !self.first && self.de.next_char()? != '&' {
                 return Err(Error::ExpectedMapComma);
             }
-        } else if !self.first && self.de.next_char()? != ',' {
-            return Err(Error::ExpectedMapComma);
+        } else {
+            if !self.first && self.de.next_char()? != ',' {
+                return Err(Error::ExpectedMapComma);
+            }
         }
-
         self.first = false;
         // Deserialize a map key.
         seed.deserialize(&mut *self.de).map(Some)
@@ -648,6 +608,7 @@ impl<'de, 'a> MapAccess<'de> for CommaSeparated<'a, 'de> {
         // It doesn't make a difference whether the colon is parsed at the end
         // of `next_key_seed` or at the beginning of `next_value_seed`. In this
         // case the code is a bit simpler having it here.
+
         if self.de.level == TOP_LEVEL {
             let next = self.de.peek_char()?;
             if next != '=' {

@@ -12,7 +12,7 @@ use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
-use vercre_core::{stringify, Kind};
+use vercre_core::{stringify, urlencode, Kind};
 pub use vercre_datasec::SecOps;
 use vercre_did::DidResolver;
 use vercre_dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
@@ -385,7 +385,7 @@ impl RequestObject {
     /// Returns an `Error::ServerError` error if the Request Object cannot be
     /// serialized.
     pub fn to_querystring(&self) -> Result<String> {
-        serde_urlencoded::to_string(self).map_err(|e| anyhow!("issue creating query string: {e}"))
+        urlencode::to_string(self).map_err(|e| anyhow!("issue creating query string: {e}"))
     }
 }
 

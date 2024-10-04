@@ -11,6 +11,7 @@ use std::fmt::Debug;
 // use anyhow::Error;
 use serde::{Deserialize, Serialize, Serializer};
 use thiserror::Error;
+use vercre_core::urlencode;
 
 /// `OpenID` error codes for  for Verifiable Credential Issuance and
 /// Presentation.
@@ -209,7 +210,7 @@ impl Error {
     /// string responses.
     #[must_use]
     pub fn to_querystring(self) -> String {
-        serde_urlencoded::to_string(&self).unwrap_or_default()
+        urlencode::to_string(&self).unwrap_or_default()
     }
 }
 
@@ -231,7 +232,7 @@ mod test {
     #[test]
     fn err_querystring() {
         let err = Error::InvalidRequest("Invalid request description".into());
-        let ser = serde_urlencoded::to_string(&err).unwrap();
+        let ser = urlencode::to_string(&err).unwrap();
         assert_eq!(ser, "error=invalid_request&error_description=Invalid+request+description");
     }
 
