@@ -2159,8 +2159,8 @@ mod tests {
 
         let serialized = urlencode::to_string(&request).expect("should serialize to string");
         println!("{}", serialized);
-        let deserialized = urlencode::from_str::<AuthorizationRequest>(&serialized)
-            .expect("should deserialize from string");
+        let deserialized: RequestObject =
+            urlencode::from_str(&serialized).expect("should deserialize from string");
         println!("{:?}", deserialized);
         // let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
 

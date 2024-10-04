@@ -58,6 +58,7 @@ pub struct Deserializer<'de> {
     // the beginning as data is parsed.
     input: String,
     level: usize,
+    first: bool,
     phantom: std::marker::PhantomData<&'de ()>,
 }
 
@@ -71,6 +72,7 @@ impl<'de> Deserializer<'de> {
         Deserializer {
             input: decoded.to_string(),
             level: 0,
+            first: true,
             phantom: std::marker::PhantomData,
         }
     }
@@ -150,8 +152,6 @@ impl<'de> Deserializer<'de> {
     // Makes no attempt to handle escape sequences. What did you expect? This is
     // example code!
     fn parse_string(&mut self) -> Result<String> {
-        // let next = self.peek_char()?;
-
         let s = match self.peek_char()? {
             '=' => {
                 if let Some(len) = self.input.find('&') {
@@ -159,7 +159,6 @@ impl<'de> Deserializer<'de> {
                     self.input = self.input[len..].to_string();
                     s
                 } else {
-                    // return Err(Error::Eof)},
                     let s = self.input[1..self.input.len()].to_string();
                     self.input = String::new();
                     s
@@ -186,14 +185,16 @@ impl<'de> Deserializer<'de> {
             }
             val => {
                 if val.is_ascii() {
-                    match self.input.find('=') {
-                        Some(len) => {
-                            let s = self.input[..len].to_string();
-                            self.input = self.input[len..].to_string();
-                            s
-                        }
-                        None => return Err(Error::Eof),
-                    }
+                    // is string key or value
+                    let eq = self.input.find('=').unwrap_or(self.input.len());
+                    let amp = self.input.find('&').unwrap_or(self.input.len());
+                    let len = if eq < amp { eq } else { amp };
+
+                    let s = self.input[..len].to_string();
+                    self.input = self.input[len..].to_string();
+
+                    // println!("self.input: {}", self.input);
+                    s
                 } else {
                     return Err(Error::ExpectedString);
                 }
@@ -214,7 +215,9 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        if self.level < TOP_LEVEL {
+        // let res = if self.level < TOP_LEVEL {
+        let res = if self.first {
+            self.first = false;
             self.deserialize_map(visitor)
         } else {
             match self.peek_char()? {
@@ -231,9 +234,10 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                     } else {
                         Err(Error::Syntax)
                     }
-                } // _ => Err(Error::Syntax),
+                }
             }
-        }
+        };
+        res
     }
 
     // Uses the `parse_bool` parsing function defined above to read the JSON
@@ -478,20 +482,20 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     {
         self.level += 1;
 
-        if self.level == TOP_LEVEL {
+        let res = if self.level == TOP_LEVEL {
             visitor.visit_map(CommaSeparated::new(self))
         } else {
             // Parse the opening brace of the map.
-            if self.peek_char()? == '=' {
-                let _ = self.next_char()?;
-            }
-            let next = self.next_char()?;
+            let next = match self.next_char()? {
+                '=' => self.next_char()?,
+                val => val,
+            };
+
             if next == '{' {
                 // Give the visitor access to each entry of the map.
                 let value = visitor.visit_map(CommaSeparated::new(self))?;
                 // Parse the closing brace of the map.
                 if self.next_char()? == '}' {
-                    self.level -= 1;
                     Ok(value)
                 } else {
                     Err(Error::ExpectedMapEnd)
@@ -499,7 +503,10 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             } else {
                 Err(Error::ExpectedMap)
             }
-        }
+        };
+
+        self.level -= 1;
+        res
     }
 
     // Structs look just like maps in JSON.
@@ -525,6 +532,11 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     {
         if self.peek_char()? == '"' {
             // Visit a unit variant.
+            visitor.visit_enum(self.parse_string()?.into_deserializer())
+        } else if self.peek_char()? == '=' {
+            // Visit a unit variant.
+            visitor.visit_enum(self.parse_string()?.into_deserializer())
+        } else if self.peek_char()?.is_ascii() {
             visitor.visit_enum(self.parse_string()?.into_deserializer())
         } else if self.next_char()? == '{' {
             // Visit a newtype variant, tuple variant, or struct variant.
@@ -628,11 +640,8 @@ impl<'de, 'a> MapAccess<'de> for CommaSeparated<'a, 'de> {
         }
 
         // Comma is required before every entry except the first.
-        if self.de.level == TOP_LEVEL {
-            if !self.first && self.de.next_char()? != '&' {
-                return Err(Error::ExpectedMapComma);
-            }
-        } else if !self.first && self.de.next_char()? != ',' {
+        let ch = if self.de.level == TOP_LEVEL { '&' } else { ',' };
+        if !self.first && self.de.next_char()? != ch {
             return Err(Error::ExpectedMapComma);
         }
 
@@ -648,16 +657,10 @@ impl<'de, 'a> MapAccess<'de> for CommaSeparated<'a, 'de> {
         // It doesn't make a difference whether the colon is parsed at the end
         // of `next_key_seed` or at the beginning of `next_value_seed`. In this
         // case the code is a bit simpler having it here.
-        if self.de.level == TOP_LEVEL {
-            let next = self.de.peek_char()?;
-            if next != '=' {
-                return Err(Error::ExpectedMapColon);
-            }
-        } else {
-            let next = self.de.next_char()?;
-            if next != ':' {
-                return Err(Error::ExpectedMapColon);
-            }
+
+        let ch = if self.de.level == TOP_LEVEL { '=' } else { ':' };
+        if self.de.next_char()? != ch {
+            return Err(Error::ExpectedMapColon);
         }
 
         // Deserialize a map value.
