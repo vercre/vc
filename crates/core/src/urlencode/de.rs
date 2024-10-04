@@ -2,8 +2,8 @@ use std::ops::{AddAssign, MulAssign, Neg};
 
 use percent_encoding::percent_decode_str;
 use serde::de::{
-    self, DeserializeSeed, EnumAccess, IntoDeserializer, MapAccess, SeqAccess, VariantAccess,
-    Visitor,
+    self, DeserializeOwned, DeserializeSeed, EnumAccess, IntoDeserializer, MapAccess, SeqAccess,
+    VariantAccess, Visitor,
 };
 use serde::Deserialize;
 
@@ -33,15 +33,33 @@ const TOP_LEVEL: usize = 1;
 /// // TODO: Add errors
 pub fn from_str<'a, T>(s: &'a str) -> Result<T>
 where
-    T: Deserialize<'a>,
+    // T: Deserialize<'a>,
+    T: DeserializeOwned,
 {
-    let mut deserializer = Deserializer::new(s);
-    let t = T::deserialize(&mut deserializer)?;
-    if deserializer.input.is_empty() {
-        Ok(t)
-    } else {
-        Err(Error::TrailingCharacters)
-    }
+    use std::time::Instant;
+    let now = Instant::now();
+
+    let decoded = percent_decode_str(s).decode_utf8_lossy().to_string();
+    let decoded = format!("{{\"{decoded}\"}}")
+        .replace('=', "\":\"")
+        .replace('&', "\",\"")
+        .replace("\"[", "[")
+        .replace("]\"", "]")
+        .replace("\"{", "{")
+        .replace("}\"", "}");
+    let t: T = serde_json::from_str(&decoded).unwrap();
+
+    // let mut deserializer = Deserializer::new(s);
+    // let t = T::deserialize(&mut deserializer)?;
+
+    let elapsed = now.elapsed();
+    println!("Elapsed: {:.2?}", elapsed);
+
+    // if deserializer.input.is_empty() {
+    Ok(t)
+    // } else {
+    //     Err(Error::TrailingCharacters)
+    // }
 }
 
 /// A deserializer for url-encoded strings.
@@ -58,7 +76,6 @@ pub struct Deserializer<'de> {
     // the beginning as data is parsed.
     input: String,
     level: usize,
-    first: bool,
     phantom: std::marker::PhantomData<&'de ()>,
 }
 
@@ -72,7 +89,6 @@ impl<'de> Deserializer<'de> {
         Deserializer {
             input: decoded.to_string(),
             level: 0,
-            first: true,
             phantom: std::marker::PhantomData,
         }
     }
@@ -192,8 +208,6 @@ impl<'de> Deserializer<'de> {
 
                     let s = self.input[..len].to_string();
                     self.input = self.input[len..].to_string();
-
-                    // println!("self.input: {}", self.input);
                     s
                 } else {
                     return Err(Error::ExpectedString);
@@ -215,8 +229,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        let res = if self.level < TOP_LEVEL {
-            self.first = false;
+        if self.level < TOP_LEVEL {
             self.deserialize_map(visitor)
         } else {
             match self.peek_char()? {
@@ -235,8 +248,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                     }
                 }
             }
-        };
-        res
+        }
     }
 
     // Uses the `parse_bool` parsing function defined above to read the JSON
@@ -482,17 +494,15 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         self.level += 1;
 
         let res = if self.level == TOP_LEVEL {
-            visitor.visit_map(CommaSeparated::new(self))
+            let res = visitor.visit_map(CommaSeparated::new(self));
+            println!("done");
+            res
         } else {
             // Parse the opening brace of the map.
-            println!("deserialize_map 1: {}", self.input);
-
             let next = match self.next_char()? {
                 '=' => self.next_char()?,
                 val => val,
             };
-
-            println!("{next}");
 
             if next == '{' {
                 // Give the visitor access to each entry of the map.
@@ -504,7 +514,6 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                     Err(Error::ExpectedMapEnd)
                 }
             } else {
-                println!("deserialize_map err: {}", self.input);
                 Err(Error::ExpectedMap)
             }
         };
@@ -534,18 +543,11 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        if self.peek_char()? == '"' {
-            // Visit a unit variant.
-            visitor.visit_enum(self.parse_string()?.into_deserializer())
-        } else if self.peek_char()? == '=' {
-            // Visit a unit variant.
-            visitor.visit_enum(self.parse_string()?.into_deserializer())
-        } else if self.peek_char()?.is_ascii() {
+        let peek = self.peek_char()?;
+        if peek == '"' || peek.is_ascii() {
             visitor.visit_enum(self.parse_string()?.into_deserializer())
         } else if self.next_char()? == '{' {
-            // Visit a newtype variant, tuple variant, or struct variant.
             let value = visitor.visit_enum(Enum::new(self))?;
-            // Parse the matching close brace.
             if self.next_char()? == '}' {
                 Ok(value)
             } else {

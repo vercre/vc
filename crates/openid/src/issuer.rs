@@ -430,16 +430,16 @@ pub struct CredentialOfferResponse {
 }
 
 /// An Authorization Request type.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 #[allow(clippy::large_enum_variant)]
 pub enum AuthorizationRequest {
-    /// An Authorization Request object.
-    Object(RequestObject),
-
     /// A URI referencing the authorization request previously stored at the PAR
     /// endpoint.
     Uri(RequestUri),
+
+    /// An Authorization Request object.
+    Object(RequestObject),
 }
 
 impl Default for AuthorizationRequest {
@@ -2154,17 +2154,22 @@ mod tests {
             ".code" => "[code]",
         });
 
-        // let serialized = request.to_string();
-        // let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
+        // // let serialized = request.to_string();
+        // // let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
 
         let serialized = urlencode::to_string(&request).expect("should serialize to string");
         println!("{}", serialized);
-        let deserialized: RequestObject =
-            urlencode::from_str(&serialized).expect("should deserialize from string");
-        println!("{:?}", deserialized);
-        // let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
 
-        // assert_eq!(request, deserialized);
+        // // let deserialized: RequestObject =
+        // //     urlencode::from_str(&serialized).expect("should deserialize from string");
+
+        let deserialized: AuthorizationRequest =
+            urlencode::from_str(&serialized).expect("should deserialize from string");
+
+        println!("{:?}", deserialized);
+        // // let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
+
+        // // assert_eq!(request, deserialized);
     }
 
     #[test]
