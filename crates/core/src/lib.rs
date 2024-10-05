@@ -10,6 +10,7 @@
 pub mod gen;
 pub mod pkce;
 pub mod stringify;
+pub mod urlencode;
 
 use serde::{Deserialize, Serialize};
 

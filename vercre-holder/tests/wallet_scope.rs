@@ -30,7 +30,7 @@ async fn wallet_scope() {
 
     // Construct an authorization request using the format for the employee ID
     // credential.
-        let issuer = issuer_metadata.credential_issuer;
+    let issuer = issuer_metadata.credential_issuer;
     let credential_config = issuer
         .credential_configurations_supported
         .get("EmployeeID_JWT")
@@ -47,9 +47,10 @@ async fn wallet_scope() {
         redirect_uri: Some(REDIRECT_URI.into()), // Must match client registration.
         authorization_details: None,
     };
-    let auth_credentials = vercre_holder::issuance::authorize(provider.clone(), &authorization_request)
-        .await
-        .expect("should authorize");
+    let auth_credentials =
+        vercre_holder::issuance::authorize(provider.clone(), &authorization_request)
+            .await
+            .expect("should authorize");
     assert_snapshot!("auth_credentials", auth_credentials, {
         ".issuance_id" => "[issuance_id]",
     });
@@ -64,9 +65,8 @@ async fn wallet_scope() {
         .await
         .expect("should get credentials");
 
-    let credentials = CredentialStorer::find(&provider, None)
-        .await
-        .expect("should retrieve all credentials");
+    let credentials =
+        CredentialStorer::find(&provider, None).await.expect("should retrieve all credentials");
 
     assert_eq!(credentials.len(), 1);
 
