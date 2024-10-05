@@ -430,7 +430,7 @@ pub struct CredentialOfferResponse {
 }
 
 /// An Authorization Request type.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 #[allow(clippy::large_enum_variant)]
 pub enum AuthorizationRequest {
@@ -460,16 +460,80 @@ impl FromStr for AuthorizationRequest {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.contains('=') && s.contains('&') {
-            let mut decoded: Value = urlencode::from_str(s)?;
-            let map =
-                decoded.as_object_mut().ok_or_else(|| anyhow!("issue with decoded querystring"))?;
-            if let Some(auth_dets) = map.get_mut("authorization_details") {
-                *auth_dets = serde_json::from_str(auth_dets.as_str().unwrap_or_default())?;
-            }
-            Ok(Self::Object(serde_json::from_value(decoded)?))
+            Ok(urlencode::from_str(s)?)
         } else {
             Ok(Self::Object(serde_json::from_str(s)?))
         }
+    }
+}
+
+/// `Claim` requires a custom deserializer as JSON claims are always objects.
+/// The A `Claim::Entry` is a single claim definition, while a `Claim::Set` is a
+/// set of nested claims.
+impl<'de> de::Deserialize<'de> for AuthorizationRequest {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct RequestVisitor;
+
+        impl<'de> Visitor<'de> for RequestVisitor {
+            type Value = AuthorizationRequest;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("AuthorizationRequest")
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: de::MapAccess<'de>,
+            {
+                let mut obj: RequestObject = RequestObject::default();
+                let mut uri: RequestUri = RequestUri::default();
+
+                while let Some(key) = map.next_key::<String>()? {
+                    match key.as_str() {
+                        // RequestObject
+                        "credential_issuer" => {
+                            obj.credential_issuer = map.next_value::<String>()?;
+                        }
+                        "response_type" => {
+                            obj.response_type = map.next_value::<oauth::ResponseType>()?;
+                        }
+                        "client_id" => obj.client_id = map.next_value::<String>()?,
+                        "redirect_uri" => obj.redirect_uri = Some(map.next_value::<String>()?),
+                        "state" => obj.state = Some(map.next_value::<String>()?),
+                        "code_challenge" => obj.code_challenge = map.next_value::<String>()?,
+                        "code_challenge_method" => {
+                            obj.code_challenge_method =
+                                map.next_value::<oauth::CodeChallengeMethod>()?;
+                        }
+                        "authorization_details" => {
+                            obj.authorization_details =
+                                Some(map.next_value::<Vec<AuthorizationDetail>>()?);
+                        }
+                        "scope" => obj.scope = Some(map.next_value::<String>()?),
+                        "resource" => obj.resource = Some(map.next_value::<String>()?),
+                        "subject_id" => obj.subject_id = map.next_value::<String>()?,
+                        "wallet_issuer" => obj.wallet_issuer = Some(map.next_value::<String>()?),
+                        "user_hint" => obj.user_hint = Some(map.next_value::<String>()?),
+                        "issuer_state" => obj.issuer_state = Some(map.next_value::<String>()?),
+
+                        // RequestUri
+                        "request_uri" => uri.request_uri = map.next_value::<String>()?,
+                        _ => {}
+                    }
+                }
+
+                if uri.request_uri.is_empty() {
+                    Ok(AuthorizationRequest::Object(obj))
+                } else {
+                    Ok(AuthorizationRequest::Uri(uri))
+                }
+            }
+        }
+
+        deserializer.deserialize_map(RequestVisitor)
     }
 }
 
@@ -2150,26 +2214,19 @@ mod tests {
         });
 
         let serialized = request.to_string();
+
+        let string = serde_json::to_string(&request).unwrap();
+        let request: AuthorizationRequest = serde_json::from_str(&string).unwrap();
+
         assert_snapshot!("authorization_format", &serialized, {
             ".code" => "[code]",
         });
 
-        // // let serialized = request.to_string();
-        // // let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
-
         let serialized = urlencode::to_string(&request).expect("should serialize to string");
-        println!("{}", serialized);
-
-        // // let deserialized: RequestObject =
-        // //     urlencode::from_str(&serialized).expect("should deserialize from string");
-
         let deserialized: AuthorizationRequest =
             urlencode::from_str(&serialized).expect("should deserialize from string");
 
-        println!("{:?}", deserialized);
-        // // let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
-
-        // // assert_eq!(request, deserialized);
+        assert_eq!(request, deserialized);
     }
 
     #[test]

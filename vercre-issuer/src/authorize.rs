@@ -402,19 +402,6 @@ mod tests {
     use super::*;
     // extern crate self as vercre_issuer;
 
-    #[tokio::test]
-    async fn authorize_de() {
-        let value = claims();
-
-        let _ = Provider::new();
-
-        // execute request
-        let request: AuthorizationRequest =
-            serde_json::from_value(value).expect("should deserialize");
-        let ser = serde_json::to_string_pretty(&request).expect("should serialize to string");
-        println!("{}", ser);
-    }
-
     #[rstest]
     #[case::configuration_id("configuration_id", configuration_id)]
     #[case::format("format", format_w3c)]

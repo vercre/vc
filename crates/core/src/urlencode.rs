@@ -25,11 +25,11 @@ use crate::urlencode::error::{Error, Result};
 ///     field_3: String,
 ///     field_4: String,
 /// }
-/// 
+///
 /// let encoded =
 ///     r#"field_1=value1&field_2=value2&nested=%7B%22field_3%22%3A%22value3%22%2C%22field_4%22%3A%22value4%22%7D"#;
 /// let deserialized: TopLevel = urlencode::from_str(&encoded).unwrap();
-/// 
+///
 /// let expected = TopLevel {
 ///     field_1: "value1".to_owned(),
 ///     field_2: "value2".to_owned(),
@@ -38,7 +38,7 @@ use crate::urlencode::error::{Error, Result};
 ///         field_4: "value4".to_owned(),
 ///     },
 /// };
-/// 
+///
 /// assert_eq!(deserialized, expected);
 /// ```
 ///
