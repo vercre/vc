@@ -233,7 +233,7 @@ mod test {
     fn err_querystring() {
         let err = Error::InvalidRequest("Invalid request description".into());
         let ser = urlencode::to_string(&err).unwrap();
-        assert_eq!(ser, "error=invalid_request&error_description=Invalid+request+description");
+        assert_eq!(ser, "error=invalid_request&error_description=Invalid%20request%20description");
     }
 
     // Test that the error details are returned as an http query string.
