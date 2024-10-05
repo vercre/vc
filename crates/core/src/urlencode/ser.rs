@@ -7,7 +7,7 @@ const TOP_LEVEL: usize = 1;
 const UNRESERVED: &AsciiSet =
     &NON_ALPHANUMERIC.remove(b'&').remove(b'=').remove(b'.').remove(b'_').remove(b'-').remove(b'~');
 
-/// Serializes a value into a url-encoded string.
+/// Serializes a value to a url-encoded string.
 ///
 /// ```rust,ignore
 /// use serde::{Deserialize, Serialize};
@@ -25,17 +25,17 @@ const UNRESERVED: &AsciiSet =
 /// }
 ///
 /// let data = TopLevel {
-///     field_1: "field1".to_owned(),
-///     field_2: "field2".to_owned(),
+///     field_1: "value1".to_owned(),
+///     field_2: "value2".to_owned(),
 ///     nested: Nested {
-///         field_3: "field3".to_owned(),
-///         field_4: "field4".to_owned(),
+///         field_3: "value3".to_owned(),
+///         field_4: "value4".to_owned(),
 ///     },
 /// };
 ///
 /// let serialized = urlencode::to_string(&data).expect("should serialize");
 /// let expected =
-///     r#"field_1=field1&field_2=field2&nested={"field_3":"field3","field_4":"field4"}"#;
+///     r#"field_1=value1&field_2=value2&nested=%7B%22field_3%22%3A%22value3%22%2C%22field_4%22%3A%22value4%22%7D"#;
 /// assert_eq!(serialized, expected);
 /// ```
 ///
