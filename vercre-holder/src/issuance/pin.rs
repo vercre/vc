@@ -31,13 +31,11 @@ pub struct PinRequest {
 pub async fn pin(provider: impl HolderProvider, request: &PinRequest) -> anyhow::Result<String> {
     tracing::debug!("Endpoint::pin");
 
-    let mut issuance: Issuance = match StateStore::get(&provider, &request.issuance_id).await {
-        Ok(issuance) => issuance,
-        Err(e) => {
+    let mut issuance: Issuance =
+        StateStore::get(&provider, &request.issuance_id).await.map_err(|e| {
             tracing::error!(target: "Endpoint::pin", ?e);
-            return Err(e);
-        }
-    };
+            e
+        })?;
     if issuance.status != Status::PendingPin {
         let e = anyhow!("invalid issuance state");
         tracing::error!(target: "Endpoint::pin", ?e);

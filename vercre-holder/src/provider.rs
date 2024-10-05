@@ -13,8 +13,8 @@ pub use vercre_did::{DidResolver, Document};
 pub use vercre_dif_exch::Constraints;
 pub use vercre_issuer::{
     AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse,
-    MetadataRequest, MetadataResponse, OAuthServerRequest, OAuthServerResponse, TokenRequest,
-    TokenResponse, TxCode,
+    DeferredCredentialRequest, DeferredCredentialResponse, MetadataRequest, MetadataResponse,
+    OAuthServerRequest, OAuthServerResponse, TokenRequest, TokenResponse, TxCode,
 };
 pub use vercre_openid::provider::{Result, StateStore};
 use vercre_openid::verifier::{RequestObjectResponse, ResponseRequest, ResponseResponse};
@@ -36,38 +36,37 @@ pub trait HolderProvider:
 /// wallet (and issuance services) to be transport layer agnostic.
 #[allow(clippy::module_name_repetitions)]
 pub trait Issuer {
-    /// Get issuer metadata. If an error is returned, the wallet will cancel the
-    /// issuance flow.
+    /// Get issuer metadata.
     fn metadata(
         &self, req: MetadataRequest,
     ) -> impl Future<Output = anyhow::Result<MetadataResponse>> + Send;
 
-    /// Get OAuth authorization configuration. If an error is returned, the
-    /// wallet will cancel the issuance flow.
+    /// Get OAuth authorization configuration.
     fn oauth_server(
         &self, req: OAuthServerRequest,
     ) -> impl Future<Output = anyhow::Result<OAuthServerResponse>> + Send;
 
-    /// Get an authorization code. If an error is returned, the wallet will
-    /// cancel the issuance flow.
+    /// Get an authorization code.
     fn authorization(
         &self, req: AuthorizationRequest,
     ) -> impl Future<Output = anyhow::Result<AuthorizationResponse>> + Send;
 
-    /// Get an access token. If an error is returned, the wallet will cancel the
-    /// issuance flow.
+    /// Get an access token.
     fn token(
         &self, req: TokenRequest,
     ) -> impl Future<Output = anyhow::Result<TokenResponse>> + Send;
 
-    /// Get a credential. If an error is returned, the wallet will cancel the
-    /// issuance flow.
+    /// Get a credential.
     fn credential(
         &self, req: CredentialRequest,
     ) -> impl Future<Output = anyhow::Result<CredentialResponse>> + Send;
 
-    /// Get a base64 encoded form of the credential logo. If an error is
-    /// returned the wallet library will ignore.
+    /// Get a deferred credential.
+    fn deferred(
+        &self, req: DeferredCredentialRequest,
+    ) -> impl Future<Output = anyhow::Result<DeferredCredentialResponse>> + Send;
+
+    /// Get a base64 encoded form of the credential logo.
     fn logo(&self, logo_url: &str) -> impl Future<Output = anyhow::Result<Logo>> + Send;
 }
 

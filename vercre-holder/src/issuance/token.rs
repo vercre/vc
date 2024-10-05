@@ -6,7 +6,7 @@
 
 use std::collections::HashMap;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
@@ -71,20 +71,14 @@ pub async fn token(
     }
 
     // Request an access token from the issuer.
-    let token_request = match token_request(&issuance) {
-        Ok(token_request) => token_request,
-        Err(e) => {
-            tracing::error!(target: "Endpoint::token", ?e);
-            return Err(e);
-        }
-    };
-    issuance.token = match Issuer::token(&provider, token_request).await {
-        Ok(token) => token,
-        Err(e) => {
-            tracing::error!(target: "Endpoint::token", ?e);
-            return Err(e);
-        }
-    };
+    let token_request = token_request(&issuance).map_err(|e| {
+        tracing::error!(target: "Endpoint::token", ?e);
+        e
+    })?;
+    issuance.token = Issuer::token(&provider, token_request).await.map_err(|e| {
+        tracing::error!(target: "Endpoint::token", ?e);
+        e
+    })?;
     issuance.status = Status::TokenReceived;
 
     let mut response = AuthorizedCredentials {
@@ -92,13 +86,10 @@ pub async fn token(
         authorized: None,
     };
     if let Some(auth_details) = issuance.token.authorization_details.clone() {
-        let authorized = match authorized_credentials(&auth_details, &issuance) {
-            Ok(authorized) => authorized,
-            Err(e) => {
-                tracing::error!(target: "Endpoint::token", ?e);
-                return Err(e);
-            }
-        };
+        let authorized = authorized_credentials(&auth_details, &issuance).map_err(|e| {
+            tracing::error!(target: "Endpoint::token", ?e);
+            e
+        })?;
         response.authorized = Some(authorized);
     }
 
@@ -118,10 +109,10 @@ fn token_request(issuance: &Issuance) -> anyhow::Result<TokenRequest> {
     // Get pre-authorized code. Unwraps are OK since verification should be called
     // on outer endpoint to check existence.
     let Some(grants) = issuance.offer.grants.as_ref() else {
-        return Err(anyhow!("no grants in offer is not supported"));
+        bail!("no grants in offer is not supported");
     };
     let Some(pre_auth_code) = grants.pre_authorized_code.as_ref() else {
-        return Err(anyhow!("token endpoint called for non-pre-authorized issuance"));
+        bail!("token endpoint called for non-pre-authorized issuance");
     };
 
     Ok(TokenRequest {

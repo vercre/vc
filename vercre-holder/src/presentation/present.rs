@@ -36,39 +36,30 @@ pub async fn present(
     }
 
     // Construct a presentation submission.
-    let submission = match create_submission(&presentation) {
-        Ok(submission) => submission,
-        Err(e) => {
-            tracing::error!(target: "Endpoint::present", ?e);
-            return Err(e);
-        }
-    };
+    let submission = create_submission(&presentation).map_err(|e| {
+        tracing::error!(target: "Endpoint::present", ?e);
+        e
+    })?;
     presentation.submission.clone_from(&submission);
 
     // create vp
     let kid = Signer::verification_method(&provider);
     let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
 
-    let vp = match create_vp(&presentation, holder_did) {
-        Ok(vp) => vp,
-        Err(e) => {
-            tracing::error!(target: "Endpoint::present", ?e);
-            return Err(e);
-        }
-    };
+    let vp = create_vp(&presentation, holder_did).map_err(|e| {
+        tracing::error!(target: "Endpoint::present", ?e);
+        e
+    })?;
 
     let payload = Payload::Vp {
         vp,
         client_id: presentation.request.client_id.clone(),
         nonce: presentation.request.nonce.clone(),
     };
-    let jwt = match proof::create(Format::JwtVcJson, payload, provider.clone()).await {
-        Ok(jwt) => jwt,
-        Err(e) => {
-            tracing::error!(target: "Endpoint::present", ?e);
-            return Err(e);
-        }
-    };
+    let jwt = proof::create(Format::JwtVcJson, payload, provider.clone()).await.map_err(|e| {
+        tracing::error!(target: "Endpoint::present", ?e);
+        e
+    })?;
 
     // Assemble the presentation response to the verifier and ask the wallet client
     // to send it.
@@ -79,13 +70,11 @@ pub async fn present(
     };
     let res_uri =
         presentation.request.response_uri.map(|uri| uri.trim_end_matches('/').to_string());
-    let response = match Verifier::present(&provider, res_uri.as_deref(), &res_req).await {
-        Ok(response) => response,
-        Err(e) => {
+    let response =
+        Verifier::present(&provider, res_uri.as_deref(), &res_req).await.map_err(|e| {
             tracing::error!(target: "Endpoint::present", ?e);
-            return Err(e);
-        }
-    };
+            e
+        })?;
 
     Ok(response)
 }

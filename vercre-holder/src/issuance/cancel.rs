@@ -16,13 +16,10 @@ use crate::provider::{HolderProvider, StateStore};
 pub async fn cancel(provider: impl HolderProvider, issuance_id: &str) -> anyhow::Result<String> {
     tracing::debug!("Endpoint::cancel");
 
-    let issuance: Issuance = match StateStore::get(&provider, issuance_id).await {
-        Ok(issuance) => issuance,
-        Err(e) => {
-            tracing::error!(target: "Endpoint::cancel", ?e);
-            return Err(e);
-        }
-    };
+    let issuance: Issuance = StateStore::get(&provider, issuance_id).await.map_err(|e| {
+        tracing::error!(target: "Endpoint::cancel", ?e);
+        e
+    })?;
 
     // TODO: Issuer notification endpoint.
 

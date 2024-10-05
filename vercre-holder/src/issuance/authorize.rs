@@ -147,13 +147,10 @@ pub async fn authorize(
             // Create a new issuance flow.
             let mut issuance = Issuance::new(client_id);
             issuance.subject_id.clone_from(subject_id);
-            match issuance.set_issuer(&provider, issuer).await {
-                Ok(()) => (),
-                Err(e) => {
-                    tracing::error!(target: "Endpoint::authorize", ?e);
-                    return Err(e);
-                }
-            };
+            issuance.set_issuer(&provider, issuer).await.map_err(|e| {
+                tracing::error!(target: "Endpoint::authorize", ?e);
+                e
+            })?;
             issuance.scope.clone_from(scope);
             issuance
         }
@@ -166,32 +163,24 @@ pub async fn authorize(
     issuance.code_verifier = Some(verifier);
 
     // Construct an authorization request.
-    let authorization_request = match authorization_request(&issuance, request) {
-        Ok(auth_request) => auth_request,
-        Err(e) => {
-            tracing::error!(target: "Endpoint::authorize", ?e);
-            return Err(e);
-        }
-    };
+    let authorization_request = authorization_request(&issuance, request).map_err(|e| {
+        tracing::error!(target: "Endpoint::authorize", ?e);
+        e
+    })?;
     // Request authorization from the issuer.
-    let auth_response = match Issuer::authorization(&provider, authorization_request).await {
-        Ok(auth) => auth,
-        Err(e) => {
+    let auth_response =
+        Issuer::authorization(&provider, authorization_request).await.map_err(|e| {
             tracing::error!(target: "Endpoint::authorize", ?e);
-            return Err(e);
-        }
-    };
+            e
+        })?;
 
     // Construct a token request using the authorization response and request an
     // access token from the issuer.
     let token_request = token_request(&issuance, request, &auth_response);
-    issuance.token = match Issuer::token(&provider, token_request).await {
-        Ok(token) => token,
-        Err(e) => {
-            tracing::error!(target: "Endpoint::authorize", ?e);
-            return Err(e);
-        }
-    };
+    issuance.token = Issuer::token(&provider, token_request).await.map_err(|e| {
+        tracing::error!(target: "Endpoint::authorize", ?e);
+        e
+    })?;
     issuance.status = Status::TokenReceived;
 
     let mut response = AuthorizedCredentials {
@@ -201,13 +190,10 @@ pub async fn authorize(
     if let Some(auth_details) = issuance.token.authorization_details.clone() {
         if !auth_details.is_empty() {
             // Get the authorized credentials.
-            let authorized = match authorized_credentials(&auth_details, &issuance) {
-                Ok(authorized) => authorized,
-                Err(e) => {
-                    tracing::error!(target: "Endpoint::token", ?e);
-                    return Err(e);
-                }
-            };
+            let authorized = authorized_credentials(&auth_details, &issuance).map_err(|e| {
+                tracing::error!(target: "Endpoint::token", ?e);
+                e
+            })?;
             response.authorized = Some(authorized);
         }
     }
@@ -255,13 +241,10 @@ fn authorization_request(
     // to explicitly build the authorization details.
     let auth_details = match scope {
         Some(_) => None,
-        None => match authorization_details(issuance, request) {
-            Ok(auth_details) => Some(auth_details),
-            Err(e) => {
-                tracing::error!(target: "Endpoint::authorize", ?e);
-                return Err(e);
-            }
-        },
+        None => Some(authorization_details(issuance, request).map_err(|e| {
+            tracing::error!(target: "Endpoint::authorize", ?e);
+            e
+        })?),
     };
 
     let Some(code_challenge_methods) =
