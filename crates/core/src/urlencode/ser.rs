@@ -69,7 +69,7 @@ pub struct Serializer {
     level: usize,
 }
 
-impl<'a> ser::Serializer for &'a mut Serializer {
+impl ser::Serializer for &mut Serializer {
     type Error = Error;
     type Ok = ();
     type SerializeMap = Self;
@@ -314,7 +314,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
 //
 // `SerializeSeq` methods are called after the `serialize_seq` function.
 // is called on the Serializer.
-impl<'a> ser::SerializeSeq for &'a mut Serializer {
+impl ser::SerializeSeq for &mut Serializer {
     type Error = Error;
     type Ok = ();
 
@@ -335,7 +335,7 @@ impl<'a> ser::SerializeSeq for &'a mut Serializer {
     }
 }
 
-impl<'a> ser::SerializeTuple for &'a mut Serializer {
+impl ser::SerializeTuple for &mut Serializer {
     type Error = Error;
     type Ok = ();
 
@@ -356,7 +356,7 @@ impl<'a> ser::SerializeTuple for &'a mut Serializer {
     }
 }
 
-impl<'a> ser::SerializeTupleStruct for &'a mut Serializer {
+impl ser::SerializeTupleStruct for &mut Serializer {
     type Error = Error;
     type Ok = ();
 
@@ -386,7 +386,7 @@ impl<'a> ser::SerializeTupleStruct for &'a mut Serializer {
 //    variant.serialize(&mut *self)?;
 //    self.output += ":[";
 //
-impl<'a> ser::SerializeTupleVariant for &'a mut Serializer {
+impl ser::SerializeTupleVariant for &mut Serializer {
     type Error = Error;
     type Ok = ();
 
@@ -419,7 +419,7 @@ impl<'a> ser::SerializeTupleVariant for &'a mut Serializer {
 // `serialize_entry` method allows serializers to optimize for the case where
 // key and value are both available simultaneously. In JSON it doesn't make a
 // difference so the default behavior for `serialize_entry` is fine.
-impl<'a> ser::SerializeMap for &'a mut Serializer {
+impl ser::SerializeMap for &mut Serializer {
     type Error = Error;
     type Ok = ();
 
@@ -456,7 +456,7 @@ impl<'a> ser::SerializeMap for &'a mut Serializer {
     }
 }
 
-impl<'a> ser::SerializeStruct for &'a mut Serializer {
+impl ser::SerializeStruct for &mut Serializer {
     type Error = Error;
     type Ok = ();
 
@@ -492,7 +492,7 @@ impl<'a> ser::SerializeStruct for &'a mut Serializer {
 
 // Similar to `SerializeTupleVariant`, here the `end` method is responsible for
 // closing both of the curly braces opened by `serialize_struct_variant`.
-impl<'a> ser::SerializeStructVariant for &'a mut Serializer {
+impl ser::SerializeStructVariant for &mut Serializer {
     type Error = Error;
     type Ok = ();
 
