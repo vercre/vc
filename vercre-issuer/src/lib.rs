@@ -125,6 +125,7 @@ pub use oauth_server::oauth_server;
 pub use par::par;
 pub use register::register;
 pub use token::token;
+pub use vercre_core::urlencode;
 pub use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     AuthorizationResponse, AuthorizedDetail, Claim, ClaimDefinition, CreateOfferRequest,

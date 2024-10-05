@@ -12,7 +12,7 @@ use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use vercre_core::{stringify, urlencode, Kind};
+use vercre_core::{urlencode, Kind};
 use vercre_datasec::jose::jwk::PublicKeyJwk;
 use vercre_datasec::SecOps;
 use vercre_did::DidResolver;
@@ -585,7 +585,6 @@ pub struct RequestObject {
     /// Authorization Details may used to convey the details about credentials
     /// the Wallet wants to obtain.
     #[serde(skip_serializing_if = "Option::is_none")]
-    // #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
 
     /// Credential Issuers MAY support requesting authorization to issue a
@@ -994,7 +993,6 @@ pub struct TokenRequest {
     /// Authorization Details is used to convey the details about the
     /// Credentials the Wallet wants to obtain.
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
 
     /// Client identity assertion using JWT instead of credentials to
@@ -2170,12 +2168,6 @@ mod tests {
             "[].credential_definition.credentialSubject" => insta::sorted_redaction(),
         });
 
-        /*
-        let serialized = serde_urlencoded::to_string(&request).expect("should serialize to string");
-        let deserialized = serde_urlencoded::from_str::<AuthorizationRequest>(&serialized)
-            .expect("should deserialize from string");
-        */
-
         let serialized = request.to_string();
         let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
         assert_eq!(request, deserialized);
@@ -2213,19 +2205,13 @@ mod tests {
             ..RequestObject::default()
         });
 
-        let serialized = request.to_string();
-
-        let string = serde_json::to_string(&request).unwrap();
-        let request: AuthorizationRequest = serde_json::from_str(&string).unwrap();
-
+        let serialized = urlencode::to_string(&request).expect("should serialize to string");
         assert_snapshot!("authorization_format", &serialized, {
             ".code" => "[code]",
         });
 
-        let serialized = urlencode::to_string(&request).expect("should serialize to string");
         let deserialized: AuthorizationRequest =
             urlencode::from_str(&serialized).expect("should deserialize from string");
-
         assert_eq!(request, deserialized);
     }
 
