@@ -95,4 +95,13 @@ impl AppState {
         vercre_holder::issuance::credentials(provider, &request).await?;
         Ok(())
     }
+
+    /// Save the credential to storage.
+    pub async fn save(&self, provider: Provider) -> anyhow::Result<()> {
+        let request = vercre_holder::issuance::SaveRequest {
+            issuance_id: self.issuance.id.clone(),
+        };
+        vercre_holder::issuance::save(provider, &request).await?;
+        Ok(())
+    }
 }

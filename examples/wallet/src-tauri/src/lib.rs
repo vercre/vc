@@ -205,6 +205,7 @@ async fn credentials(state: State<'_, StateModel>, app: AppHandle) -> Result<(),
     let mut app_state = state.app_state.lock().await;
     let provider = Provider::new(&app, state.state_store.clone());
     app_state.credentials(provider.clone()).await?;
+    app_state.save(provider.clone()).await?;
     app_state.reset(provider.clone()).await?;
     let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
