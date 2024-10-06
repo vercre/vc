@@ -26,11 +26,11 @@ use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 use vercre_issuer::{
-    AuthorizationRequest, CreateOfferRequest, CreateOfferResponse, CredentialOfferRequest,
-    CredentialOfferResponse, CredentialRequest, CredentialResponse, DeferredCredentialRequest,
-    DeferredCredentialResponse, MetadataRequest, MetadataResponse, OAuthServerRequest,
-    OAuthServerResponse, PushedAuthorizationRequest, PushedAuthorizationResponse, TokenRequest,
-    TokenResponse,
+    urlencode, AuthorizationRequest, CreateOfferRequest, CreateOfferResponse,
+    CredentialOfferRequest, CredentialOfferResponse, CredentialRequest, CredentialResponse,
+    DeferredCredentialRequest, DeferredCredentialResponse, MetadataRequest, MetadataResponse,
+    OAuthServerRequest, OAuthServerResponse, PushedAuthorizationRequest,
+    PushedAuthorizationResponse, TokenRequest, TokenResponse,
 };
 
 use crate::provider::Provider;
@@ -264,7 +264,7 @@ async fn handle_login(
     AUTH_REQUESTS.write().await.insert(req.username.clone(), auth_req.clone());
 
     // redirect back to authorize endpoint
-    let qs = serde_urlencoded::to_string(&auth_req).expect("should serialize");
+    let qs = urlencode::to_string(&auth_req).expect("should serialize");
     (StatusCode::FOUND, Redirect::to(&format!("http://{host}/auth?{qs}"))).into_response()
 }
 

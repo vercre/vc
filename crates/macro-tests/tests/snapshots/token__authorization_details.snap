@@ -1,5 +1,5 @@
 ---
-source: crates/macros/tests/token.rs
+source: crates/macro-tests/tests/token.rs
 assertion_line: 64
 expression: "&request"
 ---
@@ -9,4 +9,10 @@ grant_type: authorization_code
 code: ABCDEF
 redirect_uri: "https://example.com"
 code_verifier: ABCDEF12345
-authorization_details: "[{\"type\":\"openid_credential\",\"format\":\"jwt_vc_json\",\"credential_definition\":{\"type\":[\"VerifiableCredential\",\"EmployeeIDCredential\"]}}]"
+authorization_details:
+  - type: openid_credential
+    format: jwt_vc_json
+    credential_definition:
+      type:
+        - VerifiableCredential
+        - EmployeeIDCredential

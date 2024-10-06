@@ -17,6 +17,7 @@ use vercre_openid::verifier::{CreateRequestRequest, DeviceFlow};
 use vercre_test_utils::verifier::{self, VERIFIER_ID};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{self, Format, Payload};
+use vercre_core::urlencode;
 
 use crate::provider as holder;
 
@@ -158,7 +159,7 @@ async fn e2e_presentation_obj() {
 
     // Intiate the presentation flow using an object
     let obj = init_request.request_object.expect("should have request object");
-    let qs = serde_urlencoded::to_string(&obj).expect("should serialize");
+    let qs = urlencode::to_string(&obj).expect("should serialize");
     let presentation = vercre_holder::presentation::request(HOLDER_PROVIDER.clone(), &qs)
         .await
         .expect("should process request");

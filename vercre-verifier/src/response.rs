@@ -268,16 +268,16 @@ mod tests {
 
         // replace placeholders with actual values
         let mut vp_token = VP_TOKEN.to_owned();
-        let mut subm = SUBMISSION.to_owned();
+        let mut submission = SUBMISSION.to_owned();
 
         // replace placeholders with actual values
         *vp_token.get_mut(0).unwrap().get_mut("proof").unwrap().get_mut("challenge").unwrap() =
             json!(nonce);
-        *subm.get_mut("definition_id").unwrap() = json!(pres_def.id);
+        *submission.get_mut("definition_id").unwrap() = json!(pres_def.id);
 
         let body = json!({
-            "vp_token":  serde_json::to_string(&vp_token).expect("should serialize to string"),
-            "presentation_submission": serde_json::to_string(&subm).expect("should serialize to string"),
+            "vp_token":  vp_token,
+            "presentation_submission": submission,
             "state": state_key,
         });
 

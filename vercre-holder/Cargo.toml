@@ -25,7 +25,6 @@ base64ct.workspace = true
 chrono.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-serde_urlencoded.workspace = true
 tracing.workspace = true
 urlencoding = "2.1.3"
 uuid.workspace = true

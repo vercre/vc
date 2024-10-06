@@ -14,7 +14,7 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use vercre_core::{pkce, stringify};
+use vercre_core::pkce;
 use vercre_issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
     CredentialAuthorization, CredentialDefinition, FormatIdentifier, ProfileClaims, RequestObject,
@@ -42,7 +42,6 @@ pub struct AuthorizeRequest {
     /// Authorization Details may used to convey the details about credentials
     /// the Wallet wants to obtain.
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
 }
 

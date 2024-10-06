@@ -12,7 +12,7 @@ use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use vercre_core::{stringify, Kind};
+use vercre_core::{urlencode, Kind};
 use vercre_datasec::jose::jwk::PublicKeyJwk;
 use vercre_datasec::SecOps;
 use vercre_did::DidResolver;
@@ -283,7 +283,7 @@ impl CredentialOffer {
     /// Returns an `Error::ServerError` error if error if the Credential Offer
     /// cannot be serialized.
     pub fn to_querystring(&self) -> anyhow::Result<String> {
-        serde_urlencoded::to_string(self).map_err(|e| anyhow!("issue creating query string: {e}"))
+        urlencode::to_string(self).map_err(|e| anyhow!("issue creating query string: {e}"))
     }
 }
 
@@ -430,16 +430,16 @@ pub struct CredentialOfferResponse {
 }
 
 /// An Authorization Request type.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 #[allow(clippy::large_enum_variant)]
 pub enum AuthorizationRequest {
-    /// An Authorization Request object.
-    Object(RequestObject),
-
     /// A URI referencing the authorization request previously stored at the PAR
     /// endpoint.
     Uri(RequestUri),
+
+    /// An Authorization Request object.
+    Object(RequestObject),
 }
 
 impl Default for AuthorizationRequest {
@@ -448,39 +448,9 @@ impl Default for AuthorizationRequest {
     }
 }
 
-impl std::fmt::Display for AuthorizationRequest {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::Object(req) => {
-                // stringify non-string fields
-                let response_type = serde_json::to_value(&req.response_type)
-                    .map_or_else(|_| None, |v| Some(String::from(v.as_str().unwrap())));
-                let code_challenge_method = serde_json::to_value(&req.code_challenge_method)
-                    .map_or_else(|_| None, |v| Some(String::from(v.as_str().unwrap())));
-                let authorization_details = serde_json::to_string(&req.authorization_details).ok();
-
-                let tuples = [
-                    ("credential_issuer", Some(&req.credential_issuer)),
-                    ("response_type", response_type.as_ref()),
-                    ("client_id", Some(&req.client_id)),
-                    ("redirect_uri", req.redirect_uri.as_ref()),
-                    ("state", req.state.as_ref()),
-                    ("code_challenge", Some(&req.code_challenge)),
-                    ("code_challenge_method", code_challenge_method.as_ref()),
-                    ("authorization_details", authorization_details.as_ref()),
-                    ("scope", req.scope.as_ref()),
-                    ("resource", req.resource.as_ref()),
-                    ("subject_id", Some(&req.subject_id)),
-                    ("wallet_issuer", req.wallet_issuer.as_ref()),
-                    ("user_hint", req.user_hint.as_ref()),
-                    ("issuer_state", req.issuer_state.as_ref()),
-                ];
-
-                serde_urlencoded::to_string(tuples).unwrap()
-            }
-            Self::Uri(req) => serde_urlencoded::to_string(req).unwrap(),
-        };
-
+impl fmt::Display for AuthorizationRequest {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = urlencode::to_string(self).map_err(|_| fmt::Error)?;
         write!(f, "{s}")
     }
 }
@@ -490,66 +460,82 @@ impl FromStr for AuthorizationRequest {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.contains('=') && s.contains('&') {
-            let mut decoded: Value = serde_urlencoded::from_str(s)?;
-            let map =
-                decoded.as_object_mut().ok_or_else(|| anyhow!("issue with decoded querystring"))?;
-            if let Some(auth_dets) = map.get_mut("authorization_details") {
-                *auth_dets = serde_json::from_str(auth_dets.as_str().unwrap_or_default())?;
-            }
-            Ok(Self::Object(serde_json::from_value(decoded)?))
+            Ok(urlencode::from_str(s)?)
         } else {
             Ok(Self::Object(serde_json::from_str(s)?))
         }
     }
 }
 
-/*
-use serde::ser::{self, SerializeStruct, Serializer};
-
-impl Serialize for AuthorizationRequest {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+/// `Claim` requires a custom deserializer as JSON claims are always objects.
+/// The A `Claim::Entry` is a single claim definition, while a `Claim::Set` is a
+/// set of nested claims.
+impl<'de> de::Deserialize<'de> for AuthorizationRequest {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        S: Serializer,
+        D: Deserializer<'de>,
     {
-        match self {
-            Self::Object(req) => {
-                let mut s = serializer.serialize_struct("AuthorizationRequest", 3)?;
+        struct RequestVisitor;
 
-                s.serialize_field("credential_issuer", &req.credential_issuer)?;
-                s.serialize_field("response_type", &req.response_type)?;
-                s.serialize_field("client_id", &req.client_id)?;
-                s.serialize_field("redirect_uri", &req.redirect_uri)?;
-                s.serialize_field("state", &req.state)?;
-                s.serialize_field("code_challenge", &req.code_challenge)?;
-                s.serialize_field("code_challenge_method", &req.code_challenge_method)?;
+        impl<'de> Visitor<'de> for RequestVisitor {
+            type Value = AuthorizationRequest;
 
-                // HACK: check serializer typename to determine how  to serialize
-                // authorization_details
-                // if type_name(&s).starts_with("&serde_urlencoded") {
-                //     let string = serde_json::to_string(&req.authorization_details)
-                //         .map_err(|e| ser::Error::custom(format!("issue
-                // 'stringifying':{e}")))?;     s.serialize_field("
-                // authorization_details", &string)?; } else {
-                s.serialize_field("authorization_details", &req.authorization_details)?;
-                // }
-
-                s.serialize_field("scope", &req.scope)?;
-                s.serialize_field("resource", &req.resource)?;
-                s.serialize_field("subject_id", &req.subject_id)?;
-                s.serialize_field("wallet_issuer", &req.wallet_issuer)?;
-                s.serialize_field("user_hint", &req.user_hint)?;
-                s.serialize_field("issuer_state", &req.issuer_state)?;
-
-                s.end()
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("AuthorizationRequest")
             }
-            Self::Uri(req) => req.serialize(serializer),
+
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: de::MapAccess<'de>,
+            {
+                let mut obj: RequestObject = RequestObject::default();
+                let mut uri: RequestUri = RequestUri::default();
+
+                while let Some(key) = map.next_key::<String>()? {
+                    match key.as_str() {
+                        // RequestObject
+                        "credential_issuer" => {
+                            obj.credential_issuer = map.next_value::<String>()?;
+                        }
+                        "response_type" => {
+                            obj.response_type = map.next_value::<oauth::ResponseType>()?;
+                        }
+                        "client_id" => obj.client_id = map.next_value::<String>()?,
+                        "redirect_uri" => obj.redirect_uri = Some(map.next_value::<String>()?),
+                        "state" => obj.state = Some(map.next_value::<String>()?),
+                        "code_challenge" => obj.code_challenge = map.next_value::<String>()?,
+                        "code_challenge_method" => {
+                            obj.code_challenge_method =
+                                map.next_value::<oauth::CodeChallengeMethod>()?;
+                        }
+                        "authorization_details" => {
+                            obj.authorization_details =
+                                Some(map.next_value::<Vec<AuthorizationDetail>>()?);
+                        }
+                        "scope" => obj.scope = Some(map.next_value::<String>()?),
+                        "resource" => obj.resource = Some(map.next_value::<String>()?),
+                        "subject_id" => obj.subject_id = map.next_value::<String>()?,
+                        "wallet_issuer" => obj.wallet_issuer = Some(map.next_value::<String>()?),
+                        "user_hint" => obj.user_hint = Some(map.next_value::<String>()?),
+                        "issuer_state" => obj.issuer_state = Some(map.next_value::<String>()?),
+
+                        // RequestUri
+                        "request_uri" => uri.request_uri = map.next_value::<String>()?,
+                        _ => {}
+                    }
+                }
+
+                if uri.request_uri.is_empty() {
+                    Ok(AuthorizationRequest::Object(obj))
+                } else {
+                    Ok(AuthorizationRequest::Uri(uri))
+                }
+            }
         }
+
+        deserializer.deserialize_map(RequestVisitor)
     }
 }
-fn type_name<T>(_: T) -> &'static str {
-    std::any::type_name::<T>()
-}
-*/
 
 /// A URI referencing the authorization request previously stored at the PAR
 /// endpoint.
@@ -599,7 +585,6 @@ pub struct RequestObject {
     /// Authorization Details may used to convey the details about credentials
     /// the Wallet wants to obtain.
     #[serde(skip_serializing_if = "Option::is_none")]
-    // #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
 
     /// Credential Issuers MAY support requesting authorization to issue a
@@ -1008,7 +993,6 @@ pub struct TokenRequest {
     /// Authorization Details is used to convey the details about the
     /// Credentials the Wallet wants to obtain.
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
 
     /// Client identity assertion using JWT instead of credentials to
@@ -2184,12 +2168,6 @@ mod tests {
             "[].credential_definition.credentialSubject" => insta::sorted_redaction(),
         });
 
-        /*
-        let serialized = serde_urlencoded::to_string(&request).expect("should serialize to string");
-        let deserialized = serde_urlencoded::from_str::<AuthorizationRequest>(&serialized)
-            .expect("should deserialize from string");
-        */
-
         let serialized = request.to_string();
         let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
         assert_eq!(request, deserialized);
@@ -2227,18 +2205,14 @@ mod tests {
             ..RequestObject::default()
         });
 
-        let serialized = request.to_string();
+        let serialized = urlencode::to_string(&request).expect("should serialize to string");
         assert_snapshot!("authorization_format", &serialized, {
             ".code" => "[code]",
         });
 
-        let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
+        let deserialized: AuthorizationRequest =
+            urlencode::from_str(&serialized).expect("should deserialize from string");
         assert_eq!(request, deserialized);
-
-        /*
-        let serialized = serde_urlencoded::to_string(&request).expect("should serialize to string");
-        let deserialized =serde_urlencoded::from_str::<AuthorizationRequest>(&serialized).expect("should deserialize from string");
-        */
     }
 
     #[test]
