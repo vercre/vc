@@ -81,7 +81,7 @@ impl Context {
         // grant_type
         match &request.grant_type {
             TokenGrantType::PreAuthorizedCode { tx_code, .. } => {
-                let Stage::PreAuthorized(auth_state) = &self.state.stage else {
+                let Stage::Offered(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("pre-authorized state not set".into()));
                 };
 
@@ -148,7 +148,7 @@ impl Context {
 
         let (authorization_details, authorized) = match &request.grant_type {
             TokenGrantType::PreAuthorizedCode { .. } => {
-                let Stage::PreAuthorized(auth_state) = &self.state.stage else {
+                let Stage::Offered(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("pre-authorized state not set".into()));
                 };
 
@@ -327,9 +327,9 @@ mod tests {
 
         let provider = Provider::new();
 
-        // set up PreAuthorized state
+        // set up Offered state
         let state = State {
-            stage: Stage::PreAuthorized(PreAuthorization {
+            stage: Stage::Offered(PreAuthorization {
                 items: vec![AuthorizedItem {
                     item: ItemType::AuthorizationDetail(AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,

@@ -162,7 +162,7 @@ async fn process(
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
             subject_id: request.subject_id.clone(),
-            stage: Stage::PreAuthorized(PreAuthorization {
+            stage: Stage::Offered(PreAuthorization {
                 items: authorize(provider, &request).await?,
                 tx_code: tx_code.clone(),
             }),
@@ -178,7 +178,7 @@ async fn process(
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
             subject_id: request.subject_id.clone(),
-            stage: Stage::Offered(credential_offer.clone()),
+            stage: Stage::Pending(credential_offer.clone()),
         };
 
         let state_key = state_key(credential_offer.grants.as_ref())?;
@@ -200,7 +200,7 @@ async fn process(
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
             subject_id: request.subject_id,
-            stage: Stage::Offered(credential_offer),
+            stage: Stage::Pending(credential_offer),
         };
         StateStore::put(provider, &uri_token, &state, state.expires_at)
             .await
@@ -296,7 +296,7 @@ fn credential_offer(request: &CreateOfferRequest) -> CredentialOffer {
         };
 
         grants.pre_authorized_code = Some(PreAuthorizedCodeGrant {
-            pre_authorized_code: auth_code.clone(),
+            pre_authorized_code: auth_code,
             tx_code: tx_code_def,
             authorization_server: None,
         });
@@ -374,7 +374,7 @@ mod tests {
             ".stage.tx_code" => "[tx_code]"
         });
 
-        assert_let!(Stage::PreAuthorized(auth_state), &state.stage);
+        assert_let!(Stage::Offered(auth_state), &state.stage);
         assert_eq!(auth_state.tx_code, response.tx_code);
     }
 }

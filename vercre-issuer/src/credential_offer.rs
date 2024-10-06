@@ -45,7 +45,6 @@ async fn process(
     let state = StateStore::get::<State>(provider, &request.id)
         .await
         .map_err(|e| Error::ServerError(format!("issue fetching state: {e}")))?;
-
     StateStore::purge(provider, &request.id)
         .await
         .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
@@ -54,7 +53,7 @@ async fn process(
         return Err(Error::InvalidRequest("state expired".into()));
     }
 
-    let Stage::Offered(credential_offer) = state.stage.clone() else {
+    let Stage::Pending(credential_offer) = state.stage.clone() else {
         return Err(Error::InvalidRequest("no credential offer found".into()));
     };
 

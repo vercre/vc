@@ -47,11 +47,11 @@ pub enum Stage {
 
     /// Holds a Credential Offer awaiting retrieval by the Wallet. The Wallet
     /// has been sent a unique URL it can use to retrieve the offer.
-    Offered(CredentialOffer),
+    Pending(CredentialOffer),
 
     /// Holds pre-authorized offer data as presented to the Wallet. This data is
     /// used when validating the Wallet's request for an access token.
-    PreAuthorized(PreAuthorization),
+    Offered(PreAuthorization),
 
     /// Holds a Pushed Authorization Request awaiting retrieval by the Wallet.
     PushedAuthorization(PushedAuthorization),
