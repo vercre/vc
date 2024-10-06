@@ -51,7 +51,7 @@ pub enum Stage {
 
     /// Holds pre-authorized offer data as presented to the Wallet. This data is
     /// used when validating the Wallet's request for an access token.
-    Offered(PreAuthorization),
+    Offered(Offer),
 
     /// Holds a Pushed Authorization Request awaiting retrieval by the Wallet.
     PushedAuthorization(PushedAuthorization),
@@ -75,10 +75,10 @@ pub enum Stage {
 
 /// Pre-authorization state from the `create_offer` endpoint.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct PreAuthorization {
+pub struct Offer {
     /// A list of `authorization_details` entries referencing credentials the
     /// Wallet is authorized to request.
-    pub items: Vec<AuthorizedItem>,
+    pub items: Option<Vec<AuthorizedItem>>,
 
     /// Transaction code sent to the holder to use (if present)when requesting
     /// an access token.

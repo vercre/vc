@@ -151,9 +151,12 @@ impl Context {
                 let Stage::Offered(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("pre-authorized state not set".into()));
                 };
+                let Some(auth_items) = &auth_state.items else {
+                    return Err(Error::ServerError("no authorized items".into()));
+                };
 
                 // get the subset of requested credentials from those previously authorized
-                let retained_items = retain_details(provider, &request, &auth_state.items).await?;
+                let retained_items = retain_details(provider, &request, auth_items).await?;
                 let authorized_details = authorized_details(&retained_items);
                 let authorized = authorized_credentials(&retained_items);
                 (authorized_details, authorized)
@@ -318,7 +321,7 @@ mod tests {
     use vercre_test_utils::snapshot;
 
     use super::*;
-    use crate::state::{Authorization, PreAuthorization};
+    use crate::state::{Authorization, Offer};
 
     #[tokio::test]
     async fn pre_authorized() {
@@ -329,8 +332,8 @@ mod tests {
 
         // set up Offered state
         let state = State {
-            stage: Stage::Offered(PreAuthorization {
-                items: vec![AuthorizedItem {
+            stage: Stage::Offered(Offer {
+                items: Some(vec![AuthorizedItem {
                     item: ItemType::AuthorizationDetail(AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
                         credential: CredentialAuthorization::ConfigurationId {
@@ -341,7 +344,7 @@ mod tests {
                     }),
                     credential_configuration_id: "EmployeeID_JWT".into(),
                     credential_identifiers: vec!["PHLEmployeeID".into()],
-                }],
+                }]),
                 tx_code: Some("1234".into()),
             }),
             subject_id: Some(NORMAL_USER.into()),

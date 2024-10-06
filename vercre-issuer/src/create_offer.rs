@@ -75,7 +75,7 @@ use vercre_openid::issuer::{
 };
 use vercre_openid::{Error, Result};
 
-use crate::state::{AuthorizedItem, Expire, ItemType, PreAuthorization, Stage, State};
+use crate::state::{AuthorizedItem, Expire, ItemType, Offer, Stage, State};
 
 /// Invoke request handler generates and returns a Credential Offer.
 ///
@@ -157,31 +157,25 @@ async fn process(
         None
     };
 
-    // save pre-authorized details to state
-    if grant_types.contains(&GrantType::PreAuthorizedCode) {
+    // save offer details to state
+    if grant_types.contains(&GrantType::PreAuthorizedCode)
+        || grant_types.contains(&GrantType::AuthorizationCode)
+    {
+        let auth_items = if grant_types.contains(&GrantType::PreAuthorizedCode) {
+            Some(authorize(provider, &request).await?)
+        } else {
+            None
+        };
+        let state_key = state_key(credential_offer.grants.as_ref())?;
+
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
             subject_id: request.subject_id.clone(),
-            stage: Stage::Offered(PreAuthorization {
-                items: authorize(provider, &request).await?,
+            stage: Stage::Offered(Offer {
+                items: auth_items,
                 tx_code: tx_code.clone(),
             }),
         };
-
-        let state_key = state_key(credential_offer.grants.as_ref())?;
-        StateStore::put(provider, &state_key, &state, state.expires_at)
-            .await
-            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
-    }
-
-    if grant_types.contains(&GrantType::AuthorizationCode) {
-        let state = State {
-            expires_at: Utc::now() + Expire::Authorized.duration(),
-            subject_id: request.subject_id.clone(),
-            stage: Stage::Pending(credential_offer.clone()),
-        };
-
-        let state_key = state_key(credential_offer.grants.as_ref())?;
         StateStore::put(provider, &state_key, &state, state.expires_at)
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
@@ -222,16 +216,11 @@ async fn authorize(
 ) -> Result<Vec<AuthorizedItem>> {
     // skip authorization if not pre-authorized
 
-    let Some(subject_id) = &request.subject_id else {
-        return Err(Error::InvalidRequest(
-            "`subject_id` must be set for pre-authorized offers".into(),
-        ));
-    };
-
     let mut authorized = vec![];
+    let subject_id = request.subject_id.clone().unwrap_or_default();
 
     for config_id in request.credential_configuration_ids.clone() {
-        let identifiers = Subject::authorize(provider, subject_id, &config_id)
+        let identifiers = Subject::authorize(provider, &subject_id, &config_id)
             .await
             .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
 
@@ -296,7 +285,7 @@ fn credential_offer(request: &CreateOfferRequest) -> CredentialOffer {
         };
 
         grants.pre_authorized_code = Some(PreAuthorizedCodeGrant {
-            pre_authorized_code: auth_code,
+            pre_authorized_code: auth_code.clone(),
             tx_code: tx_code_def,
             authorization_server: None,
         });
@@ -304,7 +293,8 @@ fn credential_offer(request: &CreateOfferRequest) -> CredentialOffer {
 
     if grant_types.contains(&GrantType::AuthorizationCode) {
         grants.authorization_code = Some(AuthorizationCodeGrant {
-            issuer_state: Some(gen::issuer_state()),
+            // issuer_state: Some(gen::issuer_state()),
+            issuer_state: Some(auth_code),
             authorization_server: None,
         });
     }
