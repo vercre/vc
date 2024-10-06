@@ -149,7 +149,6 @@ async fn process(
     tracing::debug!("create_offer::process");
 
     let grant_types = request.grant_types.clone().unwrap_or_default();
-
     let credential_offer = credential_offer(&request);
     let tx_code = if grant_types.contains(&GrantType::PreAuthorizedCode) && request.tx_code_required
     {
@@ -267,7 +266,12 @@ pub fn state_key(credential_offer: &CredentialOffer) -> Result<String> {
 fn credential_offer(request: &CreateOfferRequest) -> CredentialOffer {
     let grant_types = request.grant_types.clone().unwrap_or_default();
 
-    let grants = if grant_types.contains(&GrantType::PreAuthorizedCode) {
+    let mut grants = Grants {
+        authorization_code: None,
+        pre_authorized_code: None,
+    };
+
+    if grant_types.contains(&GrantType::PreAuthorizedCode) {
         let tx_code_def = if request.tx_code_required {
             Some(TxCode {
                 input_mode: Some("numeric".into()),
@@ -278,28 +282,30 @@ fn credential_offer(request: &CreateOfferRequest) -> CredentialOffer {
             None
         };
 
-        Grants {
-            authorization_code: None,
-            pre_authorized_code: Some(PreAuthorizedCodeGrant {
-                pre_authorized_code: gen::auth_code(),
-                tx_code: tx_code_def,
-                authorization_server: None,
-            }),
-        }
+        grants.pre_authorized_code = Some(PreAuthorizedCodeGrant {
+            pre_authorized_code: gen::auth_code(),
+            tx_code: tx_code_def,
+            authorization_server: None,
+        });
+    }
+
+    if grant_types.contains(&GrantType::AuthorizationCode) {
+        grants.authorization_code = Some(AuthorizationCodeGrant {
+            issuer_state: Some(gen::issuer_state()),
+            authorization_server: None,
+        });
+    }
+
+    let grants = if grants.authorization_code.is_some() || grants.pre_authorized_code.is_some() {
+        Some(grants)
     } else {
-        Grants {
-            authorization_code: Some(AuthorizationCodeGrant {
-                issuer_state: Some(gen::issuer_state()),
-                authorization_server: None,
-            }),
-            pre_authorized_code: None,
-        }
+        None
     };
 
     CredentialOffer {
         credential_issuer: request.credential_issuer.clone(),
         credential_configuration_ids: request.credential_configuration_ids.clone(),
-        grants: Some(grants),
+        grants,
     }
 }
 
@@ -325,12 +331,11 @@ mod tests {
             "credential_issuer": CREDENTIAL_ISSUER,
             "credential_configuration_ids": ["EmployeeID_JWT"],
             "subject_id": NORMAL_USER,
-            "grants_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
+            "grant_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
             "tx_code_required": true,
             "send_type": SendType::ByVal,
         });
         let request = serde_json::from_value(value).expect("request is valid");
-
         let response = create_offer(provider.clone(), request).await.expect("response is ok");
 
         assert_snapshot!("create_offer:pre-authorized:response", &response, {

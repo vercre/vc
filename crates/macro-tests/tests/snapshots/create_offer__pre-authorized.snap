@@ -1,12 +1,13 @@
 ---
-source: crates/macros/tests/create_offer.rs
-assertion_line: 21
+source: crates/macro-tests/tests/create_offer.rs
+assertion_line: 22
 expression: "&request"
 ---
 credential_issuer: "http://vercre.io"
 subject_id: normal_user
 credential_configuration_ids:
   - EmployeeID_JWT
-pre-authorize: true
+grant_types:
+  - "urn:ietf:params:oauth:grant-type:pre-authorized_code"
 tx_code_required: true
 send_type: ByVal

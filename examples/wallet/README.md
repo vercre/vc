@@ -30,7 +30,7 @@ initiated by sending a Credential Offer to the wallet.
 RESP=$(curl --json '{
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": "normal_user",
-        "pre-authorize": true,
+         "grant_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
         "tx_code_required": true
     }' \
     http://localhost:8080/create_offer)
@@ -119,7 +119,7 @@ For issuance, run the issuance example service as above then
 RESP=$(curl --json '{
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": "normal_user",
-        "pre-authorize": true,
+         "grant_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
         "tx_code_required": true
     }' \
     http://localhost:8080/create_offer)
