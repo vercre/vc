@@ -113,26 +113,18 @@ pub struct CreateOfferRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subject_id: Option<String>,
 
-    /// A list of credentials (as identified by their metadata ids) to include
-    /// in the offer to the Wallet. Each id identifies one of the keys in
-    /// the name/value pairs stored in the
-    /// `credential_configurations_supported` Credential Issuer
-    /// metadata property. The Wallet uses this string value to obtain the
-    /// respective object that contains information about the Credential
-    /// being offered. For example, this string value can be used to obtain
-    /// scope value to be used in the Authorization Request.
+    /// A list of keys of Credentials in the `credential_configurations_supported`
+    /// Credential Issuer metadata.
+    ///
+    /// The Wallet uses these string values to obtain the respective object
+    /// containing information about the Credential being offered. For example,
+    /// these string values can be used to obtain scope values to be used in
+    /// the Authorization Request.
     pub credential_configuration_ids: Vec<String>,
 
-    // TODO: add support for `authorization_details` parameter
-    // pub authorization_details: Vec<Authorized>,
-    /// Whether the Issuer should provide a pre-authorized offer or not. If not
-    /// pre-authorized, the Wallet must request authorization to fulfill the
-    /// offer.
-    /// When set to `true`, only the
-    /// `urn:ietf:params:oauth:grant-type:pre-authorized_code` Grant Type
-    /// will be set in the returned Credential Offer.
-    #[serde(rename = "pre-authorize")]
-    pub pre_authorize: bool,
+    /// The Grant Types to include in the Offer.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub grant_types: Option<Vec<GrantType>>,
 
     /// Specifies whether a Transaction Code (PIN) is required by the `token`
     /// endpoint during the Pre-Authorized Code Flow.
@@ -1534,6 +1526,14 @@ pub struct Issuer {
     /// value is a Credential object containing metadata about specific
     /// credential.
     pub credential_configurations_supported: HashMap<String, CredentialConfiguration>,
+    //
+    // // TODO: Ddo we want to support this??
+    // /// The Client ID provided by the Issuer when a Wallet is not pre-registered.
+    // /// with the Authorization Server.
+    // ///
+    // /// <https://identity.foundation/jwt-vc-issuance-profile/#using-of-public_client_id-as-a-client_id>
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub public_client_id: Option<String>,
 }
 
 impl Issuer {

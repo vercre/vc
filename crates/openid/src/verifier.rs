@@ -12,7 +12,7 @@ use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
-use vercre_core::{ urlencode, Kind};
+use vercre_core::{urlencode, Kind};
 pub use vercre_datasec::SecOps;
 use vercre_did::DidResolver;
 use vercre_dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};

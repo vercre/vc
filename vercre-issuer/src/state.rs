@@ -47,11 +47,11 @@ pub enum Stage {
 
     /// Holds a Credential Offer awaiting retrieval by the Wallet. The Wallet
     /// has been sent a unique URL it can use to retrieve the offer.
-    Offered(Offer),
+    Pending(CredentialOffer),
 
     /// Holds pre-authorized offer data as presented to the Wallet. This data is
     /// used when validating the Wallet's request for an access token.
-    PreAuthorized(PreAuthorization),
+    Offered(Offer),
 
     /// Holds a Pushed Authorization Request awaiting retrieval by the Wallet.
     PushedAuthorization(PushedAuthorization),
@@ -71,6 +71,19 @@ pub enum Stage {
 
     /// Deferred issuance state.
     Deferred(Deferrance),
+}
+
+/// Pre-authorization state from the `create_offer` endpoint.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Offer {
+    /// A list of `authorization_details` entries referencing credentials the
+    /// Wallet is authorized to request.
+    pub items: Option<Vec<AuthorizedItem>>,
+
+    /// Transaction code sent to the holder to use (if present)when requesting
+    /// an access token.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tx_code: Option<String>,
 }
 
 /// Holds data used during the issuance of a credential.
@@ -93,35 +106,6 @@ pub struct Authorized {
     /// containing subset of claims.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub claim_ids: Option<Vec<String>>,
-}
-
-/// Pre-authorization state from the `create_offer` endpoint.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-#[allow(clippy::struct_field_names)]
-pub struct Offer {
-    /// Credential Offer, ready for the client to retrieve.
-    pub credential_offer: CredentialOffer,
-
-    /// A list of `authorization_details` entries referencing credentials the
-    /// Wallet is authorized to request.
-    pub items: Vec<AuthorizedItem>,
-
-    /// Transaction code for pre-authorized offers.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tx_code: Option<String>,
-}
-
-/// Pre-authorization state from the `create_offer` endpoint.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct PreAuthorization {
-    /// A list of `authorization_details` entries referencing credentials the
-    /// Wallet is authorized to request.
-    pub items: Vec<AuthorizedItem>,
-
-    /// Transaction code sent to the holder to use (if present)when requesting
-    /// an access token.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tx_code: Option<String>,
 }
 
 /// Authorization state.

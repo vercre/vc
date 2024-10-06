@@ -1,11 +1,10 @@
 ---
-source: crates/macros/tests/create_offer.rs
-assertion_line: 36
+source: crates/macro-tests/tests/create_offer.rs
+assertion_line: 32
 expression: "&request"
 ---
 credential_issuer: "http://vercre.io"
 credential_configuration_ids:
   - EmployeeID_JWT
-pre-authorize: false
 tx_code_required: false
 send_type: ByVal

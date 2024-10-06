@@ -8,6 +8,7 @@ use crate::parse::{Json, Value};
 // doing basic validation and setting sensible defaults.
 pub fn request(input: &Json) -> Result<TokenStream> {
     let span = Span::call_site();
+    let path = quote! {vercre_issuer};
 
     let mut input = input.clone();
 
@@ -26,7 +27,8 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     }
 
     // use default values if not set
-    let pre_authorize = input.get("pre-authorize").unwrap_or(Value::Bool(false));
+    let grant_types = grant_types(input.get("grant_types"))?;
+
     let tx_code_required = input.get("tx_code_required").unwrap_or(Value::Bool(false));
     let send_type =
         input.get("send_type").map_or_else(|| quote! {SendType::ByVal}, |v| quote! {#v.into()});
@@ -34,16 +36,43 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     // return error for any unexpected fields
     input.check_consumed()?;
 
-    let path = quote! {vercre_issuer};
-
     Ok(quote! {
         #path::CreateOfferRequest {
             credential_issuer: #credential_issuer,
             subject_id: #subject_id,
             credential_configuration_ids: #credential_configuration_ids,
-            pre_authorize: #pre_authorize,
+            grant_types: #grant_types,
             tx_code_required: #tx_code_required,
             send_type:  #send_type,
         }
     })
+}
+
+fn grant_types(input: Option<Value>) -> Result<TokenStream> {
+    let span = Span::call_site();
+    let path = quote! {vercre_issuer};
+
+    if let Some(gts) = input {
+        let mut tokens = TokenStream::new();
+
+        for gt in gts.as_array().unwrap() {
+            match gt.as_str().unwrap() {
+                "urn:ietf:params:oauth:grant-type:pre-authorized_code" => {
+                    tokens.extend(quote! {#path::GrantType::PreAuthorizedCode});
+                }
+                "authorization_code" => {
+                    tokens.extend(quote! {#path::GrantType::AuthorizationCode});
+                }
+                _ => {
+                    return Err(Error::new(
+                        span,
+                        format!("unsupported grant type: {}", gt.as_str().unwrap()),
+                    ));
+                }
+            }
+        }
+        Ok(quote! {Some(vec![#tokens])})
+    } else {
+        Ok(quote! {None})
+    }
 }
