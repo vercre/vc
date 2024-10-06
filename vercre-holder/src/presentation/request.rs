@@ -57,7 +57,6 @@ pub async fn request(
 
     // Parse or get-then-parse the presentation request
     let req_obj = if request.contains("&presentation_definition") {
-        
         urlencode::from_str::<RequestObject>(request).map_err(|e| {
             tracing::error!(target: "Endpoint::request", ?e);
             anyhow!("issue parsing RequestObject: {e}")

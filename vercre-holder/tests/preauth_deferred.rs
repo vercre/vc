@@ -7,9 +7,10 @@ mod provider;
 use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
-use vercre_holder::{issuance::{
+use vercre_holder::issuance::{
     AcceptRequest, CredentialsRequest, DeferredRequest, OfferRequest, PinRequest,
-}, provider::CredentialStorer};
+};
+use vercre_holder::provider::CredentialStorer;
 use vercre_issuer::{OfferType, SendType};
 use vercre_macros::create_offer_request;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, PENDING_USER};
@@ -30,7 +31,7 @@ async fn preauth_deferred() {
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": PENDING_USER,
-        "pre-authorize": true,
+        "grant_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
         "tx_code_required": true,
         "send_type": SendType::ByVal,
     });

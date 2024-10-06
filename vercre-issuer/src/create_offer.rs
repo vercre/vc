@@ -70,12 +70,12 @@ use tracing::instrument;
 use vercre_core::gen;
 use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, CreateOfferRequest,
-    CreateOfferResponse, CredentialAuthorization, CredentialOffer, Grants, Metadata, OfferType,
-    PreAuthorizedCodeGrant, Provider, SendType, StateStore, Subject, TxCode,
+    CreateOfferResponse, CredentialAuthorization, CredentialOffer, GrantType, Grants, Metadata,
+    OfferType, PreAuthorizedCodeGrant, Provider, SendType, StateStore, Subject, TxCode,
 };
 use vercre_openid::{Error, Result};
 
-use crate::state::{AuthorizedItem, Expire, ItemType, Offer, PreAuthorization, Stage, State};
+use crate::state::{AuthorizedItem, Expire, ItemType, PreAuthorization, Stage, State};
 
 /// Invoke request handler generates and returns a Credential Offer.
 ///
@@ -97,8 +97,11 @@ async fn verify(provider: &impl Provider, request: &CreateOfferRequest) -> Resul
     let issuer_meta = Metadata::issuer(provider, &request.credential_issuer)
         .await
         .map_err(|e| Error::ServerError(format!("issue getting issuer metadata: {e}")))?;
+    let server_meta = Metadata::server(provider, &request.credential_issuer, None)
+        .await
+        .map_err(|e| Error::ServerError(format!("issue getting issuer metadata: {e}")))?;
 
-    // credential_issuer required
+    // `credential_issuer` required
     if request.credential_issuer.is_empty() {
         return Err(Error::InvalidRequest("no `credential_issuer` specified".into()));
     };
@@ -108,7 +111,7 @@ async fn verify(provider: &impl Provider, request: &CreateOfferRequest) -> Resul
         return Err(Error::InvalidRequest("no credentials requested".into()));
     };
 
-    // requested credential is supported
+    // are requested credential(s) is supported
     for cred_id in &request.credential_configuration_ids {
         if !issuer_meta.credential_configurations_supported.contains_key(cred_id) {
             return Err(Error::UnsupportedCredentialType(
@@ -117,10 +120,24 @@ async fn verify(provider: &impl Provider, request: &CreateOfferRequest) -> Resul
         };
     }
 
-    // subject_id is required
-    if request.pre_authorize && request.subject_id.is_none() {
-        return Err(Error::InvalidRequest("`subject_id` is required for pre-authorization".into()));
-    };
+    // TODO: check requested `grant_types` are supported by OAuth Client
+    if let Some(grant_types) = &request.grant_types {
+        // check requested `grant_types` are supported by OAuth Server
+        if let Some(supported_grants) = &server_meta.oauth.grant_types_supported {
+            for gt in grant_types {
+                if !supported_grants.contains(gt) {
+                    return Err(Error::UnsupportedGrantType("unsupported grant type".into()));
+                };
+            }
+        };
+
+        // subject_id is required for pre-authorized offers
+        if grant_types.contains(&GrantType::PreAuthorizedCode) && request.subject_id.is_none() {
+            return Err(Error::InvalidRequest(
+                "`subject_id` is required for pre-authorization".into(),
+            ));
+        };
+    }
 
     Ok(())
 }
@@ -131,47 +148,61 @@ async fn process(
 ) -> Result<CreateOfferResponse> {
     tracing::debug!("create_offer::process");
 
-    let authorized_items = authorize(provider, &request).await?;
-    let credential_offer = credential_offer(&request);
-    let tx_code =
-        if request.pre_authorize && request.tx_code_required { Some(gen::tx_code()) } else { None };
+    let grant_types = request.grant_types.clone().unwrap_or_default();
 
-    // offer type and corresponding state key
-    let (offer_type, state_key) = if request.send_type == SendType::ByVal {
+    let credential_offer = credential_offer(&request);
+    let tx_code = if grant_types.contains(&GrantType::PreAuthorizedCode) && request.tx_code_required
+    {
+        Some(gen::tx_code())
+    } else {
+        None
+    };
+
+    // save pre-authorized details to state
+    if grant_types.contains(&GrantType::PreAuthorizedCode) {
+        let authorized_items = authorize(provider, &request).await?;
         let state_key = state_key(&credential_offer)?;
-        (OfferType::Object(credential_offer.clone()), state_key)
+
+        let state = State {
+            expires_at: Utc::now() + Expire::Authorized.duration(),
+            subject_id: request.subject_id.clone(),
+            stage: Stage::PreAuthorized(PreAuthorization {
+                items: authorized_items,
+                tx_code: tx_code.clone(),
+            }),
+        };
+        StateStore::put(provider, &state_key, &state, state.expires_at)
+            .await
+            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
+    }
+
+    // respond with Offer object or uri?
+    if request.send_type == SendType::ByVal {
+        Ok(CreateOfferResponse {
+            offer_type: OfferType::Object(credential_offer.clone()),
+            tx_code: tx_code.clone(),
+        })
     } else {
         let uri_token = gen::uri_token();
-        (
-            OfferType::Uri(format!("{}/credential_offer/{uri_token}", request.credential_issuer)),
-            uri_token,
-        )
-    };
 
-    // save state
-    let state_stage = if request.send_type == SendType::ByVal && request.pre_authorize {
-        Stage::PreAuthorized(PreAuthorization {
-            items: authorized_items,
-            tx_code: tx_code.clone(),
-        })
-    } else {
-        Stage::Offered(Offer {
-            credential_offer,
-            items: authorized_items,
-            tx_code: tx_code.clone(),
-        })
-    };
-    let state = State {
-        expires_at: Utc::now() + Expire::Authorized.duration(),
-        subject_id: request.subject_id,
-        stage: state_stage,
-    };
-    StateStore::put(provider, &state_key, &state, state.expires_at)
-        .await
-        .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
+        // save offer to state
+        let state = State {
+            expires_at: Utc::now() + Expire::Authorized.duration(),
+            subject_id: request.subject_id,
+            stage: Stage::Offered(credential_offer),
+        };
+        StateStore::put(provider, &uri_token, &state, state.expires_at)
+            .await
+            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
-    // return response
-    Ok(CreateOfferResponse { offer_type, tx_code })
+        Ok(CreateOfferResponse {
+            offer_type: OfferType::Uri(format!(
+                "{}/credential_offer/{uri_token}",
+                request.credential_issuer
+            )),
+            tx_code,
+        })
+    }
 }
 
 /// Authorize requested credentials for the subject.
@@ -179,9 +210,6 @@ async fn authorize(
     provider: &impl Provider, request: &CreateOfferRequest,
 ) -> Result<Vec<AuthorizedItem>> {
     // skip authorization if not pre-authorized
-    if !request.pre_authorize {
-        return Ok(vec![]);
-    }
 
     let Some(subject_id) = &request.subject_id else {
         return Err(Error::InvalidRequest(
@@ -237,7 +265,9 @@ pub fn state_key(credential_offer: &CredentialOffer) -> Result<String> {
 
 /// Create `CredentialOffer`
 fn credential_offer(request: &CreateOfferRequest) -> CredentialOffer {
-    let grants = if request.pre_authorize {
+    let grant_types = request.grant_types.clone().unwrap_or_default();
+
+    let grants = if grant_types.contains(&GrantType::PreAuthorizedCode) {
         let tx_code_def = if request.tx_code_required {
             Some(TxCode {
                 input_mode: Some("numeric".into()),
@@ -295,7 +325,7 @@ mod tests {
             "credential_issuer": CREDENTIAL_ISSUER,
             "credential_configuration_ids": ["EmployeeID_JWT"],
             "subject_id": NORMAL_USER,
-            "pre-authorize": true,
+            "grants_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
             "tx_code_required": true,
             "send_type": SendType::ByVal,
         });
