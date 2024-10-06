@@ -159,31 +159,29 @@ async fn process(
 
     // save pre-authorized details to state
     if grant_types.contains(&GrantType::PreAuthorizedCode) {
-        let authorized_items = authorize(provider, &request).await?;
-        let state_key = state_key(&credential_offer)?;
-
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
             subject_id: request.subject_id.clone(),
             stage: Stage::PreAuthorized(PreAuthorization {
-                items: authorized_items,
+                items: authorize(provider, &request).await?,
                 tx_code: tx_code.clone(),
             }),
         };
+
+        let state_key = state_key(credential_offer.grants.as_ref())?;
         StateStore::put(provider, &state_key, &state, state.expires_at)
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
     }
 
     if grant_types.contains(&GrantType::AuthorizationCode) {
-        let state_key = state_key(&credential_offer)?;
-
-        // save offer to state
         let state = State {
             expires_at: Utc::now() + Expire::Authorized.duration(),
             subject_id: request.subject_id.clone(),
             stage: Stage::Offered(credential_offer.clone()),
         };
+
+        let state_key = state_key(credential_offer.grants.as_ref())?;
         StateStore::put(provider, &state_key, &state, state.expires_at)
             .await
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
@@ -256,9 +254,9 @@ async fn authorize(
 
 /// Extract `pre_authorized_code` or `issuer_state` from `CredentialOffer` to
 /// use as state key.
-pub fn state_key(credential_offer: &CredentialOffer) -> Result<String> {
+pub fn state_key(grants: Option<&Grants>) -> Result<String> {
     // get pre-authorized code as state key
-    let Some(grants) = &credential_offer.grants else {
+    let Some(grants) = grants else {
         return Err(Error::ServerError("no grants".into()));
     };
 
@@ -273,11 +271,12 @@ pub fn state_key(credential_offer: &CredentialOffer) -> Result<String> {
         return Ok(issuer_state.clone());
     };
 
-    Err(Error::ServerError("no grants".into()))
+    Err(Error::ServerError("no state key".into()))
 }
 
 /// Create `CredentialOffer`
 fn credential_offer(request: &CreateOfferRequest) -> CredentialOffer {
+    let auth_code = gen::auth_code();
     let grant_types = request.grant_types.clone().unwrap_or_default();
 
     let mut grants = Grants {
@@ -297,7 +296,7 @@ fn credential_offer(request: &CreateOfferRequest) -> CredentialOffer {
         };
 
         grants.pre_authorized_code = Some(PreAuthorizedCodeGrant {
-            pre_authorized_code: gen::auth_code(),
+            pre_authorized_code: auth_code.clone(),
             tx_code: tx_code_def,
             authorization_server: None,
         });

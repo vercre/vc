@@ -73,6 +73,19 @@ pub enum Stage {
     Deferred(Deferrance),
 }
 
+/// Pre-authorization state from the `create_offer` endpoint.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub struct PreAuthorization {
+    /// A list of `authorization_details` entries referencing credentials the
+    /// Wallet is authorized to request.
+    pub items: Vec<AuthorizedItem>,
+
+    /// Transaction code sent to the holder to use (if present)when requesting
+    /// an access token.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tx_code: Option<String>,
+}
+
 /// Holds data used during the issuance of a credential.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Authorized {
@@ -93,19 +106,6 @@ pub struct Authorized {
     /// containing subset of claims.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub claim_ids: Option<Vec<String>>,
-}
-
-/// Pre-authorization state from the `create_offer` endpoint.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct PreAuthorization {
-    /// A list of `authorization_details` entries referencing credentials the
-    /// Wallet is authorized to request.
-    pub items: Vec<AuthorizedItem>,
-
-    /// Transaction code sent to the holder to use (if present)when requesting
-    /// an access token.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tx_code: Option<String>,
 }
 
 /// Authorization state.
