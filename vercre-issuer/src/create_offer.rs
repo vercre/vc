@@ -149,7 +149,7 @@ async fn process(
     tracing::debug!("create_offer::process");
 
     let grant_types = request.grant_types.clone().unwrap_or_default();
-    let credential_offer = credential_offer(&request);
+    let credential_offer = credential_offer(provider, &request).await?;
     let tx_code = if grant_types.contains(&GrantType::PreAuthorizedCode) && request.tx_code_required
     {
         Some(gen::tx_code())
@@ -210,6 +210,64 @@ async fn process(
     }
 }
 
+/// Create `CredentialOffer`
+async fn credential_offer(
+    provider: &impl Provider, request: &CreateOfferRequest,
+) -> Result<CredentialOffer> {
+    let auth_code = gen::auth_code();
+    let grant_types = request.grant_types.clone().unwrap_or_default();
+
+    let mut grants = Grants {
+        authorization_code: None,
+        pre_authorized_code: None,
+    };
+
+    // TODO: determine how to select correct server?
+    // select `authorization_server`, if specified
+    let issuer_meta = Metadata::issuer(provider, &request.credential_issuer)
+        .await
+        .map_err(|e| Error::ServerError(format!("issue getting issuer metadata: {e}")))?;
+    let authorization_server = issuer_meta.authorization_servers.map(|servers| servers[0].clone());
+
+    if grant_types.contains(&GrantType::PreAuthorizedCode) {
+        let tx_code_def = if request.tx_code_required {
+            Some(TxCode {
+                input_mode: Some("numeric".into()),
+                length: Some(6),
+                description: Some("Please provide the one-time code received".into()),
+            })
+        } else {
+            None
+        };
+
+        grants.pre_authorized_code = Some(PreAuthorizedCodeGrant {
+            pre_authorized_code: auth_code.clone(),
+            tx_code: tx_code_def,
+            authorization_server: authorization_server.clone(),
+        });
+    }
+
+    if grant_types.contains(&GrantType::AuthorizationCode) {
+        grants.authorization_code = Some(AuthorizationCodeGrant {
+            // issuer_state: Some(gen::issuer_state()),
+            issuer_state: Some(auth_code),
+            authorization_server,
+        });
+    }
+
+    let grants = if grants.authorization_code.is_some() || grants.pre_authorized_code.is_some() {
+        Some(grants)
+    } else {
+        None
+    };
+
+    Ok(CredentialOffer {
+        credential_issuer: request.credential_issuer.clone(),
+        credential_configuration_ids: request.credential_configuration_ids.clone(),
+        grants,
+    })
+}
+
 /// Authorize requested credentials for the subject.
 async fn authorize(
     provider: &impl Provider, request: &CreateOfferRequest,
@@ -261,55 +319,6 @@ pub fn state_key(grants: Option<&Grants>) -> Result<String> {
     };
 
     Err(Error::ServerError("no state key".into()))
-}
-
-/// Create `CredentialOffer`
-fn credential_offer(request: &CreateOfferRequest) -> CredentialOffer {
-    let auth_code = gen::auth_code();
-    let grant_types = request.grant_types.clone().unwrap_or_default();
-
-    let mut grants = Grants {
-        authorization_code: None,
-        pre_authorized_code: None,
-    };
-
-    if grant_types.contains(&GrantType::PreAuthorizedCode) {
-        let tx_code_def = if request.tx_code_required {
-            Some(TxCode {
-                input_mode: Some("numeric".into()),
-                length: Some(6),
-                description: Some("Please provide the one-time code received".into()),
-            })
-        } else {
-            None
-        };
-
-        grants.pre_authorized_code = Some(PreAuthorizedCodeGrant {
-            pre_authorized_code: auth_code.clone(),
-            tx_code: tx_code_def,
-            authorization_server: None,
-        });
-    }
-
-    if grant_types.contains(&GrantType::AuthorizationCode) {
-        grants.authorization_code = Some(AuthorizationCodeGrant {
-            // issuer_state: Some(gen::issuer_state()),
-            issuer_state: Some(auth_code),
-            authorization_server: None,
-        });
-    }
-
-    let grants = if grants.authorization_code.is_some() || grants.pre_authorized_code.is_some() {
-        Some(grants)
-    } else {
-        None
-    };
-
-    CredentialOffer {
-        credential_issuer: request.credential_issuer.clone(),
-        credential_configuration_ids: request.credential_configuration_ids.clone(),
-        grants,
-    }
 }
 
 #[cfg(test)]
