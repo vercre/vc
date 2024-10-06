@@ -63,7 +63,7 @@ pub async fn save(provider: impl HolderProvider, request: &SaveRequest) -> anyho
     }
 
     // Purge state if there are no deferred credentials left to process.
-    if issuance.deferred.is_none() {
+    if issuance.deferred.is_empty() {
         if let Err(e) = StateStore::purge(&provider, &request.issuance_id).await {
             tracing::error!(target: "Endpoint::save", ?e);
             return Err(e);

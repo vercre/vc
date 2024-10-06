@@ -48,8 +48,7 @@ pub async fn deferred(
         return Err(e);
     }
 
-    let mut deferred = issuance.deferred.unwrap_or_default();
-    deferred.remove(&request.transaction_id);
+    issuance.deferred.remove(&request.transaction_id);
 
     let def_cred_request = DeferredCredentialRequest {
         transaction_id: request.transaction_id.clone(),
@@ -83,7 +82,7 @@ pub async fn deferred(
                 issuance.credentials.extend(credentials);
             }
             if let Some(id) = transaction_id {
-                deferred.insert(id, request.credential_configuration_id.clone());
+                issuance.deferred.insert(id, request.credential_configuration_id.clone());
             }
         }
         Err(e) => {
@@ -92,12 +91,9 @@ pub async fn deferred(
         }
     };
 
-    let deferred = if deferred.is_empty() { None } else { Some(deferred) };
-    issuance.deferred = deferred;
-
     // Release issuance state if no more deferred credentials and no
     // credentials to save, otherwise stash the state.
-    if issuance.deferred.is_none() && issuance.credentials.is_empty() {
+    if issuance.deferred.is_empty() && issuance.credentials.is_empty() {
         StateStore::purge(&provider, &issuance.id).await.map_err(|e| {
             tracing::error!(target: "Endpoint::credentials", ?e);
             anyhow!("issue purging state: {e}")
@@ -109,8 +105,14 @@ pub async fn deferred(
         return Err(e);
     };
 
+    let deferred = if issuance.deferred.is_empty() {
+        None
+    } else {
+        Some(issuance.deferred.clone())
+    };
+
     Ok(CredentialsResponse {
         issuance_id: issuance.id,
-        deferred: issuance.deferred.clone(),
+        deferred,
     })
 }

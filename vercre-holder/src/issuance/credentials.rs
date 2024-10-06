@@ -97,8 +97,6 @@ pub async fn credentials(
         e
     })?;
 
-    let mut deferred = HashMap::<String, String>::new();
-
     // If the flow is scope-based then we can't examine authorization details
     // but proceed instead to request credentials by format.
     if issuance.scope.is_some() {
@@ -141,7 +139,7 @@ pub async fn credentials(
                     issuance.credentials.extend(credentials);
                 }
                 if let Some(id) = transaction_id {
-                    deferred.insert(id, cfg_id.to_string());
+                    issuance.deferred.insert(id, cfg_id.to_string());
                 }
             }
             Err(e) => {
@@ -203,7 +201,7 @@ pub async fn credentials(
                             issuance.credentials.extend(credentials);
                         }
                         if let Some(id) = transaction_id {
-                            deferred.insert(id, cfg_id.to_string());
+                            issuance.deferred.insert(id, cfg_id.to_string());
                         }
                     }
                     Err(e) => {
@@ -220,13 +218,6 @@ pub async fn credentials(
             }
         }
     }
-    // Store any deferred transactions in state.
-    let deferred = if deferred.is_empty() {
-        None
-    } else {
-        issuance.deferred = Some(deferred.clone());
-        Some(deferred)
-    };
 
     // Stash the state for the next step (save or cancel or deferred).
     if let Err(e) =
@@ -234,6 +225,12 @@ pub async fn credentials(
     {
         tracing::error!(target: "Endpoint::credentials", ?e);
         return Err(e);
+    };
+
+    let deferred = if issuance.deferred.is_empty() {
+        None
+    } else {
+        Some(issuance.deferred.clone())
     };
 
     Ok(CredentialsResponse {

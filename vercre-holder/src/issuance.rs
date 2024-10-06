@@ -84,7 +84,7 @@ pub struct Issuance {
 
     /// Outstanding deferred credential transaction IDs (key) and corresponding
     /// credential configuration IDs (value).
-    pub deferred: Option<HashMap<String, String>>,
+    pub deferred: HashMap<String, String>,
 
     /// Identifier to pass back to the issuer to notify of the success or
     /// otherwise of the credential issuance.
