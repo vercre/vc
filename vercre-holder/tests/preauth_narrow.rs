@@ -32,7 +32,7 @@ async fn preauth_narrow() {
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT", "Developer_JWT"],
         "subject_id": NORMAL_USER,
-        "pre-authorize": true,
+        "grant_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
         "tx_code_required": false, // no user PIN required
         "send_type": SendType::ByVal,
     });

@@ -1,11 +1,11 @@
 ---
 source: vercre-issuer/src/create_offer.rs
-assertion_line: 326
+assertion_line: 362
 expression: "&state"
 ---
 subject_id: normal_user
 stage:
-  pre_authorized:
+  offered:
     items:
       - AuthorizationDetail:
           type: openid_credential

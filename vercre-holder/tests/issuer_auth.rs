@@ -29,7 +29,7 @@ async fn issuer_auth() {
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": NORMAL_USER,
-        "pre-authorize": false,
+        "grant_types": ["authorization_code"],
         "tx_code_required": false,
         "send_type": SendType::ByVal,
     });
