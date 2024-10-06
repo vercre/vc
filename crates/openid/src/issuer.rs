@@ -108,11 +108,6 @@ pub struct CreateOfferRequest {
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub credential_issuer: String,
 
-    //---
-    // /// The Wallet's client ID OR the `public_client_id` specified in the
-    // /// Credential Issuer metadata.
-    // pub client_id: String,
-    // ---
     /// Identifies the (previously authenticated) Holder in order that Issuer
     /// can authorize credential issuance.
     #[serde(skip_serializing_if = "Option::is_none")]

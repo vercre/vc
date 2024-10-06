@@ -175,6 +175,20 @@ async fn process(
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
     }
 
+    if grant_types.contains(&GrantType::AuthorizationCode) {
+        let state_key = state_key(&credential_offer)?;
+
+        // save offer to state
+        let state = State {
+            expires_at: Utc::now() + Expire::Authorized.duration(),
+            subject_id: request.subject_id.clone(),
+            stage: Stage::Offered(credential_offer.clone()),
+        };
+        StateStore::put(provider, &state_key, &state, state.expires_at)
+            .await
+            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
+    }
+
     // respond with Offer object or uri?
     if request.send_type == SendType::ByVal {
         Ok(CreateOfferResponse {

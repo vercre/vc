@@ -45,9 +45,10 @@ async fn process(
     let state = StateStore::get::<State>(provider, &request.id)
         .await
         .map_err(|e| Error::ServerError(format!("issue fetching state: {e}")))?;
-    StateStore::purge(provider, &request.id)
-        .await
-        .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
+
+    // StateStore::purge(provider, &request.id)
+    //     .await
+    //     .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
 
     if state.is_expired() {
         return Err(Error::InvalidRequest("state expired".into()));
