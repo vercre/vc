@@ -121,6 +121,7 @@ pub use credential::credential;
 pub use credential_offer::credential_offer;
 pub use deferred::deferred;
 pub use metadata::metadata;
+pub use notification::notification;
 pub use oauth_server::oauth_server;
 pub use par::par;
 pub use register::register;
