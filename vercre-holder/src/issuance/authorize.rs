@@ -17,8 +17,8 @@ use tracing::instrument;
 use vercre_core::pkce;
 use vercre_issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    CredentialAuthorization, CredentialDefinition, FormatIdentifier, ProfileClaims, RequestObject,
-    TokenGrantType, TokenRequest,
+    CredentialAuthorization, CredentialDefinition, FormatIdentifier, GrantType, ProfileClaims,
+    RequestObject, TokenGrantType, TokenRequest,
 };
 
 use super::{Issuance, Status};
@@ -106,19 +106,32 @@ pub async fn authorize(
                 Ok(issuance) => {
                     // The grants must support authorized flow.
                     //
-                    // TODO: The wallet is supposed to handle the case where there are no
-                    // grants by using issuer metadata to determine the required grants. Look
-                    // up server metadata to determine the required grants.
-                    let Some(grants) = issuance.offer.grants.clone() else {
-                        let e = anyhow!("no grants in offer is not supported");
-                        tracing::error!(target: "Endpoint::authorize", ?e);
-                        return Err(e);
+                    // If there are no grants on the offer, look up auth server
+                    // metadata to determine the suppored grants.
+                    if let Some(grants) = issuance.offer.grants.clone() {
+                        if grants.authorization_code.is_none()
+                            || issuance.status != Status::Accepted
+                        {
+                            let e = anyhow!("invalid issuance state. Must be accepted and support authorization issuance flow");
+                            tracing::error!(target: "Endpoint::authorize", ?e);
+                            return Err(e);
+                        }
+                    } else {
+                        let Some(grant_types) =
+                            &issuance.authorization_server.oauth.grant_types_supported
+                        else {
+                            let e = anyhow!("no grants in offer is not supported");
+                            tracing::error!(target: "Endpoint::authorize", ?e);
+                            return Err(e);
+                        };
+                        if !grant_types.contains(&GrantType::AuthorizationCode)
+                            || issuance.status != Status::Accepted
+                        {
+                            let e = anyhow!("invalid issuance state. Must be accepted and support authorization issuance flow");
+                            tracing::error!(target: "Endpoint::authorize", ?e);
+                            return Err(e);
+                        }
                     };
-                    if grants.authorization_code.is_none() || issuance.status != Status::Accepted {
-                        let e = anyhow!("invalid issuance state. Must be accepted and support authorization issuance flow");
-                        tracing::error!(target: "Endpoint::authorize", ?e);
-                        return Err(e);
-                    }
                     issuance
                 }
                 Err(e) => {
@@ -217,15 +230,14 @@ fn authorization_request(
     };
     let issuer_state = match request.initiator {
         Initiator::Issuer { .. } => {
-            // TODO: If there are no grants in the offer, the wallet should
-            // look up server metadata to get authorized code grant information.
-            let Some(grants) = issuance.offer.grants.clone() else {
-                return Err(anyhow!("no grants in offer is not supported"));
-            };
-            let Some(auth_code) = &grants.authorization_code else {
-                return Err(anyhow!("no authorization code grant in offer"));
-            };
-            auth_code.issuer_state.clone()
+            if let Some(grants) = issuance.offer.grants.clone() {
+                grants
+                    .authorization_code
+                    .as_ref()
+                    .and_then(|auth_code| auth_code.issuer_state.clone())
+            } else {
+                None
+            }
         }
         Initiator::Wallet { .. } => None,
     };

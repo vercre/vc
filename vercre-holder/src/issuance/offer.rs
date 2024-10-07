@@ -12,7 +12,8 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, Grants};
+use vercre_issuer::{AuthorizationCodeGrant, PreAuthorizedCodeGrant};
+use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, GrantType, Grants};
 
 use super::{Issuance, Status};
 use crate::provider::{HolderProvider, StateStore};
@@ -73,15 +74,6 @@ pub async fn offer(
         tracing::error!(target: "Endpoint::offer", ?e);
         return Err(e);
     }
-    // TODO: The wallet is supposed to handle the case where there are no
-    // grants by using issuer metadata to determine the required grants. However,
-    // the metata specification does not currently include this information. Until
-    // it does, we return an error here.
-    let Some(grants) = request.offer.grants.clone() else {
-        let e = anyhow!("no grants in offer is not supported");
-        tracing::error!(target: "Endpoint::offer", ?e);
-        return Err(e);
-    };
 
     // Establish a new issuance flow state
     let mut issuance = Issuance::new(&request.client_id);
@@ -94,6 +86,34 @@ pub async fn offer(
         tracing::error!(target: "Endpoint::offer", ?e);
         e
     })?;
+
+    // Either the offer has grants supported or the OAuth server does. If not,
+    // we can't proceed.
+    let grants = if let Some(grants) = request.offer.grants.clone() {
+        grants
+    } else {
+        let Some(grant_types) = issuance.authorization_server.oauth.grant_types_supported.clone()
+        else {
+            let e = anyhow!("no grants in offer is not supported");
+            tracing::error!(target: "Endpoint::offer", ?e);
+            return Err(e);
+        };
+        let authorization_code = if grant_types.contains(&GrantType::AuthorizationCode) {
+            Some(AuthorizationCodeGrant::default())
+        } else {
+            None
+        };
+        let pre_authorized_code = if grant_types.contains(&GrantType::PreAuthorizedCode) {
+            Some(PreAuthorizedCodeGrant::default())
+        } else {
+            None
+        };
+        Grants {
+            authorization_code,
+            pre_authorized_code,
+        }
+    };
+
     issuance.status = Status::Ready;
 
     // Stash the state for the next step.
