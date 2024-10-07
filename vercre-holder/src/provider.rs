@@ -14,7 +14,8 @@ pub use vercre_dif_exch::Constraints;
 pub use vercre_issuer::{
     AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse,
     DeferredCredentialRequest, DeferredCredentialResponse, MetadataRequest, MetadataResponse,
-    OAuthServerRequest, OAuthServerResponse, TokenRequest, TokenResponse, TxCode,
+    NotificationRequest, NotificationResponse, OAuthServerRequest, OAuthServerResponse,
+    TokenRequest, TokenResponse, TxCode,
 };
 pub use vercre_openid::provider::{Result, StateStore};
 use vercre_openid::verifier::{RequestObjectResponse, ResponseRequest, ResponseResponse};
@@ -68,6 +69,11 @@ pub trait Issuer {
 
     /// Get a base64 encoded form of the credential logo.
     fn logo(&self, logo_url: &str) -> impl Future<Output = anyhow::Result<Logo>> + Send;
+
+    /// Notify the issuer of issuance progress.
+    fn notification(
+        &self, req: NotificationRequest,
+    ) -> impl Future<Output = anyhow::Result<NotificationResponse>> + Send;
 }
 
 /// Allows the wallet to interact with a verifier's services that are compliant

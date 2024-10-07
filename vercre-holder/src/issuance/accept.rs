@@ -120,7 +120,7 @@ fn narrow_scope(
     };
     let mut auth_details = Vec::new();
     for auth_spec in accept {
-        let claims: Option<ProfileClaims> = match auth_spec.claims.clone() {
+        let claims: Option<ProfileClaims> = match &auth_spec.claims {
             Some(claims) => {
                 let Some(credential_configuration) =
                     offered.get(&auth_spec.credential_configuration_id)
@@ -132,11 +132,11 @@ fn narrow_scope(
                     FormatIdentifier::JwtVcJson(_)
                     | FormatIdentifier::JwtVcJsonLd(_)
                     | FormatIdentifier::LdpVc(_) => ProfileClaims::W3c(CredentialDefinition {
-                        credential_subject: Some(claims),
+                        credential_subject: Some(claims.clone()),
                         ..CredentialDefinition::default()
                     }),
-                    FormatIdentifier::IsoMdl(_) => ProfileClaims::IsoMdl(claims),
-                    FormatIdentifier::VcSdJwt(_) => ProfileClaims::SdJwt(claims),
+                    FormatIdentifier::IsoMdl(_) => ProfileClaims::IsoMdl(claims.clone()),
+                    FormatIdentifier::VcSdJwt(_) => ProfileClaims::SdJwt(claims.clone()),
                 };
                 Some(profile)
             }

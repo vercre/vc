@@ -8,7 +8,7 @@ use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::issuance::{
-    AcceptRequest, CredentialsRequest, DeferredRequest, OfferRequest, PinRequest,
+    AcceptRequest, CredentialsRequest, DeferredRequest, OfferRequest, PinRequest, SaveRequest,
 };
 use vercre_holder::provider::CredentialStorer;
 use vercre_issuer::{OfferType, SendType};
@@ -105,6 +105,15 @@ async fn preauth_deferred() {
         vercre_holder::issuance::deferred(HOLDER_PROVIDER.clone(), &deferred_req)
             .await
             .expect("should process deferred");
+        vercre_holder::issuance::save(
+            HOLDER_PROVIDER.clone(),
+            &SaveRequest {
+                issuance_id: issuance.issuance_id.clone(),
+            },
+        )
+        .await
+        .expect("should save credentials");
+
         let credentials = CredentialStorer::find(&HOLDER_PROVIDER.clone(), None)
             .await
             .expect("should retrieve all credentials");
