@@ -192,9 +192,8 @@ impl Context {
             FormatIdentifier::JwtVcJson(w3c) => {
                 self.jwt_vc_json(provider, &request, &w3c.credential_definition, dataset).await?
             }
-            FormatIdentifier::IsoMdl(_mdl) => {
-                //&mdl.doctype
-                todo!()
+            FormatIdentifier::IsoMdl(mdl) => {
+                self.mso_mdoc(provider, &request, &mdl.doctype, dataset).await?
             }
             _ => todo!(),
         };
@@ -248,6 +247,20 @@ impl Context {
                 .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
 
         Ok(CredentialResponseType::Credential(Kind::String(jwt)))
+    }
+
+    // Generate a `mso_mdoc` format credential.
+    //
+    // Base64url-encoded representation of the CBOR-encoded IssuerSigned structure,
+    // as defined in [ISO.18013-5](https://www.iso.org/standard/69084.html).
+    async fn mso_mdoc(
+        &self, _provider: &impl Provider, _request: &CredentialRequest, _doc_type: &str,
+        _dataset: Dataset,
+    ) -> Result<CredentialResponseType> {
+        //
+
+        // Ok(CredentialResponseType::Credential(Kind::String(jwt)))
+        todo!()
     }
 
     // Generate a W3C Verifiable Credential.

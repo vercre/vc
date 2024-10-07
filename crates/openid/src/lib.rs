@@ -11,6 +11,7 @@
 
 mod error;
 pub mod issuer;
+pub mod mso_mdoc;
 pub mod oauth;
 pub mod provider;
 pub mod verifier;

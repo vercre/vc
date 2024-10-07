@@ -71,23 +71,6 @@ pub trait Subject: Send + Sync {
     ) -> impl Future<Output = provider::Result<Dataset>> + Send;
 }
 
-/// Supported Holder authentication credential types.
-pub enum Credentials {
-    /// Username and password.
-    Password {
-        /// The username.
-        username: String,
-
-        /// The password.
-        password: String,
-    },
-    //
-    // /// A Verifiable Credential.
-    // VerifiableCredential(VerifiableCredential),
-
-    // /// A JWT.
-    // Jwt(String),
-}
 
 /// The user information returned by the Subject trait.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -2105,6 +2088,7 @@ pub enum NotificationEvent {
 /// Use of the HTTP status code 204 (No Content) is RECOMMENDED.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct NotificationResponse {}
+
 
 #[cfg(test)]
 mod tests {
