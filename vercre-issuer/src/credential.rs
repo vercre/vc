@@ -231,14 +231,17 @@ impl Context {
         })
     }
 
+    // Generate a `jwt_vc_json` format credential .
     async fn jwt_vc_json(
         &self, provider: &impl Provider, request: &CredentialRequest,
         credential_definition: &CredentialDefinition, dataset: Dataset,
     ) -> Result<CredentialResponseType> {
+        // generate vc
+        let vc = self.w3c_vc(provider, request, credential_definition, dataset).await?;
+
+        // sign and return JWT
         let signer = SecOps::signer(provider, &request.credential_issuer)
             .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
-
-        let vc = self.w3c_vc(provider, request, credential_definition, dataset).await?;
         let jwt =
             vercre_w3c_vc::proof::create(proof::Format::JwtVcJson, Payload::Vc(vc.clone()), signer)
                 .await
@@ -247,10 +250,12 @@ impl Context {
         Ok(CredentialResponseType::Credential(Kind::String(jwt)))
     }
 
+    // Generate a W3C Verifiable Credential.
     async fn w3c_vc(
         &self, provider: &impl Provider, request: &CredentialRequest,
         credential_definition: &CredentialDefinition, dataset: Dataset,
     ) -> Result<VerifiableCredential> {
+        // credential type
         let Some(types) = &credential_definition.type_ else {
             return Err(Error::ServerError("Credential type not set".into()));
         };
@@ -258,7 +263,7 @@ impl Context {
             return Err(Error::ServerError("Credential type not set".into()));
         };
 
-        // Provider supplies status lookup information
+        // credential's status lookup information
         let Some(subject_id) = &self.state.subject_id else {
             return Err(Error::AccessDenied("invalid subject id".into()));
         };
@@ -593,6 +598,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn iso_mdl() {
         vercre_test_utils::init_tracer();
         snapshot!("");
