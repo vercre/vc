@@ -1,0 +1,34 @@
+[package]
+name = "vercre-iso-mdl"
+description = "Primary Verifiable Credential building blocks, including dependencies."
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+exclude.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[lib]
+# crate-type = ["cdylib", "rlib"]
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow.workspace = true
+base64ct.workspace = true
+chrono.workspace = true
+ciborium = "0.2.2"
+coset = "0.3.8"
+serde.workspace = true
+tracing.workspace = true
+uuid.workspace = true
+vercre-core.workspace = true
+
+[dev-dependencies]
+tracing-subscriber.workspace = true
