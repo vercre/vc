@@ -16,9 +16,9 @@ use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
-    CredentialIssuance, CredentialRequest, CredentialResponse, CredentialResponseType, Dataset,
-    FormatIdentifier, Issuer, Metadata, MultipleProofs, Proof, ProofClaims, Provider, SingleProof,
-    StateStore, Subject,
+    CredentialDefinition, CredentialIssuance, CredentialRequest, CredentialResponse,
+    CredentialResponseType, Dataset, FormatIdentifier, Issuer, Metadata, MultipleProofs, Proof,
+    ProofClaims, Provider, SingleProof, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_status::issuer::Status;
@@ -26,7 +26,7 @@ use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{self, Payload};
 use vercre_w3c_vc::verify_key;
 
-use crate::state::{Authorized, Credential, Deferrance, Expire, Stage, State};
+use crate::state::{Authorized, Deferrance, Expire, Stage, State};
 
 /// Credential request handler.
 ///
@@ -167,91 +167,37 @@ impl Context {
     ) -> Result<CredentialResponse> {
         tracing::debug!("credential::process");
 
-        // sign and return VC or defer issuance
-        if let Some(vc) = self.issue_vc(provider, &request).await? {
-            self.issue_response(provider, request, vc).await
-        } else {
-            self.defer_response(provider, request).await
+        let dataset = self.dataset(provider, &request).await?;
+
+        // defer issuance as claims are pending (approval)
+        if dataset.pending {
+            return self.defer_response(provider, request).await;
         }
+
+        // issue VC
+        self.issue_response(provider, request, dataset).await
     }
 
-    // Attempt to generate a Verifiable Credential from information provided in
-    // the Credential Request. May return `None` if the credential is not ready
-    // to be issued because the request for Subject is pending.
-    async fn issue_vc(
-        &self, provider: &impl Provider, request: &CredentialRequest,
-    ) -> Result<Option<VerifiableCredential>> {
-        tracing::debug!("credential::generate_vc");
-
-        let dataset = self.dataset(provider, request).await?;
-
-        // defer issuance if claims are pending (approval),
-        if dataset.pending {
-            return Ok(None);
-        }
-
-        let credential_issuer = &request.credential_issuer.clone();
-
-        // TODO: improve `types` handling
+    // Issue the requested credential.
+    async fn issue_response(
+        &self, provider: &impl Provider, request: CredentialRequest, dataset: Dataset,
+    ) -> Result<CredentialResponse> {
         let config_id = &self.authorized.credential_configuration_id;
         let config =
             self.issuer.credential_configurations_supported.get(config_id).ok_or_else(|| {
                 Error::InvalidCredentialRequest("unsupported credential requested".into())
             })?;
 
-        let credential_type = match &config.format {
-            FormatIdentifier::JwtVcJson(w3c)
-            | FormatIdentifier::JwtVcJsonLd(w3c)
-            | FormatIdentifier::LdpVc(w3c) => {
-                let Some(types) = &w3c.credential_definition.type_ else {
-                    return Err(Error::ServerError("Credential type not set".into()));
-                };
-                let Some(credential_type) = types.get(1) else {
-                    return Err(Error::ServerError("Credential type not set".into()));
-                };
-                credential_type
+        let response = match &config.format {
+            FormatIdentifier::JwtVcJson(w3c) => {
+                self.jwt_vc_json(provider, &request, &w3c.credential_definition, dataset).await?
             }
-            FormatIdentifier::IsoMdl(mdl) => &mdl.doctype,
-            FormatIdentifier::VcSdJwt(sd_jwt) => &sd_jwt.vct,
+            FormatIdentifier::IsoMdl(_mdl) => {
+                //&mdl.doctype
+                todo!()
+            }
+            _ => todo!(),
         };
-
-        // Provider supplies status lookup information
-        let Some(subject_id) = &self.state.subject_id else {
-            return Err(Error::AccessDenied("invalid subject id".into()));
-        };
-        let status = Status::status(provider, subject_id, "credential_identifier")
-            .await
-            .map_err(|e| Error::ServerError(format!("issue populating credential status: {e}")))?;
-
-        let vc = VerifiableCredential::builder()
-            .add_context(Kind::String(format!("{credential_issuer}/credentials/v1")))
-            // TODO: generate credential id
-            .id(format!("{credential_issuer}/credentials/{credential_type}"))
-            .add_type(credential_type)
-            .issuer(credential_issuer)
-            .add_subject(CredentialSubject {
-                id: Some(self.holder_did.clone()),
-                claims: dataset.claims,
-            })
-            .status(status)
-            .build()
-            .map_err(|e| Error::ServerError(format!("issue building VC: {e}")))?;
-
-        Ok(Some(vc))
-    }
-
-    // Issue the requested credential.
-    async fn issue_response(
-        &self, provider: &impl Provider, request: CredentialRequest, vc: VerifiableCredential,
-    ) -> Result<CredentialResponse> {
-        let signer = SecOps::signer(provider, &request.credential_issuer)
-            .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
-
-        // TODO: add support for other formats
-        let jwt =
-            vercre_w3c_vc::proof::create(proof::Format::JwtVcJson, Payload::Vc(vc.clone()), signer)
-                .await
-                .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
 
         // update token state with new `c_nonce`
         let mut state = self.state.clone();
@@ -269,7 +215,8 @@ impl Context {
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
         // create issuance state for notification endpoint
-        state.stage = Stage::Issued(Credential { credential: vc });
+        // TODO: save credential in state !!
+        // state.stage = Stage::Issued(Credential { credential: vc });
         let notification_id = gen::notification_id();
 
         StateStore::put(provider, &notification_id, &state, state.expires_at)
@@ -277,11 +224,63 @@ impl Context {
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
         Ok(CredentialResponse {
-            response: CredentialResponseType::Credential(Kind::String(jwt)),
+            response,
             c_nonce: Some(token_state.c_nonce.clone()),
             c_nonce_expires_in: Some(token_state.c_nonce_expires_in()),
             notification_id: Some(notification_id),
         })
+    }
+
+    async fn jwt_vc_json(
+        &self, provider: &impl Provider, request: &CredentialRequest,
+        credential_definition: &CredentialDefinition, dataset: Dataset,
+    ) -> Result<CredentialResponseType> {
+        let signer = SecOps::signer(provider, &request.credential_issuer)
+            .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
+
+        let vc = self.w3c_vc(provider, request, credential_definition, dataset).await?;
+        let jwt =
+            vercre_w3c_vc::proof::create(proof::Format::JwtVcJson, Payload::Vc(vc.clone()), signer)
+                .await
+                .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
+
+        Ok(CredentialResponseType::Credential(Kind::String(jwt)))
+    }
+
+    async fn w3c_vc(
+        &self, provider: &impl Provider, request: &CredentialRequest,
+        credential_definition: &CredentialDefinition, dataset: Dataset,
+    ) -> Result<VerifiableCredential> {
+        let Some(types) = &credential_definition.type_ else {
+            return Err(Error::ServerError("Credential type not set".into()));
+        };
+        let Some(credential_type) = types.get(1) else {
+            return Err(Error::ServerError("Credential type not set".into()));
+        };
+
+        // Provider supplies status lookup information
+        let Some(subject_id) = &self.state.subject_id else {
+            return Err(Error::AccessDenied("invalid subject id".into()));
+        };
+        let status = Status::status(provider, subject_id, "credential_identifier")
+            .await
+            .map_err(|e| Error::ServerError(format!("issue populating credential status: {e}")))?;
+
+        let credential_issuer = &request.credential_issuer.clone();
+
+        VerifiableCredential::builder()
+            .add_context(Kind::String(format!("{credential_issuer}/credentials/v1")))
+            // TODO: generate credential id
+            .id(format!("{credential_issuer}/credentials/{credential_type}"))
+            .add_type(credential_type)
+            .issuer(credential_issuer)
+            .add_subject(CredentialSubject {
+                id: Some(self.holder_did.clone()),
+                claims: dataset.claims,
+            })
+            .status(status)
+            .build()
+            .map_err(|e| Error::ServerError(format!("issue building VC: {e}")))
     }
 
     // Defer issuance of the requested credential.
