@@ -18,12 +18,47 @@ mod bytes;
 mod cbor;
 mod tag24;
 
-use vercre_openid::issuer::{CredentialConfiguration, Dataset};
+use std::collections::HashSet;
 
-pub fn to_iso_mdl(configuration: CredentialConfiguration, dataset: Dataset) {
+use coset::{self, CoseError};
+use rand::Rng;
+use sha2::{Digest, Sha256};
+use vercre_openid::issuer::{Dataset, ProfileIsoMdl};
 
-    // ValueDigests
-    // - create digest of each configuration data element
+pub type Result<T> = std::result::Result<T, anyhow::Error>;
+
+/// Convert a Credential Dataset to a base64url-encoded CBOR-encoded ISO mDL
+/// IssuerSigned object.
+pub fn to_iso_mdl(dataset: Dataset, configuration: ProfileIsoMdl) -> Result<String> {
+    // ValueDigests:
+    // - create digest of each configured data element
+    let mut value_digests = mso::ValueDigests::new();
+    let mut gen = Generator::new();
+
+    for (key, value) in dataset.claims {
+        // generate digests for a namespace
+        let mut digests_ids = mso::DigestIds::new();
+        let Some(ns_claims) = value.as_object() else {
+            continue;
+        };
+
+        for (k, v) in ns_claims {
+            let rnd_id = gen.gen_id();
+
+            let item = tag24::Tag24::new(mdoc::IssuerSignedItem {
+                digest_id: rnd_id,
+                random: rnd_id.to_string(),
+                element_identifier: k.clone(),
+                element_value: ciborium::Value::Null,
+            })?;
+            let bytes = to_vec(&item).map_err(|e| anyhow!("{e}"))?;
+
+            let digest = Sha256::digest(&bytes).to_vec();
+            digests_ids.insert(rnd_id, digest);
+        }
+
+        value_digests.insert(key, digests_ids);
+    }
 
     // IssuerSignedItems
     // - create IssuerSignedItem for each item in Dataset, referencing
@@ -39,6 +74,39 @@ pub fn to_iso_mdl(configuration: CredentialConfiguration, dataset: Dataset) {
     // - set `issuer_auth` param
     // - serialize to CBOR
     // - base64 encode
+
+    todo!()
+}
+
+pub fn to_vec<T>(value: &T) -> std::result::Result<Vec<u8>, CoseError>
+where
+    T: serde::Serialize,
+{
+    let mut buf = Vec::new();
+    ciborium::into_writer(value, &mut buf).map_err(|_| CoseError::EncodeFailed)?;
+    Ok(buf)
+}
+
+struct Generator {
+    used_ids: HashSet<mso::DigestId>,
+}
+
+impl Generator {
+    fn new() -> Self {
+        Self {
+            used_ids: HashSet::new(),
+        }
+    }
+
+    fn gen_id(&mut self) -> mso::DigestId {
+        let mut digest_id;
+        loop {
+            digest_id = rand::thread_rng().gen();
+            if self.used_ids.insert(digest_id) {
+                return digest_id;
+            }
+        }
+    }
 }
 
 #[cfg(test)]

@@ -41,27 +41,25 @@ pub struct IssuerSigned {
 }
 
 /// Returned data elements for each namespace
-pub type IssuerNameSpaces = HashMap<String, Vec<Tag24<IssuerSignedItem>>>;
+pub type IssuerNameSpaces = HashMap<String, Vec<IssuerSignedItemBytes>>;
 
 /// IssuerSignedItemBytes: to_bytes(Tag 24(bstr .cbor IssuerSignedItem))
-// pub type IssuerSignedItemBytes = Tag24<IssuerSignedItem>;
+pub type IssuerSignedItemBytes = Tag24<IssuerSignedItem>;
 
 /// Issuer-signed data element
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IssuerSignedItem {
     /// Digest ID for issuer data authentication
-    digest_id: u64,
+    pub digest_id: i32,
 
     /// Random hexadecimal value for issuer data authentication.
     /// (min. 16 bytes).
-    random: String,
+    pub random: String,
 
     /// Data element identifier. For example, "family_name"
-    element_identifier: String,
+    pub element_identifier: String,
 
     /// Data element value. For example, "Smith"
-    element_value: ciborium::Value,
+    pub element_value: ciborium::Value,
 }
-
-

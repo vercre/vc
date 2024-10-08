@@ -37,7 +37,9 @@ aes = "0.8.2"
 hex-literal = "0.3.4"
 k256 = "0.13.4"
 p256 = { version = "0.13.0", features = ["ecdh", "serde"] }
+rand = { version = "0.8.5", features = ["getrandom"] }
 serde_json.workspace = true
+sha2 = "0.9.3"
 ssi-jwk = "0.2.1"
 
 [dev-dependencies]
