@@ -155,14 +155,14 @@ impl Context {
         if let Some(client_scope) = &client.oauth.scope {
             if let Some(server_scopes) = &server.oauth.scopes_supported {
                 let scopes: Vec<&str> = client_scope.split_whitespace().collect();
-                if !scopes.iter().all(|s| server_scopes.contains(&s.to_string())) {
-                    return Err(Error::InvalidScope("client scope not supported".into()));
+                if !scopes.iter().all(|s| server_scopes.contains(&(*s).to_string())) {
+                    return Err(Error::InvalidRequest("client scope not supported".into()));
                 }
             } else {
                 return Err(Error::InvalidRequest("server supported scopes not set".into()));
             }
         } else {
-            return Err(Error::InvalidScope("client scope not set".into()));
+            return Err(Error::InvalidRequest("client scope not set".into()));
         }
 
         // 'authorization_code' grant_type allowed (client and server)?
