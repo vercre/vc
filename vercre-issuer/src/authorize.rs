@@ -151,6 +151,20 @@ impl Context {
             ));
         }
 
+        // Client and server must support the same scopes.
+        if let Some(client_scope) = &client.oauth.scope {
+            if let Some(server_scopes) = &server.oauth.scopes_supported {
+                let scopes: Vec<&str> = client_scope.split_whitespace().collect();
+                if !scopes.iter().all(|s| server_scopes.contains(&s.to_string())) {
+                    return Err(Error::InvalidScope("client scope not supported".into()));
+                }
+            } else {
+                return Err(Error::InvalidRequest("server supported scopes not set".into()));
+            }
+        } else {
+            return Err(Error::InvalidScope("client scope not set".into()));
+        }
+
         // 'authorization_code' grant_type allowed (client and server)?
         let client_grant_types = client.oauth.grant_types.unwrap_or_default();
         if !client_grant_types.contains(&GrantType::AuthorizationCode) {
