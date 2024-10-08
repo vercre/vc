@@ -1,7 +1,7 @@
 //! # Cancel Issuance Endpoint
 //!
 //! Enables the holder to cancel an issuance flow.
-//! 
+//!
 //! The converse of this endpoint is the `save` endpoint.
 
 use serde::{Deserialize, Serialize};

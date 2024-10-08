@@ -105,11 +105,8 @@ pub async fn deferred(
         return Err(e);
     };
 
-    let deferred = if issuance.deferred.is_empty() {
-        None
-    } else {
-        Some(issuance.deferred.clone())
-    };
+    let deferred =
+        if issuance.deferred.is_empty() { None } else { Some(issuance.deferred.clone()) };
 
     Ok(CredentialsResponse {
         issuance_id: issuance.id,
