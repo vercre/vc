@@ -144,6 +144,13 @@ impl Context {
             return Err(Error::InvalidRequest("invalid `credential_issuer`".into()));
         };
 
+        // Requested `response_type` must be supported by the authorization server.
+        if !server.oauth.response_types_supported.contains(&request.response_type) {
+            return Err(Error::UnsupportedResponseType(
+                "`response_type` not supported by server".into(),
+            ));
+        }
+
         // 'authorization_code' grant_type allowed (client and server)?
         let client_grant_types = client.oauth.grant_types.unwrap_or_default();
         if !client_grant_types.contains(&GrantType::AuthorizationCode) {
@@ -409,6 +416,8 @@ mod tests {
     #[case::claims("claims", claims)]
     #[should_panic(expected = "ok")]
     #[case::claims_err("claims_err", claims_err)]
+    #[should_panic(expected = "ok")]
+    #[case::response_type_err("response_type_err", response_type_err)]
     async fn authorize_tests(#[case] name: &str, #[case] value: fn() -> Value) {
         vercre_test_utils::init_tracer();
         snapshot!("");
@@ -541,6 +550,24 @@ mod tests {
                         "employee_id": {}
                     }
                 }
+            }],
+            "subject_id": NORMAL_USER,
+            "wallet_issuer": CREDENTIAL_ISSUER
+        })
+    }
+
+    fn response_type_err() -> Value {
+        json!({
+            "credential_issuer": CREDENTIAL_ISSUER,
+            "response_type": "vp_token",
+            "client_id": CLIENT_ID,
+            "redirect_uri": "http://localhost:3000/callback",
+            "state": "1234",
+            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+            "code_challenge_method": "S256",
+            "authorization_details": [{
+                "type": "openid_credential",
+                "credential_configuration_id": "EmployeeID_JWT",
             }],
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
