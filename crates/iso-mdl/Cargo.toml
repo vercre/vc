@@ -26,9 +26,21 @@ chrono.workspace = true
 ciborium = "0.2.2"
 coset = "0.3.8"
 serde.workspace = true
+serde_bytes = "0.11.15"
+thiserror = "1.0.24"
 tracing.workspace = true
 uuid.workspace = true
 vercre-core.workspace = true
+vercre-openid.workspace = true
+
+aes = "0.8.2"
+hex-literal = "0.3.4"
+k256 = "0.13.4"
+p256 = { version = "0.13.0", features = ["ecdh", "serde"] }
+serde_json.workspace = true
+ssi-jwk = "0.2.1"
 
 [dev-dependencies]
+hex = "0.4.3"
 tracing-subscriber.workspace = true
+vercre-test-utils.workspace = true

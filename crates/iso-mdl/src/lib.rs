@@ -10,10 +10,48 @@
 //! a way that is cryptographically secure, privacy respecting, and
 //! machine-verifiable.
 
-pub mod model;
-
+pub mod cose;
+pub mod mdoc;
+pub mod mso;
 pub use anyhow::anyhow;
+mod bytes;
+mod cbor;
+mod tag24;
 
-// TODO: move this macro to a more appropriate location (its own crate perhaps).
-// N.B. the current dependency tree is a little complex, so this is a temporary
-// solution that avoids cyclic dependencies.
+use vercre_openid::issuer::{CredentialConfiguration, Dataset};
+
+pub fn to_iso_mdl(configuration: CredentialConfiguration, dataset: Dataset) {
+
+    // ValueDigests
+    // - create digest of each configuration data element
+
+    // IssuerSignedItems
+    // - create IssuerSignedItem for each item in Dataset, referencing
+    // - index of item in ValueDigests array
+
+    // DeviceKeyInfo
+    // - use Signer to provide Issuer public key
+
+    // IssuerAuth
+    // - assemble MSO and sign with Issuer key
+
+    // IssuerSigned
+    // - set `issuer_auth` param
+    // - serialize to CBOR
+    // - base64 encode
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::Cursor;
+
+    use ciborium::Value;
+
+    #[test]
+    fn issuer_signed() {
+        // let slice = include_bytes!("../data/mso_mdoc.cbor");
+        // let value: Value = ciborium::from_reader(Cursor::new(&slice)).unwrap();
+
+        // 1. Pass in CredentialConfiguration + Dataset
+    }
+}
