@@ -91,9 +91,11 @@ pub async fn authorize(
     provider: impl Provider, request: AuthorizationRequest,
 ) -> Result<AuthorizationResponse> {
     // request object or URI (Pushed Authorization Request)
+    let mut is_par = false;
     let request = match request {
         AuthorizationRequest::Object(request) => request,
         AuthorizationRequest::Uri(uri) => {
+            is_par = true;
             let state: State = StateStore::get(&provider, &uri.request_uri)
                 .await
                 .map_err(|e| Error::ServerError(format!("state issue: {e}")))?;
@@ -115,6 +117,7 @@ pub async fn authorize(
 
     let mut ctx = Context {
         issuer,
+        is_par,
         ..Context::default()
     };
     ctx.verify(&provider, &request).await?;
@@ -127,6 +130,7 @@ pub struct Context {
     pub auth_dets: HashMap<String, AuthorizationDetail>,
     pub scope_items: HashMap<String, String>,
     pub claims: Option<HashMap<String, Claim>>,
+    pub is_par: bool,
 }
 
 impl Context {
@@ -143,6 +147,16 @@ impl Context {
         let Ok(server) = Metadata::server(provider, &request.credential_issuer, None).await else {
             return Err(Error::InvalidRequest("invalid `credential_issuer`".into()));
         };
+
+        // If the server requires pushed authorization requests, the request
+        // must be a PAR.
+        if let Some(must_be_par) = server.oauth.require_pushed_authorization_requests {
+            if must_be_par && !self.is_par {
+                return Err(Error::InvalidRequest(
+                    "pushed authorization request is required".into(),
+                ));
+            }
+        }
 
         // Requested `response_type` must be supported by the authorization server.
         if !server.oauth.response_types_supported.contains(&request.response_type) {
