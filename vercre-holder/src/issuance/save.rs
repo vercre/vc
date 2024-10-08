@@ -44,21 +44,22 @@ pub async fn save(provider: impl HolderProvider, request: &SaveRequest) -> anyho
                 // nothing except trace and return the original error.
                 if let Some(notification_id) = issuance.notification_id {
                     async {
-                    if let Err(err) = Issuer::notification(
-                        &provider,
-                        NotificationRequest {
-                            credential_issuer: issuance.issuer.credential_issuer.clone(),
-                            access_token: issuance.token.access_token.clone(),
-                            notification_id,
-                            event: NotificationEvent::CredentialFailure,
-                            event_description: Some("Failed to save credential".into()),
-                        },
-                    )
-                    .await
-                    {
-                        tracing::error!(target: "Endpoint::save", ?err);
+                        if let Err(err) = Issuer::notification(
+                            &provider,
+                            NotificationRequest {
+                                credential_issuer: issuance.issuer.credential_issuer.clone(),
+                                access_token: issuance.token.access_token.clone(),
+                                notification_id,
+                                event: NotificationEvent::CredentialFailure,
+                                event_description: Some("Failed to save credential".into()),
+                            },
+                        )
+                        .await
+                        {
+                            tracing::error!(target: "Endpoint::save", ?err);
+                        }
                     }
-                    }.await;
+                    .await;
                 }
                 return Err(e);
             }

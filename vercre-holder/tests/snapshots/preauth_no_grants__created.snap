@@ -1,6 +1,6 @@
 ---
-source: vercre-holder/tests/issuer_auth_no_grants.rs
-assertion_line: 56
+source: vercre-holder/tests/preauth_no_grants.rs
+assertion_line: 55
 expression: issuance
 ---
 issuance_id: "[issuance_id]"

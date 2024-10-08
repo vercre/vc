@@ -270,7 +270,7 @@ async fn handle_login(
 }
 
 /// Notification endpoint
-/// 
+///
 /// This endpoint is used by the Wallet to notify the Credential Issuer of
 /// certain events for issued Credentials. These events enable the Credential
 /// Issuer to take subsequent actions after issuance. The Credential Issuer

@@ -107,7 +107,9 @@ impl Issuer for Provider {
 
     /// Notify the issuer of issuance progress. Not implemented for this
     /// example.
-    async fn notification(&self, _req: NotificationRequest) -> anyhow::Result<NotificationResponse> {
+    async fn notification(
+        &self, _req: NotificationRequest,
+    ) -> anyhow::Result<NotificationResponse> {
         Ok(NotificationResponse::default())
     }
 }

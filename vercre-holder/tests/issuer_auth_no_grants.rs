@@ -31,7 +31,6 @@ async fn issuer_auth_no_grants() {
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": NORMAL_USER,
-        "tx_code_required": false,
         "send_type": SendType::ByVal,
     });
 
@@ -55,7 +54,6 @@ async fn issuer_auth_no_grants() {
 
     assert_snapshot!("created", issuance, {
         ".issuance_id" => "[issuance_id]",
-        ".grants.authorization_code.issuer_state" => "[issuer_state]",
         ".**.credentialSubject" => insta::sorted_redaction(),
         ".**.credentialSubject.address" => insta::sorted_redaction(),
     });

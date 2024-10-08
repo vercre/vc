@@ -12,8 +12,7 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use vercre_issuer::{AuthorizationCodeGrant, PreAuthorizedCodeGrant};
-use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, GrantType, Grants};
+use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, Grants};
 
 use super::{Issuance, Status};
 use crate::provider::{HolderProvider, StateStore};
@@ -54,7 +53,7 @@ pub struct OfferResponse {
     pub offered: HashMap<String, CredentialConfiguration>,
 
     /// Authorization requirements.
-    pub grants: Grants,
+    pub grants: Option<Grants>,
 }
 
 /// Initiates the issuance flow triggered by a new credential offer
@@ -89,30 +88,30 @@ pub async fn offer(
 
     // Either the offer has grants supported or the OAuth server does. If not,
     // we can't proceed.
-    let grants = if let Some(grants) = request.offer.grants.clone() {
-        grants
-    } else {
-        let Some(grant_types) = issuance.authorization_server.oauth.grant_types_supported.clone()
-        else {
-            let e = anyhow!("no grants in offer is not supported");
-            tracing::error!(target: "Endpoint::offer", ?e);
-            return Err(e);
-        };
-        let authorization_code = if grant_types.contains(&GrantType::AuthorizationCode) {
-            Some(AuthorizationCodeGrant::default())
-        } else {
-            None
-        };
-        let pre_authorized_code = if grant_types.contains(&GrantType::PreAuthorizedCode) {
-            Some(PreAuthorizedCodeGrant::default())
-        } else {
-            None
-        };
-        Grants {
-            authorization_code,
-            pre_authorized_code,
-        }
-    };
+    // let grants = if let Some(grants) = request.offer.grants.clone() {
+    //     grants
+    // } else {
+    //     let Some(grant_types) = issuance.authorization_server.oauth.grant_types_supported.clone()
+    //     else {
+    //         let e = anyhow!("no grants in offer is not supported");
+    //         tracing::error!(target: "Endpoint::offer", ?e);
+    //         return Err(e);
+    //     };
+    //     let authorization_code = if grant_types.contains(&GrantType::AuthorizationCode) {
+    //         Some(AuthorizationCodeGrant::default())
+    //     } else {
+    //         None
+    //     };
+    //     let pre_authorized_code = if grant_types.contains(&GrantType::PreAuthorizedCode) {
+    //         Some(PreAuthorizedCodeGrant::default())
+    //     } else {
+    //         None
+    //     };
+    //     Grants {
+    //         authorization_code,
+    //         pre_authorized_code,
+    //     }
+    // };
 
     issuance.status = Status::Ready;
 
@@ -142,7 +141,7 @@ pub async fn offer(
         issuance_id: issuance.id,
         issuer: request.offer.credential_issuer.clone(),
         offered,
-        grants,
+        grants: request.offer.grants.clone(),
     };
 
     Ok(res)

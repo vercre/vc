@@ -10,7 +10,9 @@ use anyhow::{anyhow, bail};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use vercre_issuer::{AuthorizedDetail, CredentialAuthorization, TokenGrantType, TokenRequest};
+use vercre_issuer::{
+    AuthorizedDetail, CredentialAuthorization, TokenGrantType, TokenRequest,
+};
 
 use super::{Issuance, Status};
 use crate::provider::{HolderProvider, Issuer, StateStore};
@@ -55,16 +57,12 @@ pub async fn token(
     };
 
     // The flow must be pre-authorized and accepted.
-    //
-    // TODO: The wallet is supposed to handle the case where there are no
-    // grants by using issuer metadata to determine the required grants. Look
-    // up server metadata to determine the required grants.
-    let Some(grants) = issuance.offer.grants.clone() else {
-        let e = anyhow!("no grants in offer is not supported");
-        tracing::error!(target: "Endpoint::token", ?e);
-        return Err(e);
+    let pre_authed = if let Some(grants) = issuance.offer.grants.clone() {
+        grants.pre_authorized_code.is_some()
+    } else {
+        false
     };
-    if grants.pre_authorized_code.is_none() || issuance.status != Status::Accepted {
+    if !pre_authed || issuance.status != Status::Accepted {
         let e = anyhow!("invalid issuance state. Must be pre-authorized and accepted");
         tracing::error!(target: "Endpoint::token", ?e);
         return Err(e);
@@ -106,13 +104,11 @@ pub async fn token(
 
 /// Construct a token request.
 fn token_request(issuance: &Issuance) -> anyhow::Result<TokenRequest> {
-    // Get pre-authorized code. Unwraps are OK since verification should be called
-    // on outer endpoint to check existence.
     let Some(grants) = issuance.offer.grants.as_ref() else {
         bail!("no grants in offer is not supported");
     };
     let Some(pre_auth_code) = grants.pre_authorized_code.as_ref() else {
-        bail!("token endpoint called for non-pre-authorized issuance");
+        bail!("no pre-authorized code in offer is not supported");
     };
 
     Ok(TokenRequest {
