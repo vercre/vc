@@ -8,9 +8,10 @@ use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::issuance::{
-    AcceptRequest, AuthorizeRequest, CredentialsRequest, Initiator, OfferRequest, SaveRequest
+    AcceptRequest, AuthorizeRequest, CredentialsRequest, Initiator, OfferRequest, SaveRequest,
 };
-use vercre_holder::provider::CredentialStorer;
+use vercre_holder::provider::{CredentialStorer, Issuer};
+use vercre_holder::{GrantType, OAuthServerRequest};
 use vercre_issuer::{OfferType, SendType};
 use vercre_macros::create_offer_request;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, REDIRECT_URI};
@@ -73,6 +74,23 @@ async fn preauth_no_grants() {
         .await
         .expect_err("should fail to get token");
 
+    // Instead, the wallet should check the issuer's OAuth server metadata to
+    // see if it supports authorization, then make a request to authorize.
+    let oauth_metadata_req = OAuthServerRequest {
+        credential_issuer: CREDENTIAL_ISSUER.into(),
+        issuer: None,
+    };
+    let provider = HOLDER_PROVIDER.clone();
+    let server = Issuer::oauth_server(&provider, oauth_metadata_req)
+        .await
+        .expect("should get oauth servier metadata");
+    let supported_grants = server
+        .authorization_server
+        .oauth
+        .grant_types_supported
+        .expect("should have supported grants");
+    assert!(supported_grants.contains(&GrantType::AuthorizationCode));
+
     // Authorization request
     let auth_request = AuthorizeRequest {
         initiator: Initiator::Issuer {
@@ -85,7 +103,6 @@ async fn preauth_no_grants() {
     vercre_holder::issuance::authorize(HOLDER_PROVIDER.clone(), &auth_request)
         .await
         .expect("should authorize");
-
 
     // Get (and store) credentials. Accept all on offer.
     let cred_req = CredentialsRequest {
