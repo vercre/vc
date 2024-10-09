@@ -88,11 +88,40 @@ impl Context {
                 // anonymous access allowed?
                 if request.client_id.as_ref().is_none()
                     || request.client_id.as_ref().is_some_and(String::is_empty)
-                        && !server.pre_authorized_grant_anonymous_access_supported
                 {
-                    return Err(Error::InvalidClient("anonymous access is not supported".into()));
+                    if !server.pre_authorized_grant_anonymous_access_supported {
+                        return Err(Error::InvalidClient(
+                            "anonymous access is not supported".into(),
+                        ));
+                    }
+                } else {
+                    // We have a client_id so should be able to safely unwrap.
+                    let client_id =
+                        request.client_id.as_ref().expect("request client_id is set and not empty");
+                    // client metadata
+                    let Ok(client) = Metadata::client(provider, client_id).await else {
+                        return Err(Error::InvalidClient("invalid `client_id`".into()));
+                    };
+                    // Client and server must support the same scopes.
+                    if let Some(client_scope) = &client.oauth.scope {
+                        if let Some(server_scopes) = &server.oauth.scopes_supported {
+                            let scopes: Vec<&str> = client_scope.split_whitespace().collect();
+                            if !scopes.iter().all(|s| server_scopes.contains(&(*s).to_string())) {
+                                return Err(Error::InvalidRequest(
+                                    "client scope not supported".into(),
+                                ));
+                            }
+                        } else {
+                            return Err(Error::InvalidRequest(
+                                "server supported scopes not set".into(),
+                            ));
+                        }
+                    } else {
+                        return Err(Error::InvalidRequest("client scope not set".into()));
+                    }
                 }
-                // tx_code
+
+                // tx_code (PIN)
                 if tx_code != &auth_state.tx_code {
                     return Err(Error::InvalidGrant("invalid `tx_code` provided".into()));
                 }
