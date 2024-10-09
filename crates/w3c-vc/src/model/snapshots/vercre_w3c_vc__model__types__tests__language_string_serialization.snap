@@ -1,0 +1,17 @@
+---
+source: crates/w3c-vc/src/model/types.rs
+assertion_line: 80
+expression: hydrated
+---
+name:
+  "@value": Alice
+  "@language": en
+  "@direction": ~
+description:
+  - "@value": "HTML and CSS: Designing and Creating Websites"
+    "@language": en
+    "@direction": ~
+  - "@value": "HTML و CSS: تصميم و إنشاء مواقع الويب"
+    "@language": ar
+    "@direction": rtl
+other: Just a string
