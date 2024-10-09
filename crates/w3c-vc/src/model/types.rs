@@ -9,7 +9,7 @@ use vercre_core::{Kind, Quota};
 
 /// `LangString` is a string that has one or more language representations.
 ///
-/// https://www.w3.org/TR/vc-data-model-2.0/#language-and-base-direction
+/// <https://www.w3.org/TR/vc-data-model-2.0/#language-and-base-direction>
 pub type LangString = Kind<Quota<LangValue>>;
 
 /// `LangValue` is a description of a string in a specific language.
