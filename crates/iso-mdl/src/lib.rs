@@ -10,59 +10,58 @@
 //! a way that is cryptographically secure, privacy respecting, and
 //! machine-verifiable.
 
-pub mod cose;
-pub mod mdoc;
-pub mod mso;
-pub use anyhow::anyhow;
-mod bytes;
 mod cbor;
+mod cose;
+mod mdoc;
+mod mso;
 mod tag24;
 
-use std::collections::HashSet;
-
-use coset::{self, CoseError};
-use rand::Rng;
+use anyhow::anyhow;
+use rand::{thread_rng, Rng};
 use sha2::{Digest, Sha256};
-use vercre_openid::issuer::{Dataset, ProfileIsoMdl};
+use vercre_datasec::Signer;
+use vercre_openid::issuer::Dataset;
 
-pub type Result<T> = std::result::Result<T, anyhow::Error>;
+use crate::mdoc::IssuerSignedItem;
+use crate::tag24::Tag24;
 
 /// Convert a Credential Dataset to a base64url-encoded CBOR-encoded ISO mDL
-/// IssuerSigned object.
-pub fn to_iso_mdl(dataset: Dataset, configuration: ProfileIsoMdl) -> Result<String> {
+/// `IssuerSigned` object.
+///
+/// # Errors
+/// // TODO: add errors
+pub fn to_iso_mdl(dataset: Dataset, _signer: impl Signer) -> anyhow::Result<String> {
     // ValueDigests:
     // - create digest of each configured data element
-    let mut value_digests = mso::ValueDigests::new();
-    let mut gen = Generator::new();
+
+    let mut mdoc = mdoc::IssuerSigned::new();
+    let mut mso = mso::MobileSecurityObject::new();
 
     for (key, value) in dataset.claims {
-        // generate digests for a namespace
-        let mut digests_ids = mso::DigestIds::new();
-        let Some(ns_claims) = value.as_object() else {
-            continue;
+        // namespace should be root level claim
+        let Some(name_space) = value.as_object() else {
+            return Err(anyhow!("invalid dataset"));
         };
 
-        for (k, v) in ns_claims {
-            let rnd_id = gen.gen_id();
+        let mut id_gen = mso::DigestIdGenerator::new();
 
-            let item = tag24::Tag24::new(mdoc::IssuerSignedItem {
-                digest_id: rnd_id,
-                random: rnd_id.to_string(),
+        // assemble `IssuerSignedItem`s for name space
+        for (k, v) in name_space {
+            let item = Tag24::new(IssuerSignedItem {
+                digest_id: id_gen.gen(),
+                random: thread_rng().gen::<[u8; 16]>().into(),
                 element_identifier: k.clone(),
-                element_value: ciborium::Value::Null,
+                element_value: ciborium::cbor!(v)?,
             })?;
-            let bytes = to_vec(&item).map_err(|e| anyhow!("{e}"))?;
 
-            let digest = Sha256::digest(&bytes).to_vec();
-            digests_ids.insert(rnd_id, digest);
+            // digest of item for MSO
+            let digest = Sha256::digest(&item.inner_bytes).to_vec();
+            mso.value_digests.entry(key.clone()).or_default().insert(item.inner.digest_id, digest);
+
+            // add item to IssuerSigned object
+            mdoc.name_spaces.entry(key.clone()).or_default().push(item);
         }
-
-        value_digests.insert(key, digests_ids);
     }
-
-    // IssuerSignedItems
-    // - create IssuerSignedItem for each item in Dataset, referencing
-    // - index of item in ValueDigests array
 
     // DeviceKeyInfo
     // - use Signer to provide Issuer public key
@@ -75,48 +74,37 @@ pub fn to_iso_mdl(dataset: Dataset, configuration: ProfileIsoMdl) -> Result<Stri
     // - serialize to CBOR
     // - base64 encode
 
-    todo!()
-}
+    println!("issuer_signed: {mdoc:?}");
 
-pub fn to_vec<T>(value: &T) -> std::result::Result<Vec<u8>, CoseError>
-where
-    T: serde::Serialize,
-{
-    let mut buf = Vec::new();
-    ciborium::into_writer(value, &mut buf).map_err(|_| CoseError::EncodeFailed)?;
-    Ok(buf)
-}
-
-struct Generator {
-    used_ids: HashSet<mso::DigestId>,
-}
-
-impl Generator {
-    fn new() -> Self {
-        Self {
-            used_ids: HashSet::new(),
-        }
-    }
-
-    fn gen_id(&mut self) -> mso::DigestId {
-        let mut digest_id;
-        loop {
-            digest_id = rand::thread_rng().gen();
-            if self.used_ids.insert(digest_id) {
-                return digest_id;
-            }
-        }
-    }
+    Ok(String::new())
 }
 
 #[cfg(test)]
 mod tests {
-    use std::io::Cursor;
+    use serde_json::json;
+    use vercre_datasec::SecOps;
+    use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER};
 
-    use ciborium::Value;
+    use crate::to_iso_mdl;
 
     #[test]
     fn issuer_signed() {
+        let dataset = json!({
+            "claims": {
+                "org.iso.18013.5.1.mDL": {
+                    "given_name": "Normal",
+                    "family_name": "Person",
+                    "email": "normal.user@example.com"
+                }
+            }
+        });
+        let dataset = serde_json::from_value(dataset).unwrap();
+
+        let provider = Provider::new();
+        let signer = SecOps::signer(&provider, CREDENTIAL_ISSUER).unwrap();
+
+        to_iso_mdl(dataset, signer).unwrap();
+
         // let slice = include_bytes!("../data/mso_mdoc.cbor");
         // let value: Value = ciborium::from_reader(Cursor::new(&slice)).unwrap();
 

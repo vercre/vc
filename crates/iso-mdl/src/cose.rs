@@ -1,21 +1,14 @@
 mod cose_key;
 
-use std::borrow::{Borrow, BorrowMut};
-use std::ops::{Deref, DerefMut};
+// use std::borrow::{Borrow, BorrowMut};
+// use std::ops::{Deref, DerefMut};
 
-use coset::{iana, AsCborValue, TaggedCborSerializable};
+// use coset::{iana,
+use coset::{AsCborValue, TaggedCborSerializable};
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 
+#[allow(clippy::module_name_repetitions)]
 pub use self::cose_key::CoseKey;
-
-// pub mod mac0;
-// mod serialized_as_cbor_value;
-// pub mod sign1;
-
-/// Trait to represent the signature algorithm of a signer or verifier.
-pub trait SignatureAlgorithm {
-    fn algorithm(&self) -> iana::Algorithm;
-}
 
 #[derive(Debug, Clone)]
 pub struct Tagged<T>
@@ -30,67 +23,67 @@ impl<T> Tagged<T>
 where
     T: AsCborValue + TaggedCborSerializable,
 {
-    pub fn new(tagged: bool, inner: T) -> Self {
+    pub const fn new(tagged: bool, inner: T) -> Self {
         Self { tagged, inner }
     }
 
-    /// If we are serialized as tagged.
-    pub fn is_tagged(&self) -> bool {
-        self.tagged
-    }
+    // /// If we are serialized as tagged.
+    // pub fn is_tagged(&self) -> bool {
+    //     self.tagged
+    // }
 
-    /// Set serialization to tagged.
-    pub fn set_tagged(&mut self) {
-        self.tagged = true;
-    }
+    // /// Set serialization to tagged.
+    // pub fn set_tagged(&mut self) {
+    //     self.tagged = true;
+    // }
 }
 
-impl<T> Deref for Tagged<T>
-where
-    T: AsCborValue + TaggedCborSerializable,
-{
-    type Target = T;
+// impl<T> Deref for Tagged<T>
+// where
+//     T: AsCborValue + TaggedCborSerializable,
+// {
+//     type Target = T;
 
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
+//     fn deref(&self) -> &Self::Target {
+//         &self.inner
+//     }
+// }
 
-impl<T> DerefMut for Tagged<T>
-where
-    T: AsCborValue + TaggedCborSerializable,
-{
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.inner
-    }
-}
+// impl<T> DerefMut for Tagged<T>
+// where
+//     T: AsCborValue + TaggedCborSerializable,
+// {
+//     fn deref_mut(&mut self) -> &mut Self::Target {
+//         &mut self.inner
+//     }
+// }
 
-impl<T> Borrow<T> for Tagged<T>
-where
-    T: AsCborValue + TaggedCborSerializable,
-{
-    fn borrow(&self) -> &T {
-        &self.inner
-    }
-}
+// impl<T> Borrow<T> for Tagged<T>
+// where
+//     T: AsCborValue + TaggedCborSerializable,
+// {
+//     fn borrow(&self) -> &T {
+//         &self.inner
+//     }
+// }
 
-impl<T> BorrowMut<T> for Tagged<T>
-where
-    T: AsCborValue + TaggedCborSerializable,
-{
-    fn borrow_mut(&mut self) -> &mut T {
-        &mut self.inner
-    }
-}
+// impl<T> BorrowMut<T> for Tagged<T>
+// where
+//     T: AsCborValue + TaggedCborSerializable,
+// {
+//     fn borrow_mut(&mut self) -> &mut T {
+//         &mut self.inner
+//     }
+// }
 
-impl<T> AsRef<T> for Tagged<T>
-where
-    T: AsCborValue + TaggedCborSerializable,
-{
-    fn as_ref(&self) -> &T {
-        &self.inner
-    }
-}
+// impl<T> AsRef<T> for Tagged<T>
+// where
+//     T: AsCborValue + TaggedCborSerializable,
+// {
+//     fn as_ref(&self) -> &T {
+//         &self.inner
+//     }
+// }
 
 /// Serialize manually using `ciborium::tag::Captured`, putting the tag if
 /// necessary.
@@ -133,7 +126,7 @@ where
 /// implement `Serialize`/`Deserialize` but only `AsCborValue`.
 pub struct CborValue<T>(pub T);
 
-impl<'a, T: Clone + AsCborValue> Serialize for CborValue<&'a T> {
+impl<T: Clone + AsCborValue> Serialize for CborValue<&T> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,

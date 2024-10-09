@@ -9,57 +9,59 @@
 //! and the mobile device. The issuer signs the data elements to authenticate
 //! the issuer data, and the mobile device signs the data elements to
 //! authenticate the mobile device data. The MSO MDOC is returned in the
-//! DeviceResponse structure.
+//! `DeviceResponse` structure.
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::mso;
 use crate::tag24::Tag24;
-use crate::{bytes, mso};
 
-/// Error codes for unreturned documents
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub enum ErrorCode {
-    /// Error code for unreturned documents
-    SomeCode,
-}
+pub type NameSpace = String;
 
-/// Data elements signed by the issuer
+/// Data elements (claims) returned by the Issuer. Each data element is
+/// hashed and signed by the Issuer in the MSO.
 ///
 /// See 8.3.2.1.2.2 Device retrieval mdoc response.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IssuerSigned {
-    /// Returned data elements
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub name_spaces: Option<IssuerNameSpaces>,
+    /// Returned data elements for each namespace (`IssuerNameSpaces` element)
+    pub name_spaces: BTreeMap<NameSpace, Vec<IssuerSignedItemBytes>>,
 
     /// The mobile security object (MSO) for issuer data authentication.
-    /// COSE_Sign1 with a payload of MobileSecurityObjectBytes
+    /// `COSE_Sign1` with a payload of `MobileSecurityObjectBytes`
     pub issuer_auth: mso::IssuerAuth,
 }
 
-/// Returned data elements for each namespace
-pub type IssuerNameSpaces = HashMap<String, Vec<IssuerSignedItemBytes>>;
+impl IssuerSigned {
+    /// Create a new `IssuerSigned` with default values.
+    pub fn new() -> Self {
+        Self {
+            name_spaces: BTreeMap::new(),
+            issuer_auth: mso::IssuerAuth::default(),
+        }
+    }
+}
 
-/// IssuerSignedItemBytes: to_bytes(Tag 24(bstr .cbor IssuerSignedItem))
+/// `IssuerSignedItemBytes` represents the tagged `IssuerSignedItem` after
+/// CBOR serialization:  `#6.24(bstr .cbor IssuerSignedItem)`
 pub type IssuerSignedItemBytes = Tag24<IssuerSignedItem>;
 
 /// Issuer-signed data element
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct IssuerSignedItem {
-    /// Digest ID for issuer data authentication
-    pub digest_id: i32,
+    /// Id of the digest as added to the MSO `value_digests` parameter.
+    pub digest_id: mso::DigestId,
 
     /// Random hexadecimal value for issuer data authentication.
     /// (min. 16 bytes).
-    pub random: String,
+    pub random: Vec<u8>,
 
-    /// Data element identifier. For example, "family_name"
+    /// Data element identifier. For example, "`family_name`"
     pub element_identifier: String,
 
-    /// Data element value. For example, "Smith"
+    /// Data element value. For example, "`Smith`"
     pub element_value: ciborium::Value,
 }

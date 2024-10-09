@@ -24,7 +24,8 @@
 //! ```
 use std::collections::BTreeMap;
 
-use aes::cipher::generic_array::{typenum::U8, GenericArray};
+use aes::cipher::generic_array::typenum::U8;
+use aes::cipher::generic_array::GenericArray;
 use coset::iana::Algorithm;
 use p256::EncodedPoint;
 use serde::{Deserialize, Serialize};
@@ -95,20 +96,16 @@ impl CoseKey {
     pub fn signature_algorithm(&self) -> Option<Algorithm> {
         match self {
             CoseKey::EC2 {
-                crv: EC2Curve::P256,
-                ..
+                crv: EC2Curve::P256, ..
             } => Some(Algorithm::ES256),
             CoseKey::EC2 {
-                crv: EC2Curve::P384,
-                ..
+                crv: EC2Curve::P384, ..
             } => Some(Algorithm::ES384),
             CoseKey::EC2 {
-                crv: EC2Curve::P521,
-                ..
+                crv: EC2Curve::P521, ..
             } => Some(Algorithm::ES512),
             CoseKey::OKP {
-                crv: OKPCurve::Ed448,
-                ..
+                crv: OKPCurve::Ed448, ..
             } => Some(Algorithm::EdDSA),
             CoseKey::OKP {
                 crv: OKPCurve::Ed25519,
@@ -125,20 +122,14 @@ impl From<CoseKey> for ciborium::Value {
         match key {
             CoseKey::EC2 { crv, x, y } => {
                 // kty: 1, EC2: 2
-                map.push((
-                    ciborium::Value::Integer(1.into()),
-                    ciborium::Value::Integer(2.into()),
-                ));
+                map.push((ciborium::Value::Integer(1.into()), ciborium::Value::Integer(2.into())));
                 // crv: -1
                 map.push((ciborium::Value::Integer((-1).into()), {
                     let cbor: ciborium::Value = crv.into();
                     cbor
                 }));
                 // x: -2
-                map.push((
-                    ciborium::Value::Integer((-2).into()),
-                    ciborium::Value::Bytes(x),
-                ));
+                map.push((ciborium::Value::Integer((-2).into()), ciborium::Value::Bytes(x)));
                 // y: -3
                 map.push((ciborium::Value::Integer((-3).into()), {
                     let cbor: ciborium::Value = y.into();
@@ -147,20 +138,14 @@ impl From<CoseKey> for ciborium::Value {
             }
             CoseKey::OKP { crv, x } => {
                 // kty: 1, OKP: 1
-                map.push((
-                    ciborium::Value::Integer(1.into()),
-                    ciborium::Value::Integer(1.into()),
-                ));
+                map.push((ciborium::Value::Integer(1.into()), ciborium::Value::Integer(1.into())));
                 // crv: -1
                 map.push((ciborium::Value::Integer((-1).into()), {
                     let cbor: ciborium::Value = crv.into();
                     cbor
                 }));
                 // x: -2
-                map.push((
-                    ciborium::Value::Integer((-2).into()),
-                    ciborium::Value::Bytes(x),
-                ));
+                map.push((ciborium::Value::Integer((-2).into()), ciborium::Value::Bytes(x)));
             }
         }
         ciborium::Value::Map(map)
@@ -209,6 +194,7 @@ impl TryFrom<ciborium::Value> for CoseKey {
 
 impl TryFrom<CoseKey> for EncodedPoint {
     type Error = Error;
+
     fn try_from(value: CoseKey) -> Result<EncodedPoint, Self::Error> {
         match value {
             CoseKey::EC2 {
@@ -330,12 +316,7 @@ impl TryFrom<JWK> for CoseKey {
     fn try_from(jwk: JWK) -> Result<Self, Self::Error> {
         match jwk.params {
             ssi_jwk::Params::EC(params) => {
-                let x = params
-                    .x_coordinate
-                    .as_ref()
-                    .ok_or(Error::EC2MissingX)?
-                    .0
-                    .clone();
+                let x = params.x_coordinate.as_ref().ok_or(Error::EC2MissingX)?.0.clone();
                 Ok(CoseKey::EC2 {
                     crv: (&params).try_into()?,
                     x,
@@ -370,19 +351,19 @@ impl TryFrom<ssi_jwk::ECParams> for EC2Y {
     type Error = Error;
 
     fn try_from(params: ssi_jwk::ECParams) -> Result<Self, Self::Error> {
-        if let Some(y) = params.y_coordinate.as_ref() {
-            Ok(Self::Value(y.0.clone()))
-        } else {
-            Err(Error::EC2MissingY)
-        }
+        params
+            .y_coordinate
+            .as_ref()
+            .map_or(Err(Error::EC2MissingY), |y| Ok(Self::Value(y.0.clone())))
     }
 }
 
 impl TryFrom<CoseKey> for JWK {
     type Error = Error;
-    fn try_from(cose: CoseKey) -> Result<JWK, Error> {
+
+    fn try_from(cose: CoseKey) -> Result<Self, Error> {
         Ok(match cose {
-            CoseKey::EC2 { crv, x, y } => JWK {
+            CoseKey::EC2 { crv, x, y } => Self {
                 params: ssi_jwk::Params::EC(ssi_jwk::ECParams {
                     curve: Some(match crv {
                         EC2Curve::P256 => "P-256".to_string(),
@@ -406,7 +387,7 @@ impl TryFrom<CoseKey> for JWK {
                 x509_thumbprint_sha1: None,
                 x509_thumbprint_sha256: None,
             },
-            CoseKey::OKP { crv, x } => JWK {
+            CoseKey::OKP { crv, x } => Self {
                 params: ssi_jwk::Params::OKP(ssi_jwk::OctetParams {
                     curve: match crv {
                         OKPCurve::X25519 => "X25519".to_string(),
@@ -448,9 +429,8 @@ impl TryFrom<&ssi_jwk::OctetParams> for OKPCurve {
 mod test {
     use hex::FromHex;
 
-    use crate::cbor;
-
     use super::*;
+    use crate::cbor;
 
     static EC_P256: &str = include_str!("../../data/ec_p256.cbor");
 
@@ -462,10 +442,6 @@ mod test {
             CoseKey::EC2 { crv, .. } => assert_eq!(crv, &EC2Curve::P256),
             _ => panic!("expected an EC2 cose key"),
         };
-        assert_eq!(
-            cbor::to_vec(&key).unwrap(),
-            key_bytes,
-            "cbor encoding roundtrip failed"
-        );
+        assert_eq!(cbor::to_vec(&key).unwrap(), key_bytes, "cbor encoding roundtrip failed");
     }
 }

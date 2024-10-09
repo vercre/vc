@@ -71,9 +71,9 @@ pub trait Subject: Send + Sync {
     ) -> impl Future<Output = provider::Result<Dataset>> + Send;
 }
 
-
 /// The user information returned by the Subject trait.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(default)]
 pub struct Dataset {
     /// The credential subject populated for the user.
     pub claims: Map<String, Value>,
@@ -2088,7 +2088,6 @@ pub enum NotificationEvent {
 /// Use of the HTTP status code 204 (No Content) is RECOMMENDED.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct NotificationResponse {}
-
 
 #[cfg(test)]
 mod tests {

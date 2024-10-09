@@ -1,10 +1,9 @@
-use std::io::Cursor;
-
-use ciborium::Value;
-use coset::{cbor, CoseError};
-use serde::{de, Serialize};
 use std::error::Error;
 use std::fmt;
+use std::io::Cursor;
+
+use coset::CoseError;
+use serde::de;
 
 pub fn to_vec<T>(value: &T) -> Result<Vec<u8>, CborError>
 where
@@ -15,38 +14,36 @@ where
     Ok(buf)
 }
 
+
 pub fn from_slice<T>(slice: &[u8]) -> Result<T, CborError>
 where
     T: de::DeserializeOwned,
 {
     ciborium::from_reader(Cursor::new(&slice)).map_err(|e| {
-        CborError(CoseError::DecodeFailed(ciborium::de::Error::Semantic(
-            None,
-            e.to_string(),
-        )))
+        CborError(CoseError::DecodeFailed(ciborium::de::Error::Semantic(None, e.to_string())))
     })
 }
 
-/// Convert a `ciborium::Value` into a type `T`
-#[allow(clippy::needless_pass_by_value)]
-pub fn from_value<T>(value: Value) -> Result<T, CoseError>
-where
-    T: de::DeserializeOwned,
-{
-    Value::deserialized(&value).map_err(|_| {
-        CoseError::DecodeFailed(cbor::de::Error::Semantic(
-            None,
-            "cannot deserialize".to_string(),
-        ))
-    })
-}
+// /// Convert a `ciborium::Value` into a type `T`
+// #[allow(clippy::needless_pass_by_value)]
+// pub fn from_value<T>(value: Value) -> Result<T, CoseError>
+// where
+//     T: de::DeserializeOwned,
+// {
+//     Value::deserialized(&value).map_err(|_| {
+//         CoseError::DecodeFailed(cbor::de::Error::Semantic(
+//             None,
+//             "cannot deserialize".to_string(),
+//         ))
+//     })
+// }
 
-pub fn into_value<S>(v: S) -> Result<Value, CoseError>
-where
-    S: Serialize,
-{
-    Value::serialized(&v).map_err(|_| CoseError::EncodeFailed)
-}
+// pub fn into_value<S>(v: S) -> Result<Value, CoseError>
+// where
+//     S: Serialize,
+// {
+//     Value::serialized(&v).map_err(|_| CoseError::EncodeFailed)
+// }
 
 // Wrapper struct to implement Error for CoseError
 #[derive(Debug)]
