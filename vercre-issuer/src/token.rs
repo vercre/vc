@@ -88,37 +88,9 @@ impl Context {
                 // anonymous access allowed?
                 if request.client_id.as_ref().is_none()
                     || request.client_id.as_ref().is_some_and(String::is_empty)
+                        && !server.pre_authorized_grant_anonymous_access_supported
                 {
-                    if !server.pre_authorized_grant_anonymous_access_supported {
-                        return Err(Error::InvalidClient(
-                            "anonymous access is not supported".into(),
-                        ));
-                    }
-                } else {
-                    // We have a client_id so should be able to safely unwrap.
-                    let client_id =
-                        request.client_id.as_ref().expect("request client_id is set and not empty");
-                    // client metadata
-                    let Ok(client) = Metadata::client(provider, client_id).await else {
-                        return Err(Error::InvalidClient("invalid `client_id`".into()));
-                    };
-                    // Client and server must support the same scopes.
-                    if let Some(client_scope) = &client.oauth.scope {
-                        if let Some(server_scopes) = &server.oauth.scopes_supported {
-                            let scopes: Vec<&str> = client_scope.split_whitespace().collect();
-                            if !scopes.iter().all(|s| server_scopes.contains(&(*s).to_string())) {
-                                return Err(Error::InvalidRequest(
-                                    "client scope not supported".into(),
-                                ));
-                            }
-                        } else {
-                            return Err(Error::InvalidRequest(
-                                "server supported scopes not set".into(),
-                            ));
-                        }
-                    } else {
-                        return Err(Error::InvalidRequest("client scope not set".into()));
-                    }
+                    return Err(Error::InvalidClient("anonymous access is not supported".into()));
                 }
 
                 // tx_code (PIN)
@@ -136,6 +108,9 @@ impl Context {
                 };
 
                 // client_id is the same as the one used to obtain the authorization code
+                if request.client_id.is_none() {
+                    return Err(Error::InvalidRequest("`client_id` is missing".into()));
+                }
                 if request.client_id.as_ref() != Some(&auth_state.client_id) {
                     return Err(Error::InvalidClient(
                         "`client_id` differs from authorized one".into(),
@@ -161,6 +136,26 @@ impl Context {
                 if challenge != auth_state.code_challenge {
                     return Err(Error::AccessDenied("`code_verifier` is invalid".into()));
                 }
+            }
+        }
+
+        if let Some(client_id) = &request.client_id {
+            // client metadata
+            let Ok(client) = Metadata::client(provider, client_id).await else {
+                return Err(Error::InvalidClient("invalid `client_id`".into()));
+            };
+            // Client and server must support the same scopes.
+            if let Some(client_scope) = &client.oauth.scope {
+                if let Some(server_scopes) = &server.oauth.scopes_supported {
+                    let scopes: Vec<&str> = client_scope.split_whitespace().collect();
+                    if !scopes.iter().all(|s| server_scopes.contains(&(*s).to_string())) {
+                        return Err(Error::InvalidRequest("client scope not supported".into()));
+                    }
+                } else {
+                    return Err(Error::InvalidRequest("server supported scopes not set".into()));
+                }
+            } else {
+                return Err(Error::InvalidRequest("client scope not set".into()));
             }
         }
 
