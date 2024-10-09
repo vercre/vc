@@ -61,7 +61,7 @@ async fn sample_credential() -> Credential {
         ],
         type_: vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()],
         issuer: Kind::String("https://example.com/issuers/14".into()),
-        id: "https://example.com/credentials/3732".into(),
+        id: Some("https://example.com/credentials/3732".into()),
         issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
         credential_subject: Quota::One(CredentialSubject {
             id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
@@ -83,7 +83,7 @@ async fn sample_credential() -> Credential {
     let config = vercre_test_utils::sample::credential_configuration();
     Credential {
         issuer: "https://vercre.io".into(),
-        id: vc.id.clone(),
+        id: vc.id.clone().expect("should have id"),
         metadata: config,
         vc: vc.clone(),
         issued: jwt,

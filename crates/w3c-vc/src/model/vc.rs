@@ -36,10 +36,12 @@ pub struct VerifiableCredential {
     pub context: Vec<Kind<Value>>,
 
     #[allow(rustdoc::bare_urls)]
-    /// The credential's URI. It is RECOMMENDED that if dereferenced, the URI
-    /// results in a document containing machine-readable information about
-    /// the id (a schema). For example, "`http://example.edu/credentials/3732`".
-    pub id: String,
+    /// The id property is OPTIONAL. If present, id property's value MUST be a
+    /// single URL, which MAY be dereferenceable. It is RECOMMENDED that the URL
+    /// in the id be one which, if dereferenceable, results in a document
+    /// containing machine-readable information about the id. For example,
+    /// "`http://example.edu/credentials/3732`".
+    pub id: Option<String>,
 
     /// The type property is used to uniquely identify the type of the
     /// credential. That is, to indicate the set of claims the credential
@@ -427,7 +429,7 @@ impl VcBuilder {
     /// Sets the `id` property
     #[must_use]
     pub fn id(mut self, id: impl Into<String>) -> Self {
-        self.vc.id = id.into();
+        self.vc.id = Some(id.into());
         self
     }
 
@@ -500,9 +502,6 @@ impl VcBuilder {
 
         if self.vc.context.len() < 2 {
             bail!("no context set");
-        }
-        if self.vc.id.is_empty() {
-            bail!("no id set");
         }
         if self.vc.type_.len() < 2 {
             bail!("no type set");
@@ -683,7 +682,7 @@ mod tests {
             ],
             type_: vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()],
             issuer: Kind::String("https://example.com/issuers/14".into()),
-            id: "https://example.com/credentials/3732".into(),
+            id: Some("https://example.com/credentials/3732".into()),
             issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
             credential_subject: Quota::One(CredentialSubject {
                 id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),

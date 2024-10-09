@@ -14,7 +14,8 @@ use vercre_w3c_vc::model::VerifiableCredential;
 #[derive(Clone, Default, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Credential {
     /// Credential `id` is the credential's unique identifier
-    /// (from Verifiable Credential `id`).
+    /// (from Verifiable Credential `id` or generated if credential has no
+    /// `id`).
     pub id: String,
 
     /// The credential issuer.

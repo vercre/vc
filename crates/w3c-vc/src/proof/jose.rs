@@ -97,7 +97,7 @@ impl From<VerifiableCredential> for VcClaims {
             nbf: vc.issuance_date.timestamp(),
             iss: issuer_id.clone(),
             iat: vc.issuance_date.timestamp(),
-            jti: vc.id.clone(),
+            jti: vc.id.clone().unwrap_or_default(),
             exp: vc.expiration_date.map(|exp| exp.timestamp()),
             vc,
         }
