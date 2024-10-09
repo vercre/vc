@@ -23,6 +23,7 @@ use vercre_openid::issuer::{
     AuthorizedDetail, CredentialAuthorization, Issuer, Metadata, ProfileClaims, Provider,
     StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
 };
+use vercre_openid::oauth::GrantType;
 use vercre_openid::{Error, Result};
 
 use crate::state::{Authorized, AuthorizedItem, Expire, ItemType, Stage, State, Token};
@@ -77,6 +78,9 @@ impl Context {
         let Ok(server) = Metadata::server(provider, &request.credential_issuer, None).await else {
             return Err(Error::InvalidRequest("unknown authorization server".into()));
         };
+        let Some(grant_types_supported) = &server.oauth.grant_types_supported else {
+            return Err(Error::ServerError("authorization server grant types not set".into()));
+        };
 
         // grant_type
         match &request.grant_type {
@@ -84,6 +88,10 @@ impl Context {
                 let Stage::Offered(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("pre-authorized state not set".into()));
                 };
+                // grant_type supported?
+                if !grant_types_supported.contains(&GrantType::PreAuthorizedCode) {
+                    return Err(Error::InvalidGrant("unsupported `grant_type`".into()));
+                }
 
                 // anonymous access allowed?
                 if request.client_id.as_ref().is_none()
@@ -106,6 +114,11 @@ impl Context {
                 let Stage::Authorized(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("authorization state not set".into()));
                 };
+
+                // grant_type supported?
+                if !grant_types_supported.contains(&GrantType::AuthorizationCode) {
+                    return Err(Error::InvalidGrant("unsupported `grant_type`".into()));
+                }
 
                 // client_id is the same as the one used to obtain the authorization code
                 if request.client_id.is_none() {
