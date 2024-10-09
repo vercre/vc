@@ -43,15 +43,15 @@ pub struct VerifiableCredential {
     /// "`http://example.edu/credentials/3732`".
     pub id: Option<String>,
 
-    /// The type property is used to uniquely identify the type of the
-    /// credential. That is, to indicate the set of claims the credential
-    /// contains. It is an unordered set of URIs (full or relative to
-    /// @context). It is RECOMMENDED that each URI, if dereferenced, will
-    /// result in a document containing machine-readable information about
+    /// The type property is used to determine whether or not a provided
+    /// verifiable credential is appropriate for the intended use-case. It is an
+    /// unordered set of terms or URIs (full or relative to @context). It is
+    /// RECOMMENDED that each URI, if dereferenced, will result in a
+    /// document containing machine-readable information about
     /// the type. Syntactic conveniences, such as JSON-LD, SHOULD be used to
     /// ease developer usage.
     #[serde(rename = "type")]
-    pub type_: Vec<String>,
+    pub type_: Quota<String>,
 
     /// A URI or object with an id property. It is RECOMMENDED that the
     /// URI/object id, dereferences to machine-readable information about
@@ -413,7 +413,7 @@ impl VcBuilder {
 
         // set some sensibile defaults
         builder.vc.context.push(Kind::String("https://www.w3.org/2018/credentials/v1".into()));
-        builder.vc.type_.push("VerifiableCredential".into());
+        builder.vc.type_ = Quota::One("VerifiableCredential".into());
         builder.vc.issuance_date = chrono::Utc::now(); //.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
 
         builder
@@ -436,7 +436,7 @@ impl VcBuilder {
     /// Sets the `type_` property
     #[must_use]
     pub fn add_type(mut self, type_: impl Into<String>) -> Self {
-        self.vc.type_.push(type_.into());
+        self.vc.type_.add(type_.into());
         self
     }
 
@@ -680,7 +680,7 @@ mod tests {
                 Kind::String("https://www.w3.org/2018/credentials/v1".into()),
                 Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()),
             ],
-            type_: vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()],
+            type_: Quota::Many(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
             issuer: Kind::String("https://example.com/issuers/14".into()),
             id: Some("https://example.com/credentials/3732".into()),
             issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),

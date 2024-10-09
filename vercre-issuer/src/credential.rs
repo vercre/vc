@@ -227,7 +227,7 @@ impl Context {
 
         let vc = VerifiableCredential::builder()
             .add_context(Kind::String(format!("{credential_issuer}/credentials/v1")))
-            // TODO: generate credential id
+            // TODO: generate credential id, configurable by issuer. ID may be omitted.
             .id(format!("{credential_issuer}/credentials/{credential_type}"))
             .add_type(credential_type)
             .issuer(credential_issuer)

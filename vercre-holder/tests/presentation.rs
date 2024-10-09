@@ -59,7 +59,7 @@ async fn sample_credential() -> Credential {
             Kind::String("https://www.w3.org/2018/credentials/v1".into()),
             Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()),
         ],
-        type_: vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()],
+        type_: Quota::Many(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
         issuer: Kind::String("https://example.com/issuers/14".into()),
         id: Some("https://example.com/credentials/3732".into()),
         issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
