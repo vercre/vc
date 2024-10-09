@@ -75,6 +75,7 @@ pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Res
     let mso_bytes = cbor::to_vec(&Tag24::new(mso)?)?;
     let signature = signer.sign(&mso_bytes).await;
 
+    // build COSE_Sign1
     let algorithm = match signer.algorithm() {
         Algorithm::EdDSA => iana::Algorithm::EdDSA,
         _ => iana::Algorithm::EdDSA,
@@ -90,8 +91,11 @@ pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Res
         .signature(signature)
         .build();
 
-    let serialized = cbor::to_vec(&Tagged::new(false, cose_sign_1))?;
+    // add COSE_Sign1 to IssuerSigned object
+    mdoc.issuer_auth = Tagged::new(false, cose_sign_1);
 
+    // encode CBOR -> Base64Url -> return
+    let serialized = cbor::to_vec(&mdoc)?;
     Ok(Base64::encode_string(&serialized))
 }
 
