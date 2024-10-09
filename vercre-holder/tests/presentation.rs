@@ -80,12 +80,11 @@ async fn sample_credential() -> Credential {
     let payload = Payload::Vc(vc.clone());
     let jwt = proof::create(Format::JwtVcJson, payload, signer).await.expect("should encode");
 
-    let config = vercre_test_utils::sample::credential_configuration();
     Credential {
         issuer: "https://vercre.io".into(),
         id: vc.id.clone().expect("should have id"),
-        metadata: config,
         vc: vc.clone(),
+        display: None,
         issued: jwt,
         logo: None,
     }

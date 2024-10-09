@@ -18,6 +18,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use vercre_core::{Kind, Quota};
 
+use super::types::LangString;
 use crate::proof::integrity::Proof;
 
 /// `VerifiableCredential` represents a naive implementation of the W3C
@@ -52,6 +53,23 @@ pub struct VerifiableCredential {
     /// ease developer usage.
     #[serde(rename = "type")]
     pub type_: Quota<String>,
+
+    /// The name property expresses the name of the credential. If present, the
+    /// value of the name property MUST be a string or a language value object.
+    /// Ideally, the name of a credential is concise, human-readable, and could
+    /// enable an individual to quickly differentiate one credential from any
+    /// other credentials they might hold.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<LangString>,
+
+    /// The description property conveys specific details about a credential. If
+    /// present, the value of the description property MUST be a string or a
+    /// language value object. Ideally, the description of a credential is no
+    /// more than a few sentences in length and conveys enough information about
+    /// the credential to remind an individual of its contents without having to
+    /// look through the entirety of the claims.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<LangString>,
 
     /// A URI or object with an id property. It is RECOMMENDED that the
     /// URI/object id, dereferences to machine-readable information about

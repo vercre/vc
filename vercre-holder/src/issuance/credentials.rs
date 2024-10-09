@@ -304,9 +304,9 @@ async fn credential(
     let mut storable_credential = Credential {
         id: vc.id.clone().unwrap_or_else(|| format!("urn:uuid:{}", uuid::Uuid::new_v4())),
         issuer: issuer_id.clone(),
-        metadata: config.clone(),
         vc: vc.clone(),
         issued: token.into(),
+        display: config.display.clone(),
 
         ..Credential::default()
     };

@@ -83,7 +83,7 @@ impl From<Vec<Credential>> for CredentialView {
 
 impl From<&Credential> for CredentialDisplay {
     fn from(credential: &Credential) -> Self {
-        let displays = credential.metadata.display.clone().unwrap_or_default();
+        let displays = credential.display.clone().unwrap_or_default();
         // TODO: locale
         let display = displays[0].clone();
         Self {
@@ -123,7 +123,7 @@ impl From<&CredentialConfiguration> for CredentialDisplay {
 
 impl From<&Credential> for CredentialDetail {
     fn from(credential: &Credential) -> Self {
-        let displays = credential.metadata.display.clone().unwrap_or_default();
+        let displays = credential.display.clone().unwrap_or_default();
         // TODO: locale
         let display = displays[0].clone();
         let vc = credential.vc.clone();

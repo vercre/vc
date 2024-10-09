@@ -1,6 +1,6 @@
 ---
 source: vercre-holder/tests/presentation.rs
-assertion_line: 167
+assertion_line: 166
 expression: presentation
 ---
 presentation_id: "[presentation_id]"
@@ -22,74 +22,4 @@ credentials:
         id: "did:example:ebfeb1f712ebc6f1c276e12ec21"
         employeeId: "1234567890"
       expirationDate: "2033-12-20T23:21:55Z"
-    metadata:
-      format: jwt_vc_json
-      credential_definition:
-        type:
-          - VerifiableCredential
-          - EmployeeIDCredential
-        credentialSubject:
-          address:
-            country:
-              value_type: string
-              display:
-                - name: Country
-                  locale: en-NZ
-            locality:
-              value_type: string
-              display:
-                - name: Locality
-                  locale: en-NZ
-            region:
-              value_type: string
-              display:
-                - name: Region
-                  locale: en-NZ
-            street_address:
-              value_type: string
-              display:
-                - name: Street Address
-                  locale: en-NZ
-          email:
-            mandatory: true
-            value_type: string
-            display:
-              - name: Email
-                locale: en-NZ
-          family_name:
-            mandatory: true
-            value_type: string
-            display:
-              - name: Family name
-                locale: en-NZ
-          given_name:
-            mandatory: true
-            value_type: string
-            display:
-              - name: Given name
-                locale: en-NZ
-      scope: EmployeeIDCredential
-      cryptographic_binding_methods_supported:
-        - "did:key"
-        - "did:web"
-      credential_signing_alg_values_supported:
-        - ES256K
-        - EdDSA
-      proof_types_supported:
-        jwt:
-          proof_signing_alg_values_supported:
-            - ES256K
-            - EdDSA
-      display:
-        - name: Employee ID
-          locale: en-NZ
-          logo:
-            uri: "https://vercre.github.io/assets/employee.png"
-            alt_text: Vercre Logo
-          description: Vercre employee ID credential
-          background_color: "#323ed2"
-          background_image:
-            uri: "https://vercre.github.io/assets/vercre-background.png"
-            alt_text: Vercre Background
-          text_color: "#ffffff"
     issued: eyJhbGciOiJFZERTQSIsInR5cCI6Imp3dCIsImtpZCI6ImRpZDp3ZWI6ZGVtby5jcmVkaWJpbC5pbyNrZXktMCJ9.eyJzdWIiOiJkaWQ6ZXhhbXBsZTplYmZlYjFmNzEyZWJjNmYxYzI3NmUxMmVjMjEiLCJuYmYiOjE3MDA1MjI1MTUsImlzcyI6Imh0dHBzOi8vZXhhbXBsZS5jb20vaXNzdWVycy8xNCIsImlhdCI6MTcwMDUyMjUxNSwianRpIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9jcmVkZW50aWFscy8zNzMyIiwiZXhwIjoyMDE4NzMzNzE1LCJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL2V4YW1wbGVzL3YxIl0sImlkIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9jcmVkZW50aWFscy8zNzMyIiwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIkVtcGxveWVlSURDcmVkZW50aWFsIl0sImlzc3VlciI6Imh0dHBzOi8vZXhhbXBsZS5jb20vaXNzdWVycy8xNCIsImlzc3VhbmNlRGF0ZSI6IjIwMjMtMTEtMjBUMjM6MjE6NTVaIiwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiJkaWQ6ZXhhbXBsZTplYmZlYjFmNzEyZWJjNmYxYzI3NmUxMmVjMjEiLCJlbXBsb3llZUlkIjoiMTIzNDU2Nzg5MCJ9LCJleHBpcmF0aW9uRGF0ZSI6IjIwMzMtMTItMjBUMjM6MjE6NTVaIn19.LANNC7fGRZI2ZUP43vKtm-6izCvd27r5qLDREK9XWnXq6MWfRlg1v3WU_xIONRm2wP4JeYp_4CXuHzJHTnPNAQ

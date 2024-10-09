@@ -1,6 +1,6 @@
 ---
 source: vercre-issuer/src/deferred.rs
-assertion_line: 174
+assertion_line: 180
 expression: vc
 ---
 "@context":
