@@ -8,11 +8,12 @@
 
 use std::collections::{BTreeMap, HashSet};
 
-use coset::CoseSign1;
+use ciborium::Value;
+use coset::{AsCborValue, CoseSign1};
 use rand::Rng;
-use serde::{Deserialize, Serialize};
+use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::cose::{CoseKey, OKPCurve, Tagged};
+use crate::cose_key::{CoseKey, OkpCurve};
 use crate::mdoc::NameSpace;
 
 /// `IssuerAuth` is comprised of an MSO encapsulated and signed by an untagged
@@ -20,11 +21,25 @@ use crate::mdoc::NameSpace;
 ///
 /// The `COSE_Sign1` payload is `MobileSecurityObjectBytes` with the
 /// `Sig_structure.external_aad` set to a zero-length bytestring.
-pub type IssuerAuth = Tagged<CoseSign1>;
+#[derive(Clone, Debug, Default)]
+pub struct IssuerAuth(pub CoseSign1);
 
-impl Default for IssuerAuth {
-    fn default() -> Self {
-        Self::new(false, CoseSign1::default())
+impl Serialize for IssuerAuth {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.0.clone().to_cbor_value().map_err(ser::Error::custom)?.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for IssuerAuth {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = Value::deserialize(deserializer)?;
+        CoseSign1::from_cbor_value(value).map_err(de::Error::custom).map(Self)
     }
 }
 
@@ -118,8 +133,8 @@ impl DeviceKeyInfo {
     /// Create a new `DeviceKeyInfo` with the given device key.
     pub const fn new() -> Self {
         Self {
-            device_key: CoseKey::OKP {
-                crv: OKPCurve::Ed25519,
+            device_key: CoseKey::Okp {
+                crv: OkpCurve::Ed25519,
                 x: Vec::new(),
             },
             key_authorizations: None,

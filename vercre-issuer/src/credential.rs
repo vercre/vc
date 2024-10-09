@@ -259,6 +259,7 @@ impl Context {
     ) -> Result<CredentialResponseType> {
         //
 
+        
         // Ok(CredentialResponseType::Credential(Kind::String(jwt)))
         todo!()
     }

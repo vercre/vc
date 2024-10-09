@@ -15,8 +15,8 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::cbor::Tag24;
 use crate::mso;
-use crate::tag24::Tag24;
 
 pub type NameSpace = String;
 

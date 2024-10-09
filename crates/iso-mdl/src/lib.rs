@@ -11,10 +11,9 @@
 //! machine-verifiable.
 
 mod cbor;
-mod cose;
+mod cose_key;
 mod mdoc;
 mod mso;
-mod tag24;
 
 use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded as Base64, Encoding};
@@ -24,10 +23,10 @@ use sha2::{Digest, Sha256};
 use vercre_datasec::{Algorithm, Signer};
 use vercre_openid::issuer::Dataset;
 
-use crate::cose::{CoseKey, OKPCurve, Tagged};
+use crate::cbor::Tag24;
+use crate::cose_key::{CoseKey, OkpCurve};
 use crate::mdoc::{IssuerSigned, IssuerSignedItem};
 use crate::mso::{DigestIdGenerator, MobileSecurityObject};
-use crate::tag24::Tag24;
 
 /// Convert a Credential Dataset to a base64url-encoded, CBOR-encoded, ISO mDL
 /// `IssuerSigned` object.
@@ -54,10 +53,10 @@ pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Res
                 random: thread_rng().gen::<[u8; 16]>().into(),
                 element_identifier: k.clone(),
                 element_value: ciborium::cbor!(v)?,
-            })?;
+            });
 
             // digest of `IssuerSignedItem` for MSO
-            let digest = Sha256::digest(&item.inner_bytes).to_vec();
+            let digest = Sha256::digest(&item.to_vec()?).to_vec();
             mso.value_digests.entry(key.clone()).or_default().insert(item.inner.digest_id, digest);
 
             // add item to IssuerSigned object
@@ -66,20 +65,21 @@ pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Res
     }
 
     // add public key to MSO
-    mso.device_key_info.device_key = CoseKey::OKP {
-        crv: OKPCurve::Ed25519,
+    mso.device_key_info.device_key = CoseKey::Okp {
+        crv: OkpCurve::Ed25519,
         x: signer.public_key().await?,
     };
 
     // sign
-    let mso_bytes = cbor::to_vec(&Tag24::new(mso)?)?;
+    let mso_bytes = cbor::to_vec(&Tag24::new(mso))?;
     let signature = signer.sign(&mso_bytes).await;
 
     // build COSE_Sign1
     let algorithm = match signer.algorithm() {
         Algorithm::EdDSA => iana::Algorithm::EdDSA,
-        _ => iana::Algorithm::EdDSA,
+        Algorithm::ES256K => return Err(anyhow!("unsupported algorithm")),
     };
+
     let key_id = signer.verification_method().as_bytes().to_vec();
 
     let protected = HeaderBuilder::new().algorithm(algorithm).build();
@@ -92,7 +92,7 @@ pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Res
         .build();
 
     // add COSE_Sign1 to IssuerSigned object
-    mdoc.issuer_auth = Tagged::new(false, cose_sign_1);
+    mdoc.issuer_auth = mso::IssuerAuth(cose_sign_1);
 
     // encode CBOR -> Base64Url -> return
     let serialized = cbor::to_vec(&mdoc)?;

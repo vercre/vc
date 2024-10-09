@@ -1,63 +1,89 @@
-use std::error::Error;
-use std::fmt;
 use std::io::Cursor;
 
+use anyhow::anyhow;
+use ciborium::Value;
 use coset::CoseError;
-use serde::de;
+use serde::de::{self, DeserializeOwned};
+use serde::{ser, Deserialize, Serialize};
 
-pub fn to_vec<T>(value: &T) -> Result<Vec<u8>, CborError>
+pub fn to_vec<T>(value: &T) -> anyhow::Result<Vec<u8>>
 where
     T: serde::Serialize,
 {
     let mut buf = Vec::new();
-    ciborium::into_writer(value, &mut buf).map_err(|_| CborError(CoseError::EncodeFailed))?;
+    ciborium::into_writer(value, &mut buf)?;
     Ok(buf)
 }
 
-pub fn from_slice<T>(slice: &[u8]) -> Result<T, CborError>
+pub fn from_slice<T>(slice: &[u8]) -> anyhow::Result<T>
 where
-    T: de::DeserializeOwned,
+    T: DeserializeOwned,
 {
     ciborium::from_reader(Cursor::new(&slice)).map_err(|e| {
-        CborError(CoseError::DecodeFailed(ciborium::de::Error::Semantic(None, e.to_string())))
+        anyhow!(CoseError::DecodeFailed(ciborium::de::Error::Semantic(None, e.to_string())))
     })
 }
 
-// /// Convert a `ciborium::Value` into a type `T`
-// #[allow(clippy::needless_pass_by_value)]
-// pub fn from_value<T>(value: Value) -> Result<T, CoseError>
-// where
-//     T: de::DeserializeOwned,
-// {
-//     Value::deserialized(&value).map_err(|_| {
-//         CoseError::DecodeFailed(cbor::de::Error::Semantic(
-//             None,
-//             "cannot deserialize".to_string(),
-//         ))
-//     })
-// }
+/// Wrap types that require tagging with tag 24.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Tag24<T> {
+    pub inner: T,
+}
 
-// pub fn into_value<S>(v: S) -> Result<Value, CoseError>
-// where
-//     S: Serialize,
-// {
-//     Value::serialized(&v).map_err(|_| CoseError::EncodeFailed)
-// }
+impl<T: Serialize> Tag24<T> {
+    pub const fn new(inner: T) -> Self {
+        Self { inner }
+    }
 
-// Wrapper struct to implement Error for CoseError
-#[derive(Debug)]
-pub struct CborError(pub CoseError);
-
-impl From<CoseError> for CborError {
-    fn from(err: CoseError) -> CborError {
-        CborError(err)
+    pub fn to_vec(&self) -> anyhow::Result<Vec<u8>> {
+        to_vec(&self.inner)
     }
 }
 
-impl fmt::Display for CborError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self.0)
+impl<T: DeserializeOwned> TryFrom<Value> for Tag24<T> {
+    type Error = anyhow::Error;
+
+    fn try_from(v: Value) -> anyhow::Result<Self> {
+        match v.clone() {
+            Value::Tag(24, inner_value) => match inner_value.as_ref() {
+                Value::Bytes(inner_bytes) => {
+                    let inner: T = from_slice(inner_bytes)?;
+                    Ok(Self { inner })
+                }
+                _ => Err(anyhow!("invalid tag: {inner_value:?}")),
+            },
+            _ => Err(anyhow!("not a tag24: {v:?}")),
+        }
     }
 }
 
-impl Error for CborError {}
+impl<T: Serialize> Serialize for Tag24<T> {
+    fn serialize<S: ser::Serializer>(&self, s: S) -> anyhow::Result<S::Ok, S::Error> {
+        Value::Tag(24, Box::new(Value::Bytes(to_vec(&self.inner).unwrap()))).serialize(s)
+    }
+}
+
+impl<'de, T: DeserializeOwned> Deserialize<'de> for Tag24<T> {
+    fn deserialize<D>(deserializer: D) -> anyhow::Result<Self, D::Error>
+    where
+        D: de::Deserializer<'de>,
+    {
+        let value = Value::deserialize(deserializer)?;
+        value.try_into().map_err(de::Error::custom)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::Tag24;
+
+    #[test]
+    #[should_panic]
+    // A Tag24 cannot be serialized directly into a non-cbor format as it will lose the tag.
+    fn non_cbor_roundtrip() {
+        let original = Tag24::new(String::from("some data"));
+        let json = serde_json::to_vec(&original).unwrap();
+        let roundtripped = serde_json::from_slice(&json).unwrap();
+        assert_eq!(original, roundtripped)
+    }
+}
