@@ -8,7 +8,7 @@ use coset::{AsCborValue, TaggedCborSerializable};
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 
 #[allow(clippy::module_name_repetitions)]
-pub use self::cose_key::{OKPCurve,CoseKey};
+pub use self::cose_key::{CoseKey, OKPCurve};
 
 #[derive(Debug, Clone)]
 pub struct Tagged<T>

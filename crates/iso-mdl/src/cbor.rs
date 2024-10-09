@@ -14,7 +14,6 @@ where
     Ok(buf)
 }
 
-
 pub fn from_slice<T>(slice: &[u8]) -> Result<T, CborError>
 where
     T: de::DeserializeOwned,

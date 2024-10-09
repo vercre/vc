@@ -68,10 +68,8 @@ pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Res
     // add public key to MSO
     mso.device_key_info.device_key = CoseKey::OKP {
         crv: OKPCurve::Ed25519,
-        x: vec![],
+        x: signer.public_key().await?,
     };
-
-    println!("issuer_signed: {mdoc:?}");
 
     // sign
     let mso_bytes = cbor::to_vec(&Tag24::new(mso)?)?;
