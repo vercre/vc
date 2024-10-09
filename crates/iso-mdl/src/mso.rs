@@ -12,11 +12,14 @@ use coset::CoseSign1;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
-use crate::cose::{CoseKey, Tagged};
+use crate::cose::{CoseKey, OKPCurve, Tagged};
 use crate::mdoc::NameSpace;
 
-/// Signed payload of `MobileSecurityObjectBytes`
-/// `MobileSecurityObjectBytes` = #6.24(bstr .cbor `MobileSecurityObject`)
+/// `IssuerAuth` is comprised of an MSO encapsulated and signed by an untagged
+/// `COSE_Sign1` type (RFC 8152).
+///
+/// The `COSE_Sign1` payload is `MobileSecurityObjectBytes` with the
+/// `Sig_structure.external_aad` set to a zero-length bytestring.
 pub type IssuerAuth = Tagged<CoseSign1>;
 
 impl Default for IssuerAuth {
@@ -24,6 +27,10 @@ impl Default for IssuerAuth {
         Self::new(false, CoseSign1::default())
     }
 }
+
+// /// Payload for `COSE_Sign1` signature type.
+// /// `#6.24(bstr .cbor MobileSecurityObject)`
+// pub type MobileSecurityObjectBytes = Tag24<MobileSecurityObject>;
 
 /// An mdoc digital signature is generated over the mobile security object (MSO).
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -96,7 +103,7 @@ pub enum DigestAlgorithm {
 #[serde(rename_all = "camelCase")]
 pub struct DeviceKeyInfo {
     /// Device key
-    pub device_key: BTreeMap<usize, CoseKey>,
+    pub device_key: CoseKey,
 
     /// Key authorizations
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -111,7 +118,10 @@ impl DeviceKeyInfo {
     /// Create a new `DeviceKeyInfo` with the given device key.
     pub const fn new() -> Self {
         Self {
-            device_key: BTreeMap::new(),
+            device_key: CoseKey::OKP {
+                crv: OKPCurve::Ed25519,
+                x: Vec::new(),
+            },
             key_authorizations: None,
             key_info: None,
         }

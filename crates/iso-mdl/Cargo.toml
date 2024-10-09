@@ -48,3 +48,4 @@ hex = "0.4.3"
 serde_json.workspace = true
 tracing-subscriber.workspace = true
 vercre-test-utils.workspace = true
+tokio.workspace = true

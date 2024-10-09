@@ -17,12 +17,15 @@ mod mso;
 mod tag24;
 
 use anyhow::anyhow;
+use base64ct::{Base64UrlUnpadded as Base64, Encoding};
 use rand::{thread_rng, Rng};
 use sha2::{Digest, Sha256};
 use vercre_datasec::Signer;
 use vercre_openid::issuer::Dataset;
 
-use crate::mdoc::IssuerSignedItem;
+use crate::cose::{CoseKey, OKPCurve, Tagged};
+use crate::mdoc::{IssuerSigned, IssuerSignedItem};
+use crate::mso::{DigestIdGenerator, MobileSecurityObject};
 use crate::tag24::Tag24;
 
 /// Convert a Credential Dataset to a base64url-encoded CBOR-encoded ISO mDL
@@ -30,20 +33,18 @@ use crate::tag24::Tag24;
 ///
 /// # Errors
 /// // TODO: add errors
-pub fn to_iso_mdl(dataset: Dataset, _signer: impl Signer) -> anyhow::Result<String> {
-    // ValueDigests:
-    // - create digest of each configured data element
-
-    let mut mdoc = mdoc::IssuerSigned::new();
-    let mut mso = mso::MobileSecurityObject::new();
+pub async fn to_iso_mdl(dataset: Dataset, signer: impl Signer) -> anyhow::Result<String> {
+    // populate mdoc and accompanying MSO
+    let mut mdoc = IssuerSigned::new();
+    let mut mso = MobileSecurityObject::new();
 
     for (key, value) in dataset.claims {
-        // namespace should be root level claim
+        // namespace is a root-level claim
         let Some(name_space) = value.as_object() else {
             return Err(anyhow!("invalid dataset"));
         };
 
-        let mut id_gen = mso::DigestIdGenerator::new();
+        let mut id_gen = DigestIdGenerator::new();
 
         // assemble `IssuerSignedItem`s for name space
         for (k, v) in name_space {
@@ -54,7 +55,7 @@ pub fn to_iso_mdl(dataset: Dataset, _signer: impl Signer) -> anyhow::Result<Stri
                 element_value: ciborium::cbor!(v)?,
             })?;
 
-            // digest of item for MSO
+            // digest of `IssuerSignedItem` for MSO
             let digest = Sha256::digest(&item.inner_bytes).to_vec();
             mso.value_digests.entry(key.clone()).or_default().insert(item.inner.digest_id, digest);
 
@@ -63,20 +64,32 @@ pub fn to_iso_mdl(dataset: Dataset, _signer: impl Signer) -> anyhow::Result<Stri
         }
     }
 
-    // DeviceKeyInfo
-    // - use Signer to provide Issuer public key
-
-    // IssuerAuth
-    // - assemble MSO and sign with Issuer key
-
-    // IssuerSigned
-    // - set `issuer_auth` param
-    // - serialize to CBOR
-    // - base64 encode
+    // add public key to MSO
+    // let x= signer.verification_method();
+    mso.device_key_info.device_key = CoseKey::OKP {
+        crv: OKPCurve::Ed25519,
+        x: vec![],
+    };
 
     println!("issuer_signed: {mdoc:?}");
 
-    Ok(String::new())
+    // sign
+    let mso_bytes = cbor::to_vec(&Tag24::new(mso)?)?;
+    let signature = signer.sign(&mso_bytes).await;
+
+    let protected = coset::HeaderBuilder::new().algorithm(coset::iana::Algorithm::ES256).build();
+    let unprotected = coset::HeaderBuilder::new().key_id(b"11".to_vec()).build();
+    let cose_sign_1 = coset::CoseSign1Builder::new()
+        .protected(protected)
+        .unprotected(unprotected)
+        .payload(mso_bytes)
+        .signature(signature)
+        .build();
+
+    let serialized = cbor::to_vec(&Tagged::new(false, cose_sign_1))?;
+    let encoded = Base64::encode_string(&serialized);
+
+    Ok(encoded)
 }
 
 #[cfg(test)]
@@ -87,8 +100,8 @@ mod tests {
 
     use crate::to_iso_mdl;
 
-    #[test]
-    fn issuer_signed() {
+    #[tokio::test]
+    async fn issuer_signed() {
         let dataset = json!({
             "claims": {
                 "org.iso.18013.5.1.mDL": {
@@ -103,7 +116,7 @@ mod tests {
         let provider = Provider::new();
         let signer = SecOps::signer(&provider, CREDENTIAL_ISSUER).unwrap();
 
-        to_iso_mdl(dataset, signer).unwrap();
+        to_iso_mdl(dataset, signer).await.unwrap();
 
         // let slice = include_bytes!("../data/mso_mdoc.cbor");
         // let value: Value = ciborium::from_reader(Cursor::new(&slice)).unwrap();
