@@ -18,9 +18,10 @@ mod tag24;
 
 use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded as Base64, Encoding};
+use coset::{iana, CoseSign1Builder, HeaderBuilder};
 use rand::{thread_rng, Rng};
 use sha2::{Digest, Sha256};
-use vercre_datasec::Signer;
+use vercre_datasec::{Algorithm, Signer};
 use vercre_openid::issuer::Dataset;
 
 use crate::cose::{CoseKey, OKPCurve, Tagged};
@@ -28,12 +29,12 @@ use crate::mdoc::{IssuerSigned, IssuerSignedItem};
 use crate::mso::{DigestIdGenerator, MobileSecurityObject};
 use crate::tag24::Tag24;
 
-/// Convert a Credential Dataset to a base64url-encoded CBOR-encoded ISO mDL
+/// Convert a Credential Dataset to a base64url-encoded, CBOR-encoded, ISO mDL
 /// `IssuerSigned` object.
 ///
 /// # Errors
 /// // TODO: add errors
-pub async fn to_iso_mdl(dataset: Dataset, signer: impl Signer) -> anyhow::Result<String> {
+pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Result<String> {
     // populate mdoc and accompanying MSO
     let mut mdoc = IssuerSigned::new();
     let mut mso = MobileSecurityObject::new();
@@ -65,7 +66,6 @@ pub async fn to_iso_mdl(dataset: Dataset, signer: impl Signer) -> anyhow::Result
     }
 
     // add public key to MSO
-    // let x= signer.verification_method();
     mso.device_key_info.device_key = CoseKey::OKP {
         crv: OKPCurve::Ed25519,
         x: vec![],
@@ -77,9 +77,15 @@ pub async fn to_iso_mdl(dataset: Dataset, signer: impl Signer) -> anyhow::Result
     let mso_bytes = cbor::to_vec(&Tag24::new(mso)?)?;
     let signature = signer.sign(&mso_bytes).await;
 
-    let protected = coset::HeaderBuilder::new().algorithm(coset::iana::Algorithm::ES256).build();
-    let unprotected = coset::HeaderBuilder::new().key_id(b"11".to_vec()).build();
-    let cose_sign_1 = coset::CoseSign1Builder::new()
+    let algorithm = match signer.algorithm() {
+        Algorithm::EdDSA => iana::Algorithm::EdDSA,
+        _ => iana::Algorithm::EdDSA,
+    };
+    let key_id = signer.verification_method().as_bytes().to_vec();
+
+    let protected = HeaderBuilder::new().algorithm(algorithm).build();
+    let unprotected = HeaderBuilder::new().key_id(key_id).build();
+    let cose_sign_1 = CoseSign1Builder::new()
         .protected(protected)
         .unprotected(unprotected)
         .payload(mso_bytes)
@@ -87,9 +93,8 @@ pub async fn to_iso_mdl(dataset: Dataset, signer: impl Signer) -> anyhow::Result
         .build();
 
     let serialized = cbor::to_vec(&Tagged::new(false, cose_sign_1))?;
-    let encoded = Base64::encode_string(&serialized);
 
-    Ok(encoded)
+    Ok(Base64::encode_string(&serialized))
 }
 
 #[cfg(test)]
@@ -98,7 +103,7 @@ mod tests {
     use vercre_datasec::SecOps;
     use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER};
 
-    use crate::to_iso_mdl;
+    use crate::to_credential;
 
     #[tokio::test]
     async fn issuer_signed() {
@@ -116,7 +121,7 @@ mod tests {
         let provider = Provider::new();
         let signer = SecOps::signer(&provider, CREDENTIAL_ISSUER).unwrap();
 
-        to_iso_mdl(dataset, signer).await.unwrap();
+        to_credential(dataset, signer).await.unwrap();
 
         // let slice = include_bytes!("../data/mso_mdoc.cbor");
         // let value: Value = ciborium::from_reader(Cursor::new(&slice)).unwrap();
