@@ -10,6 +10,12 @@ id: "http://vercre.io/credentials/EmployeeIDCredential"
 type:
   - VerifiableCredential
   - EmployeeIDCredential
+name:
+  "@value": Employee ID
+  "@language": en-NZ
+description:
+  "@value": Vercre employee ID credential
+  "@language": en-NZ
 issuer: "http://vercre.io"
 issuanceDate: "[issuanceDate]"
 credentialSubject:

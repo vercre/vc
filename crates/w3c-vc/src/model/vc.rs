@@ -458,6 +458,20 @@ impl VcBuilder {
         self
     }
 
+    /// Sets the `name` property
+    #[must_use]
+    pub fn add_name(mut self, name: Option<LangString>) -> Self {
+        self.vc.name = name;
+        self
+    }
+
+    /// Sets the `description` property
+    #[must_use]
+    pub fn add_description(mut self, description: Option<LangString>) -> Self {
+        self.vc.description = description;
+        self
+    }
+
     /// Sets the `issuer` property
     #[must_use]
     pub fn issuer(mut self, issuer: impl Into<String>) -> Self {

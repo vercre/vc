@@ -16,12 +16,13 @@ use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::SecOps;
 use vercre_openid::issuer::{
-    CredentialDefinition, CredentialIssuance, CredentialRequest, CredentialResponse,
-    CredentialResponseType, Dataset, FormatIdentifier, Issuer, Metadata, MultipleProofs, Proof,
-    ProofClaims, Provider, SingleProof, StateStore, Subject,
+    CredentialDefinition, CredentialDisplay, CredentialIssuance, CredentialRequest,
+    CredentialResponse, CredentialResponseType, Dataset, FormatIdentifier, Issuer, Metadata,
+    MultipleProofs, Proof, ProofClaims, Provider, SingleProof, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_status::issuer::Status;
+use vercre_w3c_vc::model::types::{LangString, LangValue};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{self, Payload};
 use vercre_w3c_vc::verify_key;
@@ -261,7 +262,6 @@ impl Context {
     ) -> Result<CredentialResponseType> {
         //
 
-        
         // Ok(CredentialResponseType::Credential(Kind::String(jwt)))
         todo!()
     }
@@ -289,11 +289,20 @@ impl Context {
 
         let credential_issuer = &request.credential_issuer.clone();
 
+        // map display names and descriptions to w3c format
+        let config_id = &self.authorized.credential_configuration_id;
+        let Some(config) = self.issuer.credential_configurations_supported.get(config_id) else {
+            return Err(Error::ServerError("credential configuration unable to be found".into()));
+        };
+        let (name, description) = config.display.as_ref().map_or((None, None), create_names);
+
         VerifiableCredential::builder()
             .add_context(Kind::String(format!("{credential_issuer}/credentials/v1")))
             // TODO: generate credential id
             .id(format!("{credential_issuer}/credentials/{credential_type}"))
             .add_type(credential_type)
+            .add_name(name)
+            .add_description(description)
             .issuer(credential_issuer)
             .add_subject(CredentialSubject {
                 id: Some(self.holder_did.clone()),
@@ -424,6 +433,38 @@ impl Context {
             c_nonce_expires_in: Expire::Nonce.duration().num_seconds(),
         })
     }
+}
+
+// Extract language object name and description from a `CredentialDisplay`
+// vector.
+fn create_names(display: &Vec<CredentialDisplay>) -> (Option<LangString>, Option<LangString>) {
+    let mut name: Option<LangString> = None;
+    let mut description: Option<LangString> = None;
+    for d in display {
+        let n = LangValue {
+            value: d.name.clone(),
+            language: d.locale.clone(),
+            ..LangValue::default()
+        };
+        if let Some(nm) = &mut name {
+            nm.add(n);
+        } else {
+            name = Some(LangString::new_object(n));
+        }
+        if d.description.is_some() {
+            let d = LangValue {
+                value: d.description.clone().unwrap(),
+                language: d.locale.clone(),
+                ..LangValue::default()
+            };
+            if let Some(desc) = &mut description {
+                desc.add(d);
+            } else {
+                description = Some(LangString::new_object(d));
+            }
+        }
+    }
+    (name, description)
 }
 
 #[cfg(test)]

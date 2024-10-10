@@ -1,17 +1,15 @@
 ---
 source: crates/w3c-vc/src/model/types.rs
-assertion_line: 84
+assertion_line: 183
 expression: serialized
 ---
 description:
-  - "@direction": ~
-    "@language": en
+  - "@language": en
     "@value": "HTML and CSS: Designing and Creating Websites"
   - "@direction": rtl
     "@language": ar
     "@value": "HTML و CSS: تصميم و إنشاء مواقع الويب"
 name:
-  "@direction": ~
   "@language": en
   "@value": Alice
 other: Just a string

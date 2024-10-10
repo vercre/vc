@@ -17,6 +17,51 @@ use vercre_core::{Kind, Quota};
 pub struct LangString(Kind<Quota<LangValue>>);
 
 impl LangString {
+    /// Create a new `LangString` from a simple string.
+    #[must_use]
+    pub fn new_string(value: &str) -> Self {
+        Self(Kind::String(value.to_string()))
+    }
+
+    /// Create a new `LangString` from a single language object.
+    #[must_use]
+    pub const fn new_object(value: LangValue) -> Self {
+        Self(Kind::Object(Quota::One(value)))
+    }
+
+    /// Add a language object to the `LangString`.
+    pub fn add(&mut self, value: LangValue) {
+        match &self.0 {
+            Kind::String(s) => {
+                let existing = LangValue {
+                    value: s.clone(),
+                    ..LangValue::default()
+                };
+                self.0 = Kind::Object(Quota::Many(vec![existing, value]));
+            }
+            Kind::Object(lang_values) => {
+                let mut new_values = lang_values.clone();
+                new_values.add(value);
+                self.0 = Kind::Object(new_values.clone());
+            }
+        }
+    }
+
+    /// Length of the `LangString` is the number of language objects.
+    #[must_use]
+    pub fn len(&self) -> usize {
+        match &self.0 {
+            Kind::String(_) => 1,
+            Kind::Object(lang_values) => lang_values.len(),
+        }
+    }
+
+    /// Check if the `LangString` is empty.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Extract a value for the provided language tag.
     ///
     /// If the language string is a simple string, the value is returned as is.
@@ -31,7 +76,7 @@ impl LangString {
             Kind::String(s) => Ok(s.to_string()),
             Kind::Object(lang_values) => match lang_values {
                 Quota::One(lang_value) => {
-                    if lang_value.language == language {
+                    if lang_value.language == Some(language.to_string()) {
                         Ok(lang_value.value.clone())
                     } else {
                         Err(anyhow::anyhow!("Language tag not found"))
@@ -39,7 +84,7 @@ impl LangString {
                 }
                 Quota::Many(lang_values) => {
                     for lang_value in lang_values {
-                        if lang_value.language == language {
+                        if lang_value.language == Some(language.to_string()) {
                             return Ok(lang_value.value.clone());
                         }
                     }
@@ -66,11 +111,15 @@ pub struct LangValue {
     pub value: String,
 
     /// Language-tag as defined in [rfc5646](https://www.rfc-editor.org/rfc/rfc5646)
+    /// 
+    /// A missing language tag implies that the string is in the default language.
     #[serde(rename = "@language")]
-    pub language: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
 
     /// Base direction of the text when bidirectional text is displayed.
     #[serde(rename = "@direction")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub direction: Option<Direction>,
 }
 
