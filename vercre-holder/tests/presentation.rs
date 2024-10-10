@@ -62,14 +62,14 @@ async fn sample_credential() -> Credential {
         type_: Quota::Many(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
         issuer: Kind::String("https://example.com/issuers/14".into()),
         id: Some("https://example.com/credentials/3732".into()),
-        issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
+        valid_from: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
         credential_subject: Quota::One(CredentialSubject {
             id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
             claims: json!({"employeeId": "1234567890"})
                 .as_object()
                 .map_or_else(Map::default, Clone::clone),
         }),
-        expiration_date: Some(Utc.with_ymd_and_hms(2033, 12, 20, 23, 21, 55).unwrap()),
+        valid_until: Some(Utc.with_ymd_and_hms(2033, 12, 20, 23, 21, 55).unwrap()),
 
         ..VerifiableCredential::default()
     };

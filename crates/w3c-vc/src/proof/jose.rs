@@ -55,7 +55,7 @@ pub struct VcClaims {
     /// For example, "did:example:ebfeb1f712ebc6f1c276e12ec21".
     pub sub: String,
 
-    /// MUST be the Credential's `issuanceDate`, encoded as a UNIX timestamp
+    /// MUST be the Credential's `validFrom`, encoded as a UNIX timestamp
     /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
     pub nbf: i64,
 
@@ -63,14 +63,14 @@ pub struct VcClaims {
     /// For example, "did:example:123456789abcdefghi#keys-1".
     pub iss: String,
 
-    /// MUST be the Credential's `issuanceDate`, encoded as a UNIX timestamp
+    /// MUST be the Credential's `validFrom`, encoded as a UNIX timestamp
     /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
     pub iat: i64,
 
     /// MUST be the `id` property of the Credential.
     pub jti: String,
 
-    /// MUST be the Credential's `expirationDate`, encoded as a UNIX timestamp
+    /// MUST be the Credential's `validUntil`, encoded as a UNIX timestamp
     /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub exp: Option<i64>,
@@ -94,11 +94,11 @@ impl From<VerifiableCredential> for VcClaims {
         Self {
             // TODO: find better way to set sub (shouldn't need to be in vc)
             sub: subject.id.clone().unwrap_or_default(),
-            nbf: vc.issuance_date.timestamp(),
+            nbf: vc.valid_from.timestamp(),
             iss: issuer_id.clone(),
-            iat: vc.issuance_date.timestamp(),
+            iat: vc.valid_from.timestamp(),
             jti: vc.id.clone().unwrap_or_default(),
-            exp: vc.expiration_date.map(|exp| exp.timestamp()),
+            exp: vc.valid_until.map(|exp| exp.timestamp()),
             vc,
         }
     }

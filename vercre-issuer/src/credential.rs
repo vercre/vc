@@ -550,7 +550,7 @@ mod tests {
         };
 
         assert_snapshot!("credential:identifier:vc", vc, {
-            ".issuanceDate" => "[issuanceDate]",
+            ".validFrom" => "[validFrom]",
             ".credentialSubject" => insta::sorted_redaction(),
             ".credentialSubject.address" => insta::sorted_redaction()
         });
@@ -641,7 +641,7 @@ mod tests {
         };
 
         assert_snapshot!("vc", vc, {
-            ".issuanceDate" => "[issuanceDate]",
+            ".validFrom" => "[validFrom]",
             ".credentialSubject" => insta::sorted_redaction()
         });
 
@@ -724,7 +724,7 @@ mod tests {
         };
 
         assert_snapshot!("credential:iso_mdl:vc", vc, {
-            ".issuanceDate" => "[issuanceDate]",
+            ".validFrom" => "[validFrom]",
             ".credentialSubject" => insta::sorted_redaction(),
             ".credentialSubject.address" => insta::sorted_redaction()
         });

@@ -64,9 +64,9 @@ pub struct CredentialDetail {
     /// Display
     display: CredentialDisplay,
     /// Issuance date
-    issuance_date: String,
+    valid_from: String,
     /// Expiry
-    expiration_date: Option<String>,
+    valid_until: Option<String>,
     /// Description
     description: Option<String>,
     /// Claims
@@ -144,8 +144,8 @@ impl From<&Credential> for CredentialDetail {
 
         Self {
             display: credential.into(),
-            issuance_date: vc.issuance_date.to_rfc2822(),
-            expiration_date: vc.expiration_date.map(|d| d.to_rfc2822()),
+            valid_from: vc.valid_from.to_rfc2822(),
+            valid_until: vc.valid_until.map(|d| d.to_rfc2822()),
             description: display.description,
             claims,
         }

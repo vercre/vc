@@ -76,22 +76,26 @@ pub struct VerifiableCredential {
     /// the issuer that can be used to verify credential information.
     pub issuer: Kind<Issuer>,
 
-    /// An XMLSCHEMA11-2 (RFC3339) date-time the credential becomes valid.
-    /// e.g. 2010-01-01T19:23:24Z.
-    pub issuance_date: DateTime<Utc>,
-
     /// A set of objects containing claims about credential subjects(s).
     pub credential_subject: Quota<CredentialSubject>,
 
-    /// One or more cryptographic proofs that can be used to detect tampering
-    /// and verify authorship of a credential.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub proof: Option<Quota<Proof>>,
+    /// An XMLSCHEMA11-2 (RFC3339) date-time the credential becomes valid.
+    /// e.g. 2010-01-01T19:23:24Z.
+    /// 
+    /// TODO: The specification implies this field is optional but other aspects
+    /// of the specification rely on it being present, so we have made it
+    /// mandatory here.
+    pub valid_from: DateTime<Utc>,
 
     /// An XMLSCHEMA11-2 (RFC3339) date-time the credential ceases to be valid.
     /// e.g. 2010-06-30T19:23:24Z
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub expiration_date: Option<DateTime<Utc>>,
+    pub valid_until: Option<DateTime<Utc>>,
+
+        /// One or more cryptographic proofs that can be used to detect tampering
+    /// and verify authorship of a credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub proof: Option<Quota<Proof>>,
 
     /// Used to determine the status of the credential, such as whether it is
     /// suspended or revoked.
@@ -432,7 +436,7 @@ impl VcBuilder {
         // set some sensibile defaults
         builder.vc.context.push(Kind::String("https://www.w3.org/2018/credentials/v1".into()));
         builder.vc.type_ = Quota::One("VerifiableCredential".into());
-        builder.vc.issuance_date = chrono::Utc::now(); //.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+        builder.vc.valid_from = chrono::Utc::now(); //.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
 
         builder
     }
@@ -617,8 +621,8 @@ mod tests {
         );
 
         assert_eq!(
-            *vc_json.get("issuanceDate").expect("issuanceDate should be set"),
-            json!(vc.issuance_date)
+            *vc_json.get("validFrom").expect("validFrom should be set"),
+            json!(vc.valid_from)
         );
 
         // deserialize
@@ -715,14 +719,14 @@ mod tests {
             type_: Quota::Many(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
             issuer: Kind::String("https://example.com/issuers/14".into()),
             id: Some("https://example.com/credentials/3732".into()),
-            issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
+            valid_from: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
             credential_subject: Quota::One(CredentialSubject {
                 id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
                 claims: json!({"employeeId": "1234567890"})
                     .as_object()
                     .map_or_else(Map::default, Clone::clone),
             }),
-            expiration_date: Some(Utc.with_ymd_and_hms(2033, 12, 20, 23, 21, 55).unwrap()),
+            valid_until: Some(Utc.with_ymd_and_hms(2033, 12, 20, 23, 21, 55).unwrap()),
 
             ..VerifiableCredential::default()
         }

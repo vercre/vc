@@ -193,7 +193,7 @@ mod test {
     fn test_format() {
         let constr = json!({
             "fields": [{
-                "path":["$.issuanceDate"],
+                "path":["$.validFrom"],
                 "filter": {
                     "type": "string",
                     "format": "date-time"
@@ -220,8 +220,8 @@ mod test {
                 ],
                 "id":"https://example.com/credentials/3732",
                 "issuer":"https://example.com/issuers/14",
-                "issuanceDate":"2023-11-20T23:21:55Z",
-                "expirationDate":"2023-12-20T23:21:55Z",
+                "validFrom":"2023-11-20T23:21:55Z",
+                "validUntil":"2023-12-20T23:21:55Z",
                 "credentialSubject":{
                     "employeeId":"1234567890",
                     "id":"did:example:ebfeb1f712ebc6f1c276e12ec21"
