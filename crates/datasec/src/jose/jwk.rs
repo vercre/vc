@@ -28,6 +28,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::jose::jwe::EncryptionAlgorithm;
+use crate::{Curve, KeyType, KeyUse};
 
 /// Simplified JSON Web Key (JWK) key structure.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, Eq, PartialEq)]
@@ -59,68 +60,6 @@ pub struct PublicKeyJwk {
     #[serde(rename = "use")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub use_: Option<KeyUse>,
-}
-
-/// Cryptographic key type.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, Eq, PartialEq)]
-pub enum KeyType {
-    /// Octet key pair (Edwards curve)
-    #[default]
-    #[serde(rename = "OKP")]
-    Okp,
-
-    /// Elliptic curve key pair
-    #[serde(rename = "EC")]
-    Ec,
-
-    /// Octet string
-    #[serde(rename = "oct")]
-    Oct,
-}
-
-// #[derive(Debug, Eq, PartialEq, Copy, Clone, Serialize, Deserialize)]
-// /// Algorithms described by [RFC 7518](https://tools.ietf.org/html/rfc7518).
-// /// This enum is serialized `untagged`.
-// #[serde(untagged)]
-// pub enum Algorithm {
-//     // /// Algorithms meant for Digital signature or MACs
-//     // /// See [RFC7518#3](https://tools.ietf.org/html/rfc7518#section-3)
-//     // Signature(SignatureAlgorithm),
-
-//     // /// Algorithms meant for key management. The algorithms are either
-// meant to     // /// encrypt a content encryption key or determine the content
-// encryption key.     // /// See [RFC7518#4](https://tools.ietf.org/html/rfc7518#section-4)
-//     // KeyManagement(KeyManagementAlgorithm),
-
-//     // /// Algorithms meant for content encryption.
-//     // /// See [RFC7518#5](https://tools.ietf.org/html/rfc7518#section-5)
-//     // Encryption(EncryptionAlgorithm),
-// }
-
-/// Cryptographic curve type.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, Eq, PartialEq)]
-pub enum Curve {
-    /// Ed25519 curve
-    #[default]
-    Ed25519,
-
-    /// secp256k1 curve
-    #[serde(rename = "ES256K", alias = "secp256k1")]
-    Es256K,
-}
-
-/// The intended usage of the public `KeyType`. This enum is serialized
-/// `untagged`
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub enum KeyUse {
-    /// Public key is to be used for signature verification
-    #[default]
-    #[serde(rename = "sig")]
-    Signature,
-
-    /// Public key is to be used for encryption
-    #[serde(rename = "enc")]
-    Encryption,
 }
 
 /// A set of JWKs.

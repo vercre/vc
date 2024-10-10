@@ -11,7 +11,8 @@ use multibase::Base;
 use rand::rngs::OsRng;
 use serde_json::json;
 use vercre_core::Kind;
-use vercre_datasec::jose::jwk::{Curve, KeyType, PublicKeyJwk};
+use vercre_datasec::jose::jwk::PublicKeyJwk;
+use vercre_datasec::{Curve, KeyType};
 
 use super::DidKey;
 use crate::document::{

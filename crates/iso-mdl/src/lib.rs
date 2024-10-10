@@ -18,8 +18,8 @@ use base64ct::{Base64UrlUnpadded as Base64, Encoding};
 use coset::{iana, CoseSign1Builder, HeaderBuilder};
 use rand::{thread_rng, Rng};
 use sha2::{Digest, Sha256};
-use vercre_datasec::cose::{CoseKey, Curve, Tag24};
-use vercre_datasec::{Algorithm, Signer};
+use vercre_datasec::cose::{CoseKey, Tag24};
+use vercre_datasec::{Algorithm, Curve, Signer};
 use vercre_openid::issuer::Dataset;
 
 use crate::mdoc::{IssuerSigned, IssuerSignedItem};

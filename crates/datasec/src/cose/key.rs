@@ -11,6 +11,8 @@ use ciborium::value::Integer;
 use ciborium::Value;
 use serde::{Deserialize, Serialize};
 
+use crate::Curve;
+
 /// Implements [`COSE_Key`] as defined in [RFC9052].
 ///
 /// [RFC9052]: https://www.rfc-editor.org/rfc/rfc9052.html#name-key-objects
@@ -26,13 +28,17 @@ pub enum CoseKey {
         /// Public key
         x: Vec<u8>,
     },
-}
+    /// Elliptic Curve Key Pair
+    Ec {
+        /// Curve
+        crv: Curve,
 
-/// Curve identifier.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Curve {
-    /// Ed25519 curve
-    Ed25519,
+        /// Public key X
+        x: Vec<u8>,
+
+        /// Public key Y
+        y: Vec<u8>,
+    },
 }
 
 /// Serialize `COSE_Key` to CBOR.
@@ -40,13 +46,18 @@ impl From<CoseKey> for Value {
     fn from(key: CoseKey) -> Self {
         let mut cbor = vec![];
         match key {
+            // kty: 1, Okp: 1, crv: -1, x: -2
             CoseKey::Okp { crv, x } => {
-                // kty: 1, Okp: 1
                 cbor.push((Self::Integer(1.into()), Self::Integer(1.into())));
-                // crv: -1
                 cbor.push((Self::Integer((-1).into()), { crv.into() }));
-                // x: -2
                 cbor.push((Self::Integer((-2).into()), Self::Bytes(x)));
+            }
+            // kty: 1, Ec: 2, crv: -1, x: -2, y: -3
+            CoseKey::Ec { crv, x, y } => {
+                cbor.push((Self::Integer(1.into()), Self::Integer(2.into())));
+                cbor.push((Self::Integer((-1).into()), { crv.into() }));
+                cbor.push((Self::Integer((-2).into()), Self::Bytes(x)));
+                cbor.push((Self::Integer((-3).into()), { y.into() }));
             }
         }
         Self::Map(cbor)
@@ -59,17 +70,17 @@ impl TryFrom<Value> for CoseKey {
 
     fn try_from(v: Value) -> anyhow::Result<Self> {
         if let Value::Map(map) = v.clone() {
-            let mut map: BTreeMap<i128, Value> = map
+            let mut map: BTreeMap<Integer, Value> = map
                 .into_iter()
-                .map(|(k, v)| {
-                    let k =
-                        k.into_integer().map_err(|e| anyhow!("issue deserializing: {e:?}"))?.into();
-                    Ok((k, v))
-                })
-                .collect::<anyhow::Result<BTreeMap<_, _>>>()?;
+                .map(|(k, v)| (k.as_integer().unwrap_or_else(|| 0.into()), v))
+                .collect::<BTreeMap<_, _>>();
 
             // kty: 1, Okp: 1, crv: -1, x: -2
-            match (map.remove(&1), map.remove(&-1), map.remove(&-2)) {
+            match (
+                map.remove(&Integer::from(1)),
+                map.remove(&Integer::from(-1)),
+                map.remove(&Integer::from(-2)),
+            ) {
                 (Some(Value::Integer(i1)), Some(Value::Integer(crv_id)), Some(Value::Bytes(x)))
                     if i1 == Integer::from(1) =>
                 {
@@ -89,6 +100,7 @@ impl From<Curve> for Value {
     fn from(crv: Curve) -> Self {
         match crv {
             Curve::Ed25519 => Self::Integer(6.into()),
+            Curve::Es256K => Self::Integer(8.into()),
         }
     }
 }
@@ -99,6 +111,7 @@ impl TryFrom<i128> for Curve {
     fn try_from(crv_id: i128) -> anyhow::Result<Self> {
         match crv_id {
             6 => Ok(Self::Ed25519),
+            8 => Ok(Self::Es256K),
             _ => Err(anyhow!("unsupported curve")),
         }
     }

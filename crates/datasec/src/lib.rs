@@ -10,6 +10,8 @@ pub mod jose;
 
 use std::future::{Future, IntoFuture};
 
+use serde::{Deserialize, Serialize};
+
 pub use crate::jose::jwa::Algorithm;
 pub use crate::jose::jwk::PublicKeyJwk;
 pub use crate::jose::jwt::Jwt;
@@ -88,4 +90,47 @@ pub trait Decryptor: Send + Sync {
     fn decrypt(
         &self, ciphertext: &[u8], sender_public_key: &[u8],
     ) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
+}
+
+/// Cryptographic key type.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, Eq, PartialEq)]
+pub enum KeyType {
+    /// Octet key pair (Edwards curve)
+    #[default]
+    #[serde(rename = "OKP")]
+    Okp,
+
+    /// Elliptic curve key pair
+    #[serde(rename = "EC")]
+    Ec,
+
+    /// Octet string
+    #[serde(rename = "oct")]
+    Oct,
+}
+
+/// Cryptographic curve type.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, Eq, PartialEq)]
+pub enum Curve {
+    /// Ed25519 curve
+    #[default]
+    Ed25519,
+
+    /// secp256k1 curve
+    #[serde(rename = "ES256K", alias = "secp256k1")]
+    Es256K,
+}
+
+/// The intended usage of the public `KeyType`. This enum is serialized
+/// `untagged`
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub enum KeyUse {
+    /// Public key is to be used for signature verification
+    #[default]
+    #[serde(rename = "sig")]
+    Signature,
+
+    /// Public key is to be used for encryption
+    #[serde(rename = "enc")]
+    Encryption,
 }
