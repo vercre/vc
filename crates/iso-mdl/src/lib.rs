@@ -100,13 +100,16 @@ pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Res
 #[cfg(test)]
 mod tests {
     use serde_json::json;
+    use vercre_datasec::cose::cbor;
     use vercre_datasec::SecOps;
     use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER};
 
+    use super::*;
+    use crate::mso::DigestAlgorithm;
     use crate::to_credential;
 
     #[tokio::test]
-    async fn issuer_signed() {
+    async fn roundtrip() {
         let dataset = json!({
             "claims": {
                 "org.iso.18013.5.1.mDL": {
@@ -116,16 +119,24 @@ mod tests {
                 }
             }
         });
+        
+        // generate mdl credential
         let dataset = serde_json::from_value(dataset).unwrap();
-
         let provider = Provider::new();
         let signer = SecOps::signer(&provider, CREDENTIAL_ISSUER).unwrap();
+        let mdl = to_credential(dataset, signer).await.unwrap();
+        // println!("{}", mdl);
 
-        to_credential(dataset, signer).await.unwrap();
+        // check credential deserializes back into original mdoc/mso structures 
+        let mdoc_bytes = Base64::decode_vec(&mdl).expect("should decode");
+        let mdoc: IssuerSigned = cbor::from_slice(&mdoc_bytes).expect("should deserialize");
+        // println!("{:?}", mdoc);
 
-        // let slice = include_bytes!("../data/mso_mdoc.cbor");
-        // let value: Value = ciborium::from_reader(Cursor::new(&slice)).unwrap();
+        let mso_bytes = mdoc.issuer_auth.0.payload.expect("should have payload");
+        let mso: MobileSecurityObject = cbor::from_slice(&mso_bytes).expect("should deserialize");
+        // println!("{:?}", mso);
 
-        // 1. Pass in CredentialConfiguration + Dataset
+        assert_eq!(mso.digest_algorithm, DigestAlgorithm::Sha256);
+        assert_eq!(mso.device_key_info.device_key.kty, KeyType::Okp);
     }
 }

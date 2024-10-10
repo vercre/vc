@@ -97,7 +97,7 @@ pub type DigestId = i32;
 pub type Digest = Vec<u8>;
 
 /// Digest algorithm used by the MSO.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum DigestAlgorithm {
     /// SHA-256
     #[serde(rename = "SHA-256")]

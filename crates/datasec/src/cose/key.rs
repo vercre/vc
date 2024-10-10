@@ -13,6 +13,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{Curve, KeyType};
 
+const KEY_TYPE: i64 = 1;
+const CURVE: i64 = -1;
+const X: i64 = -2;
+const Y: i64 = -3;
+
 /// Implements [`COSE_Key`] as defined in [RFC9052].
 ///
 /// [RFC9052]: https://www.rfc-editor.org/rfc/rfc9052.html#name-key-objects
@@ -73,7 +78,9 @@ impl TryFrom<Value> for CoseKey {
             };
 
             let y = if kty == KeyType::Ec.into() {
-                let y = map.remove(&Integer::from(Y)).ok_or_else(|| anyhow!("missing Y"))?;
+                let y = map
+                    .remove(&Integer::from(Y))
+                    .ok_or_else(|| anyhow!("y coordinate not found"))?;
                 y.as_bytes().cloned()
             } else {
                 None
@@ -90,11 +97,6 @@ impl TryFrom<Value> for CoseKey {
         }
     }
 }
-
-const KEY_TYPE: i64 = 1;
-const CURVE: i64 = -1;
-const X: i64 = -2;
-const Y: i64 = -3;
 
 impl From<KeyType> for Value {
     fn from(k: KeyType) -> Self {
