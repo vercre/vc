@@ -21,6 +21,15 @@
                 "proficiency": "3"
             },
             "pending": false
+        },
+        "DriverLicence": {
+            "configuration_id": "org.iso.18013.5.1.mDL",
+            "claims": {
+                "given_name": "Normal",
+                "family_name": "Person",
+                "email": "normal.user@example.com"
+            },
+            "pending": false
         }
     },
     "pending_user": {

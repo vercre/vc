@@ -71,26 +71,9 @@ pub trait Subject: Send + Sync {
     ) -> impl Future<Output = provider::Result<Dataset>> + Send;
 }
 
-/// Supported Holder authentication credential types.
-pub enum Credentials {
-    /// Username and password.
-    Password {
-        /// The username.
-        username: String,
-
-        /// The password.
-        password: String,
-    },
-    //
-    // /// A Verifiable Credential.
-    // VerifiableCredential(VerifiableCredential),
-
-    // /// A JWT.
-    // Jwt(String),
-}
-
 /// The user information returned by the Subject trait.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(default)]
 pub struct Dataset {
     /// The credential subject populated for the user.
     pub claims: Map<String, Value>,

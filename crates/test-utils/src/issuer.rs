@@ -109,16 +109,20 @@ impl SecOps for Provider {
 }
 
 impl Signer for IssuerSec {
+    async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
+        IssuerKeystore::try_sign(msg)
+    }
+
+    async fn public_key(&self) -> Result<Vec<u8>> {
+        IssuerKeystore::public_key()
+    }
+
     fn algorithm(&self) -> Algorithm {
-        self.0.algorithm()
+        IssuerKeystore::algorithm()
     }
 
     fn verification_method(&self) -> String {
-        self.0.verification_method()
-    }
-
-    async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
-        self.0.try_sign(msg)
+        IssuerKeystore::verification_method()
     }
 }
 
