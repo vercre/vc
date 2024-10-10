@@ -352,14 +352,18 @@ pub struct RelatedResource {
 /// credential.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(default)]
+#[serde(rename_all = "camelCase")]
 pub struct RefreshService {
     /// A URI where credential status information can be retrieved.
-    pub id: String,
+    pub url: String,
 
     /// Refers to the status method used to provide the (machine readable)
     /// status of the credential.
     #[serde(rename = "type")]
     pub type_: String,
+
+    /// Refresh token to present to the refresh service.
+    pub refresh_token: String,
 }
 
 /// Term is a single term used in defining the issuers terms of use.
