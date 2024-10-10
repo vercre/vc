@@ -16,7 +16,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
 use crate::cbor::Tag24;
-use crate::mso;
+use crate::{cbor, mso};
 
 pub type NameSpace = String;
 
@@ -42,6 +42,10 @@ impl IssuerSigned {
             name_spaces: BTreeMap::new(),
             issuer_auth: mso::IssuerAuth::default(),
         }
+    }
+
+    pub fn to_vec(&self) -> anyhow::Result<Vec<u8>> {
+        cbor::to_vec(self)
     }
 }
 

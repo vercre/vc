@@ -35,6 +35,7 @@ use ssi_jwk::JWK;
 /// restricted to the requirements of ISO/IEC 18013-5:2021.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(try_from = "ciborium::Value", into = "ciborium::Value")]
+#[allow(clippy::module_name_repetitions)]
 pub enum CoseKey {
     Ec2 { crv: Ec2Curve, x: Vec<u8>, y: Ec2y },
     Okp { crv: OkpCurve, x: Vec<u8> },
@@ -50,19 +51,13 @@ pub enum Ec2y {
 /// The RFC-8152 identifier of the curve, for Ec2 key type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Ec2Curve {
-    P256,
-    P384,
-    P521,
     P256K,
 }
 
 /// The RFC-8152 identifier of the curve, for Okp key type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum OkpCurve {
-    X25519,
-    X448,
     Ed25519,
-    Ed448,
 }
 
 /// Errors that can occur when deserializing a `COSE_Key`.
@@ -94,19 +89,12 @@ pub enum Error {
 
 impl CoseKey {
     /// Returns the signature algorithm associated with the key.
-    pub const fn signature_algorithm(&self) -> Option<Algorithm> {
+    pub const fn signature_algorithm(&self) -> Algorithm {
         match self {
             Self::Ec2 {
-                crv: Ec2Curve::P256, ..
-            } => Some(Algorithm::ES256),
-            Self::Ec2 {
-                crv: Ec2Curve::P384, ..
-            } => Some(Algorithm::ES384),
-            Self::Ec2 {
-                crv: Ec2Curve::P521, ..
-            } => Some(Algorithm::ES512),
-            Self::Okp { .. } => Some(Algorithm::EdDSA),
-            Self::Ec2 { .. } => None,
+                crv: Ec2Curve::P256K, ..
+            } => Algorithm::ES256K,
+            Self::Okp { .. } => Algorithm::EdDSA,
         }
     }
 }
@@ -193,7 +181,7 @@ impl TryFrom<CoseKey> for EncodedPoint {
     fn try_from(value: CoseKey) -> Result<Self, Self::Error> {
         match value {
             CoseKey::Ec2 {
-                crv: Ec2Curve::P256,
+                crv: Ec2Curve::P256K,
                 x,
                 y,
             } => {
@@ -225,7 +213,6 @@ impl TryFrom<CoseKey> for EncodedPoint {
                     Self::from_bytes(x_generic_array).map_err(|_e| Error::InvalidCoseKey)?;
                 Ok(encoded)
             }
-            CoseKey::Ec2 { .. } => Err(Error::InvalidCoseKey),
         }
     }
 }
@@ -254,9 +241,6 @@ impl TryFrom<ciborium::Value> for Ec2y {
 impl From<Ec2Curve> for ciborium::Value {
     fn from(crv: Ec2Curve) -> Self {
         match crv {
-            Ec2Curve::P256 => Self::Integer(1.into()),
-            Ec2Curve::P384 => Self::Integer(2.into()),
-            Ec2Curve::P521 => Self::Integer(3.into()),
             Ec2Curve::P256K => Self::Integer(8.into()),
         }
     }
@@ -267,9 +251,6 @@ impl TryFrom<i128> for Ec2Curve {
 
     fn try_from(crv_id: i128) -> Result<Self, Error> {
         match crv_id {
-            1 => Ok(Self::P256),
-            2 => Ok(Self::P384),
-            3 => Ok(Self::P521),
             8 => Ok(Self::P256K),
             _ => Err(Error::UnsupportedCurve),
         }
@@ -279,10 +260,7 @@ impl TryFrom<i128> for Ec2Curve {
 impl From<OkpCurve> for ciborium::Value {
     fn from(crv: OkpCurve) -> Self {
         match crv {
-            OkpCurve::X25519 => Self::Integer(4.into()),
-            OkpCurve::X448 => Self::Integer(5.into()),
             OkpCurve::Ed25519 => Self::Integer(6.into()),
-            OkpCurve::Ed448 => Self::Integer(7.into()),
         }
     }
 }
@@ -292,10 +270,7 @@ impl TryFrom<i128> for OkpCurve {
 
     fn try_from(crv_id: i128) -> Result<Self, Error> {
         match crv_id {
-            4 => Ok(Self::X25519),
-            5 => Ok(Self::X448),
             6 => Ok(Self::Ed25519),
-            7 => Ok(Self::Ed448),
             _ => Err(Error::UnsupportedCurve),
         }
     }
@@ -328,9 +303,6 @@ impl TryFrom<&ssi_jwk::ECParams> for Ec2Curve {
 
     fn try_from(params: &ssi_jwk::ECParams) -> Result<Self, Self::Error> {
         match params.curve.as_ref() {
-            Some(crv) if crv == "P-256" => Ok(Self::P256),
-            Some(crv) if crv == "P-384" => Ok(Self::P384),
-            Some(crv) if crv == "P-521" => Ok(Self::P521),
             Some(crv) if crv == "secp256k1" => Ok(Self::P256K),
             Some(_) => Err(Error::UnsupportedCurve),
             None => Err(Error::UnknownCurve),
@@ -357,9 +329,6 @@ impl TryFrom<CoseKey> for JWK {
             CoseKey::Ec2 { crv, x, y } => Self {
                 params: ssi_jwk::Params::EC(ssi_jwk::ECParams {
                     curve: Some(match crv {
-                        Ec2Curve::P256 => "P-256".to_string(),
-                        Ec2Curve::P384 => "P-384".to_string(),
-                        Ec2Curve::P521 => "P-521".to_string(),
                         Ec2Curve::P256K => "secp256k1".to_string(),
                     }),
                     x_coordinate: Some(ssi_jwk::Base64urlUInt(x)),
@@ -381,10 +350,7 @@ impl TryFrom<CoseKey> for JWK {
             CoseKey::Okp { crv, x } => Self {
                 params: ssi_jwk::Params::OKP(ssi_jwk::OctetParams {
                     curve: match crv {
-                        OkpCurve::X25519 => "X25519".to_string(),
-                        OkpCurve::X448 => "X448".to_string(),
                         OkpCurve::Ed25519 => "Ed25519".to_string(),
-                        OkpCurve::Ed448 => "Ed448".to_string(),
                     },
                     public_key: ssi_jwk::Base64urlUInt(x),
                     private_key: None,
@@ -408,9 +374,6 @@ impl TryFrom<&ssi_jwk::OctetParams> for OkpCurve {
     fn try_from(params: &ssi_jwk::OctetParams) -> Result<Self, Self::Error> {
         match params.curve.as_str() {
             "Ed25519" => Ok(Self::Ed25519),
-            "Ed448" => Ok(Self::Ed448),
-            "X25519" => Ok(Self::X25519),
-            "X448" => Ok(Self::X448),
             _ => Err(Error::UnsupportedCurve),
         }
     }
@@ -430,7 +393,7 @@ mod test {
         let key_bytes = <Vec<u8>>::from_hex(EC_P256).expect("unable to convert cbor hex to bytes");
         let key = crate::cbor::from_slice(&key_bytes).unwrap();
         match &key {
-            CoseKey::Ec2 { crv, .. } => assert_eq!(crv, &Ec2Curve::P256),
+            CoseKey::Ec2 { crv, .. } => assert_eq!(crv, &Ec2Curve::P256K),
             _ => panic!("expected an Ec2 cose key"),
         };
         assert_eq!(cbor::to_vec(&key).unwrap(), key_bytes, "cbor encoding roundtrip failed");

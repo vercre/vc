@@ -1,4 +1,5 @@
 use std::io::Cursor;
+use std::ops::Deref;
 
 use anyhow::anyhow;
 use ciborium::Value;
@@ -26,17 +27,19 @@ where
 
 /// Wrap types that require tagging with tag 24.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Tag24<T> {
-    pub inner: T,
+pub struct Tag24<T>(pub T);
+
+impl<T> Deref for Tag24<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl<T: Serialize> Tag24<T> {
-    pub const fn new(inner: T) -> Self {
-        Self { inner }
-    }
-
     pub fn to_vec(&self) -> anyhow::Result<Vec<u8>> {
-        to_vec(&self.inner)
+        to_vec(&self.0)
     }
 }
 
@@ -45,12 +48,12 @@ impl<T: DeserializeOwned> TryFrom<Value> for Tag24<T> {
 
     fn try_from(v: Value) -> anyhow::Result<Self> {
         match v.clone() {
-            Value::Tag(24, inner_value) => match inner_value.as_ref() {
-                Value::Bytes(inner_bytes) => {
-                    let inner: T = from_slice(inner_bytes)?;
-                    Ok(Self { inner })
+            Value::Tag(24, value) => match value.as_ref() {
+                Value::Bytes(bytes) => {
+                    let inner: T = from_slice(bytes)?;
+                    Ok(Self(inner))
                 }
-                _ => Err(anyhow!("invalid tag: {inner_value:?}")),
+                _ => Err(anyhow!("invalid tag: {value:?}")),
             },
             _ => Err(anyhow!("not a tag24: {v:?}")),
         }
@@ -59,7 +62,7 @@ impl<T: DeserializeOwned> TryFrom<Value> for Tag24<T> {
 
 impl<T: Serialize> Serialize for Tag24<T> {
     fn serialize<S: ser::Serializer>(&self, s: S) -> anyhow::Result<S::Ok, S::Error> {
-        Value::Tag(24, Box::new(Value::Bytes(to_vec(&self.inner).unwrap()))).serialize(s)
+        Value::Tag(24, Box::new(Value::Bytes(to_vec(&self.0).unwrap()))).serialize(s)
     }
 }
 
@@ -81,7 +84,7 @@ mod test {
     #[should_panic]
     // A Tag24 cannot be serialized directly into a non-cbor format as it will lose the tag.
     fn non_cbor_roundtrip() {
-        let original = Tag24::new(String::from("some data"));
+        let original = Tag24(String::from("some data"));
         let json = serde_json::to_vec(&original).unwrap();
         let roundtripped = serde_json::from_slice(&json).unwrap();
         assert_eq!(original, roundtripped)

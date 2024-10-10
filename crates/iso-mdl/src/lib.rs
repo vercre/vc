@@ -11,7 +11,7 @@
 //! machine-verifiable.
 
 mod cbor;
-mod cose_key;
+mod cose;
 mod mdoc;
 mod mso;
 
@@ -24,7 +24,7 @@ use vercre_datasec::{Algorithm, Signer};
 use vercre_openid::issuer::Dataset;
 
 use crate::cbor::Tag24;
-use crate::cose_key::{CoseKey, OkpCurve};
+use crate::cose::{CoseKey, OkpCurve};
 use crate::mdoc::{IssuerSigned, IssuerSignedItem};
 use crate::mso::{DigestIdGenerator, MobileSecurityObject};
 
@@ -48,7 +48,7 @@ pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Res
 
         // assemble `IssuerSignedItem`s for name space
         for (k, v) in name_space {
-            let item = Tag24::new(IssuerSignedItem {
+            let item = Tag24(IssuerSignedItem {
                 digest_id: id_gen.gen(),
                 random: thread_rng().gen::<[u8; 16]>().into(),
                 element_identifier: k.clone(),
@@ -57,7 +57,7 @@ pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Res
 
             // digest of `IssuerSignedItem` for MSO
             let digest = Sha256::digest(&item.to_vec()?).to_vec();
-            mso.value_digests.entry(key.clone()).or_default().insert(item.inner.digest_id, digest);
+            mso.value_digests.entry(key.clone()).or_default().insert(item.digest_id, digest);
 
             // add item to IssuerSigned object
             mdoc.name_spaces.entry(key.clone()).or_default().push(item);
@@ -71,7 +71,7 @@ pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Res
     };
 
     // sign
-    let mso_bytes = cbor::to_vec(&Tag24::new(mso))?;
+    let mso_bytes = Tag24(mso).to_vec()?;
     let signature = signer.sign(&mso_bytes).await;
 
     // build COSE_Sign1
@@ -95,8 +95,7 @@ pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Res
     mdoc.issuer_auth = mso::IssuerAuth(cose_sign_1);
 
     // encode CBOR -> Base64Url -> return
-    let serialized = cbor::to_vec(&mdoc)?;
-    Ok(Base64::encode_string(&serialized))
+    Ok(Base64::encode_string(&mdoc.to_vec()?))
 }
 
 #[cfg(test)]
