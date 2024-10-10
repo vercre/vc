@@ -124,7 +124,7 @@ pub struct VerifiableCredential {
     /// terms under which a verifiable credential or verifiable presentation
     /// was issued.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub terms_of_use: Option<Vec<Term>>,
+    pub terms_of_use: Option<Quota<Term>>,
 
     /// Evidence can be included by an issuer to provide the verifier with
     /// additional supporting information in a credential. This could be
@@ -381,40 +381,11 @@ pub struct Term {
     pub type_: String,
 
     /// A URI where credential policy information can be retrieved.
-    pub id: String,
+    pub id: Option<String>,
 
-    /// A human-readable description of the term.
-    pub profile: String,
-
-    /// An obligation tells the verifier what actions it is required to perform
-    /// if it is to accept the verifiable credential or verifiable presentation.
-    pub obligation: Option<Vec<Policy>>,
-
-    /// A prohibition tells the verifier what actions it is not allowed to
-    /// perform if it is to accept the verifiable credential or verifiable
-    /// presentation.
-    pub prohibition: Option<Vec<Policy>>,
-
-    /// A permission tells the verifier what actions it is allowed to perform
-    /// if it is to accept the verifiable credential or verifiable presentation.
-    pub permission: Option<Vec<Policy>>,
-}
-
-/// Prohibition defines what actions a verifier is not allowed to perform.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(default)]
-pub struct Policy {
-    ///  A URI identifying the credential issuer.
-    assigner: String,
-
-    /// A URI identifying the credential verifier.
-    assignee: String,
-
-    /// A URI identifying the credential (the credential `id`).
-    target: String,
-
-    /// A list of prohibited actions
-    action: Vec<String>,
+    /// The policy content specific to the type.
+    #[serde(flatten)]
+    pub policy: Value,
 }
 
 /// Evidence can be included by an issuer to provide the verifier with
