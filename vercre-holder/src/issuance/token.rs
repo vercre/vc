@@ -10,9 +10,7 @@ use anyhow::{anyhow, bail};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use vercre_issuer::{
-    AuthorizedDetail, CredentialAuthorization, TokenGrantType, TokenRequest,
-};
+use vercre_issuer::{AuthorizedDetail, CredentialAuthorization, TokenGrantType, TokenRequest};
 
 use super::{Issuance, Status};
 use crate::provider::{HolderProvider, Issuer, StateStore};

@@ -179,7 +179,7 @@ impl Wallet {
         };
 
         assert_snapshot!("credential", vc, {
-            ".issuanceDate" => "[issuanceDate]",
+            ".validFrom" => "[validFrom]",
             ".credentialSubject" => insta::sorted_redaction()
         });
 

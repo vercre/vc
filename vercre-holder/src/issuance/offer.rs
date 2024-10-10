@@ -91,18 +91,21 @@ pub async fn offer(
     // let grants = if let Some(grants) = request.offer.grants.clone() {
     //     grants
     // } else {
-    //     let Some(grant_types) = issuance.authorization_server.oauth.grant_types_supported.clone()
+    //     let Some(grant_types) =
+    // issuance.authorization_server.oauth.grant_types_supported.clone()
     //     else {
     //         let e = anyhow!("no grants in offer is not supported");
     //         tracing::error!(target: "Endpoint::offer", ?e);
     //         return Err(e);
     //     };
-    //     let authorization_code = if grant_types.contains(&GrantType::AuthorizationCode) {
+    //     let authorization_code = if
+    // grant_types.contains(&GrantType::AuthorizationCode) {
     //         Some(AuthorizationCodeGrant::default())
     //     } else {
     //         None
     //     };
-    //     let pre_authorized_code = if grant_types.contains(&GrantType::PreAuthorizedCode) {
+    //     let pre_authorized_code = if
+    // grant_types.contains(&GrantType::PreAuthorizedCode) {
     //         Some(PreAuthorizedCodeGrant::default())
     //     } else {
     //         None

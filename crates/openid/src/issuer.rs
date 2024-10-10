@@ -96,8 +96,8 @@ pub struct CreateOfferRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subject_id: Option<String>,
 
-    /// A list of keys of Credentials in the `credential_configurations_supported`
-    /// Credential Issuer metadata.
+    /// A list of keys of Credentials in the
+    /// `credential_configurations_supported` Credential Issuer metadata.
     ///
     /// The Wallet uses these string values to obtain the respective object
     /// containing information about the Credential being offered. For example,

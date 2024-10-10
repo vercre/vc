@@ -121,7 +121,7 @@ async fn preauth_narrow() {
     assert_eq!(credentials.len(), 1);
 
     assert_snapshot!("credentials", credentials, {
-        "[].vc.issuanceDate" => "[issuanceDate]",
+        "[].vc.validFrom" => "[validFrom]",
         "[].vc" => insta::sorted_redaction(),
         "[].vc.credentialSubject" => insta::sorted_redaction(),
         "[].metadata" => insta::sorted_redaction(),
