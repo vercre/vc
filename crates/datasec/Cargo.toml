@@ -30,12 +30,12 @@ ecdsa.workspace = true
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 futures.workspace = true
 k256 = "0.13.4"
-lazy_static = "1.5.0"
 serde.workspace = true
 serde_json.workspace = true
 tracing.workspace = true
 x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
 
 [dev-dependencies]
+hex = "0.4.3"
 signature = "2.2.0"
 tokio.workspace = true

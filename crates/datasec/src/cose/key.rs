@@ -37,30 +37,16 @@ pub struct CoseKey {
 /// Serialize `COSE_Key` to CBOR.
 impl From<CoseKey> for Value {
     fn from(key: CoseKey) -> Self {
-        let cbor = match key.kty {
-            KeyType::Okp => {
-                vec![
-                    (KEY_TYPE.into(), KeyType::Okp.into()),
-                    (CURVE.into(), { key.crv.into() }),
-                    (X.into(), Self::Bytes(key.x)),
-                ]
-            }
-            KeyType::Ec => {
-                vec![
-                    (KEY_TYPE.into(), KeyType::Ec.into()),
-                    ((CURVE).into(), { key.crv.into() }),
-                    (X.into(), Self::Bytes(key.x)),
-                    (Y.into(), { key.y.unwrap_or_default().into() }),
-                ]
-            }
-            KeyType::Oct => {
-                vec![
-                    (KEY_TYPE.into(), KeyType::Oct.into()),
-                    (CURVE.into(), { key.crv.into() }),
-                    (X.into(), Self::Bytes(key.x)),
-                ]
-            }
-        };
+        let mut cbor = vec![
+            (KEY_TYPE.into(), key.kty.clone().into()),
+            (CURVE.into(), { key.crv.into() }),
+            (X.into(), Self::Bytes(key.x)),
+        ];
+
+        if key.kty == KeyType::Ec {
+            cbor.push((Y.into(), { key.y.unwrap_or_default().into() }));
+        }
+
         Self::Map(cbor)
     }
 }
@@ -76,31 +62,29 @@ impl TryFrom<Value> for CoseKey {
                 .map(|(k, v)| (k.as_integer().unwrap_or_else(|| 0.into()), v))
                 .collect::<BTreeMap<_, _>>();
 
-            match (
-                map.remove(&Integer::from(KEY_TYPE)),
-                map.remove(&Integer::from(CURVE)),
-                map.remove(&Integer::from(X)),
-            ) {
-                (Some(kty), Some(crv), Some(Value::Bytes(x))) if kty == KeyType::Okp.into() => {
-                    Ok(Self {
-                        kty: KeyType::Okp,
-                        crv: crv.try_into()?,
-                        x,
-                        y: None,
-                    })
-                }
-                (Some(kty), Some(crv), Some(Value::Bytes(x))) if kty == KeyType::Ec.into() => {
-                    let y = map.remove(&Integer::from(Y)).ok_or_else(|| anyhow!("missing Y"))?;
+            let Some(kty) = map.remove(&Integer::from(KEY_TYPE)) else {
+                return Err(anyhow!("key type not found"));
+            };
+            let Some(crv) = map.remove(&Integer::from(CURVE)) else {
+                return Err(anyhow!("curve not found"));
+            };
+            let Some(Value::Bytes(x)) = map.remove(&Integer::from(X)) else {
+                return Err(anyhow!("x coordinate not found"));
+            };
 
-                    Ok(Self {
-                        kty: KeyType::Ec,
-                        crv: crv.try_into()?,
-                        x,
-                        y: y.as_bytes().cloned(),
-                    })
-                }
-                _ => Err(anyhow!("issue deserializing CoseKey")),
-            }
+            let y = if kty == KeyType::Ec.into() {
+                let y = map.remove(&Integer::from(Y)).ok_or_else(|| anyhow!("missing Y"))?;
+                y.as_bytes().cloned()
+            } else {
+                None
+            };
+
+            Ok(Self {
+                kty: kty.try_into()?,
+                crv: crv.try_into()?,
+                x,
+                y,
+            })
         } else {
             Err(anyhow!("Value is not a map: {v:?}"))
         }
@@ -122,6 +106,23 @@ impl From<KeyType> for Value {
     }
 }
 
+impl TryInto<KeyType> for Value {
+    type Error = anyhow::Error;
+
+    fn try_into(self) -> anyhow::Result<KeyType> {
+        let Some(integer) = self.as_integer() else {
+            return Err(anyhow!("issue deserializing key type"));
+        };
+
+        match integer.into() {
+            1 => Ok(KeyType::Okp),
+            2 => Ok(KeyType::Ec),
+            4 => Ok(KeyType::Oct),
+            _ => Err(anyhow!("unsupported key type")),
+        }
+    }
+}
+
 impl From<Curve> for Value {
     fn from(crv: Curve) -> Self {
         match crv {
@@ -136,34 +137,55 @@ impl TryInto<Curve> for Value {
 
     fn try_into(self) -> anyhow::Result<Curve> {
         let Some(integer) = self.as_integer() else {
-            return Err(anyhow!("unsupported curve"));
+            return Err(anyhow!("issue deserializing curve"));
         };
 
         match integer.into() {
             6 => Ok(Curve::Ed25519),
             8 => Ok(Curve::Es256K),
-            _ => Err(anyhow!("unsupported curve")),
+            _ => Err(anyhow!("unsupported curve: {integer:?}")),
         }
     }
 }
 
-// #[cfg(test)]
-// mod test {
-//     use hex::FromHex;
+#[cfg(test)]
+mod test {
+    use hex::FromHex;
 
-//     use super::*;
-//     use crate::cbor;
+    use super::*;
+    use crate::cose::cbor;
 
-//     static EC_P256: &str = include_str!("../data/ec_p256.cbor");
+    const ES256K_CBOR: &str = "a40102200821582065eda5a12577c2bae829437fe338701a10aaa375e1bb5b5de108de439c08551d2258201e52ed75701163f7f9e40ddf9f341b3dc9ba860af7e0ca7ca7e9eecd0084d19c";
+    const X_HEX: &str = "65eda5a12577c2bae829437fe338701a10aaa375e1bb5b5de108de439c08551d";
+    const Y_HEX: &str = "1e52ed75701163f7f9e40ddf9f341b3dc9ba860af7e0ca7ca7e9eecd0084d19c";
 
-//     #[test]
-//     fn ec_p256() {
-//         let key_bytes = <Vec<u8>>::from_hex(EC_P256).expect("unable to convert cbor hex to bytes");
-//         let key = crate::cbor::from_slice(&key_bytes).unwrap();
-//         match &key {
-//             CoseKey::Ec2 { crv, .. } => assert_eq!(crv, &Ec2Curve::P256K),
-//             _ => panic!("expected an Ec2 cose key"),
-//         };
-//         assert_eq!(cbor::to_vec(&key).unwrap(), key_bytes, "cbor encoding roundtrip failed");
-//     }
-// }
+    #[test]
+    fn serialize() {
+        let cose_key = CoseKey {
+            kty: KeyType::Ec,
+            crv: Curve::Es256K,
+            x: Vec::from_hex(X_HEX).unwrap(),
+            y: Some(Vec::from_hex(Y_HEX).unwrap()),
+        };
+
+        let cbor = cbor::to_vec(&cose_key).expect("should serialize");
+        let hex = hex::encode(cbor);
+
+        assert_eq!(hex, ES256K_CBOR);
+    }
+
+    #[test]
+    fn deserialize() {
+        let bytes = hex::decode(ES256K_CBOR).expect("should decode");
+        let key: CoseKey = cbor::from_slice(&bytes).expect("should serialize");
+
+        let cose_key = CoseKey {
+            kty: KeyType::Ec,
+            crv: Curve::Es256K,
+            x: Vec::from_hex(X_HEX).unwrap(),
+            y: Some(Vec::from_hex(Y_HEX).unwrap()),
+        };
+
+        assert_eq!(key, cose_key);
+    }
+}
