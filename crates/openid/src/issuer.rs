@@ -868,11 +868,11 @@ impl PartialEq for ProfileW3c {
 #[derive(Clone, Default, Debug, Deserialize, Serialize, Eq)]
 pub struct ProfileIsoMdl {
     /// The Credential type, as defined in [ISO.18013-5].
-    doctype: String,
+    pub doctype: String,
 
     /// A list of claims to include in the issued credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    claims: Option<HashMap<String, Claim>>,
+    pub claims: Option<HashMap<String, Claim>>,
 }
 
 impl PartialEq for ProfileIsoMdl {
@@ -890,11 +890,11 @@ pub struct ProfileSdJwt {
     /// The Verifiable Credential type. The `vct` value MUST be a
     /// case-sensitive String or URI serving as an identifier for
     /// the type of the SD-JWT VC.
-    vct: String,
+    pub vct: String,
 
     /// A list of claims to include in the issued credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    claims: Option<HashMap<String, Claim>>,
+    pub claims: Option<HashMap<String, Claim>>,
 }
 
 impl PartialEq for ProfileSdJwt {
