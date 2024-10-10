@@ -17,10 +17,10 @@ use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded as Base64, Encoding};
 use coset::{iana, CoseSign1Builder, HeaderBuilder};
 use rand::{thread_rng, Rng};
+use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 use vercre_datasec::cose::{CoseKey, Tag24};
 use vercre_datasec::{Algorithm, Curve, KeyType, Signer};
-use vercre_openid::issuer::Dataset;
 
 use crate::mdoc::{IssuerSigned, IssuerSignedItem};
 use crate::mso::{DigestIdGenerator, MobileSecurityObject};
@@ -30,12 +30,14 @@ use crate::mso::{DigestIdGenerator, MobileSecurityObject};
 ///
 /// # Errors
 /// // TODO: add errors
-pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Result<String> {
+pub async fn to_credential(
+    dataset: Map<String, Value>, signer: impl Signer,
+) -> anyhow::Result<String> {
     // populate mdoc and accompanying MSO
     let mut mdoc = IssuerSigned::new();
     let mut mso = MobileSecurityObject::new();
 
-    for (key, value) in dataset.claims {
+    for (key, value) in dataset {
         // namespace is a root-level claim
         let Some(name_space) = value.as_object() else {
             return Err(anyhow!("invalid dataset"));
@@ -111,15 +113,13 @@ mod tests {
     #[tokio::test]
     async fn roundtrip() {
         let dataset = json!({
-            "claims": {
-                "org.iso.18013.5.1.mDL": {
-                    "given_name": "Normal",
-                    "family_name": "Person",
-                    "email": "normal.user@example.com"
-                }
+            "org.iso.18013.5.1.mDL": {
+                "given_name": "Normal",
+                "family_name": "Person",
+                "email": "normal.user@example.com"
             }
         });
-        
+
         // generate mdl credential
         let dataset = serde_json::from_value(dataset).unwrap();
         let provider = Provider::new();
@@ -127,7 +127,7 @@ mod tests {
         let mdl = to_credential(dataset, signer).await.unwrap();
         // println!("{}", mdl);
 
-        // check credential deserializes back into original mdoc/mso structures 
+        // check credential deserializes back into original mdoc/mso structures
         let mdoc_bytes = Base64::decode_vec(&mdl).expect("should decode");
         let mdoc: IssuerSigned = cbor::from_slice(&mdoc_bytes).expect("should deserialize");
         // println!("{:?}", mdoc);
