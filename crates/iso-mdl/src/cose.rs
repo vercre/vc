@@ -26,6 +26,7 @@ use std::collections::BTreeMap;
 
 use aes::cipher::generic_array::typenum::U8;
 use aes::cipher::generic_array::GenericArray;
+use anyhow::anyhow;
 use coset::iana::Algorithm;
 use p256::EncodedPoint;
 use serde::{Deserialize, Serialize};
@@ -58,33 +59,6 @@ pub enum Ec2Curve {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum OkpCurve {
     Ed25519,
-}
-
-/// Errors that can occur when deserializing a `COSE_Key`.
-#[derive(Debug, Clone, thiserror::Error)]
-pub enum Error {
-    #[error("COSE_Key of kty 'Ec2' missing x coordinate")]
-    EC2MissingX,
-    #[error("COSE_Key of kty 'Ec2' missing y coordinate")]
-    EC2MissingY,
-    #[error("Expected to parse a CBOR bool or bstr for y-coordinate, received: '{0:?}'")]
-    InvalidTypeY(ciborium::Value),
-    #[error("Expected to parse a CBOR map, received: '{0:?}'")]
-    NotAMap(ciborium::Value),
-    #[error("Unable to discern the elliptic curve")]
-    UnknownCurve,
-    #[error("This implementation of COSE_Key only supports P-256, P-384, P-521, Ed25519 and Ed448 elliptic curves"
-    )]
-    UnsupportedCurve,
-    #[error("This implementation of COSE_Key only supports Ec2 and Okp keys")]
-    UnsupportedKeyType,
-    #[error("Could not reconstruct coordinates from the provided COSE_Key")]
-    InvalidCoseKey,
-    #[error("Constructing a JWK from CoseKey with point-compression is not supported.")]
-    UnsupportedFormat,
-    #[allow(clippy::enum_variant_names)]
-    #[error("could not serialize from to cbor")]
-    CborError,
 }
 
 impl CoseKey {
@@ -136,17 +110,18 @@ impl From<CoseKey> for ciborium::Value {
 }
 
 impl TryFrom<ciborium::Value> for CoseKey {
-    type Error = Error;
+    type Error = anyhow::Error;
 
-    fn try_from(v: ciborium::Value) -> Result<Self, Error> {
+    fn try_from(v: ciborium::Value) -> anyhow::Result<Self> {
         if let ciborium::Value::Map(map) = v.clone() {
             let mut map: BTreeMap<i128, ciborium::Value> = map
                 .into_iter()
                 .map(|(k, v)| {
-                    let k = k.into_integer().map_err(|_| Error::CborError)?.into();
+                    let k =
+                        k.into_integer().map_err(|e| anyhow!("issue deserializing: {e:?}"))?.into();
                     Ok((k, v))
                 })
-                .collect::<Result<BTreeMap<_, _>, Error>>()?;
+                .collect::<anyhow::Result<BTreeMap<_, _>>>()?;
             match (map.remove(&1), map.remove(&-1), map.remove(&-2)) {
                 (
                     Some(ciborium::Value::Integer(i2)),
@@ -155,7 +130,10 @@ impl TryFrom<ciborium::Value> for CoseKey {
                 ) if <ciborium::value::Integer as Into<i128>>::into(i2) == 2 => {
                     let crv_id: i128 = crv_id.into();
                     let crv = crv_id.try_into()?;
-                    let y = map.remove(&-3).ok_or(Error::EC2MissingY)?.try_into()?;
+                    let y = map
+                        .remove(&-3)
+                        .ok_or_else(|| anyhow!("issue deserializing Y"))?
+                        .try_into()?;
                     Ok(Self::Ec2 { crv, x, y })
                 }
                 (
@@ -167,18 +145,18 @@ impl TryFrom<ciborium::Value> for CoseKey {
                     let crv = crv_id.try_into()?;
                     Ok(Self::Okp { crv, x })
                 }
-                _ => Err(Error::UnsupportedKeyType),
+                _ => Err(anyhow!("issue deserializing CoseKey")),
             }
         } else {
-            Err(Error::NotAMap(v))
+            Err(anyhow!("Value is not a map: {v:?}"))
         }
     }
 }
 
 impl TryFrom<CoseKey> for EncodedPoint {
-    type Error = Error;
+    type Error = anyhow::Error;
 
-    fn try_from(value: CoseKey) -> Result<Self, Self::Error> {
+    fn try_from(value: CoseKey) -> anyhow::Result<Self> {
         match value {
             CoseKey::Ec2 {
                 crv: Ec2Curve::P256K,
@@ -200,8 +178,8 @@ impl TryFrom<CoseKey> for EncodedPoint {
                             bytes.insert(0, 2);
                         }
 
-                        let encoded =
-                            Self::from_bytes(bytes).map_err(|_e| Error::InvalidCoseKey)?;
+                        let encoded = Self::from_bytes(bytes)
+                            .map_err(|e| anyhow!("issue constructing CoseKey: {e}"))?;
                         Ok(encoded)
                     }
                 }
@@ -209,8 +187,8 @@ impl TryFrom<CoseKey> for EncodedPoint {
             CoseKey::Okp { crv: _, x } => {
                 let x_generic_array: GenericArray<_, U8> =
                     GenericArray::clone_from_slice(&x[0..42]);
-                let encoded =
-                    Self::from_bytes(x_generic_array).map_err(|_e| Error::InvalidCoseKey)?;
+                let encoded = Self::from_bytes(x_generic_array)
+                    .map_err(|e| anyhow!("issue constructing CoseKey: {e}"))?;
                 Ok(encoded)
             }
         }
@@ -227,13 +205,13 @@ impl From<Ec2y> for ciborium::Value {
 }
 
 impl TryFrom<ciborium::Value> for Ec2y {
-    type Error = Error;
+    type Error = anyhow::Error;
 
-    fn try_from(v: ciborium::Value) -> Result<Self, Error> {
+    fn try_from(v: ciborium::Value) -> anyhow::Result<Self> {
         match v {
             ciborium::Value::Bytes(s) => Ok(Self::Value(s)),
             ciborium::Value::Bool(b) => Ok(Self::SignBit(b)),
-            _ => Err(Error::InvalidTypeY(v)),
+            _ => Err(anyhow!("issue deserializing Y: {v:?}")),
         }
     }
 }
@@ -247,12 +225,12 @@ impl From<Ec2Curve> for ciborium::Value {
 }
 
 impl TryFrom<i128> for Ec2Curve {
-    type Error = Error;
+    type Error = anyhow::Error;
 
-    fn try_from(crv_id: i128) -> Result<Self, Error> {
+    fn try_from(crv_id: i128) -> anyhow::Result<Self> {
         match crv_id {
             8 => Ok(Self::P256K),
-            _ => Err(Error::UnsupportedCurve),
+            _ => Err(anyhow!("unsupported curve")),
         }
     }
 }
@@ -266,23 +244,28 @@ impl From<OkpCurve> for ciborium::Value {
 }
 
 impl TryFrom<i128> for OkpCurve {
-    type Error = Error;
+    type Error = anyhow::Error;
 
-    fn try_from(crv_id: i128) -> Result<Self, Error> {
+    fn try_from(crv_id: i128) -> anyhow::Result<Self> {
         match crv_id {
             6 => Ok(Self::Ed25519),
-            _ => Err(Error::UnsupportedCurve),
+            _ => Err(anyhow!("unsupported curve")),
         }
     }
 }
 
 impl TryFrom<JWK> for CoseKey {
-    type Error = Error;
+    type Error = anyhow::Error;
 
-    fn try_from(jwk: JWK) -> Result<Self, Self::Error> {
+    fn try_from(jwk: JWK) -> anyhow::Result<Self> {
         match jwk.params {
             ssi_jwk::Params::EC(params) => {
-                let x = params.x_coordinate.as_ref().ok_or(Error::EC2MissingX)?.0.clone();
+                let x = params
+                    .x_coordinate
+                    .as_ref()
+                    .ok_or_else(|| anyhow!("missing X coordinate"))?
+                    .0
+                    .clone();
                 Ok(Self::Ec2 {
                     crv: (&params).try_into()?,
                     x,
@@ -293,38 +276,37 @@ impl TryFrom<JWK> for CoseKey {
                 crv: (&params).try_into()?,
                 x: params.public_key.0.clone(),
             }),
-            _ => Err(Error::UnsupportedKeyType),
+            _ => Err(anyhow!("unsupported key type")),
         }
     }
 }
 
 impl TryFrom<&ssi_jwk::ECParams> for Ec2Curve {
-    type Error = Error;
+    type Error = anyhow::Error;
 
-    fn try_from(params: &ssi_jwk::ECParams) -> Result<Self, Self::Error> {
+    fn try_from(params: &ssi_jwk::ECParams) -> anyhow::Result<Self> {
         match params.curve.as_ref() {
             Some(crv) if crv == "secp256k1" => Ok(Self::P256K),
-            Some(_) => Err(Error::UnsupportedCurve),
-            None => Err(Error::UnknownCurve),
+            _ => Err(anyhow!("unsupported curve")),
         }
     }
 }
 
 impl TryFrom<ssi_jwk::ECParams> for Ec2y {
-    type Error = Error;
+    type Error = anyhow::Error;
 
-    fn try_from(params: ssi_jwk::ECParams) -> Result<Self, Self::Error> {
+    fn try_from(params: ssi_jwk::ECParams) -> anyhow::Result<Self> {
         params
             .y_coordinate
             .as_ref()
-            .map_or(Err(Error::EC2MissingY), |y| Ok(Self::Value(y.0.clone())))
+            .map_or(Err(anyhow!("missing y coordinate")), |y| Ok(Self::Value(y.0.clone())))
     }
 }
 
 impl TryFrom<CoseKey> for JWK {
-    type Error = Error;
+    type Error = anyhow::Error;
 
-    fn try_from(cose: CoseKey) -> Result<Self, Error> {
+    fn try_from(cose: CoseKey) -> anyhow::Result<Self> {
         Ok(match cose {
             CoseKey::Ec2 { crv, x, y } => Self {
                 params: ssi_jwk::Params::EC(ssi_jwk::ECParams {
@@ -334,7 +316,7 @@ impl TryFrom<CoseKey> for JWK {
                     x_coordinate: Some(ssi_jwk::Base64urlUInt(x)),
                     y_coordinate: match y {
                         Ec2y::Value(vec) => Some(ssi_jwk::Base64urlUInt(vec)),
-                        Ec2y::SignBit(_) => return Err(Error::UnsupportedFormat),
+                        Ec2y::SignBit(_) => return Err(anyhow!("unsupported format")),
                     },
                     ecc_private_key: None,
                 }),
@@ -369,12 +351,12 @@ impl TryFrom<CoseKey> for JWK {
 }
 
 impl TryFrom<&ssi_jwk::OctetParams> for OkpCurve {
-    type Error = Error;
+    type Error = anyhow::Error;
 
-    fn try_from(params: &ssi_jwk::OctetParams) -> Result<Self, Self::Error> {
+    fn try_from(params: &ssi_jwk::OctetParams) -> anyhow::Result<Self> {
         match params.curve.as_str() {
             "Ed25519" => Ok(Self::Ed25519),
-            _ => Err(Error::UnsupportedCurve),
+            _ => Err(anyhow!("unsupported curve")),
         }
     }
 }
