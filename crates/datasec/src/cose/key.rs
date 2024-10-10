@@ -11,55 +11,56 @@ use ciborium::value::Integer;
 use ciborium::Value;
 use serde::{Deserialize, Serialize};
 
-use crate::Curve;
+use crate::{Curve, KeyType};
 
 /// Implements [`COSE_Key`] as defined in [RFC9052].
 ///
 /// [RFC9052]: https://www.rfc-editor.org/rfc/rfc9052.html#name-key-objects
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(try_from = "Value", into = "Value")]
 #[allow(clippy::module_name_repetitions)]
-pub enum CoseKey {
-    /// Octet Key Pair
-    Okp {
-        /// Curve
-        crv: Curve,
+pub struct CoseKey {
+    /// Key type
+    pub kty: KeyType,
 
-        /// Public key
-        x: Vec<u8>,
-    },
-    /// Elliptic Curve Key Pair
-    Ec {
-        /// Curve
-        crv: Curve,
+    /// Curve
+    pub crv: Curve,
 
-        /// Public key X
-        x: Vec<u8>,
+    /// Public key X
+    pub x: Vec<u8>,
 
-        /// Public key Y
-        y: Vec<u8>,
-    },
+    /// Public key Y
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub y: Option<Vec<u8>>,
 }
 
 /// Serialize `COSE_Key` to CBOR.
 impl From<CoseKey> for Value {
     fn from(key: CoseKey) -> Self {
-        let mut cbor = vec![];
-        match key {
-            // kty: 1, Okp: 1, crv: -1, x: -2
-            CoseKey::Okp { crv, x } => {
-                cbor.push((Self::Integer(1.into()), Self::Integer(1.into())));
-                cbor.push((Self::Integer((-1).into()), { crv.into() }));
-                cbor.push((Self::Integer((-2).into()), Self::Bytes(x)));
+        let cbor = match key.kty {
+            KeyType::Okp => {
+                vec![
+                    (KEY_TYPE.into(), KeyType::Okp.into()),
+                    (CURVE.into(), { key.crv.into() }),
+                    (X.into(), Self::Bytes(key.x)),
+                ]
             }
-            // kty: 1, Ec: 2, crv: -1, x: -2, y: -3
-            CoseKey::Ec { crv, x, y } => {
-                cbor.push((Self::Integer(1.into()), Self::Integer(2.into())));
-                cbor.push((Self::Integer((-1).into()), { crv.into() }));
-                cbor.push((Self::Integer((-2).into()), Self::Bytes(x)));
-                cbor.push((Self::Integer((-3).into()), { y.into() }));
+            KeyType::Ec => {
+                vec![
+                    (KEY_TYPE.into(), KeyType::Ec.into()),
+                    ((CURVE).into(), { key.crv.into() }),
+                    (X.into(), Self::Bytes(key.x)),
+                    (Y.into(), { key.y.unwrap_or_default().into() }),
+                ]
             }
-        }
+            KeyType::Oct => {
+                vec![
+                    (KEY_TYPE.into(), KeyType::Oct.into()),
+                    (CURVE.into(), { key.crv.into() }),
+                    (X.into(), Self::Bytes(key.x)),
+                ]
+            }
+        };
         Self::Map(cbor)
     }
 }
@@ -75,23 +76,48 @@ impl TryFrom<Value> for CoseKey {
                 .map(|(k, v)| (k.as_integer().unwrap_or_else(|| 0.into()), v))
                 .collect::<BTreeMap<_, _>>();
 
-            // kty: 1, Okp: 1, crv: -1, x: -2
             match (
-                map.remove(&Integer::from(1)),
-                map.remove(&Integer::from(-1)),
-                map.remove(&Integer::from(-2)),
+                map.remove(&Integer::from(KEY_TYPE)),
+                map.remove(&Integer::from(CURVE)),
+                map.remove(&Integer::from(X)),
             ) {
-                (Some(Value::Integer(i1)), Some(Value::Integer(crv_id)), Some(Value::Bytes(x)))
-                    if i1 == Integer::from(1) =>
-                {
-                    let crv_id: i128 = crv_id.into();
-                    let crv = crv_id.try_into()?;
-                    Ok(Self::Okp { crv, x })
+                (Some(kty), Some(crv), Some(Value::Bytes(x))) if kty == KeyType::Okp.into() => {
+                    Ok(Self {
+                        kty: KeyType::Okp,
+                        crv: crv.try_into()?,
+                        x,
+                        y: None,
+                    })
+                }
+                (Some(kty), Some(crv), Some(Value::Bytes(x))) if kty == KeyType::Ec.into() => {
+                    let y = map.remove(&Integer::from(Y)).ok_or_else(|| anyhow!("missing Y"))?;
+
+                    Ok(Self {
+                        kty: KeyType::Ec,
+                        crv: crv.try_into()?,
+                        x,
+                        y: y.as_bytes().cloned(),
+                    })
                 }
                 _ => Err(anyhow!("issue deserializing CoseKey")),
             }
         } else {
             Err(anyhow!("Value is not a map: {v:?}"))
+        }
+    }
+}
+
+const KEY_TYPE: i64 = 1;
+const CURVE: i64 = -1;
+const X: i64 = -2;
+const Y: i64 = -3;
+
+impl From<KeyType> for Value {
+    fn from(k: KeyType) -> Self {
+        match k {
+            KeyType::Okp => Self::Integer(1.into()),
+            KeyType::Ec => Self::Integer(2.into()),
+            KeyType::Oct => Self::Integer(4.into()),
         }
     }
 }
@@ -105,13 +131,17 @@ impl From<Curve> for Value {
     }
 }
 
-impl TryFrom<i128> for Curve {
+impl TryInto<Curve> for Value {
     type Error = anyhow::Error;
 
-    fn try_from(crv_id: i128) -> anyhow::Result<Self> {
-        match crv_id {
-            6 => Ok(Self::Ed25519),
-            8 => Ok(Self::Es256K),
+    fn try_into(self) -> anyhow::Result<Curve> {
+        let Some(integer) = self.as_integer() else {
+            return Err(anyhow!("unsupported curve"));
+        };
+
+        match integer.into() {
+            6 => Ok(Curve::Ed25519),
+            8 => Ok(Curve::Es256K),
             _ => Err(anyhow!("unsupported curve")),
         }
     }

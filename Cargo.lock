@@ -6011,6 +6011,7 @@ dependencies = [
  "ed25519-dalek",
  "futures",
  "k256",
+ "lazy_static",
  "serde",
  "serde_json",
  "signature",

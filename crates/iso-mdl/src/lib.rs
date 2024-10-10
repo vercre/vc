@@ -19,7 +19,7 @@ use coset::{iana, CoseSign1Builder, HeaderBuilder};
 use rand::{thread_rng, Rng};
 use sha2::{Digest, Sha256};
 use vercre_datasec::cose::{CoseKey, Tag24};
-use vercre_datasec::{Algorithm, Curve, Signer};
+use vercre_datasec::{Algorithm, Curve, KeyType, Signer};
 use vercre_openid::issuer::Dataset;
 
 use crate::mdoc::{IssuerSigned, IssuerSignedItem};
@@ -62,9 +62,11 @@ pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Res
     }
 
     // add public key to MSO
-    mso.device_key_info.device_key = CoseKey::Okp {
+    mso.device_key_info.device_key = CoseKey {
+        kty: KeyType::Okp,
         crv: Curve::Ed25519,
         x: signer.public_key().await?,
+        y: None,
     };
 
     // sign
