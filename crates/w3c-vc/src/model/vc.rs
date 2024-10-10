@@ -81,7 +81,7 @@ pub struct VerifiableCredential {
 
     /// An XMLSCHEMA11-2 (RFC3339) date-time the credential becomes valid.
     /// e.g. 2010-01-01T19:23:24Z.
-    /// 
+    ///
     /// TODO: The specification implies this field is optional but other aspects
     /// of the specification rely on it being present, so we have made it
     /// mandatory here.
@@ -91,11 +91,6 @@ pub struct VerifiableCredential {
     /// e.g. 2010-06-30T19:23:24Z
     #[serde(skip_serializing_if = "Option::is_none")]
     pub valid_until: Option<DateTime<Utc>>,
-
-        /// One or more cryptographic proofs that can be used to detect tampering
-    /// and verify authorship of a credential.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub proof: Option<Quota<Proof>>,
 
     /// Used to determine the status of the credential, such as whether it is
     /// suspended or revoked.
@@ -107,6 +102,17 @@ pub struct VerifiableCredential {
     /// check credential data conformance.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_schema: Option<Quota<CredentialSchema>>,
+
+    /// One or more cryptographic proofs that can be used to detect tampering
+    /// and verify authorship of a credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub proof: Option<Quota<Proof>>,
+
+    /// Related resources allow external data to be associated with the
+    /// credential and an integrity mechanism to allow a verify to check the
+    /// related data has not changed since the credential was issued.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub related_resource: Option<Quota<RelatedResource>>,
 
     /// `RefreshService` can be used to provide a link to the issuer's refresh
     /// service so Holder's can refresh (manually or automatically) an
@@ -310,6 +316,35 @@ pub struct CredentialSchema {
     /// status of the credential. e.g. "`JsonSchemaValidator2018`"
     #[serde(rename = "type")]
     pub type_: String,
+}
+
+/// `RelatedResource` allows external data to be associated with the credential
+/// and an integrity mechanism to allow a verifier to check the related data.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(default)]
+#[serde(rename_all = "camelCase")]
+pub struct RelatedResource {
+    /// The identifier for the resource, typically a URL from which the
+    /// resource can be retrieved, or another dereferenceable identifier.
+    pub id: String,
+
+    /// The type of media as defined by the
+    /// [IANA Media Types registry](https://www.iana.org/assignments/media-types/media-types.xhtml).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub media_type: Option<String>,
+
+    /// One or more cryptographic digests, as defined by the `hash-expression`
+    /// ABNF grammar defined in the Subresource Integrity specification,
+    /// [Section 3.5: The integrity attribute](https://www.w3.org/TR/SRI/#the-integrity-attribute).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "digestSRI")]
+    pub digest_sri: Option<Quota<String>>,
+
+    /// One or more cryptographic digests, as defined by the digestMultibase
+    /// property in the Verifiable Credential Data Integrity 1.0 specification,
+    /// [Section 2.3: Resource Integrity](https://www.w3.org/TR/vc-data-integrity/#resource-integrity).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub digest_multibase: Option<Quota<String>>,
 }
 
 /// `RefreshService` can be used to provide a link to the issuer's refresh
