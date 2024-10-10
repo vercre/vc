@@ -5,7 +5,8 @@ use vercre_holder::provider::Issuer;
 use vercre_holder::{
     AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse,
     DeferredCredentialRequest, DeferredCredentialResponse, Logo, MetadataRequest, MetadataResponse,
-    OAuthServerRequest, OAuthServerResponse, TokenRequest, TokenResponse,
+    NotificationRequest, NotificationResponse, OAuthServerRequest, OAuthServerResponse,
+    TokenRequest, TokenResponse,
 };
 
 use super::Provider;
@@ -102,5 +103,13 @@ impl Issuer for Provider {
             image: logo_data,
             media_type: media_type.to_string(),
         })
+    }
+
+    /// Notify the issuer of issuance progress. Not implemented for this
+    /// example.
+    async fn notification(
+        &self, _req: NotificationRequest,
+    ) -> anyhow::Result<NotificationResponse> {
+        Ok(NotificationResponse::default())
     }
 }

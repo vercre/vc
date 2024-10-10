@@ -51,7 +51,8 @@ pub use vercre_openid::issuer::{
     AuthorizationResponse, Claim, ClaimDefinition, CredentialAuthorization,
     CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse,
     CredentialResponseType, DeferredCredentialRequest, DeferredCredentialResponse,
-    FormatIdentifier, Grants, Issuer, MetadataRequest, MetadataResponse, OAuthServerRequest,
+    FormatIdentifier, GrantType, Grants, Issuer, MetadataRequest, MetadataResponse,
+    NotificationEvent, NotificationRequest, NotificationResponse, OAuthServerRequest,
     OAuthServerResponse, PreAuthorizedCodeGrant, ProfileClaims, Proof, ProofClaims, TokenRequest,
     TokenResponse, TxCode,
 };

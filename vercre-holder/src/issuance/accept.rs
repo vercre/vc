@@ -73,11 +73,6 @@ pub async fn accept(
         tracing::error!(target: "Endpoint::accept", ?e);
         return Err(e);
     }
-    let Some(grants) = &issuance.offer.grants else {
-        let e = anyhow!("no grants on offer");
-        tracing::error!(target: "Endpoint::accept", ?e);
-        return Err(e);
-    };
     if let Some(accepted) = &request.accept {
         if accepted.is_empty() {
             let e = anyhow!("if accept is provided it cannot be empty");
@@ -94,9 +89,12 @@ pub async fn accept(
             })?;
 
     issuance.status = Status::Accepted;
-    if let Some(pre_auth_code) = &grants.pre_authorized_code {
-        if pre_auth_code.tx_code.is_some() {
-            issuance.status = Status::PendingPin;
+
+    if let Some(grants) = &issuance.offer.grants {
+        if let Some(pre_auth_code) = &grants.pre_authorized_code {
+            if pre_auth_code.tx_code.is_some() {
+                issuance.status = Status::PendingPin;
+            }
         }
     }
 
@@ -120,7 +118,7 @@ fn narrow_scope(
     };
     let mut auth_details = Vec::new();
     for auth_spec in accept {
-        let claims: Option<ProfileClaims> = match auth_spec.claims.clone() {
+        let claims: Option<ProfileClaims> = match &auth_spec.claims {
             Some(claims) => {
                 let Some(credential_configuration) =
                     offered.get(&auth_spec.credential_configuration_id)
@@ -132,11 +130,11 @@ fn narrow_scope(
                     FormatIdentifier::JwtVcJson(_)
                     | FormatIdentifier::JwtVcJsonLd(_)
                     | FormatIdentifier::LdpVc(_) => ProfileClaims::W3c(CredentialDefinition {
-                        credential_subject: Some(claims),
+                        credential_subject: Some(claims.clone()),
                         ..CredentialDefinition::default()
                     }),
-                    FormatIdentifier::IsoMdl(_) => ProfileClaims::IsoMdl(claims),
-                    FormatIdentifier::VcSdJwt(_) => ProfileClaims::SdJwt(claims),
+                    FormatIdentifier::IsoMdl(_) => ProfileClaims::IsoMdl(claims.clone()),
+                    FormatIdentifier::VcSdJwt(_) => ProfileClaims::SdJwt(claims.clone()),
                 };
                 Some(profile)
             }

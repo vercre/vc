@@ -91,9 +91,11 @@ pub async fn authorize(
     provider: impl Provider, request: AuthorizationRequest,
 ) -> Result<AuthorizationResponse> {
     // request object or URI (Pushed Authorization Request)
+    let mut is_par = false;
     let request = match request {
         AuthorizationRequest::Object(request) => request,
         AuthorizationRequest::Uri(uri) => {
+            is_par = true;
             let state: State = StateStore::get(&provider, &uri.request_uri)
                 .await
                 .map_err(|e| Error::ServerError(format!("state issue: {e}")))?;
@@ -115,6 +117,7 @@ pub async fn authorize(
 
     let mut ctx = Context {
         issuer,
+        is_par,
         ..Context::default()
     };
     ctx.verify(&provider, &request).await?;
@@ -127,6 +130,7 @@ pub struct Context {
     pub auth_dets: HashMap<String, AuthorizationDetail>,
     pub scope_items: HashMap<String, String>,
     pub claims: Option<HashMap<String, Claim>>,
+    pub is_par: bool,
 }
 
 impl Context {
@@ -143,6 +147,37 @@ impl Context {
         let Ok(server) = Metadata::server(provider, &request.credential_issuer, None).await else {
             return Err(Error::InvalidRequest("invalid `credential_issuer`".into()));
         };
+
+        // If the server requires pushed authorization requests, the request
+        // must be a PAR.
+        if let Some(must_be_par) = server.oauth.require_pushed_authorization_requests {
+            if must_be_par && !self.is_par {
+                return Err(Error::InvalidRequest(
+                    "pushed authorization request is required".into(),
+                ));
+            }
+        }
+
+        // Requested `response_type` must be supported by the authorization server.
+        if !server.oauth.response_types_supported.contains(&request.response_type) {
+            return Err(Error::UnsupportedResponseType(
+                "`response_type` not supported by server".into(),
+            ));
+        }
+
+        // Client and server must support the same scopes.
+        if let Some(client_scope) = &client.oauth.scope {
+            if let Some(server_scopes) = &server.oauth.scopes_supported {
+                let scopes: Vec<&str> = client_scope.split_whitespace().collect();
+                if !scopes.iter().all(|s| server_scopes.contains(&(*s).to_string())) {
+                    return Err(Error::InvalidRequest("client scope not supported".into()));
+                }
+            } else {
+                return Err(Error::InvalidRequest("server supported scopes not set".into()));
+            }
+        } else {
+            return Err(Error::InvalidRequest("client scope not set".into()));
+        }
 
         // 'authorization_code' grant_type allowed (client and server)?
         let client_grant_types = client.oauth.grant_types.unwrap_or_default();
@@ -409,6 +444,8 @@ mod tests {
     #[case::claims("claims", claims)]
     #[should_panic(expected = "ok")]
     #[case::claims_err("claims_err", claims_err)]
+    #[should_panic(expected = "ok")]
+    #[case::response_type_err("response_type_err", response_type_err)]
     async fn authorize_tests(#[case] name: &str, #[case] value: fn() -> Value) {
         vercre_test_utils::init_tracer();
         snapshot!("");
@@ -541,6 +578,24 @@ mod tests {
                         "employee_id": {}
                     }
                 }
+            }],
+            "subject_id": NORMAL_USER,
+            "wallet_issuer": CREDENTIAL_ISSUER
+        })
+    }
+
+    fn response_type_err() -> Value {
+        json!({
+            "credential_issuer": CREDENTIAL_ISSUER,
+            "response_type": "vp_token",
+            "client_id": CLIENT_ID,
+            "redirect_uri": "http://localhost:3000/callback",
+            "state": "1234",
+            "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+            "code_challenge_method": "S256",
+            "authorization_details": [{
+                "type": "openid_credential",
+                "credential_configuration_id": "EmployeeID_JWT",
             }],
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER

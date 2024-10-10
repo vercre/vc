@@ -5,6 +5,7 @@
 use std::collections::HashMap;
 
 use anyhow::{anyhow, bail};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_core::Kind;
@@ -20,7 +21,7 @@ use vercre_w3c_vc::proof::{Payload, Verify};
 
 use super::{Issuance, Status};
 use crate::credential::Credential;
-use crate::provider::{CredentialStorer, HolderProvider, Issuer, StateStore};
+use crate::provider::{HolderProvider, Issuer, StateStore};
 
 /// `CredentialsRequest` provides the issuance flow ID and an optional set of
 /// credential identifiers to the `credentials` endpoint.
@@ -96,127 +97,158 @@ pub async fn credentials(
         e
     })?;
 
-    let mut deferred = HashMap::<String, String>::new();
-
     // If the flow is scope-based then we can't examine authorization details
     // but proceed instead to request credentials by format.
     if issuance.scope.is_some() {
-        if request.credential_identifiers.is_some() {
-            let e = anyhow!("credential identifiers must be `None` for scope-based issuance");
-            tracing::error!(target: "Endpoint::credentials", ?e);
-            return Err(e);
-        }
-        let Some(format) = &request.format else {
-            let e = anyhow!("format must be provided for scope-based issuance");
-            tracing::error!(target: "Endpoint::credentials", ?e);
-            return Err(e);
-        };
-        let config = issuance
-            .issuer
-            .credential_configurations_supported
-            .iter()
-            .find(|(_, cfg)| cfg.scope == issuance.scope && cfg.format == *format);
-        let Some((cfg_id, config)) = config else {
-            let e = anyhow!("credential configuration not found for scope and format");
-            tracing::error!(target: "Endpoint::credentials", ?e);
-            return Err(e);
-        };
-        match get_credentials_by_format(provider.clone(), &issuance, config, &jwt).await {
-            Ok(cred_res) => {
-                if let CredentialResponseType::TransactionId(id) = &cred_res.response {
-                    deferred.insert(id.to_string(), cfg_id.to_string());
-                }
-                cred_res
-            }
-            Err(e) => {
+        credential_by_format(provider.clone(), &mut issuance, request, &jwt).await.map_err(
+            |e| {
                 tracing::error!(target: "Endpoint::credentials", ?e);
-                return Err(e);
-            }
-        };
+                e
+            },
+        )?;
     }
     // Otherwise the flow is definition or format based and we make a request
     // for each authorized credential identifier.
     else {
-        let Some(authorized) = &issuance.token.authorization_details else {
-            let e = anyhow!("no authorization details in token response");
-            tracing::error!(target: "Endpoint::credentials", ?e);
-            return Err(e);
-        };
-
-        for auth in authorized {
-            let cfg_id = match &auth.authorization_detail.credential {
-                CredentialAuthorization::ConfigurationId {
-                    credential_configuration_id,
-                    ..
-                } => credential_configuration_id,
-                CredentialAuthorization::Format(format_identifier) => {
-                    match issuance.issuer.credential_configuration_id(format_identifier) {
-                        Ok(cfg_id) => cfg_id,
-                        Err(e) => {
-                            tracing::error!(target: "Endpoint::credentials", ?e);
-                            return Err(e);
-                        }
-                    }
-                }
-            };
-            let Some(cfg) = issuance.issuer.credential_configurations_supported.get(cfg_id) else {
-                let e = anyhow!("authorized credential configuration not found in issuer metadata");
+        credential_by_identifier(provider.clone(), &mut issuance, request, &jwt).await.map_err(
+            |e| {
                 tracing::error!(target: "Endpoint::credentials", ?e);
-                return Err(e);
-            };
-            for cred_id in &auth.credential_identifiers {
-                // Check the holder wants this credential.
-                if let Some(ref ids) = request.credential_identifiers {
-                    if !ids.contains(cred_id) {
-                        continue;
-                    }
-                }
-
-                let cred_res = match get_credential_by_identifier(
-                    provider.clone(),
-                    &issuance,
-                    cfg,
-                    cred_id,
-                    &jwt,
-                )
-                .await
-                {
-                    Ok(cred_res) => {
-                        if let CredentialResponseType::TransactionId(id) = &cred_res.response {
-                            deferred.insert(id.to_string(), cfg_id.to_string());
-                        }
-                        cred_res
-                    }
-                    Err(e) => {
-                        tracing::error!(target: "Endpoint::credentials", ?e);
-                        return Err(e);
-                    }
-                };
-                if cred_res.c_nonce.is_some() {
-                    issuance.token.c_nonce.clone_from(&cred_res.c_nonce);
-                }
-                if cred_res.c_nonce_expires_in.is_some() {
-                    issuance.token.c_nonce_expires_in.clone_from(&cred_res.c_nonce_expires_in);
-                }
-            }
-        }
+                e
+            },
+        )?;
     }
-    // Release issuance state if no deferred transactions.
-    let deferred = if deferred.is_empty() {
-        StateStore::purge(&provider, &issuance.id).await.map_err(|e| {
-            tracing::error!(target: "Endpoint::credentials", ?e);
-            anyhow!("issue purging state: {e}")
-        })?;
-        None
-    } else {
-        issuance.deferred = Some(deferred.clone());
-        Some(deferred)
+
+    // Stash the state for the next step (save or cancel or deferred).
+    if let Err(e) =
+        StateStore::put(&provider, &issuance.id, &issuance, DateTime::<Utc>::MAX_UTC).await
+    {
+        tracing::error!(target: "Endpoint::credentials", ?e);
+        return Err(e);
     };
+
+    let deferred =
+        if issuance.deferred.is_empty() { None } else { Some(issuance.deferred.clone()) };
 
     Ok(CredentialsResponse {
         issuance_id: issuance.id,
         deferred,
     })
+}
+
+// Make a credential request by format based on the flow being by scope.
+async fn credential_by_format(
+    provider: impl HolderProvider, issuance: &mut Issuance, request: &CredentialsRequest, jwt: &str,
+) -> anyhow::Result<()> {
+    if request.credential_identifiers.is_some() {
+        bail!("credential identifiers must be `None` for scope-based issuance");
+    }
+    let Some(format) = &request.format else {
+        bail!("format must be provided for scope-based issuance");
+    };
+    let config = issuance
+        .issuer
+        .credential_configurations_supported
+        .iter()
+        .find(|(_, cfg)| cfg.scope == issuance.scope && cfg.format == *format);
+    let Some((cfg_id, config)) = config else {
+        bail!("credential configuration not found for scope and format");
+    };
+    let request = CredentialRequest {
+        credential_issuer: issuance.issuer.credential_issuer.clone(),
+        access_token: issuance.token.access_token.clone(),
+        credential: CredentialIssuance::Format(config.format.clone()),
+        proof: Some(Proof::Single {
+            proof_type: SingleProof::Jwt { jwt: jwt.into() },
+        }),
+        ..Default::default()
+    };
+    let cred_res = Issuer::credential(&provider, request).await.map_err(|e| {
+        tracing::error!(target: "Endpoint::credentials", ?e);
+        e
+    })?;
+    match process_credential_response(provider.clone(), config, &cred_res).await {
+        Ok((credentials, transaction_id)) => {
+            if let Some(credentials) = credentials {
+                issuance.credentials.extend(credentials);
+            }
+            if let Some(id) = transaction_id {
+                issuance.deferred.insert(id, cfg_id.to_string());
+            }
+        }
+        Err(e) => {
+            tracing::error!(target: "Endpoint::credentials", ?e);
+            return Err(e);
+        }
+    };
+    Ok(())
+}
+
+// Make a credential request by identifier.
+async fn credential_by_identifier(
+    provider: impl HolderProvider, issuance: &mut Issuance, request: &CredentialsRequest, jwt: &str,
+) -> anyhow::Result<()> {
+    let Some(authorized) = &issuance.token.authorization_details else {
+        bail!("no authorization details in token response");
+    };
+
+    for auth in authorized {
+        let cfg_id = match &auth.authorization_detail.credential {
+            CredentialAuthorization::ConfigurationId {
+                credential_configuration_id,
+                ..
+            } => credential_configuration_id,
+            CredentialAuthorization::Format(format_identifier) => {
+                match issuance.issuer.credential_configuration_id(format_identifier) {
+                    Ok(cfg_id) => cfg_id,
+                    Err(e) => {
+                        tracing::error!(target: "Endpoint::credentials", ?e);
+                        return Err(e);
+                    }
+                }
+            }
+        };
+        let Some(config) = issuance.issuer.credential_configurations_supported.get(cfg_id) else {
+            bail!("authorized credential configuration not found in issuer metadata");
+        };
+        for cred_id in &auth.credential_identifiers {
+            // Check the holder wants this credential.
+            if let Some(ref ids) = request.credential_identifiers {
+                if !ids.contains(cred_id) {
+                    continue;
+                }
+            }
+            let request = credential_request!({
+                "credential_issuer": issuance.issuer.credential_issuer.clone(),
+                "access_token": issuance.token.access_token.clone(),
+                "credential_identifier": cred_id.to_string(),
+                "proof": {
+                    "proof_type": "jwt",
+                    "jwt": jwt.to_string()
+                }
+            });
+            let cred_res = Issuer::credential(&provider, request).await?;
+            match process_credential_response(provider.clone(), config, &cred_res).await {
+                Ok((credentials, transaction_id)) => {
+                    if let Some(credentials) = credentials {
+                        issuance.credentials.extend(credentials);
+                    }
+                    if let Some(id) = transaction_id {
+                        issuance.deferred.insert(id, cfg_id.to_string());
+                    }
+                }
+                Err(e) => {
+                    return Err(e);
+                }
+            };
+            if cred_res.c_nonce.is_some() {
+                issuance.token.c_nonce.clone_from(&cred_res.c_nonce);
+            }
+            if cred_res.c_nonce_expires_in.is_some() {
+                issuance.token.c_nonce_expires_in.clone_from(&cred_res.c_nonce_expires_in);
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Process the credential response.
@@ -227,60 +259,24 @@ pub async fn credentials(
 /// returned instead.
 pub async fn process_credential_response(
     provider: impl HolderProvider, config: &CredentialConfiguration, resp: &CredentialResponse,
-) -> anyhow::Result<()> {
+) -> anyhow::Result<(Option<Vec<Credential>>, Option<String>)> {
+    let mut credentials = Vec::new();
     match &resp.response {
         CredentialResponseType::Credential(vc_kind) => {
             // Create a credential in a useful wallet format and save.
             let credential = credential(&provider, config, vc_kind).await?;
-            CredentialStorer::save(&provider, &credential).await?;
-            Ok(())
+            credentials.push(credential);
+            Ok((Some(credentials), None))
         }
-        CredentialResponseType::Credentials(credentials) => {
-            for vc_kind in credentials {
+        CredentialResponseType::Credentials(creds) => {
+            for vc_kind in creds {
                 let credential = credential(&provider, config, vc_kind).await?;
-                CredentialStorer::save(&provider, &credential).await?;
+                credentials.push(credential);
             }
-            Ok(())
+            Ok((Some(credentials), None))
         }
-        CredentialResponseType::TransactionId(_id) => Ok(()),
+        CredentialResponseType::TransactionId(id) => Ok((None, Some(id.clone()))),
     }
-}
-
-/// Get credentials by format.
-async fn get_credentials_by_format(
-    provider: impl HolderProvider, issuance: &Issuance, config: &CredentialConfiguration, jwt: &str,
-) -> anyhow::Result<CredentialResponse> {
-    let request = CredentialRequest {
-        credential_issuer: issuance.issuer.credential_issuer.clone(),
-        access_token: issuance.token.access_token.clone(),
-        credential: CredentialIssuance::Format(config.format.clone()),
-        proof: Some(Proof::Single {
-            proof_type: SingleProof::Jwt { jwt: jwt.into() },
-        }),
-        ..Default::default()
-    };
-    let cred_res = Issuer::credential(&provider, request).await?;
-    process_credential_response(provider, config, &cred_res).await?;
-    Ok(cred_res)
-}
-
-/// Get a credential by credential identifier.
-async fn get_credential_by_identifier(
-    provider: impl HolderProvider, issuance: &Issuance, config: &CredentialConfiguration,
-    cred_id: &str, jwt: &str,
-) -> anyhow::Result<CredentialResponse> {
-    let request = credential_request!({
-        "credential_issuer": issuance.issuer.credential_issuer.clone(),
-        "access_token": issuance.token.access_token.clone(),
-        "credential_identifier": cred_id.to_string(),
-        "proof": {
-            "proof_type": "jwt",
-            "jwt": jwt.to_string()
-        }
-    });
-    let cred_res = Issuer::credential(&provider, request).await?;
-    process_credential_response(provider, config, &cred_res).await?;
-    Ok(cred_res)
 }
 
 /// Construct a credential from a credential response.
