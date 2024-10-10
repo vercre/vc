@@ -131,7 +131,7 @@ pub struct VerifiableCredential {
     /// used by the verifier to establish the confidence with which it
     /// relies on credential claims.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub evidence: Option<Vec<Evidence>>,
+    pub evidence: Option<Quota<Evidence>>,
 }
 
 // TODO: create structured @context object
@@ -406,22 +406,25 @@ pub struct Evidence {
     #[serde(rename = "type")]
     pub type_: Vec<String>,
 
-    /// A URI identifying the credential issuer (i.e. verifier of evidence).
-    pub verifier: String,
+    /// A human-readable title for the evidence type.
+    pub name: Option<String>,
 
-    /// Evidence document identifies the evidence scheme.
-    #[serde(rename = "evidenceDocument")]
-    pub evidence_document: String,
+    /// A human-readable description of the evidence type.
+    pub description: Option<String>,
 
-    /// Whether the subject was present when the evidence was collected.
-    /// For example, "Physical".
-    #[serde(rename = "subjectPresence")]
-    pub subject_presence: String,
+    /// One or more cryptographic digests, as defined by the `hash-expression`
+    /// ABNF grammar defined in the Subresource Integrity specification,
+    /// [Section 3.5: The integrity attribute](https://www.w3.org/TR/SRI/#the-integrity-attribute).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "digestSRI")]
+    pub digest_sri: Option<Quota<String>>,
 
-    /// Whether the evidence document was present when the evidence was
-    /// collected. For example, "Physical".
-    #[serde(rename = "documentPresence")]
-    pub document_presence: String,
+    /// One or more cryptographic digests, as defined by the digestMultibase
+    /// property in the Verifiable Credential Data Integrity 1.0 specification,
+    /// [Section 2.3: Resource Integrity](https://www.w3.org/TR/vc-data-integrity/#resource-integrity).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "digestMultibase")]
+    pub digest_multibase: Option<Quota<String>>,
 
     /// A list of schema-specific evidence fields.
     #[serde(flatten)]
