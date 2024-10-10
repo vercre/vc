@@ -37,6 +37,7 @@ vercre-did.workspace = true
 vercre-openid.workspace = true
 vercre-status.workspace = true
 vercre-w3c-vc.workspace = true
+vercre-iso-mdl = { path = "../crates/iso-mdl" }
 
 [dev-dependencies]
 assert_let_bind.workspace = true

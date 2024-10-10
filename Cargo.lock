@@ -6010,6 +6010,7 @@ dependencies = [
  "ecdsa",
  "ed25519-dalek",
  "futures",
+ "hex",
  "k256",
  "serde",
  "serde_json",
@@ -6093,7 +6094,6 @@ dependencies = [
  "sha2",
  "tokio",
  "vercre-datasec",
- "vercre-openid",
  "vercre-test-utils",
 ]
 
@@ -6115,6 +6115,7 @@ dependencies = [
  "vercre-core",
  "vercre-datasec",
  "vercre-did",
+ "vercre-iso-mdl",
  "vercre-openid",
  "vercre-status",
  "vercre-test-utils",

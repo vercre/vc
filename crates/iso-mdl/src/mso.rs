@@ -12,7 +12,8 @@ use ciborium::Value;
 use coset::{AsCborValue, CoseSign1};
 use rand::Rng;
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
-use vercre_datasec::cose::{CoseKey, Curve};
+use vercre_datasec::cose::CoseKey;
+use vercre_datasec::{Curve, KeyType};
 
 use crate::mdoc::NameSpace;
 
@@ -96,7 +97,7 @@ pub type DigestId = i32;
 pub type Digest = Vec<u8>;
 
 /// Digest algorithm used by the MSO.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum DigestAlgorithm {
     /// SHA-256
     #[serde(rename = "SHA-256")]
@@ -133,9 +134,11 @@ impl DeviceKeyInfo {
     /// Create a new `DeviceKeyInfo` with the given device key.
     pub const fn new() -> Self {
         Self {
-            device_key: CoseKey::Okp {
+            device_key: CoseKey {
+                kty: KeyType::Okp,
                 crv: Curve::Ed25519,
                 x: Vec::new(),
+                y: None,
             },
             key_authorizations: None,
             key_info: None,

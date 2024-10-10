@@ -17,10 +17,10 @@ use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded as Base64, Encoding};
 use coset::{iana, CoseSign1Builder, HeaderBuilder};
 use rand::{thread_rng, Rng};
+use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
-use vercre_datasec::cose::{CoseKey, Curve, Tag24};
-use vercre_datasec::{Algorithm, Signer};
-use vercre_openid::issuer::Dataset;
+use vercre_datasec::cose::{CoseKey, Tag24};
+use vercre_datasec::{Algorithm, Curve, KeyType, Signer};
 
 use crate::mdoc::{IssuerSigned, IssuerSignedItem};
 use crate::mso::{DigestIdGenerator, MobileSecurityObject};
@@ -30,12 +30,14 @@ use crate::mso::{DigestIdGenerator, MobileSecurityObject};
 ///
 /// # Errors
 /// // TODO: add errors
-pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Result<String> {
+pub async fn to_credential(
+    dataset: Map<String, Value>, signer: impl Signer,
+) -> anyhow::Result<String> {
     // populate mdoc and accompanying MSO
     let mut mdoc = IssuerSigned::new();
     let mut mso = MobileSecurityObject::new();
 
-    for (key, value) in dataset.claims {
+    for (key, value) in dataset {
         // namespace is a root-level claim
         let Some(name_space) = value.as_object() else {
             return Err(anyhow!("invalid dataset"));
@@ -62,9 +64,11 @@ pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Res
     }
 
     // add public key to MSO
-    mso.device_key_info.device_key = CoseKey::Okp {
+    mso.device_key_info.device_key = CoseKey {
+        kty: KeyType::Okp,
         crv: Curve::Ed25519,
         x: signer.public_key().await?,
+        y: None,
     };
 
     // sign
@@ -98,32 +102,41 @@ pub async fn to_credential(dataset: Dataset, signer: impl Signer) -> anyhow::Res
 #[cfg(test)]
 mod tests {
     use serde_json::json;
+    use vercre_datasec::cose::cbor;
     use vercre_datasec::SecOps;
     use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER};
 
+    use super::*;
+    use crate::mso::DigestAlgorithm;
     use crate::to_credential;
 
     #[tokio::test]
-    async fn issuer_signed() {
+    async fn roundtrip() {
         let dataset = json!({
-            "claims": {
-                "org.iso.18013.5.1.mDL": {
-                    "given_name": "Normal",
-                    "family_name": "Person",
-                    "email": "normal.user@example.com"
-                }
+            "org.iso.18013.5.1.mDL": {
+                "given_name": "Normal",
+                "family_name": "Person",
+                "email": "normal.user@example.com"
             }
         });
-        let dataset = serde_json::from_value(dataset).unwrap();
 
+        // generate mdl credential
+        let dataset = serde_json::from_value(dataset).unwrap();
         let provider = Provider::new();
         let signer = SecOps::signer(&provider, CREDENTIAL_ISSUER).unwrap();
+        let mdl = to_credential(dataset, signer).await.unwrap();
+        // println!("{}", mdl);
 
-        to_credential(dataset, signer).await.unwrap();
+        // check credential deserializes back into original mdoc/mso structures
+        let mdoc_bytes = Base64::decode_vec(&mdl).expect("should decode");
+        let mdoc: IssuerSigned = cbor::from_slice(&mdoc_bytes).expect("should deserialize");
+        // println!("{:?}", mdoc);
 
-        // let slice = include_bytes!("../data/mso_mdoc.cbor");
-        // let value: Value = ciborium::from_reader(Cursor::new(&slice)).unwrap();
+        let mso_bytes = mdoc.issuer_auth.0.payload.expect("should have payload");
+        let mso: MobileSecurityObject = cbor::from_slice(&mso_bytes).expect("should deserialize");
+        // println!("{:?}", mso);
 
-        // 1. Pass in CredentialConfiguration + Dataset
+        assert_eq!(mso.digest_algorithm, DigestAlgorithm::Sha256);
+        assert_eq!(mso.device_key_info.device_key.kty, KeyType::Okp);
     }
 }

@@ -193,9 +193,7 @@ impl Context {
             FormatIdentifier::JwtVcJson(w3c) => {
                 self.jwt_vc_json(provider, &request, &w3c.credential_definition, dataset).await?
             }
-            FormatIdentifier::IsoMdl(mdl) => {
-                self.mso_mdoc(provider, &request, &mdl.doctype, dataset).await?
-            }
+            FormatIdentifier::IsoMdl(_) => self.mso_mdoc(provider, &request, dataset).await?,
             _ => todo!(),
         };
 
@@ -257,13 +255,16 @@ impl Context {
     // TODO: remove lint suppression when implemented.
     #[allow(clippy::unused_async)]
     async fn mso_mdoc(
-        &self, _provider: &impl Provider, _request: &CredentialRequest, _doc_type: &str,
-        _dataset: Dataset,
+        &self, provider: &impl Provider, request: &CredentialRequest, dataset: Dataset,
     ) -> Result<CredentialResponseType> {
-        //
+        let signer = SecOps::signer(provider, &request.credential_issuer)
+            .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
 
-        // Ok(CredentialResponseType::Credential(Kind::String(jwt)))
-        todo!()
+        let mdl = vercre_iso_mdl::to_credential(dataset.claims, signer)
+            .await
+            .map_err(|e| Error::ServerError(format!("issue generating mDL credential: {e}")))?;
+
+        Ok(CredentialResponseType::Credential(Kind::String(mdl)))
     }
 
     // Generate a W3C Verifiable Credential.
