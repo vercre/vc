@@ -59,17 +59,17 @@ async fn sample_credential() -> Credential {
             Kind::String("https://www.w3.org/2018/credentials/v1".into()),
             Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()),
         ],
-        type_: vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()],
+        type_: Quota::Many(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
         issuer: Kind::String("https://example.com/issuers/14".into()),
-        id: "https://example.com/credentials/3732".into(),
-        issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
+        id: Some("https://example.com/credentials/3732".into()),
+        valid_from: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
         credential_subject: Quota::One(CredentialSubject {
             id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
             claims: json!({"employeeId": "1234567890"})
                 .as_object()
                 .map_or_else(Map::default, Clone::clone),
         }),
-        expiration_date: Some(Utc.with_ymd_and_hms(2033, 12, 20, 23, 21, 55).unwrap()),
+        valid_until: Some(Utc.with_ymd_and_hms(2033, 12, 20, 23, 21, 55).unwrap()),
 
         ..VerifiableCredential::default()
     };
@@ -80,12 +80,11 @@ async fn sample_credential() -> Credential {
     let payload = Payload::Vc(vc.clone());
     let jwt = proof::create(Format::JwtVcJson, payload, signer).await.expect("should encode");
 
-    let config = vercre_test_utils::sample::credential_configuration();
     Credential {
         issuer: "https://vercre.io".into(),
-        id: vc.id.clone(),
-        metadata: config,
+        id: vc.id.clone().expect("should have id"),
         vc: vc.clone(),
+        display: None,
         issued: jwt,
         logo: None,
     }

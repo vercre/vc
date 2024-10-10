@@ -33,9 +33,9 @@ export interface CredentialDetail {
 	/** Display */
 	display: CredentialDisplay;
 	/** Issuance date */
-	issuance_date: string;
+	valid_from: string;
 	/** Expiry */
-	expiration_date?: string;
+	valid_until?: string;
 	/** Description */
 	description?: string;
 	/** Claims */

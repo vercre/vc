@@ -178,7 +178,7 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
         }
 
         // check VC is valid (hasn't expired, been revoked, etc)
-        if vc.expiration_date.is_some_and(|exp| exp < chrono::Utc::now()) {
+        if vc.valid_until.is_some_and(|exp| exp < chrono::Utc::now()) {
             return Err(Error::InvalidRequest("credential has expired".into()));
         }
 
