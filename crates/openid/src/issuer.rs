@@ -71,26 +71,9 @@ pub trait Subject: Send + Sync {
     ) -> impl Future<Output = provider::Result<Dataset>> + Send;
 }
 
-/// Supported Holder authentication credential types.
-pub enum Credentials {
-    /// Username and password.
-    Password {
-        /// The username.
-        username: String,
-
-        /// The password.
-        password: String,
-    },
-    //
-    // /// A Verifiable Credential.
-    // VerifiableCredential(VerifiableCredential),
-
-    // /// A JWT.
-    // Jwt(String),
-}
-
 /// The user information returned by the Subject trait.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(default)]
 pub struct Dataset {
     /// The credential subject populated for the user.
     pub claims: Map<String, Value>,
@@ -868,11 +851,11 @@ impl PartialEq for ProfileW3c {
 #[derive(Clone, Default, Debug, Deserialize, Serialize, Eq)]
 pub struct ProfileIsoMdl {
     /// The Credential type, as defined in [ISO.18013-5].
-    doctype: String,
+    pub doctype: String,
 
     /// A list of claims to include in the issued credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    claims: Option<HashMap<String, Claim>>,
+    pub claims: Option<HashMap<String, Claim>>,
 }
 
 impl PartialEq for ProfileIsoMdl {
@@ -890,11 +873,11 @@ pub struct ProfileSdJwt {
     /// The Verifiable Credential type. The `vct` value MUST be a
     /// case-sensitive String or URI serving as an identifier for
     /// the type of the SD-JWT VC.
-    vct: String,
+    pub vct: String,
 
     /// A list of claims to include in the issued credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    claims: Option<HashMap<String, Claim>>,
+    pub claims: Option<HashMap<String, Claim>>,
 }
 
 impl PartialEq for ProfileSdJwt {

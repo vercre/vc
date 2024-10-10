@@ -1,6 +1,7 @@
 [package]
-name = "vercre-issuer"
-description = "OpenID for Verifiable Credential Issuance"
+name = "vercre-iso-mdl"
+description = "Primary Verifiable Credential building blocks, including dependencies."
+license = "MIT OR Apache-2.0"
 readme = "README.md"
 authors.workspace = true
 categories.workspace = true
@@ -8,7 +9,6 @@ edition.workspace = true
 exclude.workspace = true
 homepage.workspace = true
 keywords.workspace = true
-license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 version.workspace = true
@@ -16,32 +16,21 @@ version.workspace = true
 [lib]
 # crate-type = ["cdylib", "rlib"]
 
-# [[bench]]
-# bench = true
-# name = "bench"
-# path = "benches/bench.rs"
-
 [lints]
 workspace = true
 
 [dependencies]
+anyhow.workspace = true
 base64ct.workspace = true
-chrono.workspace = true
+ciborium = "0.2.2"
+coset = "0.3.8"
+rand = { version = "0.8.5", features = ["getrandom"] }
 serde.workspace = true
-serde_json.workspace = true
 sha2 = "0.10.8"
-tracing.workspace = true
-vercre-core.workspace = true
 vercre-datasec.workspace = true
-vercre-did.workspace = true
 vercre-openid.workspace = true
-vercre-status.workspace = true
-vercre-w3c-vc.workspace = true
 
-[dev-dependencies]
-assert_let_bind.workspace = true
-async-std = { version = "1.13.0", features = ["attributes"] }
-insta.workspace = true
-rstest = "0.23.0"
+# [dev-dependencies]
+serde_json.workspace = true
 tokio.workspace = true
 vercre-test-utils.workspace = true

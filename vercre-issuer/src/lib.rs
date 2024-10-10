@@ -109,8 +109,8 @@ pub mod provider {
     pub use vercre_datasec::{Algorithm, Decryptor, Encryptor, SecOps, Signer};
     pub use vercre_did::{DidResolver, Document};
     pub use vercre_openid::issuer::{
-        ClaimDefinition, Client, Credentials, Dataset, GrantType, Issuer, Metadata, Provider,
-        Result, Server, StateStore, Subject,
+        ClaimDefinition, Client, Dataset, GrantType, Issuer, Metadata, Provider, Result, Server,
+        StateStore, Subject,
     };
     pub use vercre_status::issuer::Status;
 }

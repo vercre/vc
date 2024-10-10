@@ -171,15 +171,19 @@ impl DidResolver for Provider {
 }
 
 impl Signer for Provider {
+    async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
+        HolderKeystore::try_sign(msg)
+    }
+
+    async fn public_key(&self) -> Result<Vec<u8>> {
+        HolderKeystore::public_key()
+    }
+
     fn algorithm(&self) -> Algorithm {
         HolderKeystore::algorithm()
     }
 
     fn verification_method(&self) -> String {
         HolderKeystore::verification_method()
-    }
-
-    async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
-        HolderKeystore::try_sign(msg)
     }
 }

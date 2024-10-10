@@ -5,6 +5,7 @@
 //! This crate provides common utilities for the Vercre project and is not
 //! intended to be used directly.
 
+pub mod cose;
 pub mod jose;
 
 use std::future::{Future, IntoFuture};
@@ -47,13 +48,6 @@ pub trait SecOps: Send + Sync {
 /// Signer is used by implementers to provide signing functionality for
 /// Verifiable Credential issuance and Verifiable Presentation submissions.
 pub trait Signer: Send + Sync {
-    /// Algorithm returns the algorithm used by the signer.
-    fn algorithm(&self) -> Algorithm;
-
-    /// The verification method the verifier should use to verify the signer's
-    /// signature. This is typically a DID URL + # + verification key ID.
-    fn verification_method(&self) -> String;
-
     /// Sign is a convenience method for infallible Signer implementations.
     fn sign(&self, msg: &[u8]) -> impl Future<Output = Vec<u8>> + Send {
         let v = async { self.try_sign(msg).await.expect("should sign") };
@@ -62,6 +56,17 @@ pub trait Signer: Send + Sync {
 
     /// `TrySign` is the fallible version of Sign.
     fn try_sign(&self, msg: &[u8]) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
+
+    /// The public key of the key pair used in signing. The possibility of key
+    /// rotation mean this key should only be referenced at the point of signing.
+    fn public_key(&self) -> impl Future<Output = anyhow::Result<Vec<u8>>> + Send;
+
+    /// Algorithm returns the algorithm used by the signer.
+    fn algorithm(&self) -> Algorithm;
+
+    /// The verification method the verifier should use to verify the signer's
+    /// signature. This is typically a DID URL + # + verification key ID.
+    fn verification_method(&self) -> String;
 }
 
 /// Encryptor is used by implementers to provide encryption functionality for
