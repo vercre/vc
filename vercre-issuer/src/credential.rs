@@ -253,13 +253,13 @@ impl Context {
     //
     // Base64url-encoded representation of the CBOR-encoded IssuerSigned structure,
     // as defined in [ISO.18013-5](https://www.iso.org/standard/69084.html).
+    #[allow(clippy::unused_async)]
     async fn mso_mdoc(
         &self, _provider: &impl Provider, _request: &CredentialRequest, _doc_type: &str,
         _dataset: Dataset,
     ) -> Result<CredentialResponseType> {
         //
 
-        
         // Ok(CredentialResponseType::Credential(Kind::String(jwt)))
         todo!()
     }

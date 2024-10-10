@@ -5,6 +5,7 @@
 //! This crate provides common utilities for the Vercre project and is not
 //! intended to be used directly.
 
+pub mod cose;
 pub mod jose;
 
 use std::future::{Future, IntoFuture};

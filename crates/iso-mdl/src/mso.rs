@@ -12,8 +12,8 @@ use ciborium::Value;
 use coset::{AsCborValue, CoseSign1};
 use rand::Rng;
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
+use vercre_datasec::cose::{CoseKey, Curve};
 
-use crate::cose::{CoseKey, OkpCurve};
 use crate::mdoc::NameSpace;
 
 /// `IssuerAuth` is comprised of an MSO encapsulated and signed by an untagged
@@ -134,7 +134,7 @@ impl DeviceKeyInfo {
     pub const fn new() -> Self {
         Self {
             device_key: CoseKey::Okp {
-                crv: OkpCurve::Ed25519,
+                crv: Curve::Ed25519,
                 x: Vec::new(),
             },
             key_authorizations: None,

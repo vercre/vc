@@ -1,21 +1,34 @@
+//! # CBOR
+//!
+//! This module provides CBOR helper functions and types.
+
 use std::io::Cursor;
 use std::ops::Deref;
 
 use anyhow::anyhow;
 use ciborium::Value;
 use coset::CoseError;
-use serde::de::{self, DeserializeOwned};
-use serde::{ser, Deserialize, Serialize};
+use serde::de::{self, DeserializeOwned, Deserializer};
+use serde::ser::Serializer;
+use serde::{Deserialize, Serialize};
 
+/// Serialize a value to a CBOR byte vector.
+///
+/// # Errors
+/// TODO: Document errors
 pub fn to_vec<T>(value: &T) -> anyhow::Result<Vec<u8>>
 where
-    T: serde::Serialize,
+    T: Serialize,
 {
     let mut buf = Vec::new();
     ciborium::into_writer(value, &mut buf)?;
     Ok(buf)
 }
 
+/// Deserialize a value from a CBOR byte slice.
+///
+/// # Errors
+/// TODO: Document errors
 pub fn from_slice<T>(slice: &[u8]) -> anyhow::Result<T>
 where
     T: DeserializeOwned,
@@ -38,6 +51,10 @@ impl<T> Deref for Tag24<T> {
 }
 
 impl<T: Serialize> Tag24<T> {
+    /// Serialize the inner value to a CBOR byte vector.
+    ///
+    /// # Errors
+    /// TODO: Document errors
     pub fn to_vec(&self) -> anyhow::Result<Vec<u8>> {
         to_vec(&self.0)
     }
@@ -61,7 +78,7 @@ impl<T: DeserializeOwned> TryFrom<Value> for Tag24<T> {
 }
 
 impl<T: Serialize> Serialize for Tag24<T> {
-    fn serialize<S: ser::Serializer>(&self, s: S) -> anyhow::Result<S::Ok, S::Error> {
+    fn serialize<S: Serializer>(&self, s: S) -> anyhow::Result<S::Ok, S::Error> {
         Value::Tag(24, Box::new(Value::Bytes(to_vec(&self.0).unwrap()))).serialize(s)
     }
 }
@@ -69,7 +86,7 @@ impl<T: Serialize> Serialize for Tag24<T> {
 impl<'de, T: DeserializeOwned> Deserialize<'de> for Tag24<T> {
     fn deserialize<D>(deserializer: D) -> anyhow::Result<Self, D::Error>
     where
-        D: de::Deserializer<'de>,
+        D: Deserializer<'de>,
     {
         let value = Value::deserialize(deserializer)?;
         value.try_into().map_err(de::Error::custom)

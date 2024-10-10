@@ -14,9 +14,9 @@
 use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
+use vercre_datasec::cose::{cbor, Tag24};
 
-use crate::cbor::Tag24;
-use crate::{cbor, mso};
+use crate::mso;
 
 pub type NameSpace = String;
 
