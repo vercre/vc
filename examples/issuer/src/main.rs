@@ -343,6 +343,8 @@ async fn deferred_credential(
 ) -> AxResult<DeferredCredentialResponse> {
     req.credential_issuer = format!("http://{host}");
     req.access_token = auth.0.token().to_string();
+
+    #[allow(clippy::large_futures)]
     vercre_issuer::deferred(provider.clone(), req).await.into()
 }
 

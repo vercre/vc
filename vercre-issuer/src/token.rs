@@ -352,7 +352,7 @@ mod tests {
     use serde_json::json;
     use vercre_openid::issuer::{
         AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization,
-        CredentialDefinition, FormatIdentifier, ProfileW3c,
+        CredentialDefinition, Format, ProfileW3c,
     };
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
@@ -513,7 +513,7 @@ mod tests {
                 items: vec![AuthorizedItem {
                     item: ItemType::AuthorizationDetail(AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
-                        credential: CredentialAuthorization::Format(FormatIdentifier::JwtVcJson(
+                        credential: CredentialAuthorization::Format(Format::JwtVcJson(
                             ProfileW3c {
                                 credential_definition: CredentialDefinition {
                                     type_: Some(vec![

@@ -7,7 +7,7 @@ use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::issuance::{AuthorizeRequest, CredentialsRequest, Initiator, SaveRequest};
 use vercre_holder::provider::{CredentialStorer, Issuer, MetadataRequest};
 use vercre_holder::{
-    AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization, FormatIdentifier,
+    AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization, Format,
 };
 use vercre_issuer::ProfileW3c;
 use vercre_test_utils::issuer::{CLIENT_ID, CREDENTIAL_ISSUER, REDIRECT_URI};
@@ -40,7 +40,7 @@ async fn wallet_format() {
         .get("EmployeeID_JWT")
         .expect("should have credential configuration");
     let credential_def = match &credential_config.format {
-        FormatIdentifier::JwtVcJson(def) => def.credential_definition.clone(),
+        Format::JwtVcJson(def) => def.credential_definition.clone(),
         _ => panic!("unexpected format"),
     };
     assert_snapshot!("credential_def", credential_def, {
@@ -58,7 +58,7 @@ async fn wallet_format() {
         redirect_uri: Some(REDIRECT_URI.into()), // Must match client registration.
         authorization_details: Some(vec![AuthorizationDetail {
             type_: AuthorizationDetailType::OpenIdCredential,
-            credential: CredentialAuthorization::Format(FormatIdentifier::JwtVcJson(ProfileW3c {
+            credential: CredentialAuthorization::Format(Format::JwtVcJson(ProfileW3c {
                 credential_definition: credential_def,
             })),
             locations: None,

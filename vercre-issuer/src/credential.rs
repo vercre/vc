@@ -17,9 +17,8 @@ use vercre_datasec::jose::jws::{self, KeyType, Type};
 use vercre_datasec::{SecOps, Signer};
 use vercre_openid::issuer::{
     CredentialConfiguration, CredentialDefinition, CredentialDisplay, CredentialIssuance,
-    CredentialRequest, CredentialResponse, CredentialResponseType, Dataset, FormatIdentifier,
-    Issuer, Metadata, MultipleProofs, Proof, ProofClaims, Provider, SingleProof, StateStore,
-    Subject,
+    CredentialRequest, CredentialResponse, CredentialResponseType, Dataset, Format, Issuer,
+    Metadata, MultipleProofs, Proof, ProofClaims, Provider, SingleProof, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_status::issuer::Status;
@@ -193,16 +192,16 @@ impl Context {
 
         // determine credential format
         let response = match &self.configuration.format {
-            FormatIdentifier::JwtVcJson(w3c) => {
+            Format::JwtVcJson(w3c) => {
                 let vc = self.w3c_vc(provider, &w3c.credential_definition, dataset).await?;
                 self.jwt_vc_json(vc, signer).await?
             }
-            FormatIdentifier::IsoMdl(_) => self.mso_mdoc(dataset, signer).await?,
+            Format::IsoMdl(_) => self.mso_mdoc(dataset, signer).await?,
 
             // TODO: remaining credential formats
-            FormatIdentifier::JwtVcJsonLd(_) => todo!(),
-            FormatIdentifier::LdpVc(_) => todo!(),
-            FormatIdentifier::VcSdJwt(_) => todo!(),
+            Format::JwtVcJsonLd(_) => todo!(),
+            Format::LdpVc(_) => todo!(),
+            Format::VcSdJwt(_) => todo!(),
         };
 
         // update token state with new `c_nonce`
@@ -372,18 +371,16 @@ impl Context {
         // narrow of claimset from format/credential_definition
         if let CredentialIssuance::Format(fmt) = &request.credential {
             let claim_ids = match &fmt {
-                FormatIdentifier::JwtVcJson(w3c)
-                | FormatIdentifier::JwtVcJsonLd(w3c)
-                | FormatIdentifier::LdpVc(w3c) => w3c
+                Format::JwtVcJson(w3c) | Format::JwtVcJsonLd(w3c) | Format::LdpVc(w3c) => w3c
                     .credential_definition
                     .credential_subject
                     .as_ref()
                     .map(|subj| subj.keys().cloned().collect::<Vec<String>>()),
-                FormatIdentifier::IsoMdl(mdl) => mdl
+                Format::IsoMdl(mdl) => mdl
                     .claims
                     .as_ref()
                     .map(|claimset| claimset.keys().cloned().collect::<Vec<String>>()),
-                FormatIdentifier::VcSdJwt(sd_jwt) => sd_jwt
+                Format::VcSdJwt(sd_jwt) => sd_jwt
                     .claims
                     .as_ref()
                     .map(|claimset| claimset.keys().cloned().collect::<Vec<String>>()),
