@@ -109,8 +109,6 @@ pub enum KeyType {
     Oct,
 }
 
-
-
 /// Cryptographic curve type.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, Eq, PartialEq)]
 pub enum Curve {

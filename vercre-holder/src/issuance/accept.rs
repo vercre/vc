@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_issuer::{
     AuthorizationDetail, Claim, CredentialAuthorization, CredentialConfiguration,
-    CredentialDefinition, FormatIdentifier, ProfileClaims,
+    CredentialDefinition, Format, ProfileClaims,
 };
 
 use super::{Issuance, Status};
@@ -127,14 +127,14 @@ fn narrow_scope(
                 };
 
                 let profile = match &credential_configuration.format {
-                    FormatIdentifier::JwtVcJson(_)
-                    | FormatIdentifier::JwtVcJsonLd(_)
-                    | FormatIdentifier::LdpVc(_) => ProfileClaims::W3c(CredentialDefinition {
-                        credential_subject: Some(claims.clone()),
-                        ..CredentialDefinition::default()
-                    }),
-                    FormatIdentifier::IsoMdl(_) => ProfileClaims::IsoMdl(claims.clone()),
-                    FormatIdentifier::VcSdJwt(_) => ProfileClaims::SdJwt(claims.clone()),
+                    Format::JwtVcJson(_) | Format::JwtVcJsonLd(_) | Format::LdpVc(_) => {
+                        ProfileClaims::W3c(CredentialDefinition {
+                            credential_subject: Some(claims.clone()),
+                            ..CredentialDefinition::default()
+                        })
+                    }
+                    Format::IsoMdl(_) => ProfileClaims::IsoMdl(claims.clone()),
+                    Format::VcSdJwt(_) => ProfileClaims::SdJwt(claims.clone()),
                 };
                 Some(profile)
             }

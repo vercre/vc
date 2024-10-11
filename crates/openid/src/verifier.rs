@@ -624,7 +624,7 @@ pub struct Verifier {
     /// }
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub vp_formats: Option<HashMap<FormatIdentifier, VpFormat>>,
+    pub vp_formats: Option<HashMap<Format, VpFormat>>,
 }
 
 /// The `OpenID4VCI` specification defines commonly used [Credential Format
@@ -633,7 +633,7 @@ pub struct Verifier {
 ///
 /// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Hash)]
-pub enum FormatIdentifier {
+pub enum Format {
     /// W3C Verifiable Credential.
     #[serde(rename = "jwt_vp_json")]
     JwtVpJson,

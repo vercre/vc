@@ -111,7 +111,7 @@ pub struct LangValue {
     pub value: String,
 
     /// Language-tag as defined in [rfc5646](https://www.rfc-editor.org/rfc/rfc5646)
-    /// 
+    ///
     /// A missing language tag implies that the string is in the default language.
     #[serde(rename = "@language")]
     #[serde(skip_serializing_if = "Option::is_none")]

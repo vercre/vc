@@ -17,8 +17,8 @@ use tracing::instrument;
 use vercre_core::pkce;
 use vercre_issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    CredentialAuthorization, CredentialDefinition, FormatIdentifier, GrantType, ProfileClaims,
-    RequestObject, TokenGrantType, TokenRequest,
+    CredentialAuthorization, CredentialDefinition, Format, GrantType, ProfileClaims, RequestObject,
+    TokenGrantType, TokenRequest,
 };
 
 use super::{Issuance, Status};
@@ -319,14 +319,14 @@ fn authorization_details(
         };
         let claims: Option<ProfileClaims> =
             credential_config.format.claims().map(|claims| match &credential_config.format {
-                FormatIdentifier::JwtVcJson(w3c)
-                | FormatIdentifier::LdpVc(w3c)
-                | FormatIdentifier::JwtVcJsonLd(w3c) => ProfileClaims::W3c(CredentialDefinition {
-                    credential_subject: w3c.credential_definition.credential_subject.clone(),
-                    ..Default::default()
-                }),
-                FormatIdentifier::IsoMdl(_) => ProfileClaims::IsoMdl(claims),
-                FormatIdentifier::VcSdJwt(_) => ProfileClaims::SdJwt(claims),
+                Format::JwtVcJson(w3c) | Format::LdpVc(w3c) | Format::JwtVcJsonLd(w3c) => {
+                    ProfileClaims::W3c(CredentialDefinition {
+                        credential_subject: w3c.credential_definition.credential_subject.clone(),
+                        ..Default::default()
+                    })
+                }
+                Format::IsoMdl(_) => ProfileClaims::IsoMdl(claims),
+                Format::VcSdJwt(_) => ProfileClaims::SdJwt(claims),
             });
         auth_details.push(AuthorizationDetail {
             type_: AuthorizationDetailType::OpenIdCredential,

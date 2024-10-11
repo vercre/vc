@@ -14,17 +14,17 @@ use chrono::Utc;
 use tracing::instrument;
 use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
-use vercre_datasec::SecOps;
+use vercre_datasec::{SecOps, Signer};
 use vercre_openid::issuer::{
-    CredentialDefinition, CredentialDisplay, CredentialIssuance, CredentialRequest,
-    CredentialResponse, CredentialResponseType, Dataset, FormatIdentifier, Issuer, Metadata,
-    MultipleProofs, Proof, ProofClaims, Provider, SingleProof, StateStore, Subject,
+    CredentialConfiguration, CredentialDefinition, CredentialDisplay, CredentialIssuance,
+    CredentialRequest, CredentialResponse, CredentialResponseType, Dataset, Format, Issuer,
+    Metadata, MultipleProofs, Proof, ProofClaims, Provider, SingleProof, StateStore, Subject,
 };
 use vercre_openid::{Error, Result};
 use vercre_status::issuer::Status;
 use vercre_w3c_vc::model::types::{LangString, LangValue};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
-use vercre_w3c_vc::proof::{self, Payload};
+use vercre_w3c_vc::proof::{self, Payload, W3cFormat};
 use vercre_w3c_vc::verify_key;
 
 use crate::state::{Authorized, Deferrance, Expire, Stage, State};
@@ -46,13 +46,22 @@ pub async fn credential(
         .await
         .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
 
-    // save data accessed more than once for later use
+    // create a request context with data accessed more than once
     let mut ctx = Context {
         state,
         issuer,
         ..Context::default()
     };
+
+    // ...authorized credential
     ctx.authorized = ctx.authorized(&request)?;
+
+    // ...credential configuration
+    let config_id = &ctx.authorized.credential_configuration_id;
+    let Some(config) = ctx.issuer.credential_configurations_supported.get(config_id) else {
+        return Err(Error::ServerError("credential configuration unable to be found".into()));
+    };
+    ctx.configuration = config.clone();
 
     ctx.verify(&provider, &request).await?;
     ctx.process(&provider, request).await
@@ -63,6 +72,7 @@ struct Context {
     state: State,
     issuer: Issuer,
     authorized: Authorized,
+    configuration: CredentialConfiguration,
     holder_did: String,
 }
 
@@ -92,13 +102,7 @@ impl Context {
         }
 
         // TODO: refactor into separate function.
-        let config_id = &self.authorized.credential_configuration_id;
-        let config =
-            self.issuer.credential_configurations_supported.get(config_id).ok_or_else(|| {
-                Error::InvalidCredentialRequest("unsupported credential requested".into())
-            })?;
-
-        if let Some(supported_types) = &config.proof_types_supported {
+        if let Some(supported_types) = &self.configuration.proof_types_supported {
             let Some(proof) = &request.proof else {
                 return Err(self.invalid_proof(provider, "proof not set").await?);
             };
@@ -183,18 +187,21 @@ impl Context {
     async fn issue_response(
         &self, provider: &impl Provider, request: CredentialRequest, dataset: Dataset,
     ) -> Result<CredentialResponse> {
-        let config_id = &self.authorized.credential_configuration_id;
-        let config =
-            self.issuer.credential_configurations_supported.get(config_id).ok_or_else(|| {
-                Error::InvalidCredentialRequest("unsupported credential requested".into())
-            })?;
+        let signer = SecOps::signer(provider, &request.credential_issuer)
+            .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
 
-        let response = match &config.format {
-            FormatIdentifier::JwtVcJson(w3c) => {
-                self.jwt_vc_json(provider, &request, &w3c.credential_definition, dataset).await?
+        // determine credential format
+        let response = match &self.configuration.format {
+            Format::JwtVcJson(w3c) => {
+                let vc = self.w3c_vc(provider, &w3c.credential_definition, dataset).await?;
+                self.jwt_vc_json(vc, signer).await?
             }
-            FormatIdentifier::IsoMdl(_) => self.mso_mdoc(provider, &request, dataset).await?,
-            _ => todo!(),
+            Format::IsoMdl(_) => self.mso_mdoc(dataset, signer).await?,
+
+            // TODO: remaining credential formats
+            Format::JwtVcJsonLd(_) => todo!(),
+            Format::LdpVc(_) => todo!(),
+            Format::VcSdJwt(_) => todo!(),
         };
 
         // update token state with new `c_nonce`
@@ -229,48 +236,13 @@ impl Context {
         })
     }
 
-    // Generate a `jwt_vc_json` format credential .
-    async fn jwt_vc_json(
-        &self, provider: &impl Provider, request: &CredentialRequest,
-        credential_definition: &CredentialDefinition, dataset: Dataset,
-    ) -> Result<CredentialResponseType> {
-        // generate vc
-        let vc = self.w3c_vc(provider, request, credential_definition, dataset).await?;
-
-        // sign and return JWT
-        let signer = SecOps::signer(provider, &request.credential_issuer)
-            .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
-        let jwt =
-            vercre_w3c_vc::proof::create(proof::Format::JwtVcJson, Payload::Vc(vc.clone()), signer)
-                .await
-                .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
-
-        Ok(CredentialResponseType::Credential(Kind::String(jwt)))
-    }
-
-    // Generate a `mso_mdoc` format credential.
-    //
-    // Base64url-encoded representation of the CBOR-encoded IssuerSigned structure,
-    // as defined in [ISO.18013-5](https://www.iso.org/standard/69084.html).
-    // TODO: remove lint suppression when implemented.
-    #[allow(clippy::unused_async)]
-    async fn mso_mdoc(
-        &self, provider: &impl Provider, request: &CredentialRequest, dataset: Dataset,
-    ) -> Result<CredentialResponseType> {
-        let signer = SecOps::signer(provider, &request.credential_issuer)
-            .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
-
-        let mdl = vercre_iso_mdl::to_credential(dataset.claims, signer)
-            .await
-            .map_err(|e| Error::ServerError(format!("issue generating mDL credential: {e}")))?;
-
-        Ok(CredentialResponseType::Credential(Kind::String(mdl)))
-    }
-
     // Generate a W3C Verifiable Credential.
+    // async fn w3c_vc(&self, issuer: String, type_: String,dataset: Map<String, Value>,
+    //     status: Option<Quota<CredentialStatus>>) -> Result<VerifiableCredential> {
+
     async fn w3c_vc(
-        &self, provider: &impl Provider, request: &CredentialRequest,
-        credential_definition: &CredentialDefinition, dataset: Dataset,
+        &self, provider: &impl Provider, credential_definition: &CredentialDefinition,
+        dataset: Dataset,
     ) -> Result<VerifiableCredential> {
         // credential type
         let Some(types) = &credential_definition.type_ else {
@@ -288,14 +260,9 @@ impl Context {
             .await
             .map_err(|e| Error::ServerError(format!("issue populating credential status: {e}")))?;
 
-        let credential_issuer = &request.credential_issuer.clone();
-
-        // map display names and descriptions to w3c format
-        let config_id = &self.authorized.credential_configuration_id;
-        let Some(config) = self.issuer.credential_configurations_supported.get(config_id) else {
-            return Err(Error::ServerError("credential configuration unable to be found".into()));
-        };
-        let (name, description) = config.display.as_ref().map_or((None, None), create_names);
+        let credential_issuer = &self.issuer.credential_issuer;
+        let (name, description) =
+            self.configuration.display.as_ref().map_or((None, None), create_names);
 
         VerifiableCredential::builder()
             .add_context(Kind::String(format!("{credential_issuer}/credentials/v1")))
@@ -312,6 +279,28 @@ impl Context {
             .status(status)
             .build()
             .map_err(|e| Error::ServerError(format!("issue building VC: {e}")))
+    }
+
+    // Generate a `jwt_vc_json` format credential .
+    async fn jwt_vc_json(
+        &self, vc: VerifiableCredential, signer: impl Signer,
+    ) -> Result<CredentialResponseType> {
+        // sign and return JWT
+        let jwt =
+            proof::create(W3cFormat::JwtVcJson, Payload::Vc(vc.clone()), signer).await.map_err(
+                |e| Error::ServerError(format!("issue generating `jwt_vc_json` credential: {e}")),
+            )?;
+        Ok(CredentialResponseType::Credential(Kind::String(jwt)))
+    }
+
+    // Generate a `mso_mdoc` format credential.
+    async fn mso_mdoc(
+        &self, dataset: Dataset, signer: impl Signer,
+    ) -> Result<CredentialResponseType> {
+        let mdl = vercre_iso_mdl::to_credential(dataset.claims, signer).await.map_err(|e| {
+            Error::ServerError(format!("issue generating `mso_mdoc` credential: {e}"))
+        })?;
+        Ok(CredentialResponseType::Credential(Kind::String(mdl)))
     }
 
     // Defer issuance of the requested credential.
@@ -382,18 +371,16 @@ impl Context {
         // narrow of claimset from format/credential_definition
         if let CredentialIssuance::Format(fmt) = &request.credential {
             let claim_ids = match &fmt {
-                FormatIdentifier::JwtVcJson(w3c)
-                | FormatIdentifier::JwtVcJsonLd(w3c)
-                | FormatIdentifier::LdpVc(w3c) => w3c
+                Format::JwtVcJson(w3c) | Format::JwtVcJsonLd(w3c) | Format::LdpVc(w3c) => w3c
                     .credential_definition
                     .credential_subject
                     .as_ref()
                     .map(|subj| subj.keys().cloned().collect::<Vec<String>>()),
-                FormatIdentifier::IsoMdl(mdl) => mdl
+                Format::IsoMdl(mdl) => mdl
                     .claims
                     .as_ref()
                     .map(|claimset| claimset.keys().cloned().collect::<Vec<String>>()),
-                FormatIdentifier::VcSdJwt(sd_jwt) => sd_jwt
+                Format::VcSdJwt(sd_jwt) => sd_jwt
                     .claims
                     .as_ref()
                     .map(|claimset| claimset.keys().cloned().collect::<Vec<String>>()),
