@@ -4,7 +4,7 @@
 mod provider;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
-use vercre_holder::issuance::{AuthorizeRequest, CredentialsRequest, Initiator};
+use vercre_holder::issuance::{AuthorizeRequest, CredentialsRequest, Initiator, SaveRequest};
 use vercre_holder::provider::{CredentialStorer, Issuer, MetadataRequest};
 use vercre_test_utils::issuer::{CLIENT_ID, CREDENTIAL_ISSUER, REDIRECT_URI};
 
@@ -64,6 +64,14 @@ async fn wallet_scope() {
     vercre_holder::issuance::credentials(provider.clone(), &cred_req)
         .await
         .expect("should get credentials");
+    vercre_holder::issuance::save(
+        provider.clone(),
+        &SaveRequest {
+            issuance_id: auth_credentials.issuance_id.clone(),
+        },
+    )
+    .await
+    .expect("should save credentials");
 
     let credentials =
         CredentialStorer::find(&provider, None).await.expect("should retrieve all credentials");
@@ -71,7 +79,7 @@ async fn wallet_scope() {
     assert_eq!(credentials.len(), 1);
 
     assert_snapshot!("credentials", credentials, {
-        "[].vc.issuanceDate" => "[issuanceDate]",
+        "[].vc.validFrom" => "[validFrom]",
         "[].vc" => insta::sorted_redaction(),
         "[].vc.credentialSubject" => insta::sorted_redaction(),
         "[].metadata" => insta::sorted_redaction(),

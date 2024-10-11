@@ -15,7 +15,20 @@ pub mod proof;
 pub mod schema;
 
 pub use anyhow::anyhow;
+// use serde_json::{Map, Value};
+// use vercre_datasec::{Algorithm, Curve, KeyType, Signer};
 pub use vercre_did::{dereference, Resource};
+
+// /// Convert a Credential Dataset to a base64url-encoded, CBOR-encoded, ISO mDL
+// /// `IssuerSigned` object.
+// ///
+// /// # Errors
+// /// // TODO: add errors
+// pub async fn to_credential(
+//     dataset: Map<String, Value>, signer: impl Signer,
+// ) -> anyhow::Result<String> {
+//     todo!()
+// }
 
 // TODO: move this macro to a more appropriate location (its own crate perhaps).
 // N.B. the current dependency tree is a little complex, so this is a temporary

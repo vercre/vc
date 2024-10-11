@@ -178,7 +178,7 @@ mod tests {
         };
 
         assert_snapshot!("deferred:deferred_ok:vc", vc, {
-            ".issuanceDate" => "[issuanceDate]",
+            ".validFrom" => "[validFrom]",
             ".credentialSubject" => insta::sorted_redaction()
         });
 

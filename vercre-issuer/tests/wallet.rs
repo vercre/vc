@@ -12,7 +12,7 @@ use vercre_issuer::{
     DeferredCredentialRequest, DeferredCredentialResponse, OfferType, ProofClaims, TokenGrantType,
     TokenRequest, TokenResponse,
 };
-use vercre_openid::issuer::FormatIdentifier;
+use vercre_openid::issuer::Format;
 use vercre_openid::{Error, Result};
 use vercre_test_utils::holder;
 use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
@@ -24,7 +24,7 @@ pub const REDIRECT_URI: &str = "http://localhost:3000/callback";
 #[derive(Default)]
 pub struct Wallet {
     pub provider: issuer::Provider,
-    pub format: FormatIdentifier,
+    pub format: Format,
     pub tx_code: Option<String>,
 }
 
@@ -179,7 +179,7 @@ impl Wallet {
         };
 
         assert_snapshot!("credential", vc, {
-            ".issuanceDate" => "[issuanceDate]",
+            ".validFrom" => "[validFrom]",
             ".credentialSubject" => insta::sorted_redaction()
         });
 

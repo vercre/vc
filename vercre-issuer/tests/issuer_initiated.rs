@@ -9,7 +9,7 @@ use rstest::rstest;
 use serde_json::json;
 use utils::{provider, Issuance};
 use vercre_issuer::SendType;
-use vercre_openid::issuer::{FormatIdentifier, ProfileW3c};
+use vercre_openid::issuer::{Format, ProfileW3c};
 use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER};
 use vercre_test_utils::snapshot;
 
@@ -30,7 +30,7 @@ async fn issuance(provider: Provider, #[case] issue: Issuance) {
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": subject_id,
-        "pre-authorize": true,
+        "grant_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
         "tx_code_required": true,
         "send_type": SendType::ByVal,
     });
@@ -41,7 +41,7 @@ async fn issuance(provider: Provider, #[case] issue: Issuance) {
     let wallet = wallet::Wallet {
         provider,
         tx_code: response.tx_code,
-        format: FormatIdentifier::JwtVcJson(ProfileW3c::default()),
+        format: Format::JwtVcJson(ProfileW3c::default()),
     };
 
     wallet.issuer_initiated(response.offer_type).await.expect("should get credential");
@@ -49,8 +49,8 @@ async fn issuance(provider: Provider, #[case] issue: Issuance) {
 
 /// Credential format variants
 #[rstest]
-#[case(FormatIdentifier::JwtVcJson(ProfileW3c::default()))]
-async fn format(provider: Provider, #[case] credential_format: FormatIdentifier) {
+#[case(Format::JwtVcJson(ProfileW3c::default()))]
+async fn format(provider: Provider, #[case] credential_format: Format) {
     vercre_test_utils::init_tracer();
     snapshot!("issuer:{credential_format}");
 
@@ -58,7 +58,7 @@ async fn format(provider: Provider, #[case] credential_format: FormatIdentifier)
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": NORMAL_USER,
-        "pre-authorize": true,
+         "grant_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
         "tx_code_required": true,
         "send_type": SendType::ByVal,
     });
@@ -85,7 +85,6 @@ async fn authorization(provider: Provider) {
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": NORMAL_USER,
-        "pre-authorize": false,
         "tx_code_required": true,
         "send_type": SendType::ByVal,
     });
@@ -96,7 +95,7 @@ async fn authorization(provider: Provider) {
     let wallet = wallet::Wallet {
         provider: provider.clone(),
         tx_code: response.tx_code,
-        format: FormatIdentifier::JwtVcJson(ProfileW3c::default()),
+        format: Format::JwtVcJson(ProfileW3c::default()),
     };
 
     wallet.issuer_initiated(response.offer_type).await.expect("should get credential");
@@ -114,7 +113,7 @@ async fn offer_type(provider: Provider, #[case] send_type: SendType) {
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": NORMAL_USER,
-        "pre-authorize": true,
+        "grant_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
         "tx_code_required": true,
         "send_type": send_type,
     });
@@ -125,7 +124,7 @@ async fn offer_type(provider: Provider, #[case] send_type: SendType) {
     let wallet = wallet::Wallet {
         provider: provider.clone(),
         tx_code: response.tx_code,
-        format: FormatIdentifier::JwtVcJson(ProfileW3c::default()),
+        format: Format::JwtVcJson(ProfileW3c::default()),
     };
 
     wallet.issuer_initiated(response.offer_type).await.expect("should get credential");

@@ -6,7 +6,7 @@
 use std::ops::Deref;
 
 use serde::{Deserialize, Serialize};
-use vercre_openid::issuer::CredentialConfiguration;
+use vercre_openid::issuer::CredentialDisplay;
 use vercre_w3c_vc::model::VerifiableCredential;
 
 /// The Credential model contains information about a credential owned by the
@@ -14,7 +14,8 @@ use vercre_w3c_vc::model::VerifiableCredential;
 #[derive(Clone, Default, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Credential {
     /// Credential `id` is the credential's unique identifier
-    /// (from Verifiable Credential `id`).
+    /// (from Verifiable Credential `id` or generated if credential has no
+    /// `id`).
     pub id: String,
 
     /// The credential issuer.
@@ -22,17 +23,16 @@ pub struct Credential {
 
     /// The unpacked Verifiable Credential. Used to display VC details and for
     /// `JSONPath` Presentation Definition queries.
-    // TODO: Simplify. Make this a Value or a serialised VC or a stripped-down struct that helps
-    // with display and filtering.
     pub vc: VerifiableCredential,
-
-    /// `CredentialConfiguration` metadata
-    pub metadata: CredentialConfiguration,
 
     /// The Verifiable Credential as issued, for use in Presentation
     /// Submissions. This could be a base64-encoded JWT or 'stringified'
     /// JSON.
     pub issued: String,
+
+    /// Display information from the issuer's metadata for this credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display: Option<Vec<CredentialDisplay>>,
 
     /// A base64-encoded logo image for the credential ingested from the logo
     /// url in the display section of the metadata.

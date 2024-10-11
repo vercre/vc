@@ -4,11 +4,10 @@
 mod provider;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
-use vercre_holder::issuance::{AuthorizeRequest, CredentialsRequest, Initiator};
+use vercre_holder::issuance::{AuthorizeRequest, CredentialsRequest, Initiator, SaveRequest};
 use vercre_holder::provider::{CredentialStorer, Issuer, MetadataRequest};
 use vercre_holder::{
-    AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization, FormatIdentifier,
-    ProfileClaims,
+    AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization, Format, ProfileClaims,
 };
 use vercre_test_utils::issuer::{CLIENT_ID, CREDENTIAL_ISSUER, REDIRECT_URI};
 
@@ -40,7 +39,7 @@ async fn wallet_credential_definition() {
         .get("EmployeeID_JWT")
         .expect("should have credential configuration");
     let claims = match &credential_config.format {
-        FormatIdentifier::JwtVcJson(def) => ProfileClaims::W3c(def.credential_definition.clone()),
+        Format::JwtVcJson(def) => ProfileClaims::W3c(def.credential_definition.clone()),
         _ => panic!("unexpected format"),
     };
     assert_snapshot!("claims", claims, {
@@ -81,6 +80,14 @@ async fn wallet_credential_definition() {
     vercre_holder::issuance::credentials(provider.clone(), &cred_req)
         .await
         .expect("should get credentials");
+    vercre_holder::issuance::save(
+        provider.clone(),
+        &SaveRequest {
+            issuance_id: auth_credentials.issuance_id.clone(),
+        },
+    )
+    .await
+    .expect("should save credentials");
 
     let credentials =
         CredentialStorer::find(&provider, None).await.expect("should retrieve all credentials");
@@ -88,7 +95,7 @@ async fn wallet_credential_definition() {
     assert_eq!(credentials.len(), 1);
 
     assert_snapshot!("credentials", credentials, {
-        "[].vc.issuanceDate" => "[issuanceDate]",
+        "[].vc.validFrom" => "[validFrom]",
         "[].vc" => insta::sorted_redaction(),
         "[].vc.credentialSubject" => insta::sorted_redaction(),
         "[].metadata" => insta::sorted_redaction(),

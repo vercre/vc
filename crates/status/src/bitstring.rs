@@ -16,7 +16,7 @@ use serde_json::{Map, Value};
 use thiserror::Error;
 use vercre_datasec::Signer;
 use vercre_w3c_vc::model::{CredentialStatus, CredentialSubject, StatusPurpose, VcBuilder};
-use vercre_w3c_vc::proof::{self, Format, Payload};
+use vercre_w3c_vc::proof::{self, Payload, W3cFormat};
 
 use crate::config::ListConfig;
 use crate::log::StatusLogEntry;
@@ -221,7 +221,7 @@ pub async fn credential(
             claims,
         })
         .build()?;
-    let jwt = proof::create(Format::JwtVcJson, Payload::Vc(vc), signer).await?;
+    let jwt = proof::create(W3cFormat::JwtVcJson, Payload::Vc(vc), signer).await?;
 
     Ok(jwt)
 }

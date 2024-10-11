@@ -14,9 +14,9 @@ use futures::Future;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
-use crate::jose::jwk::{Curve, PublicKeyJwk};
+use crate::jose::jwk::PublicKeyJwk;
 pub use crate::jose::jwt::{Header, Jwt, KeyType, Type};
-use crate::{Algorithm, Signer};
+use crate::{Algorithm, Curve, Signer};
 
 /// Encode the provided header and claims and sign, returning a JWT in compact
 /// JWS form.

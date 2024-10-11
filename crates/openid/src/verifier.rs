@@ -12,7 +12,7 @@ use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
-use vercre_core::{stringify, urlencode, Kind};
+use vercre_core::{urlencode, Kind};
 pub use vercre_datasec::SecOps;
 use vercre_did::DidResolver;
 use vercre_dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
@@ -202,7 +202,6 @@ pub struct RequestObject {
     pub state: Option<String>,
 
     /// The Presentation Definition
-    #[serde(with = "stringify")]
     pub presentation_definition: Kind<PresentationDefinition>,
 
     /// The `client_id_scheme` is used to specify how the Wallet should to
@@ -223,7 +222,6 @@ pub struct RequestObject {
     pub client_id_scheme: Option<ClientIdScheme>,
 
     /// Client Metadata contains Verifier metadata values.
-    #[serde(with = "stringify")]
     pub client_metadata: Verifier,
 }
 
@@ -516,8 +514,6 @@ pub struct ResponseRequest {
     ///
     /// [OpenID4VCI]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html)
     #[serde(skip_serializing_if = "Option::is_none")]
-    // #[serde(deserialize_with = "vp_token::deserialize")]
-    #[serde(with = "stringify::option")]
     pub vp_token: Option<Vec<Kind<VerifiablePresentation>>>,
 
     /// The `presentation_submission` element as defined in
@@ -525,7 +521,6 @@ pub struct ResponseRequest {
     /// requested Verifiable Credentials and where to find them within the
     /// returned VP Token.
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "stringify::option")]
     pub presentation_submission: Option<PresentationSubmission>,
 
     /// The client state value from the Authorization Request.
@@ -629,7 +624,7 @@ pub struct Verifier {
     /// }
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub vp_formats: Option<HashMap<FormatIdentifier, VpFormat>>,
+    pub vp_formats: Option<HashMap<Format, VpFormat>>,
 }
 
 /// The `OpenID4VCI` specification defines commonly used [Credential Format
@@ -638,7 +633,7 @@ pub struct Verifier {
 ///
 /// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Hash)]
-pub enum FormatIdentifier {
+pub enum Format {
     /// W3C Verifiable Credential.
     #[serde(rename = "jwt_vp_json")]
     JwtVpJson,

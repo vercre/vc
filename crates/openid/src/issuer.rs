@@ -12,7 +12,7 @@ use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
-use vercre_core::{stringify, urlencode, Kind};
+use vercre_core::{urlencode, Kind};
 use vercre_datasec::jose::jwk::PublicKeyJwk;
 use vercre_datasec::SecOps;
 use vercre_did::DidResolver;
@@ -71,26 +71,9 @@ pub trait Subject: Send + Sync {
     ) -> impl Future<Output = provider::Result<Dataset>> + Send;
 }
 
-/// Supported Holder authentication credential types.
-pub enum Credentials {
-    /// Username and password.
-    Password {
-        /// The username.
-        username: String,
-
-        /// The password.
-        password: String,
-    },
-    //
-    // /// A Verifiable Credential.
-    // VerifiableCredential(VerifiableCredential),
-
-    // /// A JWT.
-    // Jwt(String),
-}
-
 /// The user information returned by the Subject trait.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(default)]
 pub struct Dataset {
     /// The credential subject populated for the user.
     pub claims: Map<String, Value>,
@@ -113,26 +96,18 @@ pub struct CreateOfferRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subject_id: Option<String>,
 
-    /// A list of credentials (as identified by their metadata ids) to include
-    /// in the offer to the Wallet. Each id identifies one of the keys in
-    /// the name/value pairs stored in the
-    /// `credential_configurations_supported` Credential Issuer
-    /// metadata property. The Wallet uses this string value to obtain the
-    /// respective object that contains information about the Credential
-    /// being offered. For example, this string value can be used to obtain
-    /// scope value to be used in the Authorization Request.
+    /// A list of keys of Credentials in the
+    /// `credential_configurations_supported` Credential Issuer metadata.
+    ///
+    /// The Wallet uses these string values to obtain the respective object
+    /// containing information about the Credential being offered. For example,
+    /// these string values can be used to obtain scope values to be used in
+    /// the Authorization Request.
     pub credential_configuration_ids: Vec<String>,
 
-    // TODO: add support for `authorization_details` parameter
-    // pub authorization_details: Vec<Authorized>,
-    /// Whether the Issuer should provide a pre-authorized offer or not. If not
-    /// pre-authorized, the Wallet must request authorization to fulfill the
-    /// offer.
-    /// When set to `true`, only the
-    /// `urn:ietf:params:oauth:grant-type:pre-authorized_code` Grant Type
-    /// will be set in the returned Credential Offer.
-    #[serde(rename = "pre-authorize")]
-    pub pre_authorize: bool,
+    /// The Grant Types to include in the Offer.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub grant_types: Option<Vec<GrantType>>,
 
     /// Specifies whether a Transaction Code (PIN) is required by the `token`
     /// endpoint during the Pre-Authorized Code Flow.
@@ -585,7 +560,6 @@ pub struct RequestObject {
     /// Authorization Details may used to convey the details about credentials
     /// the Wallet wants to obtain.
     #[serde(skip_serializing_if = "Option::is_none")]
-    // #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
 
     /// Credential Issuers MAY support requesting authorization to issue a
@@ -693,7 +667,7 @@ pub enum CredentialAuthorization {
     /// Identifies the credential to authorize using format-specific parameters.
     /// The requested format should resolve to a single supported credential in
     /// the `credential_configurations_supported` map in the Issuer Metadata.
-    Format(FormatIdentifier),
+    Format(Format),
 }
 
 impl Default for CredentialAuthorization {
@@ -740,7 +714,7 @@ impl PartialEq for CredentialAuthorization {
 /// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "format")]
-pub enum FormatIdentifier {
+pub enum Format {
     /// A W3C Verifiable Credential.
     ///
     /// When this format is specified, Credential Offer, Authorization Details,
@@ -792,7 +766,7 @@ pub enum FormatIdentifier {
     VcSdJwt(ProfileSdJwt),
 }
 
-impl FormatIdentifier {
+impl Format {
     /// Claims for the format profile.
     #[must_use]
     pub fn claims(&self) -> Option<HashMap<String, Claim>> {
@@ -806,13 +780,13 @@ impl FormatIdentifier {
     }
 }
 
-impl Default for FormatIdentifier {
+impl Default for Format {
     fn default() -> Self {
         Self::JwtVcJson(ProfileW3c::default())
     }
 }
 
-impl std::fmt::Display for FormatIdentifier {
+impl std::fmt::Display for Format {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::JwtVcJson(_) => write!(f, "jwt_vc_json"),
@@ -877,11 +851,11 @@ impl PartialEq for ProfileW3c {
 #[derive(Clone, Default, Debug, Deserialize, Serialize, Eq)]
 pub struct ProfileIsoMdl {
     /// The Credential type, as defined in [ISO.18013-5].
-    doctype: String,
+    pub doctype: String,
 
     /// A list of claims to include in the issued credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    claims: Option<HashMap<String, Claim>>,
+    pub claims: Option<HashMap<String, Claim>>,
 }
 
 impl PartialEq for ProfileIsoMdl {
@@ -899,11 +873,11 @@ pub struct ProfileSdJwt {
     /// The Verifiable Credential type. The `vct` value MUST be a
     /// case-sensitive String or URI serving as an identifier for
     /// the type of the SD-JWT VC.
-    vct: String,
+    pub vct: String,
 
     /// A list of claims to include in the issued credential.
     #[serde(skip_serializing_if = "Option::is_none")]
-    claims: Option<HashMap<String, Claim>>,
+    pub claims: Option<HashMap<String, Claim>>,
 }
 
 impl PartialEq for ProfileSdJwt {
@@ -994,7 +968,6 @@ pub struct TokenRequest {
     /// Authorization Details is used to convey the details about the
     /// Credentials the Wallet wants to obtain.
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "stringify::option")]
     pub authorization_details: Option<Vec<AuthorizationDetail>>,
 
     /// Client identity assertion using JWT instead of credentials to
@@ -1185,7 +1158,7 @@ pub enum CredentialIssuance {
 
     /// Defines the format and type of of the Credential to be issued.  REQUIRED
     /// when `credential_identifiers` was not returned from the Token Response.
-    Format(FormatIdentifier),
+    Format(Format),
 }
 
 impl Default for CredentialIssuance {
@@ -1536,6 +1509,14 @@ pub struct Issuer {
     /// value is a Credential object containing metadata about specific
     /// credential.
     pub credential_configurations_supported: HashMap<String, CredentialConfiguration>,
+    //
+    // // TODO: Ddo we want to support this??
+    // /// The Client ID provided by the Issuer when a Wallet is not pre-registered.
+    // /// with the Authorization Server.
+    // ///
+    // /// <https://identity.foundation/jwt-vc-issuance-profile/#using-of-public_client_id-as-a-client_id>
+    // #[serde(skip_serializing_if = "Option::is_none")]
+    // pub public_client_id: Option<String>,
 }
 
 impl Issuer {
@@ -1544,7 +1525,7 @@ impl Issuer {
     /// # Errors
     ///
     /// TODO: add error handling
-    pub fn credential_configuration_id(&self, fmt: &FormatIdentifier) -> Result<&String> {
+    pub fn credential_configuration_id(&self, fmt: &Format) -> Result<&String> {
         self.credential_configurations_supported
             .iter()
             .find(|(_, cfg)| &cfg.format == fmt)
@@ -1621,7 +1602,7 @@ pub struct CredentialConfiguration {
     ///
     /// [Credential Format Profiles]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles
     #[serde(flatten)]
-    pub format: FormatIdentifier,
+    pub format: Format,
 
     /// The `scope` value that this Credential Issuer supports for this
     /// credential. The value can be the same accross multiple
@@ -2170,12 +2151,6 @@ mod tests {
             "[].credential_definition.credentialSubject" => insta::sorted_redaction(),
         });
 
-        /*
-        let serialized = serde_urlencoded::to_string(&request).expect("should serialize to string");
-        let deserialized = serde_urlencoded::from_str::<AuthorizationRequest>(&serialized)
-            .expect("should deserialize from string");
-        */
-
         let serialized = request.to_string();
         let deserialized = AuthorizationRequest::from_str(&serialized).expect("should parse");
         assert_eq!(request, deserialized);
@@ -2193,17 +2168,15 @@ mod tests {
             code_challenge_method: oauth::CodeChallengeMethod::S256,
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                credential: CredentialAuthorization::Format(FormatIdentifier::JwtVcJson(
-                    ProfileW3c {
-                        credential_definition: CredentialDefinition {
-                            type_: Some(vec![
-                                "VerifiableCredential".into(),
-                                "EmployeeIDCredential".into(),
-                            ]),
-                            ..CredentialDefinition::default()
-                        },
+                credential: CredentialAuthorization::Format(Format::JwtVcJson(ProfileW3c {
+                    credential_definition: CredentialDefinition {
+                        type_: Some(vec![
+                            "VerifiableCredential".into(),
+                            "EmployeeIDCredential".into(),
+                        ]),
+                        ..CredentialDefinition::default()
                     },
-                )),
+                })),
 
                 ..AuthorizationDetail::default()
             }]),
@@ -2213,19 +2186,13 @@ mod tests {
             ..RequestObject::default()
         });
 
-        let serialized = request.to_string();
-
-        let string = serde_json::to_string(&request).unwrap();
-        let request: AuthorizationRequest = serde_json::from_str(&string).unwrap();
-
+        let serialized = urlencode::to_string(&request).expect("should serialize to string");
         assert_snapshot!("authorization_format", &serialized, {
             ".code" => "[code]",
         });
 
-        let serialized = urlencode::to_string(&request).expect("should serialize to string");
         let deserialized: AuthorizationRequest =
             urlencode::from_str(&serialized).expect("should deserialize from string");
-
         assert_eq!(request, deserialized);
     }
 
@@ -2288,7 +2255,7 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            credential: CredentialIssuance::Format(FormatIdentifier::JwtVcJson(ProfileW3c {
+            credential: CredentialIssuance::Format(Format::JwtVcJson(ProfileW3c {
                 credential_definition: CredentialDefinition {
                     type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
                     ..CredentialDefinition::default()

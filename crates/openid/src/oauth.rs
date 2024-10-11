@@ -120,6 +120,12 @@ pub struct OAuthClient {
     /// false.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub require_pushed_authorization_requests: Option<bool>,
+
+    /// Credential Offer Endpoint of for Wallets. If the Credential Issuer is
+    /// unable to perform discovery of the Wallet's Credential Offer Endpoint,
+    /// the following custom URL scheme is used: `openid-credential-offer://`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub credential_offer_endpoint: Option<String>,
 }
 
 impl OAuthClient {

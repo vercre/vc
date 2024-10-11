@@ -44,7 +44,7 @@ use crate::verify_key;
 
 /// Credential format options for the resulting proof.
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub enum Format {
+pub enum W3cFormat {
     /// VC signed as a JWT, not using JSON-LD
     #[serde(rename = "jwt_vc_json")]
     JwtVcJson,
@@ -57,16 +57,6 @@ pub enum Format {
     /// requiring Linked Data canonicalization.
     #[serde(rename = "ldp_vc")]
     DataIntegrityJsonLd,
-
-    /// SD-JWT-based Verifiable Credentials
-    /// [SD-JWT VC](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-01)
-    #[serde(rename = "vc+sd-jwt")]
-    VcSdJwt,
-
-    /// ISO-compliant driving licence
-    /// [ISO.18013-5](https://www.iso.org/standard/69084.html).
-    #[serde(rename = "mso_mdoc")]
-    IsoMDl,
 }
 
 /// `Payload` is used to identify the type of proof to be created.
@@ -94,9 +84,9 @@ pub enum Payload {
 /// # Errors
 /// TODO: document errors
 pub async fn create(
-    format: Format, payload: Payload, signer: impl Signer,
+    format: W3cFormat, payload: Payload, signer: impl Signer,
 ) -> anyhow::Result<String> {
-    if format != Format::JwtVcJson && format != Format::JwtVcJsonLd {
+    if format != W3cFormat::JwtVcJson && format != W3cFormat::JwtVcJsonLd {
         return Err(anyhow::anyhow!("Unsupported proof format"));
     }
 

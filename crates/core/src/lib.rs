@@ -9,7 +9,6 @@
 
 pub mod gen;
 pub mod pkce;
-pub mod stringify;
 pub mod urlencode;
 
 use serde::{Deserialize, Serialize};
@@ -67,7 +66,7 @@ impl<T: Default> Default for Quota<T> {
     }
 }
 
-impl<T: Default> Quota<T> {
+impl<T: Clone + Default + PartialEq> Quota<T> {
     /// Returns `true` if the quota is a single object.
     pub const fn is_one(&self) -> bool {
         match self {
@@ -81,6 +80,35 @@ impl<T: Default> Quota<T> {
         match self {
             Self::One(_) => false,
             Self::Many(_) => true,
+        }
+    }
+
+    /// Adds an object to the quota. If the quota is a single object, it is
+    /// converted to a set of objects.
+    pub fn add(&mut self, item: T) {
+        match self {
+            Self::One(one) => {
+                *self = Self::Many(vec![one.clone(), item]);
+            }
+            Self::Many(many) => {
+                many.push(item);
+            }
+        }
+    }
+
+    /// Returns the length of the quota.
+    pub fn len(&self) -> usize {
+        match self {
+            Self::One(_) => 1,
+            Self::Many(many) => many.len(),
+        }
+    }
+
+    /// Returns `true` if the quota is an empty `Many`.
+    pub fn is_empty(&self) -> bool {
+        match self {
+            Self::One(_) => false,
+            Self::Many(many) => many.is_empty(),
         }
     }
 }

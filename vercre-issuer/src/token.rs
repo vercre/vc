@@ -23,6 +23,7 @@ use vercre_openid::issuer::{
     AuthorizedDetail, CredentialAuthorization, Issuer, Metadata, ProfileClaims, Provider,
     StateStore, TokenGrantType, TokenRequest, TokenResponse, TokenType,
 };
+use vercre_openid::oauth::GrantType;
 use vercre_openid::{Error, Result};
 
 use crate::state::{Authorized, AuthorizedItem, Expire, ItemType, Stage, State, Token};
@@ -77,13 +78,20 @@ impl Context {
         let Ok(server) = Metadata::server(provider, &request.credential_issuer, None).await else {
             return Err(Error::InvalidRequest("unknown authorization server".into()));
         };
+        let Some(grant_types_supported) = &server.oauth.grant_types_supported else {
+            return Err(Error::ServerError("authorization server grant types not set".into()));
+        };
 
         // grant_type
         match &request.grant_type {
             TokenGrantType::PreAuthorizedCode { tx_code, .. } => {
-                let Stage::PreAuthorized(auth_state) = &self.state.stage else {
+                let Stage::Offered(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("pre-authorized state not set".into()));
                 };
+                // grant_type supported?
+                if !grant_types_supported.contains(&GrantType::PreAuthorizedCode) {
+                    return Err(Error::InvalidGrant("unsupported `grant_type`".into()));
+                }
 
                 // anonymous access allowed?
                 if request.client_id.as_ref().is_none()
@@ -92,7 +100,8 @@ impl Context {
                 {
                     return Err(Error::InvalidClient("anonymous access is not supported".into()));
                 }
-                // tx_code
+
+                // tx_code (PIN)
                 if tx_code != &auth_state.tx_code {
                     return Err(Error::InvalidGrant("invalid `tx_code` provided".into()));
                 }
@@ -106,7 +115,15 @@ impl Context {
                     return Err(Error::ServerError("authorization state not set".into()));
                 };
 
+                // grant_type supported?
+                if !grant_types_supported.contains(&GrantType::AuthorizationCode) {
+                    return Err(Error::InvalidGrant("unsupported `grant_type`".into()));
+                }
+
                 // client_id is the same as the one used to obtain the authorization code
+                if request.client_id.is_none() {
+                    return Err(Error::InvalidRequest("`client_id` is missing".into()));
+                }
                 if request.client_id.as_ref() != Some(&auth_state.client_id) {
                     return Err(Error::InvalidClient(
                         "`client_id` differs from authorized one".into(),
@@ -135,6 +152,26 @@ impl Context {
             }
         }
 
+        if let Some(client_id) = &request.client_id {
+            // client metadata
+            let Ok(client) = Metadata::client(provider, client_id).await else {
+                return Err(Error::InvalidClient("invalid `client_id`".into()));
+            };
+            // Client and server must support the same scopes.
+            if let Some(client_scope) = &client.oauth.scope {
+                if let Some(server_scopes) = &server.oauth.scopes_supported {
+                    let scopes: Vec<&str> = client_scope.split_whitespace().collect();
+                    if !scopes.iter().all(|s| server_scopes.contains(&(*s).to_string())) {
+                        return Err(Error::InvalidRequest("client scope not supported".into()));
+                    }
+                } else {
+                    return Err(Error::InvalidRequest("server supported scopes not set".into()));
+                }
+            } else {
+                return Err(Error::InvalidRequest("client scope not set".into()));
+            }
+        }
+
         Ok(())
     }
 
@@ -148,12 +185,15 @@ impl Context {
 
         let (authorization_details, authorized) = match &request.grant_type {
             TokenGrantType::PreAuthorizedCode { .. } => {
-                let Stage::PreAuthorized(auth_state) = &self.state.stage else {
+                let Stage::Offered(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("pre-authorized state not set".into()));
+                };
+                let Some(auth_items) = &auth_state.items else {
+                    return Err(Error::ServerError("no authorized items".into()));
                 };
 
                 // get the subset of requested credentials from those previously authorized
-                let retained_items = retain_details(provider, &request, &auth_state.items).await?;
+                let retained_items = retain_details(provider, &request, auth_items).await?;
                 let authorized_details = authorized_details(&retained_items);
                 let authorized = authorized_credentials(&retained_items);
                 (authorized_details, authorized)
@@ -312,13 +352,13 @@ mod tests {
     use serde_json::json;
     use vercre_openid::issuer::{
         AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization,
-        CredentialDefinition, FormatIdentifier, ProfileW3c,
+        CredentialDefinition, Format, ProfileW3c,
     };
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::snapshot;
 
     use super::*;
-    use crate::state::{Authorization, PreAuthorization};
+    use crate::state::{Authorization, Offer};
 
     #[tokio::test]
     async fn pre_authorized() {
@@ -327,10 +367,10 @@ mod tests {
 
         let provider = Provider::new();
 
-        // set up PreAuthorized state
+        // set up Offered state
         let state = State {
-            stage: Stage::PreAuthorized(PreAuthorization {
-                items: vec![AuthorizedItem {
+            stage: Stage::Offered(Offer {
+                items: Some(vec![AuthorizedItem {
                     item: ItemType::AuthorizationDetail(AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
                         credential: CredentialAuthorization::ConfigurationId {
@@ -341,7 +381,7 @@ mod tests {
                     }),
                     credential_configuration_id: "EmployeeID_JWT".into(),
                     credential_identifiers: vec!["PHLEmployeeID".into()],
-                }],
+                }]),
                 tx_code: Some("1234".into()),
             }),
             subject_id: Some(NORMAL_USER.into()),
@@ -473,7 +513,7 @@ mod tests {
                 items: vec![AuthorizedItem {
                     item: ItemType::AuthorizationDetail(AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
-                        credential: CredentialAuthorization::Format(FormatIdentifier::JwtVcJson(
+                        credential: CredentialAuthorization::Format(Format::JwtVcJson(
                             ProfileW3c {
                                 credential_definition: CredentialDefinition {
                                     type_: Some(vec![

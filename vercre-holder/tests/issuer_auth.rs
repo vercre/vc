@@ -7,7 +7,7 @@ mod provider;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::issuance::{
-    AcceptRequest, AuthorizeRequest, CredentialsRequest, Initiator, OfferRequest,
+    AcceptRequest, AuthorizeRequest, CredentialsRequest, Initiator, OfferRequest, SaveRequest,
 };
 use vercre_holder::provider::CredentialStorer;
 use vercre_issuer::{OfferType, SendType};
@@ -29,7 +29,7 @@ async fn issuer_auth() {
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": NORMAL_USER,
-        "pre-authorize": false,
+        "grant_types": ["authorization_code"],
         "tx_code_required": false,
         "send_type": SendType::ByVal,
     });
@@ -94,6 +94,14 @@ async fn issuer_auth() {
     vercre_holder::issuance::credentials(HOLDER_PROVIDER.clone(), &cred_req)
         .await
         .expect("should get credentials");
+    vercre_holder::issuance::save(
+        HOLDER_PROVIDER.clone(),
+        &SaveRequest {
+            issuance_id: issuance.issuance_id.clone(),
+        },
+    )
+    .await
+    .expect("should save credentials");
 
     let credentials = CredentialStorer::find(&HOLDER_PROVIDER.clone(), None)
         .await
@@ -102,7 +110,7 @@ async fn issuer_auth() {
     assert_eq!(credentials.len(), 1);
 
     assert_snapshot!("credentials", credentials, {
-        "[].vc.issuanceDate" => "[issuanceDate]",
+        "[].vc.validFrom" => "[validFrom]",
         "[].vc" => insta::sorted_redaction(),
         "[].vc.credentialSubject" => insta::sorted_redaction(),
         "[].metadata" => insta::sorted_redaction(),

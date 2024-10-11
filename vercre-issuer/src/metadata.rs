@@ -73,9 +73,12 @@ mod tests {
         };
         let response = metadata(provider, request).await.expect("response is ok");
         assert_snapshot!("metadata:metadata_ok:response", response, {
+            ".scopes_supported" => insta::sorted_redaction(),
             ".credential_configurations_supported" => insta::sorted_redaction(),
             ".**.credentialSubject" => insta::sorted_redaction(),
-            ".**.credentialSubject.address" => insta::sorted_redaction()
+            ".**.credentialSubject.address" => insta::sorted_redaction(),
+            ".**[\"org.iso.18013.5.1.mDL\"].claims" => insta::sorted_redaction(),
+            ".**[\"org.iso.18013.5.1.mDL\"].claims[\"org.iso.18013.5.1\"]" => insta::sorted_redaction()
         });
     }
 }

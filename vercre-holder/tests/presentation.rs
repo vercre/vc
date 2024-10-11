@@ -7,7 +7,7 @@ use std::sync::LazyLock;
 use chrono::Utc;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::Map;
-use vercre_core::{Kind, Quota};
+use vercre_core::{urlencode, Kind, Quota};
 use vercre_datasec::SecOps;
 use vercre_dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use vercre_holder::credential::Credential;
@@ -16,7 +16,7 @@ use vercre_holder::provider::CredentialStorer;
 use vercre_openid::verifier::{CreateRequestRequest, DeviceFlow};
 use vercre_test_utils::verifier::{self, VERIFIER_ID};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
-use vercre_w3c_vc::proof::{self, Format, Payload};
+use vercre_w3c_vc::proof::{self, Payload, W3cFormat};
 
 use crate::provider as holder;
 
@@ -59,17 +59,17 @@ async fn sample_credential() -> Credential {
             Kind::String("https://www.w3.org/2018/credentials/v1".into()),
             Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()),
         ],
-        type_: vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()],
+        type_: Quota::Many(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
         issuer: Kind::String("https://example.com/issuers/14".into()),
-        id: "https://example.com/credentials/3732".into(),
-        issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
+        id: Some("https://example.com/credentials/3732".into()),
+        valid_from: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
         credential_subject: Quota::One(CredentialSubject {
             id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
             claims: json!({"employeeId": "1234567890"})
                 .as_object()
                 .map_or_else(Map::default, Clone::clone),
         }),
-        expiration_date: Some(Utc.with_ymd_and_hms(2033, 12, 20, 23, 21, 55).unwrap()),
+        valid_until: Some(Utc.with_ymd_and_hms(2033, 12, 20, 23, 21, 55).unwrap()),
 
         ..VerifiableCredential::default()
     };
@@ -78,14 +78,13 @@ async fn sample_credential() -> Credential {
     let signer = SecOps::signer(&provider, VERIFIER_ID).expect("should get verifier");
 
     let payload = Payload::Vc(vc.clone());
-    let jwt = proof::create(Format::JwtVcJson, payload, signer).await.expect("should encode");
+    let jwt = proof::create(W3cFormat::JwtVcJson, payload, signer).await.expect("should encode");
 
-    let config = vercre_test_utils::sample::credential_configuration();
     Credential {
         issuer: "https://vercre.io".into(),
-        id: vc.id.clone(),
-        metadata: config,
+        id: vc.id.clone().expect("should have id"),
         vc: vc.clone(),
+        display: None,
         issued: jwt,
         logo: None,
     }
@@ -158,7 +157,7 @@ async fn e2e_presentation_obj() {
 
     // Intiate the presentation flow using an object
     let obj = init_request.request_object.expect("should have request object");
-    let qs = serde_urlencoded::to_string(&obj).expect("should serialize");
+    let qs = urlencode::to_string(&obj).expect("should serialize");
     let presentation = vercre_holder::presentation::request(HOLDER_PROVIDER.clone(), &qs)
         .await
         .expect("should process request");

@@ -8,6 +8,7 @@ use anyhow::{anyhow, bail};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use uuid::Uuid;
+pub use vercre_core::urlencode;
 use vercre_core::Kind;
 use vercre_datasec::jose::jws;
 use vercre_dif_exch::Constraints;
@@ -56,7 +57,7 @@ pub async fn request(
 
     // Parse or get-then-parse the presentation request
     let req_obj = if request.contains("&presentation_definition") {
-        serde_urlencoded::from_str::<RequestObject>(request).map_err(|e| {
+        urlencode::from_str::<RequestObject>(request).map_err(|e| {
             tracing::error!(target: "Endpoint::request", ?e);
             anyhow!("issue parsing RequestObject: {e}")
         })?

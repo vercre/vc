@@ -49,15 +49,16 @@ where
     T: DeserializeOwned,
 {
     // HACK: deserializing with `serde_json` makes decoding trivial and takes ~60µs
-    let decoded = percent_decode_str(s)
-        .decode_utf8_lossy()
+    let decoded = percent_decode_str(s).decode_utf8_lossy();
+    let decoded = format!("{{\"{decoded}\"}}");
+    let decoded = decoded
         .replace('=', "\":\"")
         .replace('&', "\",\"")
         .replace("\"[", "[")
         .replace("]\"", "]")
         .replace("\"{", "{")
         .replace("}\"", "}");
-    let decoded = format!("{{\"{decoded}\"}}");
+
     serde_json::from_str(&decoded).map_err(|e| Error::Message(e.to_string()))
 }
 
@@ -67,14 +68,14 @@ mod tests {
 
     use super::ser;
 
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
     struct TopLevel {
         field_1: String,
         field_2: String,
         nested: Nested,
     }
 
-    #[derive(Debug, Serialize, Deserialize)]
+    #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
     struct Nested {
         field_3: String,
         field_4: String,
@@ -121,5 +122,21 @@ mod tests {
         let s = E::Struct { a: 1 };
         let expected = r#"Struct=%7Ba%3A1%7D"#;
         assert_eq!(ser::to_string(&s).unwrap(), expected);
+    }
+
+    #[test]
+    fn decode_struct() {
+        let url = r#"field_1=value1&field_2=value2&nested=%7B%22field_3%22%3A%22value3%22%2C%22field_4%22%3A%22value4%22%7D"#;
+
+        let deserialized: TopLevel = super::from_str(&url).expect("should deserialize");
+        let expected = TopLevel {
+            field_1: "value1".to_owned(),
+            field_2: "value2".to_owned(),
+            nested: Nested {
+                field_3: "value3".to_owned(),
+                field_4: "value4".to_owned(),
+            },
+        };
+        assert_eq!(deserialized, expected);
     }
 }

@@ -33,4 +33,5 @@ vercre-did.workspace = true
 vercre-dif-exch.workspace = true
 
 [dev-dependencies]
+insta.workspace = true
 tracing-subscriber.workspace = true

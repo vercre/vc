@@ -18,6 +18,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use vercre_core::{Kind, Quota};
 
+use super::types::LangString;
 use crate::proof::integrity::Proof;
 
 /// `VerifiableCredential` represents a naive implementation of the W3C
@@ -36,42 +37,60 @@ pub struct VerifiableCredential {
     pub context: Vec<Kind<Value>>,
 
     #[allow(rustdoc::bare_urls)]
-    /// The credential's URI. It is RECOMMENDED that if dereferenced, the URI
-    /// results in a document containing machine-readable information about
-    /// the id (a schema). For example, "`http://example.edu/credentials/3732`".
-    pub id: String,
+    /// The id property is OPTIONAL. If present, id property's value MUST be a
+    /// single URL, which MAY be dereferenceable. It is RECOMMENDED that the URL
+    /// in the id be one which, if dereferenceable, results in a document
+    /// containing machine-readable information about the id. For example,
+    /// "`http://example.edu/credentials/3732`".
+    pub id: Option<String>,
 
-    /// The type property is used to uniquely identify the type of the
-    /// credential. That is, to indicate the set of claims the credential
-    /// contains. It is an unordered set of URIs (full or relative to
-    /// @context). It is RECOMMENDED that each URI, if dereferenced, will
-    /// result in a document containing machine-readable information about
+    /// The type property is used to determine whether or not a provided
+    /// verifiable credential is appropriate for the intended use-case. It is an
+    /// unordered set of terms or URIs (full or relative to @context). It is
+    /// RECOMMENDED that each URI, if dereferenced, will result in a
+    /// document containing machine-readable information about
     /// the type. Syntactic conveniences, such as JSON-LD, SHOULD be used to
     /// ease developer usage.
     #[serde(rename = "type")]
-    pub type_: Vec<String>,
+    pub type_: Quota<String>,
+
+    /// The name property expresses the name of the credential. If present, the
+    /// value of the name property MUST be a string or a language value object.
+    /// Ideally, the name of a credential is concise, human-readable, and could
+    /// enable an individual to quickly differentiate one credential from any
+    /// other credentials they might hold.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<LangString>,
+
+    /// The description property conveys specific details about a credential. If
+    /// present, the value of the description property MUST be a string or a
+    /// language value object. Ideally, the description of a credential is no
+    /// more than a few sentences in length and conveys enough information about
+    /// the credential to remind an individual of its contents without having to
+    /// look through the entirety of the claims.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<LangString>,
 
     /// A URI or object with an id property. It is RECOMMENDED that the
     /// URI/object id, dereferences to machine-readable information about
     /// the issuer that can be used to verify credential information.
     pub issuer: Kind<Issuer>,
 
-    /// An XMLSCHEMA11-2 (RFC3339) date-time the credential becomes valid.
-    /// e.g. 2010-01-01T19:23:24Z.
-    pub issuance_date: DateTime<Utc>,
-
     /// A set of objects containing claims about credential subjects(s).
     pub credential_subject: Quota<CredentialSubject>,
 
-    /// One or more cryptographic proofs that can be used to detect tampering
-    /// and verify authorship of a credential.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub proof: Option<Quota<Proof>>,
+    /// An XMLSCHEMA11-2 (RFC3339) date-time the credential becomes valid.
+    /// e.g. 2010-01-01T19:23:24Z.
+    ///
+    /// TODO: The specification implies this field is optional but other aspects
+    /// of the specification rely on it being present, so we have made it
+    /// mandatory here.
+    pub valid_from: DateTime<Utc>,
 
     /// An XMLSCHEMA11-2 (RFC3339) date-time the credential ceases to be valid.
     /// e.g. 2010-06-30T19:23:24Z
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub expiration_date: Option<DateTime<Utc>>,
+    pub valid_until: Option<DateTime<Utc>>,
 
     /// Used to determine the status of the credential, such as whether it is
     /// suspended or revoked.
@@ -84,6 +103,17 @@ pub struct VerifiableCredential {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_schema: Option<Quota<CredentialSchema>>,
 
+    /// One or more cryptographic proofs that can be used to detect tampering
+    /// and verify authorship of a credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub proof: Option<Quota<Proof>>,
+
+    /// Related resources allow external data to be associated with the
+    /// credential and an integrity mechanism to allow a verify to check the
+    /// related data has not changed since the credential was issued.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub related_resource: Option<Quota<RelatedResource>>,
+
     /// `RefreshService` can be used to provide a link to the issuer's refresh
     /// service so Holder's can refresh (manually or automatically) an
     /// expired credential.
@@ -94,14 +124,14 @@ pub struct VerifiableCredential {
     /// terms under which a verifiable credential or verifiable presentation
     /// was issued.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub terms_of_use: Option<Vec<Term>>,
+    pub terms_of_use: Option<Quota<Term>>,
 
     /// Evidence can be included by an issuer to provide the verifier with
     /// additional supporting information in a credential. This could be
     /// used by the verifier to establish the confidence with which it
     /// relies on credential claims.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub evidence: Option<Vec<Evidence>>,
+    pub evidence: Option<Quota<Evidence>>,
 }
 
 // TODO: create structured @context object
@@ -288,19 +318,52 @@ pub struct CredentialSchema {
     pub type_: String,
 }
 
+/// `RelatedResource` allows external data to be associated with the credential
+/// and an integrity mechanism to allow a verifier to check the related data.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(default)]
+#[serde(rename_all = "camelCase")]
+pub struct RelatedResource {
+    /// The identifier for the resource, typically a URL from which the
+    /// resource can be retrieved, or another dereferenceable identifier.
+    pub id: String,
+
+    /// The type of media as defined by the
+    /// [IANA Media Types registry](https://www.iana.org/assignments/media-types/media-types.xhtml).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub media_type: Option<String>,
+
+    /// One or more cryptographic digests, as defined by the `hash-expression`
+    /// ABNF grammar defined in the Subresource Integrity specification,
+    /// [Section 3.5: The integrity attribute](https://www.w3.org/TR/SRI/#the-integrity-attribute).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "digestSRI")]
+    pub digest_sri: Option<Quota<String>>,
+
+    /// One or more cryptographic digests, as defined by the digestMultibase
+    /// property in the Verifiable Credential Data Integrity 1.0 specification,
+    /// [Section 2.3: Resource Integrity](https://www.w3.org/TR/vc-data-integrity/#resource-integrity).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub digest_multibase: Option<Quota<String>>,
+}
+
 /// `RefreshService` can be used to provide a link to the issuer's refresh
 /// service so Holder's can refresh (manually or automatically) an expired
 /// credential.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(default)]
+#[serde(rename_all = "camelCase")]
 pub struct RefreshService {
     /// A URI where credential status information can be retrieved.
-    pub id: String,
+    pub url: String,
 
     /// Refers to the status method used to provide the (machine readable)
     /// status of the credential.
     #[serde(rename = "type")]
     pub type_: String,
+
+    /// Refresh token to present to the refresh service.
+    pub refresh_token: String,
 }
 
 /// Term is a single term used in defining the issuers terms of use.
@@ -318,40 +381,11 @@ pub struct Term {
     pub type_: String,
 
     /// A URI where credential policy information can be retrieved.
-    pub id: String,
+    pub id: Option<String>,
 
-    /// A human-readable description of the term.
-    pub profile: String,
-
-    /// An obligation tells the verifier what actions it is required to perform
-    /// if it is to accept the verifiable credential or verifiable presentation.
-    pub obligation: Option<Vec<Policy>>,
-
-    /// A prohibition tells the verifier what actions it is not allowed to
-    /// perform if it is to accept the verifiable credential or verifiable
-    /// presentation.
-    pub prohibition: Option<Vec<Policy>>,
-
-    /// A permission tells the verifier what actions it is allowed to perform
-    /// if it is to accept the verifiable credential or verifiable presentation.
-    pub permission: Option<Vec<Policy>>,
-}
-
-/// Prohibition defines what actions a verifier is not allowed to perform.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(default)]
-pub struct Policy {
-    ///  A URI identifying the credential issuer.
-    assigner: String,
-
-    /// A URI identifying the credential verifier.
-    assignee: String,
-
-    /// A URI identifying the credential (the credential `id`).
-    target: String,
-
-    /// A list of prohibited actions
-    action: Vec<String>,
+    /// The policy content specific to the type.
+    #[serde(flatten)]
+    pub policy: Value,
 }
 
 /// Evidence can be included by an issuer to provide the verifier with
@@ -372,22 +406,25 @@ pub struct Evidence {
     #[serde(rename = "type")]
     pub type_: Vec<String>,
 
-    /// A URI identifying the credential issuer (i.e. verifier of evidence).
-    pub verifier: String,
+    /// A human-readable title for the evidence type.
+    pub name: Option<String>,
 
-    /// Evidence document identifies the evidence scheme.
-    #[serde(rename = "evidenceDocument")]
-    pub evidence_document: String,
+    /// A human-readable description of the evidence type.
+    pub description: Option<String>,
 
-    /// Whether the subject was present when the evidence was collected.
-    /// For example, "Physical".
-    #[serde(rename = "subjectPresence")]
-    pub subject_presence: String,
+    /// One or more cryptographic digests, as defined by the `hash-expression`
+    /// ABNF grammar defined in the Subresource Integrity specification,
+    /// [Section 3.5: The integrity attribute](https://www.w3.org/TR/SRI/#the-integrity-attribute).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "digestSRI")]
+    pub digest_sri: Option<Quota<String>>,
 
-    /// Whether the evidence document was present when the evidence was
-    /// collected. For example, "Physical".
-    #[serde(rename = "documentPresence")]
-    pub document_presence: String,
+    /// One or more cryptographic digests, as defined by the digestMultibase
+    /// property in the Verifiable Credential Data Integrity 1.0 specification,
+    /// [Section 2.3: Resource Integrity](https://www.w3.org/TR/vc-data-integrity/#resource-integrity).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "digestMultibase")]
+    pub digest_multibase: Option<Quota<String>>,
 
     /// A list of schema-specific evidence fields.
     #[serde(flatten)]
@@ -411,8 +448,8 @@ impl VcBuilder {
 
         // set some sensibile defaults
         builder.vc.context.push(Kind::String("https://www.w3.org/2018/credentials/v1".into()));
-        builder.vc.type_.push("VerifiableCredential".into());
-        builder.vc.issuance_date = chrono::Utc::now(); //.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+        builder.vc.type_ = Quota::One("VerifiableCredential".into());
+        builder.vc.valid_from = chrono::Utc::now(); //.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
 
         builder
     }
@@ -427,14 +464,28 @@ impl VcBuilder {
     /// Sets the `id` property
     #[must_use]
     pub fn id(mut self, id: impl Into<String>) -> Self {
-        self.vc.id = id.into();
+        self.vc.id = Some(id.into());
         self
     }
 
     /// Sets the `type_` property
     #[must_use]
     pub fn add_type(mut self, type_: impl Into<String>) -> Self {
-        self.vc.type_.push(type_.into());
+        self.vc.type_.add(type_.into());
+        self
+    }
+
+    /// Sets the `name` property
+    #[must_use]
+    pub fn add_name(mut self, name: Option<LangString>) -> Self {
+        self.vc.name = name;
+        self
+    }
+
+    /// Sets the `description` property
+    #[must_use]
+    pub fn add_description(mut self, description: Option<LangString>) -> Self {
+        self.vc.description = description;
         self
     }
 
@@ -500,9 +551,6 @@ impl VcBuilder {
 
         if self.vc.context.len() < 2 {
             bail!("no context set");
-        }
-        if self.vc.id.is_empty() {
-            bail!("no id set");
         }
         if self.vc.type_.len() < 2 {
             bail!("no type set");
@@ -586,8 +634,8 @@ mod tests {
         );
 
         assert_eq!(
-            *vc_json.get("issuanceDate").expect("issuanceDate should be set"),
-            json!(vc.issuance_date)
+            *vc_json.get("validFrom").expect("validFrom should be set"),
+            json!(vc.valid_from)
         );
 
         // deserialize
@@ -681,17 +729,17 @@ mod tests {
                 Kind::String("https://www.w3.org/2018/credentials/v1".into()),
                 Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()),
             ],
-            type_: vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()],
+            type_: Quota::Many(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
             issuer: Kind::String("https://example.com/issuers/14".into()),
-            id: "https://example.com/credentials/3732".into(),
-            issuance_date: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
+            id: Some("https://example.com/credentials/3732".into()),
+            valid_from: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
             credential_subject: Quota::One(CredentialSubject {
                 id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
                 claims: json!({"employeeId": "1234567890"})
                     .as_object()
                     .map_or_else(Map::default, Clone::clone),
             }),
-            expiration_date: Some(Utc.with_ymd_and_hms(2033, 12, 20, 23, 21, 55).unwrap()),
+            valid_until: Some(Utc.with_ymd_and_hms(2033, 12, 20, 23, 21, 55).unwrap()),
 
             ..VerifiableCredential::default()
         }

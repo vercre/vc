@@ -19,6 +19,7 @@ use vercre_holder::{
     OAuthServerRequest, OAuthServerResponse, RequestObjectRequest, RequestObjectResponse,
     ResponseRequest, ResponseResponse, TokenRequest, TokenResponse,
 };
+use vercre_issuer::{NotificationRequest, NotificationResponse};
 use vercre_test_utils::store::keystore::HolderKeystore;
 use vercre_test_utils::store::{resolver, state};
 use vercre_test_utils::{issuer, verifier};
@@ -84,6 +85,12 @@ impl Issuer for Provider {
 
     async fn logo(&self, _logo_url: &str) -> anyhow::Result<Logo> {
         Ok(Logo::default())
+    }
+
+    async fn notification(
+        &self, _req: NotificationRequest,
+    ) -> anyhow::Result<NotificationResponse> {
+        Ok(NotificationResponse::default())
     }
 }
 
@@ -164,15 +171,19 @@ impl DidResolver for Provider {
 }
 
 impl Signer for Provider {
+    async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
+        HolderKeystore::try_sign(msg)
+    }
+
+    async fn public_key(&self) -> Result<Vec<u8>> {
+        HolderKeystore::public_key()
+    }
+
     fn algorithm(&self) -> Algorithm {
         HolderKeystore::algorithm()
     }
 
     fn verification_method(&self) -> String {
         HolderKeystore::verification_method()
-    }
-
-    async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
-        HolderKeystore::try_sign(msg)
     }
 }

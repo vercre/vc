@@ -16,6 +16,7 @@
 //! [Data Model v2.0]: https://www.w3.org/TR/vc-data-model-2.0
 //! [JSON Schema]: https://www.w3.org/TR/vc-json-schema/
 
+pub mod types;
 pub mod vc;
 pub mod vp;
 

@@ -6,7 +6,9 @@ mod provider;
 use std::sync::LazyLock;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
-use vercre_holder::issuance::{AcceptRequest, CredentialsRequest, OfferRequest, PinRequest};
+use vercre_holder::issuance::{
+    AcceptRequest, CredentialsRequest, OfferRequest, PinRequest, SaveRequest,
+};
 use vercre_holder::provider::CredentialStorer;
 use vercre_issuer::{OfferType, SendType};
 use vercre_macros::create_offer_request;
@@ -28,7 +30,7 @@ async fn preauth() {
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": NORMAL_USER,
-        "pre-authorize": true,
+        "grant_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
         "tx_code_required": true,
         "send_type": SendType::ByVal,
     });
@@ -89,6 +91,14 @@ async fn preauth() {
     vercre_holder::issuance::credentials(HOLDER_PROVIDER.clone(), &cred_req)
         .await
         .expect("should get credentials");
+    vercre_holder::issuance::save(
+        HOLDER_PROVIDER.clone(),
+        &SaveRequest {
+            issuance_id: issuance.issuance_id.clone(),
+        },
+    )
+    .await
+    .expect("should save credentials");
 
     let credentials = CredentialStorer::find(&HOLDER_PROVIDER.clone(), None)
         .await
@@ -97,7 +107,7 @@ async fn preauth() {
     assert_eq!(credentials.len(), 1);
 
     assert_snapshot!("credentials", credentials, {
-        "[].vc.issuanceDate" => "[issuanceDate]",
+        "[].vc.validFrom" => "[validFrom]",
         "[].vc" => insta::sorted_redaction(),
         "[].vc.credentialSubject" => insta::sorted_redaction(),
         "[].metadata" => insta::sorted_redaction(),

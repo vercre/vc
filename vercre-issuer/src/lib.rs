@@ -109,8 +109,8 @@ pub mod provider {
     pub use vercre_datasec::{Algorithm, Decryptor, Encryptor, SecOps, Signer};
     pub use vercre_did::{DidResolver, Document};
     pub use vercre_openid::issuer::{
-        ClaimDefinition, Client, Credentials, Dataset, GrantType, Issuer, Metadata, Provider,
-        Result, Server, StateStore, Subject,
+        ClaimDefinition, Client, Dataset, GrantType, Issuer, Metadata, Provider, Result, Server,
+        StateStore, Subject,
     };
     pub use vercre_status::issuer::Status;
 }
@@ -121,19 +121,22 @@ pub use credential::credential;
 pub use credential_offer::credential_offer;
 pub use deferred::deferred;
 pub use metadata::metadata;
+pub use notification::notification;
 pub use oauth_server::oauth_server;
 pub use par::par;
 pub use register::register;
 pub use token::token;
+pub use vercre_core::urlencode;
 pub use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     AuthorizationResponse, AuthorizedDetail, Claim, ClaimDefinition, CreateOfferRequest,
     CreateOfferResponse, CredentialAuthorization, CredentialConfiguration, CredentialDefinition,
     CredentialIssuance, CredentialOffer, CredentialOfferRequest, CredentialOfferResponse,
     CredentialRequest, CredentialResponse, CredentialResponseType, DeferredCredentialRequest,
-    DeferredCredentialResponse, FormatIdentifier, Grants, MetadataRequest, MetadataResponse,
-    OAuthServerRequest, OAuthServerResponse, OfferType, PreAuthorizedCodeGrant, ProfileClaims,
-    ProfileIsoMdl, ProfileSdJwt, ProfileW3c, Proof, ProofClaims, PushedAuthorizationRequest,
+    DeferredCredentialResponse, Format, GrantType, Grants, MetadataRequest, MetadataResponse,
+    NotificationEvent, NotificationRequest, NotificationResponse, OAuthServerRequest,
+    OAuthServerResponse, OfferType, PreAuthorizedCodeGrant, ProfileClaims, ProfileIsoMdl,
+    ProfileSdJwt, ProfileW3c, Proof, ProofClaims, PushedAuthorizationRequest,
     PushedAuthorizationResponse, RegistrationRequest, RegistrationResponse, RequestObject,
     SendType, SingleProof, TokenGrantType, TokenRequest, TokenResponse, TxCode,
 };

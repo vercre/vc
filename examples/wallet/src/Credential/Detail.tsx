@@ -67,9 +67,9 @@ const Detail = (props: DetailProps) => {
             {Object.entries(credential.claims).map(([key, value]) => (
                 <ClaimDefinition key={key} name={value} value={value} />
             ))}
-            <ClaimDefinition name="Issued on" value={dateFromIso(credential.issuance_date)} />
+            <ClaimDefinition name="Issued on" value={dateFromIso(credential.valid_from)} />
             <ClaimDefinition name="Expires on" value={
-                credential.expiration_date ? dateFromIso(credential.expiration_date) : 'Never'
+                credential.valid_until ? dateFromIso(credential.valid_until) : 'Never'
             } />
             <ClaimDefinition name="Issued by" value={domainFromUrl(credential.display.issuer)} />
         </Stack>

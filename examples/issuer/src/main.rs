@@ -26,11 +26,11 @@ use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 use vercre_issuer::{
-    AuthorizationRequest, CreateOfferRequest, CreateOfferResponse, CredentialOfferRequest,
-    CredentialOfferResponse, CredentialRequest, CredentialResponse, DeferredCredentialRequest,
-    DeferredCredentialResponse, MetadataRequest, MetadataResponse, OAuthServerRequest,
-    OAuthServerResponse, PushedAuthorizationRequest, PushedAuthorizationResponse, TokenRequest,
-    TokenResponse,
+    urlencode, AuthorizationRequest, CreateOfferRequest, CreateOfferResponse,
+    CredentialOfferRequest, CredentialOfferResponse, CredentialRequest, CredentialResponse,
+    DeferredCredentialRequest, DeferredCredentialResponse, MetadataRequest, MetadataResponse,
+    NotificationRequest, NotificationResponse, OAuthServerRequest, OAuthServerResponse,
+    PushedAuthorizationRequest, PushedAuthorizationResponse, TokenRequest, TokenResponse,
 };
 
 use crate::provider::Provider;
@@ -56,6 +56,7 @@ async fn main() {
         .route("/auth", get(authorize))
         .route("/par", get(par))
         .route("/login", post(handle_login))
+        .route("/notification", post(notification))
         .route("/token", post(token))
         .route("/credential", post(credential))
         .route("/deferred_credential", post(deferred_credential))
@@ -264,8 +265,40 @@ async fn handle_login(
     AUTH_REQUESTS.write().await.insert(req.username.clone(), auth_req.clone());
 
     // redirect back to authorize endpoint
-    let qs = serde_urlencoded::to_string(&auth_req).expect("should serialize");
+    let qs = urlencode::to_string(&auth_req).expect("should serialize");
     (StatusCode::FOUND, Redirect::to(&format!("http://{host}/auth?{qs}"))).into_response()
+}
+
+/// Notification endpoint
+///
+/// This endpoint is used by the Wallet to notify the Credential Issuer of
+/// certain events for issued Credentials. These events enable the Credential
+/// Issuer to take subsequent actions after issuance. The Credential Issuer
+/// needs to return one or more notification_id parameters in the Credential
+/// Response for the Wallet to be able to use this endpoint. Support for this
+/// endpoint is OPTIONAL. The Issuer cannot assume that a notification will be
+/// sent for every issued Credential since the use of this Endpoint is not
+/// mandatory for the Wallet.
+///
+/// The Wallet MUST present to the Notification Endpoint a valid Access Token
+/// issued at the Token Endpoint.
+///
+/// The notification from the Wallet is idempotent. When the Credential Issuer
+/// receives multiple identical calls from the Wallet for the same
+/// notification_id, it returns success. Due to the network errors, there are no
+/// guarantees that a Credential Issuer will receive a notification within a
+/// certain time period or at all.
+///
+/// Communication with the Notification Endpoint MUST utilize TLS.
+#[axum::debug_handler]
+async fn notification(
+    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
+    Json(mut req): Json<NotificationRequest>,
+) -> AxResult<NotificationResponse> {
+    req.credential_issuer = format!("http://{host}");
+    req.access_token = auth.token().to_string();
+    vercre_issuer::notification(provider.clone(), req).await.into()
 }
 
 /// Token endpoint
@@ -310,6 +343,8 @@ async fn deferred_credential(
 ) -> AxResult<DeferredCredentialResponse> {
     req.credential_issuer = format!("http://{host}");
     req.access_token = auth.0.token().to_string();
+
+    #[allow(clippy::large_futures)]
     vercre_issuer::deferred(provider.clone(), req).await.into()
 }
 
