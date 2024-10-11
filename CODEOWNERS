@@ -1,0 +1,8 @@
+# This CODEOWNERS file denotes the project leads
+# and encodes their responsibilities for code review.
+
+# These owners will be the default owners for everything in
+# the repo. Unless a later match takes precedence,
+# @andrewweston and @andrew-goldie will be requested for
+# review when someone opens a pull request.
+*       @andrewweston @andrew-goldie
