@@ -10,6 +10,7 @@ use base64ct::{Base64UrlUnpadded, Encoding};
 use bitvec::bits;
 use bitvec::order::Lsb0;
 use bitvec::view::BitView;
+use chrono::Utc;
 use flate2::write::GzEncoder;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
@@ -212,6 +213,8 @@ pub async fn credential(
     let cache_time = ttl.unwrap_or(DEFAULT_TTL);
     claims.insert("ttl".into(), Value::Number(cache_time.into()));
 
+    let issued_at = Utc::now().timestamp();
+
     let vc = VcBuilder::new()
         .id(id.clone())
         .add_type("BitstringStatusListCredential")
@@ -221,7 +224,7 @@ pub async fn credential(
             claims,
         })
         .build()?;
-    let jwt = proof::create(W3cFormat::JwtVcJson, Payload::Vc(vc), signer).await?;
+    let jwt = proof::create(W3cFormat::JwtVcJson, Payload::Vc { vc, issued_at }, signer).await?;
 
     Ok(jwt)
 }

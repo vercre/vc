@@ -55,15 +55,20 @@ pub struct VcClaims {
     /// For example, "did:example:ebfeb1f712ebc6f1c276e12ec21".
     pub sub: String,
 
-    /// MUST be the Credential's `validFrom`, encoded as a UNIX timestamp
-    /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
-    pub nbf: i64,
+    /// When the iat (Issued At) and/or exp (Expiration Time) JWT claims are
+    /// present, they represent the issuance and expiration time of the
+    /// signature, respectively. Note that these are different from the
+    /// validFrom and validUntil properties defined in Validity Period, which
+    /// represent the validity of the data that is being secured. Use of the nbf
+    /// (Not Before) claim is NOT RECOMMENDED, as it makes little sense to
+    /// attempt to assign a future date to a signature.
+    pub nbf: Option<i64>,
 
     /// MUST be the `issuer` property of the Credential.
     /// For example, "did:example:123456789abcdefghi#keys-1".
     pub iss: String,
 
-    /// MUST be the Credential's `validFrom`, encoded as a UNIX timestamp
+    /// MUST be the Credential's issuance date, encoded as a UNIX timestamp
     /// ([RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`).
     pub iat: i64,
 
@@ -79,8 +84,8 @@ pub struct VcClaims {
     pub vc: VerifiableCredential,
 }
 
-impl From<VerifiableCredential> for VcClaims {
-    fn from(vc: VerifiableCredential) -> Self {
+impl VcClaims {
+    pub fn from_vc(vc: VerifiableCredential, issued_at: i64) -> Self {
         let subject = match &vc.credential_subject {
             Quota::One(sub) => sub,
             Quota::Many(subs) => &subs[0],
@@ -94,22 +99,13 @@ impl From<VerifiableCredential> for VcClaims {
         Self {
             // TODO: find better way to set sub (shouldn't need to be in vc)
             sub: subject.id.clone().unwrap_or_default(),
-            nbf: vc.valid_from.timestamp(),
+            nbf: None,
             iss: issuer_id.clone(),
-            iat: vc.valid_from.timestamp(),
+            iat: issued_at,
             jti: vc.id.clone().unwrap_or_default(),
             exp: vc.valid_until.map(|exp| exp.timestamp()),
             vc,
         }
-    }
-}
-
-impl VerifiableCredential {
-    /// Transform the `VerifiableCredential` into JWT-compatible claims.
-    ///
-    /// # Errors
-    pub fn to_claims(&self) -> anyhow::Result<VcClaims> {
-        Ok(VcClaims::from(self.clone()))
     }
 }
 

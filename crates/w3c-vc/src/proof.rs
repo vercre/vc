@@ -64,7 +64,13 @@ pub enum W3cFormat {
 #[allow(clippy::large_enum_variant)]
 pub enum Payload {
     /// A Verifiable Credential proof encoded as a JWT.
-    Vc(VerifiableCredential),
+    Vc {
+        /// The Credential to create a proof for.
+        vc: VerifiableCredential,
+
+        /// The issuance date and time of the Credential.
+        issued_at: i64,
+    },
 
     /// A Verifiable Presentation proof encoded as a JWT.
     Vp {
@@ -91,8 +97,8 @@ pub async fn create(
     }
 
     let jwt = match payload {
-        Payload::Vc(vc) => {
-            let claims: jose::VcClaims = vc.into();
+        Payload::Vc { vc, issued_at } => {
+            let claims = jose::VcClaims::from_vc(vc, issued_at);
             jws::encode(jws::Type::Credential, &claims, signer).await?
         }
         Payload::Vp { vp, client_id, nonce } => {
@@ -141,7 +147,10 @@ pub async fn verify(proof: Verify<'_>, resolver: &impl DidResolver) -> anyhow::R
                 bail!("VerifiableCredential is not a JWT");
             };
             let jwt: jwt::Jwt<jose::VcClaims> = jws::decode(token, verify_key!(resolver)).await?;
-            Ok(Payload::Vc(jwt.claims.vc))
+            Ok(Payload::Vc {
+                vc: jwt.claims.vc,
+                issued_at: jwt.claims.iat,
+            })
         }
         Verify::Vp(value) => {
             match value {

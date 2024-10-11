@@ -10,7 +10,7 @@
 
 use std::fmt::Debug;
 
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use tracing::instrument;
 use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
@@ -187,6 +187,9 @@ impl Context {
     async fn issue_response(
         &self, provider: &impl Provider, request: CredentialRequest, dataset: Dataset,
     ) -> Result<CredentialResponse> {
+        // generate the issuance time stamp
+        let issuance_date = Utc::now();
+
         let signer = SecOps::signer(provider, &request.credential_issuer)
             .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
 
@@ -194,7 +197,7 @@ impl Context {
         let response = match &self.configuration.format {
             Format::JwtVcJson(w3c) => {
                 let vc = self.w3c_vc(provider, &w3c.credential_definition, dataset).await?;
-                self.jwt_vc_json(vc, signer).await?
+                self.jwt_vc_json(vc, signer, issuance_date).await?
             }
             Format::IsoMdl(_) => self.mso_mdoc(dataset, signer).await?,
 
@@ -221,7 +224,8 @@ impl Context {
 
         // create issuance state for notification endpoint
         // TODO: save credential in state !!
-        // state.stage = Stage::Issued(Credential { credential: vc });
+        // state.stage = Stage::Issued(Credential { credential: vc, issuance:
+        // issuance_dt });
         let notification_id = gen::notification_id();
 
         StateStore::put(provider, &notification_id, &state, state.expires_at)
@@ -283,13 +287,21 @@ impl Context {
 
     // Generate a `jwt_vc_json` format credential .
     async fn jwt_vc_json(
-        &self, vc: VerifiableCredential, signer: impl Signer,
+        &self, vc: VerifiableCredential, signer: impl Signer, issuance_date: DateTime<Utc>,
     ) -> Result<CredentialResponseType> {
         // sign and return JWT
-        let jwt =
-            proof::create(W3cFormat::JwtVcJson, Payload::Vc(vc.clone()), signer).await.map_err(
-                |e| Error::ServerError(format!("issue generating `jwt_vc_json` credential: {e}")),
-            )?;
+        let jwt = proof::create(
+            W3cFormat::JwtVcJson,
+            Payload::Vc {
+                vc: vc.clone(),
+                issued_at: issuance_date.timestamp(),
+            },
+            signer,
+        )
+        .await
+        .map_err(|e| {
+            Error::ServerError(format!("issue generating `jwt_vc_json` credential: {e}"))
+        })?;
         Ok(CredentialResponseType::Credential(Kind::String(jwt)))
     }
 
@@ -531,7 +543,7 @@ mod tests {
         let CredentialResponseType::Credential(vc_kind) = &response.response else {
             panic!("expected a single credential");
         };
-        let Payload::Vc(vc) =
+        let Payload::Vc { vc, .. } =
             proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
         else {
             panic!("should be VC");
@@ -621,7 +633,7 @@ mod tests {
         let CredentialResponseType::Credential(vc_kind) = &response.response else {
             panic!("expected a single credential");
         };
-        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider)
+        let Payload::Vc { vc, .. } = vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider)
             .await
             .expect("should decode")
         else {
@@ -705,7 +717,7 @@ mod tests {
         let CredentialResponseType::Credential(vc_kind) = &response.response else {
             panic!("expected a single credential");
         };
-        let Payload::Vc(vc) =
+        let Payload::Vc { vc, .. } =
             proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
         else {
             panic!("should be VC");

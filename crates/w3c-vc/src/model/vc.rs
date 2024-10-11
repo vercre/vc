@@ -82,10 +82,8 @@ pub struct VerifiableCredential {
     /// An XMLSCHEMA11-2 (RFC3339) date-time the credential becomes valid.
     /// e.g. 2010-01-01T19:23:24Z.
     ///
-    /// TODO: The specification implies this field is optional but other aspects
-    /// of the specification rely on it being present, so we have made it
-    /// mandatory here.
-    pub valid_from: DateTime<Utc>,
+    /// Note: this is not necessarily the date the credential was issued.
+    pub valid_from: Option<DateTime<Utc>>,
 
     /// An XMLSCHEMA11-2 (RFC3339) date-time the credential ceases to be valid.
     /// e.g. 2010-06-30T19:23:24Z
@@ -449,7 +447,6 @@ impl VcBuilder {
         // set some sensibile defaults
         builder.vc.context.push(Kind::String("https://www.w3.org/2018/credentials/v1".into()));
         builder.vc.type_ = Quota::One("VerifiableCredential".into());
-        builder.vc.valid_from = chrono::Utc::now(); //.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
 
         builder
     }
@@ -732,7 +729,7 @@ mod tests {
             type_: Quota::Many(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
             issuer: Kind::String("https://example.com/issuers/14".into()),
             id: Some("https://example.com/credentials/3732".into()),
-            valid_from: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
+            valid_from: Some(Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap()),
             credential_subject: Quota::One(CredentialSubject {
                 id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
                 claims: json!({"employeeId": "1234567890"})

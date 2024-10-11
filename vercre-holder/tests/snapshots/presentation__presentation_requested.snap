@@ -1,6 +1,6 @@
 ---
 source: vercre-holder/tests/presentation.rs
-assertion_line: 116
+assertion_line: 118
 expression: presentation
 ---
 presentation_id: "[presentation_id]"
@@ -22,4 +22,5 @@ credentials:
         id: "did:example:ebfeb1f712ebc6f1c276e12ec21"
       validFrom: "2023-11-20T23:21:55Z"
       validUntil: "2033-12-20T23:21:55Z"
-    issued: eyJhbGciOiJFZERTQSIsInR5cCI6Imp3dCIsImtpZCI6ImRpZDp3ZWI6ZGVtby5jcmVkaWJpbC5pbyNrZXktMCJ9.eyJzdWIiOiJkaWQ6ZXhhbXBsZTplYmZlYjFmNzEyZWJjNmYxYzI3NmUxMmVjMjEiLCJuYmYiOjE3MDA1MjI1MTUsImlzcyI6Imh0dHBzOi8vZXhhbXBsZS5jb20vaXNzdWVycy8xNCIsImlhdCI6MTcwMDUyMjUxNSwianRpIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9jcmVkZW50aWFscy8zNzMyIiwiZXhwIjoyMDE4NzMzNzE1LCJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL2V4YW1wbGVzL3YxIl0sImlkIjoiaHR0cHM6Ly9leGFtcGxlLmNvbS9jcmVkZW50aWFscy8zNzMyIiwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIkVtcGxveWVlSURDcmVkZW50aWFsIl0sImlzc3VlciI6Imh0dHBzOi8vZXhhbXBsZS5jb20vaXNzdWVycy8xNCIsImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImlkIjoiZGlkOmV4YW1wbGU6ZWJmZWIxZjcxMmViYzZmMWMyNzZlMTJlYzIxIiwiZW1wbG95ZWVJZCI6IjEyMzQ1Njc4OTAifSwidmFsaWRGcm9tIjoiMjAyMy0xMS0yMFQyMzoyMTo1NVoiLCJ2YWxpZFVudGlsIjoiMjAzMy0xMi0yMFQyMzoyMTo1NVoifX0.bJ74brviLOM_dh3i7h7GzMqUMUONu4BgIZWbDSM_PfJoJW1uQL6pUNmLpjQ_fcUdbFrzjkO3Mgai-heJFaJWAg
+    issued: "[issued]"
+    issuance_date: "[issuance_date]"
