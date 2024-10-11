@@ -8,6 +8,7 @@
 
 use std::collections::{BTreeMap, HashSet};
 
+use chrono::{Duration, SecondsFormat, Utc};
 use ciborium::Value;
 use coset::{AsCborValue, CoseSign1};
 use rand::Rng;
@@ -65,13 +66,21 @@ pub struct MobileSecurityObject {
 impl MobileSecurityObject {
     /// Create a new `MobileSecurityObject` with default values.
     pub fn new() -> Self {
+        // TODO: get valid_xxx dates from issuer
+        let until = Utc::now() + Duration::days(365);
+
         Self {
             version: "1.0".to_string(),
             digest_algorithm: DigestAlgorithm::Sha256,
             value_digests: BTreeMap::new(),
             device_key_info: DeviceKeyInfo::default(),
             doc_type: "org.iso.18013.5.1.mDL".to_string(),
-            validity_info: ValidityInfo::default(),
+            validity_info: ValidityInfo {
+                signed: Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true),
+                valid_from: Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true),
+                valid_until: until.to_rfc3339_opts(SecondsFormat::Secs, true),
+                expected_update: None,
+            },
         }
     }
 }
