@@ -284,11 +284,14 @@ async fn credential(
     provider: &impl HolderProvider, config: &CredentialConfiguration,
     vc_kind: &Kind<VerifiableCredential>,
 ) -> anyhow::Result<Credential> {
-    let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), provider)
+    let Payload::Vc{ vc, issued_at } = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), provider)
         .await
         .map_err(|e| anyhow!("issue parsing credential: {e}"))?
     else {
         bail!("expected VerifiableCredential");
+    };
+    let Some(issuance_date) = DateTime::from_timestamp(issued_at, 0) else {
+        bail!("invalid issuance date");
     };
 
     let issuer_id = match &vc.issuer {
@@ -306,6 +309,7 @@ async fn credential(
         issuer: issuer_id.clone(),
         vc: vc.clone(),
         issued: token.into(),
+        issuance_date,
         display: config.display.clone(),
 
         ..Credential::default()

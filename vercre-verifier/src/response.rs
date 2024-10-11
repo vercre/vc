@@ -160,7 +160,7 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
             _ => return Err(Error::InvalidRequest(format!("unexpected VC format: {vc_node}"))),
         };
 
-        let Payload::Vc(vc) =
+        let Payload::Vc{ vc, .. } =
             vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider)
                 .await
                 .map_err(|e| Error::InvalidRequest(format!("invalid VC proof: {e}")))?

@@ -10,7 +10,7 @@
 
 use std::fmt::Debug;
 
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use tracing::instrument;
 use vercre_core::{gen, Kind};
 use vercre_datasec::jose::jws::{self, KeyType, Type};
@@ -183,6 +183,9 @@ impl Context {
     async fn issue_response(
         &self, provider: &impl Provider, request: CredentialRequest, dataset: Dataset,
     ) -> Result<CredentialResponse> {
+        // generate the issuance time stamp
+        let issuance_dt = Utc::now();
+
         let config_id = &self.authorized.credential_configuration_id;
         let config =
             self.issuer.credential_configurations_supported.get(config_id).ok_or_else(|| {
@@ -191,7 +194,14 @@ impl Context {
 
         let response = match &config.format {
             FormatIdentifier::JwtVcJson(w3c) => {
-                self.jwt_vc_json(provider, &request, &w3c.credential_definition, dataset).await?
+                self.jwt_vc_json(
+                    provider,
+                    &request,
+                    &w3c.credential_definition,
+                    dataset,
+                    &issuance_dt,
+                )
+                .await?
             }
             FormatIdentifier::IsoMdl(_) => self.mso_mdoc(provider, &request, dataset).await?,
             _ => todo!(),
@@ -214,7 +224,8 @@ impl Context {
 
         // create issuance state for notification endpoint
         // TODO: save credential in state !!
-        // state.stage = Stage::Issued(Credential { credential: vc });
+        // state.stage = Stage::Issued(Credential { credential: vc, issuance:
+        // issuance_dt });
         let notification_id = gen::notification_id();
 
         StateStore::put(provider, &notification_id, &state, state.expires_at)
@@ -233,6 +244,7 @@ impl Context {
     async fn jwt_vc_json(
         &self, provider: &impl Provider, request: &CredentialRequest,
         credential_definition: &CredentialDefinition, dataset: Dataset,
+        issuance_dt: &DateTime<Utc>,
     ) -> Result<CredentialResponseType> {
         // generate vc
         let vc = self.w3c_vc(provider, request, credential_definition, dataset).await?;
@@ -240,10 +252,16 @@ impl Context {
         // sign and return JWT
         let signer = SecOps::signer(provider, &request.credential_issuer)
             .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
-        let jwt =
-            vercre_w3c_vc::proof::create(proof::Format::JwtVcJson, Payload::Vc(vc.clone()), signer)
-                .await
-                .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
+        let jwt = vercre_w3c_vc::proof::create(
+            proof::Format::JwtVcJson,
+            Payload::Vc {
+                vc: vc.clone(),
+                issued_at: issuance_dt.timestamp(),
+            },
+            signer,
+        )
+        .await
+        .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
 
         Ok(CredentialResponseType::Credential(Kind::String(jwt)))
     }
@@ -544,7 +562,7 @@ mod tests {
         let CredentialResponseType::Credential(vc_kind) = &response.response else {
             panic!("expected a single credential");
         };
-        let Payload::Vc(vc) =
+        let Payload::Vc{ vc, .. } =
             proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
         else {
             panic!("should be VC");
@@ -634,7 +652,7 @@ mod tests {
         let CredentialResponseType::Credential(vc_kind) = &response.response else {
             panic!("expected a single credential");
         };
-        let Payload::Vc(vc) = vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider)
+        let Payload::Vc{ vc, .. } = vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider)
             .await
             .expect("should decode")
         else {
@@ -718,7 +736,7 @@ mod tests {
         let CredentialResponseType::Credential(vc_kind) = &response.response else {
             panic!("expected a single credential");
         };
-        let Payload::Vc(vc) =
+        let Payload::Vc{ vc, .. } =
             proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
         else {
             panic!("should be VC");

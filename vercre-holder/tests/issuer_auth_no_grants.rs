@@ -117,5 +117,6 @@ async fn issuer_auth_no_grants() {
         "[].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
         "[].metadata.credential_definition.credentialSubject.address" => insta::sorted_redaction(),
         "[].issued" => "[issued]",
+        "[].issuance_date" => "[issuance_date]",
     });
 }

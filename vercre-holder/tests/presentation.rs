@@ -62,7 +62,7 @@ async fn sample_credential() -> Credential {
         type_: Quota::Many(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
         issuer: Kind::String("https://example.com/issuers/14".into()),
         id: Some("https://example.com/credentials/3732".into()),
-        valid_from: Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap(),
+        valid_from: Some(Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap()),
         credential_subject: Quota::One(CredentialSubject {
             id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
             claims: json!({"employeeId": "1234567890"})
@@ -73,11 +73,12 @@ async fn sample_credential() -> Credential {
 
         ..VerifiableCredential::default()
     };
+    let issuance_date = Utc::now();
 
     let provider = VERIFIER_PROVIDER.clone();
     let signer = SecOps::signer(&provider, VERIFIER_ID).expect("should get verifier");
 
-    let payload = Payload::Vc(vc.clone());
+    let payload = Payload::Vc{vc: vc.clone(), issued_at: issuance_date.timestamp()};
     let jwt = proof::create(Format::JwtVcJson, payload, signer).await.expect("should encode");
 
     Credential {
@@ -86,6 +87,7 @@ async fn sample_credential() -> Credential {
         vc: vc.clone(),
         display: None,
         issued: jwt,
+        issuance_date,
         logo: None,
     }
 }
@@ -115,6 +117,8 @@ async fn e2e_presentation_uri() {
     assert_eq!(presentation.status, Status::Requested);
     assert_snapshot!("presentation_requested", presentation, {
         ".presentation_id" => "[presentation_id]",
+        ".credentials[].issued" => "[issued]",
+        ".credentials[].issuance_date" => "[issuance_date]",
         ".**.credentialSubject" => insta::sorted_redaction(),
         ".**.credentialSubject.address" => insta::sorted_redaction(),
     });
@@ -165,6 +169,8 @@ async fn e2e_presentation_obj() {
     assert_eq!(presentation.status, Status::Requested);
     assert_snapshot!("presentation_requested2", presentation, {
         ".presentation_id" => "[presentation_id]",
+        ".credentials[].issued" => "[issued]",
+        ".credentials[].issuance_date" => "[issuance_date]",
         ".credentials[].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
         ".credentials[].metadata.credential_definition.credentialSubject.address" => insta::sorted_redaction(),
     });

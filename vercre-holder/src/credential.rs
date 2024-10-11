@@ -5,6 +5,7 @@
 
 use std::ops::Deref;
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use vercre_openid::issuer::CredentialDisplay;
 use vercre_w3c_vc::model::VerifiableCredential;
@@ -29,6 +30,9 @@ pub struct Credential {
     /// Submissions. This could be a base64-encoded JWT or 'stringified'
     /// JSON.
     pub issued: String,
+
+    /// The date the credential was issued.
+    pub issuance_date: DateTime<Utc>,
 
     /// Display information from the issuer's metadata for this credential.
     #[serde(skip_serializing_if = "Option::is_none")]

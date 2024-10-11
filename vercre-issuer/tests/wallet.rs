@@ -173,7 +173,7 @@ impl Wallet {
         // TODO: verify signature
 
         // verify the credential is as expected
-        let Ok(Payload::Vc(vc)) = proof::verify(Verify::Vc(credential), &self.provider).await
+        let Ok(Payload::Vc{ vc, .. }) = proof::verify(Verify::Vc(credential), &self.provider).await
         else {
             panic!("should be VC");
         };
