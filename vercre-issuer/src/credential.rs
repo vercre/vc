@@ -229,45 +229,10 @@ impl Context {
         })
     }
 
-    // Generate a `jwt_vc_json` format credential .
-    async fn jwt_vc_json(
-        &self, provider: &impl Provider, request: &CredentialRequest,
-        credential_definition: &CredentialDefinition, dataset: Dataset,
-    ) -> Result<CredentialResponseType> {
-        // generate vc
-        let vc = self.w3c_vc(provider, request, credential_definition, dataset).await?;
-
-        // sign and return JWT
-        let signer = SecOps::signer(provider, &request.credential_issuer)
-            .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
-        let jwt =
-            vercre_w3c_vc::proof::create(proof::Format::JwtVcJson, Payload::Vc(vc.clone()), signer)
-                .await
-                .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
-
-        Ok(CredentialResponseType::Credential(Kind::String(jwt)))
-    }
-
-    // Generate a `mso_mdoc` format credential.
-    //
-    // Base64url-encoded representation of the CBOR-encoded IssuerSigned structure,
-    // as defined in [ISO.18013-5](https://www.iso.org/standard/69084.html).
-    // TODO: remove lint suppression when implemented.
-    #[allow(clippy::unused_async)]
-    async fn mso_mdoc(
-        &self, provider: &impl Provider, request: &CredentialRequest, dataset: Dataset,
-    ) -> Result<CredentialResponseType> {
-        let signer = SecOps::signer(provider, &request.credential_issuer)
-            .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
-
-        let mdl = vercre_iso_mdl::to_credential(dataset.claims, signer)
-            .await
-            .map_err(|e| Error::ServerError(format!("issue generating mDL credential: {e}")))?;
-
-        Ok(CredentialResponseType::Credential(Kind::String(mdl)))
-    }
-
     // Generate a W3C Verifiable Credential.
+    // async fn w3c_vc(&self, issuer: String, type_: String,dataset: Map<String, Value>,
+    //     status: Option<Quota<CredentialStatus>>) -> Result<VerifiableCredential> {
+
     async fn w3c_vc(
         &self, provider: &impl Provider, request: &CredentialRequest,
         credential_definition: &CredentialDefinition, dataset: Dataset,
@@ -312,6 +277,41 @@ impl Context {
             .status(status)
             .build()
             .map_err(|e| Error::ServerError(format!("issue building VC: {e}")))
+    }
+
+    // Generate a `jwt_vc_json` format credential .
+    async fn jwt_vc_json(
+        &self, provider: &impl Provider, request: &CredentialRequest,
+        credential_definition: &CredentialDefinition, dataset: Dataset,
+    ) -> Result<CredentialResponseType> {
+        // sign and return JWT
+        let signer = SecOps::signer(provider, &request.credential_issuer)
+            .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
+
+        let vc = self.w3c_vc(provider, request, credential_definition, dataset).await?;
+        let jwt =
+            vercre_w3c_vc::proof::create(proof::Format::JwtVcJson, Payload::Vc(vc.clone()), signer)
+                .await
+                .map_err(|e| Error::ServerError(format!("issue creating proof: {e}")))?;
+
+        Ok(CredentialResponseType::Credential(Kind::String(jwt)))
+    }
+
+    // Generate a `mso_mdoc` format credential.
+    //
+    // Base64url-encoded representation of the CBOR-encoded `IssuerSigned`
+    // structure, as defined in [ISO.18013-5](https://www.iso.org/standard/69084.html).
+    async fn mso_mdoc(
+        &self, provider: &impl Provider, request: &CredentialRequest, dataset: Dataset,
+    ) -> Result<CredentialResponseType> {
+        let signer = SecOps::signer(provider, &request.credential_issuer)
+            .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
+
+        let mdl = vercre_iso_mdl::to_credential(dataset.claims, signer)
+            .await
+            .map_err(|e| Error::ServerError(format!("issue generating mDL credential: {e}")))?;
+
+        Ok(CredentialResponseType::Credential(Kind::String(mdl)))
     }
 
     // Defer issuance of the requested credential.

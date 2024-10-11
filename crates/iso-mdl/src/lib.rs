@@ -15,6 +15,7 @@ mod mso;
 
 use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded as Base64, Encoding};
+use ciborium::cbor;
 use coset::{iana, CoseSign1Builder, HeaderBuilder};
 use rand::{thread_rng, Rng};
 use serde_json::{Map, Value};
@@ -51,7 +52,7 @@ pub async fn to_credential(
                 digest_id: id_gen.gen(),
                 random: thread_rng().gen::<[u8; 16]>().into(),
                 element_identifier: k.clone(),
-                element_value: ciborium::cbor!(v)?,
+                element_value: cbor!(v)?,
             });
 
             // digest of `IssuerSignedItem` for MSO
