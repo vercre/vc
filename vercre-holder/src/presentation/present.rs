@@ -10,7 +10,7 @@ use vercre_core::Kind;
 use vercre_dif_exch::{DescriptorMap, FilterValue, PathNested, PresentationSubmission};
 use vercre_openid::verifier::{ResponseRequest, ResponseResponse};
 use vercre_w3c_vc::model::vp::VerifiablePresentation;
-use vercre_w3c_vc::proof::{self, Format, Payload};
+use vercre_w3c_vc::proof::{self, W3cFormat, Payload};
 
 use super::{Presentation, Status};
 use crate::provider::{HolderProvider, Signer, Verifier};
@@ -56,7 +56,7 @@ pub async fn present(
         client_id: presentation.request.client_id.clone(),
         nonce: presentation.request.nonce.clone(),
     };
-    let jwt = proof::create(Format::JwtVcJson, payload, provider.clone()).await.map_err(|e| {
+    let jwt = proof::create(W3cFormat::JwtVcJson, payload, provider.clone()).await.map_err(|e| {
         tracing::error!(target: "Endpoint::present", ?e);
         e
     })?;

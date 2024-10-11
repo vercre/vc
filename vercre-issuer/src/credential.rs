@@ -25,7 +25,7 @@ use vercre_openid::{Error, Result};
 use vercre_status::issuer::Status;
 use vercre_w3c_vc::model::types::{LangString, LangValue};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
-use vercre_w3c_vc::proof::{self, Format, Payload};
+use vercre_w3c_vc::proof::{self, Payload, W3cFormat};
 use vercre_w3c_vc::verify_key;
 
 use crate::state::{Authorized, Deferrance, Expire, Stage, State};
@@ -287,9 +287,10 @@ impl Context {
         &self, vc: VerifiableCredential, signer: impl Signer,
     ) -> Result<CredentialResponseType> {
         // sign and return JWT
-        let jwt = proof::create(Format::JwtVcJson, Payload::Vc(vc.clone()), signer).await.map_err(
-            |e| Error::ServerError(format!("issue generating `jwt_vc_json` credential: {e}")),
-        )?;
+        let jwt =
+            proof::create(W3cFormat::JwtVcJson, Payload::Vc(vc.clone()), signer).await.map_err(
+                |e| Error::ServerError(format!("issue generating `jwt_vc_json` credential: {e}")),
+            )?;
         Ok(CredentialResponseType::Credential(Kind::String(jwt)))
     }
 
