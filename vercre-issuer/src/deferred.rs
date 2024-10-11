@@ -171,7 +171,7 @@ mod tests {
         let CredentialResponseType::Credential(vc_kind) = &cred_resp.response else {
             panic!("expected a single credential");
         };
-        let Payload::Vc{ vc, .. } =
+        let Payload::Vc { vc, .. } =
             proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
         else {
             panic!("should be VC");

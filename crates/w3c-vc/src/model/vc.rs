@@ -81,7 +81,7 @@ pub struct VerifiableCredential {
 
     /// An XMLSCHEMA11-2 (RFC3339) date-time the credential becomes valid.
     /// e.g. 2010-01-01T19:23:24Z.
-    /// 
+    ///
     /// Note: this is not necessarily the date the credential was issued.
     pub valid_from: Option<DateTime<Utc>>,
 

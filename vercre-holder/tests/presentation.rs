@@ -16,7 +16,7 @@ use vercre_holder::provider::CredentialStorer;
 use vercre_openid::verifier::{CreateRequestRequest, DeviceFlow};
 use vercre_test_utils::verifier::{self, VERIFIER_ID};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
-use vercre_w3c_vc::proof::{self, Format, Payload};
+use vercre_w3c_vc::proof::{self, Payload, W3cFormat};
 
 use crate::provider as holder;
 
@@ -78,8 +78,11 @@ async fn sample_credential() -> Credential {
     let provider = VERIFIER_PROVIDER.clone();
     let signer = SecOps::signer(&provider, VERIFIER_ID).expect("should get verifier");
 
-    let payload = Payload::Vc{vc: vc.clone(), issued_at: issuance_date.timestamp()};
-    let jwt = proof::create(Format::JwtVcJson, payload, signer).await.expect("should encode");
+    let payload = Payload::Vc {
+        vc: vc.clone(),
+        issued_at: issuance_date.timestamp(),
+    };
+    let jwt = proof::create(W3cFormat::JwtVcJson, payload, signer).await.expect("should encode");
 
     Credential {
         issuer: "https://vercre.io".into(),

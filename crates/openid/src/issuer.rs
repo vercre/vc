@@ -667,7 +667,7 @@ pub enum CredentialAuthorization {
     /// Identifies the credential to authorize using format-specific parameters.
     /// The requested format should resolve to a single supported credential in
     /// the `credential_configurations_supported` map in the Issuer Metadata.
-    Format(FormatIdentifier),
+    Format(Format),
 }
 
 impl Default for CredentialAuthorization {
@@ -714,7 +714,7 @@ impl PartialEq for CredentialAuthorization {
 /// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "format")]
-pub enum FormatIdentifier {
+pub enum Format {
     /// A W3C Verifiable Credential.
     ///
     /// When this format is specified, Credential Offer, Authorization Details,
@@ -766,7 +766,7 @@ pub enum FormatIdentifier {
     VcSdJwt(ProfileSdJwt),
 }
 
-impl FormatIdentifier {
+impl Format {
     /// Claims for the format profile.
     #[must_use]
     pub fn claims(&self) -> Option<HashMap<String, Claim>> {
@@ -780,13 +780,13 @@ impl FormatIdentifier {
     }
 }
 
-impl Default for FormatIdentifier {
+impl Default for Format {
     fn default() -> Self {
         Self::JwtVcJson(ProfileW3c::default())
     }
 }
 
-impl std::fmt::Display for FormatIdentifier {
+impl std::fmt::Display for Format {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::JwtVcJson(_) => write!(f, "jwt_vc_json"),
@@ -1158,7 +1158,7 @@ pub enum CredentialIssuance {
 
     /// Defines the format and type of of the Credential to be issued.  REQUIRED
     /// when `credential_identifiers` was not returned from the Token Response.
-    Format(FormatIdentifier),
+    Format(Format),
 }
 
 impl Default for CredentialIssuance {
@@ -1525,7 +1525,7 @@ impl Issuer {
     /// # Errors
     ///
     /// TODO: add error handling
-    pub fn credential_configuration_id(&self, fmt: &FormatIdentifier) -> Result<&String> {
+    pub fn credential_configuration_id(&self, fmt: &Format) -> Result<&String> {
         self.credential_configurations_supported
             .iter()
             .find(|(_, cfg)| &cfg.format == fmt)
@@ -1602,7 +1602,7 @@ pub struct CredentialConfiguration {
     ///
     /// [Credential Format Profiles]: https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles
     #[serde(flatten)]
-    pub format: FormatIdentifier,
+    pub format: Format,
 
     /// The `scope` value that this Credential Issuer supports for this
     /// credential. The value can be the same accross multiple
@@ -2168,17 +2168,15 @@ mod tests {
             code_challenge_method: oauth::CodeChallengeMethod::S256,
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                credential: CredentialAuthorization::Format(FormatIdentifier::JwtVcJson(
-                    ProfileW3c {
-                        credential_definition: CredentialDefinition {
-                            type_: Some(vec![
-                                "VerifiableCredential".into(),
-                                "EmployeeIDCredential".into(),
-                            ]),
-                            ..CredentialDefinition::default()
-                        },
+                credential: CredentialAuthorization::Format(Format::JwtVcJson(ProfileW3c {
+                    credential_definition: CredentialDefinition {
+                        type_: Some(vec![
+                            "VerifiableCredential".into(),
+                            "EmployeeIDCredential".into(),
+                        ]),
+                        ..CredentialDefinition::default()
                     },
-                )),
+                })),
 
                 ..AuthorizationDetail::default()
             }]),
@@ -2257,7 +2255,7 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            credential: CredentialIssuance::Format(FormatIdentifier::JwtVcJson(ProfileW3c {
+            credential: CredentialIssuance::Format(Format::JwtVcJson(ProfileW3c {
                 credential_definition: CredentialDefinition {
                     type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
                     ..CredentialDefinition::default()

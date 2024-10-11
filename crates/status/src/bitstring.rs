@@ -7,17 +7,17 @@ use std::io::Write;
 
 use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded, Encoding};
-use chrono::Utc;
 use bitvec::bits;
 use bitvec::order::Lsb0;
 use bitvec::view::BitView;
+use chrono::Utc;
 use flate2::write::GzEncoder;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use thiserror::Error;
 use vercre_datasec::Signer;
 use vercre_w3c_vc::model::{CredentialStatus, CredentialSubject, StatusPurpose, VcBuilder};
-use vercre_w3c_vc::proof::{self, Format, Payload};
+use vercre_w3c_vc::proof::{self, Payload, W3cFormat};
 
 use crate::config::ListConfig;
 use crate::log::StatusLogEntry;
@@ -224,7 +224,7 @@ pub async fn credential(
             claims,
         })
         .build()?;
-    let jwt = proof::create(Format::JwtVcJson, Payload::Vc{vc, issued_at}, signer).await?;
+    let jwt = proof::create(W3cFormat::JwtVcJson, Payload::Vc { vc, issued_at }, signer).await?;
 
     Ok(jwt)
 }

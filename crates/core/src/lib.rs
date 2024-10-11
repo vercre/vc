@@ -112,4 +112,3 @@ impl<T: Clone + Default + PartialEq> Quota<T> {
         }
     }
 }
-

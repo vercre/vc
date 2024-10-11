@@ -22,6 +22,7 @@ workspace = true
 [dependencies]
 anyhow.workspace = true
 base64ct.workspace = true
+chrono.workspace = true
 ciborium = "0.2.2"
 coset = "0.3.8"
 rand = { version = "0.8.5", features = ["getrandom"] }

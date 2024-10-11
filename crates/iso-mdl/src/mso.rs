@@ -8,12 +8,12 @@
 
 use std::collections::{BTreeMap, HashSet};
 
+use chrono::{Duration, SecondsFormat, Utc};
 use ciborium::Value;
 use coset::{AsCborValue, CoseSign1};
 use rand::Rng;
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
 use vercre_datasec::cose::CoseKey;
-use vercre_datasec::{Curve, KeyType};
 
 use crate::mdoc::NameSpace;
 
@@ -26,29 +26,20 @@ use crate::mdoc::NameSpace;
 pub struct IssuerAuth(pub CoseSign1);
 
 impl Serialize for IssuerAuth {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.0.clone().to_cbor_value().map_err(ser::Error::custom)?.serialize(serializer)
     }
 }
 
 impl<'de> Deserialize<'de> for IssuerAuth {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let value = Value::deserialize(deserializer)?;
         CoseSign1::from_cbor_value(value).map_err(de::Error::custom).map(Self)
     }
 }
 
-// /// Payload for `COSE_Sign1` signature type.
-// /// `#6.24(bstr .cbor MobileSecurityObject)`
-// pub type MobileSecurityObjectBytes = Tag24<MobileSecurityObject>;
-
-/// An mdoc digital signature is generated over the mobile security object (MSO).
+/// An mdoc digital signature is generated over the mobile security object
+/// (MSO).
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MobileSecurityObject {
@@ -58,7 +49,8 @@ pub struct MobileSecurityObject {
     /// Message digest algorithm used.
     pub digest_algorithm: DigestAlgorithm,
 
-    /// An ordered set of value digests for each data element in each name space.
+    /// An ordered set of value digests for each data element in each name
+    /// space.
     pub value_digests: BTreeMap<NameSpace, BTreeMap<DigestId, Digest>>,
 
     /// Device key information
@@ -74,13 +66,21 @@ pub struct MobileSecurityObject {
 impl MobileSecurityObject {
     /// Create a new `MobileSecurityObject` with default values.
     pub fn new() -> Self {
+        // TODO: get valid_xxx dates from issuer
+        let until = Utc::now() + Duration::days(365);
+
         Self {
             version: "1.0".to_string(),
             digest_algorithm: DigestAlgorithm::Sha256,
             value_digests: BTreeMap::new(),
-            device_key_info: DeviceKeyInfo::new(),
+            device_key_info: DeviceKeyInfo::default(),
             doc_type: "org.iso.18013.5.1.mDL".to_string(),
-            validity_info: ValidityInfo::new(),
+            validity_info: ValidityInfo {
+                signed: Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true),
+                valid_from: Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true),
+                valid_until: until.to_rfc3339_opts(SecondsFormat::Secs, true),
+                expected_update: None,
+            },
         }
     }
 }
@@ -115,7 +115,7 @@ pub enum DigestAlgorithm {
 /// Used to hold the mdoc authentication public key and information related to
 /// this key. Encoded as an untagged `COSE_Key` element as specified in
 /// [RFC 9052] and [RFC 9053].
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DeviceKeyInfo {
     /// Device key
@@ -128,22 +128,6 @@ pub struct DeviceKeyInfo {
     /// Key info
     #[serde(skip_serializing_if = "Option::is_none")]
     pub key_info: Option<BTreeMap<i64, ciborium::Value>>,
-}
-
-impl DeviceKeyInfo {
-    /// Create a new `DeviceKeyInfo` with the given device key.
-    pub const fn new() -> Self {
-        Self {
-            device_key: CoseKey {
-                kty: KeyType::Okp,
-                crv: Curve::Ed25519,
-                x: Vec::new(),
-                y: None,
-            },
-            key_authorizations: None,
-            key_info: None,
-        }
-    }
 }
 
 /// Name spaces authorized for the MSO
@@ -173,7 +157,7 @@ pub struct KeyAuthorization {
 }
 
 /// Contains information related to the validity of the MSO and its signature.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ValidityInfo {
     /// Time the MSO was signed
@@ -191,18 +175,6 @@ pub struct ValidityInfo {
     /// The time at which the issuing authority expects to re-sign the MSO
     /// (and potentially update data elements).
     pub expected_update: Option<String>,
-}
-
-impl ValidityInfo {
-    /// Create a new `DeviceKeyInfo` with the given device key.
-    pub const fn new() -> Self {
-        Self {
-            signed: String::new(),
-            valid_from: String::new(),
-            valid_until: String::new(),
-            expected_update: None,
-        }
-    }
 }
 
 /// Generates unique `DigestId` values.

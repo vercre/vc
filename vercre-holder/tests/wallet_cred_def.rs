@@ -7,8 +7,7 @@ use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::issuance::{AuthorizeRequest, CredentialsRequest, Initiator, SaveRequest};
 use vercre_holder::provider::{CredentialStorer, Issuer, MetadataRequest};
 use vercre_holder::{
-    AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization, FormatIdentifier,
-    ProfileClaims,
+    AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization, Format, ProfileClaims,
 };
 use vercre_test_utils::issuer::{CLIENT_ID, CREDENTIAL_ISSUER, REDIRECT_URI};
 
@@ -40,7 +39,7 @@ async fn wallet_credential_definition() {
         .get("EmployeeID_JWT")
         .expect("should have credential configuration");
     let claims = match &credential_config.format {
-        FormatIdentifier::JwtVcJson(def) => ProfileClaims::W3c(def.credential_definition.clone()),
+        Format::JwtVcJson(def) => ProfileClaims::W3c(def.credential_definition.clone()),
         _ => panic!("unexpected format"),
     };
     assert_snapshot!("claims", claims, {

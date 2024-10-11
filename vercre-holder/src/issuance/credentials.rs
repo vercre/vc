@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_core::Kind;
 use vercre_datasec::jose::jws::{self, Type};
-use vercre_issuer::{CredentialAuthorization, CredentialIssuance, FormatIdentifier, SingleProof};
+use vercre_issuer::{CredentialAuthorization, CredentialIssuance, Format, SingleProof};
 use vercre_macros::credential_request;
 use vercre_openid::issuer::{
     CredentialConfiguration, CredentialRequest, CredentialResponse, CredentialResponseType, Proof,
@@ -44,7 +44,7 @@ pub struct CredentialsRequest {
     ///
     /// If provided, the format must be one supported by the issuer (as
     /// described in the issuer metadata).
-    pub format: Option<FormatIdentifier>,
+    pub format: Option<Format>,
 }
 
 /// `CredentialsResponse` provides the issuance flow ID and any deferred
@@ -284,7 +284,7 @@ async fn credential(
     provider: &impl HolderProvider, config: &CredentialConfiguration,
     vc_kind: &Kind<VerifiableCredential>,
 ) -> anyhow::Result<Credential> {
-    let Payload::Vc{ vc, issued_at } = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), provider)
+    let Payload::Vc { vc, issued_at } = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), provider)
         .await
         .map_err(|e| anyhow!("issue parsing credential: {e}"))?
     else {
