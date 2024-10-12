@@ -7,8 +7,8 @@
 
 use std::future::Future;
 
-pub use vercre_datasec::jose::jwk::PublicKeyJwk;
-pub use vercre_datasec::{Algorithm, Signer};
+pub use vercre_infosec::jose::jwk::PublicKeyJwk;
+pub use vercre_infosec::{Algorithm, Signer};
 pub use vercre_did::{DidResolver, Document};
 pub use vercre_dif_exch::Constraints;
 pub use vercre_issuer::{

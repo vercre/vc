@@ -9,7 +9,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_core::Kind;
-use vercre_datasec::jose::jws::{self, Type};
+use vercre_infosec::jose::jws::{self, Type};
 use vercre_issuer::{CredentialAuthorization, CredentialIssuance, Format, SingleProof};
 use vercre_macros::credential_request;
 use vercre_openid::issuer::{

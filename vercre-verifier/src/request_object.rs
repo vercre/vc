@@ -15,7 +15,7 @@
 //! [JWT VC Presentation Profile]: (https://identity.foundation/jwt-vc-presentation-profile)
 
 use tracing::instrument;
-use vercre_datasec::jose::jws::{self, Type};
+use vercre_infosec::jose::jws::{self, Type};
 use vercre_openid::verifier::{
     Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, SecOps, StateStore,
 };

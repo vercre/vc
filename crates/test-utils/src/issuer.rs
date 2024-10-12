@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use vercre_datasec::{Algorithm, Decryptor, Encryptor, SecOps, Signer};
+use vercre_infosec::{Algorithm, Decryptor, Encryptor, SecOps, Signer};
 use vercre_did::{DidResolver, Document};
 use vercre_openid::issuer::{
     Client, Dataset, Issuer, Metadata, Result, Server, StateStore, Subject,

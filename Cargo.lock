@@ -5998,29 +5998,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "vercre-datasec"
-version = "0.1.0-alpha.6"
-dependencies = [
- "aes-gcm",
- "anyhow",
- "base64ct",
- "ciborium",
- "coset",
- "crypto_box",
- "ecdsa",
- "ed25519-dalek",
- "futures",
- "hex",
- "k256",
- "serde",
- "serde_json",
- "signature",
- "tokio",
- "tracing",
- "x25519-dalek",
-]
-
-[[package]]
 name = "vercre-did"
 version = "0.1.0-alpha.6"
 dependencies = [
@@ -6039,7 +6016,7 @@ dependencies = [
  "tokio",
  "url",
  "vercre-core",
- "vercre-datasec",
+ "vercre-infosec",
 ]
 
 [[package]]
@@ -6069,15 +6046,38 @@ dependencies = [
  "urlencoding",
  "uuid",
  "vercre-core",
- "vercre-datasec",
  "vercre-did",
  "vercre-dif-exch",
+ "vercre-infosec",
  "vercre-issuer",
  "vercre-macros",
  "vercre-openid",
  "vercre-test-utils",
  "vercre-verifier",
  "vercre-w3c-vc",
+]
+
+[[package]]
+name = "vercre-infosec"
+version = "0.1.0-alpha.6"
+dependencies = [
+ "aes-gcm",
+ "anyhow",
+ "base64ct",
+ "ciborium",
+ "coset",
+ "crypto_box",
+ "ecdsa",
+ "ed25519-dalek",
+ "futures",
+ "hex",
+ "k256",
+ "serde",
+ "serde_json",
+ "signature",
+ "tokio",
+ "tracing",
+ "x25519-dalek",
 ]
 
 [[package]]
@@ -6094,7 +6094,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "tokio",
- "vercre-datasec",
+ "vercre-infosec",
  "vercre-test-utils",
 ]
 
@@ -6114,8 +6114,8 @@ dependencies = [
  "tokio",
  "tracing",
  "vercre-core",
- "vercre-datasec",
  "vercre-did",
+ "vercre-infosec",
  "vercre-iso-mdl",
  "vercre-openid",
  "vercre-status",
@@ -6150,9 +6150,9 @@ dependencies = [
  "serde_json",
  "thiserror",
  "vercre-core",
- "vercre-datasec",
  "vercre-did",
  "vercre-dif-exch",
+ "vercre-infosec",
  "vercre-status",
  "vercre-w3c-vc",
 ]
@@ -6170,7 +6170,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "vercre-core",
- "vercre-datasec",
+ "vercre-infosec",
  "vercre-w3c-vc",
 ]
 
@@ -6187,8 +6187,8 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
- "vercre-datasec",
  "vercre-did",
+ "vercre-infosec",
  "vercre-openid",
  "vercre-status",
 ]
@@ -6208,9 +6208,9 @@ dependencies = [
  "tracing",
  "uuid",
  "vercre-core",
- "vercre-datasec",
  "vercre-did",
  "vercre-dif-exch",
+ "vercre-infosec",
  "vercre-openid",
  "vercre-test-utils",
  "vercre-w3c-vc",
@@ -6230,9 +6230,9 @@ dependencies = [
  "tracing-subscriber",
  "uuid",
  "vercre-core",
- "vercre-datasec",
  "vercre-did",
  "vercre-dif-exch",
+ "vercre-infosec",
 ]
 
 [[package]]

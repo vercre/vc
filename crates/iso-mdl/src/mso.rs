@@ -13,7 +13,7 @@ use ciborium::Value;
 use coset::{AsCborValue, CoseSign1};
 use rand::Rng;
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
-use vercre_datasec::cose::CoseKey;
+use vercre_infosec::cose::CoseKey;
 
 use crate::mdoc::NameSpace;
 

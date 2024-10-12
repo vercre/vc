@@ -29,7 +29,7 @@ serde.workspace = true
 serde_json.workspace = true
 thiserror = "1.0.64"
 vercre-core.workspace = true
-vercre-datasec.workspace = true
+vercre-infosec.workspace = true
 vercre-w3c-vc.workspace = true
 
 [dev-dependencies]

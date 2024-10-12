@@ -35,9 +35,9 @@ mod jose;
 use anyhow::bail;
 use serde::{Deserialize, Serialize};
 use vercre_core::{Kind, Quota};
-use vercre_datasec::jose::{jws, jwt};
-use vercre_datasec::Signer;
 use vercre_did::DidResolver;
+use vercre_infosec::jose::{jws, jwt};
+use vercre_infosec::Signer;
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
 use crate::verify_key;

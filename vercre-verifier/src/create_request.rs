@@ -48,7 +48,7 @@ use chrono::Utc;
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::{gen, Kind};
-use vercre_datasec::Algorithm;
+use vercre_infosec::Algorithm;
 use vercre_dif_exch::{ClaimFormat, PresentationDefinition};
 use vercre_openid::verifier::{
     ClientIdScheme, CreateRequestRequest, CreateRequestResponse, DeviceFlow, Metadata, Provider,

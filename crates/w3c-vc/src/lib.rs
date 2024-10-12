@@ -16,7 +16,7 @@ pub mod schema;
 
 pub use anyhow::anyhow;
 // use serde_json::{Map, Value};
-// use vercre_datasec::{Algorithm, Curve, KeyType, Signer};
+// use vercre_infosec::{Algorithm, Curve, KeyType, Signer};
 pub use vercre_did::{dereference, Resource};
 
 // /// Convert a Credential Dataset to a base64url-encoded, CBOR-encoded, ISO mDL
@@ -39,7 +39,7 @@ pub use vercre_did::{dereference, Resource};
 /// # Example
 ///
 /// ```rust,ignore
-/// use vercre_datasec::{verify_key, SecOps};
+/// use vercre_infosec::{verify_key, SecOps};
 ///
 /// let resolver = SecOps::resolver(&provider, &request.credential_issuer)?;
 /// let jwt = jws::decode(proof_jwt, verify_key!(resolver)).await?;

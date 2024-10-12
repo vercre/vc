@@ -1,5 +1,5 @@
 [package]
-name = "vercre-datasec"
+name = "vercre-infosec"
 description = "Proof utilities"
 license = "MIT OR Apache-2.0"
 readme = "README.md"

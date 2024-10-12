@@ -6,7 +6,7 @@ use chrono::Utc;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use sha2::{Digest, Sha256};
-use vercre_datasec::jose::jws::{self, Type};
+use vercre_infosec::jose::jws::{self, Type};
 use vercre_issuer::{
     AuthorizationResponse, CredentialOfferRequest, CredentialResponseType,
     DeferredCredentialRequest, DeferredCredentialResponse, OfferType, ProofClaims, TokenGrantType,

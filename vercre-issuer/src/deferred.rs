@@ -79,7 +79,7 @@ mod tests {
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
-    use vercre_datasec::jose::jws::{self, Type};
+    use vercre_infosec::jose::jws::{self, Type};
     use vercre_openid::issuer::{CredentialRequest, CredentialResponseType, ProofClaims};
     use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use vercre_test_utils::{holder, snapshot};

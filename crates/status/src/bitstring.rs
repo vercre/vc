@@ -15,7 +15,7 @@ use flate2::write::GzEncoder;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use thiserror::Error;
-use vercre_datasec::Signer;
+use vercre_infosec::Signer;
 use vercre_w3c_vc::model::{CredentialStatus, CredentialSubject, StatusPurpose, VcBuilder};
 use vercre_w3c_vc::proof::{self, Payload, W3cFormat};
 

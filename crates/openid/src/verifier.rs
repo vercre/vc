@@ -13,7 +13,7 @@ use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 use vercre_core::{urlencode, Kind};
-pub use vercre_datasec::SecOps;
+pub use vercre_infosec::SecOps;
 use vercre_did::DidResolver;
 use vercre_dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 use vercre_w3c_vc::model::VerifiablePresentation;

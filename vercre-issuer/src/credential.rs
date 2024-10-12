@@ -13,8 +13,8 @@ use std::fmt::Debug;
 use chrono::{DateTime, Utc};
 use tracing::instrument;
 use vercre_core::{gen, Kind};
-use vercre_datasec::jose::jws::{self, KeyType, Type};
-use vercre_datasec::{SecOps, Signer};
+use vercre_infosec::jose::jws::{self, KeyType, Type};
+use vercre_infosec::{SecOps, Signer};
 use vercre_openid::issuer::{
     CredentialConfiguration, CredentialDefinition, CredentialDisplay, CredentialIssuance,
     CredentialRequest, CredentialResponse, CredentialResponseType, Dataset, Format, Issuer,

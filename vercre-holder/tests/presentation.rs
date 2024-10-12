@@ -8,7 +8,7 @@ use chrono::Utc;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::Map;
 use vercre_core::{urlencode, Kind, Quota};
-use vercre_datasec::SecOps;
+use vercre_infosec::SecOps;
 use vercre_dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use vercre_holder::credential::Credential;
 use vercre_holder::presentation::Status;

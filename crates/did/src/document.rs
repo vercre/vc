@@ -12,8 +12,8 @@ use multibase::Base;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use vercre_core::{Kind, Quota};
-use vercre_datasec::jose::jwk::PublicKeyJwk;
-use vercre_datasec::{Curve, KeyType};
+use vercre_infosec::jose::jwk::PublicKeyJwk;
+use vercre_infosec::{Curve, KeyType};
 
 use crate::error::Error;
 
