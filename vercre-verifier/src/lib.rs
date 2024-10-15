@@ -170,8 +170,8 @@ pub use vercre_openid::Result;
 
 /// Re-export provider traits and types.
 pub mod provider {
-    pub use vercre_infosec::{Algorithm, Decryptor, Encryptor, PublicKeyJwk, SecOps, Signer};
     pub use vercre_did::{DidResolver, Document};
+    pub use vercre_infosec::{Algorithm, Decryptor, Encryptor, PublicKeyJwk, SecOps, Signer};
     pub use vercre_openid::issuer::{Client, Format, Server};
     pub use vercre_openid::verifier::VpFormat;
     #[allow(clippy::module_name_repetitions)]

@@ -20,7 +20,7 @@ homepage = "https://vercre.io"
 keywords = ["credentials", "decentralized", "identity", "openid", "verifiable"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-repository = "https://github.com/vercre/vercre"
+repository = "https://github.com/vercre/vc"
 rust-version = "1.80"
 version = "0.1.0-alpha.6"
 

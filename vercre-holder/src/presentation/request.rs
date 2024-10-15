@@ -10,8 +10,8 @@ use tracing::instrument;
 use uuid::Uuid;
 pub use vercre_core::urlencode;
 use vercre_core::Kind;
-use vercre_infosec::jose::jws;
 use vercre_dif_exch::Constraints;
+use vercre_infosec::jose::jws;
 use vercre_openid::verifier::{RequestObject, RequestObjectResponse, RequestObjectType};
 use vercre_w3c_vc::verify_key;
 
