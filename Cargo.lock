@@ -6160,6 +6160,7 @@ dependencies = [
 [[package]]
 name = "vercre-infosec"
 version = "0.1.0-alpha.6"
+source = "git+https://github.com/vercre/infosec.git#7babfebab9e959b18534cbd61b4b987ee13b3ca6"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -6169,13 +6170,9 @@ dependencies = [
  "crypto_box",
  "ecdsa",
  "ed25519-dalek",
- "futures",
- "hex",
  "k256",
  "serde",
  "serde_json",
- "signature",
- "tokio",
  "tracing",
  "x25519-dalek",
 ]
