@@ -23,7 +23,7 @@ workspace = true
 anyhow.workspace = true
 base64ct.workspace = true
 chrono.workspace = true
-image = { version = "0.25.2", default-features = false, features = ["png"] }
+image = { version = "0.25.3", default-features = false, features = ["png"] }
 qrcode = { version = "0.14.1", default-features = false, features = ["image"] }
 serde.workspace = true
 serde_json.workspace = true
