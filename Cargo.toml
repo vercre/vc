@@ -53,7 +53,7 @@ tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 uuid = { version = "1.10.0", features = ["fast-rng", "v4"] }
 vercre-core = { path = "crates/core", version = "0.1.0-alpha.6" }
-vercre-did = { path = "crates/did", version = "0.1.0-alpha.6" }
+vercre-did = { git = "https://github.com/vercre/did.git" }
 vercre-dif-exch = { path = "crates/dif-exch", version = "0.1.0-alpha.6" }
 vercre-holder = { path = "vercre-holder", version = "0.1.0-alpha.6" }
 vercre-infosec = { git = "https://github.com/vercre/infosec.git" }

@@ -6099,23 +6099,21 @@ dependencies = [
 
 [[package]]
 name = "vercre-did"
-version = "0.1.0-alpha.6"
+version = "0.1.0"
+source = "git+https://github.com/vercre/did.git#c39f4611a4a18873b56d0a791b1af975e45713c9"
 dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
  "curve25519-dalek",
  "ed25519-dalek",
- "insta",
  "multibase",
  "rand 0.8.5",
  "regex",
  "serde",
  "serde_json",
  "thiserror",
- "tokio",
  "url",
- "vercre-core",
  "vercre-infosec",
 ]
 
