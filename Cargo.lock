@@ -2520,9 +2520,9 @@ dependencies = [
 
 [[package]]
 name = "image"
-version = "0.25.3"
+version = "0.25.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d97eb9a8e0cd5b76afea91d7eecd5cf8338cd44ced04256cf1f800474b227c52"
+checksum = "bc144d44a31d753b02ce64093d532f55ff8dc4ebf2ffb8a63c0dda691385acae"
 dependencies = [
  "bytemuck",
  "byteorder-lite",
@@ -2813,9 +2813,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.159"
+version = "0.2.161"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "561d97a539a36e26a9a5fad1ea11a3039a67714694aaa379433e580854bc3dc5"
+checksum = "8e9489c2807c139ffd9c1794f4af0ebe86a828db53ecdc7fea2111d0fed085d1"
 
 [[package]]
 name = "libloading"
@@ -4618,9 +4618,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.128"
+version = "1.0.129"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ff5456707a1de34e7e37f2a6fd3d3f808c318259cbd01ab6377795054b483d8"
+checksum = "6dbcf9b78a125ee667ae19388837dd12294b858d101fdd393cb9d5501ef09eb2"
 dependencies = [
  "itoa 1.0.11",
  "memchr",
@@ -6100,7 +6100,7 @@ dependencies = [
 [[package]]
 name = "vercre-did"
 version = "0.1.0"
-source = "git+https://github.com/vercre/did.git#c39f4611a4a18873b56d0a791b1af975e45713c9"
+source = "git+https://github.com/vercre/did.git#6d81a40041b3be2cb3b8468c1d40428421c2ca4f"
 dependencies = [
  "anyhow",
  "base64ct",
@@ -6157,7 +6157,7 @@ dependencies = [
 [[package]]
 name = "vercre-infosec"
 version = "0.1.0-alpha.6"
-source = "git+https://github.com/vercre/infosec.git#72b29137e9ec03af659e81b13aba5c0c2628d1d3"
+source = "git+https://github.com/vercre/infosec.git#e36d4dd7a7521fbc3935138cd769f979fe7984df"
 dependencies = [
  "aes-gcm",
  "anyhow",
