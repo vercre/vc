@@ -65,8 +65,8 @@ vercre-status = { path = "crates/status", version = "0.1.0-alpha.6" }
 vercre-verifier = { path = "vercre-verifier", version = "0.1.0-alpha.6" }
 vercre-w3c-vc = { path = "crates/w3c-vc", version = "0.1.0-alpha.6" }
 
-[patch."https://github.com/vercre/infosec.git"]
-vercre-infosec = { path = "../infosec" }
+# [patch."https://github.com/vercre/infosec.git"]
+# vercre-infosec = { path = "../infosec" }
 
 [workspace.metadata.bin]
 cargo-xcode = { version = "=1.7.0" }
