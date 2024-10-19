@@ -36,7 +36,7 @@ pedantic = "warn"
 nursery = "warn"
 
 [workspace.dependencies]
-anyhow = "1.0.89"
+anyhow = "1.0.90"
 assert_let_bind = "0.1.1"
 axum = { version = "0.7.7", features = ["macros"] }
 axum-extra = { version = "0.9.4", features = ["typed-header"] }
@@ -46,7 +46,7 @@ derive_builder = "0.20.2"
 ecdsa = "0.16.9"
 insta = { version = "1.40.0", features = ["redactions", "yaml"] }
 serde = { version = "1.0.210", features = ["derive"] }
-serde_json = { version = "1.0.129", features = ["alloc"] }
+serde_json = { version = "1.0.132", features = ["alloc"] }
 test-utils = { path = "crates/test-utils" }
 tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"] }
 tower-http = { version = "0.6.1", features = ["cors", "set-header", "trace"] }
@@ -64,6 +64,9 @@ vercre-openid = { path = "crates/openid", version = "0.1.0-alpha.6" }
 vercre-status = { path = "crates/status", version = "0.1.0-alpha.6" }
 vercre-verifier = { path = "vercre-verifier", version = "0.1.0-alpha.6" }
 vercre-w3c-vc = { path = "crates/w3c-vc", version = "0.1.0-alpha.6" }
+
+[patch."https://github.com/vercre/infosec.git"]
+vercre-infosec = { path = "../infosec" }
 
 [workspace.metadata.bin]
 cargo-xcode = { version = "=1.7.0" }
