@@ -3,7 +3,7 @@
 use std::fmt::Display;
 
 use rstest::fixture;
-use vercre_test_utils::issuer;
+use test_utils::issuer;
 
 #[fixture]
 pub fn provider() -> issuer::Provider {

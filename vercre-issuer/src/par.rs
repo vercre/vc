@@ -92,14 +92,14 @@ mod tests {
     use serde_json::json;
     use sha2::{Digest, Sha256};
     use vercre_openid::issuer::AuthorizationRequest;
-    use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-    use vercre_test_utils::snapshot;
+    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+    use test_utils::snapshot;
 
     use super::*;
 
     #[tokio::test]
     async fn request() {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();

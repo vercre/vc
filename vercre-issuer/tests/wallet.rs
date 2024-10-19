@@ -14,8 +14,8 @@ use vercre_issuer::{
 };
 use vercre_openid::issuer::Format;
 use vercre_openid::{Error, Result};
-use vercre_test_utils::holder;
-use vercre_test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+use test_utils::holder;
+use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_w3c_vc::proof::{self, Payload, Verify};
 
 pub const CODE_VERIFIER: &str = "ABCDEF12345";

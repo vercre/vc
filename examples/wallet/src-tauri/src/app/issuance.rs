@@ -35,7 +35,7 @@ impl AppState {
         let offer = serde_json::from_str::<CredentialOffer>(&offer_str)?;
         let request = OfferRequest {
             client_id: CLIENT_ID.into(),
-            subject_id: vercre_test_utils::issuer::NORMAL_USER.into(),
+            subject_id: test_utils::issuer::NORMAL_USER.into(),
             offer,
         };
         let res = vercre_holder::issuance::offer(provider, &request).await?;

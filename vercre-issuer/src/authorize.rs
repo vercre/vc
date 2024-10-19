@@ -431,8 +431,8 @@ mod tests {
     use rstest::rstest;
     use serde_json::{json, Value};
     use sha2::{Digest, Sha256};
-    use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-    use vercre_test_utils::snapshot;
+    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+    use test_utils::snapshot;
 
     use super::*;
     // extern crate self as vercre_issuer;
@@ -447,7 +447,7 @@ mod tests {
     #[should_panic(expected = "ok")]
     #[case::response_type_err("response_type_err", response_type_err)]
     async fn authorize_tests(#[case] name: &str, #[case] value: fn() -> Value) {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();

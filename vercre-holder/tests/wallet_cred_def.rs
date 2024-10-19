@@ -9,7 +9,7 @@ use vercre_holder::provider::{CredentialStorer, Issuer, MetadataRequest};
 use vercre_holder::{
     AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization, Format, ProfileClaims,
 };
-use vercre_test_utils::issuer::{CLIENT_ID, CREDENTIAL_ISSUER, REDIRECT_URI};
+use test_utils::issuer::{CLIENT_ID, CREDENTIAL_ISSUER, REDIRECT_URI};
 
 use crate::provider::Provider;
 
@@ -20,7 +20,7 @@ const SUBJECT_ID: &str = "normal_user";
 // using a credential definition.
 #[tokio::test]
 async fn wallet_credential_definition() {
-    let issuer_provider = vercre_test_utils::issuer::Provider::new();
+    let issuer_provider = test_utils::issuer::Provider::new();
     let provider = Provider::new(Some(issuer_provider.clone()), None);
 
     // Use the provider to discover the credentials available from the issuer.

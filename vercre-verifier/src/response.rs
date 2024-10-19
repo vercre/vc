@@ -225,7 +225,7 @@ mod tests {
     use vercre_openid::verifier::{
         ClientIdScheme, RequestObject, ResponseRequest, ResponseType, Verifier,
     };
-    use vercre_test_utils::verifier::Provider;
+    use test_utils::verifier::Provider;
 
     use super::*;
     use crate::state::Expire;
@@ -234,7 +234,7 @@ mod tests {
 
     #[tokio::test]
     async fn send_response() {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
 
         let provider = Provider::new();
         let pres_def = serde_json::from_value::<PresentationDefinition>(DEFINITION.to_owned())

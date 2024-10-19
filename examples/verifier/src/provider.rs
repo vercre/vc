@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use vercre_test_utils::store::keystore::VerifierKeystore;
-use vercre_test_utils::store::{presentation, resolver, state};
+use test_utils::store::keystore::VerifierKeystore;
+use test_utils::store::{presentation, resolver, state};
 use vercre_verifier::provider::{
     Algorithm, Decryptor, DidResolver, Document, Encryptor, Metadata, Result, SecOps, Signer,
     StateStore, Verifier, Wallet,

@@ -20,9 +20,9 @@ use vercre_holder::{
     ResponseRequest, ResponseResponse, TokenRequest, TokenResponse,
 };
 use vercre_issuer::{NotificationRequest, NotificationResponse};
-use vercre_test_utils::store::keystore::HolderKeystore;
-use vercre_test_utils::store::{resolver, state};
-use vercre_test_utils::{issuer, verifier};
+use test_utils::store::keystore::HolderKeystore;
+use test_utils::store::{resolver, state};
+use test_utils::{issuer, verifier};
 
 #[derive(Default, Clone, Debug)]
 #[allow(missing_docs)]

@@ -105,7 +105,7 @@ mod tests {
     use serde_json::json;
     use vercre_infosec::cose::cbor;
     use vercre_infosec::SecOps;
-    use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER};
+    use test_utils::issuer::{Provider, CREDENTIAL_ISSUER};
 
     use super::*;
     use crate::mso::DigestAlgorithm;

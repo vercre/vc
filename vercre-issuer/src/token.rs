@@ -354,15 +354,15 @@ mod tests {
         AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization,
         CredentialDefinition, Format, ProfileW3c,
     };
-    use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-    use vercre_test_utils::snapshot;
+    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+    use test_utils::snapshot;
 
     use super::*;
     use crate::state::{Authorization, Offer};
 
     #[tokio::test]
     async fn pre_authorized() {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();
@@ -429,7 +429,7 @@ mod tests {
 
     #[tokio::test]
     async fn authorized() {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();
@@ -497,7 +497,7 @@ mod tests {
 
     #[tokio::test]
     async fn authorization_details() {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();

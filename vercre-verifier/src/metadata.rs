@@ -35,14 +35,14 @@ async fn process(provider: impl Provider, req: &MetadataRequest) -> Result<Metad
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use vercre_test_utils::verifier::Provider;
+    use test_utils::verifier::Provider;
 
     // use providers::wallet_provider::holder_provider::CLIENT_ID;
     use super::*;
 
     #[tokio::test]
     async fn metadata_ok() {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
         let provider = Provider::new();
 
         let request = MetadataRequest {

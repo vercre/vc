@@ -5,8 +5,8 @@ use vercre_issuer::provider::{
     Algorithm, Client, Dataset, Decryptor, DidResolver, Document, Encryptor, Issuer, Metadata,
     Result, SecOps, Server, Signer, StateStore, Status, Subject,
 };
-use vercre_test_utils::store::keystore::IssuerKeystore;
-use vercre_test_utils::store::{issuance, resolver, state};
+use test_utils::store::keystore::IssuerKeystore;
+use test_utils::store::{issuance, resolver, state};
 
 #[derive(Default, Clone, Debug)]
 pub struct Provider {

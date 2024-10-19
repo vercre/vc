@@ -50,15 +50,15 @@ mod tests {
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
-    use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER};
-    use vercre_test_utils::snapshot;
+    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER};
+    use test_utils::snapshot;
 
     use super::*;
     use crate::state::{Expire, Stage, Token};
 
     #[tokio::test]
     async fn registration_ok() {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();

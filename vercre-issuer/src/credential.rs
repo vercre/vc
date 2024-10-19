@@ -474,8 +474,8 @@ mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
-    use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-    use vercre_test_utils::{holder, snapshot};
+    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+    use test_utils::{holder, snapshot};
     use vercre_w3c_vc::proof::{self, Verify};
 
     use super::*;
@@ -483,7 +483,7 @@ mod tests {
 
     #[tokio::test]
     async fn identifier() {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();
@@ -567,7 +567,7 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn format() {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();
@@ -657,7 +657,7 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn iso_mdl() {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();

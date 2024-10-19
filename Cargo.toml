@@ -47,6 +47,7 @@ ecdsa = "0.16.9"
 insta = { version = "1.40.0", features = ["redactions", "yaml"] }
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = { version = "1.0.129", features = ["alloc"] }
+test-utils = { path = "crates/test-utils", version = "0.1.0-alpha.6" }
 tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"] }
 tower-http = { version = "0.6.1", features = ["cors", "set-header", "trace"] }
 tracing = "0.1.40"
@@ -61,7 +62,6 @@ vercre-issuer = { path = "vercre-issuer", version = "0.1.0-alpha.6" }
 vercre-macros = { path = "crates/macros", version = "0.1.0-alpha.6" }
 vercre-openid = { path = "crates/openid", version = "0.1.0-alpha.6" }
 vercre-status = { path = "crates/status", version = "0.1.0-alpha.6" }
-vercre-test-utils = { path = "crates/test-utils", version = "0.1.0-alpha.6" }
 vercre-verifier = { path = "vercre-verifier", version = "0.1.0-alpha.6" }
 vercre-w3c-vc = { path = "crates/w3c-vc", version = "0.1.0-alpha.6" }
 

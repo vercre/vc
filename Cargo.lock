@@ -2637,12 +2637,12 @@ dependencies = [
  "oauth2",
  "serde",
  "serde_json",
+ "test-utils",
  "tokio",
  "tower-http",
  "tracing",
  "tracing-subscriber",
  "vercre-issuer",
- "vercre-test-utils",
 ]
 
 [[package]]
@@ -5534,6 +5534,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "test-utils"
+version = "0.1.0-alpha.6"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "ed25519-dalek",
+ "serde",
+ "serde_json",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "vercre-did",
+ "vercre-infosec",
+ "vercre-openid",
+ "vercre-status",
+]
+
+[[package]]
 name = "thin-slice"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6138,6 +6157,7 @@ dependencies = [
  "insta",
  "serde",
  "serde_json",
+ "test-utils",
  "tokio",
  "tracing",
  "urlencoding",
@@ -6149,7 +6169,6 @@ dependencies = [
  "vercre-issuer",
  "vercre-macros",
  "vercre-openid",
- "vercre-test-utils",
  "vercre-verifier",
  "vercre-w3c-vc",
 ]
@@ -6187,9 +6206,9 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "test-utils",
  "tokio",
  "vercre-infosec",
- "vercre-test-utils",
 ]
 
 [[package]]
@@ -6205,6 +6224,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "test-utils",
  "tokio",
  "tracing",
  "vercre-core",
@@ -6213,7 +6233,6 @@ dependencies = [
  "vercre-iso-mdl",
  "vercre-openid",
  "vercre-status",
- "vercre-test-utils",
  "vercre-w3c-vc",
 ]
 
@@ -6269,25 +6288,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "vercre-test-utils"
-version = "0.1.0-alpha.6"
-dependencies = [
- "anyhow",
- "base64ct",
- "chrono",
- "ed25519-dalek",
- "serde",
- "serde_json",
- "tracing",
- "tracing-subscriber",
- "uuid",
- "vercre-did",
- "vercre-infosec",
- "vercre-openid",
- "vercre-status",
-]
-
-[[package]]
 name = "vercre-verifier"
 version = "0.1.0-alpha.6"
 dependencies = [
@@ -6298,6 +6298,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_json_path",
+ "test-utils",
  "tokio",
  "tracing",
  "uuid",
@@ -6306,7 +6307,6 @@ dependencies = [
  "vercre-dif-exch",
  "vercre-infosec",
  "vercre-openid",
- "vercre-test-utils",
  "vercre-w3c-vc",
 ]
 
@@ -6339,11 +6339,11 @@ dependencies = [
  "chrono",
  "serde",
  "serde_json",
+ "test-utils",
  "tokio",
  "tower-http",
  "tracing",
  "tracing-subscriber",
- "vercre-test-utils",
  "vercre-verifier",
 ]
 
@@ -6408,10 +6408,10 @@ dependencies = [
  "tauri-plugin-log",
  "tauri-plugin-shell",
  "tauri-plugin-store",
+ "test-utils",
  "typeshare",
  "urlencoding",
  "vercre-holder",
- "vercre-test-utils",
 ]
 
 [[package]]

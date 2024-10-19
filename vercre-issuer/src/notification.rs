@@ -72,8 +72,8 @@ mod tests {
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use vercre_openid::issuer::NotificationEvent;
-    use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
-    use vercre_test_utils::snapshot;
+    use test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    use test_utils::snapshot;
     use vercre_w3c_vc::model::VerifiableCredential;
 
     use super::*;
@@ -81,7 +81,7 @@ mod tests {
 
     #[tokio::test]
     async fn notification_ok() {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();

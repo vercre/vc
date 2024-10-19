@@ -44,5 +44,5 @@ assert_let_bind.workspace = true
 async-std = { version = "1.13.0", features = ["attributes"] }
 insta.workspace = true
 rstest = "0.23.0"
+test-utils.workspace = true
 tokio.workspace = true
-vercre-test-utils.workspace = true

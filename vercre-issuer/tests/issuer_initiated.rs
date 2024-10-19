@@ -10,15 +10,15 @@ use serde_json::json;
 use utils::{provider, Issuance};
 use vercre_issuer::SendType;
 use vercre_openid::issuer::{Format, ProfileW3c};
-use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER};
-use vercre_test_utils::snapshot;
+use test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER};
+use test_utils::snapshot;
 
 /// Immediate and deferred issuance variants
 #[rstest]
 #[case(Issuance::Immediate)]
 #[case(Issuance::Deferred)]
 async fn issuance(provider: Provider, #[case] issue: Issuance) {
-    vercre_test_utils::init_tracer();
+    test_utils::init_tracer();
     snapshot!("issuer:{issue}");
 
     let subject_id = match issue {
@@ -51,7 +51,7 @@ async fn issuance(provider: Provider, #[case] issue: Issuance) {
 #[rstest]
 #[case(Format::JwtVcJson(ProfileW3c::default()))]
 async fn format(provider: Provider, #[case] credential_format: Format) {
-    vercre_test_utils::init_tracer();
+    test_utils::init_tracer();
     snapshot!("issuer:{credential_format}");
 
     let value = json!({
@@ -78,7 +78,7 @@ async fn format(provider: Provider, #[case] credential_format: Format) {
 // Authorization Code flow
 #[rstest]
 async fn authorization(provider: Provider) {
-    vercre_test_utils::init_tracer();
+    test_utils::init_tracer();
     snapshot!("issuer:authorization");
 
     let value = json!({
@@ -106,7 +106,7 @@ async fn authorization(provider: Provider) {
 #[case(SendType::ByRef)]
 #[case(SendType::ByVal)]
 async fn offer_type(provider: Provider, #[case] send_type: SendType) {
-    vercre_test_utils::init_tracer();
+    test_utils::init_tracer();
     snapshot!("issuer:authorization:{send_type:?}");
 
     let value = json!({

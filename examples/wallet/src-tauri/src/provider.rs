@@ -15,8 +15,8 @@ use serde::Serialize;
 use vercre_holder::provider::{
     Algorithm, DidResolver, Document, HolderProvider, Result, Signer, StateStore,
 };
-use vercre_test_utils::store::keystore::HolderKeystore;
-use vercre_test_utils::store::resolver;
+use test_utils::store::keystore::HolderKeystore;
+use test_utils::store::resolver;
 
 #[derive(Clone, Debug)]
 pub struct Provider {

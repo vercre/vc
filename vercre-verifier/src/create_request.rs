@@ -171,13 +171,13 @@ mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
-    use vercre_test_utils::verifier::Provider;
+    use test_utils::verifier::Provider;
 
     use super::*;
 
     #[tokio::test]
     async fn same_device() {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
         let provider = Provider::new();
 
         // create offer to 'send' to the app
@@ -224,7 +224,7 @@ mod tests {
 
     #[tokio::test]
     async fn cross_device() {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
         let provider = Provider::new();
 
         // create offer to 'send' to the app

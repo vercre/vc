@@ -6,14 +6,14 @@ mod wallet;
 use rstest::rstest;
 use utils::{provider, Issuance};
 use vercre_openid::issuer::{Format, ProfileW3c};
-use vercre_test_utils::issuer::Provider;
-use vercre_test_utils::snapshot;
+use test_utils::issuer::Provider;
+use test_utils::snapshot;
 
 #[rstest]
 #[case(Issuance::Immediate)]
 #[case(Issuance::Deferred)]
 async fn issuance(provider: Provider, #[case] issue: Issuance) {
-    vercre_test_utils::init_tracer();
+    test_utils::init_tracer();
     snapshot!("wallet:{issue}");
 
     let wallet = wallet::Wallet {

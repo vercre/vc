@@ -339,14 +339,14 @@ mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
-    use vercre_test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
-    use vercre_test_utils::snapshot;
+    use test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    use test_utils::snapshot;
 
     use super::*;
 
     #[tokio::test]
     async fn pre_authorized() {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();

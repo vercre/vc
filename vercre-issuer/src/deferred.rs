@@ -81,8 +81,8 @@ mod tests {
     use serde_json::json;
     use vercre_infosec::jose::jws::{self, Type};
     use vercre_openid::issuer::{CredentialRequest, CredentialResponseType, ProofClaims};
-    use vercre_test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-    use vercre_test_utils::{holder, snapshot};
+    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+    use test_utils::{holder, snapshot};
     use vercre_w3c_vc::proof::{self, Payload, Verify};
 
     use super::*;
@@ -90,7 +90,7 @@ mod tests {
 
     #[tokio::test]
     async fn deferred_ok() {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
         snapshot!("");
 
         let provider = Provider::new();

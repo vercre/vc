@@ -1,5 +1,5 @@
 [package]
-name = "vercre-test-utils"
+name = "test-utils"
 description = "Test utilities"
 edition.workspace = true
 publish = false

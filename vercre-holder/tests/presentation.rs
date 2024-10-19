@@ -7,6 +7,7 @@ use std::sync::LazyLock;
 use chrono::Utc;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::Map;
+use test_utils::verifier::{self, VERIFIER_ID};
 use vercre_core::{urlencode, Kind, Quota};
 use vercre_dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use vercre_holder::credential::Credential;
@@ -14,7 +15,6 @@ use vercre_holder::presentation::Status;
 use vercre_holder::provider::CredentialStorer;
 use vercre_infosec::SecOps;
 use vercre_openid::verifier::{CreateRequestRequest, DeviceFlow};
-use vercre_test_utils::verifier::{self, VERIFIER_ID};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{self, Payload, W3cFormat};
 

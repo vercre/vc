@@ -71,7 +71,7 @@ mod tests {
     use vercre_core::Kind;
     use vercre_dif_exch::PresentationDefinition;
     use vercre_openid::verifier::{ClientIdScheme, RequestObject, ResponseType, Verifier};
-    use vercre_test_utils::verifier::{Provider, VERIFIER_ID};
+    use test_utils::verifier::{Provider, VERIFIER_ID};
     use vercre_w3c_vc::verify_key;
 
     use super::*;
@@ -79,7 +79,7 @@ mod tests {
 
     #[tokio::test]
     async fn request_jwt() {
-        vercre_test_utils::init_tracer();
+        test_utils::init_tracer();
 
         let provider = Provider::new();
         let state_key = "ABCDEF123456";

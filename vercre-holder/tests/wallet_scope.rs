@@ -6,7 +6,7 @@ mod provider;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use vercre_holder::issuance::{AuthorizeRequest, CredentialsRequest, Initiator, SaveRequest};
 use vercre_holder::provider::{CredentialStorer, Issuer, MetadataRequest};
-use vercre_test_utils::issuer::{CLIENT_ID, CREDENTIAL_ISSUER, REDIRECT_URI};
+use test_utils::issuer::{CLIENT_ID, CREDENTIAL_ISSUER, REDIRECT_URI};
 
 use crate::provider::Provider;
 
@@ -17,7 +17,7 @@ const SUBJECT_ID: &str = "normal_user";
 // using scope.
 #[tokio::test]
 async fn wallet_scope() {
-    let issuer_provider = vercre_test_utils::issuer::Provider::new();
+    let issuer_provider = test_utils::issuer::Provider::new();
     let provider = Provider::new(Some(issuer_provider.clone()), None);
 
     // Use the provider to discover the credentials available from the issuer.
