@@ -6176,7 +6176,6 @@ dependencies = [
 [[package]]
 name = "vercre-infosec"
 version = "0.1.0-alpha.6"
-source = "git+https://github.com/vercre/infosec.git#1bb1dc73da1b2fc0382fbf5d6fe55bdfce16cdf6"
 dependencies = [
  "aes-gcm",
  "anyhow",
