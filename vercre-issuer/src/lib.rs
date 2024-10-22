@@ -141,6 +141,7 @@ pub use vercre_openid::issuer::{
     SendType, SingleProof, TokenGrantType, TokenRequest, TokenResponse, TxCode,
 };
 pub use vercre_openid::Result;
+pub use vercre_openid::Error;
 pub use vercre_w3c_vc::model::{
     Bitstring, CredentialStatus, CredentialStatusType, StatusMessage, StatusPurpose,
 };
