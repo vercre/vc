@@ -55,7 +55,7 @@ async fn process(
 
     let signer = SecOps::signer(&provider, &request.client_id)
         .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
-    let jwt = jws::encode(Type::Request, &req_obj, signer)
+    let jwt = jws::encode(Type::OauthAuthzReqJwt, &req_obj, signer)
         .await
         .map_err(|e| Error::ServerError(format!("issue encoding jwt: {e}")))?;
 

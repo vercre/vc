@@ -92,7 +92,7 @@ pub async fn credentials(
         iat: chrono::Utc::now().timestamp(),
         nonce: issuance.token.c_nonce.clone(),
     };
-    let jwt = jws::encode(Type::Proof, &claims, provider.clone()).await.map_err(|e| {
+    let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, provider.clone()).await.map_err(|e| {
         tracing::error!(target: "Endpoint::credentials", ?e);
         e
     })?;

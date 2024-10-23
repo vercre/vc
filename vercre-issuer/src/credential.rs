@@ -135,9 +135,9 @@ impl Context {
                     };
 
                 // proof type
-                if jwt.header.typ != Type::Proof {
+                if jwt.header.typ != Type::Openid4VciProofJwt {
                     return Err(self
-                        .invalid_proof(provider, format!("Proof JWT 'typ' is not {}", Type::Proof))
+                        .invalid_proof(provider, format!("Proof JWT 'typ' is not {}", Type::Openid4VciProofJwt))
                         .await?);
                 }
 
@@ -519,7 +519,7 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
+        let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, holder::Provider).await.expect("should encode");
 
         let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
@@ -604,7 +604,7 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
+        let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, holder::Provider).await.expect("should encode");
 
         let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
@@ -693,7 +693,8 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
+        let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, holder::Provider).await.expect("should encode");
+        println!("jwt: {}", jwt);
 
         let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,

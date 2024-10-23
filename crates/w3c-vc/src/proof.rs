@@ -99,13 +99,13 @@ pub async fn create(
     let jwt = match payload {
         Payload::Vc { vc, issued_at } => {
             let claims = jose::VcClaims::from_vc(vc, issued_at);
-            jws::encode(jws::Type::Credential, &claims, signer).await?
+            jws::encode(jws::Type::Jwt, &claims, signer).await?
         }
         Payload::Vp { vp, client_id, nonce } => {
             let mut claims = jose::VpClaims::from(vp);
             claims.aud.clone_from(&client_id);
             claims.nonce.clone_from(&nonce);
-            jws::encode(jws::Type::Presentation, &claims, signer).await?
+            jws::encode(jws::Type::Jwt, &claims, signer).await?
         }
     };
 

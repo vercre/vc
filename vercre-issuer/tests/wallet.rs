@@ -135,7 +135,7 @@ impl Wallet {
             iat: Utc::now().timestamp(),
             nonce: token_resp.c_nonce.clone(),
         };
-        let jwt = jws::encode(Type::Proof, &claims, holder::Provider)
+        let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, holder::Provider)
             .await
             .map_err(|e| Error::ServerError(format!("{e}")))?;
 

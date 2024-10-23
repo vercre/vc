@@ -105,7 +105,7 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.clone()),
         };
-        let jwt = jws::encode(Type::Proof, &claims, holder::Provider).await.expect("should encode");
+        let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, holder::Provider).await.expect("should encode");
 
         let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
