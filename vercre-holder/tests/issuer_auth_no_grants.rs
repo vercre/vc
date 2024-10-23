@@ -7,13 +7,13 @@ use std::sync::LazyLock;
 mod provider;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
+use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, REDIRECT_URI};
 use vercre_holder::issuance::{
     AcceptRequest, AuthorizeRequest, CredentialsRequest, Initiator, OfferRequest, SaveRequest,
 };
 use vercre_holder::provider::CredentialStorer;
 use vercre_issuer::{OfferType, SendType};
 use vercre_macros::create_offer_request;
-use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, REDIRECT_URI};
 
 use crate::provider as holder;
 

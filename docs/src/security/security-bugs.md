@@ -1,4 +1,4 @@
-# SecOps Bugs
+# KeyOps Bugs
 
 **If you are unsure whether an issue is a security vulnerability, always err on the side
 of caution and report it as a security vulnerability!**
@@ -6,7 +6,7 @@ of caution and report it as a security vulnerability!**
 Bugs must affect a [tier 1](../stability/support-tiers.md) platform or feature to be
 considered a security vulnerability.
 
-SecOps of the core libraries is paramount. Anything that undermines their ability to
+KeyOps of the core libraries is paramount. Anything that undermines their ability to
 function correctly and securely is a security vulnerability.
 
 On the other hand, execution that diverges from OpenID semantics (such as

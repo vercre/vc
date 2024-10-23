@@ -4,10 +4,10 @@ mod utils;
 mod wallet;
 
 use rstest::rstest;
-use utils::{provider, Issuance};
-use vercre_openid::issuer::{Format, ProfileW3c};
 use test_utils::issuer::Provider;
 use test_utils::snapshot;
+use utils::{provider, Issuance};
+use vercre_openid::issuer::{Format, ProfileW3c};
 
 #[rstest]
 #[case(Issuance::Immediate)]

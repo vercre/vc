@@ -17,7 +17,7 @@
 use tracing::instrument;
 use vercre_infosec::jose::jws::{self, Type};
 use vercre_openid::verifier::{
-    Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, SecOps, StateStore,
+    KeyOps, Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, StateStore,
 };
 use vercre_openid::{Error, Result};
 
@@ -53,9 +53,9 @@ async fn process(
         return Err(Error::InvalidRequest("client ID mismatch".into()));
     }
 
-    let signer = SecOps::signer(&provider, &request.client_id)
+    let signer = KeyOps::signer(&provider, &request.client_id)
         .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
-    let jwt = jws::encode(Type::OauthAuthzReqJwt, &req_obj, signer)
+    let jwt = jws::encode(Type::OauthAuthzReqJwt, &req_obj, &signer)
         .await
         .map_err(|e| Error::ServerError(format!("issue encoding jwt: {e}")))?;
 
@@ -68,10 +68,10 @@ async fn process(
 mod tests {
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use test_utils::verifier::{Provider, VERIFIER_ID};
     use vercre_core::Kind;
     use vercre_dif_exch::PresentationDefinition;
     use vercre_openid::verifier::{ClientIdScheme, RequestObject, ResponseType, Verifier};
-    use test_utils::verifier::{Provider, VERIFIER_ID};
     use vercre_w3c_vc::verify_key;
 
     use super::*;

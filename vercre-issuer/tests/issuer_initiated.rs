@@ -7,11 +7,11 @@ mod wallet;
 
 use rstest::rstest;
 use serde_json::json;
+use test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER};
+use test_utils::snapshot;
 use utils::{provider, Issuance};
 use vercre_issuer::SendType;
 use vercre_openid::issuer::{Format, ProfileW3c};
-use test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER};
-use test_utils::snapshot;
 
 /// Immediate and deferred issuance variants
 #[rstest]

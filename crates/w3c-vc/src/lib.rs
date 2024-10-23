@@ -26,9 +26,9 @@ pub use vercre_did::{dereference, Resource};
 /// # Example
 ///
 /// ```rust,ignore
-/// use vercre_infosec::{verify_key, SecOps};
+/// use vercre_infosec::{verify_key, KeyOps};
 ///
-/// let resolver = SecOps::resolver(&provider, &request.credential_issuer)?;
+/// let resolver = KeyOps::resolver(&provider, &request.credential_issuer)?;
 /// let jwt = jws::decode(proof_jwt, verify_key!(resolver)).await?;
 /// ...
 /// ```

@@ -55,14 +55,14 @@ pub trait StateStore: Send + Sync {
 
 ## Data Security
 
-`SecOps` provides the library with functionality for signing, encrypting, verifying and decrypting
+`KeyOps` provides the library with functionality for signing, encrypting, verifying and decrypting
 data by implementing one of the supported signing and verification algorithms. Typically, implementers
 will use a key vault, secure enclave, or HSM to manage private keys used for signing.
 
 Supported algorithms are defined in the Credential Issuer metadata.
 
 ```rust,ignore
-pub trait SecOps: Send + Sync {
+pub trait KeyOps: Send + Sync {
     fn signer(&self, identifier: &str) -> anyhow::Result<impl Signer>;
 
     fn verifier(&self, identifier: &str) -> anyhow::Result<impl Verifier>;

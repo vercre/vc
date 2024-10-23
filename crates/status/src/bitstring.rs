@@ -197,7 +197,7 @@ pub fn bitstring(config: &ListConfig, issued: &[StatusLogEntry]) -> anyhow::Resu
 /// * signing errors.
 pub async fn credential(
     credential_issuer: &str, config: &ListConfig, status_list_base_url: &str, bitstring: &str,
-    ttl: Option<u64>, signer: impl Signer,
+    ttl: Option<u64>, signer: &impl Signer,
 ) -> anyhow::Result<String> {
     let mut base_url = status_list_base_url.to_string();
     if !base_url.ends_with('/') {

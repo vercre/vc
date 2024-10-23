@@ -221,11 +221,11 @@ mod tests {
 
     use chrono::Utc;
     use serde_json::json;
+    use test_utils::verifier::Provider;
     use vercre_dif_exch::PresentationDefinition;
     use vercre_openid::verifier::{
         ClientIdScheme, RequestObject, ResponseRequest, ResponseType, Verifier,
     };
-    use test_utils::verifier::Provider;
 
     use super::*;
     use crate::state::Expire;

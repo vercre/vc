@@ -10,7 +10,7 @@ description of the process can be found in the [contributing section].
 Key takeways:
 
 * A new version of Vercre will be made available once a month.
-* SecOps bugs and correctness fixes will be backported to the latest two releases
+* KeyOps bugs and correctness fixes will be backported to the latest two releases
   of Vercre and issued as patch releases.
 
 Once a month Vercre will issue a new version. This will be issued with a semver-major

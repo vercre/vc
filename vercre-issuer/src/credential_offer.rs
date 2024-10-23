@@ -68,10 +68,10 @@ async fn process(
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use vercre_openid::issuer::{CreateOfferRequest, OfferType, SendType};
-    use vercre_openid::oauth::GrantType;
     use test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use test_utils::snapshot;
+    use vercre_openid::issuer::{CreateOfferRequest, OfferType, SendType};
+    use vercre_openid::oauth::GrantType;
 
     use super::*;
 

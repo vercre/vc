@@ -6,6 +6,8 @@ use chrono::Utc;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use sha2::{Digest, Sha256};
+use test_utils::holder;
+use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_infosec::jose::jws::{self, Type};
 use vercre_issuer::{
     AuthorizationResponse, CredentialOfferRequest, CredentialResponseType,
@@ -14,8 +16,6 @@ use vercre_issuer::{
 };
 use vercre_openid::issuer::Format;
 use vercre_openid::{Error, Result};
-use test_utils::holder;
-use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_w3c_vc::proof::{self, Payload, Verify};
 
 pub const CODE_VERIFIER: &str = "ABCDEF12345";
@@ -135,7 +135,7 @@ impl Wallet {
             iat: Utc::now().timestamp(),
             nonce: token_resp.c_nonce.clone(),
         };
-        let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, holder::Provider)
+        let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, &holder::Provider)
             .await
             .map_err(|e| Error::ServerError(format!("{e}")))?;
 

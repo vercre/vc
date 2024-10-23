@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use vercre_did::{DidResolver, Document};
-use vercre_infosec::{self, Algorithm, Decryptor, Encryptor, SecOps, Signer};
+use vercre_infosec::{self, Algorithm, Cipher, KeyOps, Signer};
 use vercre_openid::verifier::{Metadata, Result, StateStore, Verifier, Wallet};
 
 use crate::store::keystore::VerifierKeystore;
@@ -64,16 +64,12 @@ impl DidResolver for Provider {
 
 struct VerifierSec(VerifierKeystore);
 
-impl SecOps for Provider {
+impl KeyOps for Provider {
     fn signer(&self, _identifier: &str) -> anyhow::Result<impl Signer> {
         Ok(VerifierSec(VerifierKeystore {}))
     }
 
-    fn encryptor(&self, _identifier: &str) -> anyhow::Result<impl Encryptor> {
-        Ok(VerifierSec(VerifierKeystore {}))
-    }
-
-    fn decryptor(&self, _identifier: &str) -> anyhow::Result<impl Decryptor> {
+    fn cipher(&self, _identifier: &str) -> anyhow::Result<impl Cipher> {
         Ok(VerifierSec(VerifierKeystore {}))
     }
 }
@@ -96,17 +92,15 @@ impl Signer for VerifierSec {
     }
 }
 
-impl Encryptor for VerifierSec {
+impl Cipher for VerifierSec {
     async fn encrypt(&self, _plaintext: &[u8], _recipient_public_key: &[u8]) -> Result<Vec<u8>> {
         todo!()
     }
 
-    fn public_key(&self) -> Vec<u8> {
+    fn ephemeral_public_key(&self) -> Vec<u8> {
         todo!()
     }
-}
 
-impl Decryptor for VerifierSec {
     async fn decrypt(&self, _ciphertext: &[u8], _sender_public_key: &[u8]) -> Result<Vec<u8>> {
         todo!()
     }

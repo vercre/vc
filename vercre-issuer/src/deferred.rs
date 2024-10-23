@@ -79,10 +79,10 @@ mod tests {
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
-    use vercre_infosec::jose::jws::{self, Type};
-    use vercre_openid::issuer::{CredentialRequest, CredentialResponseType, ProofClaims};
     use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use test_utils::{holder, snapshot};
+    use vercre_infosec::jose::jws::{self, Type};
+    use vercre_openid::issuer::{CredentialRequest, CredentialResponseType, ProofClaims};
     use vercre_w3c_vc::proof::{self, Payload, Verify};
 
     use super::*;
@@ -105,7 +105,9 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.clone()),
         };
-        let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, holder::Provider).await.expect("should encode");
+        let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, &holder::Provider)
+            .await
+            .expect("should encode");
 
         let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,

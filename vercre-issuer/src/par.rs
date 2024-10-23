@@ -91,9 +91,9 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use sha2::{Digest, Sha256};
-    use vercre_openid::issuer::AuthorizationRequest;
     use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use test_utils::snapshot;
+    use vercre_openid::issuer::AuthorizationRequest;
 
     use super::*;
 

@@ -4,8 +4,8 @@ use serde::Serialize;
 use test_utils::store::keystore::VerifierKeystore;
 use test_utils::store::{presentation, resolver, state};
 use vercre_verifier::provider::{
-    Algorithm, Decryptor, DidResolver, Document, Encryptor, Metadata, Result, SecOps, Signer,
-    StateStore, Verifier, Wallet,
+    Algorithm, Cipher, DidResolver, Document, KeyOps, Metadata, Result, Signer, StateStore,
+    Verifier, Wallet,
 };
 
 #[derive(Default, Clone, Debug)]
@@ -62,16 +62,12 @@ impl DidResolver for Provider {
 
 struct VerifierSec(VerifierKeystore);
 
-impl SecOps for Provider {
+impl KeyOps for Provider {
     fn signer(&self, _identifier: &str) -> anyhow::Result<impl Signer> {
         Ok(VerifierSec(VerifierKeystore {}))
     }
 
-    fn encryptor(&self, _identifier: &str) -> anyhow::Result<impl Encryptor> {
-        Ok(VerifierSec(VerifierKeystore {}))
-    }
-
-    fn decryptor(&self, _identifier: &str) -> anyhow::Result<impl Decryptor> {
+    fn cipher(&self, _identifier: &str) -> anyhow::Result<impl Cipher> {
         Ok(VerifierSec(VerifierKeystore {}))
     }
 }
@@ -94,17 +90,15 @@ impl Signer for VerifierSec {
     }
 }
 
-impl Encryptor for VerifierSec {
+impl Cipher for VerifierSec {
     async fn encrypt(&self, _plaintext: &[u8], _recipient_public_key: &[u8]) -> Result<Vec<u8>> {
         todo!()
     }
 
-    fn public_key(&self) -> Vec<u8> {
+    fn ephemeral_public_key(&self) -> Vec<u8> {
         todo!()
     }
-}
 
-impl Decryptor for VerifierSec {
     async fn decrypt(&self, _ciphertext: &[u8], _sender_public_key: &[u8]) -> Result<Vec<u8>> {
         todo!()
     }

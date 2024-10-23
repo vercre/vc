@@ -90,7 +90,7 @@ pub enum Payload {
 /// # Errors
 /// TODO: document errors
 pub async fn create(
-    format: W3cFormat, payload: Payload, signer: impl Signer,
+    format: W3cFormat, payload: Payload, signer: &impl Signer,
 ) -> anyhow::Result<String> {
     if format != W3cFormat::JwtVcJson && format != W3cFormat::JwtVcJsonLd {
         return Err(anyhow::anyhow!("Unsupported proof format"));

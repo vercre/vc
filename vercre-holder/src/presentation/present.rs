@@ -56,11 +56,10 @@ pub async fn present(
         client_id: presentation.request.client_id.clone(),
         nonce: presentation.request.nonce.clone(),
     };
-    let jwt =
-        proof::create(W3cFormat::JwtVcJson, payload, provider.clone()).await.map_err(|e| {
-            tracing::error!(target: "Endpoint::present", ?e);
-            e
-        })?;
+    let jwt = proof::create(W3cFormat::JwtVcJson, payload, &provider).await.map_err(|e| {
+        tracing::error!(target: "Endpoint::present", ?e);
+        e
+    })?;
 
     // Assemble the presentation response to the verifier and ask the wallet client
     // to send it.

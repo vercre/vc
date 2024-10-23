@@ -13,7 +13,7 @@ use vercre_core::urlencode;
 /// `OpenID` error codes for  for Verifiable Credential Issuance and
 /// Presentation.
 #[derive(Error, Debug, Deserialize)]
-pub enum Error{
+pub enum Error {
     /// The request is missing a required parameter, includes an unsupported
     /// parameter value, repeats a parameter, includes multiple credentials,
     /// utilizes more than one mechanism for authenticating the client, or is

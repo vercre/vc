@@ -7,6 +7,9 @@ use std::sync::{Arc, Mutex};
 use chrono::{DateTime, Utc};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use test_utils::store::keystore::HolderKeystore;
+use test_utils::store::{resolver, state};
+use test_utils::{issuer, verifier};
 // TODO: remove this import
 use vercre_dif_exch::Constraints;
 use vercre_holder::provider::{
@@ -20,9 +23,6 @@ use vercre_holder::{
     ResponseRequest, ResponseResponse, TokenRequest, TokenResponse,
 };
 use vercre_issuer::{NotificationRequest, NotificationResponse};
-use test_utils::store::keystore::HolderKeystore;
-use test_utils::store::{resolver, state};
-use test_utils::{issuer, verifier};
 
 #[derive(Default, Clone, Debug)]
 #[allow(missing_docs)]

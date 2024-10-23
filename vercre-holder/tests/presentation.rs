@@ -13,7 +13,7 @@ use vercre_dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use vercre_holder::credential::Credential;
 use vercre_holder::presentation::Status;
 use vercre_holder::provider::CredentialStorer;
-use vercre_infosec::SecOps;
+use vercre_infosec::KeyOps;
 use vercre_openid::verifier::{CreateRequestRequest, DeviceFlow};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{self, Payload, W3cFormat};
@@ -76,13 +76,13 @@ async fn sample_credential() -> Credential {
     let issuance_date = Utc::now();
 
     let provider = VERIFIER_PROVIDER.clone();
-    let signer = SecOps::signer(&provider, VERIFIER_ID).expect("should get verifier");
+    let signer = KeyOps::signer(&provider, VERIFIER_ID).expect("should get verifier");
 
     let payload = Payload::Vc {
         vc: vc.clone(),
         issued_at: issuance_date.timestamp(),
     };
-    let jwt = proof::create(W3cFormat::JwtVcJson, payload, signer).await.expect("should encode");
+    let jwt = proof::create(W3cFormat::JwtVcJson, payload, &signer).await.expect("should encode");
 
     Credential {
         issuer: "https://vercre.io".into(),

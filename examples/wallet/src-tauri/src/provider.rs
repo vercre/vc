@@ -12,11 +12,11 @@ use chrono::{DateTime, Utc};
 use futures::lock::Mutex;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use test_utils::store::keystore::HolderKeystore;
+use test_utils::store::resolver;
 use vercre_holder::provider::{
     Algorithm, DidResolver, Document, HolderProvider, Result, Signer, StateStore,
 };
-use test_utils::store::keystore::HolderKeystore;
-use test_utils::store::resolver;
 
 #[derive(Clone, Debug)]
 pub struct Provider {

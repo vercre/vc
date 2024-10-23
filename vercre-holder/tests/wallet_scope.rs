@@ -4,9 +4,9 @@
 mod provider;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
+use test_utils::issuer::{CLIENT_ID, CREDENTIAL_ISSUER, REDIRECT_URI};
 use vercre_holder::issuance::{AuthorizeRequest, CredentialsRequest, Initiator, SaveRequest};
 use vercre_holder::provider::{CredentialStorer, Issuer, MetadataRequest};
-use test_utils::issuer::{CLIENT_ID, CREDENTIAL_ISSUER, REDIRECT_URI};
 
 use crate::provider::Provider;
 

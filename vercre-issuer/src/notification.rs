@@ -71,9 +71,9 @@ mod tests {
     use assert_let_bind::assert_let;
     use chrono::Utc;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use vercre_openid::issuer::NotificationEvent;
     use test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
     use test_utils::snapshot;
+    use vercre_openid::issuer::NotificationEvent;
     use vercre_w3c_vc::model::VerifiableCredential;
 
     use super::*;
