@@ -38,7 +38,7 @@
                     "text_color": "#ffffff",
                     "background_color": "#323ed2",
                     "background_image": {
-                        "uri": "https://vercre.github.io/assets/vercre-background.png",
+                        "uri": "https://vercre.github.io/assets/employee-background.png",
                         "alt_text": "Vercre Background"
                     }
                 }
@@ -151,7 +151,7 @@
                     "text_color": "#ffffff",
                     "background_color": "#010100",
                     "background_image": {
-                        "uri": "https://vercre.github.io/assets/vercre-background.png",
+                        "uri": "https://vercre.github.io/assets/developer-background.png",
                         "alt_text": "Vercre Background"
                     }
                 }

@@ -1,6 +1,6 @@
 ---
 source: vercre-holder/tests/preauth_no_grants.rs
-assertion_line: 55
+assertion_line: 56
 expression: issuance
 ---
 issuance_id: "[issuance_id]"
@@ -73,7 +73,7 @@ offered:
         description: Vercre employee ID credential
         background_color: "#323ed2"
         background_image:
-          uri: "https://vercre.github.io/assets/vercre-background.png"
+          uri: "https://vercre.github.io/assets/employee-background.png"
           alt_text: Vercre Background
         text_color: "#ffffff"
 grants: ~

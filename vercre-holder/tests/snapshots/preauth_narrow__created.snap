@@ -1,6 +1,6 @@
 ---
 source: vercre-holder/tests/preauth_narrow.rs
-assertion_line: 58
+assertion_line: 60
 expression: issuance
 ---
 issuance_id: "[issuance_id]"
@@ -50,7 +50,7 @@ offered:
         description: Vercre certified developer credential
         background_color: "#010100"
         background_image:
-          uri: "https://vercre.github.io/assets/vercre-background.png"
+          uri: "https://vercre.github.io/assets/developer-background.png"
           alt_text: Vercre Background
         text_color: "#ffffff"
   EmployeeID_JWT:
@@ -120,7 +120,7 @@ offered:
         description: Vercre employee ID credential
         background_color: "#323ed2"
         background_image:
-          uri: "https://vercre.github.io/assets/vercre-background.png"
+          uri: "https://vercre.github.io/assets/employee-background.png"
           alt_text: Vercre Background
         text_color: "#ffffff"
 grants:
