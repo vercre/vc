@@ -59,5 +59,5 @@ pub use vercre_openid::verifier::{
     RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
 };
 
-pub use crate::credential::{Credential, Logo};
+pub use crate::credential::{Credential, Image};
 pub use crate::presentation::{Presentation, Status as PresentationStatus};

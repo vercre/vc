@@ -47,8 +47,8 @@ pub struct Logo {
     pub media_type: String,
 }
 
-impl From<credential::Logo> for Logo {
-    fn from(logo: credential::Logo) -> Self {
+impl From<credential::Image> for Logo {
+    fn from(logo: credential::Image) -> Self {
         Self {
             image: logo.image,
             media_type: logo.media_type,

@@ -315,13 +315,20 @@ async fn credential(
         ..Credential::default()
     };
 
-    // Base64-encoded logo if possible.
+    // Base64-encoded logo and background image if possible.
     if let Some(display) = &config.display {
         // TODO: Locale?
         if let Some(logo_info) = &display[0].logo {
             if let Some(uri) = &logo_info.uri {
-                if let Ok(logo) = Issuer::logo(provider, uri).await {
+                if let Ok(logo) = Issuer::image(provider, uri).await {
                     storable_credential.logo = Some(logo);
+                }
+            }
+        }
+        if let Some(background_info) = &display[0].background_image {
+            if let Some(uri) = &background_info.uri {
+                if let Ok(background) = Issuer::image(provider, uri).await {
+                    storable_credential.background = Some(background);
                 }
             }
         }

@@ -41,7 +41,12 @@ pub struct Credential {
     /// A base64-encoded logo image for the credential ingested from the logo
     /// url in the display section of the metadata.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub logo: Option<Logo>,
+    pub logo: Option<Image>,
+
+    /// A base64-encoded background image for the credential ingested from the
+    /// url in the display section of the metadata.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub background: Option<Image>,
 }
 
 /// Use Deref to access the `VerifiableCredential` fields directly.
@@ -53,10 +58,10 @@ impl Deref for Credential {
     }
 }
 
-/// Logo information for a credential.
+/// Image information for a credential.
 #[derive(Clone, Default, Debug, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename = "EncodedLogo")]
-pub struct Logo {
+#[serde(rename = "Image")]
+pub struct Image {
     /// The logo image as a base64-encoded string.
     pub image: String,
 

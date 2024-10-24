@@ -4,7 +4,7 @@ use tauri_plugin_http::reqwest;
 use vercre_holder::provider::Issuer;
 use vercre_holder::{
     AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse,
-    DeferredCredentialRequest, DeferredCredentialResponse, Logo, MetadataRequest, MetadataResponse,
+    DeferredCredentialRequest, DeferredCredentialResponse, Image, MetadataRequest, MetadataResponse,
     NotificationRequest, NotificationResponse, OAuthServerRequest, OAuthServerResponse,
     TokenRequest, TokenResponse,
 };
@@ -89,18 +89,18 @@ impl Issuer for Provider {
     }
 
     /// Get a base64 encoded form of the credential logo.
-    async fn logo(&self, logo_url: &str) -> anyhow::Result<Logo> {
+    async fn image(&self, url: &str) -> anyhow::Result<Image> {
         let client = reqwest::Client::new();
-        let result = client.get(logo_url).header(ACCEPT, "image/*").send().await?;
+        let result = client.get(url).header(ACCEPT, "image/*").send().await?;
         let headers = result.headers().clone();
         let media_type = match headers.get(CONTENT_TYPE) {
             Some(mt) => mt.to_str()?,
             None => "image/*",
         };
-        let logo_bytes = result.bytes().await?;
-        let logo_data = Base64::encode_string(&logo_bytes);
-        Ok(Logo {
-            image: logo_data,
+        let image_bytes = result.bytes().await?;
+        let image_data = Base64::encode_string(&image_bytes);
+        Ok(Image {
+            image: image_data,
             media_type: media_type.to_string(),
         })
     }

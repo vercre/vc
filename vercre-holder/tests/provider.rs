@@ -18,7 +18,7 @@ use vercre_holder::provider::{
 };
 use vercre_holder::{
     AuthorizationRequest, AuthorizationResponse, Credential, CredentialRequest, CredentialResponse,
-    DeferredCredentialRequest, DeferredCredentialResponse, Logo, MetadataRequest, MetadataResponse,
+    DeferredCredentialRequest, DeferredCredentialResponse, Image, MetadataRequest, MetadataResponse,
     OAuthServerRequest, OAuthServerResponse, RequestObjectRequest, RequestObjectResponse,
     ResponseRequest, ResponseResponse, TokenRequest, TokenResponse,
 };
@@ -83,8 +83,8 @@ impl Issuer for Provider {
         Ok(response)
     }
 
-    async fn logo(&self, _logo_url: &str) -> anyhow::Result<Logo> {
-        Ok(Logo::default())
+    async fn image(&self, _logo_url: &str) -> anyhow::Result<Image> {
+        Ok(Image::default())
     }
 
     async fn notification(

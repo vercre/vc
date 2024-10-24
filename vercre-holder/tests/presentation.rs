@@ -92,6 +92,7 @@ async fn sample_credential() -> Credential {
         issued: jwt,
         issuance_date,
         logo: None,
+        background: None,
     }
 }
 
