@@ -83,19 +83,19 @@ impl DidResolver for Provider {
     }
 }
 
-struct IssuerSec(IssuerKeystore);
+struct KeyOpsImpl(IssuerKeystore);
 
 impl KeyOps for Provider {
     fn signer(&self, _identifier: &str) -> anyhow::Result<impl Signer> {
-        Ok(IssuerSec(IssuerKeystore {}))
+        Ok(KeyOpsImpl(IssuerKeystore {}))
     }
 
     fn cipher(&self, _identifier: &str) -> anyhow::Result<impl Cipher> {
-        Ok(IssuerSec(IssuerKeystore {}))
+        Ok(KeyOpsImpl(IssuerKeystore {}))
     }
 }
 
-impl Signer for IssuerSec {
+impl Signer for KeyOpsImpl {
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
         IssuerKeystore::try_sign(msg)
     }
@@ -113,7 +113,7 @@ impl Signer for IssuerSec {
     }
 }
 
-impl Cipher for IssuerSec {
+impl Cipher for KeyOpsImpl {
     async fn encrypt(&self, _plaintext: &[u8], _recipient_public_key: &[u8]) -> Result<Vec<u8>> {
         todo!()
     }
