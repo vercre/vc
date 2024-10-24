@@ -19,7 +19,7 @@ use crate::provider::{HolderProvider, StateStore};
 
 /// `OfferRequest` is the request to the `offer` endpoint to initiate an
 /// issuance flow.
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[allow(clippy::module_name_repetitions)]
 pub struct OfferRequest {
     /// Wallet client identifier. This is used by the issuance service to issue
@@ -39,7 +39,7 @@ pub struct OfferRequest {
 ///
 /// The agent application can use this to present the offer to the holder for
 /// acceptance.
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[allow(clippy::module_name_repetitions)]
 pub struct OfferResponse {
     /// The issuance flow identifier.
