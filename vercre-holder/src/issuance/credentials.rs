@@ -8,7 +8,7 @@ use anyhow::{anyhow, bail};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use vercre_core::Kind;
+use vercre_core::{Kind, Quota};
 use vercre_infosec::jose::jws::{self, Type};
 use vercre_issuer::{CredentialAuthorization, CredentialIssuance, Format, SingleProof};
 use vercre_macros::credential_request;
@@ -304,15 +304,33 @@ async fn credential(
         bail!("credential is not a JWT");
     };
 
+    // Turn a Quota of Strings into a Vec of Strings for the type of credential.
+    let mut type_ = Vec::new();
+    match &vc.type_ {
+        Quota::One(t) => type_.push(t.clone()),
+        Quota::Many(vc_types) => type_.extend(vc_types.clone()),
+    }
+
+    // Turn a Quota of claims into a Vec of claims
+    let mut claims = Vec::new();
+    match &vc.credential_subject {
+        Quota::One(claim) => claims.push(claim.clone()),
+        Quota::Many(vc_claims) => claims.extend(vc_claims.clone()),
+    }
+
     let mut storable_credential = Credential {
         id: vc.id.clone().unwrap_or_else(|| format!("urn:uuid:{}", uuid::Uuid::new_v4())),
         issuer: issuer_id.clone(),
-        vc: vc.clone(),
+        type_,
+        format: config.format.clone(),
+        claims,
         issued: token.into(),
         issuance_date,
+        valid_from: vc.valid_from,
+        valid_until: vc.valid_until,
         display: config.display.clone(),
-
-        ..Credential::default()
+        logo: None,
+        background: None,
     };
 
     // Base64-encoded logo and background image if possible.

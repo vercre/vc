@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 use vercre_holder::credential::{self, Credential};
-use vercre_holder::{CredentialConfiguration, Quota};
+use vercre_holder::CredentialConfiguration;
 
 /// View model for the credential sub-app
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -126,16 +126,10 @@ impl From<&Credential> for CredentialDetail {
         let displays = credential.display.clone().unwrap_or_default();
         // TODO: locale
         let display = displays[0].clone();
-        let vc = credential.vc.clone();
         let mut claims = HashMap::new();
 
-        let subjects = match &vc.credential_subject {
-            Quota::One(sub) => vec![sub.clone()],
-            Quota::Many(subs) => subs.clone(),
-        };
-
-        for subject in subjects {
-            let claims_map = subject.claims;
+        for subject in &credential.claims {
+            let claims_map = subject.claims.clone();
             for (key, value) in claims_map {
                 let val = serde_json::to_string(&value).unwrap_or_default();
                 claims.insert(key.clone(), val);
@@ -144,8 +138,8 @@ impl From<&Credential> for CredentialDetail {
 
         Self {
             display: credential.into(),
-            valid_from: vc.valid_from.map(|d| d.to_rfc2822()),
-            valid_until: vc.valid_until.map(|d| d.to_rfc2822()),
+            valid_from: credential.valid_from.map(|d| d.to_rfc2822()),
+            valid_until: credential.valid_until.map(|d| d.to_rfc2822()),
             description: display.description,
             claims,
         }
