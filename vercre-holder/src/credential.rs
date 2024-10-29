@@ -9,6 +9,19 @@ use serde_json::{Map, Value};
 use vercre_dif_exch::Claims;
 use vercre_openid::issuer::CredentialDisplay;
 
+/// A subject and its associated claims.
+/// 
+/// Similar to `vercre_w3c_vc::model::vc::CredentialSubject`, but with stronger
+/// typing for wallet implementations that may use code generation.
+#[derive(Clone, Default, Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct CredentialSubject {
+    /// The subject identifier.
+    pub id: String,
+
+    /// The claims associated with the subject.
+    pub claims: Vec<Map<String, Value>>,
+}
+
 /// The Credential model contains information about a credential owned by the
 /// Wallet.
 #[derive(Clone, Default, Debug, Serialize, Deserialize, PartialEq, Eq)]

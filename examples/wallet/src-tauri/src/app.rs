@@ -12,7 +12,7 @@ pub use issuance::IssuanceState;
 pub use presentation::PresentationState;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use vercre_holder::Credential;
+use vercre_holder::credential::Credential;
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]

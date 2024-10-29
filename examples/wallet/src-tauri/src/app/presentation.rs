@@ -1,7 +1,8 @@
 //! Application state implementation for presentation operations.
 
 use serde::{Deserialize, Serialize};
-use vercre_holder::Credential;
+use vercre_holder::credential::Credential;
+use vercre_holder::presentation::Status as PresentationStatus;
 
 use super::{AppState, SubApp};
 use crate::provider::Provider;
@@ -15,7 +16,7 @@ pub struct PresentationState {
     pub id: String,
 
     /// Status of the presentation flow.
-    pub status: vercre_holder::PresentationStatus,
+    pub status: PresentationStatus,
 
     /// List of credentials matching the verifier's request.
     pub credentials: Vec<Credential>,
