@@ -135,7 +135,7 @@ impl CredentialStorer for Provider {
         let mut matched: Vec<Credential> = vec![];
         let constraints = filter.expect("constraints exist");
         for cred in creds {
-            match constraints.satisfied(&cred.vc) {
+            match constraints.satisfied(&cred) {
                 Ok(true) => matched.push(cred.clone()),
                 Ok(false) => continue,
                 Err(e) => return Err(e),

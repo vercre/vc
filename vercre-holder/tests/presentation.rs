@@ -2,6 +2,7 @@
 
 mod provider;
 
+use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use chrono::Utc;
@@ -14,6 +15,8 @@ use vercre_holder::credential::Credential;
 use vercre_holder::presentation::Status;
 use vercre_holder::provider::CredentialStorer;
 use vercre_infosec::KeyOps;
+use vercre_issuer::{Claim, ClaimDefinition, CredentialDefinition, ProfileW3c};
+use vercre_openid::issuer::{Display, Format, ValueType};
 use vercre_openid::verifier::{CreateRequestRequest, DeviceFlow};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{self, Payload, W3cFormat};
@@ -84,13 +87,48 @@ async fn sample_credential() -> Credential {
     };
     let jwt = proof::create(W3cFormat::JwtVcJson, payload, &signer).await.expect("should encode");
 
+    let mut claim_def = HashMap::new();
+    let claim = Claim::Entry(ClaimDefinition {
+        mandatory: Some(true),
+        value_type: Some(ValueType::String),
+        display: Some(vec![Display {
+            name: "Employee ID".into(),
+            locale: None,
+        }])
+    });
+    claim_def.insert("employeeId".into(), claim);
+
+    // Turn a Quota of Strings into a Vec of Strings for the type of credential.
+    let mut type_ = Vec::new();
+    match &vc.type_ {
+        Quota::One(t) => type_.push(t.clone()),
+        Quota::Many(vc_types) => type_.extend(vc_types.clone()),
+    }
+
+    // Turn a Quota of claims into a Vec of claims
+    let mut claims = Vec::new();
+    match &vc.credential_subject {
+        Quota::One(claim) => claims.push(claim.clone()),
+        Quota::Many(vc_claims) => claims.extend(vc_claims.clone()),
+    }
+
     Credential {
-        issuer: "https://vercre.io".into(),
         id: vc.id.clone().expect("should have id"),
-        vc: vc.clone(),
+        issuer: "https://vercre.io".into(),
+        type_,
+        format: Format::JwtVcJson(ProfileW3c {
+            credential_definition: CredentialDefinition {
+                context: None,
+                type_: None,
+                credential_subject: Some(claim_def)
+            }
+        }),
+        claims,
         display: None,
         issued: jwt,
         issuance_date,
+        valid_from: vc.valid_from.clone(),
+        valid_until: vc.valid_until.clone(),
         logo: None,
         background: None,
     }
@@ -123,6 +161,7 @@ async fn e2e_presentation_uri() {
         ".presentation_id" => "[presentation_id]",
         ".credentials[].issued" => "[issued]",
         ".credentials[].issuance_date" => "[issuance_date]",
+        ".credentials[].type" => insta::sorted_redaction(),
         ".**.credentialSubject" => insta::sorted_redaction(),
         ".**.credentialSubject.address" => insta::sorted_redaction(),
     });
@@ -175,8 +214,9 @@ async fn e2e_presentation_obj() {
         ".presentation_id" => "[presentation_id]",
         ".credentials[].issued" => "[issued]",
         ".credentials[].issuance_date" => "[issuance_date]",
-        ".credentials[].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
-        ".credentials[].metadata.credential_definition.credentialSubject.address" => insta::sorted_redaction(),
+        ".credentials[].type" => insta::sorted_redaction(),
+        ".**.credentialSubject" => insta::sorted_redaction(),
+        ".**.credentialSubject.address" => insta::sorted_redaction(),
     });
 
     // Authorize the presentation

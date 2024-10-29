@@ -3,12 +3,12 @@
 //! This module defines types and traits to enable wallets or other holder
 //! agents to interact with the `vercre-holder` endpoints.
 
-use std::ops::Deref;
-
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use vercre_dif_exch::Claims;
+use vercre_issuer::Format;
 use vercre_openid::issuer::CredentialDisplay;
-use vercre_w3c_vc::model::VerifiableCredential;
+use vercre_w3c_vc::model::CredentialSubject;
 
 /// The Credential model contains information about a credential owned by the
 /// Wallet.
@@ -22,17 +22,33 @@ pub struct Credential {
     /// The credential issuer.
     pub issuer: String,
 
-    /// The unpacked Verifiable Credential. Used to display VC details and for
-    /// `JSONPath` Presentation Definition queries.
-    pub vc: VerifiableCredential,
-
     /// The Verifiable Credential as issued, for use in Presentation
     /// Submissions. This could be a base64-encoded JWT or 'stringified'
     /// JSON.
     pub issued: String,
 
+    /// The credential type. Used to determine whether a credential matches a
+    /// presentation request.
+    #[serde(rename = "type")]
+    pub type_: Vec<String>,
+
+    /// Credential format. Information on how the credential is formatted and
+    /// the expected claims it will contain.
+    pub format: Format,
+
+    /// Claims as a JSON object.
+    pub claims: Vec<CredentialSubject>,
+
     /// The date the credential was issued.
     pub issuance_date: DateTime<Utc>,
+
+    /// The date the credential is valid from.
+    #[serde(skip_serializing_if = "Option::is_none")]    
+    pub valid_from: Option<DateTime<Utc>>,
+
+    /// The date the credential is valid until (expiry).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub valid_until: Option<DateTime<Utc>>,
 
     /// Display information from the issuer's metadata for this credential.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -49,12 +65,16 @@ pub struct Credential {
     pub background: Option<Image>,
 }
 
-/// Use Deref to access the `VerifiableCredential` fields directly.
-impl Deref for Credential {
-    type Target = VerifiableCredential;
-
-    fn deref(&self) -> &Self::Target {
-        &self.vc
+/// Get the claims on the VC as a JSON object.
+impl Claims for Credential {
+    /// Serialize Claims as a JSON object.
+    ///
+    /// # Errors
+    ///
+    /// The implementation should return an error if the Claims cannot be
+    /// serialized to JSON.
+    fn to_json(&self) -> anyhow::Result<serde_json::Value> {
+        serde_json::to_value(self).map_err(Into::into)
     }
 }
 

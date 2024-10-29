@@ -49,7 +49,7 @@ impl CredentialStorer for Provider {
 
         let filtered = list
             .iter()
-            .filter(|cred| constraints.satisfied(&cred.vc).unwrap_or(false))
+            .filter(|cred| constraints.satisfied(*cred).unwrap_or(false))
             .cloned()
             .collect::<Vec<Credential>>();
 

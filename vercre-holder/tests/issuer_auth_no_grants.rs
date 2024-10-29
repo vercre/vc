@@ -109,9 +109,10 @@ async fn issuer_auth_no_grants() {
     assert_eq!(credentials.len(), 1);
 
     assert_snapshot!("credentials", credentials, {
-        "[].vc.validFrom" => "[validFrom]",
-        "[].vc" => insta::sorted_redaction(),
-        "[].vc.credentialSubject" => insta::sorted_redaction(),
+        "[].type" => insta::sorted_redaction(),
+        "[].format.credential_definition.credentialSubject" => insta::sorted_redaction(),
+        "[].format.credential_definition.credentialSubject.address" => insta::sorted_redaction(),
+        "[].claims[]" => insta::sorted_redaction(),
         "[].metadata" => insta::sorted_redaction(),
         "[].metadata.credential_definition" => insta::sorted_redaction(),
         "[].metadata.credential_definition.credentialSubject" => insta::sorted_redaction(),
