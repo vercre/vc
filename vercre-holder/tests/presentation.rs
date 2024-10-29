@@ -15,8 +15,8 @@ use vercre_holder::credential::Credential;
 use vercre_holder::presentation::Status;
 use vercre_holder::provider::CredentialStorer;
 use vercre_infosec::KeyOps;
-use vercre_issuer::{Claim, ClaimDefinition, CredentialDefinition, ProfileW3c};
-use vercre_openid::issuer::{Display, Format, ValueType};
+use vercre_issuer::{Claim, ClaimDefinition};
+use vercre_openid::issuer::{Display, ValueType};
 use vercre_openid::verifier::{CreateRequestRequest, DeviceFlow};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use vercre_w3c_vc::proof::{self, Payload, W3cFormat};
@@ -87,7 +87,7 @@ async fn sample_credential() -> Credential {
     };
     let jwt = proof::create(W3cFormat::JwtVcJson, payload, &signer).await.expect("should encode");
 
-    let mut claim_def = HashMap::new();
+    let mut claim_def: HashMap<String, Claim> = HashMap::new();
     let claim = Claim::Entry(ClaimDefinition {
         mandatory: Some(true),
         value_type: Some(ValueType::String),
@@ -108,21 +108,19 @@ async fn sample_credential() -> Credential {
     // Turn a Quota of claims into a Vec of claims
     let mut claims = Vec::new();
     match &vc.credential_subject {
-        Quota::One(claim) => claims.push(claim.clone()),
-        Quota::Many(vc_claims) => claims.extend(vc_claims.clone()),
+        Quota::One(claim) => claims.push(claim.claims.clone()),
+        Quota::Many(vc_claims) => {
+            for claim in vc_claims {
+                claims.push(claim.claims.clone());
+            }
+        },
     }
 
     Credential {
         id: vc.id.clone().expect("should have id"),
         issuer: "https://vercre.io".into(),
         type_,
-        format: Format::JwtVcJson(ProfileW3c {
-            credential_definition: CredentialDefinition {
-                context: None,
-                type_: None,
-                credential_subject: Some(claim_def)
-            }
-        }),
+        format: "jwt_vc_json".into(),
         claims,
         display: None,
         issued: jwt,
@@ -159,11 +157,11 @@ async fn e2e_presentation_uri() {
     assert_eq!(presentation.status, Status::Requested);
     assert_snapshot!("presentation_requested", presentation, {
         ".presentation_id" => "[presentation_id]",
+        ".credentials[].type" => insta::sorted_redaction(),
+        ".credentials[].claims[]" => insta::sorted_redaction(),
+        ".credentials[].claims[].address" => insta::sorted_redaction(),
         ".credentials[].issued" => "[issued]",
         ".credentials[].issuance_date" => "[issuance_date]",
-        ".credentials[].type" => insta::sorted_redaction(),
-        ".**.credentialSubject" => insta::sorted_redaction(),
-        ".**.credentialSubject.address" => insta::sorted_redaction(),
     });
 
     // Authorize the presentation
@@ -212,11 +210,11 @@ async fn e2e_presentation_obj() {
     assert_eq!(presentation.status, Status::Requested);
     assert_snapshot!("presentation_requested2", presentation, {
         ".presentation_id" => "[presentation_id]",
+        ".credentials[].type" => insta::sorted_redaction(),
+        ".credentials[].claims[]" => insta::sorted_redaction(),
+        ".credentials[].claims[].address" => insta::sorted_redaction(),
         ".credentials[].issued" => "[issued]",
         ".credentials[].issuance_date" => "[issuance_date]",
-        ".credentials[].type" => insta::sorted_redaction(),
-        ".**.credentialSubject" => insta::sorted_redaction(),
-        ".**.credentialSubject.address" => insta::sorted_redaction(),
     });
 
     // Authorize the presentation

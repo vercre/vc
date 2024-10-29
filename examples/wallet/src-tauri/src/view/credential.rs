@@ -128,9 +128,9 @@ impl From<&Credential> for CredentialDetail {
         let display = displays[0].clone();
         let mut claims = HashMap::new();
 
-        for subject in &credential.claims {
-            let claims_map = subject.claims.clone();
-            for (key, value) in claims_map {
+        for claim_set in &credential.claims {
+            let vc_claims = claim_set.clone();
+            for (key, value) in  vc_claims{
                 let val = serde_json::to_string(&value).unwrap_or_default();
                 claims.insert(key.clone(), val);
             }

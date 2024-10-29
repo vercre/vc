@@ -5,10 +5,9 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use serde_json::{Map, Value};
 use vercre_dif_exch::Claims;
-use vercre_issuer::Format;
 use vercre_openid::issuer::CredentialDisplay;
-use vercre_w3c_vc::model::CredentialSubject;
 
 /// The Credential model contains information about a credential owned by the
 /// Wallet.
@@ -32,12 +31,12 @@ pub struct Credential {
     #[serde(rename = "type")]
     pub type_: Vec<String>,
 
-    /// Credential format. Information on how the credential is formatted and
-    /// the expected claims it will contain.
-    pub format: Format,
+    /// Credential format. Information on how the encoded credential is
+    /// formatted.
+    pub format: String,
 
     /// Claims as a JSON object.
-    pub claims: Vec<CredentialSubject>,
+    pub claims: Vec<Map<String, Value>>,
 
     /// The date the credential was issued.
     pub issuance_date: DateTime<Utc>,
