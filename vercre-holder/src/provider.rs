@@ -20,7 +20,7 @@ pub use vercre_issuer::{
 pub use vercre_openid::provider::{Result, StateStore};
 use vercre_openid::verifier::{RequestObjectResponse, ResponseRequest, ResponseResponse};
 
-use crate::credential::{Credential, Image};
+use crate::credential::{Credential, ImageData};
 
 /// A trait that combines all the provider traits required to be implemented
 /// by holder clients.
@@ -68,7 +68,7 @@ pub trait Issuer {
     ) -> impl Future<Output = anyhow::Result<DeferredCredentialResponse>> + Send;
 
     /// Get a base64 encoded form of the credential logo.
-    fn image(&self, image_url: &str) -> impl Future<Output = anyhow::Result<Image>> + Send;
+    fn image(&self, image_url: &str) -> impl Future<Output = anyhow::Result<ImageData>> + Send;
 
     /// Notify the issuer of issuance progress.
     fn notification(

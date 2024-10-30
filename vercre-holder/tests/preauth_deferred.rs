@@ -122,8 +122,8 @@ async fn preauth_deferred() {
 
         assert_snapshot!("credentials", credentials, {
             "[].type" => insta::sorted_redaction(),
-            "[].claims[]" => insta::sorted_redaction(),
-            "[].claims[].address" => insta::sorted_redaction(),
+            "[].credentialSubject[]" => insta::sorted_redaction(),
+            "[].credentialSubject[].address" => insta::sorted_redaction(),
             "[].issued" => "[issued]",
             "[].issuance_date" => "[issuance_date]",
         });

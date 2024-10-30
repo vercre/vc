@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
+use vercre_holder::presentation::Status;
 
 use crate::app::PresentationState;
 use crate::view::credential::CredentialDisplay;
@@ -30,13 +31,13 @@ pub enum PresentationStatus {
 }
 
 /// Convert from `vercre_holder::presentation::Status` to `PresentationStatus`
-impl From<vercre_holder::PresentationStatus> for PresentationStatus {
-    fn from(status: vercre_holder::PresentationStatus) -> Self {
+impl From<Status> for PresentationStatus {
+    fn from(status: Status) -> Self {
         match status {
-            vercre_holder::PresentationStatus::Inactive => Self::Inactive,
-            vercre_holder::PresentationStatus::Requested => Self::Requested,
-            vercre_holder::PresentationStatus::Authorized => Self::Authorized,
-            vercre_holder::PresentationStatus::Failed(_) => Self::Failed,
+            Status::Inactive => Self::Inactive,
+            Status::Requested => Self::Requested,
+            Status::Authorized => Self::Authorized,
+            Status::Failed(_) => Self::Failed,
         }
     }
 }

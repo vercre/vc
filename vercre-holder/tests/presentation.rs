@@ -105,15 +105,11 @@ async fn sample_credential() -> Credential {
         Quota::Many(vc_types) => type_.extend(vc_types.clone()),
     }
 
-    // Turn a Quota of claims into a Vec of claims
-    let mut claims = Vec::new();
+    // Turn a Quota of credential subjects into a Vec of credential subjects.
+    let mut credential_subject = Vec::new();
     match &vc.credential_subject {
-        Quota::One(claim) => claims.push(claim.claims.clone()),
-        Quota::Many(vc_claims) => {
-            for claim in vc_claims {
-                claims.push(claim.claims.clone());
-            }
-        },
+        Quota::One(claim) => credential_subject.push(claim.clone()),
+        Quota::Many(vc_claims) => credential_subject.extend(vc_claims.clone()),
     }
 
     Credential {
@@ -121,7 +117,7 @@ async fn sample_credential() -> Credential {
         issuer: "https://vercre.io".into(),
         type_,
         format: "jwt_vc_json".into(),
-        claims,
+        credential_subject,
         display: None,
         issued: jwt,
         issuance_date,

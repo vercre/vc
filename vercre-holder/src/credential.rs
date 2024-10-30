@@ -5,9 +5,9 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
 use vercre_dif_exch::Claims;
 use vercre_openid::issuer::CredentialDisplay;
+use vercre_w3c_vc::model::CredentialSubject;
 
 /// The Credential model contains information about a credential owned by the
 /// Wallet.
@@ -35,8 +35,9 @@ pub struct Credential {
     /// formatted.
     pub format: String,
 
-    /// Claims as a JSON object.
-    pub claims: Vec<Map<String, Value>>,
+    /// Claims for one or more subjects (holders).
+    #[serde(rename = "credentialSubject")]
+    pub credential_subject: Vec<CredentialSubject>,
 
     /// The date the credential was issued.
     pub issuance_date: DateTime<Utc>,
@@ -56,12 +57,12 @@ pub struct Credential {
     /// A base64-encoded logo image for the credential ingested from the logo
     /// url in the display section of the metadata.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub logo: Option<Image>,
+    pub logo: Option<ImageData>,
 
     /// A base64-encoded background image for the credential ingested from the
     /// url in the display section of the metadata.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub background: Option<Image>,
+    pub background: Option<ImageData>,
 }
 
 /// Get the claims on the VC as a JSON object.
@@ -79,10 +80,9 @@ impl Claims for Credential {
 
 /// Image information for a credential.
 #[derive(Clone, Default, Debug, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename = "Image")]
-pub struct Image {
+pub struct ImageData {
     /// The logo image as a base64-encoded string.
-    pub image: String,
+    pub data: String,
 
     /// Content type. e.g. "image/png"
     #[serde(rename = "mediaType")]

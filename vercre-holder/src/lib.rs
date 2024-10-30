@@ -49,15 +49,13 @@ pub use vercre_dif_exch::Constraints;
 pub use vercre_openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     AuthorizationResponse, Claim, ClaimDefinition, CredentialAuthorization,
-    CredentialConfiguration, CredentialOffer, CredentialRequest, CredentialResponse,
-    CredentialResponseType, DeferredCredentialRequest, DeferredCredentialResponse, Format,
-    GrantType, Grants, Issuer, MetadataRequest, MetadataResponse, NotificationEvent,
-    NotificationRequest, NotificationResponse, OAuthServerRequest, OAuthServerResponse,
-    PreAuthorizedCodeGrant, ProfileClaims, Proof, ProofClaims, TokenRequest, TokenResponse, TxCode,
+    CredentialConfiguration, CredentialDisplay, CredentialOffer, CredentialRequest,
+    CredentialResponse, CredentialResponseType, DeferredCredentialRequest,
+    DeferredCredentialResponse, Format, GrantType, Grants, Image, Issuer, MetadataRequest,
+    MetadataResponse, NotificationEvent, NotificationRequest, NotificationResponse,
+    OAuthServerRequest, OAuthServerResponse, PreAuthorizedCodeGrant, ProfileClaims, Proof,
+    ProofClaims, TokenRequest, TokenResponse, TxCode,
 };
 pub use vercre_openid::verifier::{
     RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
 };
-
-pub use crate::credential::{Credential, Image};
-pub use crate::presentation::{Presentation, Status as PresentationStatus};
