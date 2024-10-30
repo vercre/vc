@@ -47,10 +47,10 @@ pub struct Logo {
     pub media_type: String,
 }
 
-impl From<credential::Image> for Logo {
-    fn from(logo: credential::Image) -> Self {
+impl From<credential::ImageData> for Logo {
+    fn from(logo: credential::ImageData) -> Self {
         Self {
-            image: logo.image,
+            image: logo.data,
             media_type: logo.media_type,
         }
     }
@@ -126,14 +126,13 @@ impl From<&Credential> for CredentialDetail {
         let displays = credential.display.clone().unwrap_or_default();
         // TODO: locale
         let display = displays[0].clone();
-        let mut claims = HashMap::new();
 
-        for claim_set in &credential.claims {
-            let vc_claims = claim_set.clone();
-            for (key, value) in  vc_claims{
-                let val = serde_json::to_string(&value).unwrap_or_default();
-                claims.insert(key.clone(), val);
-            }
+        // TODO: multiple subjects.
+        let cred_sub = credential.credential_subject[0].clone();
+        let mut claims = HashMap::new();
+        for (key, value) in cred_sub.claims {
+            let val = serde_json::to_string(&value).unwrap_or_default();
+            claims.insert(key.clone(), val);
         }
 
         Self {

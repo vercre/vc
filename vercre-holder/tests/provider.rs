@@ -16,7 +16,7 @@ use vercre_holder::provider::{
     Algorithm, CredentialStorer, DidResolver, Document, HolderProvider, Issuer, Result, Signer,
     StateStore, Verifier,
 };
-use vercre_holder::credential::{Credential, Image};
+use vercre_holder::credential::{Credential, ImageData};
 use vercre_holder::{
     AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse,
     DeferredCredentialRequest, DeferredCredentialResponse, MetadataRequest, MetadataResponse,
@@ -84,8 +84,8 @@ impl Issuer for Provider {
         Ok(response)
     }
 
-    async fn image(&self, _logo_url: &str) -> anyhow::Result<Image> {
-        Ok(Image::default())
+    async fn image(&self, _logo_url: &str) -> anyhow::Result<ImageData> {
+        Ok(ImageData::default())
     }
 
     async fn notification(

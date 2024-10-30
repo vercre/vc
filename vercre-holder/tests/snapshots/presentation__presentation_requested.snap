@@ -1,6 +1,6 @@
 ---
 source: vercre-holder/tests/presentation.rs
-assertion_line: 158
+assertion_line: 154
 expression: presentation
 ---
 presentation_id: "[presentation_id]"
@@ -13,8 +13,9 @@ credentials:
       - EmployeeIDCredential
       - VerifiableCredential
     format: jwt_vc_json
-    claims:
-      - employeeId: "1234567890"
+    credentialSubject:
+      - id: "did:example:ebfeb1f712ebc6f1c276e12ec21"
+        employeeId: "1234567890"
     issuance_date: "[issuance_date]"
     valid_from: "2023-11-20T23:21:55Z"
     valid_until: "2033-12-20T23:21:55Z"
