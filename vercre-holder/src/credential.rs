@@ -5,9 +5,32 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use serde_json::{Map, Value};
 use vercre_dif_exch::Claims;
 use vercre_openid::issuer::CredentialDisplay;
 use vercre_w3c_vc::model::CredentialSubject;
+
+/// A set of claims for a subject (holder).
+/// 
+/// (Some credentials can be issued to multiple subjects).
+#[derive(Clone, Default, Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SubjectClaims {
+    /// An identifier of the subject (holder) of the claims.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+
+    /// The claims for the subject as a map of JSON objects.
+    pub claims: Map<String, Value>
+}
+
+impl From<CredentialSubject> for SubjectClaims {
+    fn from(subject: CredentialSubject) -> Self {
+        Self {
+            id: subject.id,
+            claims: subject.claims,
+        }
+    }
+}
 
 /// The Credential model contains information about a credential owned by the
 /// Wallet.
@@ -36,8 +59,7 @@ pub struct Credential {
     pub format: String,
 
     /// Claims for one or more subjects (holders).
-    #[serde(rename = "credentialSubject")]
-    pub credential_subject: Vec<CredentialSubject>,
+    pub subject_claims: Vec<SubjectClaims>,
 
     /// The date the credential was issued.
     pub issuance_date: DateTime<Utc>,

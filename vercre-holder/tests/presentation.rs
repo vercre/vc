@@ -106,10 +106,14 @@ async fn sample_credential() -> Credential {
     }
 
     // Turn a Quota of credential subjects into a Vec of credential subjects.
-    let mut credential_subject = Vec::new();
-    match &vc.credential_subject {
-        Quota::One(claim) => credential_subject.push(claim.clone()),
-        Quota::Many(vc_claims) => credential_subject.extend(vc_claims.clone()),
+    let mut subject_claims = Vec::new();
+    match vc.credential_subject {
+        Quota::One(claim) => subject_claims.push(claim.into()),
+        Quota::Many(vc_claims) => {
+            for claim in vc_claims {
+                subject_claims.push(claim.into());
+            }
+        },
     }
 
     Credential {
@@ -117,7 +121,7 @@ async fn sample_credential() -> Credential {
         issuer: "https://vercre.io".into(),
         type_,
         format: "jwt_vc_json".into(),
-        credential_subject,
+        subject_claims,
         display: None,
         issued: jwt,
         issuance_date,
@@ -154,8 +158,9 @@ async fn e2e_presentation_uri() {
     assert_snapshot!("presentation_requested", presentation, {
         ".presentation_id" => "[presentation_id]",
         ".credentials[].type" => insta::sorted_redaction(),
-        ".credentials[].claims[]" => insta::sorted_redaction(),
-        ".credentials[].claims[].address" => insta::sorted_redaction(),
+        ".credentials[].subject_claims[]" => insta::sorted_redaction(),
+        ".credentials[].subject_claims[].claims" => insta::sorted_redaction(),
+        ".credentials[].subject_claims[].claims[].address" => insta::sorted_redaction(),
         ".credentials[].issued" => "[issued]",
         ".credentials[].issuance_date" => "[issuance_date]",
     });
@@ -207,8 +212,9 @@ async fn e2e_presentation_obj() {
     assert_snapshot!("presentation_requested2", presentation, {
         ".presentation_id" => "[presentation_id]",
         ".credentials[].type" => insta::sorted_redaction(),
-        ".credentials[].claims[]" => insta::sorted_redaction(),
-        ".credentials[].claims[].address" => insta::sorted_redaction(),
+        ".credentials[].subject_claims[]" => insta::sorted_redaction(),
+        ".credentials[].subject_claims[].claims" => insta::sorted_redaction(),
+        ".credentials[].subject_claims[].claims[].address" => insta::sorted_redaction(),
         ".credentials[].issued" => "[issued]",
         ".credentials[].issuance_date" => "[issuance_date]",
     });

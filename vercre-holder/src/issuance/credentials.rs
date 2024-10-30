@@ -311,11 +311,15 @@ async fn credential(
         Quota::Many(vc_types) => type_.extend(vc_types.clone()),
     }
 
-    // Turn a Quota of credential subjects into a Vec of credential subjects.
-    let mut credential_subject = Vec::new();
-    match &vc.credential_subject {
-        Quota::One(cs) => credential_subject.push(cs.clone()),
-        Quota::Many(vc_claims) => credential_subject.extend(vc_claims.clone()),
+    // Turn a Quota of credential subjects into a Vec of claim sets.
+    let mut subject_claims = Vec::new();
+    match vc.credential_subject {
+        Quota::One(cs) => subject_claims.push(cs.into()),
+        Quota::Many(vc_claims) => {
+            for cs in vc_claims {
+                subject_claims.push(cs.into());
+            }
+        },
     }
 
     let mut storable_credential = Credential {
@@ -323,7 +327,7 @@ async fn credential(
         issuer: issuer_id.clone(),
         type_,
         format: config.format.to_string(),
-        credential_subject,
+        subject_claims,
         issued: token.into(),
         issuance_date,
         valid_from: vc.valid_from,

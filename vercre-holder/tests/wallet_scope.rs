@@ -80,8 +80,9 @@ async fn wallet_scope() {
 
     assert_snapshot!("credentials", credentials, {
         "[].type" => insta::sorted_redaction(),
-        "[].credentialSubject[]" => insta::sorted_redaction(),
-        "[].credentialSubject[].address" => insta::sorted_redaction(),
+        "[].subject_claims[]" => insta::sorted_redaction(),
+        "[].subject_claims[].claims" => insta::sorted_redaction(),
+        "[].subject_claims[].claims.address" => insta::sorted_redaction(),
         "[].issued" => "[issued]",
         "[].issuance_date" => "[issuance_date]",
     });

@@ -128,7 +128,7 @@ impl From<&Credential> for CredentialDetail {
         let display = displays[0].clone();
 
         // TODO: multiple subjects.
-        let cred_sub = credential.credential_subject[0].clone();
+        let cred_sub = credential.subject_claims[0].clone();
         let mut claims = HashMap::new();
         for (key, value) in cred_sub.claims {
             let val = serde_json::to_string(&value).unwrap_or_default();
