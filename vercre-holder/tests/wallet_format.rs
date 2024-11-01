@@ -99,6 +99,8 @@ async fn wallet_format() {
         "[].subject_claims[]" => insta::sorted_redaction(),
         "[].subject_claims[].claims" => insta::sorted_redaction(),
         "[].subject_claims[].claims.address" => insta::sorted_redaction(),
+        "[].claim_definitions" => insta::sorted_redaction(),
+        "[].claim_definitions.address" => insta::sorted_redaction(),
         "[].issued" => "[issued]",
         "[].issuance_date" => "[issuance_date]",
     });

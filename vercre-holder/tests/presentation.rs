@@ -122,6 +122,7 @@ async fn sample_credential() -> Credential {
         type_,
         format: "jwt_vc_json".into(),
         subject_claims,
+        claim_definitions: Some(claim_def),
         display: None,
         issued: jwt,
         issuance_date,
@@ -161,6 +162,8 @@ async fn e2e_presentation_uri() {
         ".credentials[].subject_claims[]" => insta::sorted_redaction(),
         ".credentials[].subject_claims[].claims" => insta::sorted_redaction(),
         ".credentials[].subject_claims[].claims[].address" => insta::sorted_redaction(),
+        ".credentials[].claim_definitions" => insta::sorted_redaction(),
+        ".credentials[].claim_definitions.address" => insta::sorted_redaction(),
         ".credentials[].issued" => "[issued]",
         ".credentials[].issuance_date" => "[issuance_date]",
     });
@@ -215,6 +218,8 @@ async fn e2e_presentation_obj() {
         ".credentials[].subject_claims[]" => insta::sorted_redaction(),
         ".credentials[].subject_claims[].claims" => insta::sorted_redaction(),
         ".credentials[].subject_claims[].claims[].address" => insta::sorted_redaction(),
+        ".credentials[].claim_definitions" => insta::sorted_redaction(),
+        ".credentials[].claim_definitions.address" => insta::sorted_redaction(),
         ".credentials[].issued" => "[issued]",
         ".credentials[].issuance_date" => "[issuance_date]",
     });

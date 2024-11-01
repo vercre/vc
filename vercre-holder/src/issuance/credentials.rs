@@ -328,6 +328,7 @@ async fn credential(
         type_,
         format: config.format.to_string(),
         subject_claims,
+        claim_definitions: config.format.claims(),
         issued: token.into(),
         issuance_date,
         valid_from: vc.valid_from,

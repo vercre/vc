@@ -108,8 +108,6 @@ pub trait CredentialStorer: Send + Sync {
     /// no credential with the ID exists.
     fn load(&self, id: &str) -> impl Future<Output = anyhow::Result<Option<Credential>>> + Send;
 
-    // TODO: hide filtering by moving into vercre-holder library?
-
     /// Find the credentials that match the the provided filter. If `filter` is
     /// None, return all credentials in the store.
     fn find(

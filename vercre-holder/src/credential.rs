@@ -3,10 +3,13 @@
 //! This module defines types and traits to enable wallets or other holder
 //! agents to interact with the `vercre-holder` endpoints.
 
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use vercre_dif_exch::Claims;
+use vercre_issuer::Claim;
 use vercre_openid::issuer::CredentialDisplay;
 use vercre_w3c_vc::model::CredentialSubject;
 
@@ -57,6 +60,9 @@ pub struct Credential {
     /// Credential format. Information on how the encoded credential is
     /// formatted.
     pub format: String,
+
+    /// Claim definitions that can be used for displaying the credential.
+    pub claim_definitions: Option<HashMap<String, Claim>>,
 
     /// Claims for one or more subjects (holders).
     pub subject_claims: Vec<SubjectClaims>,
