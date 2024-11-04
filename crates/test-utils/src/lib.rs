@@ -20,6 +20,22 @@ use tracing_subscriber::FmtSubscriber;
 // initalise tracing once for all tests
 static INIT: Once = Once::new();
 
+/// Configure Insta snapshot name.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// snapshot!("issuer:immediate");
+///
+/// ...
+///
+/// assert_snapshot!("credential", vc, {
+///    ".validFrom" => "[validFrom]",
+///    ".credentialSubject" => insta::sorted_redaction()
+/// });
+/// ```
+///
+/// will result in a snapshot named `credential@issuer:immediate.snap`.
 #[macro_export]
 macro_rules! snapshot{
     ($($expr:expr),*) => {
