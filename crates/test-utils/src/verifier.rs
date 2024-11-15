@@ -87,8 +87,8 @@ impl Signer for VerifierSec {
         VerifierKeystore::algorithm()
     }
 
-    fn verification_method(&self) -> String {
-        VerifierKeystore::verification_method()
+    async fn verification_method(&self) -> Result<String> {
+        Ok(VerifierKeystore::verification_method())
     }
 }
 

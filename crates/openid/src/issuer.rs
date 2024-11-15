@@ -802,6 +802,7 @@ impl std::fmt::Display for Format {
 ///
 /// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(untagged)]
 pub enum ProfileClaims {
     /// W3C Verifiable Credential profile claims.
     #[serde(rename = "credential_definition")]

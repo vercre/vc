@@ -108,8 +108,8 @@ impl Signer for KeyOpsImpl {
         IssuerKeystore::algorithm()
     }
 
-    fn verification_method(&self) -> String {
-        IssuerKeystore::verification_method()
+    async fn verification_method(&self) -> Result<String> {
+        Ok(IssuerKeystore::verification_method())
     }
 }
 

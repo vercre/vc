@@ -82,7 +82,8 @@ pub async fn to_credential(
         Algorithm::ES256K => return Err(anyhow!("unsupported algorithm")),
     };
 
-    let key_id = signer.verification_method().as_bytes().to_vec();
+    let verification_method = signer.verification_method().await?;
+    let key_id = verification_method.as_bytes().to_vec();
 
     let protected = HeaderBuilder::new().algorithm(algorithm).build();
     let unprotected = HeaderBuilder::new().key_id(key_id).build();

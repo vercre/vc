@@ -31,7 +31,7 @@ impl Signer for Provider {
         HolderKeystore::algorithm()
     }
 
-    fn verification_method(&self) -> String {
-        HolderKeystore::verification_method()
+    async fn verification_method(&self) -> Result<String> {
+        Ok(HolderKeystore::verification_method())
     }
 }

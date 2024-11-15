@@ -43,7 +43,7 @@ pub async fn present(
     presentation.submission.clone_from(&submission);
 
     // create vp
-    let kid = Signer::verification_method(&provider);
+    let kid = Signer::verification_method(&provider).await?;
     let holder_did = kid.split('#').collect::<Vec<&str>>()[0];
 
     let vp = create_vp(&presentation, holder_did).map_err(|e| {
