@@ -1,7 +1,8 @@
 ---
 source: vercre-holder/tests/wallet_cred_def.rs
-assertion_line: 47
+assertion_line: 45
 expression: claims
+snapshot_kind: text
 ---
 credential_definition:
   type:

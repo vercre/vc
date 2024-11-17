@@ -1,7 +1,8 @@
 ---
 source: vercre-issuer/src/authorize.rs
-assertion_line: 468
+assertion_line: 465
 expression: state
+snapshot_kind: text
 ---
 subject_id: normal_user
 stage:

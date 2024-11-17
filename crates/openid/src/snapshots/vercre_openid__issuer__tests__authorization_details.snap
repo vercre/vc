@@ -1,7 +1,8 @@
 ---
 source: crates/openid/src/issuer.rs
-assertion_line: 1724
-expression: request.authorization_details
+assertion_line: 2150
+expression: object.authorization_details
+snapshot_kind: text
 ---
 - type: openid_credential
   credential_configuration_id: EmployeeID_JWT
