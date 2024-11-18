@@ -174,7 +174,7 @@ mod tests {
             panic!("expected a single credential");
         };
         let Payload::Vc { vc, .. } =
-            proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
+            proof::verify(Verify::Vc(&vc_kind), provider.clone()).await.expect("should decode")
         else {
             panic!("should be VC");
         };

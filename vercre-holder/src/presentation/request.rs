@@ -67,7 +67,7 @@ pub async fn request(
                 tracing::error!(target: "Endpoint::request", ?e);
                 e
             })?;
-        parse_request_object_response(&req_obj_response, &provider).await.map_err(|e| {
+        parse_request_object_response(&req_obj_response, provider.clone()).await.map_err(|e| {
             tracing::error!(target: "Endpoint::request", ?e);
             e
         })?
@@ -103,7 +103,7 @@ pub async fn request(
 
 /// Extract a presentation `RequestObject` from a `RequestObjectResponse`.
 async fn parse_request_object_response(
-    res: &RequestObjectResponse, resolver: &impl DidResolver,
+    res: &RequestObjectResponse, resolver: impl DidResolver,
 ) -> anyhow::Result<RequestObject> {
     let RequestObjectType::Jwt(token) = &res.request_object else {
         bail!("no serialized JWT found in response");

@@ -174,7 +174,7 @@ impl Wallet {
 
         // verify the credential is as expected
         let Ok(Payload::Vc { vc, .. }) =
-            proof::verify(Verify::Vc(credential), &self.provider).await
+            proof::verify(Verify::Vc(credential), self.provider.clone()).await
         else {
             panic!("should be VC");
         };

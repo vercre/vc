@@ -140,7 +140,7 @@ pub enum Verify<'a> {
 /// # Errors
 /// TODO: document errors
 #[allow(clippy::unused_async)]
-pub async fn verify(proof: Verify<'_>, resolver: &impl DidResolver) -> anyhow::Result<Payload> {
+pub async fn verify(proof: Verify<'_>, resolver: impl DidResolver) -> anyhow::Result<Payload> {
     match proof {
         Verify::Vc(value) => {
             let Kind::String(token) = value else {

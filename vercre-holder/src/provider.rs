@@ -68,7 +68,7 @@ pub trait Issuer {
     ) -> impl Future<Output = anyhow::Result<DeferredCredentialResponse>> + Send;
 
     /// Get a base64 encoded form of the credential logo.
-    fn image(&self, image_url: &str) -> impl Future<Output = anyhow::Result<ImageData>> + Send;
+    fn image(self, image_url: &str) -> impl Future<Output = anyhow::Result<ImageData>> + Send;
 
     /// Notify the issuer of issuance progress.
     fn notification(

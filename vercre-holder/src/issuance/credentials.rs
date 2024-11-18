@@ -264,13 +264,13 @@ pub async fn process_credential_response(
     match &resp.response {
         CredentialResponseType::Credential(vc_kind) => {
             // Create a credential in a useful wallet format and save.
-            let credential = credential(&provider, config, vc_kind).await?;
+            let credential = credential(provider.clone(), config, vc_kind).await?;
             credentials.push(credential);
             Ok((Some(credentials), None))
         }
         CredentialResponseType::Credentials(creds) => {
             for vc_kind in creds {
-                let credential = credential(&provider, config, vc_kind).await?;
+                let credential = credential(provider.clone(), config, vc_kind).await?;
                 credentials.push(credential);
             }
             Ok((Some(credentials), None))
@@ -281,10 +281,10 @@ pub async fn process_credential_response(
 
 /// Construct a credential from a credential response.
 async fn credential(
-    provider: &impl HolderProvider, config: &CredentialConfiguration,
+    provider: impl HolderProvider, config: &CredentialConfiguration,
     vc_kind: &Kind<VerifiableCredential>,
 ) -> anyhow::Result<Credential> {
-    let Payload::Vc { vc, issued_at } = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), provider)
+    let Payload::Vc { vc, issued_at } = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), provider.clone())
         .await
         .map_err(|e| anyhow!("issue parsing credential: {e}"))?
     else {
@@ -343,14 +343,14 @@ async fn credential(
         // TODO: Locale?
         if let Some(logo_info) = &display[0].logo {
             if let Some(uri) = &logo_info.uri {
-                if let Ok(logo) = Issuer::image(provider, uri).await {
+                if let Ok(logo) = Issuer::image(provider.clone(), uri).await {
                     storable_credential.logo = Some(logo);
                 }
             }
         }
         if let Some(background_info) = &display[0].background_image {
             if let Some(uri) = &background_info.uri {
-                if let Ok(background) = Issuer::image(provider, uri).await {
+                if let Ok(background) = Issuer::image(provider.clone(), uri).await {
                     storable_credential.background = Some(background);
                 }
             }

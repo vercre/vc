@@ -549,7 +549,7 @@ mod tests {
             panic!("expected a single credential");
         };
         let Payload::Vc { vc, .. } =
-            proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
+            proof::verify(Verify::Vc(&vc_kind), provider.clone()).await.expect("should decode")
         else {
             panic!("should be VC");
         };
@@ -640,9 +640,10 @@ mod tests {
         let CredentialResponseType::Credential(vc_kind) = &response.response else {
             panic!("expected a single credential");
         };
-        let Payload::Vc { vc, .. } = vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider)
-            .await
-            .expect("should decode")
+        let Payload::Vc { vc, .. } =
+            vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), provider.clone())
+                .await
+                .expect("should decode")
         else {
             panic!("should be VC");
         };
@@ -728,7 +729,7 @@ mod tests {
             panic!("expected a single credential");
         };
         let Payload::Vc { vc, .. } =
-            proof::verify(Verify::Vc(&vc_kind), &provider).await.expect("should decode")
+            proof::verify(Verify::Vc(&vc_kind), provider.clone()).await.expect("should decode")
         else {
             panic!("should be VC");
         };

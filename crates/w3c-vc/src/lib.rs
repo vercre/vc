@@ -38,13 +38,15 @@ macro_rules! verify_key {
     ($resolver:expr) => {{
         // create local reference before moving into closure
         let resolver = $resolver;
-
-        move |kid: String| async move {
-            let resp = $crate::dereference(&kid, None, resolver).await?;
-            let Some($crate::Resource::VerificationMethod(vm)) = resp.content_stream else {
-                return Err($crate::anyhow!("Verification method not found"));
-            };
-            vm.method_type.jwk().map_err(|e| $crate::anyhow!("JWK not found: {e}"))
+        move |kid: String| {
+            let local_resolver = resolver.clone();
+            async move {
+                let resp = $crate::dereference(&kid, None, local_resolver).await?;
+                let Some($crate::Resource::VerificationMethod(vm)) = resp.content_stream else {
+                    return Err($crate::anyhow!("Verification method not found"));
+                };
+                vm.method_type.jwk().map_err(|e| $crate::anyhow!("JWK not found: {e}"))
+            }
         }
     }};
 }

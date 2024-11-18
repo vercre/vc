@@ -84,7 +84,7 @@ impl Issuer for Provider {
         Ok(response)
     }
 
-    async fn image(&self, _logo_url: &str) -> anyhow::Result<ImageData> {
+    async fn image(self, _logo_url: &str) -> anyhow::Result<ImageData> {
         Ok(ImageData::default())
     }
 

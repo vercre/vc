@@ -6309,7 +6309,7 @@ dependencies = [
 [[package]]
 name = "vercre-did"
 version = "0.1.0"
-source = "git+https://github.com/vercre/did.git#af427326276d35b7e07b6269805788a66f8e31dc"
+source = "git+https://github.com/vercre/did.git#07195b6302825a2ffb60f1bf64aba032a5c1639a"
 dependencies = [
  "anyhow",
  "base64ct",
@@ -6366,7 +6366,7 @@ dependencies = [
 [[package]]
 name = "vercre-infosec"
 version = "0.1.0-alpha.6"
-source = "git+https://github.com/vercre/infosec.git#11e73f1e82227db1f823e0eb82062ccfc2c1a14c"
+source = "git+https://github.com/vercre/infosec.git#d7c33663287144dcfd09e7e62cedd883e86c8d21"
 dependencies = [
  "aes-gcm",
  "anyhow",

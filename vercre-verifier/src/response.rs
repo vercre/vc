@@ -73,11 +73,12 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
 
     // check nonce matches
     for vp_val in &vp_token {
-        let (vp, nonce) = match vercre_w3c_vc::proof::verify(Verify::Vp(vp_val), &provider).await {
-            Ok(Payload::Vp { vp, nonce, .. }) => (vp, nonce),
-            Ok(_) => return Err(Error::InvalidRequest("proof payload is invalid".into())),
-            Err(e) => return Err(Error::ServerError(format!("issue verifying VP proof: {e}"))),
-        };
+        let (vp, nonce) =
+            match vercre_w3c_vc::proof::verify(Verify::Vp(vp_val), provider.clone()).await {
+                Ok(Payload::Vp { vp, nonce, .. }) => (vp, nonce),
+                Ok(_) => return Err(Error::InvalidRequest("proof payload is invalid".into())),
+                Err(e) => return Err(Error::ServerError(format!("issue verifying VP proof: {e}"))),
+            };
 
         // else {
         //     return Err(Error::InvalidRequest("invalid vp_token".into()));
@@ -160,9 +161,10 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
             _ => return Err(Error::InvalidRequest(format!("unexpected VC format: {vc_node}"))),
         };
 
-        let Payload::Vc { vc, .. } = vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), &provider)
-            .await
-            .map_err(|e| Error::InvalidRequest(format!("invalid VC proof: {e}")))?
+        let Payload::Vc { vc, .. } =
+            vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), provider.clone())
+                .await
+                .map_err(|e| Error::InvalidRequest(format!("invalid VC proof: {e}")))?
         else {
             return Err(Error::InvalidRequest("proof payload is invalid".into()));
         };

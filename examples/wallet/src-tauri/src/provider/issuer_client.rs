@@ -90,7 +90,7 @@ impl Issuer for Provider {
     }
 
     /// Get a base64 encoded form of the credential logo.
-    async fn image(&self, url: &str) -> anyhow::Result<ImageData> {
+    async fn image(self, url: &str) -> anyhow::Result<ImageData> {
         let client = reqwest::Client::new();
         let result = client.get(url).header(ACCEPT, "image/*").send().await?;
         let headers = result.headers().clone();
