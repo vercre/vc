@@ -807,13 +807,10 @@ pub enum ProfileClaims {
     #[serde(rename = "credential_definition")]
     W3c(CredentialDefinition),
 
-    /// `ISO.18013-5` (Mobile Driving License) profile claims
+    /// `ISO.18013-5` (Mobile Driving License) and
+    /// Selective Disclosure JWT ([SD-JWT]) profile claims
     #[serde(rename = "claims")]
-    IsoMdl(HashMap<String, Claim>),
-
-    /// Selective Disclosure JWT ([SD-JWT]) profile claims.
-    #[serde(rename = "sdclaims")]
-    SdJwt(HashMap<String, Claim>),
+    Claims(HashMap<String, Claim>),
 }
 
 impl Default for ProfileClaims {
@@ -828,7 +825,7 @@ impl ProfileClaims {
     pub fn claims(&self) -> Option<HashMap<String, Claim>> {
         match self {
             Self::W3c(credential_definition) => credential_definition.credential_subject.clone(),
-            Self::IsoMdl(claims) | Self::SdJwt(claims) => Some(claims.clone()),
+            Self::Claims(claims) => Some(claims.clone()),
         }
     }
 }

@@ -133,8 +133,7 @@ fn narrow_scope(
                             ..CredentialDefinition::default()
                         })
                     }
-                    Format::IsoMdl(_) => ProfileClaims::IsoMdl(claims.clone()),
-                    Format::VcSdJwt(_) => ProfileClaims::SdJwt(claims.clone()),
+                    Format::IsoMdl(_) | Format::VcSdJwt(_) => ProfileClaims::Claims(claims.clone()),
                 };
                 Some(profile)
             }

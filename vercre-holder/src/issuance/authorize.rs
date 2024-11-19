@@ -325,8 +325,7 @@ fn authorization_details(
                         ..Default::default()
                     })
                 }
-                Format::IsoMdl(_) => ProfileClaims::IsoMdl(claims),
-                Format::VcSdJwt(_) => ProfileClaims::SdJwt(claims),
+                Format::IsoMdl(_) | Format::VcSdJwt(_) => ProfileClaims::Claims(claims),
             });
         auth_details.push(AuthorizationDetail {
             type_: AuthorizationDetailType::OpenIdCredential,
