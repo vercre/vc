@@ -48,6 +48,9 @@ pub struct OfferResponse {
     /// The identifer of the credential issuer.
     pub issuer: String,
 
+    /// The name of the credential issuer.
+    pub issuer_name: String,
+
     /// The credentials offered from the issuer to the holder, keyed by
     /// credential configuration ID.
     pub offered: HashMap<String, CredentialConfiguration>,
@@ -88,14 +91,6 @@ pub async fn offer(
 
     issuance.status = Status::Ready;
 
-    // Stash the state for the next step.
-    if let Err(e) =
-        StateStore::put(&provider, &issuance.id, &issuance, DateTime::<Utc>::MAX_UTC).await
-    {
-        tracing::error!(target: "Endpoint::offer", ?e);
-        return Err(e);
-    };
-
     // Trim the supported credentials to just those on offer so that the holder
     // can decide which to accept.
     let mut offered = HashMap::<String, CredentialConfiguration>::new();
@@ -110,9 +105,27 @@ pub async fn offer(
         offered.insert(cfg_id.clone(), found.clone());
     }
 
+    // TODO: Locale support.
+    let issuer_name = {
+        if let Some(display) = issuance.issuer.display.clone() {
+            display.name
+        } else {
+            issuance.issuer.credential_issuer.clone()
+        }
+    };
+
+    // Stash the state for the next step.
+    if let Err(e) =
+        StateStore::put(&provider, &issuance.id, &issuance, DateTime::<Utc>::MAX_UTC).await
+    {
+        tracing::error!(target: "Endpoint::offer", ?e);
+        return Err(e);
+    };
+
     let res = OfferResponse {
         issuance_id: issuance.id,
         issuer: request.offer.credential_issuer.clone(),
+        issuer_name,
         offered,
         grants: request.offer.grants.clone(),
     };

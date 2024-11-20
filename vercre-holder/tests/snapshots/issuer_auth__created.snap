@@ -2,9 +2,11 @@
 source: vercre-holder/tests/issuer_auth.rs
 assertion_line: 55
 expression: issuance
+snapshot_kind: text
 ---
 issuance_id: "[issuance_id]"
 issuer: "http://vercre.io"
+issuer_name: Vercre
 offered:
   EmployeeID_JWT:
     format: jwt_vc_json

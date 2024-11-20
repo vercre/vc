@@ -2,9 +2,11 @@
 source: vercre-holder/tests/preauth_narrow.rs
 assertion_line: 60
 expression: issuance
+snapshot_kind: text
 ---
 issuance_id: "[issuance_id]"
 issuer: "http://vercre.io"
+issuer_name: Vercre
 offered:
   Developer_JWT:
     format: jwt_vc_json
