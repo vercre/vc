@@ -442,9 +442,9 @@ impl FromStr for AuthorizationRequest {
     }
 }
 
-/// `Claim` requires a custom deserializer as JSON claims are always objects.
-/// The A `Claim::Entry` is a single claim definition, while a `Claim::Set` is a
-/// set of nested claims.
+/// `AuthorizationRequest` requires a custom deserializer because the default 
+/// deserializer cannot readily distinguish between `RequestObject` and
+/// `RequestUri`.
 impl<'de> de::Deserialize<'de> for AuthorizationRequest {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
