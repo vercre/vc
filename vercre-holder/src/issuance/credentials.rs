@@ -166,7 +166,7 @@ async fn credential_by_format(
         tracing::error!(target: "Endpoint::credentials", ?e);
         e
     })?;
-    match process_credential_response(provider.clone(), config, &cred_res).await {
+    match process_credential_response(provider.clone(), config, &cred_res, &issuance.issuer).await {
         Ok((credentials, transaction_id)) => {
             if let Some(credentials) = credentials {
                 issuance.credentials.extend(credentials);
@@ -227,7 +227,9 @@ async fn credential_by_identifier(
                 }
             });
             let cred_res = Issuer::credential(&provider, request).await?;
-            match process_credential_response(provider.clone(), config, &cred_res).await {
+            match process_credential_response(provider.clone(), config, &cred_res, &issuance.issuer)
+                .await
+            {
                 Ok((credentials, transaction_id)) => {
                     if let Some(credentials) = credentials {
                         issuance.credentials.extend(credentials);
@@ -259,18 +261,18 @@ async fn credential_by_identifier(
 /// returned instead.
 pub async fn process_credential_response(
     provider: impl HolderProvider, config: &CredentialConfiguration, resp: &CredentialResponse,
+    issuer: &vercre_openid::issuer::Issuer,
 ) -> anyhow::Result<(Option<Vec<Credential>>, Option<String>)> {
     let mut credentials = Vec::new();
     match &resp.response {
         CredentialResponseType::Credential(vc_kind) => {
-            // Create a credential in a useful wallet format and save.
-            let credential = credential(provider.clone(), config, vc_kind).await?;
+            let credential = credential(provider.clone(), config, vc_kind, issuer).await?;
             credentials.push(credential);
             Ok((Some(credentials), None))
         }
         CredentialResponseType::Credentials(creds) => {
             for vc_kind in creds {
-                let credential = credential(provider.clone(), config, vc_kind).await?;
+                let credential = credential(provider.clone(), config, vc_kind, issuer).await?;
                 credentials.push(credential);
             }
             Ok((Some(credentials), None))
@@ -282,11 +284,12 @@ pub async fn process_credential_response(
 /// Construct a credential from a credential response.
 async fn credential(
     provider: impl HolderProvider, config: &CredentialConfiguration,
-    vc_kind: &Kind<VerifiableCredential>,
+    vc_kind: &Kind<VerifiableCredential>, issuer: &vercre_openid::issuer::Issuer,
 ) -> anyhow::Result<Credential> {
-    let Payload::Vc { vc, issued_at } = vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), provider.clone())
-        .await
-        .map_err(|e| anyhow!("issue parsing credential: {e}"))?
+    let Payload::Vc { vc, issued_at } =
+        vercre_w3c_vc::proof::verify(Verify::Vc(vc_kind), provider.clone())
+            .await
+            .map_err(|e| anyhow!("issue parsing credential: {e}"))?
     else {
         bail!("expected VerifiableCredential");
     };
@@ -294,9 +297,14 @@ async fn credential(
         bail!("invalid issuance date");
     };
 
-    let issuer_id = match &vc.issuer {
-        Kind::String(id) => id,
-        Kind::Object(issuer) => &issuer.id,
+    let issuer_id = issuer.credential_issuer.clone();
+    // TODO: Locale support.
+    let issuer_name = {
+        if let Some(display) = issuer.display.clone() {
+            display.name
+        } else {
+            issuer_id.clone()
+        }
     };
 
     // TODO: add support for embedded proof
@@ -319,12 +327,13 @@ async fn credential(
             for cs in vc_claims {
                 subject_claims.push(cs.into());
             }
-        },
+        }
     }
 
     let mut storable_credential = Credential {
         id: vc.id.clone().unwrap_or_else(|| format!("urn:uuid:{}", uuid::Uuid::new_v4())),
         issuer: issuer_id.clone(),
+        issuer_name,
         type_,
         format: config.format.to_string(),
         subject_claims,

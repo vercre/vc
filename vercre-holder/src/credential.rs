@@ -44,8 +44,11 @@ pub struct Credential {
     /// `id`).
     pub id: String,
 
-    /// The credential issuer.
+    /// The credential issuer ID.
     pub issuer: String,
+
+    /// The credential issuer's name. (from the issuer's metadata).
+    pub issuer_name: String,
 
     /// The Verifiable Credential as issued, for use in Presentation
     /// Submissions. This could be a base64-encoded JWT or 'stringified'

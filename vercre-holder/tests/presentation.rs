@@ -119,6 +119,7 @@ async fn sample_credential() -> Credential {
     Credential {
         id: vc.id.clone().expect("should have id"),
         issuer: "https://vercre.io".into(),
+        issuer_name: "Vercre".into(),
         type_,
         format: "jwt_vc_json".into(),
         subject_claims,

@@ -1,13 +1,15 @@
 ---
 source: vercre-holder/tests/presentation.rs
-assertion_line: 159
+assertion_line: 160
 expression: presentation
+snapshot_kind: text
 ---
 presentation_id: "[presentation_id]"
 status: Requested
 credentials:
   - id: "https://example.com/credentials/3732"
     issuer: "https://vercre.io"
+    issuer_name: Vercre
     issued: "[issued]"
     type:
       - EmployeeIDCredential

@@ -74,6 +74,7 @@ pub async fn deferred(
         provider.clone(),
         config,
         &deferred_response.credential_response,
+        &issuance.issuer,
     )
     .await
     {
