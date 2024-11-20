@@ -1,0 +1,13 @@
+---
+source: crates/openid/src/issuer.rs
+assertion_line: 2480
+expression: "&claims"
+snapshot_kind: text
+---
+- Address.Country
+- Address.Locality
+- Address.Region
+- Address.Street Address
+- Email
+- Family name
+- Given name

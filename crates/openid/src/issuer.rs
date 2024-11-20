@@ -12,6 +12,7 @@ use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
+use vercre_core::strings::title_case;
 use vercre_core::{urlencode, Kind};
 use vercre_did::DidResolver;
 use vercre_infosec::jose::jwk::PublicKeyJwk;
@@ -442,7 +443,7 @@ impl FromStr for AuthorizationRequest {
     }
 }
 
-/// `AuthorizationRequest` requires a custom deserializer because the default 
+/// `AuthorizationRequest` requires a custom deserializer because the default
 /// deserializer cannot readily distinguish between `RequestObject` and
 /// `RequestUri`.
 impl<'de> de::Deserialize<'de> for AuthorizationRequest {
@@ -1764,6 +1765,57 @@ impl CredentialConfiguration {
 
         Ok(())
     }
+
+    /// Convenience method to display the claims as a vector of strings.
+    #[must_use]
+    pub fn claims_display(&self, locale: Option<&str>) -> Vec<String> {
+        let mut claim_set = Vec::new();
+
+        if let Some(claims) = &self.format.claims() {
+            for (name, claim) in claims {
+                let prefix = "";
+                Self::claim_label(&mut claim_set, prefix, name, claim, locale);
+            }
+        }
+
+        claim_set
+    }
+
+    /// Recursively build claim labels from nested claim definitions.
+    fn claim_label(
+        claim_set: &mut Vec<String>, prefix: &str, name: &str, claim: &Claim,
+        locale: Option<&str>,
+    ) {
+        match claim {
+            Claim::Entry(def) => {
+                let locale_display = def.display.as_ref().and_then(|display| {
+                    locale.as_ref().map_or_else(
+                        || {
+                            Some(
+                                display
+                                    .iter()
+                                    .find(|d| d.locale.is_none())
+                                    .unwrap_or_else(|| &display[0]),
+                            )
+                        },
+                        |loc| display.iter().find(|d| d.locale.as_deref() == Some(loc)),
+                    )
+                });
+                match locale_display {
+                    Some(display) => claim_set.push(prefix.to_owned() + &display.name),
+                    None => claim_set.push(prefix.to_owned() + &title_case(name)),
+                }
+            }
+            Claim::Set(set) => {
+                let mut pre = prefix.to_string();
+                pre.push_str(&title_case(name));
+                pre.push('.');
+                for (name, claim) in set {
+                    Self::claim_label(claim_set, &pre, name, claim, locale);
+                }
+            }
+        }
+    }
 }
 
 /// `ProofTypesSupported` describes specifics of the key proof(s) that the
@@ -2303,5 +2355,133 @@ mod tests {
 
         let serialized = serde_json::to_value(&request).expect("should serialize to string");
         assert_eq!(json, serialized);
+    }
+
+    #[test]
+    fn claim_label_display() {
+        let json = serde_json::json!({
+            "format": "jwt_vc_json",
+            "scope": "EmployeeIDCredential",
+            "cryptographic_binding_methods_supported": [
+                "did:key",
+                "did:web"
+            ],
+            "credential_signing_alg_values_supported": [
+                "ES256K",
+                "EdDSA"
+            ],
+            "proof_types_supported": {
+                "jwt": {
+                    "proof_signing_alg_values_supported": [
+                        "ES256K",
+                        "EdDSA"
+                    ]
+                }
+            },
+            "display": [
+                {
+                    "name": "Employee ID",
+                    "description": "Vercre employee ID credential",
+                    "locale": "en-NZ",
+                    "logo": {
+                        "uri": "https://vercre.github.io/assets/employee.png",
+                        "alt_text": "Vercre Logo"
+                    },
+                    "text_color": "#ffffff",
+                    "background_color": "#323ed2",
+                    "background_image": {
+                        "uri": "https://vercre.github.io/assets/employee-background.png",
+                        "alt_text": "Vercre Background"
+                    }
+                }
+            ],
+            "credential_definition": {
+                "type": [
+                    "VerifiableCredential",
+                    "EmployeeIDCredential"
+                ],
+                "credentialSubject": {
+                    "email": {
+                        "mandatory": true,
+                        "value_type": "string",
+                        "display": [
+                            {
+                                "name": "Email",
+                                "locale": "en-NZ"
+                            }
+                        ]
+                    },
+                    "family_name": {
+                        "mandatory": true,
+                        "value_type": "string",
+                        "display": [
+                            {
+                                "name": "Family name",
+                                "locale": "en-NZ"
+                            }
+                        ]
+                    },
+                    "given_name": {
+                        "mandatory": true,
+                        "value_type": "string",
+                        "display": [
+                            {
+                                "name": "Given name",
+                                "locale": "en-NZ"
+                            }
+                        ]
+                    },
+                    "address": {
+                        "street_address": {
+                            "value_type": "string",
+                            "display": [
+                                {
+                                    "name": "Street Address",
+                                    "locale": "en-NZ"
+                                }
+                            ]
+                        },
+                        "locality": {
+                            "value_type": "string",
+                            "display": [
+                                {
+                                    "name": "Locality",
+                                    "locale": "en-NZ"
+                                }
+                            ]
+                        },
+                        "region": {
+                            "value_type": "string",
+                            "display": [
+                                {
+                                    "name": "Region",
+                                    "locale": "en-NZ"
+                                }
+                            ]
+                        },
+                        "country": {
+                            "value_type": "string",
+                            "display": [
+                                {
+                                    "name": "Country",
+                                    "locale": "en-NZ"
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        });
+
+        let config: CredentialConfiguration =
+            serde_json::from_value(json.clone()).expect("should deserialize from json");
+        let claims = config.claims_display(Some("en-NZ"));
+        assert_snapshot!("claim_label_display_en-NZ", &claims, {
+            "." => insta::sorted_redaction(),
+        });
+        let default = config.claims_display(None);
+        assert_snapshot!("claim_label_display_default", &default, {
+            "." => insta::sorted_redaction(),
+        });
     }
 }
