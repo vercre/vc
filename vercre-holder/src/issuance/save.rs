@@ -77,7 +77,7 @@ pub async fn save(provider: impl HolderProvider, request: &SaveRequest) -> anyho
             &provider,
             NotificationRequest {
                 credential_issuer: issuance.issuer.credential_issuer.clone(),
-                access_token: access_token,
+                access_token,
                 notification_id,
                 event: NotificationEvent::CredentialAccepted,
                 event_description: Some("Issuance completed".into()),
