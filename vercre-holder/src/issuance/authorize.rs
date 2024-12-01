@@ -104,11 +104,16 @@ pub async fn authorize(
         Initiator::Issuer { issuance_id } => {
             match StateStore::get::<IssuanceState>(&provider, issuance_id).await {
                 Ok(issuance) => {
+                    let Some(offer) = &issuance.offer else {
+                        let e = anyhow!("the authorize endpoint requires an offer for an issuer-initiated flow");
+                        tracing::error!(target: "Endpoint::authorize", ?e);
+                            return Err(e);
+                    };
                     // The grants must support authorized flow.
                     //
                     // If there are no grants on the offer, look up auth server
                     // metadata to determine the suppored grants.
-                    if let Some(grants) = issuance.offer.grants.clone() {
+                    if let Some(grants) = &offer.grants.clone() {
                         if grants.authorization_code.is_none()
                             || issuance.status != Status::Accepted
                         {
@@ -230,7 +235,10 @@ fn authorization_request(
     };
     let issuer_state = match request.initiator {
         Initiator::Issuer { .. } => {
-            if let Some(grants) = issuance.offer.grants.clone() {
+            let Some(offer) = &issuance.offer else {
+                return Err(anyhow!("issuer-initiated issuance requires an offer"));
+            };
+            if let Some(grants) = offer.grants.clone() {
                 grants
                     .authorization_code
                     .as_ref()
@@ -313,7 +321,10 @@ fn authorization_details(
     }
     let mut auth_details = Vec::new();
     let creds_supported = &issuance.issuer.credential_configurations_supported;
-    for cfg_id in &issuance.offer.credential_configuration_ids {
+    let Some(offer) = &issuance.offer else {
+        return Err(anyhow!("issuer-initiated issuance requires an offer"));
+    };
+    for cfg_id in &offer.credential_configuration_ids {
         let Some(credential_config) = creds_supported.get(cfg_id) else {
             return Err(anyhow!("unsupported credential type in offer"));
         };

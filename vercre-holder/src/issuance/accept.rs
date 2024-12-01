@@ -73,6 +73,11 @@ pub async fn accept(
         tracing::error!(target: "Endpoint::accept", ?e);
         return Err(e);
     }
+    let Some(offer) = &issuance.offer else {
+        let e = anyhow!("the accept endpoint requires an offer");
+        tracing::error!(target: "Endpoint::accept", ?e);
+        return Err(e);
+    };
     if let Some(accepted) = &request.accept {
         if accepted.is_empty() {
             let e = anyhow!("if accept is provided it cannot be empty");
@@ -90,7 +95,7 @@ pub async fn accept(
 
     issuance.status = Status::Accepted;
 
-    if let Some(grants) = &issuance.offer.grants {
+    if let Some(grants) = &offer.grants {
         if let Some(pre_auth_code) = &grants.pre_authorized_code {
             if pre_auth_code.tx_code.is_some() {
                 issuance.status = Status::PendingPin;

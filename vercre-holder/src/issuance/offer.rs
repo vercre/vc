@@ -83,7 +83,7 @@ pub async fn offer(
     issuance.status = Status::Offered;
 
     // Set up a credential configuration for each credential offered.
-    issuance.offer = request.offer.clone();
+    issuance.offer = Some(request.offer.clone());
     issuance.set_issuer(&provider, &request.offer.credential_issuer).await.map_err(|e| {
         tracing::error!(target: "Endpoint::offer", ?e);
         e

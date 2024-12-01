@@ -55,13 +55,19 @@ pub async fn token(
     };
 
     // The flow must be pre-authorized and accepted.
-    let pre_authed = if let Some(grants) = issuance.offer.grants.clone() {
-        grants.pre_authorized_code.is_some()
+    if let Some(offer) = &issuance.offer {
+        let pre_authed = if let Some(grants) = offer.grants.clone() {
+            grants.pre_authorized_code.is_some()
+        } else {
+            false
+        };
+        if !pre_authed || issuance.status != Status::Accepted {
+            let e = anyhow!("invalid issuance state. Must be pre-authorized and accepted");
+            tracing::error!(target: "Endpoint::token", ?e);
+            return Err(e);
+        }
     } else {
-        false
-    };
-    if !pre_authed || issuance.status != Status::Accepted {
-        let e = anyhow!("invalid issuance state. Must be pre-authorized and accepted");
+        let e = anyhow!("invalid issuance state. No offer found");
         tracing::error!(target: "Endpoint::token", ?e);
         return Err(e);
     }
@@ -102,10 +108,13 @@ pub async fn token(
 
 /// Construct a token request.
 fn token_request(issuance: &IssuanceState) -> anyhow::Result<TokenRequest> {
-    let Some(grants) = issuance.offer.grants.as_ref() else {
+    let Some(offer) = &issuance.offer else {
+        bail!("no offer in issuance state");
+    };
+    let Some(grants) = &offer.grants else {
         bail!("no grants in offer is not supported");
     };
-    let Some(pre_auth_code) = grants.pre_authorized_code.as_ref() else {
+    let Some(pre_auth_code) = &grants.pre_authorized_code else {
         bail!("no pre-authorized code in offer is not supported");
     };
 

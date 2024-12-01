@@ -88,7 +88,7 @@ pub async fn credentials(
     // Construct a proof to be used in the credential requests.
     let claims = ProofClaims {
         iss: Some(issuance.client_id.clone()),
-        aud: issuance.offer.credential_issuer.clone(),
+        aud: issuance.issuer.credential_issuer.clone(),
         iat: chrono::Utc::now().timestamp(),
         nonce: issuance.token.c_nonce.clone(),
     };

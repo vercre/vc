@@ -60,7 +60,9 @@ pub struct IssuanceState {
     pub status: Status,
 
     /// The `CredentialOffer` received from the issuer.
-    pub offer: CredentialOffer,
+    /// 
+    /// Will be `None` if the flow is initiated by the holder.
+    pub offer: Option<CredentialOffer>,
 
     /// Cached issuer metadata.
     pub issuer: Issuer,
