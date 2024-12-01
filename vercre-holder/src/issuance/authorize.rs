@@ -194,17 +194,18 @@ pub async fn authorize(
     // Construct a token request using the authorization response and request an
     // access token from the issuer.
     let token_request = token_request(&issuance, request, &auth_response);
-    issuance.token = Issuer::token(&provider, token_request).await.map_err(|e| {
+    let token_response = Issuer::token(&provider, token_request).await.map_err(|e| {
         tracing::error!(target: "Endpoint::authorize", ?e);
         e
     })?;
+    issuance.token = Some(token_response.clone());
     issuance.status = Status::TokenReceived;
 
     let mut response = AuthorizedCredentials {
         issuance_id: issuance.id.clone(),
         authorized: None,
     };
-    if let Some(auth_details) = issuance.token.authorization_details.clone() {
+    if let Some(auth_details) = token_response.authorization_details {
         if !auth_details.is_empty() {
             // Get the authorized credentials.
             let authorized = authorized_credentials(&auth_details, &issuance).map_err(|e| {

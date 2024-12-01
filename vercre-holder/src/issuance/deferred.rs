@@ -47,13 +47,18 @@ pub async fn deferred(
         tracing::error!(target: "Endpoint::deferred", ?e);
         return Err(e);
     }
+    let Some(token_response) = &issuance.token else {
+        let e = anyhow!("token not found in issuance state");
+        tracing::error!(target: "Endpoint::deferred", ?e);
+        return Err(e);
+    };
 
     issuance.deferred.remove(&request.transaction_id);
 
     let def_cred_request = DeferredCredentialRequest {
         transaction_id: request.transaction_id.clone(),
         credential_issuer: issuance.issuer.credential_issuer.clone(),
-        access_token: issuance.token.access_token.clone(),
+        access_token: token_response.access_token.clone(),
     };
     let deferred_response = Issuer::deferred(&provider, def_cred_request).await.map_err(|e| {
         tracing::error!(target: "Endpoint::deferred", ?e);

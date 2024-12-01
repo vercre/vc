@@ -84,13 +84,18 @@ pub async fn credentials(
         tracing::error!(target: "Endpoint::credentials", ?e);
         return Err(e);
     }
+    let Some(token_response) = &issuance.token else {
+        let e = anyhow!("no token response in issuance state");
+        tracing::error!(target: "Endpoint::credentials", ?e);
+        return Err(e);
+    };
 
     // Construct a proof to be used in the credential requests.
     let claims = ProofClaims {
         iss: Some(issuance.client_id.clone()),
         aud: issuance.issuer.credential_issuer.clone(),
         iat: chrono::Utc::now().timestamp(),
-        nonce: issuance.token.c_nonce.clone(),
+        nonce: token_response.c_nonce.clone(),
     };
     let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, &provider).await.map_err(|e| {
         tracing::error!(target: "Endpoint::credentials", ?e);
@@ -154,9 +159,12 @@ async fn credential_by_format(
     let Some((cfg_id, config)) = config else {
         bail!("credential configuration not found for scope and format");
     };
+    let Some(token_response) = &issuance.token else {
+        bail!("no token response in issuance state");
+    };
     let request = CredentialRequest {
         credential_issuer: issuance.issuer.credential_issuer.clone(),
-        access_token: issuance.token.access_token.clone(),
+        access_token: token_response.access_token.clone(),
         credential: CredentialIssuance::Format(config.format.clone()),
         proof: Some(Proof::Single {
             proof_type: SingleProof::Jwt { jwt: jwt.into() },
@@ -189,7 +197,10 @@ async fn credential_by_identifier(
     provider: impl HolderProvider, issuance: &mut IssuanceState, request: &CredentialsRequest,
     jwt: &str,
 ) -> anyhow::Result<()> {
-    let Some(authorized) = &issuance.token.authorization_details else {
+    let Some(mut token_response) = issuance.token.clone() else {
+        bail!("no token response in issuance state");
+    };
+    let Some(authorized) = &token_response.authorization_details else {
         bail!("no authorization details in token response");
     };
 
@@ -221,7 +232,7 @@ async fn credential_by_identifier(
             }
             let request = credential_request!({
                 "credential_issuer": issuance.issuer.credential_issuer.clone(),
-                "access_token": issuance.token.access_token.clone(),
+                "access_token": token_response.access_token.clone(),
                 "credential_identifier": cred_id.to_string(),
                 "proof": {
                     "proof_type": "jwt",
@@ -245,10 +256,12 @@ async fn credential_by_identifier(
                 }
             };
             if cred_res.c_nonce.is_some() {
-                issuance.token.c_nonce.clone_from(&cred_res.c_nonce);
+                token_response.c_nonce.clone_from(&cred_res.c_nonce);
+                issuance.token = Some(token_response.clone());
             }
             if cred_res.c_nonce_expires_in.is_some() {
-                issuance.token.c_nonce_expires_in.clone_from(&cred_res.c_nonce_expires_in);
+                token_response.c_nonce_expires_in.clone_from(&cred_res.c_nonce_expires_in);
+                issuance.token = Some(token_response.clone());
             }
         }
     }

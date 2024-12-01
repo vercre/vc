@@ -86,13 +86,18 @@ pub struct IssuanceState {
     pub code_challenge: Option<String>,
 
     /// The `TokenResponse` received from the issuer.
-    pub token: TokenResponse,
+    /// 
+    /// Will be `None` if the flow is initiated by the holder or if the flow
+    /// has not yet reached the token endpoint.
+    pub token: Option<TokenResponse>,
 
     /// Requested scope for scope-based authorization.
     pub scope: Option<String>,
 
     /// Outstanding deferred credential transaction IDs (key) and corresponding
     /// credential configuration IDs (value).
+    /// 
+    /// Will be empty if there are no outstanding deferred credentials.
     pub deferred: HashMap<String, String>,
 
     /// Identifier to pass back to the issuer to notify of the success or
@@ -100,6 +105,8 @@ pub struct IssuanceState {
     pub notification_id: Option<String>,
 
     /// The credentials received from the issuer, ready to be saved to storage.
+    /// 
+    /// Will be empty until credentials have been issued.
     pub credentials: Vec<Credential>,
 }
 

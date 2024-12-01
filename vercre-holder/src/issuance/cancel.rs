@@ -36,13 +36,18 @@ pub async fn cancel(
             e
         })?;
 
+    let access_token = match issuance.token {
+        Some(token) => token.access_token.clone(),
+        None => String::new(),
+    };
+
     // Notify issuer if we have been given a notification ID.
     if let Some(notification_id) = issuance.notification_id {
         if let Err(e) = Issuer::notification(
             &provider,
             NotificationRequest {
                 credential_issuer: issuance.issuer.credential_issuer.clone(),
-                access_token: issuance.token.access_token.clone(),
+                access_token,
                 notification_id,
                 event: NotificationEvent::CredentialDeleted,
                 event_description: Some("Issuance cancelled".into()),

@@ -34,6 +34,10 @@ pub async fn save(provider: impl HolderProvider, request: &SaveRequest) -> anyho
             tracing::error!(target: "Endpoint::save", ?e);
             e
         })?;
+    let access_token = match issuance.token {
+        Some(token) => token.access_token.clone(),
+        None => String::new(),
+    };
 
     for credential in &issuance.credentials {
         match CredentialStorer::save(&provider, credential).await {
@@ -48,7 +52,7 @@ pub async fn save(provider: impl HolderProvider, request: &SaveRequest) -> anyho
                             &provider,
                             NotificationRequest {
                                 credential_issuer: issuance.issuer.credential_issuer.clone(),
-                                access_token: issuance.token.access_token.clone(),
+                                access_token: access_token.clone(),
                                 notification_id,
                                 event: NotificationEvent::CredentialFailure,
                                 event_description: Some("Failed to save credential".into()),
@@ -73,7 +77,7 @@ pub async fn save(provider: impl HolderProvider, request: &SaveRequest) -> anyho
             &provider,
             NotificationRequest {
                 credential_issuer: issuance.issuer.credential_issuer.clone(),
-                access_token: issuance.token.access_token.clone(),
+                access_token: access_token,
                 notification_id,
                 event: NotificationEvent::CredentialAccepted,
                 event_description: Some("Issuance completed".into()),
