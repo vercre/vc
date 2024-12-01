@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_issuer::{NotificationEvent, NotificationRequest};
 
-use super::Issuance;
+use super::IssuanceState;
 use crate::provider::{HolderProvider, Issuer, StateStore};
 
 /// Cancel request.
@@ -30,7 +30,7 @@ pub async fn cancel(
 ) -> anyhow::Result<String> {
     tracing::debug!("Endpoint::cancel");
 
-    let issuance: Issuance =
+    let issuance: IssuanceState =
         StateStore::get(&provider, &request.issuance_id).await.map_err(|e| {
             tracing::error!(target: "Endpoint::cancel", ?e);
             e

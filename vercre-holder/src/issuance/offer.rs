@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, Grants};
 
-use super::{Issuance, Status};
+use super::{IssuanceState, Status};
 use crate::provider::{HolderProvider, StateStore};
 
 /// `OfferRequest` is the request to the `offer` endpoint to initiate an
@@ -78,7 +78,7 @@ pub async fn offer(
     }
 
     // Establish a new issuance flow state
-    let mut issuance = Issuance::new(&request.client_id);
+    let mut issuance = IssuanceState::new(&request.client_id);
     issuance.subject_id.clone_from(&request.subject_id);
     issuance.status = Status::Offered;
 

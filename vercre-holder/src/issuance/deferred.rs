@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_issuer::DeferredCredentialRequest;
 
-use super::{Issuance, Status};
+use super::{IssuanceState, Status};
 use crate::issuance::credentials::{process_credential_response, CredentialsResponse};
 use crate::provider::{HolderProvider, Issuer, StateStore};
 
@@ -37,7 +37,7 @@ pub async fn deferred(
 ) -> anyhow::Result<CredentialsResponse> {
     tracing::debug!("Endpoint::credentials {:?}", request);
 
-    let mut issuance: Issuance =
+    let mut issuance: IssuanceState =
         StateStore::get(&provider, &request.issuance_id).await.map_err(|e| {
             tracing::error!(target: "Endpoint::deferred", ?e);
             e

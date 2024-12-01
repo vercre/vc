@@ -21,7 +21,7 @@ use vercre_issuer::{
     CredentialDefinition, Format, ProfileClaims,
 };
 
-use super::{Issuance, Status};
+use super::{IssuanceState, Status};
 use crate::provider::{HolderProvider, StateStore};
 
 /// A configuration ID and a list of claims that can be used by the holder to
@@ -62,7 +62,7 @@ pub async fn accept(
 ) -> anyhow::Result<String> {
     tracing::debug!("Endpoint::accept");
 
-    let mut issuance: Issuance =
+    let mut issuance: IssuanceState =
         StateStore::get(&provider, &request.issuance_id).await.map_err(|e| {
             tracing::error!(target: "Endpoint::accept", ?e);
             e

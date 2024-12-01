@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_issuer::{NotificationEvent, NotificationRequest};
 
-use super::Issuance;
+use super::IssuanceState;
 use crate::provider::{CredentialStorer, HolderProvider, Issuer, StateStore};
 
 /// Save request.
@@ -29,7 +29,7 @@ pub struct SaveRequest {
 pub async fn save(provider: impl HolderProvider, request: &SaveRequest) -> anyhow::Result<String> {
     tracing::debug!("Endpoint::save");
 
-    let mut issuance: Issuance =
+    let mut issuance: IssuanceState =
         StateStore::get(&provider, &request.issuance_id).await.map_err(|e| {
             tracing::error!(target: "Endpoint::save", ?e);
             e

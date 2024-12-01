@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_issuer::{AuthorizedDetail, CredentialAuthorization, TokenGrantType, TokenRequest};
 
-use super::{Issuance, Status};
+use super::{IssuanceState, Status};
 use crate::provider::{HolderProvider, Issuer, StateStore};
 
 /// `AuthorizedCredentials` is the response from the `token` endpoint.
@@ -46,7 +46,7 @@ pub async fn token(
 ) -> anyhow::Result<AuthorizedCredentials> {
     tracing::debug!("Endpoint::token");
 
-    let mut issuance: Issuance = match StateStore::get(&provider, issuance_id).await {
+    let mut issuance: IssuanceState = match StateStore::get(&provider, issuance_id).await {
         Ok(issuance) => issuance,
         Err(e) => {
             tracing::error!(target: "Endpoint::token", ?e);
@@ -101,7 +101,7 @@ pub async fn token(
 }
 
 /// Construct a token request.
-fn token_request(issuance: &Issuance) -> anyhow::Result<TokenRequest> {
+fn token_request(issuance: &IssuanceState) -> anyhow::Result<TokenRequest> {
     let Some(grants) = issuance.offer.grants.as_ref() else {
         bail!("no grants in offer is not supported");
     };
@@ -127,7 +127,7 @@ fn token_request(issuance: &Issuance) -> anyhow::Result<TokenRequest> {
 /// Uses issuer metadata in the case of a format specification to resolve to
 /// credential configuration IDs.
 pub fn authorized_credentials(
-    details: &[AuthorizedDetail], issuance: &Issuance,
+    details: &[AuthorizedDetail], issuance: &IssuanceState,
 ) -> anyhow::Result<HashMap<String, Vec<String>>> {
     let mut authorized = HashMap::new();
     for auth in details {

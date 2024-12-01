@@ -9,7 +9,7 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use tracing::instrument;
 
-use super::{Issuance, Status};
+use super::{IssuanceState, Status};
 use crate::provider::{HolderProvider, StateStore};
 
 /// A `PinRequest` is a request to set a PIN for use in the issuance flow.
@@ -31,7 +31,7 @@ pub struct PinRequest {
 pub async fn pin(provider: impl HolderProvider, request: &PinRequest) -> anyhow::Result<String> {
     tracing::debug!("Endpoint::pin");
 
-    let mut issuance: Issuance =
+    let mut issuance: IssuanceState =
         StateStore::get(&provider, &request.issuance_id).await.map_err(|e| {
             tracing::error!(target: "Endpoint::pin", ?e);
             e

@@ -19,7 +19,7 @@ use vercre_openid::issuer::{
 use vercre_w3c_vc::model::VerifiableCredential;
 use vercre_w3c_vc::proof::{Payload, Verify};
 
-use super::{Issuance, Status};
+use super::{IssuanceState, Status};
 use crate::credential::Credential;
 use crate::provider::{HolderProvider, Issuer, StateStore};
 
@@ -74,7 +74,7 @@ pub async fn credentials(
 ) -> anyhow::Result<CredentialsResponse> {
     tracing::debug!("Endpoint::credentials {:?}", request);
 
-    let mut issuance: Issuance =
+    let mut issuance: IssuanceState =
         StateStore::get(&provider, &request.issuance_id).await.map_err(|e| {
             tracing::error!(target: "Endpoint::credentials", ?e);
             e
@@ -137,7 +137,8 @@ pub async fn credentials(
 
 // Make a credential request by format based on the flow being by scope.
 async fn credential_by_format(
-    provider: impl HolderProvider, issuance: &mut Issuance, request: &CredentialsRequest, jwt: &str,
+    provider: impl HolderProvider, issuance: &mut IssuanceState, request: &CredentialsRequest,
+    jwt: &str,
 ) -> anyhow::Result<()> {
     if request.credential_identifiers.is_some() {
         bail!("credential identifiers must be `None` for scope-based issuance");
@@ -185,7 +186,8 @@ async fn credential_by_format(
 
 // Make a credential request by identifier.
 async fn credential_by_identifier(
-    provider: impl HolderProvider, issuance: &mut Issuance, request: &CredentialsRequest, jwt: &str,
+    provider: impl HolderProvider, issuance: &mut IssuanceState, request: &CredentialsRequest,
+    jwt: &str,
 ) -> anyhow::Result<()> {
     let Some(authorized) = &issuance.token.authorization_details else {
         bail!("no authorization details in token response");

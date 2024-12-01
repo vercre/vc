@@ -21,7 +21,7 @@ use vercre_issuer::{
     TokenGrantType, TokenRequest,
 };
 
-use super::{Issuance, Status};
+use super::{IssuanceState, Status};
 use crate::issuance::token::{authorized_credentials, AuthorizedCredentials};
 use crate::provider::{HolderProvider, Issuer, StateStore};
 
@@ -102,7 +102,7 @@ pub async fn authorize(
     // and check the flow status. Otherwise, create a new flow state.
     let mut issuance = match &request.initiator {
         Initiator::Issuer { issuance_id } => {
-            match StateStore::get::<Issuance>(&provider, issuance_id).await {
+            match StateStore::get::<IssuanceState>(&provider, issuance_id).await {
                 Ok(issuance) => {
                     // The grants must support authorized flow.
                     //
@@ -157,7 +157,7 @@ pub async fn authorize(
             }
 
             // Create a new issuance flow.
-            let mut issuance = Issuance::new(client_id);
+            let mut issuance = IssuanceState::new(client_id);
             issuance.subject_id.clone_from(subject_id);
             issuance.set_issuer(&provider, issuer).await.map_err(|e| {
                 tracing::error!(target: "Endpoint::authorize", ?e);
@@ -223,7 +223,7 @@ pub async fn authorize(
 
 /// Construct an authorization request.
 fn authorization_request(
-    issuance: &Issuance, request: &AuthorizeRequest,
+    issuance: &IssuanceState, request: &AuthorizeRequest,
 ) -> anyhow::Result<AuthorizationRequest> {
     let Some(code_challenge) = issuance.code_challenge.clone() else {
         return Err(anyhow!("missing code challenge"));
@@ -285,7 +285,7 @@ fn authorization_request(
 
 /// Construct a token request.
 fn token_request(
-    issuance: &Issuance, auth_request: &AuthorizeRequest, auth_response: &AuthorizationResponse,
+    issuance: &IssuanceState, auth_request: &AuthorizeRequest, auth_response: &AuthorizationResponse,
 ) -> TokenRequest {
     TokenRequest {
         credential_issuer: issuance.issuer.credential_issuer.clone(),
@@ -303,7 +303,7 @@ fn token_request(
 
 /// Construct authorization details from the issuance flow state.
 fn authorization_details(
-    issuance: &Issuance, request: &AuthorizeRequest,
+    issuance: &IssuanceState, request: &AuthorizeRequest,
 ) -> anyhow::Result<Vec<AuthorizationDetail>> {
     if issuance.accepted.is_some() {
         return Ok(issuance.accepted.clone().unwrap());
