@@ -1530,6 +1530,16 @@ impl Issuer {
             .map(|(id, _)| id)
             .ok_or_else(|| anyhow!("Credential Configuration not found"))
     }
+
+    /// Convenience method to provide the issuer's display name (if configured).
+    /// 
+    /// TODO: The field is optional and contains locale information but because
+    /// it is not a vec, only one locale is possible. Keep an eye on the spec
+    /// and implement locale support if needed.
+    #[must_use]
+    pub fn display_name(&self, _locale: &str) -> Option<String> {
+        self.display.as_ref().map(|d| d.name.clone())
+    }
 }
 
 /// Contains information about whether the Credential Issuer supports encryption
