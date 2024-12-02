@@ -159,7 +159,7 @@ impl IssuanceState {
         // present to the holder.
         let Some(issuer) = &self.issuer else {
             let e = anyhow!("issuer metadata has not been set on flow state");
-            tracing::error!(target: "Endpoint::offer", ?e);
+            tracing::error!(target: "IssuanceState::offer", ?e);
             return Err(e);
         };
         let mut offered = HashMap::<String, CredentialConfiguration>::new();
@@ -168,7 +168,7 @@ impl IssuanceState {
             // find supported credential in metadata and copy to state object.
             let Some(found) = creds_supported.get(cfg_id) else {
                 let e = anyhow!("unsupported credential type in offer");
-                tracing::error!(target: "Endpoint::offer", ?e);
+                tracing::error!(target: "IssuanceState::offer", ?e);
                 return Err(e);
             };
             offered.insert(cfg_id.clone(), found.clone());

@@ -119,6 +119,59 @@ pub async fn accept(
     Ok(issuance.id)
 }
 
+impl IssuanceState {
+    /// Progresses the issuance flow triggered by a holder accepting a credential
+    /// offer.
+    ///
+    /// # Errors
+    /// Will return an error if the issuance state is not in a state consistent
+    /// with accepting an offer.
+    #[allow(clippy::cognitive_complexity)]
+    pub fn accept(&mut self, accept: &Option<Vec<AuthorizationSpec>>) -> anyhow::Result<()> {
+        if self.status != Status::Offered {
+            let e = anyhow!("invalid issuance state");
+            tracing::error!(target: "IssuanceState::accept", ?e);
+            return Err(e);
+        }
+        let Some(offer) = &self.offer else {
+            let e = anyhow!("no offer found to accept");
+            tracing::error!(target: "IssuanceState::accept", ?e);
+            return Err(e);
+        };
+        if let Some(accepted) = &accept {
+            if accepted.is_empty() {
+                let e = anyhow!("if accept is provided it cannot be empty");
+                tracing::error!(target: "IssuanceState::accept", ?e);
+                return Err(e);
+            }
+        };
+        let Some(issuer) = &self.issuer else {
+            let e = anyhow!("issuer metadata not set");
+            tracing::error!(target: "IssuanceState::accept", ?e);
+            return Err(e);
+        };
+
+        self.accepted =
+            narrow_scope(&issuer.credential_configurations_supported, accept.as_ref())
+            .map_err(|e| {
+                tracing::error!(target: "IssuanceState::accept", ?e);
+                e
+            })?;
+
+        self.status = Status::Accepted;
+
+        if let Some(grants) = &offer.grants {
+            if let Some(pre_auth_code) = &grants.pre_authorized_code {
+                if pre_auth_code.tx_code.is_some() {
+                   self.status = Status::PendingPin;
+                }
+            }
+        }
+
+        Ok(())
+    }
+}
+
 fn narrow_scope(
     offered: &HashMap<String, CredentialConfiguration>, accept: Option<&Vec<AuthorizationSpec>>,
 ) -> anyhow::Result<Option<Vec<AuthorizationDetail>>> {

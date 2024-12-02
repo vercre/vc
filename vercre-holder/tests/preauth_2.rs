@@ -35,10 +35,14 @@ async fn preauth_2() {
 
     let provider = holder::Provider::new(Some(issuer_provider), None);
 
+    //--------------------------------------------------------------------------
     // Initiate flow state.
+    //--------------------------------------------------------------------------
     let mut state = IssuanceState::new(CLIENT_ID);
 
+    //--------------------------------------------------------------------------
     // Add issuer metadata to flow state.
+    //--------------------------------------------------------------------------
     let metadata_request = MetadataRequest {
         credential_issuer: CREDENTIAL_ISSUER.into(),
         languages: None,
@@ -47,7 +51,9 @@ async fn preauth_2() {
         provider.metadata(metadata_request).await.expect("should get issuer metadata");
     state.issuer(issuer_metadata.credential_issuer).expect("should set issuer metadata");
 
+    //--------------------------------------------------------------------------
     // Add authorization server metadata.
+    //--------------------------------------------------------------------------
     let auth_request = OAuthServerRequest {
         credential_issuer: CREDENTIAL_ISSUER.into(),
         issuer: None,
@@ -58,12 +64,19 @@ async fn preauth_2() {
         .authorization_server(auth_metadata.authorization_server)
         .expect("should set authorization server metadata");
 
-    // Process the offer.
+    //--------------------------------------------------------------------------
+    // Unpack the offer.
+    //--------------------------------------------------------------------------
     let offered = state.offer(CLIENT_ID, NORMAL_USER, &offer).expect("should process offer");
 
+    //--------------------------------------------------------------------------
     // Present the offer to the holder for them to choose what to accept.
+    //--------------------------------------------------------------------------
     insta::assert_yaml_snapshot!("offered", offered, {
         ".**.credentialSubject" => insta::sorted_redaction(),
         ".**.credentialSubject.address" => insta::sorted_redaction(),
     });
+
+    // Accept all credentials on offer.
+    state.accept(&None).expect("should accept offer");
 }
