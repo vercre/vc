@@ -17,6 +17,7 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 
 pub use accept::{accept, AcceptRequest, AuthorizationSpec};
+use anyhow::bail;
 pub use authorize::{authorize, AuthorizeRequest, Initiator};
 pub use cancel::{cancel, CancelRequest};
 pub use credentials::{credentials, CredentialsRequest, CredentialsResponse};
@@ -118,18 +119,40 @@ impl IssuanceState {
         Self {
             id: Uuid::new_v4().to_string(),
             client_id: client_id.to_string(),
+            status: Status::Inactive,
             ..Default::default()
         }
     }
 
     /// Add issuer metadata to the issuance flow state.
-    pub fn issuer(&mut self, issuer: Issuer) {
+    /// 
+    /// # Errors
+    /// Will return an error if the flow state is inconsistent with setting
+    /// issuer metadata.
+    pub fn issuer(&mut self, issuer: Issuer) -> anyhow::Result<()> {
+        if self.status != Status::Inactive || self.issuer.is_some() {
+            bail!("cannot set issuer metadata on a flow already started");
+        }
         self.issuer = Some(issuer);
+        self.status = Status::IssuerMetadataSet;
+        Ok(())
     }
 
     /// Add authorization server metadata to the issuance flow state.
-    pub fn authorization_server(&mut self, authorization_server: Server) {
+    /// 
+    /// # Errors
+    /// Will return an error if the flow state is inconsistent with setting
+    /// authorization server metadata.
+    pub fn authorization_server(&mut self, authorization_server: Server) -> anyhow::Result<()> {
+        if self.status != Status::IssuerMetadataSet {
+            bail!("cannot set authorization server metadata on a flow without issuer metadata");
+        }
+        if self.authorization_server.is_some() {
+            bail!("authorization server metadata already set");
+        }
         self.authorization_server = Some(authorization_server);
+        self.status = Status::AuthServerSet;
+        Ok(())
     }
 
     /// Gets issuer metadata from the provider and sets that information on
@@ -163,6 +186,7 @@ impl IssuanceState {
     }
 
     /// Adds a credential to the issuance flow for saving.
+    // TODO: Rename and move.
     pub fn add_credential(&mut self, credential: Credential) {
         self.credentials.push(credential);
     }
@@ -172,19 +196,20 @@ impl IssuanceState {
 ///
 /// Used to verify the state of a flow before executing the logic for an
 /// endpoint.
-// TODO: Should be able to eliminate this type and use inference functions on
-// the issuance state instead.
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub enum Status {
     /// No credential offer is being processed.
     #[default]
     Inactive,
 
+    /// Metadata has been retrieved.
+    IssuerMetadataSet,
+
+    /// Authorization server metadata has been retrieved.
+    AuthServerSet,
+
     /// A new credential offer has been received (issuer-initiated only).
     Offered,
-
-    /// Metadata has been retrieved and the offer is ready to be viewed.
-    Ready,
 
     /// The offer requires a user pin to progress.
     PendingPin,

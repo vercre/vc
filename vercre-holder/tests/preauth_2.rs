@@ -45,7 +45,7 @@ async fn preauth_2() {
     };
     let issuer_metadata =
         provider.metadata(metadata_request).await.expect("should get issuer metadata");
-    state.issuer(issuer_metadata.credential_issuer);
+    state.issuer(issuer_metadata.credential_issuer).expect("should set issuer metadata");
 
     // Add authorization server metadata.
     let auth_request = OAuthServerRequest {
@@ -54,9 +54,10 @@ async fn preauth_2() {
     };
     let auth_metadata =
         provider.oauth_server(auth_request).await.expect("should get auth metadata");
-    state.authorization_server(auth_metadata.authorization_server);
+    state
+        .authorization_server(auth_metadata.authorization_server)
+        .expect("should set authorization server metadata");
 
     // Process the offer.
     state.offer(CLIENT_ID, NORMAL_USER, offer).expect("should process offer");
 }
-

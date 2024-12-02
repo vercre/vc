@@ -89,7 +89,7 @@ pub async fn offer(
         e
     })?;
 
-    issuance.status = Status::Ready;
+    issuance.status = Status::Offered;
 
     // Trim the supported credentials to just those on offer so that the holder
     // can decide which to accept.
@@ -144,16 +144,16 @@ impl IssuanceState {
         &mut self, client_id: &str, subject_id: &str, offer: CredentialOffer,
     ) -> anyhow::Result<()> {
         // Check current state is valid for this operation.
-        if self.status != Status::Inactive {
+        if self.status != Status::AuthServerSet {
             let e = anyhow!("invalid state to apply an offer");
             tracing::error!(target: "IssuanceState::offer", ?e);
             return Err(e);
         }
 
-        self.offer = Some(offer);
         self.client_id = client_id.into();
-        self.status = Status::Offered;
         self.subject_id = subject_id.to_string();
+        self.offer = Some(offer);
+        self.status = Status::Offered;
 
         Ok(())
     }

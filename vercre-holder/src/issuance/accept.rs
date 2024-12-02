@@ -68,7 +68,7 @@ pub async fn accept(
             e
         })?;
 
-    if issuance.status != Status::Ready {
+    if issuance.status != Status::Offered {
         let e = anyhow!("invalid issuance state");
         tracing::error!(target: "Endpoint::accept", ?e);
         return Err(e);
