@@ -141,8 +141,8 @@ impl IssuanceState {
     /// Will return an error if the state is not in the correct state to apply
     /// an offer.
     pub fn offer(
-        &mut self, client_id: &str, subject_id: &str, offer: CredentialOffer,
-    ) -> anyhow::Result<()> {
+        &mut self, client_id: &str, subject_id: &str, offer: &CredentialOffer,
+    ) -> anyhow::Result<HashMap<String, CredentialConfiguration>> {
         // Check current state is valid for this operation.
         if self.status != Status::AuthServerSet {
             let e = anyhow!("invalid state to apply an offer");
@@ -152,9 +152,29 @@ impl IssuanceState {
 
         self.client_id = client_id.into();
         self.subject_id = subject_id.to_string();
-        self.offer = Some(offer);
-        self.status = Status::Offered;
+        self.offer = Some(offer.clone());
 
-        Ok(())
+        // Explicitly extract the credential configurations from the issuer
+        // metadata that match the credentials on offer to make it easier to
+        // present to the holder.
+        let Some(issuer) = &self.issuer else {
+            let e = anyhow!("issuer metadata has not been set on flow state");
+            tracing::error!(target: "Endpoint::offer", ?e);
+            return Err(e);
+        };
+        let mut offered = HashMap::<String, CredentialConfiguration>::new();
+        let creds_supported = &issuer.credential_configurations_supported;
+        for cfg_id in &offer.credential_configuration_ids {
+            // find supported credential in metadata and copy to state object.
+            let Some(found) = creds_supported.get(cfg_id) else {
+                let e = anyhow!("unsupported credential type in offer");
+                tracing::error!(target: "Endpoint::offer", ?e);
+                return Err(e);
+            };
+            offered.insert(cfg_id.clone(), found.clone());
+        }
+        
+        self.status = Status::Offered;
+        Ok(offered)
     }
 }

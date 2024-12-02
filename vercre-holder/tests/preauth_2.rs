@@ -59,5 +59,11 @@ async fn preauth_2() {
         .expect("should set authorization server metadata");
 
     // Process the offer.
-    state.offer(CLIENT_ID, NORMAL_USER, offer).expect("should process offer");
+    let offered = state.offer(CLIENT_ID, NORMAL_USER, &offer).expect("should process offer");
+
+    // Present the offer to the holder for them to choose what to accept.
+    insta::assert_yaml_snapshot!("offered", offered, {
+        ".**.credentialSubject" => insta::sorted_redaction(),
+        ".**.credentialSubject.address" => insta::sorted_redaction(),
+    });
 }
