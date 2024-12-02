@@ -65,10 +65,10 @@ pub struct IssuanceState {
     pub offer: Option<CredentialOffer>,
 
     /// Cached issuer metadata.
-    pub issuer: Issuer,
+    pub issuer: Option<Issuer>,
 
     /// Cached authorization server metadata.
-    pub authorization_server: Server,
+    pub authorization_server: Option<Server>,
 
     /// The list of credentials and claims the wallet wants to obtain from those
     /// offered.
@@ -122,12 +122,23 @@ impl IssuanceState {
         }
     }
 
+    /// Add issuer metadata to the issuance flow state.
+    pub fn issuer(&mut self, issuer: Issuer) {
+        self.issuer = Some(issuer);
+    }
+
+    /// Add authorization server metadata to the issuance flow state.
+    pub fn authorization_server(&mut self, authorization_server: Server) {
+        self.authorization_server = Some(authorization_server);
+    }
+
     /// Gets issuer metadata from the provider and sets that information on
     /// the issuance flow state.
     ///
     /// # Errors
     ///
     /// Returns an error if the provider's metadata request fails.
+    // TODO: Remove
     pub async fn set_issuer(
         &mut self, provider: &impl HolderProvider, credential_issuer: &str,
     ) -> anyhow::Result<()> {
@@ -136,7 +147,7 @@ impl IssuanceState {
             languages: None, // The wallet client should provide any specific languages required.
         };
         let md_response = IssuerProvider::metadata(provider, md_request).await?;
-        self.issuer = md_response.credential_issuer;
+        self.issuer = Some(md_response.credential_issuer);
 
         // Set the authorization server metadata.
         // TODO: The spec allows the option for the issuer to provide a list of
@@ -147,7 +158,7 @@ impl IssuanceState {
             issuer: None,
         };
         let auth_md_response = IssuerProvider::oauth_server(provider, auth_md_request).await?;
-        self.authorization_server = auth_md_response.authorization_server;
+        self.authorization_server = Some(auth_md_response.authorization_server);
         Ok(())
     }
 
@@ -161,6 +172,8 @@ impl IssuanceState {
 ///
 /// Used to verify the state of a flow before executing the logic for an
 /// endpoint.
+// TODO: Should be able to eliminate this type and use inference functions on
+// the issuance state instead.
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub enum Status {
     /// No credential offer is being processed.

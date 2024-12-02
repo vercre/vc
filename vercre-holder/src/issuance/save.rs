@@ -4,7 +4,7 @@
 //! persistent storage.
 //!
 //! The converse of this endpoint is the `cancel` endpoint.
-
+use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_issuer::{NotificationEvent, NotificationRequest};
@@ -38,6 +38,11 @@ pub async fn save(provider: impl HolderProvider, request: &SaveRequest) -> anyho
         Some(token) => token.access_token.clone(),
         None => String::new(),
     };
+    let Some(issuer) = &issuance.issuer else {
+        let e = anyhow!("no issuer metadata");
+        tracing::error!(target: "Endpoint::save", ?e);
+        return Err(e);
+    };
 
     for credential in &issuance.credentials {
         match CredentialStorer::save(&provider, credential).await {
@@ -51,7 +56,7 @@ pub async fn save(provider: impl HolderProvider, request: &SaveRequest) -> anyho
                         if let Err(err) = Issuer::notification(
                             &provider,
                             NotificationRequest {
-                                credential_issuer: issuance.issuer.credential_issuer.clone(),
+                                credential_issuer: issuer.credential_issuer.clone(),
                                 access_token: access_token.clone(),
                                 notification_id,
                                 event: NotificationEvent::CredentialFailure,
@@ -76,7 +81,7 @@ pub async fn save(provider: impl HolderProvider, request: &SaveRequest) -> anyho
         if let Err(e) = Issuer::notification(
             &provider,
             NotificationRequest {
-                credential_issuer: issuance.issuer.credential_issuer.clone(),
+                credential_issuer: issuer.credential_issuer.clone(),
                 access_token,
                 notification_id,
                 event: NotificationEvent::CredentialAccepted,

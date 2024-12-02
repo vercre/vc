@@ -118,9 +118,12 @@ fn token_request(issuance: &IssuanceState) -> anyhow::Result<TokenRequest> {
     let Some(pre_auth_code) = &grants.pre_authorized_code else {
         bail!("no pre-authorized code in offer is not supported");
     };
+    let Some(issuer) = &issuance.issuer else {
+        bail!("no issuer metadata in issuance state");
+    };
 
     Ok(TokenRequest {
-        credential_issuer: issuance.issuer.credential_issuer.clone(),
+        credential_issuer: issuer.credential_issuer.clone(),
         client_id: Some(issuance.client_id.clone()),
         grant_type: TokenGrantType::PreAuthorizedCode {
             pre_authorized_code: pre_auth_code.pre_authorized_code.clone(),
@@ -139,6 +142,9 @@ fn token_request(issuance: &IssuanceState) -> anyhow::Result<TokenRequest> {
 pub fn authorized_credentials(
     details: &[AuthorizedDetail], issuance: &IssuanceState,
 ) -> anyhow::Result<HashMap<String, Vec<String>>> {
+    let Some(issuer) = &issuance.issuer else {
+        bail!("no issuer metadata in issuance state");
+    };
     let mut authorized = HashMap::new();
     for auth in details {
         let cfg_id = match &auth.authorization_detail.credential {
@@ -147,7 +153,7 @@ pub fn authorized_credentials(
                 ..
             } => credential_configuration_id,
             CredentialAuthorization::Format(cfmt) => {
-                issuance.issuer.credential_configuration_id(cfmt)?
+                issuer.credential_configuration_id(cfmt)?
             }
         };
         authorized.insert(cfg_id.into(), auth.credential_identifiers.clone());

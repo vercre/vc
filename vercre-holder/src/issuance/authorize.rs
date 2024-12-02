@@ -104,10 +104,17 @@ pub async fn authorize(
         Initiator::Issuer { issuance_id } => {
             match StateStore::get::<IssuanceState>(&provider, issuance_id).await {
                 Ok(issuance) => {
-                    let Some(offer) = &issuance.offer else {
-                        let e = anyhow!("the authorize endpoint requires an offer for an issuer-initiated flow");
+                    let Some(authorization_server) = &issuance.authorization_server else {
+                        let e = anyhow!("authorization server metadata not set");
                         tracing::error!(target: "Endpoint::authorize", ?e);
-                            return Err(e);
+                        return Err(e);
+                    };
+                    let Some(offer) = &issuance.offer else {
+                        let e = anyhow!(
+                            "the authorize endpoint requires an offer for an issuer-initiated flow"
+                        );
+                        tracing::error!(target: "Endpoint::authorize", ?e);
+                        return Err(e);
                     };
                     // The grants must support authorized flow.
                     //
@@ -123,7 +130,7 @@ pub async fn authorize(
                         }
                     } else {
                         let Some(grant_types) =
-                            &issuance.authorization_server.oauth.grant_types_supported
+                            &authorization_server.oauth.grant_types_supported
                         else {
                             let e = anyhow!("no grants in offer is not supported");
                             tracing::error!(target: "Endpoint::authorize", ?e);
@@ -267,15 +274,21 @@ fn authorization_request(
         })?),
     };
 
+    let Some(authorization_server) = &issuance.authorization_server else {
+        return Err(anyhow!("authorization server metadata not set"));
+    };
     let Some(code_challenge_methods) =
-        issuance.authorization_server.oauth.code_challenge_methods_supported.clone()
+        authorization_server.oauth.code_challenge_methods_supported.clone()
     else {
         return Err(anyhow!("code challenge methods missing from authorization server metadata"));
     };
 
+    let Some(issuer) = &issuance.issuer else {
+        return Err(anyhow!("issuer metadata not set"));
+    };
     Ok(AuthorizationRequest::Object(RequestObject {
-        credential_issuer: issuance.issuer.credential_issuer.clone(),
-        response_type: issuance.authorization_server.oauth.response_types_supported[0].clone(),
+        credential_issuer: issuer.credential_issuer.clone(),
+        response_type: authorization_server.oauth.response_types_supported[0].clone(),
         client_id: issuance.client_id.clone(),
         redirect_uri: request.redirect_uri.clone(),
         state: Some(issuance.id.clone()),
@@ -283,7 +296,7 @@ fn authorization_request(
         code_challenge_method: code_challenge_methods[0].clone(),
         authorization_details: auth_details,
         scope,
-        resource: Some(issuance.issuer.credential_issuer.clone()),
+        resource: Some(issuer.credential_issuer.clone()),
         subject_id: issuance.subject_id.clone(),
         // TODO: support this
         wallet_issuer: None,
@@ -294,10 +307,12 @@ fn authorization_request(
 
 /// Construct a token request.
 fn token_request(
-    issuance: &IssuanceState, auth_request: &AuthorizeRequest, auth_response: &AuthorizationResponse,
+    issuance: &IssuanceState, auth_request: &AuthorizeRequest,
+    auth_response: &AuthorizationResponse,
 ) -> TokenRequest {
+    let issuer = issuance.issuer.as_ref().expect("issuer metadata should be set");
     TokenRequest {
-        credential_issuer: issuance.issuer.credential_issuer.clone(),
+        credential_issuer: issuer.credential_issuer.clone(),
         client_id: Some(issuance.client_id.clone()),
         grant_type: TokenGrantType::AuthorizationCode {
             code: auth_response.code.clone(),
@@ -321,7 +336,10 @@ fn authorization_details(
         return Err(anyhow!("authorization details are required for wallet-initiated issuance"));
     }
     let mut auth_details = Vec::new();
-    let creds_supported = &issuance.issuer.credential_configurations_supported;
+    let Some(issuer) = &issuance.issuer else {
+        return Err(anyhow!("issuer metadata not set"));
+    };
+    let creds_supported = &issuer.credential_configurations_supported;
     let Some(offer) = &issuance.offer else {
         return Err(anyhow!("issuer-initiated issuance requires an offer"));
     };

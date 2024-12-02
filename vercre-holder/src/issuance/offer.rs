@@ -93,8 +93,13 @@ pub async fn offer(
 
     // Trim the supported credentials to just those on offer so that the holder
     // can decide which to accept.
+    let Some(issuer) = &issuance.issuer else {
+        let e = anyhow!("no issuer metadata");
+        tracing::error!(target: "Endpoint::offer", ?e);
+        return Err(e);
+    };
     let mut offered = HashMap::<String, CredentialConfiguration>::new();
-    let creds_supported = &issuance.issuer.credential_configurations_supported;
+    let creds_supported = &issuer.credential_configurations_supported;
     for cfg_id in &request.offer.credential_configuration_ids {
         // find supported credential in metadata and copy to state object.
         let Some(found) = creds_supported.get(cfg_id) else {
@@ -106,13 +111,7 @@ pub async fn offer(
     }
 
     // TODO: Locale support.
-    let issuer_name = {
-        if let Some(display) = issuance.issuer.display.clone() {
-            display.name
-        } else {
-            issuance.issuer.credential_issuer.clone()
-        }
-    };
+    let issuer_name = issuer.display_name(None).unwrap_or_default();
 
     // Stash the state for the next step.
     if let Err(e) =
@@ -131,4 +130,31 @@ pub async fn offer(
     };
 
     Ok(res)
+}
+
+impl IssuanceState {
+    /// Update the issuance state with the issuer's offer information.
+    ///
+    /// Requires issuer and oauth server metadata to be set.
+    /// 
+    /// # Errors
+    /// Will return an error if the state is not in the correct state to apply
+    /// an offer.
+    pub fn offer(
+        &mut self, client_id: &str, subject_id: &str, offer: CredentialOffer,
+    ) -> anyhow::Result<()> {
+        // Check current state is valid for this operation.
+        if self.status != Status::Inactive {
+            let e = anyhow!("invalid state to apply an offer");
+            tracing::error!(target: "IssuanceState::offer", ?e);
+            return Err(e);
+        }
+
+        self.offer = Some(offer);
+        self.client_id = client_id.into();
+        self.status = Status::Offered;
+        self.subject_id = subject_id.to_string();
+
+        Ok(())
+    }
 }

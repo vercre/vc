@@ -85,9 +85,14 @@ pub async fn accept(
             return Err(e);
         }
     };
+    let Some(issuer) = &issuance.issuer else {
+        let e = anyhow!("issuer metadata not set");
+        tracing::error!(target: "Endpoint::accept", ?e);
+        return Err(e);
+    };
 
     issuance.accepted =
-        narrow_scope(&issuance.issuer.credential_configurations_supported, request.accept.as_ref())
+        narrow_scope(&issuer.credential_configurations_supported, request.accept.as_ref())
             .map_err(|e| {
                 tracing::error!(target: "Endpoint::accept", ?e);
                 e

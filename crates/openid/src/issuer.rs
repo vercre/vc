@@ -1537,7 +1537,7 @@ impl Issuer {
     /// it is not a vec, only one locale is possible. Keep an eye on the spec
     /// and implement locale support if needed.
     #[must_use]
-    pub fn display_name(&self, _locale: &str) -> Option<String> {
+    pub fn display_name(&self, _locale: Option<&str>) -> Option<String> {
         self.display.as_ref().map(|d| d.name.clone())
     }
 }

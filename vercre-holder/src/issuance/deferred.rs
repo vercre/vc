@@ -52,12 +52,17 @@ pub async fn deferred(
         tracing::error!(target: "Endpoint::deferred", ?e);
         return Err(e);
     };
+    let Some(issuer) = &issuance.issuer else {
+        let e = anyhow!("no issuer metadata on issuance state");
+        tracing::error!(target: "Endpoint::deferred", ?e);
+        return Err(e);
+    };
 
     issuance.deferred.remove(&request.transaction_id);
 
     let def_cred_request = DeferredCredentialRequest {
         transaction_id: request.transaction_id.clone(),
-        credential_issuer: issuance.issuer.credential_issuer.clone(),
+        credential_issuer: issuer.credential_issuer.clone(),
         access_token: token_response.access_token.clone(),
     };
     let deferred_response = Issuer::deferred(&provider, def_cred_request).await.map_err(|e| {
@@ -65,8 +70,7 @@ pub async fn deferred(
         e
     })?;
 
-    let Some(config) = issuance
-        .issuer
+    let Some(config) = issuer
         .credential_configurations_supported
         .get(&request.credential_configuration_id)
     else {
@@ -79,7 +83,7 @@ pub async fn deferred(
         provider.clone(),
         config,
         &deferred_response.credential_response,
-        &issuance.issuer,
+        issuer,
     )
     .await
     {

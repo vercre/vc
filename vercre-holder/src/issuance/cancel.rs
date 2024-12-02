@@ -3,7 +3,7 @@
 //! Enables the holder to cancel an issuance flow.
 //!
 //! The converse of this endpoint is the `save` endpoint.
-
+use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_issuer::{NotificationEvent, NotificationRequest};
@@ -43,10 +43,15 @@ pub async fn cancel(
 
     // Notify issuer if we have been given a notification ID.
     if let Some(notification_id) = issuance.notification_id {
+        let Some(issuer) = &issuance.issuer else {
+            let e = anyhow!("no issuer metadata");
+            tracing::error!(target: "Endpoint::cancel", ?e);
+            return Err(e);
+        };
         if let Err(e) = Issuer::notification(
             &provider,
             NotificationRequest {
-                credential_issuer: issuance.issuer.credential_issuer.clone(),
+                credential_issuer: issuer.credential_issuer.clone(),
                 access_token,
                 notification_id,
                 event: NotificationEvent::CredentialDeleted,

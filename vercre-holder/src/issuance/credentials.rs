@@ -89,11 +89,16 @@ pub async fn credentials(
         tracing::error!(target: "Endpoint::credentials", ?e);
         return Err(e);
     };
+    let Some(issuer) = &issuance.issuer else {
+        let e = anyhow!("no issuer metadata in issuance state");
+        tracing::error!(target: "Endpoint::credentials", ?e);
+        return Err(e);
+    };
 
     // Construct a proof to be used in the credential requests.
     let claims = ProofClaims {
         iss: Some(issuance.client_id.clone()),
-        aud: issuance.issuer.credential_issuer.clone(),
+        aud: issuer.credential_issuer.clone(),
         iat: chrono::Utc::now().timestamp(),
         nonce: token_response.c_nonce.clone(),
     };
@@ -151,8 +156,10 @@ async fn credential_by_format(
     let Some(format) = &request.format else {
         bail!("format must be provided for scope-based issuance");
     };
-    let config = issuance
-        .issuer
+    let Some(issuer) = &issuance.issuer else {
+        bail!("no issuer metadata in issuance state");
+    };
+    let config = issuer
         .credential_configurations_supported
         .iter()
         .find(|(_, cfg)| cfg.scope == issuance.scope && cfg.format == *format);
@@ -163,7 +170,7 @@ async fn credential_by_format(
         bail!("no token response in issuance state");
     };
     let request = CredentialRequest {
-        credential_issuer: issuance.issuer.credential_issuer.clone(),
+        credential_issuer: issuer.credential_issuer.clone(),
         access_token: token_response.access_token.clone(),
         credential: CredentialIssuance::Format(config.format.clone()),
         proof: Some(Proof::Single {
@@ -175,7 +182,7 @@ async fn credential_by_format(
         tracing::error!(target: "Endpoint::credentials", ?e);
         e
     })?;
-    match process_credential_response(provider.clone(), config, &cred_res, &issuance.issuer).await {
+    match process_credential_response(provider.clone(), config, &cred_res, issuer).await {
         Ok((credentials, transaction_id)) => {
             if let Some(credentials) = credentials {
                 issuance.credentials.extend(credentials);
@@ -203,6 +210,9 @@ async fn credential_by_identifier(
     let Some(authorized) = &token_response.authorization_details else {
         bail!("no authorization details in token response");
     };
+    let Some(issuer) = &issuance.issuer else {
+        bail!("no issuer metadata in issuance state");
+    };
 
     for auth in authorized {
         let cfg_id = match &auth.authorization_detail.credential {
@@ -211,7 +221,7 @@ async fn credential_by_identifier(
                 ..
             } => credential_configuration_id,
             CredentialAuthorization::Format(format_identifier) => {
-                match issuance.issuer.credential_configuration_id(format_identifier) {
+                match issuer.credential_configuration_id(format_identifier) {
                     Ok(cfg_id) => cfg_id,
                     Err(e) => {
                         tracing::error!(target: "Endpoint::credentials", ?e);
@@ -220,7 +230,7 @@ async fn credential_by_identifier(
                 }
             }
         };
-        let Some(config) = issuance.issuer.credential_configurations_supported.get(cfg_id) else {
+        let Some(config) = issuer.credential_configurations_supported.get(cfg_id) else {
             bail!("authorized credential configuration not found in issuer metadata");
         };
         for cred_id in &auth.credential_identifiers {
@@ -231,7 +241,7 @@ async fn credential_by_identifier(
                 }
             }
             let request = credential_request!({
-                "credential_issuer": issuance.issuer.credential_issuer.clone(),
+                "credential_issuer": issuer.credential_issuer.clone(),
                 "access_token": token_response.access_token.clone(),
                 "credential_identifier": cred_id.to_string(),
                 "proof": {
@@ -240,9 +250,7 @@ async fn credential_by_identifier(
                 }
             });
             let cred_res = Issuer::credential(&provider, request).await?;
-            match process_credential_response(provider.clone(), config, &cred_res, &issuance.issuer)
-                .await
-            {
+            match process_credential_response(provider.clone(), config, &cred_res, issuer).await {
                 Ok((credentials, transaction_id)) => {
                     if let Some(credentials) = credentials {
                         issuance.credentials.extend(credentials);
