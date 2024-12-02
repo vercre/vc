@@ -15,7 +15,7 @@ use crate::provider as holder;
 #[tokio::test]
 async fn preauth_2() {
     // Use the issuance service endpoint to create a sample offer that we can
-    // use to start the flow.
+    // use to start the flow. Include PIN.
     let request = create_offer_request!({
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
@@ -79,4 +79,14 @@ async fn preauth_2() {
 
     // Accept all credentials on offer.
     state.accept(&None).expect("should accept offer");
+
+    //--------------------------------------------------------------------------
+    // Enter a PIN.
+    //--------------------------------------------------------------------------
+    // Cheat by getting the PIN from the offer response on the call to the
+    // issuance crate to create the offer. In a real-world scenario, the holder
+    // would be sent the offer on this main channel and the PIN on a separate
+    // channel.
+    let pin = offer_resp.tx_code.expect("should have user code");
+    state.pin(&pin).expect("should apply pin");
 }

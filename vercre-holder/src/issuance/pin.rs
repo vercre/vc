@@ -56,3 +56,24 @@ pub async fn pin(provider: impl HolderProvider, request: &PinRequest) -> anyhow:
 
     Ok(issuance.id)
 }
+
+impl IssuanceState {
+    /// Progress the issuance flow by setting a PIN.
+    /// 
+    /// # Errors
+    /// Will return an error if the current state is inconsistent with setting a
+    /// PIN.
+    pub fn pin(&mut self, pin: &str) -> anyhow::Result<()> {
+        if self.status != Status::PendingPin {
+            let e = anyhow!("invalid issuance state");
+            tracing::error!(target: "Endpoint::pin", ?e);
+            return Err(e);
+        };
+    
+        // Update the state of the flow to indicate the PIN has been set.
+        self.pin = Some(pin.into());
+        self.status = Status::Accepted;
+
+        Ok(())
+    }
+}
