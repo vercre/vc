@@ -29,7 +29,7 @@ use serde::{Deserialize, Serialize};
 pub use token::{token, AuthorizedCredentials};
 use uuid::Uuid;
 use vercre_issuer::{
-    AuthorizationDetail, CredentialOffer, MetadataRequest, OAuthServerRequest, TokenResponse,
+    AuthorizationDetail, CredentialOffer, Format, MetadataRequest, OAuthServerRequest, TokenResponse
 };
 use vercre_openid::issuer::{Issuer, Server};
 
@@ -63,6 +63,16 @@ pub enum FlowType {
         #[serde(skip_serializing_if = "Option::is_none")]
         scope: Option<String>,
     },
+}
+
+/// Type of credential request that can be made.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub enum CredentialRequestType {
+    /// Request by credential identifiers. This is the default.
+    CredentialIdentifiers(Vec<String>),
+
+    /// Request by format. Used when the issuance flow is scope-based.
+    Format(Format),
 }
 
 /// `Issuance` represents app state across the steps of the issuance flow.

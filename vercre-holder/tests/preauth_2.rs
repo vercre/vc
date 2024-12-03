@@ -3,7 +3,7 @@
 mod provider;
 
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-use vercre_holder::issuance::{FlowType, IssuanceState};
+use vercre_holder::issuance::{CredentialRequestType, FlowType, IssuanceState};
 use vercre_holder::provider::{Issuer, MetadataRequest, OAuthServerRequest};
 use vercre_issuer::{OfferType, SendType};
 use vercre_macros::create_offer_request;
@@ -94,9 +94,26 @@ async fn preauth_2() {
     // Request an access token from the issuer.
     //--------------------------------------------------------------------------
     let token_request = state.token_request().expect("should get token request");
-    let token_response = provider
-        .token(token_request)
-        .await
-        .expect("should get token response");
+    let token_response = provider.token(token_request).await.expect("should get token response");
     state.token(&token_response).expect("should get token");
+
+    //--------------------------------------------------------------------------
+    // Make credential requests.
+    //--------------------------------------------------------------------------
+    // For this test we are going to accept all credentials on offer. (Just one
+    // in this case but we demonstate the pattern for multiple credentials.) We
+    // are making the request by credential identifier.
+    let Some(authorized) = &token_response.authorization_details else {
+        panic!("no authorization details in token response");
+    };
+    let mut identifiers = vec![];
+    for auth in authorized {
+        for id in auth.credential_identifiers.iter() {
+            identifiers.push(id.clone());
+        }
+    }
+    let _credential_requests = state
+        .credential_requests(CredentialRequestType::CredentialIdentifiers(identifiers), provider)
+        .await
+        .expect("should construct credential requests");
 }
