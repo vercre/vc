@@ -23,6 +23,7 @@ use vercre_issuer::{
 
 use super::{IssuanceState, Status};
 use crate::issuance::token::{authorized_credentials, AuthorizedCredentials};
+use crate::issuance::FlowType;
 use crate::provider::{HolderProvider, Issuer, StateStore};
 
 /// `AuthorizeRequest` is the request to the `authorize` endpoint to initiate an
@@ -70,7 +71,7 @@ pub enum Initiator {
         scope: Option<String>,
 
         /// A Holder identifier provided by the Wallet. It must have meaning to
-        /// the Credential Issuer in order that credentialSubject claims
+        /// the Credential Issuer so that credentialSubject claims
         /// can be populated.
         subject_id: String,
     },
@@ -169,13 +170,15 @@ pub async fn authorize(
             }
 
             // Create a new issuance flow.
-            let mut issuance = IssuanceState::new(client_id);
-            issuance.subject_id.clone_from(subject_id);
+            let flow = FlowType::HolderInitiated{
+                issuer: issuer.clone(),
+                scope: scope.clone(),
+            };
+            let mut issuance = IssuanceState::new(flow, client_id, subject_id);
             issuance.set_issuer(&provider, issuer).await.map_err(|e| {
                 tracing::error!(target: "Endpoint::authorize", ?e);
                 e
             })?;
-            issuance.scope.clone_from(scope);
             issuance
         }
     };

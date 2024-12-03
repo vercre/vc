@@ -21,6 +21,7 @@ use vercre_w3c_vc::proof::{Payload, Verify};
 
 use super::{IssuanceState, Status};
 use crate::credential::Credential;
+use crate::issuance::FlowType;
 use crate::provider::{HolderProvider, Issuer, StateStore};
 
 /// `CredentialsRequest` provides the issuance flow ID and an optional set of
@@ -109,8 +110,12 @@ pub async fn credentials(
 
     // If the flow is scope-based then we can't examine authorization details
     // but proceed instead to request credentials by format.
-    if issuance.scope.is_some() {
-        credential_by_format(provider.clone(), &mut issuance, request, &jwt).await.map_err(
+    let scope = match issuance.flow_type.clone() {
+        FlowType::HolderInitiated{ scope, .. } => scope,
+        _ => None,
+    };
+    if scope.is_some() {
+        credential_by_format(provider.clone(), &mut issuance, scope.as_deref(), request, &jwt).await.map_err(
             |e| {
                 tracing::error!(target: "Endpoint::credentials", ?e);
                 e
@@ -147,7 +152,7 @@ pub async fn credentials(
 
 // Make a credential request by format based on the flow being by scope.
 async fn credential_by_format(
-    provider: impl HolderProvider, issuance: &mut IssuanceState, request: &CredentialsRequest,
+    provider: impl HolderProvider, issuance: &mut IssuanceState, scope: Option<&str>, request: &CredentialsRequest,
     jwt: &str,
 ) -> anyhow::Result<()> {
     if request.credential_identifiers.is_some() {
@@ -162,7 +167,7 @@ async fn credential_by_format(
     let config = issuer
         .credential_configurations_supported
         .iter()
-        .find(|(_, cfg)| cfg.scope == issuance.scope && cfg.format == *format);
+        .find(|(_, cfg)| cfg.scope.as_deref() == scope && cfg.format == *format);
     let Some((cfg_id, config)) = config else {
         bail!("credential configuration not found for scope and format");
     };

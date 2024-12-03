@@ -15,6 +15,7 @@ use tracing::instrument;
 use vercre_openid::issuer::{CredentialConfiguration, CredentialOffer, Grants};
 
 use super::{IssuanceState, Status};
+use crate::issuance::FlowType;
 use crate::provider::{HolderProvider, StateStore};
 
 /// `OfferRequest` is the request to the `offer` endpoint to initiate an
@@ -78,7 +79,14 @@ pub async fn offer(
     }
 
     // Establish a new issuance flow state
-    let mut issuance = IssuanceState::new(&request.client_id);
+    let flow_type = request.offer.grants.as_ref().map_or(FlowType::IssuerAuthorized, |grants| {
+        if grants.pre_authorized_code.is_some() {
+            FlowType::IssuerPreAuthorized
+        } else {
+            FlowType::IssuerAuthorized
+        }
+    });
+    let mut issuance = IssuanceState::new(flow_type, &request.client_id, &request.subject_id);
     issuance.subject_id.clone_from(&request.subject_id);
     issuance.status = Status::Offered;
 
@@ -136,12 +144,12 @@ impl IssuanceState {
     /// Update the issuance state with the issuer's offer information.
     ///
     /// Requires issuer and oauth server metadata to be set.
-    /// 
+    ///
     /// # Errors
     /// Will return an error if the state is not in the correct state to apply
     /// an offer.
     pub fn offer(
-        &mut self, client_id: &str, subject_id: &str, offer: &CredentialOffer,
+        &mut self, offer: &CredentialOffer,
     ) -> anyhow::Result<HashMap<String, CredentialConfiguration>> {
         // Check current state is valid for this operation.
         if self.status != Status::AuthServerSet {
@@ -150,8 +158,6 @@ impl IssuanceState {
             return Err(e);
         }
 
-        self.client_id = client_id.into();
-        self.subject_id = subject_id.to_string();
         self.offer = Some(offer.clone());
 
         // Explicitly extract the credential configurations from the issuer
@@ -173,7 +179,7 @@ impl IssuanceState {
             };
             offered.insert(cfg_id.clone(), found.clone());
         }
-        
+
         self.status = Status::Offered;
         Ok(offered)
     }

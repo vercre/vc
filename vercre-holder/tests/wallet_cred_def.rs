@@ -4,7 +4,7 @@
 mod provider;
 
 use insta::assert_yaml_snapshot as assert_snapshot;
-use test_utils::issuer::{CLIENT_ID, CREDENTIAL_ISSUER, REDIRECT_URI};
+use test_utils::issuer::{CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, REDIRECT_URI};
 use vercre_holder::issuance::{AuthorizeRequest, CredentialsRequest, Initiator, SaveRequest};
 use vercre_holder::provider::{CredentialStorer, Issuer, MetadataRequest};
 use vercre_holder::{
@@ -12,9 +12,6 @@ use vercre_holder::{
 };
 
 use crate::provider::Provider;
-
-// In a real scenario, this will be the result of an authentication request.
-const SUBJECT_ID: &str = "normal_user";
 
 // Test end-to-end wallet-initiated issuance flow, with authorization request
 // using a credential definition.
@@ -52,7 +49,7 @@ async fn wallet_credential_definition() {
             client_id: CLIENT_ID.into(),
             scope: None,
             issuer: CREDENTIAL_ISSUER.into(),
-            subject_id: SUBJECT_ID.into(),
+            subject_id: NORMAL_USER.into(),
         },
         redirect_uri: Some(REDIRECT_URI.into()), // Must match client registration.
         authorization_details: Some(vec![AuthorizationDetail {

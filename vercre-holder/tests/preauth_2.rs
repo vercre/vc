@@ -3,7 +3,7 @@
 mod provider;
 
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-use vercre_holder::issuance::IssuanceState;
+use vercre_holder::issuance::{FlowType, IssuanceState};
 use vercre_holder::provider::{Issuer, MetadataRequest, OAuthServerRequest};
 use vercre_issuer::{OfferType, SendType};
 use vercre_macros::create_offer_request;
@@ -38,7 +38,7 @@ async fn preauth_2() {
     //--------------------------------------------------------------------------
     // Initiate flow state.
     //--------------------------------------------------------------------------
-    let mut state = IssuanceState::new(CLIENT_ID);
+    let mut state = IssuanceState::new(FlowType::IssuerPreAuthorized, CLIENT_ID, NORMAL_USER);
 
     //--------------------------------------------------------------------------
     // Add issuer metadata to flow state.
@@ -67,7 +67,7 @@ async fn preauth_2() {
     //--------------------------------------------------------------------------
     // Unpack the offer.
     //--------------------------------------------------------------------------
-    let offered = state.offer(CLIENT_ID, NORMAL_USER, &offer).expect("should process offer");
+    let offered = state.offer(&offer).expect("should process offer");
 
     //--------------------------------------------------------------------------
     // Present the offer to the holder for them to choose what to accept.
@@ -89,4 +89,8 @@ async fn preauth_2() {
     // channel.
     let pin = offer_resp.tx_code.expect("should have user code");
     state.pin(&pin).expect("should apply pin");
+
+    //--------------------------------------------------------------------------
+    // Request an access token.
+    //--------------------------------------------------------------------------
 }
