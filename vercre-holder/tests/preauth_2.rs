@@ -91,6 +91,12 @@ async fn preauth_2() {
     state.pin(&pin).expect("should apply pin");
 
     //--------------------------------------------------------------------------
-    // Request an access token.
+    // Request an access token from the issuer.
     //--------------------------------------------------------------------------
+    let token_request = state.token_request().expect("should get token request");
+    let token_response = provider
+        .token(token_request)
+        .await
+        .expect("should get token response");
+    state.token(&token_response).expect("should get token");
 }

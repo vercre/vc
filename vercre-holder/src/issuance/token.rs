@@ -10,9 +10,11 @@ use anyhow::{anyhow, bail};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
-use vercre_issuer::{AuthorizedDetail, CredentialAuthorization, TokenGrantType, TokenRequest};
+use vercre_issuer::{
+    AuthorizedDetail, CredentialAuthorization, TokenGrantType, TokenRequest, TokenResponse,
+};
 
-use super::{IssuanceState, Status};
+use super::{FlowType, IssuanceState, Status};
 use crate::provider::{HolderProvider, Issuer, StateStore};
 
 /// `AuthorizedCredentials` is the response from the `token` endpoint.
@@ -77,7 +79,7 @@ pub async fn token(
         tracing::error!(target: "Endpoint::token", ?e);
         e
     })?;
-    let token_response =Issuer::token(&provider, token_request).await.map_err(|e| {
+    let token_response = Issuer::token(&provider, token_request).await.map_err(|e| {
         tracing::error!(target: "Endpoint::token", ?e);
         e
     })?;
@@ -135,6 +137,64 @@ fn token_request(issuance: &IssuanceState) -> anyhow::Result<TokenRequest> {
     })
 }
 
+impl IssuanceState {
+    /// Construct a token request from current state.
+    ///
+    /// # Errors
+    /// Will return an error if the current state is inconsistent with making a
+    /// token request.
+    pub fn token_request(&self) -> anyhow::Result<TokenRequest> {
+        let Some(offer) = &self.offer else {
+            bail!("no offer in issuance state");
+        };
+        let Some(grants) = &offer.grants else {
+            bail!("no grants in offer is not supported");
+        };
+        let Some(pre_auth_code) = &grants.pre_authorized_code else {
+            bail!("no pre-authorized code in offer is not supported");
+        };
+        let Some(issuer) = &self.issuer else {
+            bail!("no issuer metadata in issuance state");
+        };
+
+        Ok(TokenRequest {
+            credential_issuer: issuer.credential_issuer.clone(),
+            client_id: Some(self.client_id.clone()),
+            grant_type: TokenGrantType::PreAuthorizedCode {
+                pre_authorized_code: pre_auth_code.pre_authorized_code.clone(),
+                tx_code: self.pin.clone(),
+            },
+            authorization_details: self.accepted.clone(),
+            // TODO: support this
+            client_assertion: None,
+        })
+    }
+
+    /// Add access token information to the issuance state.
+    ///
+    /// # Errors
+    /// Will return an error if the current state is inconsistent with receiving
+    /// an access token.
+    pub fn token(&mut self, token: &TokenResponse) -> anyhow::Result<()> {
+        if self.status != Status::Accepted {
+            let e = anyhow!("invalid issuance state");
+            tracing::error!(target: "IssuanceState::token", ?e);
+            return Err(e);
+        }
+        match &self.flow_type {
+            FlowType::IssuerPreAuthorized => {},
+            _ => {
+                todo!("support other flow types");
+            }
+        }
+    
+        self.token = Some(token.clone());
+        self.status = Status::TokenReceived;
+
+        Ok(())
+    }
+}
+
 /// Construct authorized credential idenifiers from authorization details.
 ///
 /// Uses issuer metadata in the case of a format specification to resolve to
@@ -152,9 +212,7 @@ pub fn authorized_credentials(
                 credential_configuration_id,
                 ..
             } => credential_configuration_id,
-            CredentialAuthorization::Format(cfmt) => {
-                issuer.credential_configuration_id(cfmt)?
-            }
+            CredentialAuthorization::Format(cfmt) => issuer.credential_configuration_id(cfmt)?,
         };
         authorized.insert(cfg_id.into(), auth.credential_identifiers.clone());
     }
