@@ -58,7 +58,7 @@ pub async fn deferred(
         return Err(e);
     };
 
-    issuance.deferred.remove(&request.transaction_id);
+    issuance.deferred_deprecated.remove(&request.transaction_id);
 
     let def_cred_request = DeferredCredentialRequest {
         transaction_id: request.transaction_id.clone(),
@@ -70,9 +70,8 @@ pub async fn deferred(
         e
     })?;
 
-    let Some(config) = issuer
-        .credential_configurations_supported
-        .get(&request.credential_configuration_id)
+    let Some(config) =
+        issuer.credential_configurations_supported.get(&request.credential_configuration_id)
     else {
         let e = anyhow!("credential configuration not found in issuer metadata");
         tracing::error!(target: "Endpoint::deferred", ?e);
@@ -92,7 +91,9 @@ pub async fn deferred(
                 issuance.credentials.extend(credentials);
             }
             if let Some(id) = transaction_id {
-                issuance.deferred.insert(id, request.credential_configuration_id.clone());
+                issuance
+                    .deferred_deprecated
+                    .insert(id, request.credential_configuration_id.clone());
             }
         }
         Err(e) => {
@@ -103,7 +104,7 @@ pub async fn deferred(
 
     // Release issuance state if no more deferred credentials and no
     // credentials to save, otherwise stash the state.
-    if issuance.deferred.is_empty() && issuance.credentials.is_empty() {
+    if issuance.deferred_deprecated.is_empty() && issuance.credentials.is_empty() {
         StateStore::purge(&provider, &issuance.id).await.map_err(|e| {
             tracing::error!(target: "Endpoint::credentials", ?e);
             anyhow!("issue purging state: {e}")
@@ -115,8 +116,11 @@ pub async fn deferred(
         return Err(e);
     };
 
-    let deferred =
-        if issuance.deferred.is_empty() { None } else { Some(issuance.deferred.clone()) };
+    let deferred = if issuance.deferred_deprecated.is_empty() {
+        None
+    } else {
+        Some(issuance.deferred_deprecated.clone())
+    };
 
     Ok(CredentialsResponse {
         issuance_id: issuance.id,

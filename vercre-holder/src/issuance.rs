@@ -139,7 +139,13 @@ pub struct IssuanceState {
     /// credential configuration IDs (value).
     ///
     /// Will be empty if there are no outstanding deferred credentials.
-    pub deferred: HashMap<String, String>,
+    // TODO: Remove.
+    pub deferred_deprecated: HashMap<String, String>,
+
+    /// Outstanding deferred credential transaction IDs.
+    ///
+    /// Will be empty if there are no outstanding deferred credentials.
+    pub deferred: Vec<String>,
 
     /// Identifier to pass back to the issuer to notify of the success or
     /// otherwise of the credential issuance.
@@ -225,12 +231,6 @@ impl IssuanceState {
         let auth_md_response = IssuerProvider::oauth_server(provider, auth_md_request).await?;
         self.authorization_server = Some(auth_md_response.authorization_server);
         Ok(())
-    }
-
-    /// Adds a credential to the issuance flow for saving.
-    // TODO: Rename and move.
-    pub fn add_credential(&mut self, credential: Credential) {
-        self.credentials.push(credential);
     }
 }
 

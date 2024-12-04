@@ -192,6 +192,7 @@ impl Credential {
     }
 }
 
+
 /// Image information for a credential.
 #[derive(Clone, Default, Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ImageData {

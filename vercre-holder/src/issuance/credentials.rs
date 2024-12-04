@@ -10,7 +10,6 @@ use serde::{Deserialize, Serialize};
 use tracing::instrument;
 use vercre_core::{Kind, Quota};
 use vercre_infosec::jose::jws::{self, Type};
-use vercre_infosec::Signer;
 use vercre_issuer::{
     CredentialAuthorization, CredentialIssuance, Format, SingleProof, TokenResponse,
 };
@@ -144,8 +143,11 @@ pub async fn credentials(
         return Err(e);
     };
 
-    let deferred =
-        if issuance.deferred.is_empty() { None } else { Some(issuance.deferred.clone()) };
+    let deferred = if issuance.deferred_deprecated.is_empty() {
+        None
+    } else {
+        Some(issuance.deferred_deprecated.clone())
+    };
 
     Ok(CredentialsResponse {
         issuance_id: issuance.id,
@@ -196,7 +198,7 @@ async fn credential_by_format(
                 issuance.credentials.extend(credentials);
             }
             if let Some(id) = transaction_id {
-                issuance.deferred.insert(id, cfg_id.to_string());
+                issuance.deferred_deprecated.insert(id, cfg_id.to_string());
             }
         }
         Err(e) => {
@@ -264,7 +266,7 @@ async fn credential_by_identifier(
                         issuance.credentials.extend(credentials);
                     }
                     if let Some(id) = transaction_id {
-                        issuance.deferred.insert(id, cfg_id.to_string());
+                        issuance.deferred_deprecated.insert(id, cfg_id.to_string());
                     }
                 }
                 Err(e) => {
@@ -312,7 +314,7 @@ pub async fn process_credential_response(
     }
 }
 
-/// Construct a credential from a credential response.
+/// Construct a wallet-style credential from the format provided by the issuer.
 async fn credential(
     provider: impl HolderProvider, config: &CredentialConfiguration,
     vc_kind: &Kind<VerifiableCredential>, issuer: &vercre_openid::issuer::Issuer,
@@ -401,15 +403,39 @@ async fn credential(
 }
 
 impl IssuanceState {
-    /// Construct a set of credential requests from authorization details and
-    /// specified scope.
+    /// Construct a proof to be used in the credential requests.
     ///
     /// # Errors
     /// Will return an error if the flow state is inconsistent with constructing
     /// credential requests.
-    pub async fn credential_requests(
-        &self, request_type: CredentialRequestType, signer: impl Signer,
-    ) -> anyhow::Result<Vec<CredentialRequest>> {
+    pub fn proof(&self) -> anyhow::Result<ProofClaims> {
+        let Some(token_response) = &self.token else {
+            bail!("no token response in issuance state");
+        };
+        let Some(issuer) = &self.issuer else {
+            bail!("no issuer metadata in issuance state");
+        };
+        let claims = ProofClaims {
+            iss: Some(self.client_id.clone()),
+            aud: issuer.credential_issuer.clone(),
+            iat: chrono::Utc::now().timestamp(),
+            nonce: token_response.c_nonce.clone(),
+        };
+        Ok(claims)
+    }
+
+    /// Construct a set of credential requests from authorization details and
+    /// specified scope.
+    ///
+    /// The tuple contains the credential configuration ID for ease of lookup in
+    /// issuer metadata as well as the credential request itself.
+    ///
+    /// # Errors
+    /// Will return an error if the flow state is inconsistent with constructing
+    /// credential requests.
+    pub fn credential_requests(
+        &self, request_type: CredentialRequestType, jwt: &str,
+    ) -> anyhow::Result<Vec<(String, CredentialRequest)>> {
         if self.status != Status::TokenReceived {
             bail!("invalid issuance state status");
         }
@@ -419,18 +445,6 @@ impl IssuanceState {
         let Some(issuer) = &self.issuer else {
             bail!("no issuer metadata in issuance state");
         };
-
-        // Construct a proof to be used in the credential requests.
-        let claims = ProofClaims {
-            iss: Some(self.client_id.clone()),
-            aud: issuer.credential_issuer.clone(),
-            iat: chrono::Utc::now().timestamp(),
-            nonce: token_response.c_nonce.clone(),
-        };
-        let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, &signer).await.map_err(|e| {
-            tracing::error!(target: "Endpoint::credentials", ?e);
-            e
-        })?;
 
         // Shell out to a scope or identifier based request builder.
         match request_type {
@@ -444,10 +458,10 @@ impl IssuanceState {
                     bail!("issuance is holder-initiated but has no scope");
                 };
 
-                Self::credential_requests_by_format(&format, &scope, issuer, token_response, &jwt)
+                Self::credential_requests_by_format(&format, &scope, issuer, token_response, jwt)
             }
             CredentialRequestType::CredentialIdentifiers(identifiers) => {
-                Self::credential_requests_by_identifier(&identifiers, issuer, token_response, &jwt)
+                Self::credential_requests_by_identifier(&identifiers, issuer, token_response, jwt)
             }
         }
     }
@@ -459,12 +473,12 @@ impl IssuanceState {
     /// configuration with the specified format and scope.
     fn credential_requests_by_format(
         format: &Format, scope: &str, issuer: &IssuerMetadata, token: &TokenResponse, jwt: &str,
-    ) -> anyhow::Result<Vec<CredentialRequest>> {
+    ) -> anyhow::Result<Vec<(String, CredentialRequest)>> {
         let config = issuer
             .credential_configurations_supported
             .iter()
             .find(|(_, cfg)| cfg.scope.as_deref() == Some(scope) && cfg.format == *format);
-        let Some((_, config)) = config else {
+        let Some((cfg_id, config)) = config else {
             bail!("credential configuration not found for scope and format");
         };
         let request = CredentialRequest {
@@ -476,7 +490,7 @@ impl IssuanceState {
             }),
             ..Default::default()
         };
-        Ok(vec![request])
+        Ok(vec![(cfg_id.to_string(), request)])
     }
 
     /// Construct a set of credential requests by credential identifier.
@@ -487,7 +501,7 @@ impl IssuanceState {
     /// inconsistent with issuer metadata.
     fn credential_requests_by_identifier(
         identifiers: &[String], issuer: &IssuerMetadata, token: &TokenResponse, jwt: &str,
-    ) -> anyhow::Result<Vec<CredentialRequest>> {
+    ) -> anyhow::Result<Vec<(String, CredentialRequest)>> {
         let Some(authorized) = &token.authorization_details else {
             bail!("no authorization details in token response");
         };
@@ -527,9 +541,90 @@ impl IssuanceState {
                         "jwt": jwt.to_string()
                     }
                 });
-                requests.push(request);
+                requests.push((cfg_id.to_string(), request));
             }
         }
         Ok(requests)
+    }
+
+    /// Add a deferred transaction ID to the issuance state.
+    pub fn add_deferred(&mut self, id: &String) {
+        self.deferred.push(id.into());
+    }
+
+    /// Add a credential to the issuance state, converting the W3C format to a
+    /// convenient wallet format.
+    ///
+    /// # Errors
+    /// Will return an error if the current state does not contain the metadata
+    /// required to combine with the provided VC.
+    pub fn add_credential(
+        &mut self, vc: &VerifiableCredential, encoded: &Kind<VerifiableCredential>,
+        issued_at: &i64, config_id: &str,
+    ) -> anyhow::Result<()> {
+        let Some(issuance_date) = DateTime::from_timestamp(*issued_at, 0) else {
+            bail!("invalid issuance date");
+        };
+
+        let Some(issuer) = &self.issuer else {
+            bail!("no issuer metadata in issuance state");
+        };
+        let issuer_id = issuer.credential_issuer.clone();
+
+        // TODO: Locale support.
+        let issuer_name = {
+            if let Some(display) = issuer.display.clone() {
+                display.name
+            } else {
+                issuer_id.clone()
+            }
+        };
+
+        let Some(config) = issuer.credential_configurations_supported.get(config_id) else {
+            bail!("credential configuration not found in issuer metadata");
+        };
+
+        // TODO: add support for embedded proof
+        let Kind::String(token) = encoded else {
+            bail!("credential is not a JWT");
+        };
+
+        // Turn a Quota of Strings into a Vec of Strings for the type of credential.
+        let mut type_ = Vec::new();
+        match &vc.type_ {
+            Quota::One(t) => type_.push(t.clone()),
+            Quota::Many(vc_types) => type_.extend(vc_types.clone()),
+        }
+
+        // Turn a Quota of credential subjects into a Vec of claim sets.
+        let mut subject_claims = Vec::new();
+        match vc.credential_subject.clone() {
+            Quota::One(cs) => subject_claims.push(cs.into()),
+            Quota::Many(vc_claims) => {
+                for cs in vc_claims {
+                    subject_claims.push(cs.into());
+                }
+            }
+        }
+
+        let storable_credential = Credential {
+            id: vc.id.clone().unwrap_or_else(|| format!("urn:uuid:{}", uuid::Uuid::new_v4())),
+            issuer: issuer_id,
+            issuer_name,
+            type_,
+            format: config.format.to_string(),
+            subject_claims,
+            claim_definitions: config.format.claims(),
+            issued: token.into(),
+            issuance_date,
+            valid_from: vc.valid_from,
+            valid_until: vc.valid_until,
+            display: config.display.clone(),
+            logo: None,
+            background: None,
+        };
+
+        self.credentials.push(storable_credential);
+        Ok(())
     }
 }

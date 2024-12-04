@@ -2,11 +2,14 @@
 //! accepts all credentials and all claims on offer.
 mod provider;
 
+use insta::assert_yaml_snapshot;
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_holder::issuance::{CredentialRequestType, FlowType, IssuanceState};
 use vercre_holder::provider::{Issuer, MetadataRequest, OAuthServerRequest};
-use vercre_issuer::{OfferType, SendType};
+use vercre_infosec::jose::{jws, Type};
+use vercre_issuer::{CredentialResponseType, OfferType, SendType};
 use vercre_macros::create_offer_request;
+use vercre_w3c_vc::proof::{Payload, Verify};
 
 use crate::provider as holder;
 
@@ -77,7 +80,7 @@ async fn preauth_2() {
         ".**.credentialSubject.address" => insta::sorted_redaction(),
     });
 
-    // Accept all credentials on offer.
+    // Accept all credentials and all claims on offer.
     state.accept(&None).expect("should accept offer");
 
     //--------------------------------------------------------------------------
@@ -112,8 +115,66 @@ async fn preauth_2() {
             identifiers.push(id.clone());
         }
     }
-    let _credential_requests = state
-        .credential_requests(CredentialRequestType::CredentialIdentifiers(identifiers), provider)
+    let jws = state.proof().expect("should get proof");
+    let jwt = jws::encode(Type::Openid4VciProofJwt, &jws, &provider)
         .await
+        .expect("should encode proof claims");
+    let credential_requests = state
+        .credential_requests(CredentialRequestType::CredentialIdentifiers(identifiers), &jwt)
         .expect("should construct credential requests");
+    for request in credential_requests {
+        let credential_response =
+            provider.credential(request.1).await.expect("should get credentials");
+        // A credential response could contain a single credential, multiple
+        // credentials or a deferred transaction ID. Any credential issued also
+        // needs its proof verified by using a DID resolver.
+        match credential_response.response {
+            CredentialResponseType::Credential(vc_kind) => {
+                // Single credential in response.
+                let Payload::Vc { vc, issued_at } =
+                    vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), provider.clone())
+                        .await
+                        .expect("should parse credential")
+                else {
+                    panic!("expected Payload::Vc");
+                };
+                state
+                    .add_credential(&vc, &vc_kind, &issued_at, &request.0)
+                    .expect("should add credential");
+            }
+            CredentialResponseType::Credentials(creds) => {
+                // Multiple credentials in response.
+                for vc_kind in creds {
+                    let Payload::Vc { vc, issued_at } =
+                        vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), provider.clone())
+                            .await
+                            .expect("should parse credential")
+                    else {
+                        panic!("expected Payload::Vc");
+                    };
+                    state
+                        .add_credential(&vc, &vc_kind, &issued_at, &request.0)
+                        .expect("should add credential");
+                }
+            }
+            CredentialResponseType::TransactionId(tx_id) => {
+                // Deferred transaction ID.
+                state.add_deferred(&tx_id);
+            }
+        }
+    }
+
+    // The flow is complete and the credential on the issuance state could now
+    // be saved to the wallet using the `CredentialStorer` provider trait. For
+    // the test we check snapshot of the state's credentials.
+    assert_yaml_snapshot!("credentials", state.credentials, {
+        "[].type" => insta::sorted_redaction(),
+        "[].subject_claims[]" => insta::sorted_redaction(),
+        "[].subject_claims[].claims" => insta::sorted_redaction(),
+        "[].subject_claims[].claims.address" => insta::sorted_redaction(),
+        "[].claim_definitions" => insta::sorted_redaction(),
+        "[].claim_definitions.address" => insta::sorted_redaction(),
+        "[].issued" => "[issued]",
+        "[].issuance_date" => "[issuance_date]",
+    });
 }
