@@ -2,7 +2,7 @@
 //!
 //! Use a previously issued transaction ID to retrieve a credential.
 
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
@@ -58,7 +58,7 @@ pub async fn deferred(
         return Err(e);
     };
 
-    issuance.deferred_deprecated.remove(&request.transaction_id);
+    issuance.deferred.remove(&request.transaction_id);
 
     let def_cred_request = DeferredCredentialRequest {
         transaction_id: request.transaction_id.clone(),
@@ -91,9 +91,7 @@ pub async fn deferred(
                 issuance.credentials.extend(credentials);
             }
             if let Some(id) = transaction_id {
-                issuance
-                    .deferred_deprecated
-                    .insert(id, request.credential_configuration_id.clone());
+                issuance.deferred.insert(id, request.credential_configuration_id.clone());
             }
         }
         Err(e) => {
@@ -104,7 +102,7 @@ pub async fn deferred(
 
     // Release issuance state if no more deferred credentials and no
     // credentials to save, otherwise stash the state.
-    if issuance.deferred_deprecated.is_empty() && issuance.credentials.is_empty() {
+    if issuance.deferred.is_empty() && issuance.credentials.is_empty() {
         StateStore::purge(&provider, &issuance.id).await.map_err(|e| {
             tracing::error!(target: "Endpoint::credentials", ?e);
             anyhow!("issue purging state: {e}")
@@ -116,14 +114,41 @@ pub async fn deferred(
         return Err(e);
     };
 
-    let deferred = if issuance.deferred_deprecated.is_empty() {
-        None
-    } else {
-        Some(issuance.deferred_deprecated.clone())
-    };
+    let deferred =
+        if issuance.deferred.is_empty() { None } else { Some(issuance.deferred.clone()) };
 
     Ok(CredentialsResponse {
         issuance_id: issuance.id,
         deferred,
     })
+}
+
+impl IssuanceState {
+    /// Construct a deferred credential request.
+    ///
+    /// # Errors
+    /// Will return an error if the issuance state is not consistent with
+    /// constructing such a request.
+    pub fn deferred_request(&self, transaction_id: &str) -> anyhow::Result<DeferredCredentialRequest> {
+        if self.status != Status::TokenReceived {
+            bail!("invalid issuance state status");
+        }
+        let Some(token_response) = &self.token else {
+            bail!("token not found in issuance state");
+        };
+        let Some(issuer) = &self.issuer else {
+            bail!("no issuer metadata on issuance state");
+        };
+        let def_cred_request = DeferredCredentialRequest {
+            transaction_id: transaction_id.into(),
+            credential_issuer: issuer.credential_issuer.clone(),
+            access_token: token_response.access_token.clone(),
+        };
+        Ok(def_cred_request)
+    }
+
+    /// Remove a pending deferred credential transaction from state.
+    pub fn remove_deferred(&mut self, transaction_id: &str) {
+        self.deferred.remove(transaction_id);
+    }
 }

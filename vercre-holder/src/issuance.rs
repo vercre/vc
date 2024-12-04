@@ -139,13 +139,7 @@ pub struct IssuanceState {
     /// credential configuration IDs (value).
     ///
     /// Will be empty if there are no outstanding deferred credentials.
-    // TODO: Remove.
-    pub deferred_deprecated: HashMap<String, String>,
-
-    /// Outstanding deferred credential transaction IDs.
-    ///
-    /// Will be empty if there are no outstanding deferred credentials.
-    pub deferred: Vec<String>,
+    pub deferred: HashMap<String, String>,
 
     /// Identifier to pass back to the issuer to notify of the success or
     /// otherwise of the credential issuance.

@@ -143,10 +143,10 @@ pub async fn credentials(
         return Err(e);
     };
 
-    let deferred = if issuance.deferred_deprecated.is_empty() {
+    let deferred = if issuance.deferred.is_empty() {
         None
     } else {
-        Some(issuance.deferred_deprecated.clone())
+        Some(issuance.deferred.clone())
     };
 
     Ok(CredentialsResponse {
@@ -198,7 +198,7 @@ async fn credential_by_format(
                 issuance.credentials.extend(credentials);
             }
             if let Some(id) = transaction_id {
-                issuance.deferred_deprecated.insert(id, cfg_id.to_string());
+                issuance.deferred.insert(id, cfg_id.to_string());
             }
         }
         Err(e) => {
@@ -209,7 +209,7 @@ async fn credential_by_format(
     Ok(())
 }
 
-// Make a credential request by identifier.
+// Construct a credential request by identifier.
 async fn credential_by_identifier(
     provider: impl HolderProvider, issuance: &mut IssuanceState, request: &CredentialsRequest,
     jwt: &str,
@@ -266,7 +266,7 @@ async fn credential_by_identifier(
                         issuance.credentials.extend(credentials);
                     }
                     if let Some(id) = transaction_id {
-                        issuance.deferred_deprecated.insert(id, cfg_id.to_string());
+                        issuance.deferred.insert(id, cfg_id.to_string());
                     }
                 }
                 Err(e) => {
@@ -548,8 +548,8 @@ impl IssuanceState {
     }
 
     /// Add a deferred transaction ID to the issuance state.
-    pub fn add_deferred(&mut self, id: &String) {
-        self.deferred.push(id.into());
+    pub fn add_deferred(&mut self, tx_id: &String, cfg_id: &String) {
+        self.deferred.insert(tx_id.into(), cfg_id.into());
     }
 
     /// Add a credential to the issuance state, converting the W3C format to a

@@ -1,9 +1,10 @@
 //! Tests for issuer-initiated pre-authorized issuance flow where the holder
-//! accepts all credentials and all claims on offer.
+//! accepts all credentials and all claims on offer but the issuance is
+//! deferred.
 mod provider;
 
 use insta::assert_yaml_snapshot;
-use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, PENDING_USER};
 use vercre_holder::issuance::{CredentialRequestType, FlowType, IssuanceState};
 use vercre_holder::provider::{Issuer, MetadataRequest, OAuthServerRequest};
 use vercre_infosec::jose::{jws, Type};
@@ -16,13 +17,13 @@ use crate::provider as holder;
 // Test end-to-end pre-authorized issuance flow (issuer-initiated), with
 // acceptance of all credentials on offer.
 #[tokio::test]
-async fn preauth_2() {
+async fn preauth_deferred_2() {
     // Use the issuance service endpoint to create a sample offer that we can
     // use to start the flow. Include PIN.
     let request = create_offer_request!({
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
-        "subject_id": NORMAL_USER,
+        "subject_id": PENDING_USER,
         "grant_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
         "tx_code_required": true,
         "send_type": SendType::ByVal,
@@ -41,7 +42,7 @@ async fn preauth_2() {
     //--------------------------------------------------------------------------
     // Initiate flow state.
     //--------------------------------------------------------------------------
-    let mut state = IssuanceState::new(FlowType::IssuerPreAuthorized, CLIENT_ID, NORMAL_USER);
+    let mut state = IssuanceState::new(FlowType::IssuerPreAuthorized, CLIENT_ID, PENDING_USER);
 
     //--------------------------------------------------------------------------
     // Add issuer metadata to flow state.
@@ -163,6 +164,62 @@ async fn preauth_2() {
             }
         }
     }
+
+    // Because we used the test subject ID, PENDING_USER, the issuance should
+    // have been deferred.
+    assert_eq!(state.deferred.len(), 1);
+    assert_eq!(state.credentials.len(), 0);
+
+    //--------------------------------------------------------------------------
+    // Process deferred transaction.
+    //--------------------------------------------------------------------------
+    for (tx_id, cfg_id) in state.deferred.clone() {
+        let deferred_request =
+            state.deferred_request(&tx_id).expect("should construct deferred credential request");
+        let deferred_response = provider
+            .deferred(deferred_request)
+            .await
+            .expect("issuer should process deferred request");
+        match deferred_response.credential_response.response {
+            CredentialResponseType::Credential(vc_kind) => {
+                // Single credential in response.
+                let Payload::Vc { vc, issued_at } =
+                    vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), provider.clone())
+                        .await
+                        .expect("should parse credential")
+                else {
+                    panic!("expected Payload::Vc");
+                };
+                state
+                    .add_credential(&vc, &vc_kind, &issued_at, &cfg_id)
+                    .expect("should add credential");
+            }
+            CredentialResponseType::Credentials(creds) => {
+                // Multiple credentials in response.
+                for vc_kind in creds {
+                    let Payload::Vc { vc, issued_at } =
+                        vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), provider.clone())
+                            .await
+                            .expect("should parse credential")
+                    else {
+                        panic!("expected Payload::Vc");
+                    };
+                    state
+                        .add_credential(&vc, &vc_kind, &issued_at, &cfg_id)
+                        .expect("should add credential");
+                }
+            }
+            CredentialResponseType::TransactionId(tx_id) => {
+                // Deferred transaction ID (assumes we get a new one)
+                state.add_deferred(&tx_id, &cfg_id);
+            }
+        }
+        state.remove_deferred(&tx_id);
+    }
+
+    // Check the deferred transaction has been "used" and the credentials saved.
+    assert_eq!(state.deferred.len(), 0);
+    assert_eq!(state.credentials.len(), 1);
 
     // The flow is complete and the credential on the issuance state could now
     // be saved to the wallet using the `CredentialStorer` provider trait. For
