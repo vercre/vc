@@ -18,7 +18,9 @@ use crate::provider as holder;
 #[tokio::test]
 async fn preauth_2() {
     // Use the issuance service endpoint to create a sample offer that we can
-    // use to start the flow. Include PIN.
+    // use to start the flow. This is test set-up only - wallets do not ask an
+    // issuer for an offer. Usually this code is internal to an issuer service.
+    // We include the requirement for a PIN.
     let request = create_offer_request!({
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
@@ -76,6 +78,7 @@ async fn preauth_2() {
     // Present the offer to the holder for them to choose what to accept.
     //--------------------------------------------------------------------------
     insta::assert_yaml_snapshot!("offered", offered, {
+        "." => insta::sorted_redaction(),
         ".**.credentialSubject" => insta::sorted_redaction(),
         ".**.credentialSubject.address" => insta::sorted_redaction(),
     });

@@ -10,7 +10,7 @@
 //! The endpoint is also used in the case where the issuer initiates the flow
 //! but in the offer, inidicates to the holder that authorization is required.
 
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
@@ -370,4 +370,25 @@ fn authorization_details(
         });
     }
     Ok(auth_details)
+}
+
+impl IssuanceState {
+    /// Construct an authorization request from the current state.
+    /// 
+    /// # Errors
+    /// Will return an error if the current state is inconsistent with making an
+    /// authorization request.
+    pub fn authorization_request(&self) -> anyhow::Result<AuthorizationRequest> {
+        match self.flow_type {
+            FlowType::IssuerPreAuthorized => {
+                bail!("cannot construct an authorization request for an issuer-initiated")
+            }
+            FlowType::IssuerAuthorized => {
+                unimplemented!("authorization request for issuer-authorized issuance");
+            }
+            FlowType::HolderInitiated { .. } => {
+                unimplemented!("authorization request for holder-initiated issuance");
+            }
+        }
+    }
 }

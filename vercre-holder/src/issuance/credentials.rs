@@ -547,11 +547,6 @@ impl IssuanceState {
         Ok(requests)
     }
 
-    /// Add a deferred transaction ID to the issuance state.
-    pub fn add_deferred(&mut self, tx_id: &String, cfg_id: &String) {
-        self.deferred.insert(tx_id.into(), cfg_id.into());
-    }
-
     /// Add a credential to the issuance state, converting the W3C format to a
     /// convenient wallet format.
     ///
