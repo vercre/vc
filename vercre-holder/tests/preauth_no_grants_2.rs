@@ -3,7 +3,7 @@
 //! in the offer.
 mod provider;
 
-use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, REDIRECT_URI};
 use vercre_holder::issuance::{FlowType, IssuanceState};
 use vercre_holder::provider::{Issuer, MetadataRequest, OAuthServerRequest};
 use vercre_issuer::{OfferType, SendType};
@@ -39,7 +39,8 @@ async fn preauth_no_grants_2() {
     //--------------------------------------------------------------------------
     // Initiate flow state. If no grants are provided in the offer, we need
     // to initialize the flow with `FlowType::IssuerAuthorized`. We use a
-    // pre-authorized flow type then test that the flow will fail.
+    // pre-authorized flow type deliberately here to test that the flow will
+    // fail.
     //--------------------------------------------------------------------------
     let mut state = IssuanceState::new(FlowType::IssuerPreAuthorized, CLIENT_ID, NORMAL_USER);
 
@@ -97,5 +98,27 @@ async fn preauth_no_grants_2() {
     // Construct an authorization request should fail since we have set the wrong
     // flow type.
     //--------------------------------------------------------------------------
-    // state.authorization_request().expect_err("should fail to construct an authorization request");
+    state
+        .authorization_request(Some(REDIRECT_URI))
+        .expect_err("should fail to construct an authorization request");
+
+    //--------------------------------------------------------------------------
+    // Let's just hack the flow type and make sure we get an authorization
+    // request. For a real implementation do this on `IssuanceState::new`
+    // instead (see above).
+    //--------------------------------------------------------------------------
+    state.flow_type = FlowType::IssuerAuthorized;
+    let auth_request = state
+        .authorization_request(Some(REDIRECT_URI))
+        .expect("should construct an authorization request");
+    insta::assert_yaml_snapshot!("auth_request", auth_request, {
+        ".**.credentialSubject" => insta::sorted_redaction(),
+        ".**.credentialSubject.address" => insta::sorted_redaction(),
+        ".code_challenge" => "[code_challenge]",
+        ".state" => "[state]",
+        ".user_hint" => "[user_hint]",
+    });
+
+    // etc... The rest of the flow is tested in `issuer_auth` and
+    // `holder_auth` tests so no need to repeat here.
 }
