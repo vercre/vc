@@ -23,7 +23,6 @@ use vercre_w3c_vc::proof::{Payload, Verify};
 
 use super::{CredentialRequestType, IssuanceState, Status};
 use crate::credential::Credential;
-use crate::issuance::FlowType;
 use crate::provider::{HolderProvider, Issuer, StateStore};
 
 /// `CredentialsRequest` provides the issuance flow ID and an optional set of
@@ -112,11 +111,8 @@ pub async fn credentials(
 
     // If the flow is scope-based then we can't examine authorization details
     // but proceed instead to request credentials by format.
-    let scope = match issuance.flow_type.clone() {
-        FlowType::HolderInitiated { scope, .. } => scope,
-        _ => None,
-    };
-    if scope.is_some() {
+    if issuance.scope.is_some() {
+        let scope = issuance.scope.clone();
         credential_by_format(provider.clone(), &mut issuance, scope.as_deref(), request, &jwt)
             .await
             .map_err(|e| {
@@ -143,11 +139,8 @@ pub async fn credentials(
         return Err(e);
     };
 
-    let deferred = if issuance.deferred.is_empty() {
-        None
-    } else {
-        Some(issuance.deferred.clone())
-    };
+    let deferred =
+        if issuance.deferred.is_empty() { None } else { Some(issuance.deferred.clone()) };
 
     Ok(CredentialsResponse {
         issuance_id: issuance.id,
@@ -449,17 +442,11 @@ impl IssuanceState {
         // Shell out to a scope or identifier based request builder.
         match request_type {
             CredentialRequestType::Format(format) => {
-                let Some(scope) = (match self.flow_type.clone() {
-                    FlowType::HolderInitiated { scope, .. } => scope,
-                    _ => {
-                        bail!("can only make format-based requests for holder-initiated, scope-based issuance");
-                    }
-                }) else {
-                    bail!("issuance is holder-initiated but has no scope");
+                let Some(scope) = self.scope.clone() else {
+                    bail!("can only make format-based requests for holder-initiated, scope-based issuance");
                 };
-
                 Self::credential_requests_by_format(&format, &scope, issuer, token_response, jwt)
-            }
+            },
             CredentialRequestType::CredentialIdentifiers(identifiers) => {
                 Self::credential_requests_by_identifier(&identifiers, issuer, token_response, jwt)
             }

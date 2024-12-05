@@ -129,49 +129,84 @@ impl IssuanceState {
     #[allow(clippy::cognitive_complexity)]
     pub fn accept(&mut self, accept: &Option<Vec<AuthorizationSpec>>) -> anyhow::Result<()> {
         if self.status != Status::Offered {
-            let e = anyhow!("invalid issuance state");
-            tracing::error!(target: "IssuanceState::accept", ?e);
-            return Err(e);
+            bail!("invalid issuance state status");
         }
         let Some(offer) = &self.offer else {
-            let e = anyhow!("no offer found to accept");
-            tracing::error!(target: "IssuanceState::accept", ?e);
-            return Err(e);
+            bail!("no offer found to accept");
         };
         if let Some(accepted) = &accept {
             if accepted.is_empty() {
-                let e = anyhow!("if accept is provided it cannot be empty");
-                tracing::error!(target: "IssuanceState::accept", ?e);
-                return Err(e);
+                bail!("if accept is provided it cannot be empty. To accept all credentials, send `None`.");
             }
         };
-        let Some(issuer) = &self.issuer else {
-            let e = anyhow!("issuer metadata not set");
-            tracing::error!(target: "IssuanceState::accept", ?e);
-            return Err(e);
-        };
 
-        self.accepted =
-            narrow_scope(&issuer.credential_configurations_supported, accept.as_ref())
-            .map_err(|e| {
-                tracing::error!(target: "IssuanceState::accept", ?e);
-                e
-            })?;
+        self.accepted = self.accept_all(accept.as_ref())?;
 
         self.status = Status::Accepted;
 
         if let Some(grants) = &offer.grants {
             if let Some(pre_auth_code) = &grants.pre_authorized_code {
                 if pre_auth_code.tx_code.is_some() {
-                   self.status = Status::PendingPin;
+                    self.status = Status::PendingPin;
                 }
             }
         }
 
         Ok(())
     }
+
+    /// Accept all credentials offered.
+    fn accept_all(
+        &self, accept: Option<&Vec<AuthorizationSpec>>,
+    ) -> anyhow::Result<Option<Vec<AuthorizationDetail>>> {
+        let Some(issuer) = &self.issuer else {
+            bail!("no issuer metadata on state");
+        };
+        let creds_supported = &issuer.credential_configurations_supported;
+        let Some(offer) = &self.offer else {
+            bail!("no offer found to accept");
+        };
+        let mut auth_details = Vec::new();
+        for cfg_id in &offer.credential_configuration_ids {
+            let Some(cred_config) = creds_supported.get(cfg_id) else {
+                bail!("offer on state has credential configuration not found in metadata");
+            };
+            if let Some(accept) = &accept {
+                if !accept
+                    .iter()
+                    .any(|a| a.credential_configuration_id == *cfg_id)
+                {
+                    continue;
+                }
+            }
+            let claims: Option<ProfileClaims> =
+                cred_config.format.claims().map(|claims| match &cred_config.format {
+                    Format::JwtVcJson(w3c) | Format::LdpVc(w3c) | Format::JwtVcJsonLd(w3c) => {
+                        ProfileClaims::W3c(CredentialDefinition {
+                            credential_subject: w3c
+                                .credential_definition
+                                .credential_subject
+                                .clone(),
+                            ..Default::default()
+                        })
+                    }
+                    Format::IsoMdl(_) | Format::VcSdJwt(_) => ProfileClaims::Claims(claims),
+                });
+            // TODO: Support CredentialAuthorization::Format
+            let detail = AuthorizationDetail {
+                credential: CredentialAuthorization::ConfigurationId {
+                    credential_configuration_id: cfg_id.clone(),
+                    claims,
+                },
+                ..Default::default()
+            };
+            auth_details.push(detail);
+        }
+        Ok(Some(auth_details))
+    }
 }
 
+// TODO: Remove
 fn narrow_scope(
     offered: &HashMap<String, CredentialConfiguration>, accept: Option<&Vec<AuthorizationSpec>>,
 ) -> anyhow::Result<Option<Vec<AuthorizationDetail>>> {

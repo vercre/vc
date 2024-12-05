@@ -29,7 +29,8 @@ use serde::{Deserialize, Serialize};
 pub use token::{token, AuthorizedCredentials};
 use uuid::Uuid;
 use vercre_issuer::{
-    AuthorizationDetail, CredentialOffer, Format, MetadataRequest, OAuthServerRequest, TokenResponse
+    AuthorizationDetail, CredentialOffer, Format, MetadataRequest, OAuthServerRequest,
+    TokenResponse,
 };
 use vercre_openid::issuer::{Issuer, Server};
 
@@ -49,20 +50,11 @@ pub enum FlowType {
     /// Initiated by the issuer but requires the holder to be authorized.
     IssuerAuthorized,
 
-    /// Initiated by the holder.
-    HolderInitiated {
-        /// Identifier (URL) of the credential issuer.
-        issuer: String,
+    /// Initiated by the holder with authorization details
+    HolderAuthDetail,
 
-        /// Credential Issuers MAY support requesting authorization to issue a
-        /// credential using OAuth 2.0 scope values.
-        /// A scope value and its mapping to a credential type is defined by the
-        /// Issuer. A description of scope value semantics or machine readable
-        /// definitions could be defined in Issuer metadata. For example,
-        /// mapping a scope value to an authorization details object.
-        #[serde(skip_serializing_if = "Option::is_none")]
-        scope: Option<String>,
-    },
+    /// Initiated by the holder with a scope.
+    HolderScope,
 }
 
 /// Type of credential request that can be made.
@@ -116,9 +108,18 @@ pub struct IssuanceState {
 
     /// The list of credentials and claims the wallet wants to obtain from those
     /// offered.
-    ///
-    /// None implies the wallet wants all claims.
+    /// 
+    /// Must be set for holder-initiated flows that don't use scope prior to
+    /// making an authorization request.
     pub accepted: Option<Vec<AuthorizationDetail>>,
+
+    /// Credential Issuers MAY support requesting authorization to issue a
+    /// credential using OAuth 2.0 scope values.
+    /// A scope value and its mapping to a credential type is defined by the
+    /// Issuer. A description of scope value semantics or machine readable
+    /// definitions could be defined in Issuer metadata. For example,
+    /// mapping a scope value to an authorization details object.
+    pub scope: Option<String>,
 
     /// The user's pin, as set from the shell.
     pub pin: Option<String>,
