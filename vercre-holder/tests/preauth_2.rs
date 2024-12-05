@@ -99,9 +99,9 @@ async fn preauth_2() {
     //--------------------------------------------------------------------------
     // Request an access token from the issuer.
     //--------------------------------------------------------------------------
-    let token_request = state.token_request().expect("should get token request");
+    let token_request = state.token_request(None, None).expect("should get token request");
     let token_response = provider.token(token_request).await.expect("should get token response");
-    state.token(&token_response).expect("should get token");
+    state.token(&token_response).expect("should stash token");
 
     //--------------------------------------------------------------------------
     // Make credential requests.

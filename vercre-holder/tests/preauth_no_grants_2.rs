@@ -92,7 +92,7 @@ async fn preauth_no_grants_2() {
     // Constructing a token request should fail as no grants were provided in
     // the offer.
     //--------------------------------------------------------------------------
-    state.token_request().expect_err("should fail to construct a token request");
+    state.token_request(None, None).expect_err("should fail to construct a token request");
 
     //--------------------------------------------------------------------------
     // Construct an authorization request should fail since we have set the wrong

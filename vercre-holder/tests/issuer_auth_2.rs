@@ -1,14 +1,11 @@
-//! Tests for issuer-initiated pre-authorized issuance flow where the holder
-//! decides to only accept a subset of the credentials on offer and a subset of
-//! claims within the credential.
+//! End to end tests for issuer-initiated issuance flow that requires
+//! authorization.
 mod provider;
 
-use std::collections::HashMap;
-
-use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-use vercre_holder::issuance::{AuthorizationSpec, CredentialRequestType, FlowType, IssuanceState};
+use insta::assert_yaml_snapshot;
+use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, REDIRECT_URI};
+use vercre_holder::issuance::{CredentialRequestType, FlowType, IssuanceState};
 use vercre_holder::provider::{Issuer, MetadataRequest, OAuthServerRequest};
-use vercre_holder::Claim;
 use vercre_infosec::jose::{jws, Type};
 use vercre_issuer::{CredentialResponseType, OfferType, SendType};
 use vercre_macros::create_offer_request;
@@ -16,20 +13,19 @@ use vercre_w3c_vc::proof::{Payload, Verify};
 
 use crate::provider as holder;
 
-// Test end-to-end pre-authorized issuance flow (issuer-initiated), with
-// acceptance of a subset of credentials on offer and a subset of claims within
-// a credential.
+// Test end-to-end issuer-initiated flow that requires authorization.
 #[tokio::test]
-async fn preauth_narrow_2() {
+async fn issuer_auth_2() {
     // Use the issuance service endpoint to create a sample offer that we can
     // use to start the flow. This is test set-up only - wallets do not ask an
     // issuer for an offer. Usually this code is internal to an issuer service.
+    // We include the requirement for a PIN.
     let request = create_offer_request!({
         "credential_issuer": CREDENTIAL_ISSUER,
-        "credential_configuration_ids": ["EmployeeID_JWT", "Developer_JWT"],
+        "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": NORMAL_USER,
-        "grant_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
-        "tx_code_required": false, // We will forgo the use of a PIN for this test.
+        "grant_types": ["authorization_code"],
+        "tx_code_required": false, // Leave out PIN for this test
         "send_type": SendType::ByVal,
     });
 
@@ -44,9 +40,13 @@ async fn preauth_narrow_2() {
     let provider = holder::Provider::new(Some(issuer_provider), None);
 
     //--------------------------------------------------------------------------
-    // Initiate flow state.
+    // Initiate flow state. A wallet should check the offer grants and use the
+    // appropriate flow type.
     //--------------------------------------------------------------------------
-    let mut state = IssuanceState::new(FlowType::IssuerPreAuthorized, CLIENT_ID, NORMAL_USER);
+
+    let grants = offer.grants.clone().unwrap();
+    grants.authorization_code.unwrap();
+    let mut state = IssuanceState::new(FlowType::IssuerAuthorized, CLIENT_ID, NORMAL_USER);
 
     //--------------------------------------------------------------------------
     // Add issuer metadata to flow state.
@@ -86,32 +86,35 @@ async fn preauth_narrow_2() {
         ".**.credentialSubject.address" => insta::sorted_redaction(),
     });
 
-    // Accept only the Developer credential on offer and only the proficiency
-    // claim.
-    let accept_spec = Some(vec![AuthorizationSpec {
-        credential_configuration_id: "Developer_JWT".into(),
-        claims: Some(HashMap::from([("proficiency".to_string(), Claim::default())])),
-    }]);
-    state.accept(&accept_spec).expect("should accept offer");
+    // Accept all credentials and all claims on offer.
+    state.accept(&None).expect("should accept offer");
 
     //--------------------------------------------------------------------------
-    // No PIN required for this test. (See the offer creation above.)
+    // Get an authorization code. The redirect URI must match one registered
+    // with the issuer on client registration.
     //--------------------------------------------------------------------------
+    let auth_request =
+        state.authorization_request(Some(REDIRECT_URI)).expect("should get auth request");
+    // We should have code challenge and verifier populated on state
+    assert!(state.code_challenge.is_some());
+    assert!(state.code_verifier.is_some());
+
+    let auth_response = provider.authorization(auth_request).await.expect("should authorize");
 
     //--------------------------------------------------------------------------
-    // Request an access token from the issuer.
+    // Exchange the authorization code for a token.
     //--------------------------------------------------------------------------
-    let token_request = state.token_request(None, None).expect("should get token request");
+    let token_request = state
+        .token_request(Some(REDIRECT_URI), Some(&auth_response.code))
+        .expect("should get token request");
     let token_response = provider.token(token_request).await.expect("should get token response");
-    state.token(&token_response).expect("should get token");
+    state.token(&token_response).expect("should stash token");
 
     //--------------------------------------------------------------------------
     // Make credential requests.
     //--------------------------------------------------------------------------
-    // For this test we are going to accept all credentials we have a token for
-    // and as specified in the `accept` step above. (There is just one
-    // credential to be retrieved in this case but we use a loop to demonstate
-    // the pattern for multiple credentials.) We
+    // For this test we are going to accept all credentials on offer. (Just one
+    // in this case but we demonstate the pattern for multiple credentials.) We
     // are making the request by credential identifier.
     let Some(authorized) = &token_response.authorization_details else {
         panic!("no authorization details in token response");
@@ -174,7 +177,7 @@ async fn preauth_narrow_2() {
     // The flow is complete and the credential on the issuance state could now
     // be saved to the wallet using the `CredentialStorer` provider trait. For
     // the test we check snapshot of the state's credentials.
-    insta::assert_yaml_snapshot!("credentials", state.credentials, {
+    assert_yaml_snapshot!("credentials", state.credentials, {
         "[].type" => insta::sorted_redaction(),
         "[].subject_claims[]" => insta::sorted_redaction(),
         "[].subject_claims[].claims" => insta::sorted_redaction(),
