@@ -1,5 +1,6 @@
 //! End to end tests for issuer-initiated issuance flow that requires
-//! authorization.
+//! authorization but where no grant types are specified on the offer and need
+//! to be gained from OAuth server metadata.
 mod provider;
 
 use insta::assert_yaml_snapshot;
@@ -13,9 +14,11 @@ use vercre_w3c_vc::proof::{Payload, Verify};
 
 use crate::provider as holder;
 
-// Test end-to-end issuer-initiated flow that requires authorization.
+// Test end-to-end issuer-initiated flow that requires authorization but where
+// the grant types are not specified on the offer.
 #[tokio::test]
-async fn issuer_auth_2() {
+async fn issuer_auth_no_grants_2() {
+
     // Use the issuance service endpoint to create a sample offer that we can
     // use to start the flow. This is test set-up only - wallets do not ask an
     // issuer for an offer. Usually this code is internal to an issuer service.
@@ -23,8 +26,6 @@ async fn issuer_auth_2() {
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": NORMAL_USER,
-        "grant_types": ["authorization_code"],
-        "tx_code_required": false, // Leave out PIN for this test
         "send_type": SendType::ByVal,
     });
 
@@ -40,11 +41,11 @@ async fn issuer_auth_2() {
 
     //--------------------------------------------------------------------------
     // Initiate flow state. A wallet should check the offer grants and use the
-    // appropriate flow type.
+    // appropriate flow type. In this case, the offer has no grants so we need
+    // to authorize.
     //--------------------------------------------------------------------------
 
-    let grants = offer.grants.clone().unwrap();
-    grants.authorization_code.unwrap();
+    assert!(offer.grants.is_none());
     let mut state = IssuanceState::new(FlowType::IssuerAuthorized, CLIENT_ID, NORMAL_USER);
 
     //--------------------------------------------------------------------------
