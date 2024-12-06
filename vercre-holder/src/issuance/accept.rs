@@ -220,6 +220,19 @@ impl IssuanceState {
         self.status = Status::Accepted;
         Ok(())
     }
+
+    /// Set the scope directly on the issuance state.
+    /// 
+    /// # Errors
+    /// Will return an error if the flow type is not holder-initiated by scope.
+    pub fn scope_direct(&mut self, scope: &str) -> anyhow::Result<()> {
+        if !matches!(self.flow_type, FlowType::HolderScope) {
+            bail!("scope can only be set for holder-initiated issuance by scope");
+        }
+        self.scope = Some(scope.to_string());
+        self.status = Status::Accepted;
+        Ok(())
+    }
 }
 
 // TODO: Remove
