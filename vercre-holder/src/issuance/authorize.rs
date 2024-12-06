@@ -307,6 +307,7 @@ fn authorization_request(
 }
 
 /// Construct a token request.
+// TODO: remove
 fn token_request(
     issuance: &IssuanceState, auth_request: &AuthorizeRequest,
     auth_response: &AuthorizationResponse,
@@ -379,6 +380,9 @@ impl IssuanceState {
     pub fn authorization_request(
         &mut self, redirect_uri: Option<&str>,
     ) -> anyhow::Result<AuthorizationRequest> {
+        if self.status != Status::Accepted {
+            bail!("holder has not accepted an offer or set acceptable credentials from metadata so cannot authorize");
+        }
         // Check issuer's authorization server metadata supports the
         // authorization code grant.
         let Some(issuer) = &self.issuer else {
@@ -407,9 +411,6 @@ impl IssuanceState {
                 bail!("cannot construct an authorization request for an issuer-initiated flow that is pre-authorized");
             }
             FlowType::IssuerAuthorized => {
-                if self.status != Status::Accepted {
-                    bail!("holder has not accepted an offer so cannot authorize");
-                }
                 let Some(offer) = &self.offer else {
                     bail!("no offer on issuance state");
                 };

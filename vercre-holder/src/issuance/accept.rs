@@ -21,7 +21,7 @@ use vercre_issuer::{
     CredentialDefinition, Format, ProfileClaims,
 };
 
-use super::{IssuanceState, Status};
+use super::{FlowType, IssuanceState, Status};
 use crate::provider::{HolderProvider, StateStore};
 
 /// A configuration ID and a list of claims that can be used by the holder to
@@ -140,7 +140,7 @@ impl IssuanceState {
             }
         };
 
-        self.accepted = self.accept_all(accept.as_ref())?;
+        self.accepted = self.accept_filter(accept.as_ref())?;
 
         self.status = Status::Accepted;
 
@@ -155,8 +155,9 @@ impl IssuanceState {
         Ok(())
     }
 
-    /// Accept all credentials offered.
-    fn accept_all(
+    /// Accept specified credentials. Pass `None` to accept all credentials on
+    /// offer.
+    fn accept_filter(
         &self, accept: Option<&Vec<AuthorizationSpec>>,
     ) -> anyhow::Result<Option<Vec<AuthorizationDetail>>> {
         let Some(issuer) = &self.issuer else {
@@ -203,6 +204,21 @@ impl IssuanceState {
             auth_details.push(detail);
         }
         Ok(Some(auth_details))
+    }
+
+    /// Set the accepted credentials by specification directly. Used for holder-
+    /// initiated flows where there is no check against an offer from an issuer.
+    /// 
+    /// # Errors
+    /// Will return an error if the flow is not holder-initiated by
+    /// authorization detail.
+    pub fn accept_direct(&mut self, accepted: Vec<AuthorizationDetail>) -> anyhow::Result<()> {
+        if !matches!(self.flow_type, FlowType::HolderAuthDetail) {
+            bail!("accept_direct is only for holder-initiated flows by authorization detail");
+        }
+        self.accepted = Some(accepted);
+        self.status = Status::Accepted;
+        Ok(())
     }
 }
 
