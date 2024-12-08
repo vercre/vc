@@ -22,7 +22,6 @@ pub use authorize::{authorize, AuthorizeRequest, Initiator};
 pub use cancel::{cancel, CancelRequest};
 pub use credentials::{credentials, CredentialsRequest, CredentialsResponse};
 pub use deferred::{deferred, DeferredRequest};
-pub use offer::{offer, OfferRequest, OfferResponse};
 pub use pin::{pin, PinRequest};
 pub use save::{save, SaveRequest};
 use serde::{Deserialize, Serialize};

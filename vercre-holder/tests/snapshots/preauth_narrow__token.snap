@@ -1,9 +1,0 @@
----
-source: vercre-holder/tests/preauth_narrow.rs
-assertion_line: 79
-expression: token_response
----
-issuance_id: "[issuance_id]"
-authorized:
-  Developer_JWT:
-    - PHLDeveloper

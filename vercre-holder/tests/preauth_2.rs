@@ -49,7 +49,7 @@ async fn preauth_2() {
     // Add issuer metadata to flow state.
     //--------------------------------------------------------------------------
     let metadata_request = MetadataRequest {
-        credential_issuer: CREDENTIAL_ISSUER.into(),
+        credential_issuer: offer.credential_issuer.clone(),
         languages: None,
     };
     let issuer_metadata =
@@ -60,7 +60,7 @@ async fn preauth_2() {
     // Add authorization server metadata.
     //--------------------------------------------------------------------------
     let auth_request = OAuthServerRequest {
-        credential_issuer: CREDENTIAL_ISSUER.into(),
+        credential_issuer: offer.credential_issuer.clone(),
         issuer: None,
     };
     let auth_metadata =

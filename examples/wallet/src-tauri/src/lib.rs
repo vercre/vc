@@ -26,7 +26,7 @@ struct StateModel {
 }
 
 /// Unique identifier for this wallet application as a client of the issuance
-/// service. In a real application, this may be provided by registering the
+/// service. In a real application, this must be provided by registering the
 /// client with the issuer.
 pub const CLIENT_ID: &str = "wallet";
 

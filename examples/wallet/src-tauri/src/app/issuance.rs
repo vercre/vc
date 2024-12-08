@@ -1,64 +1,53 @@
 //! Application state implementation for issuance operations.
 
-use std::collections::HashMap;
-
-use serde::{Deserialize, Serialize};
-use vercre_holder::issuance::{AcceptRequest, CredentialsRequest, OfferRequest, PinRequest};
-use vercre_holder::{CredentialConfiguration, CredentialOffer, TxCode};
+use anyhow::bail;
+use test_utils::issuer::NORMAL_USER;
+use vercre_holder::issuance::{AcceptRequest, CredentialsRequest, FlowType, IssuanceState, PinRequest};
+use vercre_holder::provider::Issuer;
+use vercre_holder::{CredentialOffer, MetadataRequest, OAuthServerRequest};
 
 use super::{AppState, SubApp};
 use crate::provider::Provider;
 use crate::CLIENT_ID;
-
-/// Application state for the issuance sub-app.
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-#[allow(clippy::module_name_repetitions)]
-pub struct IssuanceState {
-    /// Issuance flow identifier to pass to the vercre-holder crate for state
-    /// management.
-    pub id: String,
-    /// Issuer of the credential(s)
-    pub issuer: String,
-    /// Description of the credential(s) offered, keyed by credential
-    /// configuration ID.
-    pub offered: HashMap<String, CredentialConfiguration>,
-    /// Description of the type of PIN needed to accept the offer.
-    pub tx_code: Option<TxCode>,
-    /// PIN set by the holder.
-    pub pin: Option<String>,
-}
 
 impl AppState {
     /// Process a credential issuance offer.
     pub async fn offer(&mut self, encoded_offer: &str, provider: Provider) -> anyhow::Result<()> {
         let offer_str = urlencoding::decode(encoded_offer)?;
         let offer = serde_json::from_str::<CredentialOffer>(&offer_str)?;
-        let request = OfferRequest {
-            client_id: CLIENT_ID.into(),
-            subject_id: test_utils::issuer::NORMAL_USER.into(),
-            offer,
-        };
-        let res = vercre_holder::issuance::offer(provider, &request).await?;
 
-        // This example can only process an issuer-initiated, pre-authorized issuance
-        // flow.
-        let tx_code = if let Some(grants) = res.grants {
-            if let Some(pre_auth_code) = grants.pre_authorized_code {
-                pre_auth_code.tx_code
-            } else {
-                None
-            }
-        } else {
-            None
+        // Check the offer has a pre-authorized grant. This is the only flow
+        // type supported by this example.
+        let Some(grants) = &offer.grants else {
+            bail!("no grants in offer is not supported");
         };
+        if grants.pre_authorized_code.is_none() {
+            bail!("grant other than pre-authorized code is not supported");
+        }
 
-        self.issuance = IssuanceState {
-            id: res.issuance_id,
-            issuer: res.issuer,
-            offered: res.offered,
-            tx_code,
-            pin: None,
+        // Initiate flow state.
+        let mut state = IssuanceState::new(FlowType::IssuerPreAuthorized, CLIENT_ID, NORMAL_USER);
+
+        // Add issuer metadata to flow state.
+        let metadata_request = MetadataRequest {
+            credential_issuer: offer.credential_issuer.clone(),
+            languages: None,
         };
+        let issuer_metadata = provider.metadata(metadata_request).await?;
+        state.issuer(issuer_metadata.credential_issuer)?;
+
+        // Add authorization server metadata to flow state.
+        let auth_request = OAuthServerRequest {
+            credential_issuer: offer.credential_issuer.clone(),
+            issuer: None,
+        };
+        let auth_metadata = provider.oauth_server(auth_request).await?;
+        state.authorization_server(auth_metadata.authorization_server)?;
+
+        // Unpack the offer into the flow state.
+        state.offer(&offer)?;
+    
+        self.issuance = state;
         self.sub_app = SubApp::Issuance;
         Ok(())
     }

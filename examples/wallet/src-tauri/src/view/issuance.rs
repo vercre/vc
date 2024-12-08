@@ -4,9 +4,9 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
+use vercre_holder::issuance::IssuanceState;
 use vercre_holder::TxCode;
 
-use crate::app::IssuanceState;
 use crate::view::credential::CredentialDisplay;
 
 /// Issuance flow viewable state
@@ -26,12 +26,20 @@ pub struct IssuanceView {
 impl From<IssuanceState> for IssuanceView {
     fn from(state: IssuanceState) -> Self {
         let mut creds: HashMap<String, CredentialDisplay> = HashMap::new();
-        for (id, offered) in &state.offered {
+        let on_offer = state.offered().unwrap_or_default();
+        let issuer = state.issuer.clone().unwrap_or_default();
+        for (id, offered) in &on_offer {
             let mut cred: CredentialDisplay = offered.into();
-            cred.issuer = Some(state.issuer.clone());
+            cred.issuer = Some(issuer.credential_issuer.clone());
             creds.insert(id.clone(), cred);
         }
-        let schema = state.tx_code.clone().map(Into::into);
+        let schema = state.offer.as_ref().and_then(|offer| {
+            offer.grants.as_ref().and_then(|grants| {
+                grants.pre_authorized_code.as_ref().and_then(|pre_auth| {
+                    pre_auth.tx_code.as_ref().map(|tx_code| tx_code.clone().into())
+                })
+            })
+        });
         Self {
             credentials: creds,
             pin: state.pin,
