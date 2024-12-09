@@ -6602,6 +6602,8 @@ dependencies = [
  "typeshare",
  "urlencoding",
  "vercre-holder",
+ "vercre-infosec",
+ "vercre-w3c-vc",
 ]
 
 [[package]]

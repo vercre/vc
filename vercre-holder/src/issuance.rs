@@ -19,10 +19,8 @@ use std::fmt::Debug;
 pub use accept::AuthorizationSpec;
 use anyhow::bail;
 pub use cancel::{cancel, CancelRequest};
-pub use credentials::{credentials, CredentialsRequest, CredentialsResponse};
 pub use save::{save, SaveRequest};
 use serde::{Deserialize, Serialize};
-pub use token::{token, AuthorizedCredentials};
 use uuid::Uuid;
 use vercre_issuer::{
     AuthorizationDetail, CredentialOffer, Format, MetadataRequest, OAuthServerRequest,

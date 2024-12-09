@@ -2,9 +2,11 @@
 
 use anyhow::bail;
 use test_utils::issuer::NORMAL_USER;
-use vercre_holder::issuance::{CredentialsRequest, FlowType, IssuanceState};
+use vercre_holder::issuance::{CredentialRequestType, FlowType, IssuanceState};
 use vercre_holder::provider::Issuer;
-use vercre_holder::{CredentialOffer, MetadataRequest, OAuthServerRequest};
+use vercre_holder::{CredentialOffer, CredentialResponseType, MetadataRequest, OAuthServerRequest};
+use vercre_infosec::jose::{jws, Type};
+use vercre_w3c_vc::proof::{Payload, Verify};
 
 use super::{AppState, SubApp};
 use crate::provider::Provider;
@@ -46,7 +48,7 @@ impl AppState {
 
         // Unpack the offer into the flow state.
         state.offer(&offer)?;
-    
+
         self.issuance = state;
         self.sub_app = SubApp::Issuance;
         Ok(())
@@ -65,17 +67,61 @@ impl AppState {
     }
 
     /// Get the credentials for the accepted issuance offer.
-    pub async fn credentials(&self, provider: Provider) -> anyhow::Result<()> {
+    pub async fn credentials(&mut self, provider: Provider) -> anyhow::Result<()> {
         log::info!("Getting an access token for issuance {}", self.issuance.id);
-        vercre_holder::issuance::token(provider.clone(), &self.issuance.id).await?;
+        let token_request = self.issuance.token_request(None, None)?;
+        let token_response = provider.token(token_request).await?;
+        self.issuance.token(&token_response)?;
 
         log::info!("Getting credentials for issuance {}", self.issuance.id);
-        let request = CredentialsRequest {
-            issuance_id: self.issuance.id.clone(),
-            credential_identifiers: None,
-            format: None,
+        // In a real app, there may be multiple credentials to receive. We just
+        // take the first one in this example.
+        let Some(authorized) = &token_response.authorization_details else {
+            bail!("no authorized credentials in token response");
         };
-        vercre_holder::issuance::credentials(provider, &request).await?;
+        let identifier = authorized[0].credential_identifiers[0].clone();
+        let jws_claims = self.issuance.proof()?;
+        let jwt = jws::encode(Type::Openid4VciProofJwt, &jws_claims, &provider).await?;
+        let requests = self.issuance.credential_requests(
+            CredentialRequestType::CredentialIdentifiers(vec![identifier]),
+            &jwt,
+        )?;
+        let request = requests[0].clone();
+        let credential_response = provider.credential(request.1).await?;
+        match credential_response.response {
+            CredentialResponseType::Credential(vc_kind) => {
+                // Single credential in response.
+                let Payload::Vc { vc, issued_at } =
+                    vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), provider.clone())
+                        .await
+                        .expect("should parse credential")
+                else {
+                    panic!("expected Payload::Vc");
+                };
+                self.issuance
+                    .add_credential(&vc, &vc_kind, &issued_at, &request.0)
+                    .expect("should add credential");
+            }
+            CredentialResponseType::Credentials(creds) => {
+                // Multiple credentials in response.
+                for vc_kind in creds {
+                    let Payload::Vc { vc, issued_at } =
+                        vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), provider.clone())
+                            .await
+                            .expect("should parse credential")
+                    else {
+                        panic!("expected Payload::Vc");
+                    };
+                    self.issuance
+                        .add_credential(&vc, &vc_kind, &issued_at, &request.0)
+                        .expect("should add credential");
+                }
+            }
+            CredentialResponseType::TransactionId(tx_id) => {
+                // Deferred transaction ID.
+                self.issuance.add_deferred(&tx_id, &request.0);
+            }
+        }
         Ok(())
     }
 
