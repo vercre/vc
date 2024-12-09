@@ -2,7 +2,7 @@
 
 use anyhow::bail;
 use test_utils::issuer::NORMAL_USER;
-use vercre_holder::issuance::{CredentialsRequest, FlowType, IssuanceState, PinRequest};
+use vercre_holder::issuance::{CredentialsRequest, FlowType, IssuanceState};
 use vercre_holder::provider::Issuer;
 use vercre_holder::{CredentialOffer, MetadataRequest, OAuthServerRequest};
 
@@ -60,14 +60,8 @@ impl AppState {
     }
 
     /// Set a PIN
-    pub async fn pin(&mut self, provider: Provider, pin: &str) -> anyhow::Result<()> {
-        let request = PinRequest {
-            issuance_id: self.issuance.id.clone(),
-            pin: pin.into(),
-        };
-        vercre_holder::issuance::pin(provider, &request).await?;
-        self.issuance.pin = Some(pin.into());
-        Ok(())
+    pub fn pin(&mut self, pin: &str) -> anyhow::Result<()> {
+        self.issuance.pin(pin)
     }
 
     /// Get the credentials for the accepted issuance offer.
