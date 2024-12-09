@@ -20,7 +20,6 @@ pub use accept::AuthorizationSpec;
 use anyhow::bail;
 pub use cancel::{cancel, CancelRequest};
 pub use credentials::{credentials, CredentialsRequest, CredentialsResponse};
-pub use deferred::{deferred, DeferredRequest};
 pub use save::{save, SaveRequest};
 use serde::{Deserialize, Serialize};
 pub use token::{token, AuthorizedCredentials};
