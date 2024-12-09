@@ -5,12 +5,10 @@
 
 pub(crate) mod accept;
 pub(crate) mod authorize;
-pub(crate) mod cancel;
 pub(crate) mod credentials;
 pub(crate) mod deferred;
 pub(crate) mod offer;
 pub(crate) mod pin;
-pub(crate) mod save;
 pub(crate) mod token;
 
 use std::collections::HashMap;
@@ -18,8 +16,6 @@ use std::fmt::Debug;
 
 pub use accept::AuthorizationSpec;
 use anyhow::bail;
-pub use cancel::{cancel, CancelRequest};
-pub use save::{save, SaveRequest};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use vercre_issuer::{

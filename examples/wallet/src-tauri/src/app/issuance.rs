@@ -3,7 +3,7 @@
 use anyhow::bail;
 use test_utils::issuer::NORMAL_USER;
 use vercre_holder::issuance::{CredentialRequestType, FlowType, IssuanceState};
-use vercre_holder::provider::Issuer;
+use vercre_holder::provider::{CredentialStorer, Issuer};
 use vercre_holder::{CredentialOffer, CredentialResponseType, MetadataRequest, OAuthServerRequest};
 use vercre_infosec::jose::{jws, Type};
 use vercre_w3c_vc::proof::{Payload, Verify};
@@ -126,11 +126,12 @@ impl AppState {
     }
 
     /// Save the credential to storage.
+    // TODO: Notify issuer of completion or failure if the issuer has given us
+    // a notification ID.
     pub async fn save(&self, provider: Provider) -> anyhow::Result<()> {
-        let request = vercre_holder::issuance::SaveRequest {
-            issuance_id: self.issuance.id.clone(),
-        };
-        vercre_holder::issuance::save(provider, &request).await?;
+        for credential in &self.issuance.credentials {
+            provider.save(credential).await?;
+        }
         Ok(())
     }
 }
