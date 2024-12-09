@@ -2,7 +2,7 @@
 
 use anyhow::bail;
 use test_utils::issuer::NORMAL_USER;
-use vercre_holder::issuance::{AcceptRequest, CredentialsRequest, FlowType, IssuanceState, PinRequest};
+use vercre_holder::issuance::{CredentialsRequest, FlowType, IssuanceState, PinRequest};
 use vercre_holder::provider::Issuer;
 use vercre_holder::{CredentialOffer, MetadataRequest, OAuthServerRequest};
 
@@ -53,15 +53,10 @@ impl AppState {
     }
 
     /// Accept a credential issuance offer.
-    pub async fn accept(&self, provider: Provider) -> anyhow::Result<()> {
+    pub fn accept(&mut self) -> anyhow::Result<()> {
         // Just accept whatever is offered. In a real app, the user would need
         // to select which credentials to accept.
-        let req = AcceptRequest {
-            issuance_id: self.issuance.id.clone(),
-            accept: None, // implies accept all
-        };
-        vercre_holder::issuance::accept(provider, &req).await?;
-        Ok(())
+        self.issuance.accept(&None)
     }
 
     /// Set a PIN

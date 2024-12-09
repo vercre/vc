@@ -16,7 +16,7 @@ pub(crate) mod token;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-pub use accept::{accept, AcceptRequest, AuthorizationSpec};
+pub use accept::AuthorizationSpec;
 use anyhow::bail;
 pub use authorize::{authorize, AuthorizeRequest, Initiator};
 pub use cancel::{cancel, CancelRequest};

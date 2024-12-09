@@ -171,9 +171,8 @@ async fn offer(
 #[tauri::command]
 async fn accept(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("accept invoked");
-    let app_state = state.app_state.lock().await;
-    let provider = Provider::new(&app, state.state_store.clone());
-    app_state.accept(provider).await?;
+    let mut app_state = state.app_state.lock().await;
+    app_state.accept()?;
     let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
     app.emit("state_updated", view).map_err(error::AppError::from)?;
