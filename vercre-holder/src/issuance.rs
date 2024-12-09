@@ -18,7 +18,6 @@ use std::fmt::Debug;
 
 pub use accept::AuthorizationSpec;
 use anyhow::bail;
-pub use authorize::{authorize, AuthorizeRequest, Initiator};
 pub use cancel::{cancel, CancelRequest};
 pub use credentials::{credentials, CredentialsRequest, CredentialsResponse};
 pub use deferred::{deferred, DeferredRequest};
