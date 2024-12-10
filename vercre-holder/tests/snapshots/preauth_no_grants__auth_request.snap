@@ -1,5 +1,5 @@
 ---
-source: vercre-holder/tests/preauth_no_grants_2.rs
+source: vercre-holder/tests/preauth_no_grants.rs
 assertion_line: 114
 expression: auth_request
 snapshot_kind: text

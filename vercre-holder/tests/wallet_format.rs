@@ -6,23 +6,26 @@ use insta::assert_yaml_snapshot;
 use test_utils::issuer::{CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, REDIRECT_URI};
 use vercre_holder::issuance::{CredentialRequestType, FlowType, IssuanceState};
 use vercre_holder::provider::{Issuer, MetadataRequest, OAuthServerRequest};
-use vercre_holder::CredentialResponseType;
+use vercre_holder::{
+    AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization, CredentialResponseType,
+    Format, ProfileW3c,
+};
 use vercre_infosec::jose::{jws, Type};
 use vercre_w3c_vc::proof::{Payload, Verify};
 
 use crate::provider as holder;
 
 // Test end-to-end wallet-initiated issuance flow, with authorization request
-// using scope.
+// using a format.
 #[tokio::test]
-async fn wallet_scope_2() {
+async fn wallet_format() {
     let issuer_provider = test_utils::issuer::Provider::new();
     let provider = holder::Provider::new(Some(issuer_provider.clone()), None);
 
     //--------------------------------------------------------------------------
     // Initiate flow state.
     //--------------------------------------------------------------------------
-    let mut state = IssuanceState::new(FlowType::HolderScope, CLIENT_ID, NORMAL_USER);
+    let mut state = IssuanceState::new(FlowType::HolderAuthDetail, CLIENT_ID, NORMAL_USER);
 
     //--------------------------------------------------------------------------
     // Add issuer metadata to flow state.
@@ -59,10 +62,18 @@ async fn wallet_scope_2() {
         .credential_configurations_supported
         .get("EmployeeID_JWT")
         .expect("should have credential configuration");
-    let scope = cred_config.scope.clone().expect("issuer metadata should have scope");
-    let format = cred_config.format.clone();
-    state.scope_direct(&scope).expect("should set scope");
-
+    let cred_def = match &cred_config.format {
+        Format::JwtVcJson(def) => def.credential_definition.clone(),
+        _ => panic!("unexpected format"),
+    };
+    let accept = vec![AuthorizationDetail {
+        type_: AuthorizationDetailType::OpenIdCredential,
+        credential: CredentialAuthorization::Format(Format::JwtVcJson(ProfileW3c {
+            credential_definition: cred_def,
+        })),
+        locations: None,
+    }];
+    state.accept_direct(accept).expect("should be able to apply accepted credential details");
     let authorization_request = state
         .authorization_request(Some(REDIRECT_URI))
         .expect("should be able to construct authorization request");
@@ -88,12 +99,21 @@ async fn wallet_scope_2() {
     // For this test we are going to accept all credentials on offer. (Just one
     // in this case but we demonstate the pattern for multiple credentials.) We
     // are making the request by credential identifier.
+    let Some(authorized) = &token_response.authorization_details else {
+        panic!("no authorization details in token response");
+    };
+    let mut identifiers = vec![];
+    for auth in authorized {
+        for id in auth.credential_identifiers.iter() {
+            identifiers.push(id.clone());
+        }
+    }
     let jws = state.proof().expect("should get proof");
     let jwt = jws::encode(Type::Openid4VciProofJwt, &jws, &provider)
         .await
         .expect("should encode proof claims");
     let credential_requests = state
-        .credential_requests(CredentialRequestType::Format(format), &jwt)
+        .credential_requests(CredentialRequestType::CredentialIdentifiers(identifiers), &jwt)
         .expect("should construct credential requests");
     for request in credential_requests {
         let credential_response =

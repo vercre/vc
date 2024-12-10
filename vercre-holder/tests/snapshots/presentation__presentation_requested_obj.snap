@@ -1,5 +1,5 @@
 ---
-source: vercre-holder/tests/presentation_2.rs
+source: vercre-holder/tests/presentation.rs
 assertion_line: 272
 expression: state
 snapshot_kind: text

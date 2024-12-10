@@ -1,9 +1,9 @@
-//! Tests for issuer-initiated pre-authorized issuance flow where the holder
-//! accepts all credentials and all claims on offer.
+//! End to end tests for issuer-initiated issuance flow that requires
+//! authorization.
 mod provider;
 
 use insta::assert_yaml_snapshot;
-use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, REDIRECT_URI};
 use vercre_holder::issuance::{CredentialRequestType, FlowType, IssuanceState};
 use vercre_holder::provider::{Issuer, MetadataRequest, OAuthServerRequest};
 use vercre_infosec::jose::{jws, Type};
@@ -13,20 +13,18 @@ use vercre_w3c_vc::proof::{Payload, Verify};
 
 use crate::provider as holder;
 
-// Test end-to-end pre-authorized issuance flow (issuer-initiated), with
-// acceptance of all credentials on offer.
+// Test end-to-end issuer-initiated flow that requires authorization.
 #[tokio::test]
-async fn preauth_2() {
+async fn issuer_auth() {
     // Use the issuance service endpoint to create a sample offer that we can
     // use to start the flow. This is test set-up only - wallets do not ask an
     // issuer for an offer. Usually this code is internal to an issuer service.
-    // We include the requirement for a PIN.
     let request = create_offer_request!({
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": NORMAL_USER,
-        "grant_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
-        "tx_code_required": true,
+        "grant_types": ["authorization_code"],
+        "tx_code_required": false, // Leave out PIN for this test
         "send_type": SendType::ByVal,
     });
 
@@ -41,15 +39,19 @@ async fn preauth_2() {
     let provider = holder::Provider::new(Some(issuer_provider), None);
 
     //--------------------------------------------------------------------------
-    // Initiate flow state.
+    // Initiate flow state. A wallet should check the offer grants and use the
+    // appropriate flow type.
     //--------------------------------------------------------------------------
-    let mut state = IssuanceState::new(FlowType::IssuerPreAuthorized, CLIENT_ID, NORMAL_USER);
+
+    let grants = offer.grants.clone().unwrap();
+    grants.authorization_code.unwrap();
+    let mut state = IssuanceState::new(FlowType::IssuerAuthorized, CLIENT_ID, NORMAL_USER);
 
     //--------------------------------------------------------------------------
     // Add issuer metadata to flow state.
     //--------------------------------------------------------------------------
     let metadata_request = MetadataRequest {
-        credential_issuer: offer.credential_issuer.clone(),
+        credential_issuer: CREDENTIAL_ISSUER.into(),
         languages: None,
     };
     let issuer_metadata =
@@ -60,7 +62,7 @@ async fn preauth_2() {
     // Add authorization server metadata.
     //--------------------------------------------------------------------------
     let auth_request = OAuthServerRequest {
-        credential_issuer: offer.credential_issuer.clone(),
+        credential_issuer: CREDENTIAL_ISSUER.into(),
         issuer: None,
     };
     let auth_metadata =
@@ -87,19 +89,23 @@ async fn preauth_2() {
     state.accept(&None).expect("should accept offer");
 
     //--------------------------------------------------------------------------
-    // Enter a PIN.
+    // Get an authorization code. The redirect URI must match one registered
+    // with the issuer on client registration.
     //--------------------------------------------------------------------------
-    // Cheat by getting the PIN from the offer response on the call to the
-    // issuance crate to create the offer. In a real-world scenario, the holder
-    // would be sent the offer on this main channel and the PIN on a separate
-    // channel.
-    let pin = offer_resp.tx_code.expect("should have user code");
-    state.pin(&pin).expect("should apply pin");
+    let auth_request =
+        state.authorization_request(Some(REDIRECT_URI)).expect("should get auth request");
+    // We should have code challenge and verifier populated on state
+    assert!(state.code_challenge.is_some());
+    assert!(state.code_verifier.is_some());
+
+    let auth_response = provider.authorization(auth_request).await.expect("should authorize");
 
     //--------------------------------------------------------------------------
-    // Request an access token from the issuer.
+    // Exchange the authorization code for a token.
     //--------------------------------------------------------------------------
-    let token_request = state.token_request(None, None).expect("should get token request");
+    let token_request = state
+        .token_request(Some(REDIRECT_URI), Some(&auth_response.code))
+        .expect("should get token request");
     let token_response = provider.token(token_request).await.expect("should get token response");
     state.token(&token_response).expect("should stash token");
 

@@ -15,7 +15,7 @@ use crate::provider as holder;
 // credentials on offer but where no grants are provided in the offer. This test
 // is expected to fail issuance.
 #[tokio::test]
-async fn preauth_no_grants_2() {
+async fn preauth_no_grants() {
     // Use the issuance service endpoint to create a sample offer that we can
     // use to start the flow. This is test set-up only - wallets do not ask an
     // issuer for an offer. Usually this code is internal to an issuer service.

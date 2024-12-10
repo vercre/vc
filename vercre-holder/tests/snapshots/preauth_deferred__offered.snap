@@ -1,6 +1,6 @@
 ---
-source: vercre-holder/tests/preauth_no_grants_2.rs
-assertion_line: 78
+source: vercre-holder/tests/preauth_deferred.rs
+assertion_line: 80
 expression: offered
 snapshot_kind: text
 ---
