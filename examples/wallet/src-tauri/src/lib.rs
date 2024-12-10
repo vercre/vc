@@ -239,8 +239,7 @@ async fn request(
 async fn authorize(state: State<'_, StateModel>, app: AppHandle) -> Result<(), error::AppError> {
     log::info!("authorize invoked");
     let mut app_state = state.app_state.lock().await;
-    let provider = Provider::new(&app, state.state_store.clone());
-    app_state.authorize(provider).await?;
+    app_state.authorize()?;
     let view: ViewModel = app_state.clone().into();
     log::info!("emitting state_updated");
     app.emit("state_updated", view).map_err(error::AppError::from)?;

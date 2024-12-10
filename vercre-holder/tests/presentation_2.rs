@@ -10,7 +10,7 @@ use test_utils::verifier::{self, VERIFIER_ID};
 use vercre_core::{Kind, Quota};
 use vercre_dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use vercre_holder::credential::Credential;
-use vercre_holder::presentation::Presentation;
+use vercre_holder::presentation::PresentationState;
 use vercre_holder::provider::{CredentialStorer, Verifier};
 use vercre_infosec::{KeyOps, Signer};
 use vercre_issuer::{Claim, ClaimDefinition};
@@ -148,7 +148,7 @@ async fn presentation_uri() {
     //--------------------------------------------------------------------------
     // Initiate the presentation flow state using a URL.
     //--------------------------------------------------------------------------
-    let mut state = Presentation::new();
+    let mut state = PresentationState::new();
 
     let url = init_request.request_uri.expect("should have request uri");
     let request_object_response =
@@ -159,7 +159,7 @@ async fn presentation_uri() {
     //--------------------------------------------------------------------------
 
     let request_object =
-        Presentation::parse_request_object_response(&request_object_response, provider.clone())
+        PresentationState::parse_request_object_response(&request_object_response, provider.clone())
             .await
             .expect("should parse request object response");
 
@@ -250,7 +250,7 @@ async fn presentation_obj() {
     //--------------------------------------------------------------------------
     // Initiate the presentation flow state using an object.
     //--------------------------------------------------------------------------
-    let mut state = Presentation::new();
+    let mut state = PresentationState::new();
 
     let request_object = init_request.request_object.expect("should have request object");
 

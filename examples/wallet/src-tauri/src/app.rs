@@ -8,11 +8,11 @@ mod credential;
 mod issuance;
 mod presentation;
 
-pub use presentation::PresentationState;
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 use vercre_holder::credential::Credential;
 use vercre_holder::issuance::IssuanceState;
+use vercre_holder::presentation::PresentationState;
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]

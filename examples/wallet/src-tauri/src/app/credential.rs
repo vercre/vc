@@ -1,8 +1,8 @@
 use anyhow::anyhow;
 use vercre_holder::issuance::IssuanceState;
+use vercre_holder::presentation::PresentationState;
 use vercre_holder::provider::CredentialStorer;
 
-use super::presentation::PresentationState;
 use crate::app::{AppState, SubApp};
 
 impl AppState {

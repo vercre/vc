@@ -11,21 +11,17 @@ use std::fmt::{Debug, Display};
 use std::str::FromStr;
 
 use anyhow::anyhow;
-pub use authorize::authorize;
-use chrono::{DateTime, Utc};
-pub use present::present;
-pub use request::request;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use vercre_core::urlencode;
 use vercre_dif_exch::{Constraints, PresentationSubmission};
 use vercre_openid::verifier::RequestObject;
 
 use crate::credential::Credential;
-use crate::provider::{HolderProvider, StateStore};
 
-/// `Presentation` maintains app state across steps of the presentation flow.
+/// `PresentationState` maintains app state across steps of the presentation flow.
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct Presentation {
+pub struct PresentationState {
     /// The unique identifier for the presentation flow. Not used internally but
     /// passed to providers so that wallet clients can track interactions
     /// with specific flows.
@@ -49,7 +45,7 @@ pub struct Presentation {
     pub submission: PresentationSubmission,
 }
 
-impl Presentation {
+impl PresentationState {
     /// Create a new presentation flow.
     #[must_use]
     pub fn new() -> Self {
@@ -114,14 +110,23 @@ impl FromStr for Status {
     }
 }
 
-/// Get and put presentation state information using the supplied provider.
-async fn get_presentation(provider: impl HolderProvider, id: &str) -> anyhow::Result<Presentation> {
-    StateStore::get(&provider, id).await
-}
+/// Utility to extract a presentation `RequestObject` from a URL-encoded string.
+/// If the request string can be decoded but appears to be something other than
+/// a `RequestObject`, None is returned.
+/// 
+/// Wrapper to the function from `vercre-core`.
+/// 
+/// # Errors
+/// If the string cannot be decoded or appears to be an encoded `RequestObject`
+/// but cannot be successfully deserialized, an error is returned.
+pub fn parse_request_object(request: &str) -> anyhow::Result<Option<RequestObject>> {
+    let req_obj = if request.contains("&presentation_definition") {
+        Some(urlencode::from_str::<RequestObject>(request).map_err(|e|
+            anyhow!("failed to parse request object: {e}")
+        )?)
+    } else {
+        None
+    };
 
-async fn put_presentation(
-    provider: impl HolderProvider, presentation: &Presentation,
-) -> anyhow::Result<()> {
-    StateStore::put(&provider, &presentation.id, &presentation, DateTime::<Utc>::MAX_UTC).await?;
-    Ok(())
+    Ok(req_obj)
 }

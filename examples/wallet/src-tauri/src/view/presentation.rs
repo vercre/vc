@@ -4,9 +4,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use vercre_holder::presentation::Status;
+use vercre_holder::presentation::{PresentationState, Status};
 
-use crate::app::PresentationState;
 use crate::view::credential::CredentialDisplay;
 
 /// Status of the presentation flow. This is re-typed instead of using the
