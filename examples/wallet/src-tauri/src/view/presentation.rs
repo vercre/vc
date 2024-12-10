@@ -35,7 +35,7 @@ impl From<Status> for PresentationStatus {
     fn from(status: Status) -> Self {
         match status {
             Status::Inactive => Self::Inactive,
-            Status::Requested => Self::Requested,
+            Status::Requested | Status::CredentialsSet => Self::Requested,
             Status::Authorized => Self::Authorized,
             Status::Failed(_) => Self::Failed,
         }

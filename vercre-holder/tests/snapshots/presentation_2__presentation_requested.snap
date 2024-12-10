@@ -1,0 +1,79 @@
+---
+source: vercre-holder/tests/presentation_2.rs
+assertion_line: 181
+expression: state
+snapshot_kind: text
+---
+id: "[presentation_id]"
+status: CredentialsSet
+request:
+  response_type: vp_token
+  client_id: "http://localhost:8080/post"
+  response_mode: direct_post
+  response_uri: "http://localhost:8080/post"
+  nonce: "[nonce]"
+  state: "[state]"
+  presentation_definition:
+    id: "[presentation_definition_id]"
+    input_descriptors:
+      - id: EmployeeID_JWT
+        constraints:
+          fields:
+            - path:
+                - $.type
+              filter:
+                type: string
+                const: EmployeeIDCredential
+    purpose: To verify employment status
+    format:
+      jwt_vc:
+        alg:
+          - EdDSA
+  client_id_scheme: redirect_uri
+  client_metadata:
+    client_id: "http://localhost:8080"
+    redirect_uris:
+      - "http://localhost:3000/callback"
+    response_types:
+      - vp_token
+      - id_token vp_token
+    client_name: Verifier
+    vp_formats:
+      jwt_vp_json:
+        alg:
+          - ES256K
+        proof_type:
+          - JsonWebSignature2020
+credentials:
+  - id: "https://example.com/credentials/3732"
+    issuer: "https://vercre.io"
+    issuer_name: Vercre
+    issued: "[issued]"
+    type:
+      - EmployeeIDCredential
+      - VerifiableCredential
+    format: jwt_vc_json
+    claim_definitions:
+      employeeId:
+        mandatory: true
+        value_type: string
+        display:
+          - name: Employee ID
+    subject_claims:
+      - claims:
+          employeeId: "1234567890"
+        id: "did:example:ebfeb1f712ebc6f1c276e12ec21"
+    issuance_date: "[issuance_date]"
+    valid_from: "2023-11-20T23:21:55Z"
+    valid_until: "2033-12-20T23:21:55Z"
+filter:
+  fields:
+    - path:
+        - $.type
+      filter:
+        type: string
+        const: EmployeeIDCredential
+submission:
+  id: ""
+  definition_id: ""
+  descriptor_map: []

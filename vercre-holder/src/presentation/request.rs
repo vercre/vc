@@ -101,20 +101,6 @@ pub async fn request(
     Ok(response)
 }
 
-/// Extract a presentation `RequestObject` from a `RequestObjectResponse`.
-async fn parse_request_object_response(
-    res: &RequestObjectResponse, resolver: impl DidResolver,
-) -> anyhow::Result<RequestObject> {
-    let RequestObjectType::Jwt(token) = &res.request_object else {
-        bail!("no serialized JWT found in response");
-    };
-    let jwt: jws::Jwt<RequestObject> = jws::decode(token, verify_key!(resolver))
-        .await
-        .map_err(|e| anyhow!("failed to parse JWT: {e}"))?;
-
-    Ok(jwt.claims)
-}
-
 /// Construct a credential filter (`JSONPath`) from the presentation definition
 /// contained in the presentation request.
 // TODO: How to handle multiple input descriptors?
@@ -129,4 +115,86 @@ fn build_filter(request: &RequestObject) -> anyhow::Result<Constraints> {
     let constraints = pd.input_descriptors[0].constraints.clone();
 
     Ok(constraints)
+}
+
+/// Utility to extract a presentation `RequestObject` from a
+/// `RequestObjectResponse`. Uses a DID resolver to verify the JWT.
+/// 
+/// # Errors
+/// If decoding or verifying the JWT fails an error is returned.
+async fn parse_request_object_response(
+    res: &RequestObjectResponse, resolver: impl DidResolver,
+) -> anyhow::Result<RequestObject> {
+    let RequestObjectType::Jwt(token) = &res.request_object else {
+        bail!("no serialized JWT found in response");
+    };
+    let jwt: jws::Jwt<RequestObject> = jws::decode(token, verify_key!(resolver))
+        .await
+        .map_err(|e| anyhow!("failed to parse JWT: {e}"))?;
+
+    Ok(jwt.claims)
+}
+
+impl Presentation {
+    /// Update the presentation with a request object retrieved from the
+    /// verifier's endpoint.
+    /// 
+    /// # Errors
+    /// If a set of constraints cannot be built from the request object's
+    /// presentation definition an error is returned.
+    pub fn request(&mut self, request: &RequestObject) -> anyhow::Result<Constraints> {
+        self.request.clone_from(request);
+        self.status = Status::Requested;
+        let filter = Self::build_filter(request).map_err(|e|
+            anyhow!("issue building filter from RequestObject: {e}")
+        )?;
+        self.filter.clone_from(&filter);
+        Ok(filter)
+    }
+
+    /// Utility to extract a presentation `RequestObject` from a
+    /// `RequestObjectResponse`. Uses a DID resolver to verify the JWT.
+    /// 
+    /// # Errors
+    /// If decoding or verifying the JWT fails an error is returned.
+    pub async fn parse_request_object_response(
+        res: &RequestObjectResponse, resolver: impl DidResolver,
+    ) -> anyhow::Result<RequestObject> {
+        let RequestObjectType::Jwt(token) = &res.request_object else {
+            bail!("no serialized JWT found in response");
+        };
+        let jwt: jws::Jwt<RequestObject> = jws::decode(token, verify_key!(resolver))
+            .await
+            .map_err(|e| anyhow!("failed to parse JWT: {e}"))?;
+
+        Ok(jwt.claims)
+    }
+
+    /// Update the presentation with a list of credentials that match the
+    /// verifier's request.
+    ///
+    /// # Errors
+    /// Will return an error if the presentation flow state is not consistent
+    /// with adding credentials.
+    pub fn credentials(&mut self, credentials: &Vec<Credential>) -> anyhow::Result<()> {
+        if self.status != Status::Requested {
+            bail!("cannot add credentials to a flow without a request");
+        }
+        self.credentials.clone_from(credentials);
+        self.status = Status::CredentialsSet;
+        Ok(())
+    }
+
+    fn build_filter(request: &RequestObject) -> anyhow::Result<Constraints> {
+        let pd = match &request.presentation_definition {
+            Kind::Object(pd) => pd,
+            Kind::String(_) => bail!("presentation_definition_uri is unsupported"),
+        };
+        if pd.input_descriptors.is_empty() {
+            bail!("no input descriptors found");
+        }
+        let constraints = pd.input_descriptors[0].constraints.clone();
+    
+        Ok(constraints)
+    }    
 }

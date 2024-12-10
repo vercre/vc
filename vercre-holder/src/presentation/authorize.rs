@@ -3,10 +3,10 @@
 //! The authorize endpoint receives confirmation from the holder that they
 //! authorize the agent to present the credential to the verifier.
 
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 use tracing::instrument;
 
-use super::Status;
+use super::{Presentation, Status};
 use crate::provider::HolderProvider;
 
 /// Updates the status of the flow as authorized. The request is the
@@ -32,4 +32,18 @@ pub async fn authorize(provider: impl HolderProvider, request: String) -> anyhow
         return Err(e);
     }
     Ok(presentation.status)
+}
+
+impl Presentation {
+    /// Authorize the presentation request.
+    /// 
+    /// # Errors
+    /// Will return an error if there are no credentials to present.
+    pub fn authorize(&mut self) -> anyhow::Result<()> {
+        if self.credentials.is_empty() {
+            bail!("no credentials to present");
+        }
+        self.status = Status::Authorized;
+        Ok(())
+    }
 }

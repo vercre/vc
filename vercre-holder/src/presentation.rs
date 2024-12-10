@@ -16,6 +16,7 @@ use chrono::{DateTime, Utc};
 pub use present::present;
 pub use request::request;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use vercre_dif_exch::{Constraints, PresentationSubmission};
 use vercre_openid::verifier::RequestObject;
 
@@ -48,6 +49,18 @@ pub struct Presentation {
     pub submission: PresentationSubmission,
 }
 
+impl Presentation {
+    /// Create a new presentation flow.
+    #[must_use]
+    pub fn new() -> Self {
+        Self {
+            id: Uuid::new_v4().to_string(),
+            status: Status::Inactive,
+            ..Default::default()
+        }
+    }
+}
+
 /// Presentation Status values.
 #[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(rename = "PresentationStatus")]
@@ -58,6 +71,10 @@ pub enum Status {
 
     /// A new authorization request has been received.
     Requested,
+
+    /// Credentials have been selected from the wallet that match the
+    /// presentation request.
+    CredentialsSet,
 
     /// The authorization request has been authorized.
     Authorized,
@@ -72,6 +89,7 @@ impl Display for Status {
         match self {
             Self::Inactive => write!(f, "Inactive"),
             Self::Requested => write!(f, "Requested"),
+            Self::CredentialsSet => write!(f, "CredentialsSet"),
             Self::Authorized => write!(f, "Authorized"),
             Self::Failed(e) => write!(f, "Failed: {e}"),
         }
