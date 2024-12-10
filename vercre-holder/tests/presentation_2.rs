@@ -228,3 +228,94 @@ async fn presentation_uri() {
         provider.present(uri.as_deref(), &res_req).await.expect("should present to verifier");
     assert_yaml_snapshot!("response_response", response);
 }
+
+#[tokio::test]
+async fn presentation_obj() {
+    // Have a credential saved in the wallet ready to present.
+    let credential = sample_credential().await;
+    let verifier_provider = verifier::Provider::new();
+    let provider = holder::Provider::new(None, Some(verifier_provider.clone()));
+    provider.save(&credential).await.expect("should save credential");
+
+    // Use the verifier service to create a sample request so we can get a valid
+    // presentation request object. This is test set-up only - wallets do not
+    // ask a verifer for a request; the verifier presents a presentation request
+    // to the wallet.
+    let mut request_request = setup_create_request();
+    request_request.device_flow = DeviceFlow::SameDevice;
+    let init_request = vercre_verifier::create_request(verifier_provider, &request_request)
+        .await
+        .expect("should get request");
+
+    //--------------------------------------------------------------------------
+    // Initiate the presentation flow state using an object.
+    //--------------------------------------------------------------------------
+    let mut state = Presentation::new();
+
+    let request_object = init_request.request_object.expect("should have request object");
+
+    //--------------------------------------------------------------------------
+    // Store the request in state.
+    //--------------------------------------------------------------------------
+
+    let filter = state.request(&request_object).expect("should update state with request object");
+
+    //--------------------------------------------------------------------------
+    // Get the credentials from the holder's credential store that match the
+    // verifier's request.
+    //--------------------------------------------------------------------------
+
+    let credentials = provider.find(Some(filter)).await.expect("should find credentials");
+    state.credentials(&credentials).expect("should update state with credentials");
+
+    // Assert snapshot now that the flow is built.
+    assert_yaml_snapshot!("presentation_requested_obj", state, {
+        ".id" => "[presentation_id]",
+        ".request.nonce" => "[nonce]",
+        ".request.state" => "[state]",
+        ".request.presentation_definition.id" => "[presentation_definition_id]",
+        ".credentials[].type" => insta::sorted_redaction(),
+        ".credentials[].subject_claims[]" => insta::sorted_redaction(),
+        ".credentials[].subject_claims[].claims" => insta::sorted_redaction(),
+        ".credentials[].subject_claims[].claims[].address" => insta::sorted_redaction(),
+        ".credentials[].claim_definitions" => insta::sorted_redaction(),
+        ".credentials[].claim_definitions.address" => insta::sorted_redaction(),
+        ".credentials[].issued" => "[issued]",
+        ".credentials[].issuance_date" => "[issuance_date]",
+    });
+
+    //--------------------------------------------------------------------------
+    // Authorize the presentation.
+    //--------------------------------------------------------------------------
+
+    state.authorize().expect("should authorize presentation");
+
+    //--------------------------------------------------------------------------
+    // Construct a presentation submission and verifiable presentation payload
+    //--------------------------------------------------------------------------
+
+    let kid = provider.verification_method().await.expect("should get verification method");
+    let vp = state
+        .create_verifiable_presentation_payload(&kid)
+        .expect("should get verifiable presentation payload");
+
+    //--------------------------------------------------------------------------
+    // Create a proof and use it to create a presentation response request.
+    //--------------------------------------------------------------------------
+
+    let Payload::Vp { vp, client_id, nonce } = vp else {
+        panic!("expected Payload::Vp");
+    };
+    let jwt = proof::create(W3cFormat::JwtVcJson, Payload::Vp { vp, client_id, nonce }, &provider)
+        .await
+        .expect("should create proof");
+    let (res_req, uri) = state.create_response_request(&jwt);
+
+    //--------------------------------------------------------------------------
+    // Send the presentation response to the verifier.
+    //--------------------------------------------------------------------------
+
+    let response =
+        provider.present(uri.as_deref(), &res_req).await.expect("should present to verifier");
+    assert_yaml_snapshot!("response_response_obj", response);
+}
