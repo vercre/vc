@@ -1,0 +1,76 @@
+---
+source: vercre-holder/tests/preauth_deferred_2.rs
+assertion_line: 83
+expression: offered
+snapshot_kind: text
+---
+EmployeeID_JWT:
+  format: jwt_vc_json
+  credential_definition:
+    type:
+      - VerifiableCredential
+      - EmployeeIDCredential
+    credentialSubject:
+      address:
+        country:
+          value_type: string
+          display:
+            - name: Country
+              locale: en-NZ
+        locality:
+          value_type: string
+          display:
+            - name: Locality
+              locale: en-NZ
+        region:
+          value_type: string
+          display:
+            - name: Region
+              locale: en-NZ
+        street_address:
+          value_type: string
+          display:
+            - name: Street Address
+              locale: en-NZ
+      email:
+        mandatory: true
+        value_type: string
+        display:
+          - name: Email
+            locale: en-NZ
+      family_name:
+        mandatory: true
+        value_type: string
+        display:
+          - name: Family name
+            locale: en-NZ
+      given_name:
+        mandatory: true
+        value_type: string
+        display:
+          - name: Given name
+            locale: en-NZ
+  scope: EmployeeIDCredential
+  cryptographic_binding_methods_supported:
+    - "did:key"
+    - "did:web"
+  credential_signing_alg_values_supported:
+    - ES256K
+    - EdDSA
+  proof_types_supported:
+    jwt:
+      proof_signing_alg_values_supported:
+        - ES256K
+        - EdDSA
+  display:
+    - name: Employee ID
+      locale: en-NZ
+      logo:
+        uri: "https://vercre.github.io/assets/employee.png"
+        alt_text: Vercre Logo
+      description: Vercre employee ID credential
+      background_color: "#323ed2"
+      background_image:
+        uri: "https://vercre.github.io/assets/employee-background.png"
+        alt_text: Vercre Background
+      text_color: "#ffffff"

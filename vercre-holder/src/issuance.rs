@@ -601,13 +601,12 @@ impl<P, Ac> IssuanceFlow<WithOffer, P, Ac, WithToken> {
     /// constructing such a request.
     pub fn deferred_request(
         &self, transaction_id: &str,
-    ) -> anyhow::Result<DeferredCredentialRequest> {
-        let def_cred_request = DeferredCredentialRequest {
+    ) -> DeferredCredentialRequest {
+        DeferredCredentialRequest {
             transaction_id: transaction_id.into(),
             credential_issuer: self.issuer.credential_issuer.clone(),
             access_token: self.token.0.access_token.clone(),
-        };
-        Ok(def_cred_request)
+        }
     }
 
     /// Add a deferred transaction ID to the issuance state.
