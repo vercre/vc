@@ -261,6 +261,20 @@ impl CredentialOffer {
     pub fn to_querystring(&self) -> anyhow::Result<String> {
         urlencode::to_string(self).map_err(|e| anyhow!("issue creating query string: {e}"))
     }
+
+    /// Convenience method for extracting a pre-authorized code grant from an
+    /// offer if it exists.
+    #[must_use]
+    pub fn pre_authorized_code(&self) -> Option<PreAuthorizedCodeGrant> {
+        self.grants.as_ref().and_then(|grants| grants.pre_authorized_code.clone())
+    }
+
+    /// Convenience method for extracting an authorization code grant from an
+    /// offer if it exists.
+    #[must_use]
+    pub fn authorization_code(&self) -> Option<AuthorizationCodeGrant> {
+        self.grants.as_ref().and_then(|grants| grants.authorization_code.clone())
+    }
 }
 
 /// Grant Types the Credential Issuer's Authorization Server is prepared to
