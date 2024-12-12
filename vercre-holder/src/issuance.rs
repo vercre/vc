@@ -21,10 +21,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use vercre_core::{Kind, Quota};
 use vercre_issuer::{
-    AuthorizationDetail, CredentialAuthorization, CredentialConfiguration, CredentialDefinition,
-    CredentialOffer, CredentialRequest, DeferredCredentialRequest, Format, MetadataRequest,
-    OAuthServerRequest, PreAuthorizedCodeGrant, ProfileClaims, TokenGrantType, TokenRequest,
-    TokenResponse,
+    AuthorizationDetail, CredentialAuthorization, CredentialConfiguration, CredentialDefinition, CredentialOffer, CredentialRequest, DeferredCredentialRequest, Format, MetadataRequest, OAuthServerRequest, PreAuthorizedCodeGrant, ProfileClaims, ProofClaims, TokenGrantType, TokenRequest, TokenResponse
 };
 use vercre_macros::credential_request;
 use vercre_openid::issuer::{Issuer, Server};
@@ -310,13 +307,13 @@ impl IssuanceFlow<WithOffer, PreAuthorized, NotAccepted, WithoutToken> {
     /// Create a new issuance flow with an offer from the issuer.
     #[must_use]
     pub fn new(
-        client_id: &str, subject_id: &str, issuer: Issuer, auth_server: Server, offer: WithOffer,
-        pre_authorized: PreAuthorized,
+        client_id: &str, subject_id: &str, issuer: Issuer, auth_server: Server, offer: CredentialOffer,
+        pre_auth_code_grant: PreAuthorizedCodeGrant,
     ) -> Self {
         Self {
-            offer,
+            offer: WithOffer(offer),
             accepted: NotAccepted,
-            pre_authorized,
+            pre_authorized: PreAuthorized(pre_auth_code_grant),
             token: WithoutToken,
 
             id: Uuid::new_v4().to_string(),
@@ -427,13 +424,13 @@ impl IssuanceFlow<WithOffer, PreAuthorized, Accepted, WithoutToken> {
     /// Add the token response to the flow state.
     #[must_use]
     pub fn token(
-        self, token: WithToken,
+        self, token: TokenResponse,
     ) -> IssuanceFlow<WithOffer, PreAuthorized, Accepted, WithToken> {
         IssuanceFlow {
             offer: self.offer,
             accepted: self.accepted,
             pre_authorized: self.pre_authorized,
-            token,
+            token: WithToken(token),
 
             id: self.id,
             client_id: self.client_id,
@@ -447,6 +444,17 @@ impl IssuanceFlow<WithOffer, PreAuthorized, Accepted, WithoutToken> {
 }
 
 impl<P, Ac> IssuanceFlow<WithOffer, P, Ac, WithToken> {
+    /// Convenience method to construct a proof so we can sign it and use it in
+    /// credential requests.
+    pub fn proof(&self) -> ProofClaims {
+        ProofClaims {
+            iss: Some(self.client_id.clone()),
+            aud: self.issuer.credential_issuer.clone(),
+            iat: chrono::Utc::now().timestamp(),
+            nonce: self.token.0.c_nonce.clone(),
+        }
+    }
+
     /// Create a set of credential requests from the current state for the
     /// given set of credential identifiers (allows the user to select a
     /// subset of accepted credentials) and a proof JWT.
@@ -454,7 +462,7 @@ impl<P, Ac> IssuanceFlow<WithOffer, P, Ac, WithToken> {
     /// If any inconsistencies are found between the authorization details may
     /// result in an empty or partial set of credential requests.
     pub fn credential_requests(
-        self, identifiers: &[String], jwt: &str,
+        &self, identifiers: &[String], jwt: &str,
     ) -> Vec<(String, CredentialRequest)> {
         let mut requests = Vec::new();
         let Some(authorized) = &self.token.0.authorization_details else {
@@ -504,15 +512,15 @@ impl<P, Ac> IssuanceFlow<WithOffer, P, Ac, WithToken> {
     /// credential configuration IDs (value).
     ///
     /// Will be empty if there are no outstanding deferred credentials.
-    pub fn deferred(self) -> HashMap<String, String> {
-        self.deferred
+    pub fn deferred(&self) -> HashMap<String, String> {
+        self.deferred.clone()
     }
 
     /// The credentials received from the issuer, ready to be saved to storage.
     ///
     /// Will be empty until credentials have been issued.
-    pub fn credentials(self) -> Vec<Credential> {
-        self.credentials
+    pub fn credentials(&self) -> Vec<Credential> {
+        self.credentials.clone()
     }
 
     /// Add a credential to the issuance state, converting the W3C format to a
