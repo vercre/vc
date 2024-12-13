@@ -1,52 +1,34 @@
-//! End to end tests for issuer-initiated issuance flow that requires
-//! authorization.
+//! Tests for wallet-initiated issuance flow where the authorization request is
+//! made using a credential definition.
 mod provider;
 
 use insta::assert_yaml_snapshot;
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, REDIRECT_URI};
 use vercre_holder::issuance::{
-    IssuanceFlow, NotAccepted, NotPreAuthorized, WithOffer, WithoutToken,
+    IssuanceFlow, NotAccepted, NotPreAuthorized, WithoutOffer, WithoutToken,
 };
 use vercre_holder::provider::{Issuer, MetadataRequest, OAuthServerRequest};
 use vercre_infosec::jose::{jws, Type};
-use vercre_issuer::{CredentialResponseType, OfferType, SendType};
-use vercre_macros::create_offer_request;
+use vercre_issuer::{
+    AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization, CredentialResponseType,
+    Format, ProfileClaims,
+};
 use vercre_w3c_vc::proof::{Payload, Verify};
 
 use crate::provider as holder;
 
-// Test end-to-end pre-authorized issuance flow (issuer-initiated), with
-// acceptance of all credentials on offer.
+// Test end-to-end wallet-initiated issuance flow, with authorization request
+// using a credential definition.
 #[tokio::test]
-async fn issuer_auth_2() {
-    // Use the issuance service endpoint to create a sample offer that we can
-    // use to start the flow. This is test set-up only - wallets do not ask an
-    // issuer for an offer. Usually this code is internal to an issuer service.
-    // We include the requirement for a PIN.
-    let request = create_offer_request!({
-        "credential_issuer": CREDENTIAL_ISSUER,
-        "credential_configuration_ids": ["EmployeeID_JWT"],
-        "subject_id": NORMAL_USER,
-        "grant_types": ["authorization_code"],
-        "tx_code_required": false, // Leave out PIN for this test
-        "send_type": SendType::ByVal,
-    });
-
+async fn wallet_credential_definition_2() {
     let issuer_provider = issuer::Provider::new();
-    let offer_resp = vercre_issuer::create_offer(issuer_provider.clone(), request)
-        .await
-        .expect("should get offer");
-    let OfferType::Object(offer) = offer_resp.offer_type else {
-        panic!("expected CredentialOfferType::Object");
-    };
-
     let provider = holder::Provider::new(Some(issuer_provider), None);
 
     //--------------------------------------------------------------------------
     // Get issuer metadata.
     //--------------------------------------------------------------------------
     let metadata_request = MetadataRequest {
-        credential_issuer: offer.credential_issuer.clone(),
+        credential_issuer: CREDENTIAL_ISSUER.into(),
         languages: None,
     };
     let issuer_metadata =
@@ -56,46 +38,49 @@ async fn issuer_auth_2() {
     // Get authorization server metadata.
     //--------------------------------------------------------------------------
     let auth_request = OAuthServerRequest {
-        credential_issuer: offer.credential_issuer.clone(),
+        credential_issuer: CREDENTIAL_ISSUER.into(),
         issuer: None,
     };
     let auth_metadata =
         provider.oauth_server(auth_request).await.expect("should get auth metadata");
 
     //--------------------------------------------------------------------------
-    // Initiate flow state with the offer and metadata. A wallet should check
-    // the grants on the offer and use the appropriate flow type.
+    // Initiate flow state with the offer and metadata.
     //--------------------------------------------------------------------------
-    assert!(offer.pre_authorized_code().is_none());
-
-    let state = IssuanceFlow::<WithOffer, NotPreAuthorized, NotAccepted, WithoutToken>::new(
+    let state = IssuanceFlow::<WithoutOffer, NotPreAuthorized, NotAccepted, WithoutToken>::new(
         CLIENT_ID,
         NORMAL_USER,
-        issuer_metadata.credential_issuer,
+        issuer_metadata.credential_issuer.clone(),
         auth_metadata.authorization_server,
-        offer,
     );
-    let offered = state.offered();
 
     //--------------------------------------------------------------------------
-    // Present the offer to the holder for them to choose what to accept. For
-    // this test, we omit the PIN requirement.
+    // Construct an authorization request using the credential definition for
+    // the employee ID credential. The expected user workflow would be to
+    // present the issuer's metadata to the user and allow them to select which
+    // credential and claims they want to request. Here we are hardcoding the
+    // credential configuration ID for the employee ID credential and asking
+    // for all claims in the credential.
     //--------------------------------------------------------------------------
-    insta::assert_yaml_snapshot!("offered", offered, {
-        "." => insta::sorted_redaction(),
-        ".**.credentialSubject" => insta::sorted_redaction(),
-        ".**.credentialSubject.address" => insta::sorted_redaction(),
-    });
+    let cred_config = issuer_metadata
+        .credential_issuer
+        .credential_configurations_supported
+        .get("EmployeeID_JWT")
+        .expect("should have credential configuration");
+    let claims = match &cred_config.format {
+        Format::JwtVcJson(def) => ProfileClaims::W3c(def.credential_definition.clone()),
+        _ => panic!("unexpected format"),
+    };
+    let accept = vec![AuthorizationDetail {
+        type_: AuthorizationDetailType::OpenIdCredential,
+        credential: CredentialAuthorization::ConfigurationId {
+            credential_configuration_id: "EmployeeID_JWT".into(),
+            claims: Some(claims),
+        },
+        locations: None,
+    }];
+    let state = state.accept(accept);
 
-    // By sending `None` we are accepting all credentials on offer.
-    let state = state.accept(&None, None);
-
-    // If there is no pre-authorized code, the wallet should use an
-    // authorization flow. The flow builder will give a runtime error if the
-    // authorization server does not support an authorized code grant. It will
-    // also fail if there are grants on the offer other than the authorization
-    // code grant. (It is OK if there are no grants on the offer but the server
-    // supports the authorization code grant.)
     let (auth_request, verifier) = state
         .authorization_request(Some(REDIRECT_URI))
         .expect("should construct authorization request");

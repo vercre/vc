@@ -21,7 +21,10 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use vercre_core::{pkce, Kind, Quota};
 use vercre_issuer::{
-    AuthorizationDetail, AuthorizationRequest, CredentialAuthorization, CredentialConfiguration, CredentialDefinition, CredentialOffer, CredentialRequest, DeferredCredentialRequest, Format, GrantType, MetadataRequest, OAuthServerRequest, PreAuthorizedCodeGrant, ProfileClaims, ProofClaims, RequestObject, TokenGrantType, TokenRequest, TokenResponse
+    AuthorizationDetail, AuthorizationRequest, CredentialAuthorization, CredentialConfiguration,
+    CredentialDefinition, CredentialOffer, CredentialRequest, DeferredCredentialRequest, Format,
+    GrantType, MetadataRequest, OAuthServerRequest, PreAuthorizedCodeGrant, ProfileClaims,
+    ProofClaims, RequestObject, TokenGrantType, TokenRequest, TokenResponse,
 };
 use vercre_macros::credential_request;
 use vercre_openid::issuer::{Issuer, Server};
@@ -375,7 +378,7 @@ impl<P> IssuanceFlow<WithOffer, P, NotAccepted, WithoutToken> {
     /// Accept the offer from the issuer.
     #[must_use]
     pub fn accept(
-        self, accept: &Option<Vec<AuthorizationSpec>>, pin: Option<String>,
+        self, accepted: &Option<Vec<AuthorizationSpec>>, pin: Option<String>,
     ) -> IssuanceFlow<WithOffer, P, Accepted, WithoutToken> {
         // If the accept parameter is `None`, all contents of the offer are
         // accepted. Otherwise transform the acceptance into authorization
@@ -386,8 +389,8 @@ impl<P> IssuanceFlow<WithOffer, P, NotAccepted, WithoutToken> {
             let Some(cred_config) = creds_supported.get(cfg_id) else {
                 continue;
             };
-            if let Some(accept) = &accept {
-                if !accept.iter().any(|a| a.credential_configuration_id == *cfg_id) {
+            if let Some(accepted) = &accepted {
+                if !accepted.iter().any(|a| a.credential_configuration_id == *cfg_id) {
                     continue;
                 }
             }
@@ -486,7 +489,7 @@ impl IssuanceFlow<WithOffer, NotPreAuthorized, Accepted, WithoutToken> {
         let verifier = pkce::code_verifier();
         let code_challenge = pkce::code_challenge(&verifier);
 
-        let request = AuthorizationRequest::Object(RequestObject{
+        let request = AuthorizationRequest::Object(RequestObject {
             credential_issuer: self.issuer.credential_issuer.clone(),
             response_type: self.authorization_server.oauth.response_types_supported[0].clone(),
             client_id: self.client_id.clone(),
@@ -501,6 +504,99 @@ impl IssuanceFlow<WithOffer, NotPreAuthorized, Accepted, WithoutToken> {
             wallet_issuer: None,
             user_hint: Some(self.id.clone()),
             issuer_state,
+        });
+
+        Ok((request, verifier))
+    }
+}
+
+impl IssuanceFlow<WithoutOffer, NotPreAuthorized, NotAccepted, WithoutToken> {
+    /// Create a new wallet-initiated issuance flow.
+    /// Create a new issuance flow with an offer from the issuer.
+    #[must_use]
+    pub fn new(client_id: &str, subject_id: &str, issuer: Issuer, auth_server: Server) -> Self {
+        Self {
+            offer: WithoutOffer,
+            accepted: NotAccepted,
+            pre_authorized: NotPreAuthorized,
+            token: WithoutToken,
+
+            id: Uuid::new_v4().to_string(),
+            client_id: client_id.into(),
+            subject_id: subject_id.into(),
+            issuer,
+            authorization_server: auth_server,
+            deferred: HashMap::new(),
+            credentials: Vec::new(),
+        }
+    }
+
+    /// Create an updated state with the credentials and claims to accept for
+    /// a wallet-initiated issuance flow.
+    #[must_use]
+    pub fn accept(
+        self, accepted: Vec<AuthorizationDetail>,
+    ) -> IssuanceFlow<WithoutOffer, NotPreAuthorized, Accepted, WithoutToken> {
+        IssuanceFlow {
+            offer: WithoutOffer,
+            accepted: Accepted(accepted, None),
+            pre_authorized: NotPreAuthorized,
+            token: WithoutToken,
+
+            id: self.id,
+            client_id: self.client_id,
+            subject_id: self.subject_id,
+            issuer: self.issuer,
+            authorization_server: self.authorization_server,
+            deferred: self.deferred,
+            credentials: self.credentials,
+        }
+    }
+}
+
+impl IssuanceFlow<WithoutOffer, NotPreAuthorized, Accepted, WithoutToken> {
+    /// Create an authorization request from the current state. The request and
+    /// a PKCE code verifier are returned.
+    /// 
+    /// # Errors
+    /// Will return an error if the authorization server does not support the
+    /// authorization code grant.
+    pub fn authorization_request(
+        &self, redirect_uri: Option<&str>,
+    ) -> anyhow::Result<(AuthorizationRequest, String)> {
+        // Check issuer's authorization server metadata supports the
+        // authorization code grant.
+        let Some(grant_types) = &self.authorization_server.oauth.grant_types_supported else {
+            bail!("authorization server does not support any grant types");
+        };
+        if !grant_types.contains(&GrantType::AuthorizationCode) {
+            bail!("authorization server does not support authorization code grant");
+        }
+        let Some(code_challenge_methods) =
+            &self.authorization_server.oauth.code_challenge_methods_supported
+        else {
+            bail!("code challenge methods missing from authorization server metadata");
+        };
+
+        // PKCE pair
+        let verifier = pkce::code_verifier();
+        let code_challenge = pkce::code_challenge(&verifier);
+
+        let request = AuthorizationRequest::Object(RequestObject {
+            credential_issuer: self.issuer.credential_issuer.clone(),
+            response_type: self.authorization_server.oauth.response_types_supported[0].clone(),
+            client_id: self.client_id.clone(),
+            redirect_uri: redirect_uri.map(ToString::to_string),
+            state: Some(self.id.clone()),
+            code_challenge,
+            code_challenge_method: code_challenge_methods[0].clone(),
+            authorization_details: Some(self.accepted.0.clone()),
+            scope: None,
+            resource: Some(self.issuer.credential_issuer.clone()),
+            subject_id: self.subject_id.clone(),
+            wallet_issuer: None,
+            user_hint: Some(self.id.clone()),
+            issuer_state: None,
         });
 
         Ok((request, verifier))
@@ -530,9 +626,7 @@ impl<O> IssuanceFlow<O, NotPreAuthorized, Accepted, WithoutToken> {
 impl<O, P, Ac> IssuanceFlow<O, P, Ac, WithoutToken> {
     /// Add the token response to the flow state.
     #[must_use]
-    pub fn token(
-        self, token: TokenResponse,
-    ) -> IssuanceFlow<O, P, Ac, WithToken> {
+    pub fn token(self, token: TokenResponse) -> IssuanceFlow<O, P, Ac, WithToken> {
         IssuanceFlow {
             offer: self.offer,
             accepted: self.accepted,
