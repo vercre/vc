@@ -22,9 +22,10 @@ use uuid::Uuid;
 use vercre_core::{pkce, Kind, Quota};
 use vercre_issuer::{
     AuthorizationDetail, AuthorizationRequest, CredentialAuthorization, CredentialConfiguration,
-    CredentialDefinition, CredentialOffer, CredentialRequest, DeferredCredentialRequest, Format,
-    GrantType, MetadataRequest, OAuthServerRequest, PreAuthorizedCodeGrant, ProfileClaims,
-    ProofClaims, RequestObject, TokenGrantType, TokenRequest, TokenResponse,
+    CredentialDefinition, CredentialIssuance, CredentialOffer, CredentialRequest,
+    DeferredCredentialRequest, Format, GrantType, MetadataRequest, OAuthServerRequest,
+    PreAuthorizedCodeGrant, ProfileClaims, Proof, ProofClaims, RequestObject, SingleProof,
+    TokenGrantType, TokenRequest, TokenResponse,
 };
 use vercre_macros::credential_request;
 use vercre_openid::issuer::{Issuer, Server};
@@ -552,12 +553,77 @@ impl IssuanceFlow<WithoutOffer, NotPreAuthorized, NotAccepted, WithoutToken> {
             credentials: self.credentials,
         }
     }
+
+    /// Create a scope-based authorization request. The request and a PKCE code
+    /// verifier are returned.
+    ///
+    /// # Errors
+    /// Will return an error if the authorization server does not support the
+    /// authorization code grant.
+    pub fn authorization_request(
+        &self, scope: &str, redirect_uri: Option<&str>,
+    ) -> anyhow::Result<(AuthorizationRequest, String)> {
+        // Check issuer's authorization server metadata supports the
+        // authorization code grant.
+        let Some(grant_types) = &self.authorization_server.oauth.grant_types_supported else {
+            bail!("authorization server does not support any grant types");
+        };
+        if !grant_types.contains(&GrantType::AuthorizationCode) {
+            bail!("authorization server does not support authorization code grant");
+        }
+        let Some(code_challenge_methods) =
+            &self.authorization_server.oauth.code_challenge_methods_supported
+        else {
+            bail!("code challenge methods missing from authorization server metadata");
+        };
+
+        // PKCE pair
+        let verifier = pkce::code_verifier();
+        let code_challenge = pkce::code_challenge(&verifier);
+
+        let request = AuthorizationRequest::Object(RequestObject {
+            credential_issuer: self.issuer.credential_issuer.clone(),
+            response_type: self.authorization_server.oauth.response_types_supported[0].clone(),
+            client_id: self.client_id.clone(),
+            redirect_uri: redirect_uri.map(ToString::to_string),
+            state: Some(self.id.clone()),
+            code_challenge,
+            code_challenge_method: code_challenge_methods[0].clone(),
+            authorization_details: None,
+            scope: Some(scope.into()),
+            resource: Some(self.issuer.credential_issuer.clone()),
+            subject_id: self.subject_id.clone(),
+            wallet_issuer: None,
+            user_hint: Some(self.id.clone()),
+            issuer_state: None,
+        });
+
+        Ok((request, verifier))
+    }
+
+    /// Create a scope-based token request from the current state.
+    #[must_use]
+    pub fn token_request(
+        &self, auth_code: &str, verifier: &str, redirect_uri: Option<&str>,
+    ) -> TokenRequest {
+        TokenRequest {
+            credential_issuer: self.issuer.credential_issuer.clone(),
+            client_id: Some(self.client_id.clone()),
+            grant_type: TokenGrantType::AuthorizationCode {
+                code: auth_code.to_string(),
+                redirect_uri: redirect_uri.map(ToString::to_string),
+                code_verifier: Some(verifier.into()),
+            },
+            authorization_details: None,
+            client_assertion: None,
+        }
+    }
 }
 
 impl IssuanceFlow<WithoutOffer, NotPreAuthorized, Accepted, WithoutToken> {
     /// Create an authorization request from the current state. The request and
     /// a PKCE code verifier are returned.
-    /// 
+    ///
     /// # Errors
     /// Will return an error if the authorization server does not support the
     /// authorization code grant.
@@ -644,18 +710,7 @@ impl<O, P, Ac> IssuanceFlow<O, P, Ac, WithoutToken> {
     }
 }
 
-impl<O, P, Ac> IssuanceFlow<O, P, Ac, WithToken> {
-    /// Convenience method to construct a proof so we can sign it and use it in
-    /// credential requests.
-    pub fn proof(&self) -> ProofClaims {
-        ProofClaims {
-            iss: Some(self.client_id.clone()),
-            aud: self.issuer.credential_issuer.clone(),
-            iat: chrono::Utc::now().timestamp(),
-            nonce: self.token.0.c_nonce.clone(),
-        }
-    }
-
+impl<O, P> IssuanceFlow<O, P, Accepted, WithToken> {
     /// Create a set of credential requests from the current state for the
     /// given set of credential identifiers (allows the user to select a
     /// subset of accepted credentials) and a proof JWT.
@@ -707,6 +762,50 @@ impl<O, P, Ac> IssuanceFlow<O, P, Ac, WithToken> {
             }
         }
         requests
+    }
+}
+
+impl<O, P> IssuanceFlow<O, P, NotAccepted, WithToken> {
+    /// Create a set of credential requests from the current state for the
+    /// given format and a proof JWT.
+    ///
+    /// # Errors
+    /// If no credential configuration can be found in the issuer metadata with
+    /// the given scope and format an error is returned.
+    pub fn credential_request(
+        &self, scope: &str, format: &Format, jwt: &str,
+    ) -> anyhow::Result<(String, CredentialRequest)> {
+        let Some((cfg_id, _config)) = &self
+            .issuer
+            .credential_configurations_supported
+            .iter()
+            .find(|(_, cfg)| cfg.scope.as_deref() == Some(scope) && cfg.format == *format)
+        else {
+            bail!("credential configuration not found for scope and format");
+        };
+        let request = CredentialRequest {
+            credential_issuer: self.issuer.credential_issuer.clone(),
+            access_token: self.token.0.access_token.clone(),
+            credential: CredentialIssuance::Format(format.clone()),
+            proof: Some(Proof::Single {
+                proof_type: SingleProof::Jwt { jwt: jwt.into() },
+            }),
+            ..Default::default()
+        };
+        Ok(((*cfg_id).to_string(), request))
+    }
+}
+
+impl<O, P, Ac> IssuanceFlow<O, P, Ac, WithToken> {
+    /// Convenience method to construct a proof so we can sign it and use it in
+    /// credential requests.
+    pub fn proof(&self) -> ProofClaims {
+        ProofClaims {
+            iss: Some(self.client_id.clone()),
+            aud: self.issuer.credential_issuer.clone(),
+            iat: chrono::Utc::now().timestamp(),
+            nonce: self.token.0.c_nonce.clone(),
+        }
     }
 
     /// Outstanding deferred credential transaction IDs (key) and corresponding
