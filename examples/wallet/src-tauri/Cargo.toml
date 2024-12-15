@@ -38,8 +38,6 @@ test-utils.workspace = true
 typeshare = "1.0.3"
 urlencoding = "2.1.3"
 vercre-holder.workspace = true
-vercre-infosec.workspace = true
-vercre-w3c-vc.workspace = true
 
 [dev-dependencies]
 

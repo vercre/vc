@@ -3,8 +3,8 @@
 use anyhow::bail;
 use vercre_holder::presentation::PresentationState;
 use vercre_holder::provider::{CredentialStorer, Verifier};
-use vercre_infosec::Signer;
-use vercre_w3c_vc::proof::{self, Payload, W3cFormat};
+use vercre_holder::Signer;
+use vercre_holder::proof::{self, Payload, W3cFormat};
 
 use super::{AppState, SubApp};
 use crate::provider::Provider;

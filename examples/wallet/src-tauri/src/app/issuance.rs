@@ -5,10 +5,10 @@ use test_utils::issuer::NORMAL_USER;
 use vercre_holder::issuance::{
     Accepted, IssuanceFlow, NotAccepted, PreAuthorized, WithOffer, WithToken, WithoutToken,
 };
+use vercre_holder::jose::{jws, Type};
+use vercre_holder::proof::{Payload, Verify};
 use vercre_holder::provider::{CredentialStorer, Issuer};
 use vercre_holder::{CredentialOffer, CredentialResponseType, MetadataRequest, OAuthServerRequest};
-use vercre_infosec::jose::{jws, Type};
-use vercre_w3c_vc::proof::{Payload, Verify};
 
 use super::{AppState, SubApp};
 use crate::provider::Provider;
@@ -131,7 +131,7 @@ impl AppState {
             CredentialResponseType::Credential(vc_kind) => {
                 // Single credential in response.
                 let Payload::Vc { vc, issued_at } =
-                    vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), provider.clone())
+                    vercre_holder::proof::verify(Verify::Vc(&vc_kind), provider.clone())
                         .await
                         .expect("should parse credential")
                 else {
@@ -143,7 +143,7 @@ impl AppState {
                 // Multiple credentials in response.
                 for vc_kind in creds {
                     let Payload::Vc { vc, issued_at } =
-                        vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), provider.clone())
+                        vercre_holder::proof::verify(Verify::Vc(&vc_kind), provider.clone())
                             .await
                             .expect("should parse credential")
                     else {
