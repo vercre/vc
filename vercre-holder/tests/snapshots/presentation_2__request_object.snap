@@ -1,0 +1,43 @@
+---
+source: vercre-holder/tests/presentation_2.rs
+assertion_line: 165
+expression: request_object
+snapshot_kind: text
+---
+response_type: vp_token
+client_id: "http://localhost:8080/post"
+response_mode: direct_post
+response_uri: "http://localhost:8080/post"
+nonce: "[nonce]"
+state: "[state]"
+presentation_definition:
+  id: "[presentation_definition_id]"
+  input_descriptors:
+    - id: EmployeeID_JWT
+      constraints:
+        fields:
+          - path:
+              - $.type
+            filter:
+              type: string
+              const: EmployeeIDCredential
+  purpose: To verify employment status
+  format:
+    jwt_vc:
+      alg:
+        - EdDSA
+client_id_scheme: redirect_uri
+client_metadata:
+  client_id: "http://localhost:8080"
+  redirect_uris:
+    - "http://localhost:3000/callback"
+  response_types:
+    - vp_token
+    - id_token vp_token
+  client_name: Verifier
+  vp_formats:
+    jwt_vp_json:
+      alg:
+        - ES256K
+      proof_type:
+        - JsonWebSignature2020

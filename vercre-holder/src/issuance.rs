@@ -37,7 +37,7 @@ pub struct AuthorizationSpec {
 }
 
 /// An issuance flow is used to orchestrate the change in state as the wallet
-/// progresses through a credential issuance flow.
+/// progresses through a credential issuance.
 #[derive(Clone, Debug)]
 pub struct IssuanceFlow<O, P, A, T> {
     offer: O,
@@ -45,7 +45,9 @@ pub struct IssuanceFlow<O, P, A, T> {
     accepted: A,
     token: T,
 
+    /// Perhaps useful to the wallet for tracking a particular flow instance.
     id: String,
+    
     client_id: String,
     subject_id: String,
     issuer: Issuer,
