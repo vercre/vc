@@ -1,11 +1,12 @@
-//! Tests for issuer-initiated pre-authorized issuance flow where the holder
-//! accepts all credentials and all claims on offer but the issuance is
-//! deferred.
+//! End to end tests for issuer-initiated issuance flow that requires
+//! authorization.
 mod provider;
 
 use insta::assert_yaml_snapshot;
-use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, PENDING_USER};
-use vercre_holder::issuance::{IssuanceFlow, NotAccepted, PreAuthorized, WithOffer, WithoutToken};
+use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, REDIRECT_URI};
+use vercre_holder::issuance::{
+    IssuanceFlow, NotAccepted, NotPreAuthorized, WithOffer, WithoutToken,
+};
 use vercre_holder::provider::{Issuer, MetadataRequest, OAuthServerRequest};
 use vercre_infosec::jose::{jws, Type};
 use vercre_issuer::{CredentialResponseType, OfferType, SendType};
@@ -17,7 +18,7 @@ use crate::provider as holder;
 // Test end-to-end pre-authorized issuance flow (issuer-initiated), with
 // acceptance of all credentials on offer.
 #[tokio::test]
-async fn preauth_deferred_2() {
+async fn issuer_auth() {
     // Use the issuance service endpoint to create a sample offer that we can
     // use to start the flow. This is test set-up only - wallets do not ask an
     // issuer for an offer. Usually this code is internal to an issuer service.
@@ -25,9 +26,9 @@ async fn preauth_deferred_2() {
     let request = create_offer_request!({
         "credential_issuer": CREDENTIAL_ISSUER,
         "credential_configuration_ids": ["EmployeeID_JWT"],
-        "subject_id": PENDING_USER,
-        "grant_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
-        "tx_code_required": true,
+        "subject_id": NORMAL_USER,
+        "grant_types": ["authorization_code"],
+        "tx_code_required": false, // Leave out PIN for this test
         "send_type": SendType::ByVal,
     });
 
@@ -42,7 +43,7 @@ async fn preauth_deferred_2() {
     let provider = holder::Provider::new(Some(issuer_provider), None);
 
     //--------------------------------------------------------------------------
-    // Get issuer metadata to flow state.
+    // Get issuer metadata.
     //--------------------------------------------------------------------------
     let metadata_request = MetadataRequest {
         credential_issuer: offer.credential_issuer.clone(),
@@ -62,23 +63,23 @@ async fn preauth_deferred_2() {
         provider.oauth_server(auth_request).await.expect("should get auth metadata");
 
     //--------------------------------------------------------------------------
-    // Initiate flow state with the offer and metadata.
+    // Initiate flow state with the offer and metadata. A wallet should check
+    // the grants on the offer and use the appropriate flow type.
     //--------------------------------------------------------------------------
+    assert!(offer.pre_authorized_code().is_none());
 
-    let pre_auth_code_grant = offer.pre_authorized_code().expect("should get pre-authorized code");
-    let state = IssuanceFlow::<WithOffer, PreAuthorized, NotAccepted, WithoutToken>::new(
+    let state = IssuanceFlow::<WithOffer, NotPreAuthorized, NotAccepted, WithoutToken>::new(
         CLIENT_ID,
-        PENDING_USER,
+        NORMAL_USER,
         issuer_metadata.credential_issuer,
         auth_metadata.authorization_server,
         offer,
-        pre_auth_code_grant,
     );
     let offered = state.offered();
 
     //--------------------------------------------------------------------------
-    // Present the offer to the holder for them to choose what to accept and
-    // then present a PIN input.
+    // Present the offer to the holder for them to choose what to accept. For
+    // this test, we omit the PIN requirement.
     //--------------------------------------------------------------------------
     insta::assert_yaml_snapshot!("offered", offered, {
         "." => insta::sorted_redaction(),
@@ -86,18 +87,24 @@ async fn preauth_deferred_2() {
         ".**.credentialSubject.address" => insta::sorted_redaction(),
     });
 
-    // For the test we can get the PIN from the offer response on the call to
-    // the issuance crate to create the offer. In a real-world scenario this
-    // will be sent to the holder on another channel.
-    let pin = offer_resp.tx_code.expect("should have user code");
-
     // By sending `None` we are accepting all credentials on offer.
-    let state = state.accept(&None, Some(pin));
+    let state = state.accept(&None, None);
+
+    // If there is no pre-authorized code, the wallet should use an
+    // authorization flow. The flow builder will give a runtime error if the
+    // authorization server does not support an authorized code grant. It will
+    // also fail if there are grants on the offer other than the authorization
+    // code grant. (It is OK if there are no grants on the offer but the server
+    // supports the authorization code grant.)
+    let (auth_request, verifier) = state
+        .authorization_request(Some(REDIRECT_URI))
+        .expect("should construct authorization request");
+    let auth_response = provider.authorization(auth_request).await.expect("should authorize");
 
     //--------------------------------------------------------------------------
-    // Request an access token from the issuer.
+    // Exchange the authorization code for an access token.
     //--------------------------------------------------------------------------
-    let token_request = state.token_request();
+    let token_request = state.token_request(&auth_response.code, &verifier, Some(REDIRECT_URI));
     let token_response = provider.token(token_request).await.expect("should get token response");
     let mut state = state.token(token_response.clone());
 
@@ -161,58 +168,6 @@ async fn preauth_deferred_2() {
                 state.add_deferred(&tx_id, &request.0);
             }
         }
-    }
-
-    // Because we used the test subject ID, PENDING_USER, the issuance should
-    // have been deferred.
-    let deferred = state.deferred();
-    assert_eq!(deferred.len(), 1);
-    assert_eq!(state.credentials().len(), 0);
-
-    //--------------------------------------------------------------------------
-    // Process deferred transaction.
-    //--------------------------------------------------------------------------
-    for (tx_id, cfg_id) in deferred {
-        let deferred_request = state.deferred_request(&tx_id);
-        let deferred_response = provider
-            .deferred(deferred_request)
-            .await
-            .expect("issuer should process deferred request");
-        match deferred_response.credential_response.response {
-            CredentialResponseType::Credential(vc_kind) => {
-                // Single credential in response.
-                let Payload::Vc { vc, issued_at } =
-                    vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), provider.clone())
-                        .await
-                        .expect("should parse credential")
-                else {
-                    panic!("expected Payload::Vc");
-                };
-                state
-                    .add_credential(&vc, &vc_kind, &issued_at, &cfg_id)
-                    .expect("should add credential");
-            }
-            CredentialResponseType::Credentials(creds) => {
-                // Multiple credentials in response.
-                for vc_kind in creds {
-                    let Payload::Vc { vc, issued_at } =
-                        vercre_w3c_vc::proof::verify(Verify::Vc(&vc_kind), provider.clone())
-                            .await
-                            .expect("should parse credential")
-                    else {
-                        panic!("expected Payload::Vc");
-                    };
-                    state
-                        .add_credential(&vc, &vc_kind, &issued_at, &cfg_id)
-                        .expect("should add credential");
-                }
-            }
-            CredentialResponseType::TransactionId(tx_id) => {
-                // Deferred transaction ID (assumes we get a new one)
-                state.add_deferred(&tx_id, &cfg_id);
-            }
-        }
-        state.remove_deferred(&tx_id);
     }
 
     // The flow is complete and the credential on the issuance state could now

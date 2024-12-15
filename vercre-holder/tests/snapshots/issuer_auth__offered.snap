@@ -1,6 +1,6 @@
 ---
-source: vercre-holder/tests/preauth_2.rs
-assertion_line: 82
+source: vercre-holder/tests/issuer_auth.rs
+assertion_line: 84
 expression: offered
 snapshot_kind: text
 ---
