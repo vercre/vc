@@ -5,13 +5,12 @@
 //! translated into a view model for the shell to render.
 
 mod credential;
-mod issuance;
+pub mod issuance;
 mod presentation;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 use vercre_holder::credential::Credential;
-use vercre_holder::issuance::IssuanceState;
 use vercre_holder::presentation::PresentationState;
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -26,7 +25,7 @@ pub enum SubApp {
 }
 
 /// Application state
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Default)]
 #[allow(clippy::module_name_repetitions)]
 pub struct AppState {
     /// The sub-app currently active
@@ -34,7 +33,7 @@ pub struct AppState {
     /// Credentials stored in the wallet
     pub credential: Vec<Credential>,
     /// State of issuance flow (if active)
-    pub issuance: IssuanceState,
+    pub issuance: issuance::IssuanceState,
     /// State of presentation flow (if active)
     pub presentation: PresentationState,
     /// Error information

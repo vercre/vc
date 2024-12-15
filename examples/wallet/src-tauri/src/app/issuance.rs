@@ -2,7 +2,9 @@
 
 use anyhow::bail;
 use test_utils::issuer::NORMAL_USER;
-use vercre_holder::issuance::{CredentialRequestType, FlowType, IssuanceState};
+use vercre_holder::issuance::{
+    Accepted, IssuanceFlow, NotAccepted, PreAuthorized, WithOffer, WithToken, WithoutToken,
+};
 use vercre_holder::provider::{CredentialStorer, Issuer};
 use vercre_holder::{CredentialOffer, CredentialResponseType, MetadataRequest, OAuthServerRequest};
 use vercre_infosec::jose::{jws, Type};
@@ -12,6 +14,25 @@ use super::{AppState, SubApp};
 use crate::provider::Provider;
 use crate::CLIENT_ID;
 
+/// Issuance flow state.
+#[derive(Clone, Debug, Default)]
+pub enum IssuanceState {
+    /// No issuance is in progress.
+    #[default]
+    Inactive,
+
+    /// An offer has been received, has been combined with metadata and is
+    /// ready to present to the user for acceptance.
+    Offered(IssuanceFlow<WithOffer, PreAuthorized, NotAccepted, WithoutToken>),
+
+    /// An offer has been accepted.
+    /// A PIN may also be set on this state.
+    Accepted(IssuanceFlow<WithOffer, PreAuthorized, Accepted, WithoutToken>),
+
+    /// An offer has been accepted and a token has been received.
+    Token(IssuanceFlow<WithOffer, PreAuthorized, Accepted, WithToken>),
+}
+
 impl AppState {
     /// Process a credential issuance offer.
     pub async fn offer(&mut self, encoded_offer: &str, provider: Provider) -> anyhow::Result<()> {
@@ -20,36 +41,35 @@ impl AppState {
 
         // Check the offer has a pre-authorized grant. This is the only flow
         // type supported by this example.
-        let Some(grants) = &offer.grants else {
-            bail!("no grants in offer is not supported");
-        };
-        if grants.pre_authorized_code.is_none() {
+        let Some(pre_auth_code_grant) = offer.pre_authorized_code() else {
             bail!("grant other than pre-authorized code is not supported");
-        }
+        };
 
-        // Initiate flow state.
-        let mut state = IssuanceState::new(FlowType::IssuerPreAuthorized, CLIENT_ID, NORMAL_USER);
-
-        // Add issuer metadata to flow state.
+        // Get issuer metadata.
         let metadata_request = MetadataRequest {
             credential_issuer: offer.credential_issuer.clone(),
             languages: None,
         };
         let issuer_metadata = provider.metadata(metadata_request).await?;
-        state.issuer(issuer_metadata.credential_issuer)?;
 
-        // Add authorization server metadata to flow state.
+        // Get authorization server metadata.
         let auth_request = OAuthServerRequest {
             credential_issuer: offer.credential_issuer.clone(),
             issuer: None,
         };
         let auth_metadata = provider.oauth_server(auth_request).await?;
-        state.authorization_server(auth_metadata.authorization_server)?;
 
-        // Unpack the offer into the flow state.
-        state.offer(&offer)?;
+        // Initiate flow state with the offer and metadata.
+        let state = IssuanceFlow::<WithOffer, PreAuthorized, NotAccepted, WithoutToken>::new(
+            CLIENT_ID,
+            NORMAL_USER,
+            issuer_metadata.credential_issuer,
+            auth_metadata.authorization_server,
+            offer,
+            pre_auth_code_grant,
+        );
 
-        self.issuance = state;
+        self.issuance = IssuanceState::Offered(state);
         self.sub_app = SubApp::Issuance;
         Ok(())
     }
@@ -58,34 +78,53 @@ impl AppState {
     pub fn accept(&mut self) -> anyhow::Result<()> {
         // Just accept whatever is offered. In a real app, the user would need
         // to select which credentials to accept.
-        self.issuance.accept(&None)
+        match &self.issuance {
+            IssuanceState::Offered(state) => {
+                let accepted = state.clone().accept(&None, None);
+                self.issuance = IssuanceState::Accepted(accepted);
+                Ok(())
+            }
+            _ => bail!("no offer to accept"),
+        }
     }
 
     /// Set a PIN
     pub fn pin(&mut self, pin: &str) -> anyhow::Result<()> {
-        self.issuance.pin(pin)
+        match &self.issuance {
+            IssuanceState::Accepted(accepted) => {
+                let mut state = accepted.clone();
+                state.set_pin(pin);
+                self.issuance = IssuanceState::Accepted(state);
+                Ok(())
+            }
+            _ => bail!("no offer to accept"),
+        }
     }
 
     /// Get the credentials for the accepted issuance offer.
     pub async fn credentials(&mut self, provider: Provider) -> anyhow::Result<()> {
-        log::info!("Getting an access token for issuance {}", self.issuance.id);
-        let token_request = self.issuance.token_request(None, None)?;
-        let token_response = provider.token(token_request).await?;
-        self.issuance.token(&token_response)?;
+        let state = match &self.issuance {
+            IssuanceState::Accepted(s) => s.clone(),
+            _ => bail!("unexpected issuance state for constructing a token request"),
+        };
+        log::info!("Getting an access token for issuance {}", state.id());
 
-        log::info!("Getting credentials for issuance {}", self.issuance.id);
+        // Request an access token from the issuer.
+        let token_request = state.clone().token_request();
+        let token_response = provider.token(token_request).await?;
+        let mut state = state.token(token_response.clone());
+
+        log::info!("Getting credentials for issuance {}", state.id());
         // In a real app, there may be multiple credentials to receive. We just
         // take the first one in this example.
         let Some(authorized) = &token_response.authorization_details else {
             bail!("no authorized credentials in token response");
         };
         let identifier = authorized[0].credential_identifiers[0].clone();
-        let jws_claims = self.issuance.proof()?;
+        let jws_claims = state.proof();
         let jwt = jws::encode(Type::Openid4VciProofJwt, &jws_claims, &provider).await?;
-        let requests = self.issuance.credential_requests(
-            CredentialRequestType::CredentialIdentifiers(vec![identifier]),
-            &jwt,
-        )?;
+
+        let requests = state.credential_requests(&[identifier], &jwt).clone();
         let request = requests[0].clone();
         let credential_response = provider.credential(request.1).await?;
         match credential_response.response {
@@ -98,9 +137,7 @@ impl AppState {
                 else {
                     panic!("expected Payload::Vc");
                 };
-                self.issuance
-                    .add_credential(&vc, &vc_kind, &issued_at, &request.0)
-                    .expect("should add credential");
+                state.add_credential(&vc, &vc_kind, &issued_at, &request.0)?;
             }
             CredentialResponseType::Credentials(creds) => {
                 // Multiple credentials in response.
@@ -112,16 +149,16 @@ impl AppState {
                     else {
                         panic!("expected Payload::Vc");
                     };
-                    self.issuance
-                        .add_credential(&vc, &vc_kind, &issued_at, &request.0)
-                        .expect("should add credential");
+                    state.add_credential(&vc, &vc_kind, &issued_at, &request.0)?;
                 }
             }
             CredentialResponseType::TransactionId(tx_id) => {
                 // Deferred transaction ID.
-                self.issuance.add_deferred(&tx_id, &request.0);
+                state.add_deferred(&tx_id, &request.0);
             }
         }
+
+        self.issuance = IssuanceState::Token(state);
         Ok(())
     }
 
@@ -129,7 +166,12 @@ impl AppState {
     // TODO: Notify issuer of completion or failure if the issuer has given us
     // a notification ID.
     pub async fn save(&self, provider: Provider) -> anyhow::Result<()> {
-        for credential in &self.issuance.credentials {
+        let state = match &self.issuance {
+            IssuanceState::Token(s) => s.clone(),
+            _ => bail!("unexpected issuance state for saving credentials"),
+        };
+        let credentials = state.credentials();
+        for credential in &credentials {
             provider.save(credential).await?;
         }
         Ok(())

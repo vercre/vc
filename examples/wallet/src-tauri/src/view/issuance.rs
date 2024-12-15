@@ -4,9 +4,9 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use vercre_holder::issuance::IssuanceState;
 use vercre_holder::TxCode;
 
+use crate::app::issuance::IssuanceState;
 use crate::view::credential::CredentialDisplay;
 
 /// Issuance flow viewable state
@@ -26,23 +26,29 @@ pub struct IssuanceView {
 impl From<IssuanceState> for IssuanceView {
     fn from(state: IssuanceState) -> Self {
         let mut creds: HashMap<String, CredentialDisplay> = HashMap::new();
-        let on_offer = state.offered().unwrap_or_default();
-        let issuer = state.issuer.clone().unwrap_or_default();
+        let (on_offer, issuer, offer, pin) = match state {
+            IssuanceState::Inactive => return Self::default(),
+            IssuanceState::Offered(state) => (state.offered(), state.issuer(), state.offer(), None),
+            IssuanceState::Accepted(state) => {
+                (state.offered(), state.issuer(), state.offer(), state.pin())
+            }
+            IssuanceState::Token(state) => {
+                (state.offered(), state.issuer(), state.offer(), state.pin())
+            }
+        };
         for (id, offered) in &on_offer {
             let mut cred: CredentialDisplay = offered.into();
             cred.issuer = Some(issuer.credential_issuer.clone());
             creds.insert(id.clone(), cred);
         }
-        let schema = state.offer.as_ref().and_then(|offer| {
-            offer.grants.as_ref().and_then(|grants| {
-                grants.pre_authorized_code.as_ref().and_then(|pre_auth| {
-                    pre_auth.tx_code.as_ref().map(|tx_code| tx_code.clone().into())
-                })
-            })
-        });
+        let tx_code = match offer.pre_authorized_code() {
+            Some(pre_auth) => pre_auth.tx_code,
+            None => None,
+        };
+        let schema = tx_code.map(Into::into);
         Self {
             credentials: creds,
-            pin: state.pin,
+            pin,
             pin_schema: schema,
         }
     }
