@@ -131,7 +131,7 @@ async fn sample_credential() -> Credential {
 }
 
 #[tokio::test]
-async fn presentation_uri_2() {
+async fn presentation_uri() {
     // Have a credential saved in the wallet ready to present.
     let credential = sample_credential().await;
     let verifier_provider = verifier::Provider::new();
@@ -225,7 +225,7 @@ async fn presentation_uri_2() {
 }
 
 #[tokio::test]
-async fn presentation_obj_2() {
+async fn presentation_obj() {
     // Have a credential saved in the wallet ready to present.
     let credential = sample_credential().await;
     let verifier_provider = verifier::Provider::new();

@@ -1,6 +1,6 @@
 ---
-source: vercre-holder/tests/presentation_2.rs
-assertion_line: 309
+source: vercre-holder/tests/presentation.rs
+assertion_line: 307
 expression: response
 snapshot_kind: text
 ---

@@ -1,11 +1,13 @@
 ---
-source: vercre-holder/tests/presentation_2.rs
-assertion_line: 251
+source: vercre-holder/tests/presentation.rs
+assertion_line: 163
 expression: request_object
 snapshot_kind: text
 ---
 response_type: vp_token
-client_id: "http://localhost:8080/callback"
+client_id: "http://localhost:8080/post"
+response_mode: direct_post
+response_uri: "http://localhost:8080/post"
 nonce: "[nonce]"
 state: "[state]"
 presentation_definition:
