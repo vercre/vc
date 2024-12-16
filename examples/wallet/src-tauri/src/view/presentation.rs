@@ -4,8 +4,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
-use vercre_holder::presentation::{PresentationState, Status};
 
+use crate::app::presentation::PresentationState;
 use crate::view::credential::CredentialDisplay;
 
 /// Status of the presentation flow. This is re-typed instead of using the
@@ -24,19 +24,15 @@ pub enum PresentationStatus {
 
     /// The authorization request has been authorized.
     Authorized,
-
-    /// The authorization request has failed, with an error message.
-    Failed,
 }
 
 /// Convert from `vercre_holder::presentation::Status` to `PresentationStatus`
-impl From<Status> for PresentationStatus {
-    fn from(status: Status) -> Self {
+impl From<PresentationState> for PresentationStatus {
+    fn from(status: PresentationState) -> Self {
         match status {
-            Status::Inactive => Self::Inactive,
-            Status::Requested | Status::CredentialsSet => Self::Requested,
-            Status::Authorized => Self::Authorized,
-            Status::Failed(_) => Self::Failed,
+            PresentationState::Inactive => Self::Inactive,
+            PresentationState::Requested(_, _) => Self::Requested,
+            PresentationState::Authorized(_) => Self::Authorized,
         }
     }
 }
@@ -56,11 +52,22 @@ pub struct PresentationView {
 impl From<PresentationState> for PresentationView {
     fn from(state: PresentationState) -> Self {
         let mut creds = HashMap::new();
-        for cred in &state.credentials {
-            creds.insert(cred.id.clone(), cred.into());
+        match state.clone() {
+            PresentationState::Inactive => (),
+            PresentationState::Requested(_flow, credentials) => {
+                for cred in &credentials {
+                    creds.insert(cred.id.clone(), cred.into());
+                }
+            }
+            PresentationState::Authorized(flow) => {
+                let credentials = flow.credentials();
+                for cred in &credentials {
+                    creds.insert(cred.id.clone(), cred.into());
+                }
+            }
         }
         Self {
-            status: state.status.into(),
+            status: state.into(),
             credentials: creds,
         }
     }

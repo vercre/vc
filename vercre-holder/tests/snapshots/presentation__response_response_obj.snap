@@ -1,8 +1,0 @@
----
-source: vercre-holder/tests/presentation.rs
-assertion_line: 320
-expression: response
-snapshot_kind: text
----
-redirect_uri: "http://localhost:3000/cb"
-response_code: ~

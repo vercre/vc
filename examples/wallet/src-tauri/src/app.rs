@@ -6,12 +6,11 @@
 
 mod credential;
 pub mod issuance;
-mod presentation;
+pub mod presentation;
 
 use serde::{Deserialize, Serialize};
 use typeshare::typeshare;
 use vercre_holder::credential::Credential;
-use vercre_holder::presentation::PresentationState;
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[typeshare]
@@ -35,7 +34,7 @@ pub struct AppState {
     /// State of issuance flow (if active)
     pub issuance: issuance::IssuanceState,
     /// State of presentation flow (if active)
-    pub presentation: PresentationState,
+    pub presentation: presentation::PresentationState,
     /// Error information
     pub error: Option<String>,
 }

@@ -2,17 +2,10 @@
 //!
 //! The Presentation endpoints implement the vercre-holder's credential
 //! presentation flow.
-
-pub(crate) mod authorize;
-pub(crate) mod present;
-pub(crate) mod request;
-
-use std::fmt::{Debug, Display};
-use std::str::FromStr;
+use std::fmt::Debug;
 use std::vec;
 
 use anyhow::{anyhow, bail};
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use vercre_core::{urlencode, Kind};
 use vercre_did::DidResolver;
@@ -28,97 +21,6 @@ use vercre_w3c_vc::proof::Payload;
 use vercre_w3c_vc::verify_key;
 
 use crate::credential::Credential;
-
-/// `PresentationState` maintains app state across steps of the presentation flow.
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-pub struct PresentationState {
-    /// The unique identifier for the presentation flow. Not used internally but
-    /// passed to providers so that wallet clients can track interactions
-    /// with specific flows.
-    pub id: String,
-
-    /// The current status of the presentation flow.
-    pub status: Status,
-
-    /// The request object received from the verifier.
-    pub request: RequestObject,
-
-    /// The list of credentials matching the verifier's request (Presentation
-    /// Definition).
-    pub credentials: Vec<Credential>,
-
-    /// The `JSONPath` query used to match credentials to the verifier's
-    /// request.
-    pub filter: Constraints,
-
-    /// The presentation submission token.
-    pub submission: PresentationSubmission,
-}
-
-impl PresentationState {
-    /// Create a new presentation flow.
-    #[must_use]
-    pub fn new() -> Self {
-        Self {
-            id: Uuid::new_v4().to_string(),
-            status: Status::Inactive,
-            ..Default::default()
-        }
-    }
-}
-
-/// Presentation Status values.
-#[derive(Default, Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
-#[serde(rename = "PresentationStatus")]
-pub enum Status {
-    /// No authorization request is being processed.
-    #[default]
-    Inactive,
-
-    /// A new authorization request has been received.
-    Requested,
-
-    /// Credentials have been selected from the wallet that match the
-    /// presentation request.
-    CredentialsSet,
-
-    /// The authorization request has been authorized.
-    Authorized,
-
-    /// The authorization request has failed, with an error message.
-    Failed(String),
-}
-
-/// Get a string representation of the `Status`.
-impl Display for Status {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Inactive => write!(f, "Inactive"),
-            Self::Requested => write!(f, "Requested"),
-            Self::CredentialsSet => write!(f, "CredentialsSet"),
-            Self::Authorized => write!(f, "Authorized"),
-            Self::Failed(e) => write!(f, "Failed: {e}"),
-        }
-    }
-}
-
-/// Parse a `Status` from a string.
-impl FromStr for Status {
-    // TODO: strongly typed error
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> anyhow::Result<Self> {
-        if s.starts_with("Failed") {
-            return Ok(Self::Failed(s[8..].to_string()));
-        }
-        match s {
-            "Inactive" => Ok(Self::Inactive),
-            "Requested" => Ok(Self::Requested),
-            "Authorized" => Ok(Self::Authorized),
-            _ => Err(anyhow!("Invalid status: {s}")),
-        }
-    }
-}
 
 /// Utility to extract a presentation `RequestObject` from a URL-encoded string.
 /// If the request string can be decoded but appears to be something other than
@@ -145,38 +47,21 @@ pub fn parse_request_object(request: &str) -> anyhow::Result<Option<RequestObjec
 /// A presentation flow is used to orchestrate the change in state as the
 /// wallet progresses through a credential verification.
 #[derive(Clone, Debug)]
-pub struct PresentationFlow<U, R, A> {
-    uri: U,
-    request: R,
+pub struct PresentationFlow<A> {
     authorize: A,
 
     /// Perhaps useful to the wallet for tracking a particular flow instance.
     id: String,
+    request: RequestObject,
+    submission: PresentationSubmission,
 }
 
-impl<U, R, A> PresentationFlow<U, R, A> {
+impl<A> PresentationFlow<A> {
     /// Get the ID of the issuance flow.
     pub fn id(&self) -> String {
         self.id.clone()
     }
 }
-
-/// Type guard for a `PresentationFlow` that has been requested with a URI.
-#[derive(Clone, Debug)]
-pub struct WithUri(String);
-/// Type guard for a `PresentationFlow` that has been requested directly with a
-/// `RequestObject`, so has no URI,
-#[derive(Clone, Debug)]
-pub struct WithoutUri;
-
-/// Type guard for a `PresentationFlow` that has a `RequestObject` either
-/// because it was requested directly or because it was parsed from a URI.
-#[derive(Clone, Debug)]
-pub struct WithRequest(RequestObject, PresentationSubmission);
-/// Type guard for a `PresentationFlow` that has not yet had a request object
-/// resolved.
-#[derive(Clone, Debug)]
-pub struct WithoutRequest;
 
 /// Type guard for a `PresentationFlow` that has been authorized.
 #[derive(Clone, Debug)]
@@ -185,47 +70,7 @@ pub struct Authorized(Vec<Credential>);
 #[derive(Clone, Debug)]
 pub struct NotAuthorized;
 
-impl PresentationFlow<WithUri, WithoutRequest, NotAuthorized> {
-    /// Create a new presentation flow with a URI.
-    #[must_use]
-    pub fn new(uri: String) -> Self {
-        Self {
-            uri: WithUri(uri),
-            request: WithoutRequest,
-            authorize: NotAuthorized,
-
-            id: Uuid::new_v4().to_string(),
-        }
-    }
-
-    /// Add a request object to the presentation flow.
-    ///
-    /// # Errors
-    /// Will return an error if the request object does not contain a
-    /// presentation definition object: this is the only currently supported
-    /// type.
-    pub fn request(
-        self, request: RequestObject,
-    ) -> anyhow::Result<PresentationFlow<WithUri, WithRequest, NotAuthorized>> {
-        let submission = create_submission(&request)?;
-        Ok(PresentationFlow {
-            uri: self.uri,
-            request: WithRequest(request, submission),
-            authorize: NotAuthorized,
-
-            id: self.id,
-        })
-    }
-}
-
-impl<R, A> PresentationFlow<WithUri, R, A> {
-    /// Get the URI of the verifiers request from current state.
-    pub fn uri(&self) -> String {
-        self.uri.0.clone()
-    }
-}
-
-impl PresentationFlow<WithoutUri, WithRequest, NotAuthorized> {
+impl PresentationFlow<NotAuthorized> {
     /// Create a new presentation flow with a request object.
     /// 
     /// # Errors
@@ -235,16 +80,13 @@ impl PresentationFlow<WithoutUri, WithRequest, NotAuthorized> {
     pub fn new(request: RequestObject) -> anyhow::Result<Self> {
         let submission = create_submission(&request)?;
         Ok(Self {
-            uri: WithoutUri,
-            request: WithRequest(request, submission),
             authorize: NotAuthorized,
 
             id: Uuid::new_v4().to_string(),
+            request,
+            submission,
         })
     }
-}
-
-impl<U> PresentationFlow<U, WithRequest, NotAuthorized> {
     /// Get a filter from the request object on the state.
     /// 
     /// # Errors
@@ -252,7 +94,7 @@ impl<U> PresentationFlow<U, WithRequest, NotAuthorized> {
     /// presentation definition object: this is the only currently supported
     /// type.
     pub fn filter(&self) -> anyhow::Result<Constraints> {
-        let pd = match &self.request.0.presentation_definition {
+        let pd = match &self.request.presentation_definition {
             Kind::Object(pd) => pd,
             Kind::String(_) => bail!("presentation_definition_uri is unsupported"),
         };
@@ -265,20 +107,21 @@ impl<U> PresentationFlow<U, WithRequest, NotAuthorized> {
     }
 
     /// Authorize the presentation flow.
+    #[must_use]
     pub fn authorize(
         self, credentials: &[Credential],
-    ) -> PresentationFlow<U, WithRequest, Authorized> {
+    ) -> PresentationFlow<Authorized> {
         PresentationFlow {
-            uri: self.uri,
-            request: self.request,
             authorize: Authorized(credentials.to_vec()),
 
             id: self.id,
+            request: self.request,
+            submission: self.submission,
         }
     }
 }
 
-impl<U> PresentationFlow<U, WithRequest, Authorized> {
+impl PresentationFlow<Authorized> {
     /// Construct a presentation payload.
     ///
     /// # Errors
@@ -293,7 +136,7 @@ impl<U> PresentationFlow<U, WithRequest, Authorized> {
             .add_context(Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()))
             .holder(holder_did);
 
-        let pd = match &self.request.0.presentation_definition {
+        let pd = match &self.request.presentation_definition {
             Kind::Object(pd) => pd,
             Kind::String(_) => bail!("presentation_definition_uri is unsupported"),
         };
@@ -317,8 +160,8 @@ impl<U> PresentationFlow<U, WithRequest, Authorized> {
 
         let payload = Payload::Vp {
             vp,
-            client_id: self.request.0.client_id.clone(),
-            nonce: self.request.0.nonce.clone(),
+            client_id: self.request.client_id.clone(),
+            nonce: self.request.nonce.clone(),
         };
 
         Ok(payload)
@@ -330,12 +173,18 @@ impl<U> PresentationFlow<U, WithRequest, Authorized> {
     pub fn create_response_request(&self, jwt: &str) -> (ResponseRequest, Option<String>) {
         let res_req = ResponseRequest {
             vp_token: Some(vec![Kind::String(jwt.into())]),
-            presentation_submission: Some(self.request.1.clone()),
-            state: self.request.0.state.clone(),
+            presentation_submission: Some(self.submission.clone()),
+            state: self.request.state.clone(),
         };
         let res_uri =
-            self.request.0.response_uri.clone().map(|uri| uri.trim_end_matches('/').to_string());
+            self.request.response_uri.clone().map(|uri| uri.trim_end_matches('/').to_string());
         (res_req, res_uri)
+    }
+
+    /// Get the credentials from the authorized presentation flow.
+    #[must_use]
+    pub fn credentials(&self) -> Vec<Credential> {
+        self.authorize.0.clone()
     }
 }
 

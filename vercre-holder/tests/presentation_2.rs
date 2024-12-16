@@ -11,8 +11,7 @@ use vercre_core::{Kind, Quota};
 use vercre_dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use vercre_holder::credential::Credential;
 use vercre_holder::presentation::{
-    parse_request_object_response, NotAuthorized, PresentationFlow, WithRequest,
-    WithUri, WithoutRequest, WithoutUri,
+    parse_request_object_response, NotAuthorized, PresentationFlow,
 };
 use vercre_holder::provider::{CredentialStorer, Verifier};
 use vercre_infosec::{KeyOps, Signer};
@@ -152,7 +151,6 @@ async fn presentation_uri_2() {
     // Initiate the presentation flow state using a URL.
     //--------------------------------------------------------------------------
     let url = init_request.request_uri.expect("should have request uri");
-    let state = PresentationFlow::<WithUri, WithoutRequest, NotAuthorized>::new(url.clone());
 
     //--------------------------------------------------------------------------
     // Parse and verify the request object.
@@ -171,7 +169,7 @@ async fn presentation_uri_2() {
     //--------------------------------------------------------------------------
     // Store the request in state.
     //--------------------------------------------------------------------------
-    let state = state.request(request_object).expect("should have a valid request object");
+    let state = PresentationFlow::<NotAuthorized>::new(request_object).expect("should have a valid request object");
     let filter = state.filter().expect("should build filter from request object");
 
     //--------------------------------------------------------------------------
@@ -253,7 +251,7 @@ async fn presentation_obj_2() {
         ".state" => "[state]",
         ".presentation_definition.id" => "[presentation_definition_id]",
     });
-    let state = PresentationFlow::<WithoutUri, WithRequest, NotAuthorized>::new(request_object)
+    let state = PresentationFlow::<NotAuthorized>::new(request_object)
         .expect("should have a valid request object");
     let filter = state.filter().expect("should build filter from request object");
 
