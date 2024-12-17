@@ -4,9 +4,7 @@ mod provider;
 
 use insta::assert_yaml_snapshot;
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, REDIRECT_URI};
-use vercre_holder::issuance::{
-    IssuanceFlow, NotAccepted, NotPreAuthorized, WithoutOffer, WithoutToken,
-};
+use vercre_holder::issuance::{AuthCode, IssuanceFlow, NotAccepted, WithoutOffer, WithoutToken};
 use vercre_holder::provider::{Issuer, MetadataRequest, OAuthServerRequest};
 use vercre_infosec::jose::{jws, Type};
 use vercre_issuer::CredentialResponseType;
@@ -44,7 +42,7 @@ async fn wallet_scope() {
     //--------------------------------------------------------------------------
     // Initiate flow state with the offer and metadata.
     //--------------------------------------------------------------------------
-    let state = IssuanceFlow::<WithoutOffer, NotPreAuthorized, NotAccepted, WithoutToken>::new(
+    let state = IssuanceFlow::<WithoutOffer, AuthCode, NotAccepted, WithoutToken>::new(
         CLIENT_ID,
         NORMAL_USER,
         issuer_metadata.credential_issuer.clone(),

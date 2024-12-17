@@ -10,7 +10,7 @@ use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 use vercre_holder::issuance::{
     AuthorizationSpec, IssuanceFlow, NotAccepted, PreAuthorized, WithOffer, WithoutToken,
 };
-use vercre_holder::provider::{Issuer, MetadataRequest, OAuthServerRequest};
+use vercre_holder::provider::{Issuer, MetadataRequest};
 use vercre_holder::Claim;
 use vercre_infosec::jose::{jws, Type};
 use vercre_issuer::{CredentialResponseType, OfferType, SendType};
@@ -57,16 +57,6 @@ async fn preauth_narrow() {
         provider.metadata(metadata_request).await.expect("should get issuer metadata");
 
     //--------------------------------------------------------------------------
-    // Get authorization server metadata.
-    //--------------------------------------------------------------------------
-    let auth_request = OAuthServerRequest {
-        credential_issuer: offer.credential_issuer.clone(),
-        issuer: None,
-    };
-    let auth_metadata =
-        provider.oauth_server(auth_request).await.expect("should get auth metadata");
-
-    //--------------------------------------------------------------------------
     // Initiate flow state with the offer and metadata.
     //--------------------------------------------------------------------------
 
@@ -75,7 +65,6 @@ async fn preauth_narrow() {
         CLIENT_ID,
         NORMAL_USER,
         issuer_metadata.credential_issuer,
-        auth_metadata.authorization_server,
         offer,
         pre_auth_code_grant,
     );

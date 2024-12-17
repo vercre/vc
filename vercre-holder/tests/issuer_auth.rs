@@ -5,7 +5,7 @@ mod provider;
 use insta::assert_yaml_snapshot;
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, REDIRECT_URI};
 use vercre_holder::issuance::{
-    IssuanceFlow, NotAccepted, NotPreAuthorized, WithOffer, WithoutToken,
+    IssuanceFlow, NotAccepted, AuthCode, WithOffer, WithoutToken,
 };
 use vercre_holder::provider::{Issuer, MetadataRequest, OAuthServerRequest};
 use vercre_infosec::jose::{jws, Type};
@@ -68,7 +68,7 @@ async fn issuer_auth() {
     //--------------------------------------------------------------------------
     assert!(offer.pre_authorized_code().is_none());
 
-    let state = IssuanceFlow::<WithOffer, NotPreAuthorized, NotAccepted, WithoutToken>::new(
+    let state = IssuanceFlow::<WithOffer, AuthCode, NotAccepted, WithoutToken>::new(
         CLIENT_ID,
         NORMAL_USER,
         issuer_metadata.credential_issuer,

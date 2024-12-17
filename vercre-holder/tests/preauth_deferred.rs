@@ -6,7 +6,7 @@ mod provider;
 use insta::assert_yaml_snapshot;
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, PENDING_USER};
 use vercre_holder::issuance::{IssuanceFlow, NotAccepted, PreAuthorized, WithOffer, WithoutToken};
-use vercre_holder::provider::{Issuer, MetadataRequest, OAuthServerRequest};
+use vercre_holder::provider::{Issuer, MetadataRequest};
 use vercre_infosec::jose::{jws, Type};
 use vercre_issuer::{CredentialResponseType, OfferType, SendType};
 use vercre_macros::create_offer_request;
@@ -52,16 +52,6 @@ async fn preauth_deferred() {
         provider.metadata(metadata_request).await.expect("should get issuer metadata");
 
     //--------------------------------------------------------------------------
-    // Get authorization server metadata.
-    //--------------------------------------------------------------------------
-    let auth_request = OAuthServerRequest {
-        credential_issuer: offer.credential_issuer.clone(),
-        issuer: None,
-    };
-    let auth_metadata =
-        provider.oauth_server(auth_request).await.expect("should get auth metadata");
-
-    //--------------------------------------------------------------------------
     // Initiate flow state with the offer and metadata.
     //--------------------------------------------------------------------------
 
@@ -70,7 +60,6 @@ async fn preauth_deferred() {
         CLIENT_ID,
         PENDING_USER,
         issuer_metadata.credential_issuer,
-        auth_metadata.authorization_server,
         offer,
         pre_auth_code_grant,
     );

@@ -8,7 +8,7 @@ use vercre_holder::issuance::{
 use vercre_holder::jose::{jws, Type};
 use vercre_holder::proof::{Payload, Verify};
 use vercre_holder::provider::{CredentialStorer, Issuer};
-use vercre_holder::{CredentialOffer, CredentialResponseType, MetadataRequest, OAuthServerRequest};
+use vercre_holder::{CredentialOffer, CredentialResponseType, MetadataRequest};
 
 use super::{AppState, SubApp};
 use crate::provider::Provider;
@@ -52,19 +52,11 @@ impl AppState {
         };
         let issuer_metadata = provider.metadata(metadata_request).await?;
 
-        // Get authorization server metadata.
-        let auth_request = OAuthServerRequest {
-            credential_issuer: offer.credential_issuer.clone(),
-            issuer: None,
-        };
-        let auth_metadata = provider.oauth_server(auth_request).await?;
-
         // Initiate flow state with the offer and metadata.
         let state = IssuanceFlow::<WithOffer, PreAuthorized, NotAccepted, WithoutToken>::new(
             CLIENT_ID,
             NORMAL_USER,
             issuer_metadata.credential_issuer,
-            auth_metadata.authorization_server,
             offer,
             pre_auth_code_grant,
         );
