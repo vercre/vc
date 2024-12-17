@@ -29,11 +29,12 @@ impl Verifier for Provider {
         let Some(presentation_url) = uri else {
             return Err(anyhow::anyhow!("No URI provided"));
         };
+        let form = presentation.form_encode()?;
         let result = client
             .post(presentation_url)
             .header(CONTENT_TYPE, "multipart/form-data")
             .header(ACCEPT, "application/json")
-            .form(presentation)
+            .form(&form)
             .send()
             .await?;
         let response = match result.json::<ResponseResponse>().await {

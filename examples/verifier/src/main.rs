@@ -6,6 +6,8 @@
 
 mod provider;
 
+use std::collections::HashMap;
+
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -22,7 +24,7 @@ use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 use vercre_verifier::{
     CreateRequestRequest, CreateRequestResponse, RequestObjectRequest, RequestObjectResponse,
-    ResponseRequest,
+    ResponseRequest, ResponseResponse,
 };
 
 use crate::provider::Provider;
@@ -75,10 +77,20 @@ async fn request_object(
 // Wallet Authorization response endpoint
 #[axum::debug_handler]
 async fn response(
-    State(provider): State<Provider>, Form(request): Form<ResponseRequest>,
+    State(provider): State<Provider>, Form(request): Form<HashMap<String, String>>,
 ) -> impl IntoResponse {
-    let response = vercre_verifier::response(provider, &request).await;
-    AxResult(response)
+    let Ok(req) = ResponseRequest::form_decode(&request) else {
+        tracing::error!("unable to turn HashMap {request:?} into ResponseRequest");
+        return (StatusCode::BAD_REQUEST, "unable to turn request into ResponseRequest").into_response();
+    };
+    let response: AxResult<ResponseResponse> = match vercre_verifier::response(provider, &req).await {
+        Ok(r) => Ok(r).into(),
+        Err(e) => {
+            tracing::error!("error getting response: {e}");
+            Err(e).into()
+        }
+    };
+    response.into_response()
 }
 
 // ----------------------------------------------------------------------------
