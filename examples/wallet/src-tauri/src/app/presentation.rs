@@ -77,6 +77,8 @@ impl AppState {
             proof::create(W3cFormat::JwtVcJson, Payload::Vp { vp, client_id, nonce }, &provider)
                 .await?;
         let (res_req, uri) = flow.create_response_request(&jwt);
+        log::info!("presentation URI: {uri:?}");
+        log::info!("presentation request: {res_req:?}");
         let _response = provider.present(uri.as_deref(), &res_req).await?;
         Ok(())
     }

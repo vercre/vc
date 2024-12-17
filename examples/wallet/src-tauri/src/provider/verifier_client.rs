@@ -36,7 +36,13 @@ impl Verifier for Provider {
             .form(presentation)
             .send()
             .await?;
-        let response = result.json::<ResponseResponse>().await?;
+        let response = match result.json::<ResponseResponse>().await {
+            Ok(response) => response,
+            Err(e) => {
+                log::error!("Error sending presentation: {}", e);
+                return Err(e.into());
+            }
+        };
         Ok(response)
     }
 }

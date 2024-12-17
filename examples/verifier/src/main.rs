@@ -30,7 +30,7 @@ use crate::provider::Provider;
 #[allow(clippy::needless_return)]
 #[tokio::main]
 async fn main() {
-    let subscriber = FmtSubscriber::builder().with_max_level(Level::ERROR).finish();
+    let subscriber = FmtSubscriber::builder().with_max_level(Level::DEBUG).finish();
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
     let cors = CorsLayer::new().allow_methods(Any).allow_origin(Any).allow_headers(Any);

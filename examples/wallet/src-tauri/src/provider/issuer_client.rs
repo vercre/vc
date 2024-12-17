@@ -25,7 +25,7 @@ impl Issuer for Provider {
                 return Err(e.into());
             }
         };
-        md.credential_issuer.credential_issuer = req.credential_issuer.clone();
+        md.credential_issuer.credential_issuer.clone_from(&req.credential_issuer);
         Ok(md)
     }
 

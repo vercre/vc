@@ -528,6 +528,58 @@ pub struct ResponseRequest {
     pub state: Option<String>,
 }
 
+impl ResponseRequest {
+    /// Create a `HashMap` representation of the `ResponseRequest` suitable for
+    /// use in an HTML form post.
+    /// 
+    /// # Errors
+    /// Will return an error if any nested objects cannot be serialized and
+    /// URL-encoded.
+    pub fn form_encode(&self) -> anyhow::Result<HashMap<String, String>> {
+        let mut map = HashMap::new();
+        if let Some(vp_token) = &self.vp_token {
+            let as_json = serde_json::to_string(vp_token)?;
+            map.insert("vp_token".into(), urlencoding::encode(&as_json).to_string());
+        }
+        if let Some(presentation_submission) = &self.presentation_submission {
+            let as_json = serde_json::to_string(presentation_submission)?;
+            map.insert("presentation_submission".into(), urlencoding::encode(&as_json).to_string());
+        }
+        if let Some(state) = &self.state {
+            map.insert("state".into(), state.into());
+        }
+        Ok(map)
+    }
+
+    /// Create a `ResponseRequest` from a `HashMap` representation.
+    /// 
+    /// Suitable for
+    /// use in a verifier's response endpoint that receives a form post before
+    /// passing the `ResponseRequest` to the `vercre-verfier` `response`
+    /// handler.
+    /// 
+    /// # Errors
+    /// Will return an error if any nested objects cannot be deserialized from
+    /// URL-encoded JSON strings.
+    pub fn form_decode(map: &HashMap<String, String>) -> anyhow::Result<Self> {
+        let mut req = Self::default();
+        if let Some(vp_token) = map.get("vp_token") {
+            let decoded = urlencoding::decode(vp_token)?;
+            let vp_token: Vec<Kind<VerifiablePresentation>> = serde_json::from_str(&decoded)?;
+            req.vp_token = Some(vp_token);
+        }
+        if let Some(presentation_submission) = map.get("presentation_submission") {
+            let decoded = urlencoding::decode(presentation_submission)?;
+            let presentation_submission: PresentationSubmission = serde_json::from_str(&decoded)?;
+            req.presentation_submission = Some(presentation_submission);
+        }
+        if let Some(state) = map.get("state") {
+            req.state = Some(state.to_string());
+        }
+        Ok(req)
+    }
+}
+
 /// Authorization Response response object is used to return a `redirect_uri` to
 /// the Wallet following successful processing of the presentation submission.
 #[derive(Debug, Deserialize, Serialize)]
@@ -655,4 +707,39 @@ pub struct Wallet {
     /// A list of key value pairs, where the key identifies a Credential format
     /// supported by the Wallet.
     pub vp_formats_supported: Option<HashMap<String, VpFormat>>,
+}
+
+#[cfg(test)]
+mod tests {
+    use insta::assert_yaml_snapshot as assert_snapshot;
+    use vercre_dif_exch::{DescriptorMap, PathNested};
+
+    use super::*;
+
+    #[test]
+    fn response_request_form_encode() {
+        let request = ResponseRequest {
+            vp_token: Some(vec![Kind::String("eyJ.etc".into())]),
+            presentation_submission: Some(PresentationSubmission{
+                id: "07b0d07c-f51e-4909-a1ab-d35e2cef20b0".into(),
+                definition_id: "4b93b6aa-2157-4458-80ff-ffcefa3ff3b0".into(),
+                descriptor_map: vec![DescriptorMap{ 
+                    id: "employment".into(),
+                    format: "jwt_vc_json".into(),
+                    path: "$".into(),
+                    path_nested: PathNested{
+                        format: "jwt_vc_json".into(),
+                        path: "$.verifiableCredential[0]".into(),
+                    }
+                }],
+            }),
+            state: Some("Z2VVKkglOWt-MkNDbX5VN05RRFI4ZkZeT01ZelEzQG8".into()),
+        };
+        let map = request.form_encode().expect("should condense to hashmap");
+        assert_snapshot!("response_request_form_encoded", &map, {
+            "." => insta::sorted_redaction(),
+        });
+        let req = ResponseRequest::form_decode(&map).expect("should expand from hashmap");
+        assert_snapshot!("response_request_form_decoded", &req);
+    }
 }
