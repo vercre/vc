@@ -18,13 +18,14 @@ impl Issuer for Provider {
         let client = reqwest::Client::new();
         let url = format!("{}/.well-known/openid-credential-issuer", req.credential_issuer);
         let result = client.get(&url).header(ACCEPT, "application/json").send().await?;
-        let md = match result.json::<MetadataResponse>().await {
+        let mut md = match result.json::<MetadataResponse>().await {
             Ok(md) => md,
             Err(e) => {
                 log::error!("Error getting metadata: {}", e);
                 return Err(e.into());
             }
         };
+        md.credential_issuer.credential_issuer = req.credential_issuer.clone();
         Ok(md)
     }
 
