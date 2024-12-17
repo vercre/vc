@@ -28,7 +28,7 @@ struct StateModel {
 /// Unique identifier for this wallet application as a client of the issuance
 /// service. In a real application, this must be provided by registering the
 /// client with the issuer.
-pub const CLIENT_ID: &str = "wallet";
+pub const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
 
 /// Tauri entry point
 ///

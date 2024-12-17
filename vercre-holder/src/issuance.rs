@@ -190,6 +190,7 @@ impl<P> IssuanceFlow<WithOffer, P, NotAccepted, WithoutToken> {
                     credential_configuration_id: cfg_id.clone(),
                     claims,
                 },
+                locations: Some(vec![self.offer.0.credential_issuer.clone()]),
                 ..Default::default()
             };
             auth_details.push(detail);
@@ -250,7 +251,7 @@ impl IssuanceFlow<WithOffer, PreAuthorized, Accepted, WithoutToken> {
     #[must_use]
     pub fn token_request(&self) -> TokenRequest {
         TokenRequest {
-            credential_issuer: self.issuer.credential_issuer.clone(),
+            credential_issuer: self.offer.0.credential_issuer.clone(),
             client_id: Some(self.client_id.clone()),
             grant_type: TokenGrantType::PreAuthorizedCode {
                 pre_authorized_code: self.pre_authorized.0.pre_authorized_code.clone(),
@@ -308,7 +309,7 @@ impl IssuanceFlow<WithOffer, NotPreAuthorized, Accepted, WithoutToken> {
         let code_challenge = pkce::code_challenge(&verifier);
 
         let request = AuthorizationRequest::Object(RequestObject {
-            credential_issuer: self.issuer.credential_issuer.clone(),
+            credential_issuer: self.offer.0.credential_issuer.clone(),
             response_type: self.authorization_server.oauth.response_types_supported[0].clone(),
             client_id: self.client_id.clone(),
             redirect_uri: redirect_uri.map(ToString::to_string),

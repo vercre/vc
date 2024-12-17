@@ -27,11 +27,7 @@ export const Issuance = (props: IssuanceProps) => {
                 setMode("pin");
                 break;
             case "Accepted":
-            case "Requested":
                 setMode("request");
-                break;
-            case "Failed":
-                setMode("error");
                 break;
             default:
                 setMode("accept");

@@ -43,7 +43,7 @@ static PAR_REQUESTS: LazyLock<RwLock<HashMap<String, PushedAuthorizationRequest>
 #[allow(clippy::needless_return)]
 #[tokio::main]
 async fn main() {
-    let subscriber = FmtSubscriber::builder().with_max_level(Level::ERROR).finish();
+    let subscriber = FmtSubscriber::builder().with_max_level(Level::DEBUG).finish();
     tracing::subscriber::set_global_default(subscriber).expect("set subscriber");
 
     let cors = CorsLayer::new().allow_methods(Any).allow_origin(Any).allow_headers(Any);
@@ -317,10 +317,21 @@ async fn notification(
 #[axum::debug_handler]
 async fn token(
     State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
-    Form(mut req): Form<TokenRequest>,
-) -> AxResult<TokenResponse> {
-    req.credential_issuer = format!("http://{host}");
-    vercre_issuer::token(provider.clone(), req).await.into()
+    Form(req): Form<HashMap<String, String>>,
+) -> impl IntoResponse {
+    let Ok(mut tr) = TokenRequest::form_decode(&req) else {
+        tracing::error!("unable to turn HashMap {req:?} into TokenRequest");
+        return (StatusCode::BAD_REQUEST, Json(json!({"error": "invalid request"}))).into_response();
+    };
+    tr.credential_issuer = format!("http://{host}");
+    let response: AxResult<TokenResponse> = match vercre_issuer::token(provider.clone(), tr).await {
+        Ok(v) => Ok(v).into(),
+        Err(e) => {
+            tracing::error!("error getting token: {e}");
+            Err(e).into()
+        }
+    };
+    response.into_response()
 }
 
 // Credential endpoint

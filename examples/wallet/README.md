@@ -4,7 +4,7 @@ Tauri + React + Typescript
 
 ## Getting Started
 
-Install dependencies:
+Install dependencies inside `/examples/wallet` directory:
 
 ```bash
 pnpm install
@@ -31,7 +31,8 @@ RESP=$(curl --json '{
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": "normal_user",
          "grant_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
-        "tx_code_required": true
+        "tx_code_required": true,
+        "send_type": "ByVal"
     }' \
     http://localhost:8080/create_offer)
 
@@ -120,7 +121,8 @@ RESP=$(curl --json '{
         "credential_configuration_ids": ["EmployeeID_JWT"],
         "subject_id": "normal_user",
          "grant_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
-        "tx_code_required": true
+        "tx_code_required": true,
+        "send_type": "ByVal"
     }' \
     http://localhost:8080/create_offer)
 

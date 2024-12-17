@@ -107,11 +107,23 @@ impl AppState {
             IssuanceState::Accepted(s) => s.clone(),
             _ => bail!("unexpected issuance state for constructing a token request"),
         };
-        log::info!("Getting an access token for issuance {}", state.id());
+        log::info!(
+            "Getting an access token for issuance {} from {}",
+            state.id(),
+            state.issuer().credential_issuer
+        );
 
         // Request an access token from the issuer.
         let token_request = state.clone().token_request();
-        let token_response = provider.token(token_request).await?;
+        log::info!("Requesting token with {:?}", token_request);
+        let token_response = match provider.token(token_request).await {
+            Ok(token) => token,
+            Err(e) => {
+                log::error!("Error getting token: {}", e);
+                return Err(e);
+            }
+        };
+        log::info!("Updating state with token response {:?}", token_response);
         let mut state = state.token(token_response.clone());
 
         log::info!("Getting credentials for issuance {}", state.id());

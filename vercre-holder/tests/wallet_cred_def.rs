@@ -77,7 +77,7 @@ async fn wallet_credential_definition() {
             credential_configuration_id: "EmployeeID_JWT".into(),
             claims: Some(claims),
         },
-        locations: None,
+        locations: Some(vec![CREDENTIAL_ISSUER.into()]),
     }];
     let state = state.accept(accept);
 

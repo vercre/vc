@@ -55,14 +55,21 @@ impl Issuer for Provider {
     async fn token(&self, req: TokenRequest) -> anyhow::Result<TokenResponse> {
         let client = reqwest::Client::new();
         let url = format!("{}/token", req.credential_issuer);
+        let form = req.form_encode()?;
         let result = client
             .post(&url)
             .header(CONTENT_TYPE, "multipart/form-data")
             .header(ACCEPT, "application/json")
-            .form(&req)
+            .form(&form)
             .send()
             .await?;
-        let token = result.json::<TokenResponse>().await?;
+        let token = match result.json::<TokenResponse>().await {
+            Ok(token) => token,
+            Err(e) => {
+                log::error!("Error getting token: {}", e);
+                return Err(e.into());
+            }
+        };
         Ok(token)
     }
 

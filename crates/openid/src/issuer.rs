@@ -989,6 +989,112 @@ pub struct TokenRequest {
     pub client_assertion: Option<ClientAssertion>,
 }
 
+impl TokenRequest {
+    /// Create a `HashMap` representation of the `TokenRequest` suitable for
+    /// use in an HTML form post.
+    ///
+    /// # Errors
+    /// Will return an error if any of the object-type fields cannot be
+    /// serialized to JSON and URL-encoded. (`authorization_details` and
+    /// `client_assertion`).
+    pub fn form_encode(&self) -> anyhow::Result<HashMap<String, String>> {
+        let mut map = HashMap::new();
+        if !self.credential_issuer.is_empty() {
+            map.insert("credential_issuer".into(), self.credential_issuer.clone());
+        }
+        if let Some(client_id) = &self.client_id {
+            map.insert("client_id".into(), client_id.clone());
+        }
+        match &self.grant_type {
+            TokenGrantType::AuthorizationCode {
+                code,
+                redirect_uri,
+                code_verifier,
+            } => {
+                map.insert("code".into(), code.clone());
+                if let Some(redirect_uri) = redirect_uri {
+                    map.insert("redirect_uri".into(), redirect_uri.clone());
+                }
+                if let Some(code_verifier) = code_verifier {
+                    map.insert("code_verifier".into(), code_verifier.clone());
+                }
+            }
+            TokenGrantType::PreAuthorizedCode {
+                pre_authorized_code,
+                tx_code,
+            } => {
+                map.insert("pre-authorized_code".into(), pre_authorized_code.clone());
+                if let Some(tx_code) = tx_code {
+                    map.insert("tx_code".into(), tx_code.clone());
+                }
+            }
+        }
+        if let Some(authorization_details) = &self.authorization_details {
+            let as_json = serde_json::to_string(authorization_details)?;
+            map.insert("authorization_details".into(), urlencoding::encode(&as_json).to_string());
+        }
+        if let Some(client_assertion) = &self.client_assertion {
+            map.insert(
+                "client_assertion_type".into(),
+                urlencoding::encode("urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
+                    .into(),
+            );
+            let ClientAssertion::JwtBearer { client_assertion } = client_assertion;
+            map.insert("client_assertion".into(), client_assertion.clone());
+        }
+        Ok(map)
+    }
+
+    /// Create a `TokenRequest` from a `HashMap` representation. Suitable for
+    /// use in an issuer's token endpoint that receives an HTML form post.
+    ///
+    /// # Errors
+    /// Will return an error if any of the object-type fields, assumed to be
+    /// URL-encoded JSON, cannot be decoded. (`authorization_details` and
+    /// `client_assertion`).
+    pub fn form_decode(map: &HashMap<String, String>) -> anyhow::Result<Self> {
+        let mut req = Self::default();
+        if let Some(credential_issuer) = map.get("credential_issuer") {
+            req.credential_issuer.clone_from(credential_issuer);
+        }
+        if let Some(client_id) = map.get("client_id") {
+            req.client_id = Some(client_id.clone());
+        }
+        if let Some(code) = map.get("code") {
+            let redirect_uri = map.get("redirect_uri").cloned();
+            let code_verifier = map.get("code_verifier").cloned();
+            req.grant_type = TokenGrantType::AuthorizationCode {
+                code: code.clone(),
+                redirect_uri,
+                code_verifier,
+            };
+        } else if let Some(pre_authorized_code) = map.get("pre-authorized_code") {
+            let tx_code = map.get("tx_code").cloned();
+            req.grant_type = TokenGrantType::PreAuthorizedCode {
+                pre_authorized_code: pre_authorized_code.clone(),
+                tx_code,
+            };
+        }
+        if let Some(authorization_details) = map.get("authorization_details") {
+            let authorization_details =
+                serde_json::from_str(&urlencoding::decode(authorization_details)?)?;
+            req.authorization_details = Some(authorization_details);
+        }
+        if let Some(client_assertion) = map.get("client_assertion") {
+            if let Some(client_assertion_type) = map.get("client_assertion_type") {
+                let decoded = urlencoding::decode(client_assertion_type)?;
+                if decoded == "urn:ietf:params:oauth:client-assertion-type:jwt-bearer" {
+                    req.client_assertion = Some(ClientAssertion::JwtBearer {
+                        client_assertion: client_assertion.clone(),
+                    });
+                }
+            }
+        }
+
+        Ok(req)
+    }
+}
+
 /// Token authorization grant types.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "grant_type")]
@@ -1546,7 +1652,7 @@ impl Issuer {
     }
 
     /// Convenience method to provide the issuer's display name (if configured).
-    /// 
+    ///
     /// TODO: The field is optional and contains locale information but because
     /// it is not a vec, only one locale is possible. Keep an eye on the spec
     /// and implement locale support if needed.
@@ -1807,8 +1913,7 @@ impl CredentialConfiguration {
 
     /// Recursively build claim labels from nested claim definitions.
     fn claim_label(
-        claim_set: &mut Vec<String>, prefix: &str, name: &str, claim: &Claim,
-        locale: Option<&str>,
+        claim_set: &mut Vec<String>, prefix: &str, name: &str, claim: &Claim, locale: Option<&str>,
     ) {
         match claim {
             Claim::Entry(def) => {
@@ -2506,6 +2611,57 @@ mod tests {
         let default = config.claims_display(None);
         assert_snapshot!("claim_label_display_default", &default, {
             "." => insta::sorted_redaction(),
+        });
+    }
+
+    #[test]
+    fn token_request_form_encoding() {
+        let request = TokenRequest {
+            credential_issuer: "https://example.com".into(),
+            client_id: Some("1234".into()),
+            grant_type: TokenGrantType::PreAuthorizedCode {
+                pre_authorized_code: "WQHhDmQ3ZygxyOPlBjunlA".into(),
+                tx_code: Some("111222".into()),
+            },
+            authorization_details: Some(vec![AuthorizationDetail {
+                type_: AuthorizationDetailType::OpenIdCredential,
+                credential: CredentialAuthorization::ConfigurationId {
+                    credential_configuration_id: "EmployeeID_JWT".into(),
+                    claims: Some(ProfileClaims::W3c(CredentialDefinition {
+                        context: None,
+                        type_: Some(vec![
+                            "VerifiableCredential".into(),
+                            "EmployeeIDCredential".into(),
+                        ]),
+                        credential_subject: Some(HashMap::from([
+                            ("given_name".to_string(), Claim::default()),
+                            ("family_name".to_string(), Claim::default()),
+                            ("email".to_string(), Claim::default()),
+                            (
+                                "address".to_string(),
+                                Claim::Set(HashMap::from([
+                                    ("street_address".to_string(), Claim::default()),
+                                    ("locality".to_string(), Claim::default()),
+                                    ("region".to_string(), Claim::default()),
+                                    ("country".to_string(), Claim::default()),
+                                ])),
+                            ),
+                        ])),
+                    })),
+                },
+                locations: Some(vec!["https://example.com".into()]),
+            }]),
+            client_assertion: Some(ClientAssertion::JwtBearer {
+                client_assertion: "Ezie91o7DuPsA2PCLOtRUg".into(),
+            }),
+        };
+
+        let map = request.form_encode().expect("should condense to hashmap");
+        let req = TokenRequest::form_decode(&map).expect("should expand from hashmap");
+        assert_snapshot!("token_request_form_encoding", &req, {
+            ".authorization_details[].credential_definition.type_" => insta::sorted_redaction(),
+            ".authorization_details[].credential_definition.credentialSubject" => insta::sorted_redaction(),
+            ".authorization_details[].credential_definition.credentialSubject.address" => insta::sorted_redaction(),
         });
     }
 }

@@ -28,6 +28,7 @@ qrcode = { version = "0.14.1", default-features = false, features = ["image"] }
 serde.workspace = true
 serde_json.workspace = true
 thiserror = "1.0.65"
+urlencoding = "2.1.3"
 vercre-core.workspace = true
 vercre-did.workspace = true
 vercre-dif-exch.workspace = true

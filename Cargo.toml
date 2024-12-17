@@ -43,7 +43,6 @@ axum-extra = { version = "0.9.4", features = ["typed-header"] }
 base64ct = { version = "1.6.0", features = ["std"] }
 chrono = { version = "0.4.38", features = ["serde"] }
 derive_builder = "0.20.2"
-ecdsa = "0.16.9"
 insta = { version = "1.40.0", features = ["redactions", "yaml"] }
 serde = { version = "1.0.213", features = ["derive"] }
 serde_json = { version = "1.0.132", features = ["alloc"] }
