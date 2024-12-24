@@ -95,6 +95,7 @@ pub enum DeviceFlow {
 }
 
 /// The response to the originator of the Request Object Request.
+// TODO: Should this be an enum?
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct CreateRequestResponse {
     /// The generated Authorization Request Object, ready to send to the Wallet.
@@ -105,6 +106,47 @@ pub struct CreateRequestResponse {
     /// be retrieved by the Wallet.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub request_uri: Option<String>,
+}
+
+impl CreateRequestResponse {
+    /// Convenience method to convert the `CreateRequestResponse` to a QR code.
+    ///
+    /// If the `request_object` is set, the method will generate a QR code for
+    /// that in favour of the `request_uri`.
+    /// 
+    /// TODO: Revisit the logic to determine default type if this struct is made
+    /// an enum.
+    ///
+    /// # Errors
+    /// Returns an error if the neither the `request_object` nor `request_uri` is
+    /// set or the respective field cannot be represented as a base64-encoded PNG
+    /// image of a QR code.
+    pub fn to_qrcode(&self, endpoint: Option<&str>) -> anyhow::Result<String> {
+        if let Some(req_obj) = &self.request_object {
+            let Some(endpoint) = endpoint else {
+                return Err(anyhow!("no endpoint provided for object-type response"));
+            };
+            req_obj.to_qrcode(endpoint)
+        } else {
+            let Some(request_uri) = &self.request_uri else {
+                return Err(anyhow!("response has no request object or request uri"));
+            };
+            // generate qr code
+            let qr_code =
+                QrCode::new(request_uri).map_err(|e| anyhow!("Failed to create QR code: {e}"))?;
+
+            // write image to buffer
+            let img_buf = qr_code.render::<image::Luma<u8>>().build();
+            let mut buffer: Vec<u8> = Vec::new();
+            let mut writer = Cursor::new(&mut buffer);
+            img_buf
+                .write_to(&mut writer, image::ImageFormat::Png)
+                .map_err(|e| anyhow!("Failed to create QR code: {e}"))?;
+
+            // base64 encode image
+            Ok(format!("data:image/png;base64,{}", Base64::encode_string(buffer.as_slice())))
+        }
+    }
 }
 
 /// The Authorization Request follows the definition given in [RFC6749].
@@ -531,7 +573,7 @@ pub struct ResponseRequest {
 impl ResponseRequest {
     /// Create a `HashMap` representation of the `ResponseRequest` suitable for
     /// use in an HTML form post.
-    /// 
+    ///
     /// # Errors
     /// Will return an error if any nested objects cannot be serialized and
     /// URL-encoded.
@@ -552,12 +594,12 @@ impl ResponseRequest {
     }
 
     /// Create a `ResponseRequest` from a `HashMap` representation.
-    /// 
+    ///
     /// Suitable for
     /// use in a verifier's response endpoint that receives a form post before
     /// passing the `ResponseRequest` to the `vercre-verfier` `response`
     /// handler.
-    /// 
+    ///
     /// # Errors
     /// Will return an error if any nested objects cannot be deserialized from
     /// URL-encoded JSON strings.
@@ -720,17 +762,17 @@ mod tests {
     fn response_request_form_encode() {
         let request = ResponseRequest {
             vp_token: Some(vec![Kind::String("eyJ.etc".into())]),
-            presentation_submission: Some(PresentationSubmission{
+            presentation_submission: Some(PresentationSubmission {
                 id: "07b0d07c-f51e-4909-a1ab-d35e2cef20b0".into(),
                 definition_id: "4b93b6aa-2157-4458-80ff-ffcefa3ff3b0".into(),
-                descriptor_map: vec![DescriptorMap{ 
+                descriptor_map: vec![DescriptorMap {
                     id: "employment".into(),
                     format: "jwt_vc_json".into(),
                     path: "$".into(),
-                    path_nested: PathNested{
+                    path_nested: PathNested {
                         format: "jwt_vc_json".into(),
                         path: "$.verifiableCredential[0]".into(),
-                    }
+                    },
                 }],
             }),
             state: Some("Z2VVKkglOWt-MkNDbX5VN05RRFI4ZkZeT01ZelEzQG8".into()),

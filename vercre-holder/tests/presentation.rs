@@ -10,9 +10,7 @@ use test_utils::verifier::{self, VERIFIER_ID};
 use vercre_core::{Kind, Quota};
 use vercre_dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use vercre_holder::credential::Credential;
-use vercre_holder::presentation::{
-    parse_request_object_response, NotAuthorized, PresentationFlow,
-};
+use vercre_holder::presentation::{parse_request_object_response, NotAuthorized, PresentationFlow};
 use vercre_holder::provider::{CredentialStorer, Verifier};
 use vercre_infosec::{KeyOps, Signer};
 use vercre_issuer::{Claim, ClaimDefinition};
@@ -169,7 +167,8 @@ async fn presentation_uri() {
     //--------------------------------------------------------------------------
     // Store the request in state.
     //--------------------------------------------------------------------------
-    let state = PresentationFlow::<NotAuthorized>::new(request_object).expect("should have a valid request object");
+    let state = PresentationFlow::<NotAuthorized>::new(request_object)
+        .expect("should have a valid request object");
     let filter = state.filter().expect("should build filter from request object");
 
     //--------------------------------------------------------------------------
