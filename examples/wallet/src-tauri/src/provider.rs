@@ -69,7 +69,7 @@ impl Signer for Provider {
         HolderKeystore::try_sign(msg)
     }
 
-    async fn public_key(&self) -> Result<Vec<u8>> {
+    async fn verifying_key(&self) -> Result<Vec<u8>> {
         HolderKeystore::public_key()
     }
 

@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use vercre_did::{DidResolver, Document};
-use vercre_infosec::{Algorithm, Cipher, KeyOps, Signer};
+use vercre_infosec::{Algorithm, KeyOps, PublicKey, Receiver, SharedSecret, Signer};
 use vercre_openid::issuer::{
     Client, Dataset, Issuer, Metadata, Result, Server, StateStore, Subject,
 };
@@ -95,11 +95,11 @@ impl DidResolver for Provider {
 struct IssuerSec(IssuerKeystore);
 
 impl KeyOps for Provider {
-    fn signer(&self, _identifier: &str) -> anyhow::Result<impl Signer> {
+    fn signer(&self, _controller: &str) -> anyhow::Result<impl Signer> {
         Ok(IssuerSec(IssuerKeystore {}))
     }
 
-    fn cipher(&self, _identifier: &str) -> anyhow::Result<impl Cipher> {
+    fn receiver(&self, _controller: &str) -> anyhow::Result<impl Receiver> {
         Ok(IssuerSec(IssuerKeystore {}))
     }
 }
@@ -109,7 +109,7 @@ impl Signer for IssuerSec {
         IssuerKeystore::try_sign(msg)
     }
 
-    async fn public_key(&self) -> Result<Vec<u8>> {
+    async fn verifying_key(&self) -> Result<Vec<u8>> {
         IssuerKeystore::public_key()
     }
 
@@ -122,16 +122,12 @@ impl Signer for IssuerSec {
     }
 }
 
-impl Cipher for IssuerSec {
-    async fn encrypt(&self, _plaintext: &[u8], _recipient_public_key: &[u8]) -> Result<Vec<u8>> {
+impl Receiver for IssuerSec {
+    fn key_id(&self) -> String {
         todo!()
     }
 
-    fn ephemeral_public_key(&self) -> Vec<u8> {
-        todo!()
-    }
-
-    async fn decrypt(&self, _ciphertext: &[u8], _sender_public_key: &[u8]) -> Result<Vec<u8>> {
+    async fn shared_secret(&self, _sender_public: PublicKey) -> Result<SharedSecret> {
         todo!()
     }
 }

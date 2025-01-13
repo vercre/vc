@@ -13,7 +13,7 @@ use std::fmt::Debug;
 use chrono::{DateTime, Utc};
 use tracing::instrument;
 use vercre_core::{gen, Kind};
-use vercre_infosec::jose::jws::{self, KeyType, Type};
+use vercre_infosec::jose::jws::{self, Key, Type};
 use vercre_infosec::{KeyOps, Signer};
 use vercre_openid::issuer::{
     CredentialConfiguration, CredentialDefinition, CredentialDisplay, CredentialIssuance,
@@ -152,7 +152,7 @@ impl Context {
                 }
 
                 // Key ID
-                let KeyType::KeyId(kid) = &jwt.header.key else {
+                let Key::KeyId(kid) = &jwt.header.key else {
                     return Err(self.invalid_proof(provider, "Proof JWT 'kid' is missing").await?);
                 };
 

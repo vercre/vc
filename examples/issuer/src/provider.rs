@@ -4,8 +4,8 @@ use serde::Serialize;
 use test_utils::store::keystore::IssuerKeystore;
 use test_utils::store::{issuance, resolver, state};
 use vercre_issuer::provider::{
-    Algorithm, Cipher, Client, Dataset, DidResolver, Document, Issuer, KeyOps, Metadata, Result,
-    Server, Signer, StateStore, Status, Subject,
+    Algorithm, Client, Dataset, DidResolver, Document, Issuer, KeyOps, Metadata, PublicKey,
+    Receiver, Result, Server, SharedSecret, Signer, StateStore, Status, Subject,
 };
 
 #[derive(Default, Clone, Debug)]
@@ -86,11 +86,11 @@ impl DidResolver for Provider {
 struct KeyOpsImpl(IssuerKeystore);
 
 impl KeyOps for Provider {
-    fn signer(&self, _identifier: &str) -> anyhow::Result<impl Signer> {
+    fn signer(&self, _controller: &str) -> anyhow::Result<impl Signer> {
         Ok(KeyOpsImpl(IssuerKeystore {}))
     }
 
-    fn cipher(&self, _identifier: &str) -> anyhow::Result<impl Cipher> {
+    fn receiver(&self, _controller: &str) -> anyhow::Result<impl Receiver> {
         Ok(KeyOpsImpl(IssuerKeystore {}))
     }
 }
@@ -100,7 +100,7 @@ impl Signer for KeyOpsImpl {
         IssuerKeystore::try_sign(msg)
     }
 
-    async fn public_key(&self) -> Result<Vec<u8>> {
+    async fn verifying_key(&self) -> Result<Vec<u8>> {
         IssuerKeystore::public_key()
     }
 
@@ -113,16 +113,12 @@ impl Signer for KeyOpsImpl {
     }
 }
 
-impl Cipher for KeyOpsImpl {
-    async fn encrypt(&self, _plaintext: &[u8], _recipient_public_key: &[u8]) -> Result<Vec<u8>> {
+impl Receiver for KeyOpsImpl {
+    fn key_id(&self) -> String {
         todo!()
     }
 
-    fn ephemeral_public_key(&self) -> Vec<u8> {
-        todo!()
-    }
-
-    async fn decrypt(&self, _ciphertext: &[u8], _sender_public_key: &[u8]) -> Result<Vec<u8>> {
+    async fn shared_secret(&self, _sender_public: PublicKey) -> Result<SharedSecret> {
         todo!()
     }
 }

@@ -20,7 +20,7 @@ impl Json {
     /// Expect the key to be present and return the value or an error.
     pub fn expect(&mut self, key: &str) -> Result<Value> {
         let Some(v) = self.fields.remove(key) else {
-            return Err(Error::new(Span::call_site(), "`{key}` is not set"));
+            return Err(Error::new(Span::call_site(), format!("`{key}` is not set")));
         };
         Ok(Value::Tokens(quote! {Into::into(#v)}))
     }

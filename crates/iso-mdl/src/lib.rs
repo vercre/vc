@@ -68,7 +68,7 @@ pub async fn to_credential(
     mso.device_key_info.device_key = CoseKey {
         kty: KeyType::Okp,
         crv: Curve::Ed25519,
-        x: signer.public_key().await?,
+        x: signer.verifying_key().await?,
         y: None,
     };
 
