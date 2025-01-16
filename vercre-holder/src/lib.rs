@@ -60,4 +60,4 @@ pub use vercre_openid::verifier::{
     RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
 };
 pub use vercre_infosec::{Signer, jose::{self,}};
-pub use vercre_w3c_vc::proof::{self,};
+pub use vercre_w3c_vc::proof::{self, Type};

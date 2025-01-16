@@ -4,14 +4,12 @@ mod provider;
 
 use insta::assert_yaml_snapshot;
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, REDIRECT_URI};
-use vercre_holder::issuance::{
-    IssuanceFlow, NotAccepted, AuthCode, WithOffer, WithoutToken,
-};
+use vercre_holder::issuance::{AuthCode, IssuanceFlow, NotAccepted, WithOffer, WithoutToken};
+use vercre_holder::jose::JwsBuilder;
 use vercre_holder::provider::{Issuer, MetadataRequest, OAuthServerRequest};
-use vercre_infosec::jose::{jws, Type};
 use vercre_issuer::{CredentialResponseType, OfferType, SendType};
 use vercre_macros::create_offer_request;
-use vercre_w3c_vc::proof::{Payload, Verify};
+use vercre_w3c_vc::proof::{Payload, Type, Verify};
 
 use crate::provider as holder;
 
@@ -123,10 +121,15 @@ async fn issuer_auth() {
             identifiers.push(id.clone());
         }
     }
-    let jws = state.proof();
-    let jwt = jws::encode(Type::Openid4VciProofJwt, &jws, &provider)
+    let jws_claims = state.proof();
+    let jws = JwsBuilder::new()
+        .jwt_type(Type::Openid4VciProofJwt)
+        .payload(jws_claims)
+        .add_signer(&provider)
+        .build()
         .await
-        .expect("should encode proof claims");
+        .expect("should build jws");
+    let jwt = jws.encode().expect("should encode jws");
     let credential_requests = state.credential_requests(&identifiers, &jwt).clone();
     for request in credential_requests {
         let credential_response =

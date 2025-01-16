@@ -13,8 +13,8 @@ use std::fmt::Debug;
 use chrono::{DateTime, Utc};
 use tracing::instrument;
 use vercre_core::{gen, Kind};
-use vercre_infosec::jose::jws::{self, Key, Type};
-use vercre_infosec::{KeyOps, Signer};
+use vercre_infosec::jose::jws::{self, Key};
+use vercre_infosec::Signer;
 use vercre_openid::issuer::{
     CredentialConfiguration, CredentialDefinition, CredentialDisplay, CredentialIssuance,
     CredentialRequest, CredentialResponse, CredentialResponseType, Dataset, Format, Issuer,
@@ -24,7 +24,7 @@ use vercre_openid::{Error, Result};
 use vercre_status::issuer::Status;
 use vercre_w3c_vc::model::types::{LangString, LangValue};
 use vercre_w3c_vc::model::{CredentialSubject, VerifiableCredential};
-use vercre_w3c_vc::proof::{self, Payload, W3cFormat};
+use vercre_w3c_vc::proof::{self, Payload, Type, W3cFormat};
 use vercre_w3c_vc::verify_key;
 
 use crate::state::{Authorized, Deferrance, Expire, Stage, State};
@@ -135,11 +135,15 @@ impl Context {
                     };
 
                 // proof type
-                if jwt.header.typ != Type::Openid4VciProofJwt {
+                if jwt.header.typ != Type::Openid4VciProofJwt.to_string() {
                     return Err(self
                         .invalid_proof(
                             provider,
-                            format!("Proof JWT 'typ' is not {}", Type::Openid4VciProofJwt),
+                            format!(
+                                "Proof JWT 'typ' ({}) is not {}",
+                                jwt.header.typ,
+                                Type::Openid4VciProofJwt
+                            ),
                         )
                         .await?);
                 }
@@ -183,26 +187,23 @@ impl Context {
         }
 
         // issue VC
-        self.issue_response(provider, request, dataset).await
+        self.issue_response(provider, dataset).await
     }
 
     // Issue the requested credential.
     async fn issue_response(
-        &self, provider: &impl Provider, request: CredentialRequest, dataset: Dataset,
+        &self, provider: &impl Provider, dataset: Dataset,
     ) -> Result<CredentialResponse> {
         // generate the issuance time stamp
         let issuance_date = Utc::now();
-
-        let signer = KeyOps::signer(provider, &request.credential_issuer)
-            .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
 
         // determine credential format
         let response = match &self.configuration.format {
             Format::JwtVcJson(w3c) => {
                 let vc = self.w3c_vc(provider, &w3c.credential_definition, dataset).await?;
-                self.jwt_vc_json(vc, signer, issuance_date).await?
+                self.jwt_vc_json(vc, provider.clone(), issuance_date).await?
             }
-            Format::IsoMdl(_) => self.mso_mdoc(dataset, signer).await?,
+            Format::IsoMdl(_) => self.mso_mdoc(dataset, provider.clone()).await?,
 
             // TODO: remaining credential formats
             Format::JwtVcJsonLd(_) => todo!(),
@@ -476,6 +477,7 @@ mod tests {
 
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
+    use jws::JwsBuilder;
     use serde_json::json;
     use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use test_utils::{holder, snapshot};
@@ -522,9 +524,14 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, &holder::Provider)
+        let jws = JwsBuilder::new()
+            .jwt_type(Type::Openid4VciProofJwt)
+            .payload(claims)
+            .add_signer(&holder::Provider)
+            .build()
             .await
-            .expect("should encode");
+            .expect("jws should build");
+        let jwt = jws.encode().expect("should encode");
 
         let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
@@ -609,9 +616,14 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, &holder::Provider)
+        let jws = JwsBuilder::new()
+            .jwt_type(Type::Openid4VciProofJwt)
+            .payload(claims)
+            .add_signer(&holder::Provider)
+            .build()
             .await
-            .expect("should encode");
+            .expect("jws should build");
+        let jwt = jws.encode().expect("should encode");
 
         let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,
@@ -701,9 +713,14 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.into()),
         };
-        let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, &holder::Provider)
+        let jws = JwsBuilder::new()
+            .jwt_type(Type::Openid4VciProofJwt)
+            .payload(claims)
+            .add_signer(&holder::Provider)
+            .build()
             .await
-            .expect("should encode");
+            .expect("jws should build");
+        let jwt = jws.encode().expect("should encode");
         println!("jwt: {}", jwt);
 
         let value = json!({

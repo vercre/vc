@@ -172,7 +172,7 @@ pub use vercre_openid::Result;
 pub mod provider {
     pub use vercre_did::{DidResolver, Document};
     pub use vercre_infosec::{
-        Algorithm, KeyOps, PublicKey, PublicKeyJwk, Receiver, SharedSecret, Signer,
+        Algorithm, PublicKey, PublicKeyJwk, Receiver, SharedSecret, Signer,
     };
     pub use vercre_openid::issuer::{Client, Format, Server};
     pub use vercre_openid::verifier::VpFormat;

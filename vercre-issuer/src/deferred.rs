@@ -81,9 +81,9 @@ mod tests {
     use serde_json::json;
     use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use test_utils::{holder, snapshot};
-    use vercre_infosec::jose::jws::{self, Type};
+    use vercre_infosec::jose::JwsBuilder;
     use vercre_openid::issuer::{CredentialRequest, CredentialResponseType, ProofClaims};
-    use vercre_w3c_vc::proof::{self, Payload, Verify};
+    use vercre_w3c_vc::proof::{self, Payload, Type, Verify};
 
     use super::*;
     use crate::state::{Authorized, Deferrance, Expire, Token};
@@ -105,9 +105,14 @@ mod tests {
             iat: Utc::now().timestamp(),
             nonce: Some(c_nonce.clone()),
         };
-        let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, &holder::Provider)
+        let jws = JwsBuilder::new()
+            .jwt_type(Type::Openid4VciProofJwt)
+            .payload(claims)
+            .add_signer(&holder::Provider)
+            .build()
             .await
-            .expect("should encode");
+            .expect("jws should build");
+        let jwt = jws.encode().expect("jws should encode");
 
         let value = json!({
             "credential_issuer": CREDENTIAL_ISSUER,

@@ -16,7 +16,7 @@ use vercre_core::strings::title_case;
 use vercre_core::{urlencode, Kind};
 use vercre_did::DidResolver;
 use vercre_infosec::jose::jwk::PublicKeyJwk;
-use vercre_infosec::KeyOps;
+use vercre_infosec::Signer;
 use vercre_status::issuer::Status;
 use vercre_w3c_vc::model::VerifiableCredential;
 
@@ -31,7 +31,7 @@ pub use crate::provider::{self, Result, StateStore};
 
 /// Issuer Provider trait.
 pub trait Provider:
-    Metadata + Subject + StateStore + KeyOps + DidResolver + Status + Clone
+    Metadata + Subject + StateStore + Signer + DidResolver + Status + Clone
 {
 }
 

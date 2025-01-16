@@ -32,6 +32,8 @@ mod controller;
 pub mod integrity;
 mod jose;
 
+use std::fmt::Display;
+
 use anyhow::bail;
 use serde::{Deserialize, Serialize};
 use vercre_core::{Kind, Quota};
@@ -99,13 +101,13 @@ pub async fn create(
     let jwt = match payload {
         Payload::Vc { vc, issued_at } => {
             let claims = jose::VcClaims::from_vc(vc, issued_at);
-            jws::encode(jws::Type::Jwt, &claims, signer).await?
+            jws::encode(&claims, signer).await?
         }
         Payload::Vp { vp, client_id, nonce } => {
             let mut claims = jose::VpClaims::from(vp);
             claims.aud.clone_from(&client_id);
             claims.nonce.clone_from(&nonce);
-            jws::encode(jws::Type::Jwt, &claims, signer).await?
+            jws::encode(&claims, signer).await?
         }
     };
 
@@ -178,5 +180,39 @@ pub async fn verify(proof: Verify<'_>, resolver: impl DidResolver) -> anyhow::Re
                 }
             }
         }
+    }
+}
+
+/// The JWS `typ` header parameter.
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+pub enum Type {
+    /// General purpose JWT type.
+    #[default]
+    #[serde(rename = "jwt")]
+    Jwt,
+
+    /// JWT `typ` for Wallet's Proof of possession of key material.
+    #[serde(rename = "openid4vci-proof+jwt")]
+    Openid4VciProofJwt,
+
+    /// JWT `typ` for Authorization Request Object.
+    #[serde(rename = "oauth-authz-req+jwt")]
+    OauthAuthzReqJwt,
+}
+
+impl From<Type> for String {
+    fn from(t: Type) -> Self {
+        match t {
+            Type::Jwt => "jwt".into(),
+            Type::Openid4VciProofJwt => "openid4vci-proof+jwt".into(),
+            Type::OauthAuthzReqJwt => "oauth-authz-req+jwt".into(),
+        }
+    }
+}
+
+impl Display for Type {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s: String = self.clone().into();
+        write!(f, "{}", s)
     }
 }

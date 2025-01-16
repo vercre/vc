@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use vercre_did::{DidResolver, Document};
-use vercre_infosec::{Algorithm, KeyOps, PublicKey, Receiver, SharedSecret, Signer};
+use vercre_infosec::{Algorithm, PublicKey, Receiver, SharedSecret, Signer};
 use vercre_openid::issuer::{
     Client, Dataset, Issuer, Metadata, Result, Server, StateStore, Subject,
 };
@@ -92,19 +92,7 @@ impl DidResolver for Provider {
     }
 }
 
-struct IssuerSec(IssuerKeystore);
-
-impl KeyOps for Provider {
-    fn signer(&self, _controller: &str) -> anyhow::Result<impl Signer> {
-        Ok(IssuerSec(IssuerKeystore {}))
-    }
-
-    fn receiver(&self, _controller: &str) -> anyhow::Result<impl Receiver> {
-        Ok(IssuerSec(IssuerKeystore {}))
-    }
-}
-
-impl Signer for IssuerSec {
+impl Signer for Provider {
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
         IssuerKeystore::try_sign(msg)
     }
@@ -122,7 +110,7 @@ impl Signer for IssuerSec {
     }
 }
 
-impl Receiver for IssuerSec {
+impl Receiver for Provider {
     fn key_id(&self) -> String {
         todo!()
     }

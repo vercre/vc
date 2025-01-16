@@ -5,8 +5,8 @@ use test_utils::issuer::NORMAL_USER;
 use vercre_holder::issuance::{
     Accepted, IssuanceFlow, NotAccepted, PreAuthorized, WithOffer, WithToken, WithoutToken,
 };
-use vercre_holder::jose::{jws, Type};
-use vercre_holder::proof::{Payload, Verify};
+use vercre_holder::jose::JwsBuilder;
+use vercre_holder::proof::{Payload, Type, Verify};
 use vercre_holder::provider::{CredentialStorer, Issuer};
 use vercre_holder::{CredentialOffer, CredentialResponseType, MetadataRequest};
 
@@ -126,9 +126,15 @@ impl AppState {
         };
         let identifier = authorized[0].credential_identifiers[0].clone();
         let jws_claims = state.proof();
-        let jwt = jws::encode(Type::Openid4VciProofJwt, &jws_claims, &provider).await?;
+        let jws = JwsBuilder::new()
+            .jwt_type(Type::Openid4VciProofJwt)
+            .payload(jws_claims)
+            .add_signer(&provider)
+            .build()
+            .await?;
+        let jwt_proof = jws.encode()?;
 
-        let requests = state.credential_requests(&[identifier], &jwt).clone();
+        let requests = state.credential_requests(&[identifier], &jwt_proof).clone();
         let request = requests[0].clone();
         let credential_response = provider.credential(request.1).await?;
         match credential_response.response {

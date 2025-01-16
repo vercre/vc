@@ -4,7 +4,7 @@ use serde::Serialize;
 use test_utils::store::keystore::IssuerKeystore;
 use test_utils::store::{issuance, resolver, state};
 use vercre_issuer::provider::{
-    Algorithm, Client, Dataset, DidResolver, Document, Issuer, KeyOps, Metadata, PublicKey,
+    Algorithm, Client, Dataset, DidResolver, Document, Issuer, Metadata, PublicKey,
     Receiver, Result, Server, SharedSecret, Signer, StateStore, Status, Subject,
 };
 
@@ -83,19 +83,7 @@ impl DidResolver for Provider {
     }
 }
 
-struct KeyOpsImpl(IssuerKeystore);
-
-impl KeyOps for Provider {
-    fn signer(&self, _controller: &str) -> anyhow::Result<impl Signer> {
-        Ok(KeyOpsImpl(IssuerKeystore {}))
-    }
-
-    fn receiver(&self, _controller: &str) -> anyhow::Result<impl Receiver> {
-        Ok(KeyOpsImpl(IssuerKeystore {}))
-    }
-}
-
-impl Signer for KeyOpsImpl {
+impl Signer for Provider {
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
         IssuerKeystore::try_sign(msg)
     }
@@ -113,7 +101,7 @@ impl Signer for KeyOpsImpl {
     }
 }
 
-impl Receiver for KeyOpsImpl {
+impl Receiver for Provider {
     fn key_id(&self) -> String {
         todo!()
     }

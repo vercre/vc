@@ -104,9 +104,8 @@ pub async fn to_credential(
 #[cfg(test)]
 mod tests {
     use serde_json::json;
-    use test_utils::issuer::{Provider, CREDENTIAL_ISSUER};
+    use test_utils::issuer::Provider;
     use vercre_infosec::cose::cbor;
-    use vercre_infosec::KeyOps;
 
     use super::*;
     use crate::mso::DigestAlgorithm;
@@ -125,8 +124,7 @@ mod tests {
         // generate mdl credential
         let dataset = serde_json::from_value(dataset).unwrap();
         let provider = Provider::new();
-        let signer = KeyOps::signer(&provider, CREDENTIAL_ISSUER).unwrap();
-        let mdl = to_credential(dataset, signer).await.unwrap();
+        let mdl = to_credential(dataset, provider).await.unwrap();
         // println!("{}", mdl);
 
         // check credential deserializes back into original mdoc/mso structures

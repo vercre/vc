@@ -15,11 +15,12 @@
 //! [JWT VC Presentation Profile]: (https://identity.foundation/jwt-vc-presentation-profile)
 
 use tracing::instrument;
-use vercre_infosec::jose::jws::{self, Type};
+use vercre_infosec::jose::JwsBuilder;
 use vercre_openid::verifier::{
-    KeyOps, Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, StateStore,
+    Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, StateStore,
 };
 use vercre_openid::{Error, Result};
+use vercre_w3c_vc::proof::Type;
 
 use crate::state::State;
 
@@ -53,14 +54,17 @@ async fn process(
         return Err(Error::InvalidRequest("client ID mismatch".into()));
     }
 
-    let signer = KeyOps::signer(&provider, &request.client_id)
-        .map_err(|e| Error::ServerError(format!("issue  resolving signer: {e}")))?;
-    let jwt = jws::encode(Type::OauthAuthzReqJwt, &req_obj, &signer)
+    let jws = JwsBuilder::new()
+        .jwt_type(Type::OauthAuthzReqJwt)
+        .payload(&req_obj)
+        .add_signer(&provider)
+        .build()
         .await
-        .map_err(|e| Error::ServerError(format!("issue encoding jwt: {e}")))?;
+        .map_err(|e| Error::ServerError(format!("issue building jwt: {e}")))?;
+    let jwt_proof = jws.encode().map_err(|e| Error::ServerError(format!("issue encoding jwt: {e}")))?;
 
     Ok(RequestObjectResponse {
-        request_object: RequestObjectType::Jwt(jwt),
+        request_object: RequestObjectType::Jwt(jwt_proof),
     })
 }
 
@@ -70,6 +74,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use test_utils::verifier::{Provider, VERIFIER_ID};
     use vercre_core::Kind;
+    use vercre_infosec::jose::jws;
     use vercre_dif_exch::PresentationDefinition;
     use vercre_openid::verifier::{ClientIdScheme, RequestObject, ResponseType, Verifier};
     use vercre_w3c_vc::verify_key;

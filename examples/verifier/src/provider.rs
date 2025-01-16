@@ -4,7 +4,7 @@ use serde::Serialize;
 use test_utils::store::keystore::VerifierKeystore;
 use test_utils::store::{presentation, resolver, state};
 use vercre_verifier::provider::{
-    Algorithm, DidResolver, Document, KeyOps, Metadata, PublicKey, Receiver, Result, SharedSecret,
+    Algorithm, DidResolver, Document, Metadata, PublicKey, Receiver, Result, SharedSecret,
     Signer, StateStore, Verifier, Wallet,
 };
 
@@ -60,19 +60,7 @@ impl DidResolver for Provider {
     }
 }
 
-struct VerifierSec(VerifierKeystore);
-
-impl KeyOps for Provider {
-    fn signer(&self, _controller: &str) -> anyhow::Result<impl Signer> {
-        Ok(VerifierSec(VerifierKeystore {}))
-    }
-
-    fn receiver(&self, _controller: &str) -> anyhow::Result<impl Receiver> {
-        Ok(VerifierSec(VerifierKeystore {}))
-    }
-}
-
-impl Signer for VerifierSec {
+impl Signer for Provider {
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
         VerifierKeystore::try_sign(msg)
     }
@@ -90,7 +78,7 @@ impl Signer for VerifierSec {
     }
 }
 
-impl Receiver for VerifierSec {
+impl Receiver for Provider {
     fn key_id(&self) -> String {
         todo!()
     }

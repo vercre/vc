@@ -8,7 +8,7 @@ use serde_json::json;
 use sha2::{Digest, Sha256};
 use test_utils::holder;
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-use vercre_infosec::jose::jws::{self, Type};
+use vercre_infosec::jose::JwsBuilder;
 use vercre_issuer::{
     AuthorizationResponse, CredentialOfferRequest, CredentialResponseType,
     DeferredCredentialRequest, DeferredCredentialResponse, OfferType, ProofClaims, TokenGrantType,
@@ -16,7 +16,7 @@ use vercre_issuer::{
 };
 use vercre_openid::issuer::Format;
 use vercre_openid::{Error, Result};
-use vercre_w3c_vc::proof::{self, Payload, Verify};
+use vercre_w3c_vc::proof::{self, Payload, Type, Verify};
 
 pub const CODE_VERIFIER: &str = "ABCDEF12345";
 pub const REDIRECT_URI: &str = "http://localhost:3000/callback";
@@ -135,9 +135,14 @@ impl Wallet {
             iat: Utc::now().timestamp(),
             nonce: token_resp.c_nonce.clone(),
         };
-        let jwt = jws::encode(Type::Openid4VciProofJwt, &claims, &holder::Provider)
+        let jws = JwsBuilder::new()
+            .jwt_type(Type::Openid4VciProofJwt)
+            .payload(claims)
+            .add_signer(&holder::Provider)
+            .build()
             .await
             .map_err(|e| Error::ServerError(format!("{e}")))?;
+        let jwt = jws.encode().map_err(|e| Error::ServerError(format!("{e}")))?;
 
         // FIXME: two paths: credential_identifier or format/type
         let Some(auth_dets) = &token_resp.authorization_details else {

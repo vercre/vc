@@ -11,8 +11,7 @@ use vercre_core::{Kind, Quota};
 use vercre_dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
 use vercre_holder::credential::Credential;
 use vercre_holder::presentation::{parse_request_object_response, NotAuthorized, PresentationFlow};
-use vercre_holder::provider::{CredentialStorer, Verifier};
-use vercre_infosec::{KeyOps, Signer};
+use vercre_holder::provider::{CredentialStorer, Signer, Verifier};
 use vercre_issuer::{Claim, ClaimDefinition};
 use vercre_openid::issuer::{Display, ValueType};
 use vercre_openid::verifier::{CreateRequestRequest, DeviceFlow};
@@ -73,13 +72,12 @@ async fn sample_credential() -> Credential {
     let issuance_date = Utc::now();
 
     let provider = verifier::Provider::new();
-    let signer = KeyOps::signer(&provider, VERIFIER_ID).expect("should get verifier");
 
     let payload = Payload::Vc {
         vc: vc.clone(),
         issued_at: issuance_date.timestamp(),
     };
-    let jwt = proof::create(W3cFormat::JwtVcJson, payload, &signer).await.expect("should encode");
+    let jwt = proof::create(W3cFormat::JwtVcJson, payload, &provider).await.expect("should encode");
 
     let mut claim_def: HashMap<String, Claim> = HashMap::new();
     let claim = Claim::Entry(ClaimDefinition {
