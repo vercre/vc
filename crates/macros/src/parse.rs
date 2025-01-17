@@ -186,7 +186,7 @@ impl ToTokens for Value {
 impl Value {
     pub fn as_str(&self) -> Option<&str> {
         match self {
-            Self::String(s) => Some(s),
+            Self::String(s) => Some(s.as_str()),
             _ => None,
         }
     }
