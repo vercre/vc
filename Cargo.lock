@@ -6347,9 +6347,9 @@ dependencies = [
 
 [[package]]
 name = "valuable"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "830b7e5d4d90034032940e4ace0d9a9a057e7a45cd94e6c007832e39edb82f6d"
+checksum = "ba73ea9cf16a25df0c8caa16c51acb937d5712a8429db78a3ee29d5dcacd3a65"
 
 [[package]]
 name = "value-bag"
@@ -6429,7 +6429,7 @@ dependencies = [
 [[package]]
 name = "vercre-infosec"
 version = "0.1.0-alpha.6"
-source = "git+https://github.com/vercre/infosec.git#f365971e083b9a11e107d68f2ee4ead43c167e17"
+source = "git+https://github.com/vercre/infosec.git#3732f149b3700f9ec3110fb9737b8d7d32d288f6"
 dependencies = [
  "aes-gcm",
  "aes-kw",
