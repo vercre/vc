@@ -13,3 +13,5 @@ gen/
 
 # local env file(s)
 .env
+
+.DS_Store
