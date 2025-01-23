@@ -522,6 +522,11 @@ impl<O, P, A> IssuanceFlow<O, P, A, WithoutToken> {
 }
 
 impl<O, P> IssuanceFlow<O, P, Accepted, WithToken> {
+    /// Get the token response from the current state.
+    pub fn get_token(&self) -> TokenResponse {
+        self.token.0.clone()
+    }
+    
     /// Create a set of credential requests from the current state for the
     /// given set of credential identifiers (allows the user to select a
     /// subset of accepted credentials) and a proof JWT.

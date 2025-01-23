@@ -95,6 +95,11 @@ async fn preauth() {
     // For this test we are going to accept all credentials on offer. (Just one
     // in this case but we demonstate the pattern for multiple credentials.) We
     // are making the request by credential identifier.
+
+    // Although we have access to the token response locally here, using the
+    // getter on the state to make sure that is working OK.
+    let token_response = state.get_token();
+
     let Some(authorized) = &token_response.authorization_details else {
         panic!("no authorization details in token response");
     };
