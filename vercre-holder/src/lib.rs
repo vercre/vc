@@ -44,7 +44,7 @@ pub mod issuance;
 pub mod presentation;
 pub mod provider;
 
-pub use vercre_core::{urlencode, Quota};
+pub use vercre_core::{urlencode, Kind, Quota};
 pub use vercre_dif_exch::Constraints;
 pub use vercre_infosec::jose::{self};
 pub use vercre_infosec::Signer;
@@ -61,4 +61,5 @@ pub use vercre_openid::issuer::{
 pub use vercre_openid::verifier::{
     RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
 };
+pub use vercre_w3c_vc::model::VerifiableCredential;
 pub use vercre_w3c_vc::proof::{self, Type};
