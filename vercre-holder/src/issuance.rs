@@ -530,6 +530,9 @@ impl<O, P> IssuanceFlow<O, P, Accepted, WithToken> {
     /// Create a set of credential requests from the current state for the
     /// given set of credential identifiers (allows the user to select a
     /// subset of accepted credentials) and a proof JWT.
+    /// 
+    /// The tuple returned is the credential configuration ID and the associated
+    /// credential request.
     ///
     /// If any inconsistencies are found between the authorization details may
     /// result in an empty or partial set of credential requests.
