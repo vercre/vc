@@ -405,7 +405,7 @@ impl Context {
             if let Some(claim_ids) = &claim_ids {
                 dataset.claims.retain(|k, _| claim_ids.contains(k));
             }
-        };
+        }
 
         Ok(dataset)
     }

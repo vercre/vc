@@ -64,7 +64,7 @@ async fn process(
     if let CredentialResponseType::TransactionId(_) = response.response {
         // TODO: make retry interval configurable
         return Err(Error::IssuancePending(5));
-    };
+    }
 
     Ok(DeferredCredentialResponse {
         credential_response: response,

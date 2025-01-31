@@ -119,12 +119,12 @@ impl Context {
         // `credential_issuer` required
         if request.credential_issuer.is_empty() {
             return Err(Error::InvalidRequest("no `credential_issuer` specified".into()));
-        };
+        }
 
         // credentials required
         if request.credential_configuration_ids.is_empty() {
             return Err(Error::InvalidRequest("no credentials requested".into()));
-        };
+        }
 
         // are requested credential(s) is supported
         for cred_id in &request.credential_configuration_ids {
@@ -132,7 +132,7 @@ impl Context {
                 return Err(Error::UnsupportedCredentialType(
                     "requested credential is unsupported".into(),
                 ));
-            };
+            }
         }
 
         // TODO: check requested `grant_types` are supported by OAuth Client
@@ -142,16 +142,16 @@ impl Context {
                 for gt in grant_types {
                     if !supported_grants.contains(gt) {
                         return Err(Error::UnsupportedGrantType("unsupported grant type".into()));
-                    };
+                    }
                 }
-            };
+            }
 
             // subject_id is required for pre-authorized offers
             if grant_types.contains(&GrantType::PreAuthorizedCode) && request.subject_id.is_none() {
                 return Err(Error::InvalidRequest(
                     "`subject_id` is required for pre-authorization".into(),
                 ));
-            };
+            }
         }
 
         Ok(())
@@ -322,14 +322,14 @@ pub fn state_key(grants: Option<&Grants>) -> Result<String> {
 
     if let Some(pre_auth_code) = &grants.pre_authorized_code {
         return Ok(pre_auth_code.pre_authorized_code.clone());
-    };
+    }
 
     if let Some(authorization_code) = &grants.authorization_code {
         let Some(issuer_state) = &authorization_code.issuer_state else {
             return Err(Error::ServerError("no issuer_state".into()));
         };
         return Ok(issuer_state.clone());
-    };
+    }
 
     Err(Error::ServerError("no state key".into()))
 }

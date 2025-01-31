@@ -1863,7 +1863,7 @@ impl CredentialConfiguration {
                 } else {
                     return Err(anyhow!("{key} claimset is not supported "));
                 }
-            };
+            }
         }
 
         Ok(())
