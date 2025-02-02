@@ -147,7 +147,7 @@ impl AppState {
                 else {
                     panic!("expected Payload::Vc");
                 };
-                state.add_credential(&vc, &vc_kind, &issued_at, &request.0)?;
+                state.add_credential(&vc, &vc_kind, &issued_at, &request.0, None, None)?;
             }
             CredentialResponseType::Credentials(creds) => {
                 // Multiple credentials in response.
@@ -159,7 +159,7 @@ impl AppState {
                     else {
                         panic!("expected Payload::Vc");
                     };
-                    state.add_credential(&vc, &vc_kind, &issued_at, &request.0)?;
+                    state.add_credential(&vc, &vc_kind, &issued_at, &request.0, None, None)?;
                 }
             }
             CredentialResponseType::TransactionId(tx_id) => {

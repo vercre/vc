@@ -21,7 +21,7 @@ use vercre_macros::credential_request;
 use vercre_openid::issuer::{Issuer, Server};
 use vercre_w3c_vc::model::VerifiableCredential;
 
-use crate::credential::Credential;
+use crate::credential::{Credential, ImageData};
 
 /// A configuration ID and a list of claims that can be used by the holder to
 /// narrow the scope of the acceptance from the full set on offer.
@@ -650,7 +650,7 @@ impl<O, P, A> IssuanceFlow<O, P, A, WithToken> {
     /// required to combine with the provided VC.
     pub fn add_credential(
         &mut self, vc: &VerifiableCredential, encoded: &Kind<VerifiableCredential>,
-        issued_at: &i64, config_id: &str,
+        issued_at: &i64, config_id: &str, logo: Option<ImageData>, background: Option<ImageData>,
     ) -> anyhow::Result<()> {
         let Some(issuance_date) = DateTime::from_timestamp(*issued_at, 0) else {
             bail!("invalid issuance date");
@@ -705,8 +705,8 @@ impl<O, P, A> IssuanceFlow<O, P, A, WithToken> {
             valid_from: vc.valid_from,
             valid_until: vc.valid_until,
             display: config.display.clone(),
-            logo: None,
-            background: None,
+            logo,
+            background,
         };
 
         self.credentials.push(storable_credential);

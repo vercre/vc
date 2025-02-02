@@ -139,7 +139,7 @@ async fn preauth_narrow() {
                     panic!("expected Payload::Vc");
                 };
                 state
-                    .add_credential(&vc, &vc_kind, &issued_at, &request.0)
+                    .add_credential(&vc, &vc_kind, &issued_at, &request.0, None, None)
                     .expect("should add credential");
             }
             CredentialResponseType::Credentials(creds) => {
@@ -153,7 +153,7 @@ async fn preauth_narrow() {
                         panic!("expected Payload::Vc");
                     };
                     state
-                        .add_credential(&vc, &vc_kind, &issued_at, &request.0)
+                        .add_credential(&vc, &vc_kind, &issued_at, &request.0, None, None)
                         .expect("should add credential");
                 }
             }
