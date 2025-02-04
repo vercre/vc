@@ -59,7 +59,8 @@ pub use vercre_openid::issuer::{
     Proof, ProofClaims, TokenRequest, TokenResponse, TxCode,
 };
 pub use vercre_openid::verifier::{
-    RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest, ResponseResponse,
+    RequestObject, RequestObjectRequest, RequestObjectResponse, RequestObjectType, ResponseRequest,
+    ResponseResponse,
 };
 pub use vercre_w3c_vc::model::VerifiableCredential;
 pub use vercre_w3c_vc::proof::{self, Type};
