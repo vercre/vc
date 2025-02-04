@@ -64,3 +64,4 @@ pub use vercre_openid::verifier::{
 };
 pub use vercre_w3c_vc::model::VerifiableCredential;
 pub use vercre_w3c_vc::proof::{self, Type};
+pub use vercre_w3c_vc::verify_key;
