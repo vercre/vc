@@ -1,7 +1,6 @@
 # Vercre
 
-Issuance, Holder, and Verification libraries for use in `OpenID` Verifiable Credentials
-solutions.
+Issuance and Verification libraries for use in `OpenID` Verifiable Credentials solutions.
 
 > [!CAUTION]
 >
@@ -20,19 +19,19 @@ initial focus on meeting requirements in the [JWT VC Issuance] and [JWT VC Prese
 Profiles.
 
 You will find a more complete set of documentation on the 
-[Vercre website](https://vercre.io).
+[Credibil website](https://credibil.io).
 
 ## Getting Started
 
-Example impementations for Credential issuance, presentation, and a rudimentary wallet
-can be found in the [examples](./examples) directory
+There is no default feature for this crate. To use the Issuer API include the `issuer` feature flag; to include the Verifier API use `verifier`. You can include both if building a single service that both issues and verifies credentials or if you are building, say, a holder agent application (like a wallet) that might need the types necessary to interact with both types of service.
 
-The wallet example is built using [Tauri](https://tauri.studio/) to provide an 
-end-to-end example using the `vercre` libraries to issue and present Verifiable 
-Credentials.
+Example impementations for Credential issuance and presentation can be found in the [examples](./examples) directory
 
-Additionally, end-to-end client examples can be found in each top-level crate's `/tests`
-directory.
+Additionally, end-to-end client examples can be found in the `/tests` directory.
+
+## WASM
+
+One of the goals of this project is to allow WASM services to be built using this API. While the bulk of the library is compatible with WASM without special consideration, some dependencies require a feature flag. So if compiling for WASM, regardless of the WASM runtime, include the `wasm` feature.
 
 ## Specification Conformance
 
