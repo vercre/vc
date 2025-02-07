@@ -29,7 +29,7 @@ serde.workspace = true
 serde_json.workspace = true
 thiserror = "2.0.11"
 vercre-core.workspace = true
-vercre-infosec.workspace = true
+credibil-infosec.workspace = true
 vercre-w3c-vc.workspace = true
 
 [dev-dependencies]

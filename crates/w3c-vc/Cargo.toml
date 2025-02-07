@@ -28,9 +28,9 @@ serde_json.workspace = true
 tracing.workspace = true
 uuid.workspace = true
 vercre-core.workspace = true
-vercre-did.workspace = true
+credibil-did.workspace = true
 vercre-dif-exch.workspace = true
-vercre-infosec.workspace = true
+credibil-infosec.workspace = true
 
 [dev-dependencies]
 insta.workspace = true

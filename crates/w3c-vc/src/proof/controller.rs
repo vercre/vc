@@ -1,7 +1,7 @@
 //! # Controller Document
 
 use serde::{Deserialize, Serialize};
-use vercre_infosec::jose::jwk::PublicKeyJwk;
+use credibil_infosec::jose::jwk::PublicKeyJwk;
 
 /// A controller document contains a set of verification methods that specify
 /// relationships between the controller and a set of public keys.

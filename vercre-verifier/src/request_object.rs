@@ -15,7 +15,7 @@
 //! [JWT VC Presentation Profile]: (https://identity.foundation/jwt-vc-presentation-profile)
 
 use tracing::instrument;
-use vercre_infosec::jose::JwsBuilder;
+use credibil_infosec::jose::JwsBuilder;
 use vercre_openid::verifier::{
     Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, StateStore,
 };
@@ -74,7 +74,7 @@ mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
     use test_utils::verifier::{Provider, VERIFIER_ID};
     use vercre_core::Kind;
-    use vercre_infosec::jose::jws;
+    use credibil_infosec::jose::jws;
     use vercre_dif_exch::PresentationDefinition;
     use vercre_openid::verifier::{ClientIdScheme, RequestObject, ResponseType, Verifier};
     use vercre_w3c_vc::verify_key;

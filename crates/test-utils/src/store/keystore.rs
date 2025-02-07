@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use ed25519_dalek::{SecretKey, Signer, SigningKey};
-use vercre_infosec::jose::jwa::Algorithm;
+use credibil_infosec::jose::jwa::Algorithm;
 use vercre_openid::provider::Result;
 
 #[derive(Default, Clone, Debug)]

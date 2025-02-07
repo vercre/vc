@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use vercre_did::{DidResolver, Document};
-use vercre_infosec::{Algorithm, PublicKey, Receiver, SharedSecret, Signer};
+use credibil_did::{DidResolver, Document};
+use credibil_infosec::{Algorithm, PublicKey, Receiver, SharedSecret, Signer};
 use vercre_openid::issuer::{
     Client, Dataset, Issuer, Metadata, Result, Server, StateStore, Subject,
 };

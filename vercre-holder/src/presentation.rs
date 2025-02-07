@@ -8,11 +8,11 @@ use std::vec;
 use anyhow::{anyhow, bail};
 use uuid::Uuid;
 use vercre_core::{urlencode, Kind};
-use vercre_did::DidResolver;
+use credibil_did::DidResolver;
 use vercre_dif_exch::{
     Constraints, DescriptorMap, FilterValue, PathNested, PresentationSubmission,
 };
-use vercre_infosec::jose::jws;
+use credibil_infosec::jose::jws;
 use vercre_openid::verifier::{
     RequestObject, RequestObjectResponse, RequestObjectType, ResponseRequest,
 };

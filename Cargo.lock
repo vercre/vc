@@ -1040,6 +1040,51 @@ dependencies = [
 ]
 
 [[package]]
+name = "credibil-did"
+version = "0.1.0"
+source = "git+https://github.com/credibil/did.git#0667480c9522bfdc2a9822e0b848a1d638e90fd6"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "chrono",
+ "credibil-infosec",
+ "curve25519-dalek",
+ "ed25519-dalek",
+ "multibase",
+ "rand 0.8.5",
+ "regex",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.11",
+ "url",
+]
+
+[[package]]
+name = "credibil-infosec"
+version = "0.1.0-alpha.6"
+source = "git+https://github.com/credibil/infosec.git#4013abd9f49d2d6bf38306094f7622e9aa78fc6a"
+dependencies = [
+ "aes-gcm",
+ "aes-kw",
+ "anyhow",
+ "base64ct",
+ "chacha20poly1305",
+ "ciborium",
+ "coset",
+ "ecdsa",
+ "ecies",
+ "ed25519-dalek",
+ "k256",
+ "multibase",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "tracing",
+ "x25519-dalek",
+ "zeroize",
+]
+
+[[package]]
 name = "critical-section"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5820,14 +5865,14 @@ dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
+ "credibil-did",
+ "credibil-infosec",
  "ed25519-dalek",
  "serde",
  "serde_json",
  "tracing",
  "tracing-subscriber",
  "uuid",
- "vercre-did",
- "vercre-infosec",
  "vercre-openid",
  "vercre-status",
 ]
@@ -6423,26 +6468,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "vercre-did"
-version = "0.1.0"
-source = "git+https://github.com/vercre/did.git#ea21e46beef227f20e75ff105b200773ffbfc31a"
-dependencies = [
- "anyhow",
- "base64ct",
- "chrono",
- "curve25519-dalek",
- "ed25519-dalek",
- "multibase",
- "rand 0.8.5",
- "regex",
- "serde",
- "serde_json",
- "thiserror 2.0.11",
- "url",
- "vercre-infosec",
-]
-
-[[package]]
 name = "vercre-dif-exch"
 version = "0.1.0-alpha.6"
 dependencies = [
@@ -6460,6 +6485,8 @@ version = "0.1.0-alpha.6"
 dependencies = [
  "anyhow",
  "chrono",
+ "credibil-did",
+ "credibil-infosec",
  "insta",
  "serde",
  "serde_json",
@@ -6469,39 +6496,12 @@ dependencies = [
  "urlencoding",
  "uuid",
  "vercre-core",
- "vercre-did",
  "vercre-dif-exch",
- "vercre-infosec",
  "vercre-issuer",
  "vercre-macros",
  "vercre-openid",
  "vercre-verifier",
  "vercre-w3c-vc",
-]
-
-[[package]]
-name = "vercre-infosec"
-version = "0.1.0-alpha.6"
-source = "git+https://github.com/vercre/infosec.git#d619ecb83f1d1205aefbb0165bf36a768661be78"
-dependencies = [
- "aes-gcm",
- "aes-kw",
- "anyhow",
- "base64ct",
- "chacha20poly1305",
- "ciborium",
- "coset",
- "ecdsa",
- "ecies",
- "ed25519-dalek",
- "k256",
- "multibase",
- "rand 0.8.5",
- "serde",
- "serde_json",
- "tracing",
- "x25519-dalek",
- "zeroize",
 ]
 
 [[package]]
@@ -6513,13 +6513,13 @@ dependencies = [
  "chrono",
  "ciborium",
  "coset",
+ "credibil-infosec",
  "rand 0.8.5",
  "serde",
  "serde_json",
  "sha2 0.10.8",
  "test-utils",
  "tokio",
- "vercre-infosec",
 ]
 
 [[package]]
@@ -6530,6 +6530,8 @@ dependencies = [
  "async-std",
  "base64ct",
  "chrono",
+ "credibil-did",
+ "credibil-infosec",
  "insta",
  "rstest",
  "serde",
@@ -6539,8 +6541,6 @@ dependencies = [
  "tokio",
  "tracing",
  "vercre-core",
- "vercre-did",
- "vercre-infosec",
  "vercre-iso-mdl",
  "vercre-openid",
  "vercre-status",
@@ -6567,6 +6567,8 @@ dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
+ "credibil-did",
+ "credibil-infosec",
  "image",
  "insta",
  "qrcode",
@@ -6575,9 +6577,7 @@ dependencies = [
  "thiserror 2.0.11",
  "urlencoding",
  "vercre-core",
- "vercre-did",
  "vercre-dif-exch",
- "vercre-infosec",
  "vercre-status",
  "vercre-w3c-vc",
 ]
@@ -6590,12 +6590,12 @@ dependencies = [
  "base64ct",
  "bitvec",
  "chrono",
+ "credibil-infosec",
  "flate2",
  "serde",
  "serde_json",
  "thiserror 2.0.11",
  "vercre-core",
- "vercre-infosec",
  "vercre-w3c-vc",
 ]
 
@@ -6605,6 +6605,8 @@ version = "0.1.0-alpha.6"
 dependencies = [
  "assert_let_bind",
  "chrono",
+ "credibil-did",
+ "credibil-infosec",
  "derive_builder",
  "insta",
  "serde",
@@ -6615,9 +6617,7 @@ dependencies = [
  "tracing",
  "uuid",
  "vercre-core",
- "vercre-did",
  "vercre-dif-exch",
- "vercre-infosec",
  "vercre-openid",
  "vercre-w3c-vc",
 ]
@@ -6629,6 +6629,8 @@ dependencies = [
  "anyhow",
  "base64ct",
  "chrono",
+ "credibil-did",
+ "credibil-infosec",
  "insta",
  "serde",
  "serde_json",
@@ -6636,9 +6638,7 @@ dependencies = [
  "tracing-subscriber",
  "uuid",
  "vercre-core",
- "vercre-did",
  "vercre-dif-exch",
- "vercre-infosec",
 ]
 
 [[package]]

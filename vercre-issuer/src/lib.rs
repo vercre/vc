@@ -105,9 +105,9 @@ mod token;
 
 /// Re-export provider traits and types.
 pub mod provider {
-    pub use vercre_did::{DidResolver, Document};
-    pub use vercre_infosec::jose::jwk::PublicKeyJwk;
-    pub use vercre_infosec::{Algorithm, PublicKey, Receiver, SharedSecret, Signer};
+    pub use credibil_did::{DidResolver, Document};
+    pub use credibil_infosec::jose::jwk::PublicKeyJwk;
+    pub use credibil_infosec::{Algorithm, PublicKey, Receiver, SharedSecret, Signer};
     pub use vercre_openid::issuer::{
         ClaimDefinition, Client, Dataset, GrantType, Issuer, Metadata, Provider, Result, Server,
         StateStore, Subject,

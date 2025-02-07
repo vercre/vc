@@ -15,7 +15,7 @@ pub mod proof;
 pub mod schema;
 
 pub use anyhow::anyhow;
-pub use vercre_did::{dereference, Resource};
+pub use credibil_did::{dereference, Resource};
 
 // TODO: move this macro to a more appropriate location (its own crate perhaps).
 // N.B. the current dependency tree is a little complex, so this is a temporary
@@ -26,7 +26,7 @@ pub use vercre_did::{dereference, Resource};
 /// # Example
 ///
 /// ```rust,ignore
-/// use vercre_infosec::{verify_key, KeyOps};
+/// use credibil_infosec::{verify_key, KeyOps};
 ///
 /// let resolver = KeyOps::resolver(&provider, &request.credential_issuer)?;
 /// let jwt = jws::decode(proof_jwt, verify_key!(resolver)).await?;

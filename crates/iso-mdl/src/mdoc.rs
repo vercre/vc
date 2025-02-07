@@ -14,7 +14,7 @@
 use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
-use vercre_infosec::cose::{cbor, Tag24};
+use credibil_infosec::cose::{cbor, Tag24};
 
 use crate::mso;
 

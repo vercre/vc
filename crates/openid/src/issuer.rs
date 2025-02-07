@@ -14,9 +14,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use vercre_core::strings::title_case;
 use vercre_core::{urlencode, Kind};
-use vercre_did::DidResolver;
-use vercre_infosec::jose::jwk::PublicKeyJwk;
-use vercre_infosec::Signer;
+use credibil_did::DidResolver;
+use credibil_infosec::jose::jwk::PublicKeyJwk;
+use credibil_infosec::Signer;
 use vercre_status::issuer::Status;
 use vercre_w3c_vc::model::VerifiableCredential;
 

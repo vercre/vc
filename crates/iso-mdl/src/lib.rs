@@ -20,8 +20,8 @@ use coset::{iana, CoseSign1Builder, HeaderBuilder};
 use rand::{thread_rng, Rng};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
-use vercre_infosec::cose::{CoseKey, Tag24};
-use vercre_infosec::{Algorithm, Curve, KeyType, Signer};
+use credibil_infosec::cose::{CoseKey, Tag24};
+use credibil_infosec::{Algorithm, Curve, KeyType, Signer};
 
 use crate::mdoc::{IssuerSigned, IssuerSignedItem};
 use crate::mso::{DigestIdGenerator, MobileSecurityObject};
@@ -105,7 +105,7 @@ pub async fn to_credential(
 mod tests {
     use serde_json::json;
     use test_utils::issuer::Provider;
-    use vercre_infosec::cose::cbor;
+    use credibil_infosec::cose::cbor;
 
     use super::*;
     use crate::mso::DigestAlgorithm;

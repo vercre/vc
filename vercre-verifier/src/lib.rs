@@ -170,8 +170,8 @@ pub use vercre_openid::Result;
 
 /// Re-export provider traits and types.
 pub mod provider {
-    pub use vercre_did::{DidResolver, Document};
-    pub use vercre_infosec::{
+    pub use credibil_did::{DidResolver, Document};
+    pub use credibil_infosec::{
         Algorithm, PublicKey, PublicKeyJwk, Receiver, SharedSecret, Signer,
     };
     pub use vercre_openid::issuer::{Client, Format, Server};
@@ -183,7 +183,7 @@ pub use create_request::create_request;
 pub use metadata::metadata;
 pub use request_object::request_object;
 pub use response::response;
-pub use vercre_dif_exch::{Constraints, Field, Filter, FilterValue, InputDescriptor};
+pub use vercre_dif_exch::{Constraints, Claims, Field, Filter, FilterValue, InputDescriptor};
 pub use vercre_openid::verifier::{
     ClientIdScheme, CreateRequestRequest, CreateRequestResponse, DeviceFlow, MetadataRequest,
     MetadataResponse, RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest,

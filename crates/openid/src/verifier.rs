@@ -13,9 +13,9 @@ use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 use vercre_core::{urlencode, Kind};
-use vercre_did::DidResolver;
+use credibil_did::DidResolver;
 use vercre_dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
-pub use vercre_infosec::Signer;
+pub use credibil_infosec::Signer;
 use vercre_w3c_vc::model::VerifiablePresentation;
 
 pub use crate::oauth::{OAuthClient, OAuthServer};

@@ -37,9 +37,9 @@ use std::fmt::Display;
 use anyhow::bail;
 use serde::{Deserialize, Serialize};
 use vercre_core::{Kind, Quota};
-use vercre_did::DidResolver;
-use vercre_infosec::jose::{jws, jwt};
-use vercre_infosec::Signer;
+use credibil_did::DidResolver;
+use credibil_infosec::jose::{jws, jwt};
+use credibil_infosec::Signer;
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
 use crate::verify_key;

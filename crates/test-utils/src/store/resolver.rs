@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use vercre_did::Document;
+use credibil_did::Document;
 use vercre_openid::provider::Result;
 
 /// Dereference DID URL to public key. For example,

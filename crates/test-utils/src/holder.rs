@@ -1,4 +1,4 @@
-use vercre_infosec::{Algorithm, Signer};
+use credibil_infosec::{Algorithm, Signer};
 use vercre_openid::provider::Result;
 
 use crate::store::keystore::HolderKeystore;
