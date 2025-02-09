@@ -11,11 +11,11 @@ use bitvec::bits;
 use bitvec::order::Lsb0;
 use bitvec::view::BitView;
 use chrono::Utc;
+use credibil_infosec::Signer;
 use flate2::write::GzEncoder;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use thiserror::Error;
-use credibil_infosec::Signer;
 use vercre_w3c_vc::model::{CredentialStatus, CredentialSubject, StatusPurpose, VcBuilder};
 use vercre_w3c_vc::proof::{self, Payload, W3cFormat};
 

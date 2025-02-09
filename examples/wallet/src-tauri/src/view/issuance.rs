@@ -52,13 +52,23 @@ impl From<IssuanceState> for IssuanceView {
         let mut creds: HashMap<String, CredentialDisplay> = HashMap::new();
         let (on_offer, issuer, offer, pin, mut status) = match state {
             IssuanceState::Inactive => return Self::default(),
-            IssuanceState::Offered(state) => (state.offered(), state.issuer(), state.offer(), None, IssuanceStatus::Offered),
-            IssuanceState::Accepted(state) => {
-                (state.offered(), state.issuer(), state.offer(), state.pin(), IssuanceStatus::Accepted)
+            IssuanceState::Offered(state) => {
+                (state.offered(), state.issuer(), state.offer(), None, IssuanceStatus::Offered)
             }
-            IssuanceState::Token(state) => {
-                (state.offered(), state.issuer(), state.offer(), state.pin(), IssuanceStatus::Tokenized)
-            }
+            IssuanceState::Accepted(state) => (
+                state.offered(),
+                state.issuer(),
+                state.offer(),
+                state.pin(),
+                IssuanceStatus::Accepted,
+            ),
+            IssuanceState::Token(state) => (
+                state.offered(),
+                state.issuer(),
+                state.offer(),
+                state.pin(),
+                IssuanceStatus::Tokenized,
+            ),
         };
         for (id, offered) in &on_offer {
             let mut cred: CredentialDisplay = offered.into();

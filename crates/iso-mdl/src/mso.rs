@@ -11,9 +11,9 @@ use std::collections::{BTreeMap, HashSet};
 use chrono::{Duration, SecondsFormat, Utc};
 use ciborium::Value;
 use coset::{AsCborValue, CoseSign1};
+use credibil_infosec::cose::CoseKey;
 use rand::Rng;
 use serde::{de, ser, Deserialize, Deserializer, Serialize, Serializer};
-use credibil_infosec::cose::CoseKey;
 
 use crate::mdoc::NameSpace;
 

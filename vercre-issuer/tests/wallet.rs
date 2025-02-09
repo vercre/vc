@@ -3,12 +3,12 @@
 
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
+use credibil_infosec::jose::JwsBuilder;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use test_utils::holder;
 use test_utils::issuer::{self, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-use credibil_infosec::jose::JwsBuilder;
 use vercre_issuer::{
     AuthorizationResponse, CredentialOfferRequest, CredentialResponseType,
     DeferredCredentialRequest, DeferredCredentialResponse, OfferType, ProofClaims, TokenGrantType,

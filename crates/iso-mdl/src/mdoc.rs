@@ -13,8 +13,8 @@
 
 use std::collections::BTreeMap;
 
-use serde::{Deserialize, Serialize};
 use credibil_infosec::cose::{cbor, Tag24};
+use serde::{Deserialize, Serialize};
 
 use crate::mso;
 

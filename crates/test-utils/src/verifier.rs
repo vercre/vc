@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
-use serde::de::DeserializeOwned;
-use serde::Serialize;
 use credibil_did::{DidResolver, Document};
 use credibil_infosec::{self, Algorithm, PublicKey, Receiver, SharedSecret, Signer};
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use vercre_openid::verifier::{Metadata, Result, StateStore, Verifier, Wallet};
 
 use crate::store::keystore::VerifierKeystore;

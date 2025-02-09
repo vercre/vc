@@ -45,11 +45,11 @@
 use std::collections::HashMap;
 
 use chrono::Utc;
+use credibil_infosec::Algorithm;
 use tracing::instrument;
 use uuid::Uuid;
 use vercre_core::{gen, Kind};
 use vercre_dif_exch::{ClaimFormat, PresentationDefinition};
-use credibil_infosec::Algorithm;
 use vercre_openid::verifier::{
     ClientIdScheme, CreateRequestRequest, CreateRequestResponse, DeviceFlow, Metadata, Provider,
     RequestObject, ResponseType, StateStore,

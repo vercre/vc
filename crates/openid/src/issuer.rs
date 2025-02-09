@@ -8,15 +8,15 @@ use std::str::FromStr;
 
 use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
+use credibil_did::DidResolver;
+use credibil_infosec::jose::jwk::PublicKeyJwk;
+use credibil_infosec::Signer;
 use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use vercre_core::strings::title_case;
 use vercre_core::{urlencode, Kind};
-use credibil_did::DidResolver;
-use credibil_infosec::jose::jwk::PublicKeyJwk;
-use credibil_infosec::Signer;
 use vercre_status::issuer::Status;
 use vercre_w3c_vc::model::VerifiableCredential;
 

@@ -14,8 +14,8 @@
 //!
 //! [JWT VC Presentation Profile]: (https://identity.foundation/jwt-vc-presentation-profile)
 
-use tracing::instrument;
 use credibil_infosec::jose::JwsBuilder;
+use tracing::instrument;
 use vercre_openid::verifier::{
     Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType, StateStore,
 };
@@ -61,7 +61,8 @@ async fn process(
         .build()
         .await
         .map_err(|e| Error::ServerError(format!("issue building jwt: {e}")))?;
-    let jwt_proof = jws.encode().map_err(|e| Error::ServerError(format!("issue encoding jwt: {e}")))?;
+    let jwt_proof =
+        jws.encode().map_err(|e| Error::ServerError(format!("issue encoding jwt: {e}")))?;
 
     Ok(RequestObjectResponse {
         request_object: RequestObjectType::Jwt(jwt_proof),
@@ -71,10 +72,10 @@ async fn process(
 #[cfg(test)]
 mod tests {
     use chrono::Utc;
+    use credibil_infosec::jose::jws;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use test_utils::verifier::{Provider, VERIFIER_ID};
     use vercre_core::Kind;
-    use credibil_infosec::jose::jws;
     use vercre_dif_exch::PresentationDefinition;
     use vercre_openid::verifier::{ClientIdScheme, RequestObject, ResponseType, Verifier};
     use vercre_w3c_vc::verify_key;

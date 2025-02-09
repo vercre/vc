@@ -183,7 +183,7 @@ pub use create_request::create_request;
 pub use metadata::metadata;
 pub use request_object::request_object;
 pub use response::response;
-pub use vercre_dif_exch::{Constraints, Claims, Field, Filter, FilterValue, InputDescriptor};
+pub use vercre_dif_exch::{Claims, Constraints, Field, Filter, FilterValue, InputDescriptor};
 pub use vercre_openid::verifier::{
     ClientIdScheme, CreateRequestRequest, CreateRequestResponse, DeviceFlow, MetadataRequest,
     MetadataResponse, RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest,

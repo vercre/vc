@@ -12,11 +12,11 @@ use test_utils::store::{resolver, state};
 use test_utils::{issuer, verifier};
 // TODO: remove this import
 use vercre_dif_exch::Constraints;
+use vercre_holder::credential::{Credential, ImageData};
 use vercre_holder::provider::{
     Algorithm, CredentialStorer, DidResolver, Document, HolderProvider, Issuer, Result, Signer,
     StateStore, Verifier,
 };
-use vercre_holder::credential::{Credential, ImageData};
 use vercre_holder::{
     AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse,
     DeferredCredentialRequest, DeferredCredentialResponse, MetadataRequest, MetadataResponse,

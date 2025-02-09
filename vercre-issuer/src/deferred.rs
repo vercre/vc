@@ -77,11 +77,11 @@ mod tests {
 
     use assert_let_bind::assert_let;
     use chrono::Utc;
+    use credibil_infosec::jose::JwsBuilder;
     use insta::assert_yaml_snapshot as assert_snapshot;
     use serde_json::json;
     use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
     use test_utils::{holder, snapshot};
-    use credibil_infosec::jose::JwsBuilder;
     use vercre_openid::issuer::{CredentialRequest, CredentialResponseType, ProofClaims};
     use vercre_w3c_vc::proof::{self, Payload, Type, Verify};
 

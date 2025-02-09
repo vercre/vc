@@ -8,9 +8,9 @@
 use std::future::Future;
 
 pub use credibil_did::{DidResolver, Document};
-pub use vercre_dif_exch::Constraints;
 pub use credibil_infosec::jose::jwk::PublicKeyJwk;
 pub use credibil_infosec::{Algorithm, Signer};
+pub use vercre_dif_exch::Constraints;
 pub use vercre_issuer::{
     AuthorizationRequest, AuthorizationResponse, CredentialRequest, CredentialResponse,
     DeferredCredentialRequest, DeferredCredentialResponse, MetadataRequest, MetadataResponse,

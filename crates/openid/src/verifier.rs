@@ -8,14 +8,14 @@ use std::io::Cursor;
 
 use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
+use credibil_did::DidResolver;
+pub use credibil_infosec::Signer;
 use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 use vercre_core::{urlencode, Kind};
-use credibil_did::DidResolver;
 use vercre_dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
-pub use credibil_infosec::Signer;
 use vercre_w3c_vc::model::VerifiablePresentation;
 
 pub use crate::oauth::{OAuthClient, OAuthServer};
@@ -113,7 +113,7 @@ impl CreateRequestResponse {
     ///
     /// If the `request_object` is set, the method will generate a QR code for
     /// that in favour of the `request_uri`.
-    /// 
+    ///
     /// TODO: Revisit the logic to determine default type if this struct is made
     /// an enum.
     ///

@@ -81,9 +81,11 @@ async fn response(
 ) -> impl IntoResponse {
     let Ok(req) = ResponseRequest::form_decode(&request) else {
         tracing::error!("unable to turn HashMap {request:?} into ResponseRequest");
-        return (StatusCode::BAD_REQUEST, "unable to turn request into ResponseRequest").into_response();
+        return (StatusCode::BAD_REQUEST, "unable to turn request into ResponseRequest")
+            .into_response();
     };
-    let response: AxResult<ResponseResponse> = match vercre_verifier::response(provider, &req).await {
+    let response: AxResult<ResponseResponse> = match vercre_verifier::response(provider, &req).await
+    {
         Ok(r) => Ok(r).into(),
         Err(e) => {
             tracing::error!("error getting response: {e}");

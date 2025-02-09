@@ -35,11 +35,11 @@ mod jose;
 use std::fmt::Display;
 
 use anyhow::bail;
-use serde::{Deserialize, Serialize};
-use vercre_core::{Kind, Quota};
 use credibil_did::DidResolver;
 use credibil_infosec::jose::{jws, jwt};
 use credibil_infosec::Signer;
+use serde::{Deserialize, Serialize};
+use vercre_core::{Kind, Quota};
 
 use crate::model::{VerifiableCredential, VerifiablePresentation};
 use crate::verify_key;

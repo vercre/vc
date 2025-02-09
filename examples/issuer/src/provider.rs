@@ -4,8 +4,8 @@ use serde::Serialize;
 use test_utils::store::keystore::IssuerKeystore;
 use test_utils::store::{issuance, resolver, state};
 use vercre_issuer::provider::{
-    Algorithm, Client, Dataset, DidResolver, Document, Issuer, Metadata, PublicKey,
-    Receiver, Result, Server, SharedSecret, Signer, StateStore, Status, Subject,
+    Algorithm, Client, Dataset, DidResolver, Document, Issuer, Metadata, PublicKey, Receiver,
+    Result, Server, SharedSecret, Signer, StateStore, Status, Subject,
 };
 
 #[derive(Default, Clone, Debug)]

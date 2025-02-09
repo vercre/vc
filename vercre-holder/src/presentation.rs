@@ -6,13 +6,13 @@ use std::fmt::Debug;
 use std::vec;
 
 use anyhow::{anyhow, bail};
+use credibil_did::DidResolver;
+use credibil_infosec::jose::jws;
 use uuid::Uuid;
 use vercre_core::{urlencode, Kind};
-use credibil_did::DidResolver;
 use vercre_dif_exch::{
     Constraints, DescriptorMap, FilterValue, PathNested, PresentationSubmission,
 };
-use credibil_infosec::jose::jws;
 use vercre_openid::verifier::{
     RequestObject, RequestObjectResponse, RequestObjectType, ResponseRequest,
 };
@@ -72,7 +72,7 @@ pub struct NotAuthorized;
 
 impl PresentationFlow<NotAuthorized> {
     /// Create a new presentation flow with a request object.
-    /// 
+    ///
     /// # Errors
     /// Will return an error if the request object does not contain a
     /// presentation definition object: this is the only currently supported
@@ -87,8 +87,9 @@ impl PresentationFlow<NotAuthorized> {
             submission,
         })
     }
+
     /// Get a filter from the request object on the state.
-    /// 
+    ///
     /// # Errors
     /// Will return an error if the request object does not contain a
     /// presentation definition object: this is the only currently supported
@@ -108,9 +109,7 @@ impl PresentationFlow<NotAuthorized> {
 
     /// Authorize the presentation flow.
     #[must_use]
-    pub fn authorize(
-        self, credentials: &[Credential],
-    ) -> PresentationFlow<Authorized> {
+    pub fn authorize(self, credentials: &[Credential]) -> PresentationFlow<Authorized> {
         PresentationFlow {
             authorize: Authorized(credentials.to_vec()),
 

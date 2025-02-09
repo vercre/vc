@@ -11,10 +11,10 @@
 use std::fmt::Debug;
 
 use chrono::{DateTime, Utc};
-use tracing::instrument;
-use vercre_core::{gen, Kind};
 use credibil_infosec::jose::jws::{self, Key};
 use credibil_infosec::Signer;
+use tracing::instrument;
+use vercre_core::{gen, Kind};
 use vercre_openid::issuer::{
     CredentialConfiguration, CredentialDefinition, CredentialDisplay, CredentialIssuance,
     CredentialRequest, CredentialResponse, CredentialResponseType, Dataset, Format, Issuer,

@@ -526,11 +526,11 @@ impl<O, P> IssuanceFlow<O, P, Accepted, WithToken> {
     pub fn get_token(&self) -> TokenResponse {
         self.token.0.clone()
     }
-    
+
     /// Create a set of credential requests from the current state for the
     /// given set of credential identifiers (allows the user to select a
     /// subset of accepted credentials) and a proof JWT.
-    /// 
+    ///
     /// The tuple returned is the credential configuration ID and the associated
     /// credential request.
     ///

@@ -321,7 +321,8 @@ async fn token(
 ) -> impl IntoResponse {
     let Ok(mut tr) = TokenRequest::form_decode(&req) else {
         tracing::error!("unable to turn HashMap {req:?} into TokenRequest");
-        return (StatusCode::BAD_REQUEST, Json(json!({"error": "invalid request"}))).into_response();
+        return (StatusCode::BAD_REQUEST, Json(json!({"error": "invalid request"})))
+            .into_response();
     };
     tr.credential_issuer = format!("http://{host}");
     let response: AxResult<TokenResponse> = match vercre_issuer::token(provider.clone(), tr).await {

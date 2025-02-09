@@ -18,6 +18,7 @@ pub mod verifier;
 
 mod core;
 mod dif_exch;
+mod iso_mdl;
 mod openid;
 mod status;
 mod w3c_vc;

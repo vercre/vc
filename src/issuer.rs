@@ -106,11 +106,14 @@ pub mod provider {
     pub use credibil_did::{DidResolver, Document};
     pub use credibil_infosec::jose::jwk::PublicKeyJwk;
     pub use credibil_infosec::{Algorithm, PublicKey, Receiver, SharedSecret, Signer};
-    pub use vercre_openid::issuer::{
-        ClaimDefinition, Client, Dataset, GrantType, Issuer, Metadata, Provider, Result, Server,
-        StateStore, Subject,
+
+    pub use crate::openid::issuer::{
+        ClaimDefinition, Client, Dataset, Issuer, Metadata, Provider, Server, Subject,
     };
-    pub use vercre_status::issuer::Status;
+    pub use crate::openid::oauth::GrantType;
+    pub use crate::openid::provider::StateStore;
+    pub use crate::openid::Result;
+    pub use crate::status::issuer::Status;
 }
 
 pub use authorize::authorize;
@@ -124,21 +127,23 @@ pub use oauth_server::oauth_server;
 pub use par::par;
 pub use register::register;
 pub use token::token;
-pub use vercre_core::urlencode;
-pub use vercre_openid::issuer::{
+
+pub use crate::core::urlencode;
+pub use crate::openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     AuthorizationResponse, AuthorizedDetail, Claim, ClaimDefinition, CreateOfferRequest,
     CreateOfferResponse, CredentialAuthorization, CredentialConfiguration, CredentialDefinition,
     CredentialIssuance, CredentialOffer, CredentialOfferRequest, CredentialOfferResponse,
     CredentialRequest, CredentialResponse, CredentialResponseType, DeferredCredentialRequest,
-    DeferredCredentialResponse, Format, GrantType, Grants, MetadataRequest, MetadataResponse,
+    DeferredCredentialResponse, Format, Grants, MetadataRequest, MetadataResponse,
     NotificationEvent, NotificationRequest, NotificationResponse, OAuthServerRequest,
     OAuthServerResponse, OfferType, PreAuthorizedCodeGrant, ProfileClaims, ProfileIsoMdl,
     ProfileSdJwt, ProfileW3c, Proof, ProofClaims, PushedAuthorizationRequest,
     PushedAuthorizationResponse, RegistrationRequest, RegistrationResponse, RequestObject,
     SendType, SingleProof, TokenGrantType, TokenRequest, TokenResponse, TxCode,
 };
-pub use vercre_openid::{Error, Result};
-pub use vercre_w3c_vc::model::{
+pub use crate::openid::oauth::GrantType;
+pub use crate::openid::{Error, Result};
+pub use crate::w3c_vc::model::{
     Bitstring, CredentialStatus, CredentialStatusType, StatusMessage, StatusPurpose,
 };

@@ -17,11 +17,11 @@ use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded as Base64, Encoding};
 use ciborium::cbor;
 use coset::{iana, CoseSign1Builder, HeaderBuilder};
+use credibil_infosec::cose::{CoseKey, Tag24};
+use credibil_infosec::{Algorithm, Curve, KeyType, Signer};
 use rand::{thread_rng, Rng};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
-use credibil_infosec::cose::{CoseKey, Tag24};
-use credibil_infosec::{Algorithm, Curve, KeyType, Signer};
 
 use crate::mdoc::{IssuerSigned, IssuerSignedItem};
 use crate::mso::{DigestIdGenerator, MobileSecurityObject};
@@ -103,9 +103,9 @@ pub async fn to_credential(
 
 #[cfg(test)]
 mod tests {
+    use credibil_infosec::cose::cbor;
     use serde_json::json;
     use test_utils::issuer::Provider;
-    use credibil_infosec::cose::cbor;
 
     use super::*;
     use crate::mso::DigestAlgorithm;

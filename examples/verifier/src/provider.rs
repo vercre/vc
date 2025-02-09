@@ -4,8 +4,8 @@ use serde::Serialize;
 use test_utils::store::keystore::VerifierKeystore;
 use test_utils::store::{presentation, resolver, state};
 use vercre_verifier::provider::{
-    Algorithm, DidResolver, Document, Metadata, PublicKey, Receiver, Result, SharedSecret,
-    Signer, StateStore, Verifier, Wallet,
+    Algorithm, DidResolver, Document, Metadata, PublicKey, Receiver, Result, SharedSecret, Signer,
+    StateStore, Verifier, Wallet,
 };
 
 #[derive(Default, Clone, Debug)]

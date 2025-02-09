@@ -433,11 +433,11 @@ mod tests {
     use rstest::rstest;
     use serde_json::{json, Value};
     use sha2::{Digest, Sha256};
-    use test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
-    use test_utils::snapshot;
 
     use super::*;
-    // extern crate self as vercre_issuer;
+    use crate::snapshot;
+    use crate::test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
+    use crate::test_utils::{self};
 
     #[rstest]
     #[case::configuration_id("configuration_id", configuration_id)]
