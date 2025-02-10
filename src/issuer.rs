@@ -135,6 +135,11 @@ pub mod status {
     pub use crate::status::bitstring::{bitstring, credential, DEFAULT_TTL};
 }
 
+/// Proofs
+pub mod proof {
+    pub use crate::w3c_vc::proof::jose::VcClaims;
+}
+
 pub use crate::core::urlencode;
 pub use crate::openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,

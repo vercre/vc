@@ -17,4 +17,4 @@ pub mod bitstring;
 mod config;
 pub mod error;
 mod log;
-mod provider;
+pub mod provider;

@@ -14,6 +14,7 @@ use crate::core::urlencode;
 /// `OpenID` error codes for  for Verifiable Credential Issuance and
 /// Presentation.
 #[derive(Error, Debug, Deserialize)]
+#[allow(clippy::enum_variant_names)]
 pub enum Error {
     /// The request is missing a required parameter, includes an unsupported
     /// parameter value, repeats a parameter, includes multiple credentials,
@@ -199,7 +200,7 @@ impl Serialize for Error {
 impl Error {
     /// Transfrom error to `OpenID` compatible json format.
     #[must_use]
-    pub fn to_json(self) -> serde_json::Value {
+    pub fn to_json(&self) -> serde_json::Value {
         serde_json::from_str(&self.to_string()).unwrap_or_default()
     }
 
@@ -207,7 +208,7 @@ impl Error {
     /// Does not include `c_nonce` as this is not required for in query
     /// string responses.
     #[must_use]
-    pub fn to_querystring(self) -> String {
+    pub fn to_querystring(&self) -> String {
         urlencode::to_string(&self).unwrap_or_default()
     }
 }

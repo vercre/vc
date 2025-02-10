@@ -232,6 +232,7 @@ impl Default for CredentialStatusType {
 ///
 /// [Bitstring Status List v1.0](https://www.w3.org/TR/vc-bitstring-status-list/)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[allow(clippy::struct_field_names)]
 pub struct Bitstring {
     /// The purpose of the status declaration stored in the bitstring.
     pub status_purpose: StatusPurpose,

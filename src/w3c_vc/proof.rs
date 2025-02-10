@@ -30,7 +30,7 @@
 
 mod controller;
 pub mod integrity;
-mod jose;
+pub mod jose;
 
 use std::fmt::Display;
 

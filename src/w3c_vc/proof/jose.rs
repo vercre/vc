@@ -85,6 +85,9 @@ pub struct VcClaims {
 }
 
 impl VcClaims {
+    /// Create Verifiable Credential JWT payload from a W3C Verifiable
+    /// Credential.
+    #[must_use]
     pub fn from_vc(vc: VerifiableCredential, issued_at: i64) -> Self {
         let subject = match &vc.credential_subject {
             Quota::One(sub) => sub,

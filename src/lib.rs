@@ -16,12 +16,12 @@ pub mod issuer;
 #[cfg(feature = "verifier")]
 pub mod verifier;
 
-mod core;
-mod dif_exch;
-mod iso_mdl;
-mod openid;
-mod status;
-mod w3c_vc;
+pub mod core;
+pub mod dif_exch;
+pub mod iso_mdl;
+pub mod openid;
+pub mod status;
+pub mod w3c_vc;
 
 #[cfg(test)]
 mod test_utils;

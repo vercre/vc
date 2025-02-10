@@ -73,9 +73,10 @@ pub fn tx_code() -> String {
     random_string(PIN_LEN, PIN_CHARS)
 }
 
-// Generates a random string from a given set of characters. Uses fastrand so is
-// not cryptographically secure.
-pub(crate) fn random_string(len: usize, charset: &str) -> String {
+/// Generates a random string from a given set of characters. Uses fastrand so is
+/// not cryptographically secure.
+#[must_use]
+pub fn random_string(len: usize, charset: &str) -> String {
     let chars: Vec<char> = charset.chars().collect();
     (0..len).map(|_| chars[fastrand::usize(..chars.len())]).collect()
 }

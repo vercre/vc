@@ -64,6 +64,7 @@ use crate::core::Quota;
 /// are implemented using the `Proof` object described here.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", default)]
+#[allow(clippy::struct_field_names)]
 pub struct Proof {
     /// An optional identifier for the proof. MUST be a URL, such as a UUID as a
     /// URN e.g. "`urn:uuid:6a1676b8-b51f-11ed-937b-d76685a20ff5`".

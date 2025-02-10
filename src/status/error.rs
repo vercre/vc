@@ -44,7 +44,7 @@ impl Serialize for Error {
 impl Error {
     /// Transform error to `ValidationError` compatible json format.
     #[must_use]
-    pub fn to_json(self) -> serde_json::Value {
+    pub fn to_json(&self) -> serde_json::Value {
         serde_json::from_str(&self.to_string()).unwrap_or_default()
     }
 }
