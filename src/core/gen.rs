@@ -23,12 +23,12 @@ pub fn auth_code() -> String {
     Base64UrlUnpadded::encode_string(rnd.as_bytes())
 }
 
-/// Generates a base64 encoded random string for `issuer_state`
-#[must_use]
-pub fn issuer_state() -> String {
-    let rnd = random_string(STATE_LEN, SAFE_CHARS);
-    Base64UrlUnpadded::encode_string(rnd.as_bytes())
-}
+// /// Generates a base64 encoded random string for `issuer_state`
+// #[must_use]
+// pub fn issuer_state() -> String {
+//     let rnd = random_string(STATE_LEN, SAFE_CHARS);
+//     Base64UrlUnpadded::encode_string(rnd.as_bytes())
+// }
 
 /// Generates a base64 encoded random string for nonce
 #[must_use]

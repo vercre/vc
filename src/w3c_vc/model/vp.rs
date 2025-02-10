@@ -184,7 +184,7 @@ mod tests {
     use serde_json::json;
 
     use super::*;
-    use crate::model::vc::{CredentialSubject, VerifiableCredential};
+    use super::super::vc::{CredentialSubject, VerifiableCredential};
 
     #[test]
     fn test_vp_build() {

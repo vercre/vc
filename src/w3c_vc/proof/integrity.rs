@@ -146,7 +146,7 @@ impl FromStr for Proof {
     }
 }
 
-/// Encode proof
-pub fn encode() {
-    todo!()
-}
+// /// Encode proof
+// pub fn encode() {
+//     todo!()
+// }

@@ -1098,6 +1098,7 @@ dependencies = [
  "coset",
  "credibil-did",
  "credibil-infosec",
+ "derive_builder",
  "ed25519-dalek",
  "fastrand",
  "flate2",

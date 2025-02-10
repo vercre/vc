@@ -33,6 +33,7 @@ ciborium = "0.2.2"
 coset = "0.3.8"
 credibil-did.workspace = true
 credibil-infosec.workspace = true
+derive_builder.workspace = true
 fastrand = "2.3.0"
 flate2 = "1.0.35"
 image = { version = "0.25.5", default-features = false, features = ["png"] }

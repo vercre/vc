@@ -116,6 +116,7 @@ pub mod provider {
     pub use crate::status::issuer::Status;
 }
 
+// Endpoints
 pub use authorize::authorize;
 pub use create_offer::create_offer;
 pub use credential::credential;
@@ -127,6 +128,11 @@ pub use oauth_server::oauth_server;
 pub use par::par;
 pub use register::register;
 pub use token::token;
+
+/// Status
+pub mod status {
+    pub use crate::status::bitstring;
+}
 
 pub use crate::core::urlencode;
 pub use crate::openid::issuer::{
