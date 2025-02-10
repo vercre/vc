@@ -182,13 +182,22 @@ pub mod provider {
     pub use crate::openid::verifier::{Metadata, Provider, Verifier, Wallet};
     pub use crate::openid::Result;
 }
+
+// Endpoints
 pub use create_request::create_request;
 pub use metadata::metadata;
 pub use request_object::request_object;
 pub use response::response;
+
+// Re-export types
 pub use crate::dif_exch::{Claims, Constraints, Field, Filter, FilterValue, InputDescriptor};
 pub use crate::openid::verifier::{
     ClientIdScheme, CreateRequestRequest, CreateRequestResponse, DeviceFlow, MetadataRequest,
     MetadataResponse, RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest,
     ResponseResponse, ResponseType,
 };
+
+/// Re-export status traits and types.
+pub mod status {
+    pub use crate::status::verifier::*;
+}

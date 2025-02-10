@@ -18,14 +18,9 @@
 
 pub mod types;
 
-#[cfg(feature = "issuer")]
 pub mod vc;
-#[cfg(feature = "issuer")]
 pub use vc::*;
-
-#[cfg(feature = "verifier")]
 pub mod vp;
-#[cfg(feature = "verifier")]
 pub use vp::*;
 
 // TODO: move this to crate where it can be shared with DID impls.

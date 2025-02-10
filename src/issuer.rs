@@ -131,7 +131,8 @@ pub use token::token;
 
 /// Status
 pub mod status {
-    pub use crate::status::bitstring;
+    pub use crate::status::issuer::*;
+    pub use crate::status::bitstring::{bitstring, credential, DEFAULT_TTL};
 }
 
 pub use crate::core::urlencode;
