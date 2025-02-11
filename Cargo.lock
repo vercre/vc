@@ -1749,6 +1749,7 @@ dependencies = [
  "axum-extra",
  "chrono",
  "credibil-vc",
+ "macros",
  "oauth2",
  "serde",
  "serde_json",

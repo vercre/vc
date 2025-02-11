@@ -22,8 +22,8 @@ use syn::{parse_macro_input, Error};
 /// # Example
 ///
 /// ```rust
-/// use vercre_macros::create_offer_request;
-/// use vercre_issuer::SendType;
+/// use macros::create_offer_request;
+/// use credibil_vc::issuer::SendType;
 ///
 /// const CREDENTIAL_ISSUER: &str = "http://vercre.io";
 /// let subject_id = "normal_user";
@@ -53,8 +53,8 @@ pub fn create_offer_request(input: TokenStream) -> TokenStream {
 /// ```rust
 /// use base64ct::{Base64UrlUnpadded, Encoding};
 /// use sha2::{Digest, Sha256};
-/// use vercre_macros::authorization_request;
-/// use vercre_issuer::AuthorizationRequest;
+/// use macros::authorization_request;
+/// use credibil_vc::issuer::AuthorizationRequest;
 ///
 /// const CREDENTIAL_ISSUER: &str = "http://vercre.io";
 /// const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
@@ -93,7 +93,7 @@ pub fn authorization_request(input: TokenStream) -> TokenStream {
 /// # Example
 ///
 /// ```rust
-/// use vercre_macros::token_request;
+/// use macros::token_request;
 ///
 /// const CREDENTIAL_ISSUER: &str = "http://vercre.io";
 /// const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
@@ -122,7 +122,7 @@ pub fn token_request(input: TokenStream) -> TokenStream {
 /// # Example
 ///
 /// ```rust
-/// use vercre_macros::credential_request;
+/// use macros::credential_request;
 ///
 /// const CREDENTIAL_ISSUER: &str = "http://vercre.io";
 /// let jwt = "eyJhbGciOiJFZERTQSIsInR5cCI6Im9wZW5pZDR2Y...";

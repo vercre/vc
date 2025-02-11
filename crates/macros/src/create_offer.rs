@@ -8,7 +8,7 @@ use crate::parse::{Json, Value};
 // doing basic validation and setting sensible defaults.
 pub fn request(input: &Json) -> Result<TokenStream> {
     let span = Span::call_site();
-    let path = quote! {vercre_issuer};
+    let path = quote! {credibil_vc::issuer};
 
     let mut input = input.clone();
 
@@ -50,7 +50,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
 
 fn grant_types(input: Option<Value>) -> Result<TokenStream> {
     let span = Span::call_site();
-    let path = quote! {vercre_issuer};
+    let path = quote! {credibil_vc::issuer};
 
     if let Some(gts) = input {
         let mut tokens = TokenStream::new();
