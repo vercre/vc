@@ -1,0 +1,6 @@
+---
+source: src/issuer/notification.rs
+assertion_line: 111
+expression: response
+---
+{}

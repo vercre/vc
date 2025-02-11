@@ -1,7 +1,7 @@
 #![allow(missing_docs)]
 
 use insta::assert_yaml_snapshot as assert_snapshot;
-use vercre_macros::credential_request;
+use macros::credential_request;
 
 const CREDENTIAL_ISSUER: &str = "http://vercre.io";
 

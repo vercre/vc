@@ -37,7 +37,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
     // return error for any unexpected fields
     input.check_consumed()?;
 
-    let path = quote! {vercre_issuer};
+    let path = quote! {credibil_vc::issuer};
 
     Ok(quote! {
         #path::AuthorizationRequest::Object(#path::RequestObject {
@@ -61,7 +61,7 @@ pub fn request(input: &Json) -> Result<TokenStream> {
 
 fn authorization_details(details: &Value) -> Result<TokenStream> {
     let span = Span::call_site();
-    let path = quote! {vercre_issuer};
+    let path = quote! {credibil_vc::issuer};
 
     let Some(details) = details.as_array() else {
         return Err(Error::new(span, "`authorization_details` must be an array"));
@@ -102,7 +102,7 @@ fn authorization_details(details: &Value) -> Result<TokenStream> {
 
 fn credential_authorization(detail: &HashMap<String, Value>) -> Result<TokenStream> {
     let span = Span::call_site();
-    let path = quote! {vercre_issuer};
+    let path = quote! {credibil_vc::issuer};
 
     // credential_configuration_id or format?
     if let Some(credential_configuration_id) = detail.get("credential_configuration_id") {
@@ -147,7 +147,7 @@ fn credential_authorization(detail: &HashMap<String, Value>) -> Result<TokenStre
 
 fn configuration_definition(defn_value: &Value) -> Result<TokenStream> {
     let span = Span::call_site();
-    let path = quote! {vercre_issuer};
+    let path = quote! {credibil_vc::issuer};
 
     let Some(credential_definition) = defn_value.as_object() else {
         return Err(Error::new(span, "`credential_definition` must be an object"));
@@ -176,7 +176,7 @@ fn configuration_definition(defn_value: &Value) -> Result<TokenStream> {
 
 fn format_definition(defn_value: &Value) -> Result<TokenStream> {
     let span = Span::call_site();
-    let path = quote! {vercre_issuer};
+    let path = quote! {credibil_vc::issuer};
 
     let Some(credential_definition) = defn_value.as_object() else {
         return Err(Error::new(span, "`credential_definition` must be an object"));
@@ -220,7 +220,7 @@ fn subject(definition: &HashMap<String, Value>) -> Result<TokenStream> {
 }
 
 fn claims(claimset: &HashMap<String, Value>) -> TokenStream {
-    let path = quote! {vercre_issuer};
+    let path = quote! {credibil_vc::issuer};
 
     let claims = claimset.iter().map(|(k, v)| {
         if let Some(nested) = v.as_object()

@@ -1,11 +1,11 @@
 use chrono::{DateTime, Utc};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use test_utils::store::keystore::VerifierKeystore;
-use test_utils::store::{presentation, resolver, state};
-use vercre_verifier::provider::{
-    Algorithm, DidResolver, Document, Metadata, PublicKey, Receiver, Result, SharedSecret,
-    Signer, StateStore, Verifier, Wallet,
+use credibil_vc::test_utils::store::keystore::VerifierKeystore;
+use credibil_vc::test_utils::store::{presentation, resolver, state};
+use credibil_vc::verifier::provider::{
+    Algorithm, DidResolver, Document, Metadata, PublicKey, Receiver, Result, SharedSecret, Signer,
+    StateStore, Verifier, Wallet,
 };
 
 #[derive(Default, Clone, Debug)]
@@ -24,7 +24,7 @@ impl Provider {
     }
 }
 
-impl vercre_verifier::provider::Provider for Provider {}
+impl credibil_vc::verifier::provider::Provider for Provider {}
 
 impl Metadata for Provider {
     async fn verifier(&self, verifier_id: &str) -> Result<Verifier> {

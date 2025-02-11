@@ -1,0 +1,12 @@
+---
+source: src/openid/issuer.rs
+assertion_line: 2609
+expression: "&default"
+---
+- Address.Country
+- Address.Locality
+- Address.Region
+- Address.Street Address
+- Email
+- Family name
+- Given name

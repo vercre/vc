@@ -11,12 +11,12 @@ anyhow.workspace = true
 axum-extra.workspace = true
 axum.workspace = true
 chrono.workspace = true
+macros = { path = "../../crates/macros" }
 oauth2 = { version = "4.4.2" }
 serde.workspace = true
 serde_json.workspace = true
-test-utils.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
 tracing-subscriber.workspace = true
 tracing.workspace = true
-vercre-issuer.workspace = true
+credibil-vc = { workspace = true, features = ["issuer"] }
