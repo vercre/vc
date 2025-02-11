@@ -17,5 +17,4 @@ version.workspace = true
 base64ct.workspace = true
 insta.workspace = true
 sha2 = "0.10.8"
-vercre-issuer.workspace = true
-vercre-macros = { path = "../macros" }
+macros = { path = "../macros" }

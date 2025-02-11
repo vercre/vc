@@ -1,5 +1,5 @@
 [package]
-name = "vercre-macros"
+name = "macros"
 description = "OpenID macros"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
@@ -28,4 +28,3 @@ syn = { version = "2.0.85", features = ["full"] }
 base64ct.workspace = true
 insta.workspace = true
 sha2 = "0.10.8"
-vercre-issuer.workspace = true

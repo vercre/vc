@@ -65,23 +65,19 @@ members = [
     "examples/issuer",
     "examples/verifier",
     "examples/wallet/src-tauri",
-    "vercre-holder",
-    "vercre-issuer",
-    "vercre-verifier",
 ]
-exclude = ["vercre-holder/examples/*"]
 resolver = "2"
 
 [workspace.package]
-authors = ["Vercre"]
+authors = ["Credibil"]
 categories = ["authentication", "cryptography", "data-structures"]
 edition = "2021"
 exclude = [".*", "/docs", "snapshots/"]
-homepage = "https://vercre.io"
+homepage = "https://credibil.io"
 keywords = ["credentials", "decentralized", "identity", "openid", "verifiable"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-repository = "https://github.com/vercre/vc"
+repository = "https://github.com/credibil/vc"
 rust-version = "1.80"
 version = "0.1.0-alpha.6"
 
@@ -113,17 +109,8 @@ tower-http = { version = "0.6.1", features = ["cors", "set-header", "trace"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 uuid = { version = "1.11.0", features = ["fast-rng", "v4"] }
-vercre-core = { path = "crates/core", version = "0.1.0-alpha.6" }
 credibil-did = { git = "https://github.com/credibil/did.git" }
-vercre-dif-exch = { path = "crates/dif-exch", version = "0.1.0-alpha.6" }
-vercre-holder = { path = "vercre-holder", version = "0.1.0-alpha.6" }
 credibil-infosec = { git = "https://github.com/credibil/infosec.git" }
-vercre-issuer = { path = "vercre-issuer", version = "0.1.0-alpha.6" }
-vercre-macros = { path = "crates/macros", version = "0.1.0-alpha.6" }
-vercre-openid = { path = "crates/openid", version = "0.1.0-alpha.6" }
-vercre-status = { path = "crates/status", version = "0.1.0-alpha.6" }
-vercre-verifier = { path = "vercre-verifier", version = "0.1.0-alpha.6" }
-vercre-w3c-vc = { path = "crates/w3c-vc", version = "0.1.0-alpha.6" }
 
 [workspace.metadata.bin]
 cargo-xcode = { version = "=1.7.0" }
