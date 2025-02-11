@@ -64,7 +64,6 @@ members = [
     "crates/*",
     "examples/issuer",
     "examples/verifier",
-    "examples/wallet/src-tauri",
 ]
 resolver = "2"
 
@@ -111,6 +110,7 @@ tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 uuid = { version = "1.11.0", features = ["fast-rng", "v4"] }
 credibil-did = { git = "https://github.com/credibil/did.git" }
 credibil-infosec = { git = "https://github.com/credibil/infosec.git" }
+credibil-vc = { path = "." }
 
 [workspace.metadata.bin]
 cargo-xcode = { version = "=1.7.0" }
