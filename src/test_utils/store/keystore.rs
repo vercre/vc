@@ -33,10 +33,12 @@ impl IssuerKeystore {
         Ok(signing_key.verifying_key().as_bytes().to_vec())
     }
 
-    pub fn algorithm() -> Algorithm {
+    #[must_use]
+    pub const fn algorithm() -> Algorithm {
         Algorithm::EdDSA
     }
 
+    #[must_use]
     pub fn verification_method() -> String {
         format!("{ISSUER_DID}#{ISSUER_VERIFY_KEY}")
     }
@@ -65,10 +67,12 @@ impl VerifierKeystore {
         Ok(verify_key.as_bytes().to_vec())
     }
 
-    pub fn algorithm() -> Algorithm {
+    #[must_use]
+    pub const fn algorithm() -> Algorithm {
         Algorithm::EdDSA
     }
 
+    #[must_use]
     pub fn verification_method() -> String {
         format!("{VERIFIER_DID}#{VERIFIER_VERIFY_KEY}")
     }
@@ -97,10 +101,12 @@ impl HolderKeystore {
         Ok(verify_key.as_bytes().to_vec())
     }
 
-    pub fn algorithm() -> Algorithm {
+    #[must_use]
+    pub const fn algorithm() -> Algorithm {
         Algorithm::EdDSA
     }
 
+    #[must_use]
     pub fn verification_method() -> String {
         format!("{HOLDER_DID}#{HOLDER_VERIFY_KEY}")
     }

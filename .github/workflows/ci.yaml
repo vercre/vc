@@ -41,7 +41,7 @@ jobs:
           sudo apt-get -y install libwebkit2gtk-4.1-dev
           mkdir examples/wallet/dist
       
-      - run: cargo nextest run
+      - run: cargo nextest run --all-features
 
   # windows:
   #   name: Test suite (windows)

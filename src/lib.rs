@@ -23,5 +23,4 @@ pub mod openid;
 pub mod status;
 pub mod w3c_vc;
 
-#[cfg(test)]
-mod test_utils;
+pub mod test_utils;

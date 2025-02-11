@@ -1,0 +1,19 @@
+---
+source: src/issuer/token.rs
+assertion_line: 565
+expression: "&response"
+---
+access_token: "[access_token]"
+token_type: Bearer
+expires_in: 900
+c_nonce: "[c_nonce]"
+c_nonce_expires_in: 600
+authorization_details:
+  - type: openid_credential
+    format: jwt_vc_json
+    credential_definition:
+      type:
+        - VerifiableCredential
+        - EmployeeIDCredential
+    credential_identifiers:
+      - PHLEmployeeID

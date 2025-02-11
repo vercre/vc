@@ -18,6 +18,7 @@ pub struct IssuerStore {
 }
 
 impl IssuerStore {
+    #[must_use]
     pub fn new() -> Self {
         let json = include_bytes!("issuer.json");
         let issuer: Issuer = serde_json::from_slice(json).expect("should serialize");
@@ -44,6 +45,7 @@ pub struct ServerStore {
 }
 
 impl ServerStore {
+    #[must_use]
     pub fn new() -> Self {
         let json = include_bytes!("server.json");
         let server: Server = serde_json::from_slice(json).expect("should serialize");
@@ -70,6 +72,7 @@ pub struct ClientStore {
 }
 
 impl ClientStore {
+    #[must_use]
     pub fn new() -> Self {
         let json = include_bytes!("client.json");
         let client: Client = serde_json::from_slice(json).expect("should serialize");
@@ -120,6 +123,7 @@ pub struct DatasetStore {
 }
 
 impl DatasetStore {
+    #[must_use]
     pub fn new() -> Self {
         let json = include_bytes!("datasets.json");
         let datasets: HashMap<String, HashMap<String, Credential>> =
@@ -138,7 +142,7 @@ impl DatasetStore {
 
         // preset dataset identifiers for subject/credential
         let mut identifiers = vec![];
-        for (k, credential) in subj_datasets.iter() {
+        for (k, credential) in &subj_datasets {
             if credential.configuration_id != credential_configuration_id {
                 continue;
             }

@@ -13,6 +13,7 @@ pub struct Store {
 }
 
 impl Store {
+    #[must_use]
     pub fn new() -> Self {
         let json = include_bytes!("verifier.json");
         let verifier: Verifier = serde_json::from_slice(json).expect("should serialize");

@@ -7,14 +7,10 @@
 //!
 //! [Status section of Verifiable Credentials Data Model v2.0](https://www.w3.org/TR/vc-data-model-2.0/#status)
 
-#[cfg(feature = "issuer")]
-pub mod issuer;
-
-#[cfg(feature = "verifier")]
-pub mod verifier;
-
 pub mod bitstring;
 mod config;
 pub mod error;
+pub mod issuer;
 mod log;
 pub mod provider;
+pub mod verifier;

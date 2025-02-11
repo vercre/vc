@@ -138,6 +138,7 @@ pub mod status {
 /// Proofs
 pub mod proof {
     pub use crate::w3c_vc::proof::jose::VcClaims;
+    pub use crate::w3c_vc::proof::{Payload, Type, verify, Verify};
 }
 
 pub use crate::core::urlencode;

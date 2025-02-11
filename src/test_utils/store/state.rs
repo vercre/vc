@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -14,6 +16,7 @@ pub struct Store {
 }
 
 impl Store {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             store: Arc::new(Mutex::new(HashMap::new())),

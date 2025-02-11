@@ -7,15 +7,11 @@
 //! be used directly by the end users. Any public types are re-exported through
 //! the respective top-level `vercre-xxx` crates.
 
-#[cfg(feature = "issuer")]
-pub mod issuer;
-
-#[cfg(feature = "verifier")]
-pub mod verifier;
-
 mod error;
+pub mod issuer;
 pub mod oauth;
 pub mod provider;
+pub mod verifier;
 
 pub use self::error::Error;
 
