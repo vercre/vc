@@ -180,7 +180,7 @@ pub mod provider {
     pub use crate::openid::verifier::VpFormat;
     #[allow(clippy::module_name_repetitions)]
     pub use crate::openid::verifier::{Metadata, Provider, Verifier, Wallet};
-    pub use crate::openid::Result;
+    pub use crate::openid::provider::Result;
 }
 
 // Endpoints

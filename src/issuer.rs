@@ -112,7 +112,7 @@ pub mod provider {
     };
     pub use crate::openid::oauth::GrantType;
     pub use crate::openid::provider::StateStore;
-    pub use crate::openid::Result;
+    pub use crate::openid::provider::Result;
     pub use crate::status::issuer::Status;
 }
 

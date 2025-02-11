@@ -15,6 +15,10 @@ use axum::routing::{get, post};
 use axum::{Form, Json, Router};
 use axum_extra::headers::Host;
 use axum_extra::TypedHeader;
+use credibil_vc::verifier::{
+    self, CreateRequestRequest, CreateRequestResponse, RequestObjectRequest, RequestObjectResponse,
+    ResponseRequest, ResponseResponse,
+};
 use serde::Serialize;
 use serde_json::json;
 use tokio::net::TcpListener;
@@ -22,10 +26,6 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
-use vercre_verifier::{
-    CreateRequestRequest, CreateRequestResponse, RequestObjectRequest, RequestObjectResponse,
-    ResponseRequest, ResponseResponse,
-};
 
 use crate::provider::Provider;
 
@@ -58,7 +58,7 @@ async fn create_request(
     Json(mut request): Json<CreateRequestRequest>,
 ) -> AxResult<CreateRequestResponse> {
     request.client_id = format!("http://{host}");
-    vercre_verifier::create_request(provider, &request).await.into()
+    verifier::create_request(provider, &request).await.into()
 }
 
 // Retrieve Authorization Request Object endpoint
@@ -71,7 +71,7 @@ async fn request_object(
         client_id: format!("http://{host}"),
         id: object_id,
     };
-    vercre_verifier::request_object(provider, &request).await.into()
+    verifier::request_object(provider, &request).await.into()
 }
 
 // Wallet Authorization response endpoint
@@ -84,7 +84,7 @@ async fn response(
         return (StatusCode::BAD_REQUEST, "unable to turn request into ResponseRequest")
             .into_response();
     };
-    let response: AxResult<ResponseResponse> = match vercre_verifier::response(provider, &req).await
+    let response: AxResult<ResponseResponse> = match verifier::response(provider, &req).await
     {
         Ok(r) => Ok(r).into(),
         Err(e) => {
@@ -100,7 +100,7 @@ async fn response(
 // ----------------------------------------------------------------------------
 
 /// Axum response wrapper
-pub struct AxResult<T>(vercre_verifier::Result<T>);
+pub struct AxResult<T>(verifier::Result<T>);
 
 impl<T> IntoResponse for AxResult<T>
 where
@@ -115,8 +115,8 @@ where
     }
 }
 
-impl<T> From<vercre_verifier::Result<T>> for AxResult<T> {
-    fn from(val: vercre_verifier::Result<T>) -> Self {
+impl<T> From<verifier::Result<T>> for AxResult<T> {
+    fn from(val: verifier::Result<T>) -> Self {
         Self(val)
     }
 }

@@ -1,9 +1,9 @@
 use chrono::{DateTime, Utc};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use test_utils::store::keystore::IssuerKeystore;
-use test_utils::store::{issuance, resolver, state};
-use vercre_issuer::provider::{
+use credibil_vc::test_utils::store::keystore::IssuerKeystore;
+use credibil_vc::test_utils::store::{issuance, resolver, state};
+use credibil_vc::issuer::provider::{
     Algorithm, Client, Dataset, DidResolver, Document, Issuer, Metadata, PublicKey, Receiver,
     Result, Server, SharedSecret, Signer, StateStore, Status, Subject,
 };
@@ -30,7 +30,7 @@ impl Provider {
     }
 }
 
-impl vercre_issuer::provider::Provider for Provider {}
+impl credibil_vc::issuer::provider::Provider for Provider {}
 
 impl Metadata for Provider {
     async fn client(&self, client_id: &str) -> Result<Client> {
