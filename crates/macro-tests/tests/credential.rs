@@ -3,7 +3,7 @@
 use insta::assert_yaml_snapshot as assert_snapshot;
 use macros::credential_request;
 
-const CREDENTIAL_ISSUER: &str = "http://vercre.io";
+const CREDENTIAL_ISSUER: &str = "http://credibil.io";
 
 #[test]
 fn identifier() {

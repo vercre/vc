@@ -25,7 +25,7 @@ minimal Pre-Authorized flow example. The example uses [axum](https://docs.rs/axu
 but any Rust web server should suffice.
 
 For the sake of brevity, imports, tracing, etc. are omitted. A more complete example can
-be found in the [examples directory](https://github.com/vercre/vercre/tree/main/examples/verifier).
+be found in the [examples directory](https://github.com/credibil/vc/tree/main/examples/verifier).
 
 ```rust,ignore
 #[tokio::main]
@@ -65,7 +65,7 @@ async fn create_request(
     Json(mut req): Json<CreateRequestRequest>,        // <- convert request body
 ) -> AxResult<CreateOfferResponse> {
     request.client_id = format!("http://{host}");     // <- set verifier
-    vercre_verifier::create_request(provider, &request).await.into()    // <- forward to library
+    verifier::create_request(provider, &request).await.into()    // <- forward to library
 }
 ```
 

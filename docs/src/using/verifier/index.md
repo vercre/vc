@@ -1,7 +1,7 @@
 # Verifier
 
 Based on the [OpenID for Verifiable Presentations](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
-specification, the [vercre-verifier](https://github.com/vercre/vercre/tree/main/vercre-verifier) 
+specification, the [credibil-vc](https://github.com/credibil/vc) 
 library provides an API for requesting and presenting Verifiable Credentials. 
 
 The API is comprised of the a set of endpoints, called in sequence to request 
@@ -44,5 +44,5 @@ In the following sections, we will cover implementing the API, in particular
 [endpoints](./endpoints.md) and [providers](./providers.md).
 
 ### Working example 
-If you want to skip ahead, this [API example](https://github.com/vercre/vercre/tree/main/examples/verifier)
+If you want to skip ahead, this [API example](https://github.com/credibil/vc/tree/main/examples/verifier)
 provides a naive but complete implementation of the presentation API.

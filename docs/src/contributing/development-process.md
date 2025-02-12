@@ -68,5 +68,5 @@ removing warnings, etc.
 [issues]: https://guides.github.com/features/issues/
 [pull requests]: https://help.github.com/articles/about-pull-requests/
 [issue keywords]: https://help.github.com/articles/closing-issues-using-keywords/
-[Core Team]: https://github.com/orgs/vercre/people/
-[newissue]: https://github.com/vercre/vercre/issues/new
+[Core Team]: https://github.com/orgs/credibil/people/
+[newissue]: https://github.com/credibil/vc/issues/new

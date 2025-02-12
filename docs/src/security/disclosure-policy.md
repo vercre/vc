@@ -1,6 +1,6 @@
 # Disclosure Policy
 
-This section addresses the security disclosure policy for Vercre projects.
+This section addresses the security disclosure policy for Credibil projects.
 
 The security report is received and is assigned a primary handler. This person will 
 coordinate the fix and release process. The problem is confirmed and a list of all 
@@ -14,7 +14,7 @@ A suggested embargo date for this vulnerability is chosen and a [CVE](https://ww
 A pre-notification may be published on the security announcements mailing list, 
 providing information about affected projects, severity, and the embargo date.
 
-On the embargo date, the Vercre security mailing list is sent a copy of the
+On the embargo date, the Credibil security mailing list is sent a copy of the
 announcement. The changes are pushed to the public repository and new builds are
 deployed.
 
@@ -27,7 +27,7 @@ maintainers of other projects. Every effort will be made to handle the bug in as
 a manner as possible; however, it’s important that we follow the release process above
 to ensure that the disclosure is handled in a consistent manner.
 
-Project maintainers are encouraged to write a post-mortem for the Vercre blog, detailing
+Project maintainers are encouraged to write a post-mortem for the Credibil blog, detailing
 the vulnerability and steps being taken to identify and prevent similar vulnerabilities
 in the future.
 
@@ -35,5 +35,5 @@ in the future.
 
 KeyOps notifications will be distributed via the following methods.
 
-- Zulip: <https://vercre.zulipchat.com/#channels/440231/security-updates/>
+- Zulip: <https://credibil.zulipchat.com/#channels/440231/security-updates/>
 - Email: TODO: add mailing list information...

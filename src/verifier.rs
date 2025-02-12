@@ -91,7 +91,7 @@
 //! existing specifications to enable the interoperable presentation of
 //! Verifiable Credentials (VCs) between Wallets and Verifiers.
 //!
-//! The `vercre-vp` library has been implemented to support the profile's
+//! The `verifier` feature has been implemented to support the profile's
 //! recommendations.
 //!
 //! # Design

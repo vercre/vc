@@ -3,7 +3,7 @@
 use insta::assert_yaml_snapshot as assert_snapshot;
 use macros::token_request;
 
-const CREDENTIAL_ISSUER: &str = "http://vercre.io";
+const CREDENTIAL_ISSUER: &str = "http://credibil.io";
 const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
 
 #[test]

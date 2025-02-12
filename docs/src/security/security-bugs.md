@@ -15,7 +15,7 @@ vulnerabilities so long as they do not guarantees implied by the existing
 implementation. 
 
 Denials of service when *executing* are considered security vulnerabilities. For
-example, a Vercre endpoint that goes into an infinite loop that never yields is
+example, an endpoint that goes into an infinite loop that never yields is
 considered a security vulnerability.
 
 Any kind of memory unsafety (e.g. use-after-free bugs, out-of-bounds memory accesses,

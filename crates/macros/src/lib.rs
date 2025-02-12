@@ -1,11 +1,12 @@
 #![feature(let_chains)]
 
-//! # Core Vercre `proc_macros`
+//! # Core Credibil VC `proc_macros`
 //!
-//! This crate provides external `proc_macro`s for use by Vercre implementers.
-//! It not intended to be used directly as the macros are re-exported from one
-//! of the top-level crates (`vercre-issuer`, `vercre-verifier`, and
-//! `vercre-holder`).
+//! This crate provides external `proc_macro`s for use by Credibil VC
+//! implementers.
+//! 
+//! It not intended to be used directly. If the macros are found to be useful
+//! they will be re-exported by `credibil-vc`.
 
 mod authorization;
 mod create_offer;
@@ -25,7 +26,7 @@ use syn::{parse_macro_input, Error};
 /// use macros::create_offer_request;
 /// use credibil_vc::issuer::SendType;
 ///
-/// const CREDENTIAL_ISSUER: &str = "http://vercre.io";
+/// const CREDENTIAL_ISSUER: &str = "http://credibil.io";
 /// let subject_id = "normal_user";
 ///
 /// let request = create_offer_request!({
@@ -56,7 +57,7 @@ pub fn create_offer_request(input: TokenStream) -> TokenStream {
 /// use macros::authorization_request;
 /// use credibil_vc::issuer::AuthorizationRequest;
 ///
-/// const CREDENTIAL_ISSUER: &str = "http://vercre.io";
+/// const CREDENTIAL_ISSUER: &str = "http://credibil.io";
 /// const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
 /// let subject_id = "normal_user";
 ///
@@ -95,7 +96,7 @@ pub fn authorization_request(input: TokenStream) -> TokenStream {
 /// ```rust
 /// use macros::token_request;
 ///
-/// const CREDENTIAL_ISSUER: &str = "http://vercre.io";
+/// const CREDENTIAL_ISSUER: &str = "http://credibil.io";
 /// const CLIENT_ID: &str = "96bfb9cb-0513-7d64-5532-bed74c48f9ab";
 ///
 /// let pre_auth_code = "ABCDEF";
@@ -124,7 +125,7 @@ pub fn token_request(input: TokenStream) -> TokenStream {
 /// ```rust
 /// use macros::credential_request;
 ///
-/// const CREDENTIAL_ISSUER: &str = "http://vercre.io";
+/// const CREDENTIAL_ISSUER: &str = "http://credibil.io";
 /// let jwt = "eyJhbGciOiJFZERTQSIsInR5cCI6Im9wZW5pZDR2Y...";
 ///
 /// let request = credential_request!({

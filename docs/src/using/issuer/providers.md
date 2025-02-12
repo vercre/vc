@@ -7,8 +7,8 @@ Providers are a set of Rust traits that allow the library to outsource
 data persistence, secure signing, and callback functionality. Each provider requires the
 library user to implement a corresponding trait, as defined below.
 
-_See Vercre's example
-[issuer providers](https://github.com/vercre/vercre/blob/main/examples/issuer/src/provider.rs)
+_See Credibil VC's example
+[issuer providers](https://github.com/credibil/vc/blob/main/examples/issuer/src/provider.rs)
 for more detail._
 
 ## Client Metadata

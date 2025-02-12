@@ -5,7 +5,7 @@
 //! endpoint locations and authorization server capabilities.
 //!
 //! The data model for this metadata is defined in
-//! [`vercre-openid::oauth::OAuthServer`] and [`vercre-openid::issuer::Server`].
+//! [`openid::oauth::OAuthServer`] and [`openid::issuer::Server`].
 //!
 //! Credential Issuers publishing authorization server metadata MUST make a JSON
 //! document available. This is usually at the path formed by concatenating the

@@ -1,9 +1,7 @@
-#  Vercre Macros
+#  Credibil VC Macros
 
 Useful macros for higher order crates.
 
-This crate is not intended to be used directly. See
+This crate is not intended to be used directly and may be removed. See
 
-* [vercre-issuer](https://crates.io/crates/vercre-issuer)
-* [vercre-verifier](https://crates.io/crates/vercre-verifier)
-* [vercre-holder](https://crates.io/crates/vercre-holder)
+* [credibil-vc](https://crates.io/crates/credibil-vc)

@@ -4,7 +4,7 @@ use insta::assert_yaml_snapshot as assert_snapshot;
 use credibil_vc::issuer::SendType;
 use macros::create_offer_request;
 
-const CREDENTIAL_ISSUER: &str = "http://vercre.io";
+const CREDENTIAL_ISSUER: &str = "http://credibil.io";
 
 #[test]
 fn pre_authorized() {
@@ -25,7 +25,7 @@ fn pre_authorized() {
 #[test]
 fn default() {
     let request = create_offer_request!({
-        "credential_issuer": "http://vercre.io",
+        "credential_issuer": "http://credibil.io",
         "credential_configuration_ids": ["EmployeeID_JWT"],
     });
 

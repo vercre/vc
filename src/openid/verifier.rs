@@ -45,7 +45,7 @@ pub trait Metadata: Send + Sync {
 pub struct CreateRequestRequest {
     #[allow(rustdoc::bare_urls)]
     /// The Verifier ID. It MUST be a valid URI. For example,
-    /// `"https://vercre.io"` or `"did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg"`.
+    /// `"https://credibil.io"` or `"did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg"`.
     pub client_id: String,
 
     /// The reason the Verifier is requesting the Verifiable Presentation.
@@ -597,8 +597,7 @@ impl ResponseRequest {
     ///
     /// Suitable for
     /// use in a verifier's response endpoint that receives a form post before
-    /// passing the `ResponseRequest` to the `vercre-verfier` `response`
-    /// handler.
+    /// passing the `ResponseRequest` to the `response` handler.
     ///
     /// # Errors
     /// Will return an error if any nested objects cannot be deserialized from
@@ -691,7 +690,7 @@ pub struct VpFormat {
 }
 
 /// OAuth 2 client metadata used for registering clients of the issuance and
-/// vercre-wallet authorization servers.
+/// wallet authorization servers.
 ///
 /// In the case of Issuance, the Wallet is the Client and the Issuer is the
 /// Authorization Server.

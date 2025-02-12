@@ -2,11 +2,11 @@
 
 In addition to implementing endpoints for a wallet or holder agent, the implementer must also provide a set of providers that the wallet can use to interact with the issuer and verifier, and get or store credentials from a repository.
 
-_See Vercre's example [holder providers](https://github.com/vercre/vercre/blob/main/examples/wallet/src-tauri/src/provider.rs) for more detail._
+_See Credibils's example [holder providers](https://github.com/credibil/vc/blob/main/examples/tauri-wallet/src-tauri/src/provider.rs) for more detail._
 
 ## Issuer Client
 
-The `IssuerClient` provider allows the library to make calls to an issuer's API that implements the OpenID for Verifiable Credential Issuance specification - such as one based on vercre-issuer. The provider is responsible for getting issuer metadata, getting an access token and retrieving the offered credentials.
+The `IssuerClient` provider allows the library to make calls to an issuer's API that implements the OpenID for Verifiable Credential Issuance specification - such as one based on Credibil VC. The provider is responsible for getting issuer metadata, getting an access token and retrieving the offered credentials.
 
 In addition to the OpenID specification, the W3C data model for a Verifable Credential can contain URLs to logos that are suitable for visual display in, say, a wallet, so the provider should also have a method for retrieving such a logo.
 
@@ -32,7 +32,7 @@ pub trait IssuerClient {
 
 ## Verifier Client
 
-The `VerifierClient` provider allows the library to make calls to a verifier's API that implements the OpenID for Verifiable Presentations specification - such as one based on vercre-verifier. The provider is responsible for retrieving a presentation request object from a URI if the library receives the request initiation in that format. It also sends the signed presentation submission to the verifier.
+The `VerifierClient` provider allows the library to make calls to a verifier's API that implements the OpenID for Verifiable Presentations specification - such as one based on Credibil VC. The provider is responsible for retrieving a presentation request object from a URI if the library receives the request initiation in that format. It also sends the signed presentation submission to the verifier.
 
 ```rust,ignore
 pub trait VerifierClient {

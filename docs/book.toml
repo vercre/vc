@@ -1,10 +1,10 @@
 [book]
-authors = ["Vercre developers"]
+authors = ["Credibil"]
 description = "The example book covers examples."
 language = "en"
 multilingual = false
 src = "src"
-title = "Vercre: OpenID for Verifiable Credentials"
+title = "Credibil VC: OpenID for Verifiable Credentials"
 
 [preprocessor]
 
@@ -16,9 +16,9 @@ command = "mdbook-admonish"
 
 [output.html]
 additional-css = ["./mdbook-admonish.css"]
-cname = "vercre.io"
-edit-url-template = "https://github.com/vercre/vercre/edit/main/docs/{path}"
-git-repository-url = "https://github.com/vercre/vercre/"
+cname = "credibil.io"
+edit-url-template = "https://github.com/credibil/vc/edit/main/docs/{path}"
+git-repository-url = "https://github.com/credibil/vc/"
 # site-url = "/"
 
 # [output.html.redirect]

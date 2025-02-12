@@ -3,7 +3,7 @@ source: crates/macro-tests/tests/create_offer.rs
 assertion_line: 32
 expression: "&request"
 ---
-credential_issuer: "http://vercre.io"
+credential_issuer: "http://credibil.io"
 credential_configuration_ids:
   - EmployeeID_JWT
 tx_code_required: false

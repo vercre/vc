@@ -1,7 +1,7 @@
 # Code of Conduct
 
 Note: this Code of Conduct pertains to individuals' behavior. Please also see the 
-[Organizational Code of Conduct](https://github.com/vercre/vercre/blob/main/CODE-OF-CONDUCT.md).
+[Organizational Code of Conduct](https://github.com/credibil/vc/blob/main/CODE-OF-CONDUCT.md).
 
 ## Our Pledge
 
@@ -54,14 +54,14 @@ project maintainers.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by 
-contacting the Vercre CoC team at report@vercre.io. The CoC team will review and 
+contacting the Credibil CoC team at report@credibil.io. The CoC team will review and 
 investigate all complaints, and will respond in a way that it deems appropriate to the 
 circumstances. The CoC team is obligated to maintain confidentiality with regard to the
 reporter of an incident. Further details of specific enforcement policies may be posted 
 separately.
 
 Project maintainers who do not follow or enforce the Code of Conduct in good faith may 
-face temporary or permanent repercussions as determined by other members of Vercre's 
+face temporary or permanent repercussions as determined by other members of Credibil's 
 leadership.
 
 ## Attribution

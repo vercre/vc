@@ -1,6 +1,6 @@
 # Coding guidelines
 
-For the most part, Vercre follows common Rust conventions and [pull request] (PR)
+For the most part, Credibil VC follows common Rust conventions and [pull request] (PR)
 workflows, though we do have a few additional things to be aware of.
 
 [pull request]: https://help.github.com/articles/about-pull-requests/
@@ -20,57 +20,57 @@ your editor.
 
 ### Minimum Supported `rustc` Version
 
-Vercre supports the latest three stable releases of Rust. This
-means that if the latest version of Rust is 1.78.0 then Vercre supports Rust
-1.76.0, 1.77.0, and 1.78.0. CI will test by default with 1.78.0 and there will
+Credibil supports the latest three stable releases of Rust. This
+means that if the latest version of Rust is 1.85.0 then Credibil VC supports Rust
+1.83.0, 1.84.0, and 1.85.0. CI will test by default with 1.78.0 and there will
 be one job running the full test suite on Linux x86\_64 on 1.76.0.
 
 Some of the CI jobs depend on nightly Rust, for example to run rustdoc with
 nightly features, however these use pinned versions in CI that are updated
 periodically and the general repository does not depend on nightly features.
 
-Updating Vercre's MSRV is done by editing the `rust-version` field in the
+Updating Credibil VC's MSRV is done by editing the `rust-version` field in the
 workspace root's `Cargo.toml`
 
-### Dependencies of Vercre
+### Dependencies of Credibil VC
 
-Vercre have a higher threshold than default for adding
+Credibil have a higher threshold than default for adding
 dependencies to the project. All dependencies are required to be "vetted"
 through the [`cargo vet` tool](https://mozilla.github.io/cargo-vet/). This is
 checked on CI and will run on all modifications to `Cargo.lock`.
 
-A "vet" for Vercre is not a meticulous code review of a dependency for
+A "vet" for Credibil VC is not a meticulous code review of a dependency for
 correctness but rather it is a statement that the crate does not contain
 malicious code and is safe for us to run during development and (optionally)
-users to run when they run Vercre themselves. Vercre's vet entries are used
+users to run when they run Credibil VC themselves. Credibil VC's vet entries are used
 by other organizations which means that this isn't simply for our own personal
-use. Vercre additionally uses vet entries from other organizations as well
+use. Credibil VC additionally uses vet entries from other organizations as well
 which means we don't have to vet everything ourselves.
 
-New vet entries are required to be made by trusted contributors to Vercre.
-This is all configured in the `supply-chain` folder of Vercre. These files
+New vet entries are required to be made by trusted contributors to Credibil VC.
+This is all configured in the `supply-chain` folder of Credibil VC. These files
 generally aren't hand-edited though and are instead managed through the `cargo
 vet` tool itself. Note that our `supply-chain/audits.toml` additionally contains
 entries which indicates that authors are trusted as opposed to vets of
 individual crates. This lowers the burden of updating version of a crate from a
 trusted author.
 
-When put together this means that contributions to Vercre which
+When put together this means that contributions to Credibil VC which
 update existing dependencies or add new dependencies will not be mergeable by
 default (CI will fail). This is expected from our project's configuration and
 this situation will be handled one of a few ways:
 
 Note that this process is not in place to prevent new dependencies or prevent
-updates, but rather it ensures that development of Vercre is done with a
+updates, but rather it ensures that development of Credibil VC is done with a
 trusted set of code that has been reviewed by trusted parties. We welcome
 dependency updates and new functionality, so please don't be too alarmed when
 contributing and seeing a failure of `cargo vet` on CI!
 
 ### `cargo vet` for Contributors
 
-If you're a contributor to Vercre and you've landed on this documentation,
+If you're a contributor to Credibil VC and you've landed on this documentation,
 hello and thanks for your contribution! Here's some guidelines for changing the
-set of dependencies in Vercre:
+set of dependencies in Credibil VC:
 
 * If a new dependency is being added it might be worth trying to slim down
   what's required or avoiding the dependency altogether. Avoiding new
@@ -91,8 +91,8 @@ to add `cargo vet` entries and once that lands yours will be added to the queue.
 
 ### `cargo vet` for Maintainers
 
-Maintainers of Vercre are required to explicitly vet and approve all
-dependency updates and modifications to Vercre. This means that when reviewing
+Maintainers of Credibil VC are required to explicitly vet and approve all
+dependency updates and modifications to Credibil VC. This means that when reviewing
 a PR you should ensure that contributors are not modifying the `supply-chain`
 directory themselves outside of commits authored by other maintainers. Otherwise
 though to add vet entries this is done through one of a few methods:
@@ -135,7 +135,7 @@ benefit of `cargo vet` in protection against supply-chain style attacks.
   does not require careful review or review at all of these dependencies. The
   assumption here is that a supply chain attack against a popular crate is
   statistically likely to be discovered relatively quickly. Changes to `main` in
-  Vercre take at least 2 weeks to be released due to our release process, so
+  Credibil VC take at least 2 weeks to be released due to our release process, so
   the assumption is that popular crates that are victim of a supply chain attack
   would be discovered during this time. This policy additionally greatly helps
   when updating dependencies on popular crates that are common to see without

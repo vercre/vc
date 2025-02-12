@@ -1,19 +1,19 @@
 # Contributing
 
-We're excited to work on Vercre and hope you will be too! This guide should help you get
-up and running with Vercre development. But first, make sure you've read our 
+We're excited to work on Credibil VC and hope you will be too! This guide should help you get
+up and running with Credibil VC development. But first, make sure you've read our 
 [Code of Conduct](./coc.md).
 
-Vercre is ambitious, with much work to be done to achieve full compliance with the core
+Credibil VC is ambitious, with much work to be done to achieve full compliance with the core
 OpenID specifications. And while we're confident we can achieve our goals, we see many 
 opportunities for others to get involved and help get there more quickly.
 
 
 ## Join Our Chat
 
-We chat about Vercre development on [Zulip](https://vercre.zulipchat.com/) — join us!.
+We chat about Credibil VC development on [Zulip](https://credibil.zulipchat.com/) — join us!.
 
-If you're having trouble building Vercre, aren't sure why a test is failing, or have any
+If you're having trouble building Credibil VC, aren't sure why a test is failing, or have any
 other questions, feel free to ask on Zulip. Not everything we hope to do with these projects 
 is reflected in the code or documentation yet, so if you see things that seem missing or
 that don't make sense, or even that just don't work the way you expect them to, we're also 
@@ -21,7 +21,7 @@ interested to hear about that!
 
 As always, you're more than welcome to open an issue too!
 
-Finally, we have bi-weekly project meetings, hosted on Zoom, for Vercre. For more
+Finally, we have bi-weekly project meetings, hosted on Zoom, for Credibil VC. For more
 information, see our meetings agendas/minutes repository. Please feel free to contact us
 via Zulip if you're interested in joining!
 
@@ -31,7 +31,7 @@ If you're looking for something to do, these are great places to start:
 
 Issues labeled "good first issue" — these issues tend to be simple, what needs to be
 done is well known, and are good for new contributors to tackle. The goal is to learn 
-Vercre's development workflow and make sure that you can build and test Vercre.
+Credibil VC's development workflow and make sure that you can build and test Credibil VC.
 
 Issues labeled "help wanted" — these are issues that we need a little help with!
 

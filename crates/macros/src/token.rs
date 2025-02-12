@@ -7,8 +7,6 @@ use syn::parse::{Error, Result};
 use crate::parse::{Json, Value};
 
 pub fn request(input: &Json) -> Result<TokenStream> {
-    // let path = quote! {vercre_openid::issuer};
-
     // we remove fields as we go so we can check for unexpected input
     let mut input = input.clone();
 

@@ -4,7 +4,7 @@ assertion_line: 78
 expression: response
 ---
 authorization_server:
-  issuer: "http://vercre.io"
+  issuer: "http://credibil.io"
   authorization_endpoint: /auth
   token_endpoint: /token
   scopes_supported:

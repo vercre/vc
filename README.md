@@ -1,4 +1,4 @@
-# Vercre
+# Credibil VC
 
 Issuance and Verification libraries for use in `OpenID` Verifiable Credentials solutions.
 
@@ -59,7 +59,7 @@ TODO
 
 ## Additional
 
-[![ci](https://github.com/vercre/vercre/actions/workflows/ci.yaml/badge.svg)](https://github.com/vercre/vercre/actions/workflows/ci.yaml)
+[![ci](https://github.com/credibil/vc/actions/workflows/ci.yaml/badge.svg)](https://github.com/credibil/vc/actions/workflows/ci.yaml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE-MIT)
 [![License](https://img.shields.io/badge/license-Apache-blue.svg)](./LICENSE-APACHE)
 

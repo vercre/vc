@@ -1,16 +1,16 @@
-# Vercre RFCs
+# Credibil VC RFCs
 
-Vercre uses an RFC (request for comment) process for instigating major change to any
+Credibil VC uses an RFC (request for comment) process for instigating major change to any
 project. We see RFCs as a tool for getting feedback on design and implementation ideas
 and for consensus-building among stakeholders.
 
-See the [Vercre RFC repo](https://github.com/vercre/rfcs) for a complete list of RFCs.
+See the [Credibil VC RFC repo](https://github.com/credibil/rfcs) for a complete list of RFCs.
 
 ## What is an RFC?
 
 An RFC lays out a problem along with a proposed solution. To support getting early 
-feedback, RFCs can come in [draft](https://github.com/vercre/rfcs/blob/main/rfc-draft.md)
-or [full](https://github.com/vercre/rfcs/blob/main/rfc-full.md) forms. Draft RFCs should be opened as 
+feedback, RFCs can come in [draft](https://github.com/credibil/rfcs/blob/main/rfc-draft.md)
+or [full](https://github.com/credibil/rfcs/blob/main/rfc-full.md) forms. Draft RFCs should be opened as 
 [draft PRs](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests#draft-pull-requests).
 
 In either case, discussion happens by opening a pull request to place the RFC into the 
@@ -18,7 +18,7 @@ In either case, discussion happens by opening a pull request to place the RFC in
 
 ## When is an RFC needed?
 
-Many changes to Vercre projects can and should happen through every-day GitHub processes 
+Many changes to Credibil projects can and should happen through every-day GitHub processes 
 — issues and pull requests. An RFC is warranted when:
 
 * There is a change that will significantly affect stakeholders. For example:

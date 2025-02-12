@@ -20,4 +20,4 @@ One of the benefits of a systems programming language like Rust is the ability t
 
 Rust's small binary footprint and efficient memory usage make it well-suited for deployment on small, low-spec devices for a truly distributed infrastructure. And while we have yet to optimize for either, we are confident Rust will be up to the task.
 
-Also, without the need for garbage collection, Rust libraries are eminently well-suited for use by other programming languages via foreign-function interfaces. Non-Rust applications can integrate Vercre without the memory safety risks inherent with other systems programming languages.
+Also, without the need for garbage collection, Rust libraries are eminently well-suited for use by other programming languages via foreign-function interfaces. Non-Rust applications can integrate Credibil VC without the memory safety risks inherent with other systems programming languages.

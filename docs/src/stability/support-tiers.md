@@ -1,6 +1,6 @@
 # Support Tiers
 
-Vercre recognises three distinct tiers of platform and feature support. Each tier
+Credibil recognises three distinct tiers of platform and feature support. Each tier
 identifies the level of support that should be provided for a given platform or feature.
 
 The description of these tiers are inspired by the Rust compiler's [support tiers for
@@ -11,7 +11,7 @@ This section provides a framework for the evaluation of new features as well as 
 requires for existing features.
 
 _Keep in mind, this is merely a guide and should not be used to "lawyer" a change into 
-Vercre on some technical detail._
+Credibil VC on some technical detail._
 
 ## Supported Platforms and Features
 
@@ -37,14 +37,14 @@ what circumstances work "can be avoided" for each tier.
 | Example feature     | [`example feature`]          |
 </div>
 
-[`example feature`]: https://github.com/vercre/vercre/blob/master/proposals/example-feature/Overview.md
+[`example feature`]: https://github.com/credibil/vc/blob/master/proposals/example-feature/Overview.md
 
 [^1]: Binary artifacts for MUSL can be statically linked, meaning that they are
 suitable for "run on any linux distribution" style use cases.
 
-Tier 1 is intended to be the highest level of support in Vercre for included features,
+Tier 1 is intended to be the highest level of support in Credibil VC for included features,
 indicating that they are suitable for production environments. This conveys a high 
-level of confidence within the Vercre project about the included features.
+level of confidence within the Credibil VC project about the included features.
 
 Tier 1 features include:
 
@@ -58,7 +58,7 @@ Tier 1 features include:
   features and targets.
 
 * Major changes affecting this tier may require help from maintainers with specialized
-  expertise, but otherwise it should be reasonable to expect most Vercre developers to
+  expertise, but otherwise it should be reasonable to expect most Credibil VC developers to
   be able to maintain Tier 1 features.
 
 * Major changes affecting Tier 1 features require an RFC and prior agreement on the
@@ -91,7 +91,7 @@ already be "production ready" and safe to use.
 
 Tier 2 features include:
 
-* Tests are run in CI for the Vercre project for this feature and everything
+* Tests are run in CI for the Credibil VC project for this feature and everything
   passes. For example a Tier 2 platform runs in CI directly or via emulation.
   Features are otherwise fully tested on CI.
 
@@ -99,7 +99,7 @@ Tier 2 features include:
   all Tier 2 targets must implement all of the Tier 1 WebAssembly proposals,
   and all Tier 2 features must be implemented on all Tier 1 targets.
 
-* Any Vercre developer could be expected to handle minor changes which affect Tier 2
+* Any Credibil VC developer could be expected to handle minor changes which affect Tier 2
   features. For example, if an interface changes, the developer changing the 
   interface should be able to handle the changes for Tier 2 architectures as long as the
   affected part is relatively minor.
@@ -130,13 +130,13 @@ PR-in-progress or otherwise has a schedule for the implementation of the feature
 | Target               | `riscv64gc-unknown-linux-gnu` | full-time maintainer                         |
 </div>
 
-In general, Tier 3 is the baseline for inclusion of code into the Vercre project.
+In general, Tier 3 is the baseline for inclusion of code into the Credibil VC project.
 However, this does not mean it is the catch-all "if a patch is sent it will be merged"
 tier. Instead, the goal of this tier is to outline what is expected of contributors 
-adding new features to Vercre which might be experimental at the time of addition. 
+adding new features to Credibil VC which might be experimental at the time of addition. 
 
 Tier 3 not a tier where restrictions are releaxed, rather it already implies a
-significant commitment of effort to a feature being included within Vercre.
+significant commitment of effort to a feature being included within Credibil VC.
 
 Tier 3 features include:
 
@@ -145,13 +145,13 @@ Tier 3 features include:
 
   * An experimental feature that doubles the CI time for all PRs.
   * A change which makes it significantly more difficult to make architectural changes
-    to Vercre's internal implementation.
-  * A change which makes building Vercre more difficult.
+    to Credibil VC's internal implementation.
+  * A change which makes building Credibil VC more difficult.
 
   In general Tier 3 features are off-by-default at compile time but still
   tested-by-default on CI.
 
-* New features of Vercre cannot have major known bugs at the time of inclusion. Landing
+* New features of Credibil VC cannot have major known bugs at the time of inclusion. Landing
   a feature requires the feature to be correct and bug-free as best can be evaluated at
   the time of inclusion. Inevitably, bugs will be found and that's ok, but anything 
   identified during review must be addressed.
@@ -167,7 +167,7 @@ Tier 3 features include:
 * New components must have a clearly identified owner who is willing to be "on the hook"
   for review, updates to any internals, etc. For example, a new backend would need to 
   have a maintainer who is willing to respond to changes in interfaces and the needs of 
-  Vercre.
+  Credibil VC.
 
 Notably, this baseline level of support does not require any degree of testing, fuzzing,
 or verification. As a result, components classified as Tier 3 are generally not 
@@ -183,8 +183,8 @@ feature is preventing development of other features then:
 
 ## Unsupported features and platforms
 
-While this is not an exhaustive list, Vercre does not currently support the following
-features. While this documents Vercre's current state, it does not mean Vercre does not
+While this is not an exhaustive list, Credibil VC does not currently support the following
+features. While this documents Credibil VC's current state, it does not mean Credibil does not
 want to ever support these features; rather design discussion and PRs are welcome for 
 many of the below features to figure out how best to implement them and at least move 
 them to Tier 3 above.

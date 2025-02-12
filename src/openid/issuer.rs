@@ -215,14 +215,14 @@ pub struct CredentialOffer {
 
 impl CredentialOffer {
     /// Generate a qrcode for the Credential Offer.
-    /// Use the `endpoint` parameter to specify vercre-wallet's endpoint using
+    /// Use the `endpoint` parameter to specify a wallet's endpoint using
     /// deep link or direct call format.
     ///
     /// For example,
     ///
     /// ```http
     ///   openid-credential-offer://credential_offer=
-    ///   or GET https://holder.vercre-wallet.io/credential_offer?
+    ///   or GET https://holder.credibil.io/credential_offer?
     /// ```
     ///
     /// # Errors
@@ -2174,7 +2174,7 @@ pub enum ValueType {
 }
 
 /// OAuth 2 client metadata used for registering clients of the issuance and
-/// vercre-wallet authorization servers.
+/// wallet authorization servers.
 ///
 /// In the case of Issuance, the Wallet is the Client and the Issuer is the
 /// Authorization Server.
@@ -2507,17 +2507,17 @@ mod tests {
             "display": [
                 {
                     "name": "Employee ID",
-                    "description": "Vercre employee ID credential",
+                    "description": "Credibil employee ID credential",
                     "locale": "en-NZ",
                     "logo": {
-                        "uri": "https://vercre.github.io/assets/employee.png",
-                        "alt_text": "Vercre Logo"
+                        "uri": "https://credibil.io/assets/employee.png",
+                        "alt_text": "Employee ID Logo"
                     },
                     "text_color": "#ffffff",
                     "background_color": "#323ed2",
                     "background_image": {
-                        "uri": "https://vercre.github.io/assets/employee-background.png",
-                        "alt_text": "Vercre Background"
+                        "uri": "https://credibil.io/assets/employee-background.png",
+                        "alt_text": "Employee ID Background"
                     }
                 }
             ],

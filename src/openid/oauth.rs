@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use super::error;
 
 /// OAuth 2 client metadata used for registering clients of the issuance and
-/// vercre-wallet authorization servers.
+/// wallet authorization servers.
 ///
 /// In the case of Issuance, the Wallet is the Client and the Issuer is the
 /// Authorization Server.

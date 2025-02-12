@@ -1,10 +1,10 @@
 # Building
 
-This section describes everything required to build and run Vercre.
+This section describes everything required to build and run Credibil VC.
 
 ## Prerequisites
 
-Before we can actually build Vercre, we'll need to make sure these things are
+Before we can actually build Credibil VC, we'll need to make sure these things are
 installed first.
 
 ### The Rust Toolchain
@@ -12,16 +12,16 @@ installed first.
 [Install the Rust toolchain here.](https://www.rust-lang.org/tools/install) This
 includes `rustup`, `cargo`, `rustc`, etc...
 
-## Building `vercre` Libraries
+## Building `credibil-vc` Library
 
-To make an unoptimized, debug build of the `vercre` CLI tool, go to the root
+To make an unoptimized, debug build of the `credibil-vc` crate, go to the root
 of the repository and run this command:
 
 ```shell
 cargo build
 ```
 
-The built executable will be located at `target/debug/vercre`.
+The built executable will be located at `target/debug/libcredibil_vc.rlib`.
 
 To make an optimized build, run this command in the root of the repository:
 
@@ -29,25 +29,22 @@ To make an optimized build, run this command in the root of the repository:
 cargo build --release
 ```
 
-The built executable will be located at `target/release/vercre`.
+The built executable will be located at `target/release/libcredibil_vc.rlib`.
 
-You can also build and run a local `vercre` CLI by replacing `cargo build`
-with `cargo run`.
+## Building Example Crates
 
-## Building Other Vercre Crates
-
-You can build any of the Vercre crates by appending `-p vercre-whatever` to
-the `cargo build` invocation. For example, to build the `vercre-holder` crate,
+You can build any of the example crates by appending `-p whatever` to
+the `cargo build` invocation. For example, to build the example `issuer` crate,
 execute this command:
 
 ```shell
-cargo build -p vercre-holder
+cargo build -p issuer
 ```
 
 Alternatively, you can `cd` into the crate's directory, and run `cargo build`
 there, without needing to supply the `-p` flag:
 
 ```shell
-cd vercre-holder
+cd examples/issuer
 cargo build
 ```

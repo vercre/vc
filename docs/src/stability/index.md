@@ -1,10 +1,10 @@
 # Stability
 
-Vercre's stability is a reflection of the process of change in supported features,
+Credibil VC's stability is a reflection of the process of change in supported features,
 platforms, as well as internal structure. This section should provide some insight
-as to expectations of the maintainers regarding change in Vercre.
+as to expectations of the maintainers regarding change in Credibil VC.
 
-For Vercre, the stability of the API is primarily affected by:
+For Credibil VC, the stability of the API is primarily affected by:
 
 * The process of change — introducing or deprecating features and platforms
 

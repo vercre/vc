@@ -1,6 +1,6 @@
 # Endpoints
 
-The holder API is comprised of a set of endpoints that orchestrate the issuance or presentation of verifiable credentials. The holder endpoints assume the sequences implied by the [verce-issuer](../issuer/endpoints.md) and [verce-verifier](../verifier/endpoints.md) endpoints.
+The holder API is comprised of a set of endpoints that orchestrate the issuance or presentation of verifiable credentials. The holder endpoints assume the sequences implied by the [issuer](../issuer/endpoints.md) and [verifier](../verifier/endpoints.md) endpoints.
 
 The primary endpoints for issuance are:
 
@@ -17,7 +17,7 @@ The primary endpoints for presentation are:
 
 ## Exposing Endpoints
 
-While the OpenID specification assumes HTTP endpoints for the issuer and verifier services, it may not be a practical protocol for a wallet. However, this does not mean it cannot be used. The repository provides a [non-HTTP example (using Tauri)](https://github.com/vercre/vercre/tree/main/examples/wallet) but the following is a minimal example web server exposing endpoints required to support a minimal Pre-Authorized flow example. The example uses [axum](https://docs.rs/axum/latest/axum/), but any Rust web server should suffice.
+While the OpenID specification assumes HTTP endpoints for the issuer and verifier services, it may not be a practical protocol for a wallet. However, this does not mean it cannot be used. The repository provides a [non-HTTP example (using Tauri)](https://github.com/credibil/holder/tree/main/examples/tauri-wallet) but the following is a minimal example web server exposing endpoints required to support a minimal Pre-Authorized flow example. The example uses [axum](https://docs.rs/axum/latest/axum/), but any Rust web server should suffice.
 
 ```rust,ignore
 #[tokio::main]
@@ -50,7 +50,7 @@ async fn offer(
     State(provider): State<Provider>,                 // <- get providers from state
     Json(mt req): Json<OfferRequest>,                 // <- convert request body
 ) -> AxResult<Issuance> {
-    vercre_holder::offer(provider, &req).await.into() // <- forward to library
+    credibil_holder::offer(provider, &req).await.into() // <- forward to library
 }
 ```
 

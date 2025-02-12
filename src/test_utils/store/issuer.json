@@ -1,9 +1,9 @@
 {
-    "credential_issuer": "http://vercre.io",
-    "credential_endpoint": "http://vercre.io/credential",
-    "deferred_credential_endpoint": "http://vercre.io/deferred",
+    "credential_issuer": "http://credibil.io",
+    "credential_endpoint": "http://credibil.io/credential",
+    "deferred_credential_endpoint": "http://credibil.io/deferred",
     "display": {
-        "name": "Vercre",
+        "name": "Credibil",
         "locale": "en-NZ"
     },
     "credential_configurations_supported": {
@@ -29,17 +29,17 @@
             "display": [
                 {
                     "name": "Employee ID",
-                    "description": "Vercre employee ID credential",
+                    "description": "Credibil employee ID credential",
                     "locale": "en-NZ",
                     "logo": {
-                        "uri": "https://vercre.github.io/assets/employee.png",
-                        "alt_text": "Vercre Logo"
+                        "uri": "https://credibil.io/assets/employee.png",
+                        "alt_text": "Employee ID Logo"
                     },
                     "text_color": "#ffffff",
                     "background_color": "#323ed2",
                     "background_image": {
-                        "uri": "https://vercre.github.io/assets/employee-background.png",
-                        "alt_text": "Vercre Background"
+                        "uri": "https://credibil.io/assets/employee-background.png",
+                        "alt_text": "Employee ID Background"
                     }
                 }
             ],
@@ -142,17 +142,17 @@
             "display": [
                 {
                     "name": "Developer",
-                    "description": "Vercre certified developer credential",
+                    "description": "Credibil certified developer credential",
                     "locale": "en-NZ",
                     "logo": {
-                        "uri": "https://vercre.github.io/assets/developer.png",
-                        "alt_text": "Vercre Logo"
+                        "uri": "https://credibil.io/assets/developer.png",
+                        "alt_text": "Developer Logo"
                     },
                     "text_color": "#ffffff",
                     "background_color": "#010100",
                     "background_image": {
-                        "uri": "https://vercre.github.io/assets/developer-background.png",
-                        "alt_text": "Vercre Background"
+                        "uri": "https://credibil.io/assets/developer-background.png",
+                        "alt_text": "Developer Background"
                     }
                 }
             ],
@@ -216,17 +216,17 @@
             "display": [
                 {
                     "name": "Employee ID",
-                    "description": "Vercre employee ID credential",
+                    "description": "Credibil employee ID credential",
                     "locale": "en-NZ",
                     "logo": {
-                        "uri": "https://vercre.github.io/assets/employee.png",
-                        "alt_text": "Vercre Logo"
+                        "uri": "https://credibil.io/assets/employee.png",
+                        "alt_text": "Employee ID Logo"
                     },
                     "text_color": "#ffffff",
                     "background_color": "#323ed2",
                     "background_image": {
-                        "uri": "https://vercre.github.io/assets/vercre-background.png",
-                        "alt_text": "Vercre Background"
+                        "uri": "https://credibil.io/assets/employee-background.png",
+                        "alt_text": "Employee ID Background"
                     }
                 }
             ],

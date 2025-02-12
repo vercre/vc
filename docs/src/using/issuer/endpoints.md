@@ -22,7 +22,7 @@ minimal Pre-Authorized flow example. The example uses [axum](https://docs.rs/axu
 but any Rust web server should suffice.
 
 For the sake of brevity, imports, tracing, etc. are omitted. A more complete example can
-be found in the [examples directory](https://github.com/vercre/vercre/tree/main/examples/issuer).
+be found in the [examples directory](https://github.com/credibil/vc/tree/main/examples/issuer).
 
 ```rust,ignore
 #[tokio::main]
@@ -63,7 +63,7 @@ async fn create_offer(
     Json(mut req): Json<CreateOfferRequest>,          // <- convert request body
 ) -> AxResult<CreateOfferResponse> {
     req.credential_issuer = format!("http://{host}"); // <- set credential issuer
-    vercre_issuer::create_offer(provider, &req).await.into()    // <- forward to library
+    issuer::create_offer(provider, &req).await.into()    // <- forward to library
 }
 ```
 

@@ -3,11 +3,11 @@ source: src/issuer/metadata.rs
 assertion_line: 76
 expression: response
 ---
-credential_issuer: "http://vercre.io"
-credential_endpoint: "http://vercre.io/credential"
-deferred_credential_endpoint: "http://vercre.io/deferred"
+credential_issuer: "http://credibil.io"
+credential_endpoint: "http://credibil.io/credential"
+deferred_credential_endpoint: "http://credibil.io/deferred"
 display:
-  name: Vercre
+  name: Credibil
   locale: en-NZ
 credential_configurations_supported:
   Developer_JWT:
@@ -49,13 +49,13 @@ credential_configurations_supported:
       - name: Developer
         locale: en-NZ
         logo:
-          uri: "https://vercre.github.io/assets/developer.png"
-          alt_text: Vercre Logo
-        description: Vercre certified developer credential
+          uri: "https://credibil.io/assets/developer.png"
+          alt_text: Developer Logo
+        description: Credibil certified developer credential
         background_color: "#010100"
         background_image:
-          uri: "https://vercre.github.io/assets/developer-background.png"
-          alt_text: Vercre Background
+          uri: "https://credibil.io/assets/developer-background.png"
+          alt_text: Developer Background
         text_color: "#ffffff"
   EmployeeID_JWT:
     format: jwt_vc_json
@@ -119,13 +119,13 @@ credential_configurations_supported:
       - name: Employee ID
         locale: en-NZ
         logo:
-          uri: "https://vercre.github.io/assets/employee.png"
-          alt_text: Vercre Logo
-        description: Vercre employee ID credential
+          uri: "https://credibil.io/assets/employee.png"
+          alt_text: Employee ID Logo
+        description: Credibil employee ID credential
         background_color: "#323ed2"
         background_image:
-          uri: "https://vercre.github.io/assets/employee-background.png"
-          alt_text: Vercre Background
+          uri: "https://credibil.io/assets/employee-background.png"
+          alt_text: Employee ID Background
         text_color: "#ffffff"
   org.iso.18013.5.1.mDL:
     format: mso_mdoc
@@ -168,11 +168,11 @@ credential_configurations_supported:
       - name: Employee ID
         locale: en-NZ
         logo:
-          uri: "https://vercre.github.io/assets/employee.png"
-          alt_text: Vercre Logo
-        description: Vercre employee ID credential
+          uri: "https://credibil.io/assets/employee.png"
+          alt_text: Employee ID Logo
+        description: Credibil employee ID credential
         background_color: "#323ed2"
         background_image:
-          uri: "https://vercre.github.io/assets/vercre-background.png"
-          alt_text: Vercre Background
+          uri: "https://credibil.io/assets/employee-background.png"
+          alt_text: Employee ID Background
         text_color: "#ffffff"

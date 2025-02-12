@@ -233,7 +233,7 @@ mod tests {
     use crate::test_utils;
     use crate::test_utils::verifier::Provider;
 
-    const CLIENT_ID: &str = "http://vercre.io";
+    const CLIENT_ID: &str = "http://credibil.io";
 
     #[tokio::test]
     async fn send_response() {

@@ -1,15 +1,15 @@
-# Vercre's CredentialAuthorization of `cargo vet`
+# Credibil's CredentialAuthorization of `cargo vet`
 
 > [!CAUTION]
 >
 > **Unimplemented!**
 >
-> This is a placeholder for the implementation of `cargo vet` for Vercre crates.
+> This is a placeholder for the implementation of `cargo vet` for Credibil VC crates.
 
 This directory contains the state for [`cargo vet`], a tool to help projects
 ensure that third-party Rust dependencies have been audited by a trusted entity.
-For more information about Vercre's usage of `cargo vet` see our
-[documentation](https://vercre.io/contributing-coding-guidelines.html#dependencies-of-vercre).
+For more information about Credibil's usage of `cargo vet` see our
+[documentation](https://credibil.io/contributing-coding-guidelines.html#dependencies-of-credibil-vc).
 
 [`cargo vet`]: https://mozilla.github.io/cargo-vet/
 

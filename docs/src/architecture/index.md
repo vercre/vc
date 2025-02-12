@@ -1,6 +1,6 @@
 # Architecture
 
-At its most simple, Vercre is a set of three top-level libraries that support 
+At its most simple, Credibil VC is a library that support 
 developers in building Verifiable Credential-based applications. That is, applications
 that can issue, present, and verify credentials — all underpinned by OpenID for 
 Verifiable Credential specifications.
@@ -11,15 +11,18 @@ Users bring their own HTTP server(s) and implement provider traits for each libr
 
 ## Issuer-Holder-Verifier
 
-Vercre is modelled around the _Issuer-Holder-Verifier_ model — a means of exchanging 
+Credibil VC is modelled around the _Issuer-Holder-Verifier_ model — a means of exchanging 
 Verifiable Credential claims, where claim issuance is independent of the process of 
 presenting them to Verifiers.
 
-Each top-level library maps to one of the model's three components:
+The library has two feature flags that map to the model's _Issuer_ and _Verifier_ components:
 
-- [vercre-issuer](../using/issuer/index.md) to the _Issuer_
-- [vercre-verifier](../using/verifier/index.md) to the _Verifier_
-- [vercre-holder](../using/holder/index.md) to the _Holder_.
+- [issuer](../using/issuer/index.md) to the _Issuer_
+- [verifier](../using/verifier/index.md) to the _Verifier_
+
+A separate repository provides an opinionated set of data structures and examples that can build _Holder_ agent components:
+
+- [credibil-holder](../using/holder/index.md) to the _Holder_.
 
 ## Providers
 

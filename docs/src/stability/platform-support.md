@@ -1,14 +1,14 @@
 # Platform Support
 
-This page is intended to give a high-level overview of Vercre's platform support along
-with a few Vercre aspirations. For more detail, see the [support tiers](./support-tiers.md)
+This page is intended to give a high-level overview of Credibil VC's platform support along
+with a few Credibil aspirations. For more detail, see the [support tiers](./support-tiers.md)
 which has more detail on what is supported and to what extent.
 
-Vercre strives to support hardware that anyone wants to run WebAssembly on. Vercre
+Credibil strives to support hardware that anyone wants to run WebAssembly on. Credibil VC
 maintainers support a number of "major" platforms but porting work may be required
 to support platforms that maintainers are not familiar with. 
 
-Out-of-the box Vercre supports:
+Out-of-the box Credibil VC supports:
 
 * **Linux**: x86\_64, aarch64
 * **MacOS**: x86\_64, aarch64
@@ -24,7 +24,7 @@ TODO: complete this section
 
 ## Support for `#![no_std]`
 
-The `vercre-issuer` crate supports being build on no\_std platforms in Rust, but
+The `credibil-vc` crate supports being build on no\_std platforms in Rust, but
 only for a subset of its compile-time Cargo features. Currently supported features 
 are:
 
@@ -32,18 +32,18 @@ are:
 * `gc`
 * `component-model`
 
-Notably, this does not include the `default` feature which means that when depending on
-Vercre you'll need to set `default-features = false`.
+Note that Credibil VC does not have a `default` feature which means that when depending on
+Credibil VC you'll need to set features explicitly.
 
-Vercre's support for no\_std requires the embedder to implement the equivalent of a C 
+Credibil VC's support for no\_std requires the embedder to implement the equivalent of a C 
 header file to indicate how to perform basic OS operations such as allocating virtual 
-memory. This API can be found as `vercre-platform.h` in Vercre's release artifacts or at
-`examples/min-platform/embedding/vercre-platform.h` in the source tree. Note that this 
-API is not guaranteed to be stable at this time, it'll need to be updated when Vercre 
+memory. This API can be found as `credibil-vc-platform.h` in Credibil VC's release artifacts or at
+`examples/min-platform/embedding/credibil-vc-platform.h` in the source tree. Note that this 
+API is not guaranteed to be stable at this time, it'll need to be updated when Credibil VC 
 is updated.
 
-Vercre's runtime will use the symbols defined in this file meaning that if they're not
+Credibil VC's runtime will use the symbols defined in this file meaning that if they're not
 defined then a link-time error will be generated. Embedders are required to implement 
-these functions in accordance with their documentation to enable Vercre to run on custom
+these functions in accordance with their documentation to enable Credibil VC to run on custom
 platforms.
 </div>

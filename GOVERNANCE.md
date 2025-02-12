@@ -1,12 +1,12 @@
-# Vercre Governance
+# Credibil VC Governance
 
-This document defines the project governance for Vercre.
+This document defines the project governance for the Credibil VC project.
 
 ## Principles
 
-The Vercre community adheres to the following principles:
+The Credibil VC community adheres to the following principles:
 
-- Open: Vercre is open source. See repository guidelines and processes below.
+- Open: Credibil VC is open source. See repository guidelines and processes below.
 - Welcoming and respectful: See Code of Conduct, below.
 - Transparent and accessible: Work and collaboration are done in public.
 - Merit: Ideas and contributions are accepted according to their technical merit and alignment with project objectives, scope, and design principles.
@@ -22,7 +22,7 @@ New maintainers must be proposed by an existing maintainer and must be elected b
 
 ## Project Decision Making and Voting
 
-The Vercre project employs "organization voting" to ensure no single organization can dominate the project. Ideally, all project decisions are resolved by consensus, but if this is not possible, maintainers may call a vote.
+The Credibil VC project employs "organization voting" to ensure no single organization can dominate the project. Ideally, all project decisions are resolved by consensus, but if this is not possible, maintainers may call a vote.
 
 Individuals not associated with or employed by a company or organization are allowed one organization vote. Each company or organization (regardless of the number of maintainers associated with or employed by that company/organization) receives one organization vote.
 
@@ -34,7 +34,7 @@ For formal votes, a specific statement of what is being voted on should be added
 
 ## GitHub Project Administration
 
-Maintainers will be added to the Vercre GitHub organization.
+Maintainers will be added to the Credibil GitHub organization.
 
 ## Approving and Merging PRs
 
@@ -46,6 +46,6 @@ All changes in Governance require a 2/3 majority organization vote of the mainta
 
 ## Code of Conduct
 
-Vercre follows the CNCF Code of Conduct:
+Credibil follows the CNCF Code of Conduct:
 
 [https://github.com/cncf/foundation/blob/master/code-of-conduct.md](https://github.com/cncf/foundation/blob/master/code-of-conduct.md)

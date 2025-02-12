@@ -84,23 +84,8 @@ args = ["semver-checks"]
 install_crate = "cargo-semver-checks"
 
 [tasks.pre-pub]
-run_task = { name = ["pre-pub-core", "pre-pub-issuer", "pre-pub-vp", "pre-pub-holder"], parallel = true }
-
-[tasks.pre-pub-core]
 command = "cargo"
-args = ["publish", "--allow-dirty", "--dry-run", "--package", "core-utils"]
-
-[tasks.pre-pub-issuer]
-command = "cargo"
-args = ["publish", "--allow-dirty", "--dry-run", "--package", "vercre-issuer"]
-
-[tasks.pre-pub-vp]
-command = "cargo"
-args = ["publish", "--allow-dirty", "--dry-run", "--package", "vercre-vp"]
-
-[tasks.pre-pub-holder]
-command = "cargo"
-args = ["publish", "--allow-dirty", "--dry-run", "--package", "vercre-holder"]
+args = ["publish", "--allow-dirty", "--dry-run", "--package", "credibil-vc"]
 
 # args = release level: one of `release`, `major`, `minor`, `patch`, `alpha`, `beta`, `rc`
 [tasks.release]
@@ -112,12 +97,3 @@ install_crate = "cargo-release"
 command = "cargo"
 args = ["release", "${@}", "--execute"]
 install_crate = "cargo-release"
-
-# -----------------------------------------------------------------------------
-# Type generation for Tauri wallet example
-# -----------------------------------------------------------------------------
-
-[tasks.typegen]
-command = "typeshare"
-args = ["./examples/wallet/src-tauri", "--lang=typescript", "--output-file=./examples/wallet/src/types/generated.ts"]
-install_crate = "typeshare-cli"
