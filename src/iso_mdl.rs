@@ -46,7 +46,7 @@ pub async fn to_credential(
         // assemble `IssuerSignedItem`s for name space
         for (k, v) in name_space {
             let item = Tag24(IssuerSignedItem {
-                digest_id: id_gen.gen(),
+                digest_id: id_gen.generate(),
                 random: rng().random::<[u8; 16]>().into(),
                 element_identifier: k.clone(),
                 element_value: cbor!(v)?,

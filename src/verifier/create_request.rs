@@ -50,7 +50,7 @@ use tracing::instrument;
 use uuid::Uuid;
 
 use super::state::{Expire, State};
-use crate::core::{gen, Kind};
+use crate::core::{generate, Kind};
 use crate::dif_exch::{ClaimFormat, PresentationDefinition};
 use crate::openid::provider::StateStore;
 use crate::openid::verifier::{
@@ -123,7 +123,7 @@ async fn process(
         format: Some(HashMap::from([("jwt_vc".into(), fmt)])),
         name: None,
     };
-    let uri_token = gen::uri_token();
+    let uri_token = generate::uri_token();
 
     // get client metadata
     let Ok(verifier_meta) = Metadata::verifier(&provider, &request.client_id).await else {
@@ -133,7 +133,7 @@ async fn process(
     let mut req_obj = RequestObject {
         response_type: ResponseType::VpToken,
         state: Some(uri_token.clone()),
-        nonce: gen::nonce(),
+        nonce: generate::nonce(),
         presentation_definition: Kind::Object(pres_def),
         client_metadata: verifier_meta,
         client_id_scheme: Some(ClientIdScheme::RedirectUri),

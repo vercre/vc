@@ -16,7 +16,7 @@ use credibil_infosec::Signer;
 use tracing::instrument;
 
 use super::state::{Authorized, Deferrance, Expire, Stage, State};
-use crate::core::{gen, Kind};
+use crate::core::{generate, Kind};
 use crate::openid::issuer::{
     CredentialConfiguration, CredentialDefinition, CredentialDisplay, CredentialIssuance,
     CredentialRequest, CredentialResponse, CredentialResponseType, Dataset, Format, Issuer,
@@ -219,7 +219,7 @@ impl Context {
         let Stage::Validated(mut token_state) = state.stage else {
             return Err(Error::AccessDenied("invalid access token state".into()));
         };
-        token_state.c_nonce = gen::nonce();
+        token_state.c_nonce = generate::nonce();
         token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
         state.stage = Stage::Validated(token_state.clone());
 
@@ -231,7 +231,7 @@ impl Context {
         // TODO: save credential in state !!
         // state.stage = Stage::Issued(Credential { credential: vc, issuance:
         // issuance_dt });
-        let notification_id = gen::notification_id();
+        let notification_id = generate::notification_id();
 
         StateStore::put(provider, &notification_id, &state, state.expires_at)
             .await
@@ -324,7 +324,7 @@ impl Context {
     async fn defer_response(
         &self, provider: &impl Provider, request: CredentialRequest,
     ) -> Result<CredentialResponse> {
-        let txn_id = gen::transaction_id();
+        let txn_id = generate::transaction_id();
 
         let state = State {
             subject_id: None,
@@ -417,7 +417,7 @@ impl Context {
         &self, provider: &impl Provider, hint: impl Into<String> + Send,
     ) -> Result<Error> {
         // generate nonce and update token state
-        let c_nonce = gen::nonce();
+        let c_nonce = generate::nonce();
         let mut state = self.state.clone();
         state.expires_at = Utc::now() + Expire::Access.duration();
 

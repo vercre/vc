@@ -20,7 +20,7 @@ use chrono::Utc;
 use tracing::instrument;
 
 use super::state::{Authorized, AuthorizedItem, Expire, ItemType, Stage, State, Token};
-use crate::core::{gen, pkce};
+use crate::core::{generate, pkce};
 use crate::openid::issuer::{
     AuthorizedDetail, CredentialAuthorization, Issuer, Metadata, ProfileClaims, Provider,
     TokenGrantType, TokenRequest, TokenResponse, TokenType,
@@ -209,8 +209,8 @@ impl Context {
             }
         };
 
-        let access_token = gen::token();
-        let c_nonce = gen::nonce();
+        let access_token = generate::token();
+        let c_nonce = generate::nonce();
 
         // update state
         let mut state = self.state.clone();

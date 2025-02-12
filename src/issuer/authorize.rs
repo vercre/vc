@@ -72,7 +72,7 @@ use chrono::Utc;
 use tracing::instrument;
 
 use super::state::{Authorization, AuthorizedItem, Expire, ItemType, Stage, State};
-use crate::core::gen;
+use crate::core::generate;
 use crate::openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
     Claim, CredentialAuthorization, Issuer, Metadata, ProfileClaims, Provider, RequestObject,
@@ -406,7 +406,7 @@ impl Context {
             }),
         };
 
-        let code = gen::auth_code();
+        let code = generate::auth_code();
         StateStore::put(provider, &code, &state, state.expires_at)
             .await
             .map_err(|e| Error::ServerError(format!("issue saving authorization state: {e}")))?;

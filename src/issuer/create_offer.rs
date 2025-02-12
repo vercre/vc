@@ -71,7 +71,7 @@ use chrono::Utc;
 use tracing::instrument;
 
 use super::state::{AuthorizedItem, Expire, ItemType, Offer, Stage, State};
-use crate::core::gen;
+use crate::core::generate;
 use crate::openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, CreateOfferRequest,
     CreateOfferResponse, CredentialAuthorization, CredentialOffer, Grants, Issuer, Metadata,
@@ -168,7 +168,7 @@ impl Context {
         let credential_offer = self.credential_offer(&request);
         let tx_code =
             if request.tx_code_required && grant_types.contains(&GrantType::PreAuthorizedCode) {
-                Some(gen::tx_code())
+                Some(generate::tx_code())
             } else {
                 None
             };
@@ -204,7 +204,7 @@ impl Context {
                 tx_code: tx_code.clone(),
             })
         } else {
-            let uri_token = gen::uri_token();
+            let uri_token = generate::uri_token();
 
             // save offer to state
             let state = State {
@@ -228,7 +228,7 @@ impl Context {
 
     /// Create `CredentialOffer`
     fn credential_offer(&self, request: &CreateOfferRequest) -> CredentialOffer {
-        let auth_code = gen::auth_code();
+        let auth_code = generate::auth_code();
         let grant_types = request.grant_types.clone().unwrap_or_default();
 
         // TODO: determine how to select correct server?

@@ -11,7 +11,7 @@ use tracing::instrument;
 
 use super::authorize;
 use super::state::{PushedAuthorization, Stage, State};
-use crate::core::gen;
+use crate::core::generate;
 use crate::openid::issuer::{
     Metadata, Provider, PushedAuthorizationRequest, PushedAuthorizationResponse,
 };
@@ -64,7 +64,7 @@ async fn process(
     tracing::debug!("par::process");
 
     // generate a request URI and expiry between 5 - 600 secs
-    let request_uri = format!("urn:ietf:params:oauth:request_uri:{}", gen::uri_token());
+    let request_uri = format!("urn:ietf:params:oauth:request_uri:{}", generate::uri_token());
     let expires_in = Duration::seconds(600);
 
     // save request to state for retrieval by authorization endpoint

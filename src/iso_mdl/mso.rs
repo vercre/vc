@@ -187,7 +187,7 @@ impl DigestIdGenerator {
         Self { used: HashSet::new() }
     }
 
-    pub fn gen(&mut self) -> DigestId {
+    pub fn generate(&mut self) -> DigestId {
         let mut digest_id;
         loop {
             digest_id = i32::abs(rand::rng().random());
