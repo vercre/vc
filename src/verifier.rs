@@ -183,7 +183,7 @@ pub mod provider {
 
 /// Proofs
 pub mod proof {
-    pub use crate::w3c_vc::proof::Payload;
+    pub use crate::w3c_vc::proof::{create, Payload, W3cFormat};
 }
 
 // Endpoints
