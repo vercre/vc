@@ -15,8 +15,9 @@ use axum::{Form, Json, Router};
 use axum_extra::headers::authorization::Bearer;
 use axum_extra::headers::{Authorization, Host};
 use axum_extra::TypedHeader;
+use credibil_vc::urlencode;
 use credibil_vc::issuer::{
-    self, urlencode, AuthorizationRequest, CreateOfferRequest, CreateOfferResponse,
+    self, AuthorizationRequest, CreateOfferRequest, CreateOfferResponse,
     CredentialOfferRequest, CredentialOfferResponse, CredentialRequest, CredentialResponse,
     DeferredCredentialRequest, DeferredCredentialResponse, MetadataRequest, MetadataResponse,
     NotificationRequest, NotificationResponse, OAuthServerRequest, OAuthServerResponse,

@@ -1,5 +1,7 @@
 //! An API to request and present Verifiable Credentials as Verifiable
-//! Presentations based on the [OpenID for Verifiable Presentations](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
+//! Presentations.
+//!
+//! The crate is based on the [OpenID for Verifiable Presentations](https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
 //! specification.
 //!
 //! # [OpenID for Verifiable Presentations]
@@ -165,9 +167,6 @@ mod request_object;
 mod response;
 mod state;
 
-/// Re-export types.
-pub use crate::openid::Result;
-
 /// Re-export provider traits and types.
 pub mod provider {
     pub use credibil_did::{DidResolver, Document};
@@ -176,11 +175,15 @@ pub mod provider {
     };
 
     pub use crate::openid::issuer::{Client, Format, Server};
-    pub use crate::openid::provider::StateStore;
+    pub use crate::openid::provider::{Result, StateStore};
     pub use crate::openid::verifier::VpFormat;
     #[allow(clippy::module_name_repetitions)]
     pub use crate::openid::verifier::{Metadata, Provider, Verifier, Wallet};
-    pub use crate::openid::provider::Result;
+}
+
+/// Proofs
+pub mod proof {
+    pub use crate::w3c_vc::proof::Payload;
 }
 
 // Endpoints
@@ -190,12 +193,17 @@ pub use request_object::request_object;
 pub use response::response;
 
 // Re-export types
-pub use crate::dif_exch::{Claims, Constraints, Field, Filter, FilterValue, InputDescriptor};
+pub use crate::dif_exch::{
+    Claims, Constraints, DescriptorMap, Field, Filter, FilterValue, InputDescriptor, PathNested,
+    PresentationSubmission,
+};
+pub use crate::openid::Result;
 pub use crate::openid::verifier::{
     ClientIdScheme, CreateRequestRequest, CreateRequestResponse, DeviceFlow, MetadataRequest,
-    MetadataResponse, RequestObject, RequestObjectRequest, RequestObjectResponse, ResponseRequest,
-    ResponseResponse, ResponseType,
+    MetadataResponse, RequestObject, RequestObjectRequest, RequestObjectResponse,
+    RequestObjectType, ResponseRequest, ResponseResponse, ResponseType,
 };
+pub use crate::w3c_vc::model::VerifiablePresentation;
 
 /// Re-export status traits and types.
 pub mod status {

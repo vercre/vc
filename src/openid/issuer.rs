@@ -1553,6 +1553,7 @@ pub struct RegistrationResponse {
 
 /// The Credential Issuer's configuration.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[allow(clippy::struct_field_names)]
 pub struct Issuer {
     /// The Credential Issuer's identifier.
     #[serde(skip_serializing_if = "String::is_empty", default)]
@@ -2244,6 +2245,7 @@ pub struct NotificationRequest {
 /// actions after issuance.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
+#[allow(clippy::enum_variant_names)]
 pub enum NotificationEvent {
     /// Credential was successfully stored in the Wallet.
     CredentialAccepted,

@@ -1,12 +1,12 @@
 use chrono::{DateTime, Utc};
-use serde::de::DeserializeOwned;
-use serde::Serialize;
-use credibil_vc::test_utils::store::keystore::IssuerKeystore;
-use credibil_vc::test_utils::store::{issuance, resolver, state};
 use credibil_vc::issuer::provider::{
     Algorithm, Client, Dataset, DidResolver, Document, Issuer, Metadata, PublicKey, Receiver,
     Result, Server, SharedSecret, Signer, StateStore, Status, Subject,
 };
+use credibil_vc::test_utils::store::keystore::IssuerKeystore;
+use credibil_vc::test_utils::store::{issuance, resolver, state};
+use serde::Serialize;
+use serde::de::DeserializeOwned;
 
 #[derive(Default, Clone, Debug)]
 pub struct Provider {

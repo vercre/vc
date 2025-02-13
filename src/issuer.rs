@@ -111,8 +111,7 @@ pub mod provider {
         ClaimDefinition, Client, Dataset, Issuer, Metadata, Provider, Server, Subject,
     };
     pub use crate::openid::oauth::GrantType;
-    pub use crate::openid::provider::StateStore;
-    pub use crate::openid::provider::Result;
+    pub use crate::openid::provider::{Result, StateStore};
     pub use crate::status::issuer::Status;
 }
 
@@ -131,32 +130,38 @@ pub use token::token;
 
 /// Status
 pub mod status {
+    pub use crate::status::bitstring::{DEFAULT_TTL, bitstring, credential};
     pub use crate::status::issuer::*;
-    pub use crate::status::bitstring::{bitstring, credential, DEFAULT_TTL};
 }
 
 /// Proofs
 pub mod proof {
     pub use crate::w3c_vc::proof::jose::VcClaims;
-    pub use crate::w3c_vc::proof::{Payload, Type, verify, Verify};
+    pub use crate::w3c_vc::proof::{Payload, Type, Verify, verify};
 }
 
-pub use crate::core::urlencode;
+/// PKCE
+pub mod pkce {
+    pub use crate::core::pkce::{code_challenge, code_verifier};
+}
+
+/// Re-export types
 pub use crate::openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     AuthorizationResponse, AuthorizedDetail, Claim, ClaimDefinition, CreateOfferRequest,
     CreateOfferResponse, CredentialAuthorization, CredentialConfiguration, CredentialDefinition,
-    CredentialIssuance, CredentialOffer, CredentialOfferRequest, CredentialOfferResponse,
-    CredentialRequest, CredentialResponse, CredentialResponseType, DeferredCredentialRequest,
-    DeferredCredentialResponse, Format, Grants, MetadataRequest, MetadataResponse,
-    NotificationEvent, NotificationRequest, NotificationResponse, OAuthServerRequest,
-    OAuthServerResponse, OfferType, PreAuthorizedCodeGrant, ProfileClaims, ProfileIsoMdl,
-    ProfileSdJwt, ProfileW3c, Proof, ProofClaims, PushedAuthorizationRequest,
+    CredentialDisplay, CredentialIssuance, CredentialOffer, CredentialOfferRequest,
+    CredentialOfferResponse, CredentialRequest, CredentialResponse, CredentialResponseType,
+    DeferredCredentialRequest, DeferredCredentialResponse, Format, Grants, Issuer, MetadataRequest,
+    MetadataResponse, NotificationEvent, NotificationRequest, NotificationResponse,
+    OAuthServerRequest, OAuthServerResponse, OfferType, PreAuthorizedCodeGrant, ProfileClaims,
+    ProfileIsoMdl, ProfileSdJwt, ProfileW3c, Proof, ProofClaims, PushedAuthorizationRequest,
     PushedAuthorizationResponse, RegistrationRequest, RegistrationResponse, RequestObject,
-    SendType, SingleProof, TokenGrantType, TokenRequest, TokenResponse, TxCode,
+    SendType, Server, SingleProof, TokenGrantType, TokenRequest, TokenResponse, TxCode,
 };
 pub use crate::openid::oauth::GrantType;
 pub use crate::openid::{Error, Result};
 pub use crate::w3c_vc::model::{
-    Bitstring, CredentialStatus, CredentialStatusType, StatusMessage, StatusPurpose,
+    Bitstring, CredentialStatus, CredentialStatusType, CredentialSubject, StatusMessage,
+    StatusPurpose, VerifiableCredential,
 };

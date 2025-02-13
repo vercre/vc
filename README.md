@@ -4,10 +4,7 @@ Issuance and Verification libraries for use in `OpenID` Verifiable Credentials s
 
 > [!CAUTION]
 >
-> **Alpha code not yet intended for production use!**
->
-> The code in this repository is experimental and under active development. The examples
-> work, albeit for a narrow range of use cases **with hard-coded values**.
+> The code in this repository is under active development.
 > 
 > We still have much to do and welcome feedback and contributions.
 
