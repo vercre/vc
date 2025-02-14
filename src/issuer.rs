@@ -152,12 +152,13 @@ pub use crate::openid::issuer::{
     CreateOfferResponse, CredentialAuthorization, CredentialConfiguration, CredentialDefinition,
     CredentialDisplay, CredentialIssuance, CredentialOffer, CredentialOfferRequest,
     CredentialOfferResponse, CredentialRequest, CredentialResponse, CredentialResponseType,
-    DeferredCredentialRequest, DeferredCredentialResponse, Format, Grants, Issuer, MetadataRequest,
-    MetadataResponse, NotificationEvent, NotificationRequest, NotificationResponse,
-    OAuthServerRequest, OAuthServerResponse, OfferType, PreAuthorizedCodeGrant, ProfileClaims,
-    ProfileIsoMdl, ProfileSdJwt, ProfileW3c, Proof, ProofClaims, PushedAuthorizationRequest,
-    PushedAuthorizationResponse, RegistrationRequest, RegistrationResponse, RequestObject,
-    SendType, Server, SingleProof, TokenGrantType, TokenRequest, TokenResponse, TxCode,
+    DeferredCredentialRequest, DeferredCredentialResponse, Display, Format, Grants, Issuer,
+    MetadataRequest, MetadataResponse, NotificationEvent, NotificationRequest,
+    NotificationResponse, OAuthServerRequest, OAuthServerResponse, OfferType,
+    PreAuthorizedCodeGrant, ProfileClaims, ProfileIsoMdl, ProfileSdJwt, ProfileW3c, Proof,
+    ProofClaims, PushedAuthorizationRequest, PushedAuthorizationResponse, RegistrationRequest,
+    RegistrationResponse, RequestObject, SendType, Server, SingleProof, TokenGrantType,
+    TokenRequest, TokenResponse, TxCode, ValueType,
 };
 pub use crate::openid::oauth::GrantType;
 pub use crate::openid::{Error, Result};
