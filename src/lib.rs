@@ -32,14 +32,12 @@ pub mod provider {
 
 /// Re-export DID resolution
 pub mod did {
-    pub use credibil_did::{dereference, DidResolver, Document, Resource};
+    pub use credibil_did::*;
 }
 
 /// Re-export cryptographic types and functions
 pub mod infosec {
-    pub use credibil_infosec::jose::jwk::PublicKeyJwk;
-    pub use credibil_infosec::jose::jws;
-    pub use credibil_infosec::{Algorithm, Signer};
+    pub use credibil_infosec::*;
 }
 
 /// Re-export basic types
