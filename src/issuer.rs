@@ -152,7 +152,7 @@ pub use crate::openid::issuer::{
     CreateOfferResponse, CredentialAuthorization, CredentialConfiguration, CredentialDefinition,
     CredentialDisplay, CredentialIssuance, CredentialOffer, CredentialOfferRequest,
     CredentialOfferResponse, CredentialRequest, CredentialResponse, CredentialResponseType,
-    DeferredCredentialRequest, DeferredCredentialResponse, Display, Format, Grants, Issuer,
+    DeferredCredentialRequest, DeferredCredentialResponse, Display, Format, Grants, Image, Issuer,
     MetadataRequest, MetadataResponse, NotificationEvent, NotificationRequest,
     NotificationResponse, OAuthServerRequest, OAuthServerResponse, OfferType,
     PreAuthorizedCodeGrant, ProfileClaims, ProfileIsoMdl, ProfileSdJwt, ProfileW3c, Proof,
