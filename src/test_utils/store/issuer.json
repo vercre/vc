@@ -32,13 +32,13 @@
                     "description": "Credibil employee ID credential",
                     "locale": "en-NZ",
                     "logo": {
-                        "uri": "https://credibil.io/assets/employee.png",
+                        "uri": "http://credibil.io/assets/employee.png",
                         "alt_text": "Employee ID Logo"
                     },
                     "text_color": "#ffffff",
                     "background_color": "#323ed2",
                     "background_image": {
-                        "uri": "https://credibil.io/assets/employee-background.png",
+                        "uri": "http://credibil.io/assets/employee-background.png",
                         "alt_text": "Employee ID Background"
                     }
                 }
@@ -145,13 +145,13 @@
                     "description": "Credibil certified developer credential",
                     "locale": "en-NZ",
                     "logo": {
-                        "uri": "https://credibil.io/assets/developer.png",
+                        "uri": "http://credibil.io/assets/developer.png",
                         "alt_text": "Developer Logo"
                     },
                     "text_color": "#ffffff",
                     "background_color": "#010100",
                     "background_image": {
-                        "uri": "https://credibil.io/assets/developer-background.png",
+                        "uri": "http://credibil.io/assets/developer-background.png",
                         "alt_text": "Developer Background"
                     }
                 }
@@ -219,13 +219,13 @@
                     "description": "Credibil employee ID credential",
                     "locale": "en-NZ",
                     "logo": {
-                        "uri": "https://credibil.io/assets/employee.png",
+                        "uri": "http://credibil.io/assets/employee.png",
                         "alt_text": "Employee ID Logo"
                     },
                     "text_color": "#ffffff",
                     "background_color": "#323ed2",
                     "background_image": {
-                        "uri": "https://credibil.io/assets/employee-background.png",
+                        "uri": "http://credibil.io/assets/employee-background.png",
                         "alt_text": "Employee ID Background"
                     }
                 }
