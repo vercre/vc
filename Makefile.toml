@@ -95,5 +95,5 @@ install_crate = "cargo-release"
 
 [tasks.release]
 command = "cargo"
-args = ["release", "${@}", "--execute"]
+args = ["release", "${@}", "--execute", "--all-features"]
 install_crate = "cargo-release"
