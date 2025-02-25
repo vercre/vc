@@ -83,17 +83,17 @@ command = "cargo"
 args = ["semver-checks"]
 install_crate = "cargo-semver-checks"
 
-[tasks.pre-pub]
+[tasks.prepub]
 command = "cargo"
-args = ["publish", "--allow-dirty", "--dry-run", "--package", "credibil-vc"]
+args = ["publish", "--allow-dirty", "--dry-run"]
 
-# args = release level: one of `release`, `major`, `minor`, `patch`, `alpha`, `beta`, `rc`
-[tasks.release]
+# args: one of `release`, `major`, `minor`, `patch`, `alpha`, `beta`, `rc`
+[tasks.dryrun]
 command = "cargo"
 args = ["release", "${@}"]
 install_crate = "cargo-release"
 
-[tasks.publish]
+[tasks.release]
 command = "cargo"
 args = ["release", "${@}", "--execute"]
 install_crate = "cargo-release"
