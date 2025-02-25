@@ -1,5 +1,3 @@
-#![feature(let_chains)]
-
 //! # Core Credibil VC `proc_macros`
 //!
 //! This crate provides external `proc_macro`s for use by Credibil VC

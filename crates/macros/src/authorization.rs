@@ -76,10 +76,12 @@ fn authorization_details(details: &Value) -> Result<TokenStream> {
 
         // check type is set and is `openid_credential`
         if let Some(type_) = detail.get("type") {
-            if let Some(t) = type_.as_str()
-                && t != "openid_credential"
-            {
-                return Err(Error::new(span, "`type` must be `openid_credential`"));
+            if let Some(t) = type_.as_str() {
+                if t != "openid_credential" {
+                    return Err(Error::new(span, "`type` must be `openid_credential`"));
+                }
+            } else {
+                return Err(Error::new(span, "`type` must be a be `openid_credential`"));
             }
         } else {
             return Err(Error::new(span, "`type` is not set"));
@@ -223,11 +225,13 @@ fn claims(claimset: &HashMap<String, Value>) -> TokenStream {
     let path = quote! {credibil_vc::issuer};
 
     let claims = claimset.iter().map(|(k, v)| {
-        if let Some(nested) = v.as_object()
-            && !nested.is_empty()
-        {
-            let claims = claims(nested);
-            quote! {(#k.to_string(), #path::Claim::Set(#claims.unwrap()))}
+        if let Some(nested) = v.as_object() {
+            if !nested.is_empty() {
+                let claims = claims(nested);
+                quote! {(#k.to_string(), #path::Claim::Set(#claims.unwrap()))}
+            } else {
+                quote! {(#k.to_string(), #path::Claim::Entry(#path::ClaimDefinition::default()))}
+            }
         } else {
             quote! {(#k.to_string(), #path::Claim::Entry(#path::ClaimDefinition::default()))}
         }

@@ -108,8 +108,8 @@ tower-http = { version = "0.6.1", features = ["cors", "set-header", "trace"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "fmt"] }
 uuid = { version = "1.11.0", features = ["fast-rng", "v4"] }
-credibil-did = "0.1.0"
-credibil-infosec = "0.1.0"
+credibil-did = "0.1.2"
+credibil-infosec = "0.1.1"
 credibil-vc = { path = "." }
 
 [workspace.metadata.bin]

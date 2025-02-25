@@ -99,9 +99,11 @@ fn authorization_details(details: &Value) -> Result<TokenStream> {
 
         // check type is set and is `openid_credential`
         if let Some(type_) = detail.get("type") {
-            if let Some(t) = type_.as_str()
-                && t != "openid_credential"
-            {
+            if let Some(t) = type_.as_str() {
+                if t != "openid_credential" {
+                    return Err(Error::new(span, "`type` must be `openid_credential`"));
+                }
+            } else {
                 return Err(Error::new(span, "`type` must be `openid_credential`"));
             }
         } else {
