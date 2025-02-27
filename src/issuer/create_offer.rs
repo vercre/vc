@@ -65,8 +65,6 @@
 //!
 //! See <https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-offer-endpoint>
 
-use std::vec;
-
 use chrono::Utc;
 use tracing::instrument;
 
@@ -339,11 +337,11 @@ pub fn state_key(grants: Option<&Grants>) -> Result<String> {
 mod tests {
     use assert_let_bind::assert_let;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use serde_json::json;
 
     use super::*;
+    use crate::issuer::client::create_offer::CreateOfferRequestBuilder;
     use crate::snapshot;
-    use crate::test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER};
+    use crate::test_utils::issuer::{CREDENTIAL_ISSUER, NORMAL_USER, Provider};
     use crate::test_utils::{self};
 
     #[tokio::test]
@@ -354,15 +352,15 @@ mod tests {
         let provider = Provider::new();
 
         // create offer to 'send' to the app
-        let value = json!({
-            "credential_issuer": CREDENTIAL_ISSUER,
-            "credential_configuration_ids": ["EmployeeID_JWT"],
-            "subject_id": NORMAL_USER,
-            "grant_types": ["urn:ietf:params:oauth:grant-type:pre-authorized_code"],
-            "tx_code_required": true,
-            "send_type": SendType::ByVal,
-        });
-        let request = serde_json::from_value(value).expect("request is valid");
+        let request = CreateOfferRequestBuilder::new()
+            .credential_issuer(CREDENTIAL_ISSUER)
+            .subject_id(NORMAL_USER)
+            .with_credential("EmployeeID_JWT")
+            .with_grant(GrantType::PreAuthorizedCode)
+            .tx_code_required(true)
+            .send_type(SendType::ByVal)
+            .build();
+
         let response = create_offer(provider.clone(), request).await.expect("response is ok");
 
         assert_snapshot!("create_offer:pre-authorized:response", &response, {

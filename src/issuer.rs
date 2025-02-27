@@ -89,6 +89,7 @@
 //! [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
 
 mod authorize;
+pub mod client;
 mod create_offer;
 mod credential;
 mod credential_offer;
