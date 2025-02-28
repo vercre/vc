@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use credibil_did::{DidResolver, Document};
 use credibil_infosec::{self, Algorithm, PublicKey, Receiver, SharedSecret, Signer};
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 
 use super::store::keystore::VerifierKeystore;
 use super::store::{presentation, resolver, state};

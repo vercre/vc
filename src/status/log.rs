@@ -4,6 +4,7 @@
 //! statuses. This is independent of the method used to publish the status.
 
 use serde::{Deserialize, Serialize};
+
 use crate::w3c_vc::model::StatusPurpose;
 
 /// Entry in a log of issued credentials and their current status.

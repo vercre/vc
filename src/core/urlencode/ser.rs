@@ -1,5 +1,5 @@
-use percent_encoding::{utf8_percent_encode, AsciiSet, NON_ALPHANUMERIC};
-use serde::{ser, Serialize};
+use percent_encoding::{AsciiSet, NON_ALPHANUMERIC, utf8_percent_encode};
+use serde::{Serialize, ser};
 
 use super::error::{Error, Result};
 

@@ -7,16 +7,16 @@ mod wallet;
 
 use credibil_vc::issuer::{self, Format, ProfileW3c, SendType};
 use credibil_vc::{snapshot, test_utils};
-use credibil_vc::test_utils::issuer::{Provider, CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER};
 use rstest::rstest;
 use serde_json::json;
-use utils::{provider, Issuance};
+use test_issuer::{CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER, ProviderImpl};
+use utils::{Issuance, provider};
 
 /// Immediate and deferred issuance variants
 #[rstest]
 #[case(Issuance::Immediate)]
 #[case(Issuance::Deferred)]
-async fn issuance(provider: Provider, #[case] issue: Issuance) {
+async fn issuance(provider: ProviderImpl, #[case] issue: Issuance) {
     test_utils::init_tracer();
     snapshot!("issuer:{issue}");
 
@@ -49,7 +49,7 @@ async fn issuance(provider: Provider, #[case] issue: Issuance) {
 /// Credential format variants
 #[rstest]
 #[case(Format::JwtVcJson(ProfileW3c::default()))]
-async fn format(provider: Provider, #[case] credential_format: Format) {
+async fn format(provider: ProviderImpl, #[case] credential_format: Format) {
     test_utils::init_tracer();
     snapshot!("issuer:{credential_format}");
 
@@ -76,7 +76,7 @@ async fn format(provider: Provider, #[case] credential_format: Format) {
 
 // Authorization Code flow
 #[rstest]
-async fn authorization(provider: Provider) {
+async fn authorization(provider: ProviderImpl) {
     test_utils::init_tracer();
     snapshot!("issuer:authorization");
 
@@ -104,7 +104,7 @@ async fn authorization(provider: Provider) {
 #[rstest]
 #[case(SendType::ByRef)]
 #[case(SendType::ByVal)]
-async fn offer_type(provider: Provider, #[case] send_type: SendType) {
+async fn offer_type(provider: ProviderImpl, #[case] send_type: SendType) {
     test_utils::init_tracer();
     snapshot!("issuer:authorization:{send_type:?}");
 

@@ -13,8 +13,8 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Form, Json, Router};
-use axum_extra::headers::Host;
 use axum_extra::TypedHeader;
+use axum_extra::headers::Host;
 use credibil_vc::verifier::{
     self, CreateRequestRequest, CreateRequestResponse, RequestObjectRequest, RequestObjectResponse,
     ResponseRequest, ResponseResponse,
@@ -84,8 +84,7 @@ async fn response(
         return (StatusCode::BAD_REQUEST, "unable to turn request into ResponseRequest")
             .into_response();
     };
-    let response: AxResult<ResponseResponse> = match verifier::response(provider, &req).await
-    {
+    let response: AxResult<ResponseResponse> = match verifier::response(provider, &req).await {
         Ok(r) => Ok(r).into(),
         Err(e) => {
             tracing::error!("error getting response: {e}");

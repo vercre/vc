@@ -9,8 +9,8 @@ use std::str::FromStr;
 use anyhow::anyhow;
 use base64ct::{Base64, Encoding};
 use credibil_did::DidResolver;
-use credibil_infosec::jose::jwk::PublicKeyJwk;
 use credibil_infosec::Signer;
+use credibil_infosec::jose::jwk::PublicKeyJwk;
 use qrcode::QrCode;
 use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
@@ -20,7 +20,7 @@ use super::oauth;
 use super::oauth::{GrantType, OAuthClient, OAuthServer};
 use super::provider::{self, Result, StateStore};
 use crate::core::strings::title_case;
-use crate::core::{urlencode, Kind};
+use crate::core::{Kind, urlencode};
 use crate::status::issuer::Status;
 use crate::w3c_vc::model::VerifiableCredential;
 
@@ -2111,11 +2111,7 @@ impl<'de> de::Deserialize<'de> for Claim {
                 }
 
                 // empty claims (e.g. "given_name": {}) will always be an `entry`
-                if set.is_empty() {
-                    Ok(Claim::Entry(entry))
-                } else {
-                    Ok(Claim::Set(set))
-                }
+                if set.is_empty() { Ok(Claim::Entry(entry)) } else { Ok(Claim::Set(set)) }
             }
         }
 

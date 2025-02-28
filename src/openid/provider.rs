@@ -3,8 +3,8 @@
 use std::future::Future;
 
 use chrono::{DateTime, Utc};
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 
 /// Result is used for all external errors.
 pub type Result<T, E = anyhow::Error> = std::result::Result<T, E>;

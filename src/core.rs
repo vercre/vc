@@ -1,5 +1,4 @@
 //! # Core Utilities for Credibil VC
-//!
 
 // // generic member access API on the error trait
 // // https://github.com/rust-lang/rust/issues/99301

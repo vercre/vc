@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 
 use super::oauth::{OAuthClient, OAuthServer};
 use super::provider::{Result, StateStore};
-use crate::core::{urlencode, Kind};
+use crate::core::{Kind, urlencode};
 use crate::dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
 use crate::w3c_vc::model::VerifiablePresentation;
 

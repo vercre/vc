@@ -24,6 +24,7 @@
 //! ```
 
 use tracing::instrument;
+
 use crate::openid::issuer::{Metadata, MetadataRequest, MetadataResponse, Provider};
 use crate::openid::{Error, Result};
 
@@ -50,36 +51,4 @@ async fn process(provider: &impl Provider, request: MetadataRequest) -> Result<M
         .await
         .map_err(|e| Error::ServerError(format!("issue getting metadata: {e}")))?;
     Ok(MetadataResponse { credential_issuer })
-}
-
-#[cfg(test)]
-mod tests {
-    use insta::assert_yaml_snapshot as assert_snapshot;
-    use crate::test_utils::issuer::{Provider, CREDENTIAL_ISSUER};
-    use crate::snapshot;
-    use crate::test_utils;
-
-    use super::*;
-
-    #[tokio::test]
-    async fn metadata_ok() {
-        test_utils::init_tracer();
-        snapshot!("");
-
-        let provider = Provider::new();
-
-        let request = MetadataRequest {
-            credential_issuer: CREDENTIAL_ISSUER.to_string(),
-            languages: None,
-        };
-        let response = metadata(provider, request).await.expect("response is ok");
-        assert_snapshot!("metadata:metadata_ok:response", response, {
-            ".scopes_supported" => insta::sorted_redaction(),
-            ".credential_configurations_supported" => insta::sorted_redaction(),
-            ".**.credentialSubject" => insta::sorted_redaction(),
-            ".**.credentialSubject.address" => insta::sorted_redaction(),
-            ".**[\"org.iso.18013.5.1.mDL\"].claims" => insta::sorted_redaction(),
-            ".**[\"org.iso.18013.5.1.mDL\"].claims[\"org.iso.18013.5.1\"]" => insta::sorted_redaction()
-        });
-    }
 }

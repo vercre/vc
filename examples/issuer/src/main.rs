@@ -8,21 +8,21 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use axum::extract::{Path, State};
-use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
+use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum::{Form, Json, Router};
+use axum_extra::TypedHeader;
 use axum_extra::headers::authorization::Bearer;
 use axum_extra::headers::{Authorization, Host};
-use axum_extra::TypedHeader;
-use credibil_vc::urlencode;
 use credibil_vc::issuer::{
-    self, AuthorizationRequest, CreateOfferRequest, CreateOfferResponse,
-    CredentialOfferRequest, CredentialOfferResponse, CredentialRequest, CredentialResponse,
-    DeferredCredentialRequest, DeferredCredentialResponse, MetadataRequest, MetadataResponse,
-    NotificationRequest, NotificationResponse, OAuthServerRequest, OAuthServerResponse,
-    PushedAuthorizationRequest, PushedAuthorizationResponse, TokenRequest, TokenResponse,
+    self, AuthorizationRequest, CreateOfferRequest, CreateOfferResponse, CredentialOfferRequest,
+    CredentialOfferResponse, CredentialRequest, CredentialResponse, DeferredCredentialRequest,
+    DeferredCredentialResponse, MetadataRequest, MetadataResponse, NotificationRequest,
+    NotificationResponse, OAuthServerRequest, OAuthServerResponse, PushedAuthorizationRequest,
+    PushedAuthorizationResponse, TokenRequest, TokenResponse,
 };
+use credibil_vc::urlencode;
 use oauth2::CsrfToken;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -232,8 +232,7 @@ async fn par(
     // process request
     req.request.credential_issuer = format!("http://{host}");
 
-    let axresponse: AxResult<PushedAuthorizationResponse> =
-        issuer::par(provider, req).await.into();
+    let axresponse: AxResult<PushedAuthorizationResponse> = issuer::par(provider, req).await.into();
     axresponse.into_response()
 }
 

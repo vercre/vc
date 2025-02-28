@@ -10,18 +10,17 @@ use credibil_vc::issuer::{
     DeferredCredentialRequest, DeferredCredentialResponse, Error, Format, OfferType, ProofClaims,
     Result, TokenGrantType, TokenRequest, TokenResponse,
 };
-use credibil_vc::test_utils::holder;
-use credibil_vc::test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use sha2::{Digest, Sha256};
+use test_issuer::{CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, ProviderImpl};
 
 pub const CODE_VERIFIER: &str = "ABCDEF12345";
 pub const REDIRECT_URI: &str = "http://localhost:3000/callback";
 
 #[derive(Default)]
 pub struct Wallet {
-    pub provider: Provider,
+    pub provider: ProviderImpl,
     pub format: Format,
     pub tx_code: Option<String>,
 }
@@ -135,7 +134,7 @@ impl Wallet {
         let jws = JwsBuilder::new()
             .jwt_type(Type::Openid4VciProofJwt)
             .payload(claims)
-            .add_signer(&holder::Provider)
+            .add_signer(&test_holder::ProviderImpl)
             .build()
             .await
             .map_err(|e| Error::ServerError(format!("{e}")))?;

@@ -6,8 +6,6 @@
 #![allow(missing_docs)]
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::missing_panics_doc)]
-pub mod holder;
-pub mod issuer;
 pub mod sample;
 pub mod store;
 pub mod verifier;

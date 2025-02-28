@@ -5,8 +5,8 @@ use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 
 use crate::openid::provider::Result;
 

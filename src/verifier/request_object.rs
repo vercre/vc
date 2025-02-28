@@ -16,14 +16,14 @@
 
 use credibil_infosec::jose::JwsBuilder;
 use tracing::instrument;
+
+use super::state::State;
+use crate::openid::provider::StateStore;
 use crate::openid::verifier::{
     Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType,
 };
-use crate::openid::provider::StateStore;
 use crate::openid::{Error, Result};
 use crate::w3c_vc::proof::Type;
-
-use super::state::State;
 
 /// Endpoint for the Wallet to request the Verifier's Request Object when
 /// engaged in a cross-device flow.
@@ -75,14 +75,14 @@ mod tests {
     use chrono::Utc;
     use credibil_infosec::jose::jws;
     use insta::assert_yaml_snapshot as assert_snapshot;
-    use crate::test_utils::verifier::{Provider, VERIFIER_ID};
+
+    use super::super::state::Expire;
+    use super::*;
     use crate::core::Kind;
     use crate::dif_exch::PresentationDefinition;
     use crate::openid::verifier::{ClientIdScheme, RequestObject, ResponseType, Verifier};
+    use crate::test_utils::verifier::{Provider, VERIFIER_ID};
     use crate::{test_utils, verify_key};
-
-    use super::*;
-    use super::super::state::Expire;
 
     #[tokio::test]
     async fn request_jwt() {

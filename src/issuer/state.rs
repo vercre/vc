@@ -34,11 +34,13 @@ pub struct State {
 
 impl State {
     /// Determines whether state has expired or not.
+    #[must_use]
     pub fn is_expired(&self) -> bool {
         self.expires_at.signed_duration_since(Utc::now()).num_seconds() < 0
     }
 }
 
+/// State stages.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 #[allow(clippy::large_enum_variant)]
@@ -117,6 +119,7 @@ pub struct Authorization {
     /// The `client_id` of the Wallet requesting issuance.
     pub client_id: String,
 
+    /// The `redirect_uri` of the Wallet requesting issuance.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub redirect_uri: Option<String>,
 
@@ -131,6 +134,7 @@ pub struct Authorization {
     pub items: Vec<AuthorizedItem>,
 }
 
+/// Pushed Authorization Request state.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PushedAuthorization {
     /// The Authorization Request pushed to the PAR endpoint.
@@ -155,6 +159,7 @@ pub struct AuthorizedItem {
     pub credential_identifiers: Vec<String>,
 }
 
+/// Authorized item type.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum ItemType {
     /// Authorized item is of type `authorization_detail`
@@ -190,10 +195,14 @@ pub struct Token {
 }
 
 impl Token {
+    /// The number of seconds until the `c_nonce` expires.
+    #[must_use]
     pub fn c_nonce_expires_in(&self) -> i64 {
         self.c_nonce_expires_at.signed_duration_since(Utc::now()).num_seconds()
     }
 
+    /// Determines whether the `c_nonce` has expired.
+    #[must_use]
     pub fn c_nonce_expired(&self) -> bool {
         self.c_nonce_expires_in() < 0
     }
@@ -202,6 +211,7 @@ impl Token {
 /// Issued Credential state (for Notification endpoint).
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Credential {
+    /// The issued credential.
     pub credential: VerifiableCredential,
 }
 
@@ -216,13 +226,19 @@ pub struct Deferrance {
     pub credential_request: CredentialRequest,
 }
 
+/// Expire enum.
 pub enum Expire {
+    /// Authorized state expiration.
     Authorized,
+    /// Access state expiration.
     Access,
+    /// Nonce state expiration.
     Nonce,
 }
 
 impl Expire {
+    /// Duration of the state.
+    #[must_use]
     pub fn duration(&self) -> TimeDelta {
         match self {
             Self::Authorized => TimeDelta::try_minutes(5).unwrap_or_default(),

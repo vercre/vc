@@ -3,7 +3,7 @@ use credibil_vc::issuer::provider::{
     Algorithm, Client, Dataset, DidResolver, Document, Issuer, Metadata, PublicKey, Receiver,
     Result, Server, SharedSecret, Signer, StateStore, Status, Subject,
 };
-use credibil_vc::test_utils::store::keystore::IssuerKeystore;
+use test_issuer::Keystore;
 use credibil_vc::test_utils::store::{issuance, resolver, state};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
@@ -85,19 +85,19 @@ impl DidResolver for Provider {
 
 impl Signer for Provider {
     async fn try_sign(&self, msg: &[u8]) -> Result<Vec<u8>> {
-        IssuerKeystore::try_sign(msg)
+        Keystore::try_sign(msg)
     }
 
     async fn verifying_key(&self) -> Result<Vec<u8>> {
-        IssuerKeystore::public_key()
+        Keystore::public_key()
     }
 
     fn algorithm(&self) -> Algorithm {
-        IssuerKeystore::algorithm()
+        Keystore::algorithm()
     }
 
     async fn verification_method(&self) -> Result<String> {
-        Ok(IssuerKeystore::verification_method())
+        Ok(Keystore::verification_method())
     }
 }
 

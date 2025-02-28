@@ -6,7 +6,7 @@
 //! [Presentation Exchange]: (https://identity.foundation/presentation-exchange/spec/v2.0.0)
 //! [Presentation Definition]: (https://identity.foundation/presentation-exchange/spec/v2.0.0/#presentation-definition)
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use chrono::{DateTime, NaiveDate};
 use regex::Regex;
 use serde_json::Value;

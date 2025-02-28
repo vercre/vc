@@ -50,7 +50,7 @@ use tracing::instrument;
 use uuid::Uuid;
 
 use super::state::{Expire, State};
-use crate::core::{generate, Kind};
+use crate::core::{Kind, generate};
 use crate::dif_exch::{ClaimFormat, PresentationDefinition};
 use crate::openid::provider::StateStore;
 use crate::openid::verifier::{

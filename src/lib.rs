@@ -16,18 +16,18 @@ pub mod issuer;
 #[cfg(feature = "verifier")]
 pub mod verifier;
 
-mod core;
+pub mod core;
 mod dif_exch;
 mod iso_mdl;
-mod openid;
-mod status;
-mod w3c_vc;
+pub mod openid;
+pub mod status;
+pub mod w3c_vc;
 
 pub mod test_utils;
 
 /// Re-export top-level provider traits and types
 pub mod provider {
-    pub use crate::openid::provider::{StateStore, Result};
+    pub use crate::openid::provider::{Result, StateStore};
 }
 
 /// Re-export DID resolution

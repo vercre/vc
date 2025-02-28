@@ -98,7 +98,7 @@ mod notification;
 mod oauth_server;
 mod par;
 mod register;
-mod state;
+pub mod state;
 mod token;
 
 /// Re-export provider traits and types.

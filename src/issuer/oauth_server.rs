@@ -54,29 +54,3 @@ async fn process(
         authorization_server: auth_server,
     })
 }
-
-#[cfg(test)]
-mod tests {
-    use insta::assert_yaml_snapshot as assert_snapshot;
-
-    use super::*;
-    use crate::test_utils::issuer::{Provider, CREDENTIAL_ISSUER};
-    use crate::{snapshot, test_utils};
-
-    #[tokio::test]
-    async fn metadata_ok() {
-        test_utils::init_tracer();
-        snapshot!("");
-
-        let provider = Provider::new();
-
-        let request = OAuthServerRequest {
-            credential_issuer: CREDENTIAL_ISSUER.to_string(),
-            issuer: None,
-        };
-        let response = oauth_server(provider, request).await.expect("response is ok");
-        assert_snapshot!("oauth_server:metadata_ok:response", response, {
-            ".grant_types_supported" => insta::sorted_redaction()
-        });
-    }
-}

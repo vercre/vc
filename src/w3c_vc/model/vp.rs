@@ -183,8 +183,8 @@ impl FromStr for VerifiablePresentation {
 mod tests {
     use serde_json::json;
 
-    use super::*;
     use super::super::vc::{CredentialSubject, VerifiableCredential};
+    use super::*;
 
     #[test]
     fn test_vp_build() {

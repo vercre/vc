@@ -3,11 +3,11 @@
 use std::fmt::Display;
 
 use rstest::fixture;
-use credibil_vc::test_utils::issuer;
+use test_issuer::ProviderImpl;
 
 #[fixture]
-pub fn provider() -> issuer::Provider {
-    issuer::Provider::new()
+pub fn provider() -> ProviderImpl {
+    ProviderImpl::new()
 }
 
 /// Issuance variants

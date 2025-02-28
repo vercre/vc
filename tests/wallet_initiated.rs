@@ -4,15 +4,15 @@ mod utils;
 mod wallet;
 
 use credibil_vc::issuer::{Format, ProfileW3c};
-use credibil_vc::test_utils::issuer::Provider;
 use credibil_vc::{snapshot, test_utils};
 use rstest::rstest;
-use utils::{provider, Issuance};
+use test_issuer::ProviderImpl;
+use utils::{Issuance, provider};
 
 #[rstest]
 #[case(Issuance::Immediate)]
 #[case(Issuance::Deferred)]
-async fn issuance(provider: Provider, #[case] issue: Issuance) {
+async fn issuance(provider: ProviderImpl, #[case] issue: Issuance) {
     test_utils::init_tracer();
     snapshot!("wallet:{issue}");
 
