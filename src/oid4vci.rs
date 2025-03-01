@@ -91,9 +91,9 @@
 pub mod endpoint;
 mod error;
 mod handlers;
-pub mod issuer;
 pub mod provider;
 pub mod state;
+pub mod types;
 
 /// Status
 pub mod status {
@@ -115,7 +115,7 @@ pub mod pkce {
 pub use error::Error;
 
 /// Re-export types
-pub use crate::oid4vci::issuer::*;
+pub use crate::oid4vci::types::*;
 pub use crate::openid::oauth::GrantType;
 pub use crate::w3c_vc::model::{
     Bitstring, CredentialStatus, CredentialStatusType, CredentialSubject, StatusMessage,

@@ -19,8 +19,8 @@
 use tracing::instrument;
 
 use crate::oid4vci::endpoint::Request;
-use crate::oid4vci::issuer::{OAuthServerRequest, OAuthServerResponse};
 use crate::oid4vci::provider::{Metadata, Provider};
+use crate::oid4vci::types::{OAuthServerRequest, OAuthServerResponse};
 use crate::oid4vci::{Error, Result};
 
 /// OAuth server metadata request handler.

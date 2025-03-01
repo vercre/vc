@@ -6,11 +6,11 @@ use chrono::Utc;
 use credibil_infosec::jose::jws;
 use credibil_vc::core::Kind;
 use credibil_vc::dif_exch::PresentationDefinition;
-use credibil_vc::openid::provider::StateStore;
+use credibil_vc::oid4vp::state::{Expire, State};
 use credibil_vc::oid4vp::verifier::{
     ClientIdScheme, RequestObject, RequestObjectRequest, RequestObjectType, ResponseType, Verifier,
 };
-use credibil_vc::oid4vp::state::{Expire, State};
+use credibil_vc::openid::provider::StateStore;
 use credibil_vc::{oid4vp, verify_key};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use test_verifier::VERIFIER_ID;

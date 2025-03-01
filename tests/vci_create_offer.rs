@@ -4,8 +4,8 @@ mod utils;
 
 use assert_let_bind::assert_let;
 use credibil_vc::oid4vci::state::{Stage, State};
+use credibil_vc::oid4vci::types::{OfferType, SendType};
 use credibil_vc::oid4vci::{self, CreateOfferRequest, CreateOfferResponse};
-use credibil_vc::oid4vci::issuer::{OfferType, SendType};
 use credibil_vc::openid::provider::StateStore;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;

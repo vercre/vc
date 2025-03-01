@@ -2,7 +2,7 @@
 
 mod utils;
 
-use credibil_vc::oid4vci::issuer::{CreateOfferRequest, OfferType, SendType};
+use credibil_vc::oid4vci::types::{CreateOfferRequest, OfferType, SendType};
 use credibil_vc::oid4vci::{self, CredentialOfferRequest};
 use credibil_vc::openid::oauth::GrantType;
 use insta::assert_yaml_snapshot as assert_snapshot;

@@ -9,7 +9,7 @@ use chrono::Utc;
 use credibil_infosec::jose::JwsBuilder;
 use credibil_vc::oid4vci;
 use credibil_vc::oid4vci::state::{Authorized, Deferrance, Expire, Stage, State, Token};
-use credibil_vc::oid4vci::issuer::{
+use credibil_vc::oid4vci::types::{
     CredentialRequest, CredentialResponseType, DeferredCredentialRequest, ProofClaims,
 };
 use credibil_vc::openid::provider::StateStore;
@@ -91,7 +91,9 @@ async fn deferred_ok() {
         transaction_id: transaction_id.into(),
     };
 
-    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("response is valid");
+    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
+        .await
+        .expect("response is valid");
     assert_snapshot!("deferred:deferred_ok:response", &response, {
         ".transaction_id" => "[transaction_id]",
         ".credential" => "[credential]",

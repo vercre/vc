@@ -5,7 +5,7 @@ use std::future::Future;
 use credibil_did::DidResolver;
 use credibil_infosec::Signer;
 
-use crate::oid4vci::issuer::{Client, Dataset, Issuer, Server};
+use crate::oid4vci::types::{Client, Dataset, Issuer, Server};
 use crate::openid::provider::{self, StateStore};
 use crate::status::issuer::Status;
 

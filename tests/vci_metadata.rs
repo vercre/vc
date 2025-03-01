@@ -3,7 +3,7 @@
 mod utils;
 
 use credibil_vc::oid4vci;
-use credibil_vc::oid4vci::issuer::MetadataRequest;
+use credibil_vc::oid4vci::types::MetadataRequest;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use test_issuer::CREDENTIAL_ISSUER;
 
@@ -17,7 +17,9 @@ async fn metadata_ok() {
         credential_issuer: CREDENTIAL_ISSUER.to_string(),
         languages: None,
     };
-    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("response is ok");
+    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
+        .await
+        .expect("response is ok");
     assert_snapshot!("metadata:metadata_ok:response", response, {
         ".scopes_supported" => insta::sorted_redaction(),
         ".credential_configurations_supported" => insta::sorted_redaction(),

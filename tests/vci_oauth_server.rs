@@ -3,7 +3,7 @@
 mod utils;
 
 use credibil_vc::oid4vci;
-use credibil_vc::oid4vci::issuer::OAuthServerRequest;
+use credibil_vc::oid4vci::types::OAuthServerRequest;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use test_issuer::CREDENTIAL_ISSUER;
 

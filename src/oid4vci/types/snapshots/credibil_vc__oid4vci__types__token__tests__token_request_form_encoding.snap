@@ -1,6 +1,6 @@
 ---
-source: src/oid4vci/issuer.rs
-assertion_line: 2655
+source: src/oid4vci/types/token.rs
+assertion_line: 324
 expression: "&req"
 ---
 credential_issuer: "https://example.com"

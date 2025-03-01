@@ -176,7 +176,7 @@ pub mod provider {
         Algorithm, PublicKey, PublicKeyJwk, Receiver, SharedSecret, Signer,
     };
 
-    pub use crate::oid4vci::issuer::{Client, Format, Server};
+    pub use crate::oid4vci::types::{Client, Format, Server};
     pub use crate::oid4vp::verifier::VpFormat;
     #[allow(clippy::module_name_repetitions)]
     pub use crate::oid4vp::verifier::{Metadata, Provider, Verifier, Wallet};

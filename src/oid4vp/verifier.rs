@@ -15,10 +15,10 @@ use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 
-use crate::openid::oauth::{OAuthClient, OAuthServer};
 use super::provider::{Result, StateStore};
 use crate::core::{Kind, urlencode};
 use crate::dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};
+use crate::openid::oauth::{OAuthClient, OAuthServer};
 use crate::w3c_vc::model::VerifiablePresentation;
 
 /// Verifier Provider trait.

@@ -1,6 +1,6 @@
 ---
-source: src/oid4vci/issuer.rs
-assertion_line: 2315
+source: src/oid4vci/types/authorization.rs
+assertion_line: 538
 expression: request
 ---
 credential_issuer: "https://example.com"

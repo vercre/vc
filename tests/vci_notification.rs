@@ -6,7 +6,7 @@ use assert_let_bind::assert_let;
 use chrono::Utc;
 use credibil_vc::oid4vci;
 use credibil_vc::oid4vci::state::{Credential, Expire, Stage, State};
-use credibil_vc::oid4vci::issuer::{NotificationEvent, NotificationRequest};
+use credibil_vc::oid4vci::types::{NotificationEvent, NotificationRequest};
 use credibil_vc::openid::provider::StateStore;
 use credibil_vc::w3c_vc::model::VerifiableCredential;
 use insta::assert_yaml_snapshot as assert_snapshot;

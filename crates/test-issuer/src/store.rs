@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use anyhow::anyhow;
-use credibil_vc::oid4vci::issuer::{Client, Dataset, Issuer, Server};
+use credibil_vc::oid4vci::types::{Client, Dataset, Issuer, Server};
 use credibil_vc::openid::provider::Result;
 use serde::Deserialize;
 use serde_json::{Map, Value};

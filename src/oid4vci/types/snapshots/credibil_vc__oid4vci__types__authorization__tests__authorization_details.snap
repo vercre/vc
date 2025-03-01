@@ -1,6 +1,6 @@
 ---
-source: src/oid4vci/issuer.rs
-assertion_line: 2322
+source: src/oid4vci/types/authorization.rs
+assertion_line: 545
 expression: object.authorization_details
 ---
 - type: openid_credential

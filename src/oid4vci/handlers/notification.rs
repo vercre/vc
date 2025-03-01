@@ -22,9 +22,9 @@
 use tracing::instrument;
 
 use crate::oid4vci::endpoint::Request;
-use crate::oid4vci::issuer::{NotificationRequest, NotificationResponse};
 use crate::oid4vci::provider::Provider;
 use crate::oid4vci::state::{Stage, State};
+use crate::oid4vci::types::{NotificationRequest, NotificationResponse};
 use crate::oid4vci::{Error, Result};
 use crate::openid::provider::StateStore;
 

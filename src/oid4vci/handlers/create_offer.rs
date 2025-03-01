@@ -72,13 +72,13 @@ use tracing::instrument;
 
 use crate::core::generate;
 use crate::oid4vci::endpoint::Request;
-use crate::oid4vci::issuer::{
-    AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, CreateOfferRequest,
-    CreateOfferResponse, CredentialAuthorization, CredentialOffer, Grants, Issuer,
-    OfferType, PreAuthorizedCodeGrant, SendType, Server, TxCode,
-};
 use crate::oid4vci::provider::{Metadata, Provider, Subject};
 use crate::oid4vci::state::{AuthorizedItem, Expire, ItemType, Offer, Stage, State};
+use crate::oid4vci::types::{
+    AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, CreateOfferRequest,
+    CreateOfferResponse, CredentialAuthorization, CredentialOffer, Grants, Issuer, OfferType,
+    PreAuthorizedCodeGrant, SendType, Server, TxCode,
+};
 use crate::oid4vci::{Error, Result};
 use crate::openid::oauth::GrantType;
 use crate::openid::provider::StateStore;
