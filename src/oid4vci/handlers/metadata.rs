@@ -25,6 +25,7 @@
 
 use tracing::instrument;
 
+use crate::oid4vci::endpoint::Request;
 use crate::openid::issuer::{Metadata, MetadataRequest, MetadataResponse, Provider};
 use crate::openid::{Error, Result};
 
@@ -41,6 +42,16 @@ pub async fn metadata(
     provider: impl Provider, request: MetadataRequest,
 ) -> Result<MetadataResponse> {
     process(&provider, request).await
+}
+
+impl Request for MetadataRequest {
+    type Response = MetadataResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        metadata(provider.clone(), self)
+    }
 }
 
 async fn process(provider: &impl Provider, request: MetadataRequest) -> Result<MetadataResponse> {

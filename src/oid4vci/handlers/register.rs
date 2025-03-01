@@ -2,7 +2,8 @@
 
 use tracing::instrument;
 
-use super::state::State;
+use crate::oid4vci::state::State;
+use crate::oid4vci::endpoint::Request;
 use crate::openid::issuer::{Provider, RegistrationRequest, RegistrationResponse};
 use crate::openid::provider::StateStore;
 use crate::openid::{Error, Result};
@@ -19,6 +20,16 @@ pub async fn register(
 ) -> Result<RegistrationResponse> {
     verify(&provider, &request).await?;
     process(&provider, request).await
+}
+
+impl Request for RegistrationRequest {
+    type Response = RegistrationResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        register(provider.clone(), self)
+    }
 }
 
 async fn verify(provider: &impl Provider, request: &RegistrationRequest) -> Result<()> {

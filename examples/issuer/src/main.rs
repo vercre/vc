@@ -13,7 +13,7 @@ use axum::{Form, Json, Router};
 use axum_extra::TypedHeader;
 use axum_extra::headers::authorization::Bearer;
 use axum_extra::headers::{Authorization, Host};
-use credibil_vc::issuer::{
+use credibil_vc::oid4vci::{
     self, AuthorizationRequest, CreateOfferRequest, CreateOfferResponse, CredentialOfferRequest,
     CredentialOfferResponse, CredentialRequest, CredentialResponse, DeferredCredentialRequest,
     DeferredCredentialResponse, MetadataRequest, MetadataResponse, NotificationRequest,
@@ -78,7 +78,7 @@ async fn create_offer(
     Json(mut req): Json<CreateOfferRequest>,
 ) -> AxResult<CreateOfferResponse> {
     req.credential_issuer = format!("http://{host}");
-    issuer::create_offer(provider, req).await.into()
+    oid4vci::endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
 }
 
 // Retrieve Authorization Request Object endpoint
@@ -91,7 +91,7 @@ async fn credential_offer(
         credential_issuer: format!("http://{host}"),
         id: offer_id,
     };
-    issuer::credential_offer(provider, request).await.into()
+    oid4vci::endpoint::handle(&format!("http://{host}"), request, &provider).await.into()
 }
 
 // Metadata endpoint
@@ -107,7 +107,7 @@ async fn metadata(
             .and_then(|v| v.to_str().ok())
             .map(ToString::to_string),
     };
-    issuer::metadata(provider.clone(), req).await.into()
+    oid4vci::endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
 }
 
 // OAuth Server metadata endpoint
@@ -120,7 +120,7 @@ async fn oauth_server(
         // Issuer should be derived from path component if necessary
         issuer: None,
     };
-    issuer::oauth_server(provider.clone(), req).await.into()
+    oid4vci::endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
 }
 
 /// Authorize endpoint
@@ -174,7 +174,7 @@ async fn authorize(
             .into_response();
     };
 
-    match issuer::authorize(provider, req).await {
+    match oid4vci::endpoint::handle(&format!("http://{host}"), req, &provider).await {
         Ok(v) => (StatusCode::FOUND, Redirect::to(&format!("{redirect_uri}?code={}", v.code)))
             .into_response(),
         Err(e) => {
@@ -229,7 +229,11 @@ async fn par(
     // process request
     req.request.credential_issuer = format!("http://{host}");
 
-    let axresponse: AxResult<PushedAuthorizationResponse> = issuer::par(provider, req).await.into();
+    // let axresponse: AxResult<PushedAuthorizationResponse> =
+    //     oid4vci::par(provider, req).await.into();
+
+    let axresponse: AxResult<PushedAuthorizationResponse> =
+        oid4vci::endpoint::handle(&format!("http://{host}"), req, &provider).await.into();
     axresponse.into_response()
 }
 
@@ -295,7 +299,7 @@ async fn notification(
 ) -> AxResult<NotificationResponse> {
     req.credential_issuer = format!("http://{host}");
     req.access_token = auth.token().to_string();
-    issuer::notification(provider.clone(), req).await.into()
+    oid4vci::endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
 }
 
 /// Token endpoint
@@ -322,13 +326,14 @@ async fn token(
             .into_response();
     };
     tr.credential_issuer = format!("http://{host}");
-    let response: AxResult<TokenResponse> = match issuer::token(provider.clone(), tr).await {
-        Ok(v) => Ok(v).into(),
-        Err(e) => {
-            tracing::error!("error getting token: {e}");
-            Err(e).into()
-        }
-    };
+    let response: AxResult<TokenResponse> =
+        match oid4vci::endpoint::handle(&format!("http://{host}"), tr, &provider).await {
+            Ok(v) => Ok(v).into(),
+            Err(e) => {
+                tracing::error!("error getting token: {e}");
+                Err(e).into()
+            }
+        };
     response.into_response()
 }
 
@@ -340,7 +345,7 @@ async fn credential(
 ) -> AxResult<CredentialResponse> {
     req.credential_issuer = format!("http://{host}");
     req.access_token = auth.token().to_string();
-    issuer::credential(provider.clone(), req).await.into()
+    oid4vci::endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
 }
 
 // Deferred endpoint
@@ -354,7 +359,7 @@ async fn deferred_credential(
     req.access_token = auth.0.token().to_string();
 
     #[allow(clippy::large_futures)]
-    issuer::deferred(provider.clone(), req).await.into()
+    oid4vci::endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
 }
 
 // ----------------------------------------------------------------------------
@@ -362,7 +367,7 @@ async fn deferred_credential(
 // ----------------------------------------------------------------------------
 
 /// Wrapper for `axum::Response`
-pub struct AxResult<T>(issuer::Result<T>);
+pub struct AxResult<T>(oid4vci::Result<T>);
 
 impl<T> IntoResponse for AxResult<T>
 where
@@ -377,8 +382,8 @@ where
     }
 }
 
-impl<T> From<issuer::Result<T>> for AxResult<T> {
-    fn from(val: issuer::Result<T>) -> Self {
+impl<T> From<oid4vci::Result<T>> for AxResult<T> {
+    fn from(val: oid4vci::Result<T>) -> Self {
         Self(val)
     }
 }

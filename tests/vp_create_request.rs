@@ -5,8 +5,8 @@ mod utils;
 use assert_let_bind::assert_let;
 use credibil_vc::openid::provider::StateStore;
 use credibil_vc::openid::verifier::CreateRequestRequest;
-use credibil_vc::verifier;
-use credibil_vc::verifier::state::State;
+use credibil_vc::oid4vp;
+use credibil_vc::oid4vp::state::State;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 
@@ -38,7 +38,7 @@ async fn same_device() {
     request.client_id = "http://localhost:8080".into();
 
     let response =
-        verifier::create_request(provider.clone(), &request).await.expect("response is ok");
+        oid4vp::create_request(provider.clone(), &request).await.expect("response is ok");
 
     assert_eq!(response.request_uri, None);
     assert_let!(Some(req_obj), &response.request_object);
@@ -86,7 +86,7 @@ async fn cross_device() {
     request.client_id = "http://localhost:8080".into();
 
     let response =
-        verifier::create_request(provider.clone(), &request).await.expect("response is ok");
+        oid4vp::create_request(provider.clone(), &request).await.expect("response is ok");
 
     assert!(response.request_object.is_none());
     assert_let!(Some(req_uri), response.request_uri);

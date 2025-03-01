@@ -9,9 +9,10 @@
 use chrono::{Duration, Utc};
 use tracing::instrument;
 
-use super::authorize;
-use super::state::{PushedAuthorization, Stage, State};
 use crate::core::generate;
+use crate::oid4vci::endpoint::Request;
+use crate::oid4vci::handlers::authorize;
+use crate::oid4vci::state::{PushedAuthorization, Stage, State};
 use crate::openid::issuer::{
     Metadata, Provider, PushedAuthorizationRequest, PushedAuthorizationResponse,
 };
@@ -31,6 +32,16 @@ pub async fn par(
 ) -> Result<PushedAuthorizationResponse> {
     verify(&provider, &request).await?;
     process(&provider, request).await
+}
+
+impl Request for PushedAuthorizationRequest {
+    type Response = PushedAuthorizationResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        par(provider.clone(), self)
+    }
 }
 
 // Verify the pushed Authorization Request.

@@ -3,7 +3,7 @@
 mod utils;
 mod wallet;
 
-use credibil_vc::issuer::{Format, ProfileW3c};
+use credibil_vc::oid4vci::{Format, ProfileW3c};
 use rstest::rstest;
 use test_issuer::ProviderImpl;
 use utils::{Issuance, provider};

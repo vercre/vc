@@ -10,8 +10,9 @@
 
 use tracing::instrument;
 
-use super::credential::credential;
-use super::state::{Stage, State};
+use crate::oid4vci::endpoint::Request;
+use crate::oid4vci::handlers::credential::credential;
+use crate::oid4vci::state::{Stage, State};
 use crate::openid::issuer::{
     CredentialResponseType, DeferredCredentialRequest, DeferredCredentialResponse, Provider,
 };
@@ -29,6 +30,16 @@ pub async fn deferred(
     provider: impl Provider, request: DeferredCredentialRequest,
 ) -> Result<DeferredCredentialResponse> {
     process(&provider, request).await
+}
+
+impl Request for DeferredCredentialRequest {
+    type Response = DeferredCredentialResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        deferred(provider.clone(), self)
+    }
 }
 
 async fn process(

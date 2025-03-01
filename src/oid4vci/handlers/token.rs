@@ -19,8 +19,9 @@ use std::fmt::Debug;
 use chrono::Utc;
 use tracing::instrument;
 
-use super::state::{Authorized, AuthorizedItem, Expire, ItemType, Stage, State, Token};
 use crate::core::{generate, pkce};
+use crate::oid4vci::endpoint::Request;
+use crate::oid4vci::state::{Authorized, AuthorizedItem, Expire, ItemType, Stage, State, Token};
 use crate::openid::issuer::{
     AuthorizedDetail, CredentialAuthorization, Issuer, Metadata, ProfileClaims, Provider,
     TokenGrantType, TokenRequest, TokenResponse, TokenType,
@@ -59,6 +60,16 @@ pub async fn token(provider: impl Provider, request: TokenRequest) -> Result<Tok
 
     ctx.verify(&provider, &request).await?;
     ctx.process(&provider, request).await
+}
+
+impl Request for TokenRequest {
+    type Response = TokenResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        token(provider.clone(), self)
+    }
 }
 
 #[derive(Debug)]

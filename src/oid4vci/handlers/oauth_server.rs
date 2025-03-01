@@ -18,6 +18,7 @@
 
 use tracing::instrument;
 
+use crate::oid4vci::endpoint::Request;
 use crate::openid::issuer::{Metadata, OAuthServerRequest, OAuthServerResponse, Provider};
 use crate::openid::{Error, Result};
 
@@ -37,6 +38,16 @@ pub async fn oauth_server(
     provider: impl Provider, request: OAuthServerRequest,
 ) -> Result<OAuthServerResponse> {
     process(&provider, request).await
+}
+
+impl Request for OAuthServerRequest {
+    type Response = OAuthServerResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        oauth_server(provider.clone(), self)
+    }
 }
 
 async fn process(

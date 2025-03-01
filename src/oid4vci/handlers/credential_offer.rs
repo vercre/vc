@@ -16,7 +16,8 @@
 
 use tracing::instrument;
 
-use super::state::{Stage, State};
+use crate::oid4vci::endpoint::Request;
+use crate::oid4vci::state::{Stage, State};
 use crate::openid::issuer::{CredentialOfferRequest, CredentialOfferResponse, Provider};
 use crate::openid::provider::StateStore;
 use crate::openid::{Error, Result};
@@ -33,6 +34,16 @@ pub async fn credential_offer(
     provider: impl Provider, request: CredentialOfferRequest,
 ) -> Result<CredentialOfferResponse> {
     process(&provider, request).await
+}
+
+impl Request for CredentialOfferRequest {
+    type Response = CredentialOfferResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        credential_offer(provider.clone(), self)
+    }
 }
 
 async fn process(

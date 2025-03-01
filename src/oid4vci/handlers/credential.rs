@@ -15,8 +15,9 @@ use credibil_infosec::Signer;
 use credibil_infosec::jose::jws::{self, Key};
 use tracing::instrument;
 
-use super::state::{Authorized, Deferrance, Expire, Stage, State};
 use crate::core::{Kind, generate};
+use crate::oid4vci::endpoint::Request;
+use crate::oid4vci::state::{Authorized, Deferrance, Expire, Stage, State};
 use crate::openid::issuer::{
     CredentialConfiguration, CredentialDefinition, CredentialDisplay, CredentialIssuance,
     CredentialRequest, CredentialResponse, CredentialResponseType, Dataset, Format, Issuer,
@@ -66,6 +67,16 @@ pub async fn credential(
 
     ctx.verify(&provider, &request).await?;
     ctx.process(&provider, request).await
+}
+
+impl Request for CredentialRequest {
+    type Response = CredentialResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        credential(provider.clone(), self)
+    }
 }
 
 #[derive(Debug, Default)]

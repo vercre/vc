@@ -21,7 +21,8 @@
 
 use tracing::instrument;
 
-use super::state::{Stage, State};
+use crate::oid4vci::endpoint::Request;
+use crate::oid4vci::state::{Stage, State};
 use crate::openid::issuer::{NotificationRequest, NotificationResponse, Provider};
 use crate::openid::provider::StateStore;
 use crate::openid::{Error, Result};
@@ -37,6 +38,16 @@ pub async fn notification(
     provider: impl Provider, request: NotificationRequest,
 ) -> Result<NotificationResponse> {
     process(&provider, request).await
+}
+
+impl Request for NotificationRequest {
+    type Response = NotificationResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        notification(provider.clone(), self)
+    }
 }
 
 #[allow(clippy::unused_async)]

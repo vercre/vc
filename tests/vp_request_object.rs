@@ -10,8 +10,8 @@ use credibil_vc::openid::provider::StateStore;
 use credibil_vc::openid::verifier::{
     ClientIdScheme, RequestObject, RequestObjectRequest, RequestObjectType, ResponseType, Verifier,
 };
-use credibil_vc::verifier::state::{Expire, State};
-use credibil_vc::{verifier, verify_key};
+use credibil_vc::oid4vp::state::{Expire, State};
+use credibil_vc::{oid4vp, verify_key};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use test_verifier::VERIFIER_ID;
 
@@ -50,7 +50,7 @@ async fn request_jwt() {
         id: state_key.to_string(),
     };
     let response =
-        verifier::request_object(provider.clone(), &request).await.expect("response is valid");
+        oid4vp::request_object(provider.clone(), &request).await.expect("response is valid");
 
     let RequestObjectType::Jwt(jwt_enc) = &response.request_object else {
         panic!("no JWT found in response");

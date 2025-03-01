@@ -2,7 +2,7 @@
 
 mod utils;
 
-use credibil_vc::issuer::{self, CredentialOfferRequest};
+use credibil_vc::oid4vci::{self, CredentialOfferRequest};
 use credibil_vc::openid::issuer::{CreateOfferRequest, OfferType, SendType};
 use credibil_vc::openid::oauth::GrantType;
 use insta::assert_yaml_snapshot as assert_snapshot;
@@ -23,7 +23,7 @@ async fn request_jwt() {
         send_type: SendType::ByRef,
     };
     let create_resp =
-        issuer::create_offer(provider.clone(), create_req).await.expect("should create offer");
+        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, create_req, &provider).await.expect("should create offer");
 
     let OfferType::Uri(uri) = create_resp.offer_type else {
         panic!("no URI found in response");
@@ -37,7 +37,7 @@ async fn request_jwt() {
         id: id.to_string(),
     };
     let offer_resp =
-        issuer::credential_offer(provider, offer_req).await.expect("response is valid");
+        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, offer_req, &provider).await.expect("response is valid");
 
     assert_snapshot!("credential_offer:request_jwt:response", offer_resp,  {
         // ".credential_offer.grants.authorization_code.issuer_state" => "[issuer_state]",

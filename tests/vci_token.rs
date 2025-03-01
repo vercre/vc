@@ -4,13 +4,13 @@ mod utils;
 
 use chrono::Utc;
 use credibil_vc::core::pkce;
-use credibil_vc::issuer;
-use credibil_vc::issuer::state::{
+use credibil_vc::oid4vci;
+use credibil_vc::oid4vci::state::{
     Authorization, AuthorizedItem, Expire, ItemType, Offer, Stage, State,
 };
 use credibil_vc::openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization, CredentialDefinition,
-    Format, ProfileW3c,
+    Format, ProfileW3c, TokenRequest, TokenResponse,
 };
 use credibil_vc::openid::provider::StateStore;
 use insta::assert_yaml_snapshot as assert_snapshot;
@@ -58,9 +58,12 @@ async fn pre_authorized() {
         "pre-authorized_code": pre_auth_code,
         "tx_code": "1234"
     });
-    let request = serde_json::from_value(value).expect("request is valid");
+    let request: TokenRequest = serde_json::from_value(value).expect("request is valid");
 
-    let token_resp = issuer::token(provider.clone(), request).await.expect("response is valid");
+    let token_resp: TokenResponse =
+        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
+            .await
+            .expect("response is valid");
 
     assert_snapshot!("token:pre_authorized:response", &token_resp, {
         ".access_token" => "[access_token]",
@@ -126,8 +129,11 @@ async fn authorized() {
         "code": code,
         "code_verifier": verifier,
     });
-    let request = serde_json::from_value(value).expect("request is valid");
-    let token_resp = issuer::token(provider.clone(), request).await.expect("response is valid");
+    let request: TokenRequest = serde_json::from_value(value).expect("request is valid");
+    let token_resp: TokenResponse =
+        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
+            .await
+            .expect("response is valid");
 
     assert_snapshot!("token:authorized:response", &token_resp, {
         ".access_token" => "[access_token]",
@@ -210,8 +216,10 @@ async fn authorization_details() {
             }
         }],
     });
-    let request = serde_json::from_value(value).expect("request is valid");
-    let response = issuer::token(provider.clone(), request).await.expect("response is valid");
+    let request: TokenRequest = serde_json::from_value(value).expect("request is valid");
+    let response: TokenResponse = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
+        .await
+        .expect("response is valid");
 
     assert_snapshot!("token:authorization_details:response", &response, {
         ".access_token" => "[access_token]",

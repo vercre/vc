@@ -3,8 +3,8 @@
 mod utils;
 
 use chrono::Utc;
-use credibil_vc::issuer;
-use credibil_vc::issuer::state::{Expire, Stage, State, Token};
+use credibil_vc::oid4vci;
+use credibil_vc::oid4vci::state::{Expire, Stage, State, Token};
 use credibil_vc::openid::issuer::RegistrationRequest;
 use credibil_vc::openid::provider::StateStore;
 use insta::assert_yaml_snapshot as assert_snapshot;
@@ -53,7 +53,9 @@ async fn registration_ok() {
     request.credential_issuer = CREDENTIAL_ISSUER.to_string();
     request.access_token = access_token.to_string();
 
-    let response = issuer::register(provider, request).await.expect("response is ok");
+    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
+        .await
+        .expect("response is ok");
     assert_snapshot!("register:registration_ok:response", response, {
         ".client_id" => "[client_id]",
     });

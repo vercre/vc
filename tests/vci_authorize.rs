@@ -3,8 +3,8 @@
 mod utils;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
-use credibil_vc::issuer;
-use credibil_vc::issuer::state::State;
+use credibil_vc::oid4vci::state::State;
+use credibil_vc::oid4vci::{self, AuthorizationRequest, AuthorizationResponse};
 use credibil_vc::openid::provider::StateStore;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use rstest::rstest;
@@ -27,8 +27,10 @@ async fn authorize_tests(#[case] name: &str, #[case] value: fn() -> Value) {
     let provider = test_issuer::ProviderImpl::new();
 
     // execute request
-    let request = serde_json::from_value(value()).expect("should deserialize");
-    let response = issuer::authorize(provider.clone(), request).await.expect("ok");
+    let request: AuthorizationRequest =
+        serde_json::from_value(value()).expect("should deserialize");
+    let response: AuthorizationResponse =
+        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("ok");
     assert_snapshot!("authorize:configuration_id:response", &response, {
         ".code" =>"[code]",
     });

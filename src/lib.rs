@@ -11,10 +11,10 @@
 //! * `verifier` - Enables the verifier API.
 
 #[cfg(feature = "issuer")]
-pub mod issuer;
+pub mod oid4vci;
 
 #[cfg(feature = "verifier")]
-pub mod verifier;
+pub mod oid4vp;
 
 pub mod core;
 pub mod dif_exch;

@@ -70,8 +70,9 @@ use std::vec;
 use chrono::Utc;
 use tracing::instrument;
 
-use super::state::{AuthorizedItem, Expire, ItemType, Offer, Stage, State};
 use crate::core::generate;
+use crate::oid4vci::endpoint::Request;
+use crate::oid4vci::state::{AuthorizedItem, Expire, ItemType, Offer, Stage, State};
 use crate::openid::issuer::{
     AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, CreateOfferRequest,
     CreateOfferResponse, CredentialAuthorization, CredentialOffer, Grants, Issuer, Metadata,
@@ -105,6 +106,16 @@ pub async fn create_offer(
 
     ctx.verify(&request)?;
     ctx.process(&provider, request).await
+}
+
+impl Request for CreateOfferRequest {
+    type Response = CreateOfferResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        create_offer(provider.clone(), self)
+    }
 }
 
 #[derive(Debug, Default)]

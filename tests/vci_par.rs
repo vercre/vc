@@ -3,8 +3,8 @@
 mod utils;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
-use credibil_vc::issuer;
-use credibil_vc::issuer::state::State;
+use credibil_vc::oid4vci;
+use credibil_vc::oid4vci::state::State;
 use credibil_vc::openid::issuer::{AuthorizationRequest, PushedAuthorizationRequest};
 use credibil_vc::openid::provider::StateStore;
 use insta::assert_yaml_snapshot as assert_snapshot;
@@ -43,7 +43,9 @@ async fn request() {
         request: req_obj,
         client_assertion: None,
     };
-    let response = issuer::par(provider.clone(), request).await.expect("response is valid");
+    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
+        .await
+        .expect("response is valid");
     assert_snapshot!("par:request:response", response, {
         ".request_uri" => "[request_uri]",
     });

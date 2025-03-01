@@ -66,13 +66,13 @@
 
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::vec;
 
 use chrono::Utc;
 use tracing::instrument;
 
-use super::state::{Authorization, AuthorizedItem, Expire, ItemType, Stage, State};
 use crate::core::generate;
+use crate::oid4vci::endpoint::Request;
+use crate::oid4vci::state::{Authorization, AuthorizedItem, Expire, ItemType, Stage, State};
 use crate::openid::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
     Claim, CredentialAuthorization, Issuer, Metadata, ProfileClaims, Provider, RequestObject,
@@ -124,6 +124,16 @@ pub async fn authorize(
     };
     ctx.verify(&provider, &request).await?;
     ctx.process(&provider, request).await
+}
+
+impl Request for AuthorizationRequest {
+    type Response = AuthorizationResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        authorize(provider.clone(), self)
+    }
 }
 
 #[derive(Debug, Default)]

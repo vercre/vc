@@ -88,18 +88,9 @@
 //! [OpenID Connect]: (https://openid.net/specs/openid-connect-core-1_0.html)
 //! [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
 
-mod authorize;
-mod create_offer;
-mod credential;
-mod credential_offer;
-mod deferred;
-mod metadata;
-mod notification;
-mod oauth_server;
-mod par;
-mod register;
+mod handlers;
 pub mod state;
-mod token;
+pub mod endpoint;
 
 /// Re-export provider traits and types.
 pub mod provider {
@@ -114,19 +105,6 @@ pub mod provider {
     pub use crate::openid::provider::{Result, StateStore};
     pub use crate::status::issuer::Status;
 }
-
-// Endpoints
-pub use authorize::authorize;
-pub use create_offer::create_offer;
-pub use credential::credential;
-pub use credential_offer::credential_offer;
-pub use deferred::deferred;
-pub use metadata::metadata;
-pub use notification::notification;
-pub use oauth_server::oauth_server;
-pub use par::par;
-pub use register::register;
-pub use token::token;
 
 /// Status
 pub mod status {

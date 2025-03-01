@@ -7,9 +7,11 @@ use std::collections::HashMap;
 use assert_let_bind::assert_let;
 use chrono::Utc;
 use credibil_infosec::jose::jws::JwsBuilder;
-use credibil_vc::issuer;
-use credibil_vc::issuer::state::{Authorized, Expire, Stage, State, Token};
-use credibil_vc::openid::issuer::{CredentialResponseType, ProofClaims};
+use credibil_vc::oid4vci;
+use credibil_vc::oid4vci::state::{Authorized, Expire, Stage, State, Token};
+use credibil_vc::openid::issuer::{
+    CredentialRequest, CredentialResponse, CredentialResponseType, ProofClaims,
+};
 use credibil_vc::openid::provider::StateStore;
 use credibil_vc::w3c_vc::proof::{self, Payload, Type, Verify};
 use insta::assert_yaml_snapshot as assert_snapshot;
@@ -70,9 +72,12 @@ async fn identifier() {
             "jwt": jwt
         }
     });
-    let request = serde_json::from_value(value).expect("request is valid");
+    let request: CredentialRequest = serde_json::from_value(value).expect("request is valid");
 
-    let response = issuer::credential(provider.clone(), request).await.expect("response is valid");
+    let response: CredentialResponse =
+        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
+            .await
+            .expect("response is valid");
     assert_snapshot!("credential:identifier:response", &response, {
         ".credential" => "[credential]",
         ".c_nonce" => "[c_nonce]",
@@ -166,8 +171,11 @@ async fn format() {
             "jwt": jwt
         }
     });
-    let request = serde_json::from_value(value).expect("request is valid");
-    let response = issuer::credential(provider.clone(), request).await.expect("response is valid");
+    let request: CredentialRequest = serde_json::from_value(value).expect("request is valid");
+    let response: CredentialResponse =
+        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
+            .await
+            .expect("response is valid");
 
     assert_snapshot!("credential:format:response", &response, {
         ".credential" => "[credential]",
@@ -256,9 +264,12 @@ async fn iso_mdl() {
             "jwt": jwt
         }
     });
-    let request = serde_json::from_value(value).expect("request is valid");
+    let request: CredentialRequest = serde_json::from_value(value).expect("request is valid");
 
-    let response = issuer::credential(provider.clone(), request).await.expect("response is valid");
+    let response: CredentialResponse =
+        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
+            .await
+            .expect("response is valid");
     assert_snapshot!("credential:iso_mdl:response", &response, {
         ".credential" => "[credential]",
         ".c_nonce" => "[c_nonce]",

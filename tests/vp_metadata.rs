@@ -4,7 +4,7 @@ mod utils;
 
 // use providers::wallet_provider::holder_provider::CLIENT_ID;
 use credibil_vc::openid::verifier::MetadataRequest;
-use credibil_vc::verifier;
+use credibil_vc::oid4vp;
 use insta::assert_yaml_snapshot as assert_snapshot;
 
 #[tokio::test]
@@ -15,7 +15,7 @@ async fn metadata_ok() {
     let request = MetadataRequest {
         client_id: "http://localhost:8080".into(),
     };
-    let response = verifier::metadata(provider, &request).await.expect("response is ok");
+    let response = oid4vp::metadata(provider, &request).await.expect("response is ok");
     assert_snapshot!("response", response, {
         ".vp_formats" => insta::sorted_redaction()
     });
