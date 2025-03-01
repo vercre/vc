@@ -3,10 +3,10 @@
 mod utils;
 
 use assert_let_bind::assert_let;
+use credibil_vc::oid4vp;
 use credibil_vc::oid4vp::provider::StateStore;
 use credibil_vc::oid4vp::state::State;
 use credibil_vc::oid4vp::types::CreateRequestRequest;
-use credibil_vc::oid4vp::{self, CreateRequestResponse};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 
@@ -37,7 +37,7 @@ async fn same_device() {
         serde_json::from_value::<CreateRequestRequest>(body).expect("should deserialize");
     request.client_id = "http://localhost:8080".into();
 
-    let response: CreateRequestResponse =
+    let response =
         oid4vp::endpoint::handle("http://localhost:8080", request, &provider).await.expect("ok");
 
     assert_eq!(response.request_uri, None);

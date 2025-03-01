@@ -217,7 +217,7 @@ async fn authorization_details() {
         }],
     });
     let request: TokenRequest = serde_json::from_value(value).expect("request is valid");
-    let response: TokenResponse = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
+    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
         .await
         .expect("response is valid");
 

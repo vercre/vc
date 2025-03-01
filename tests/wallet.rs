@@ -7,9 +7,8 @@ use credibil_infosec::jose::JwsBuilder;
 use credibil_vc::oid4vci::proof::{self, Payload, Type, Verify};
 use credibil_vc::oid4vci::{
     self, AuthorizationRequest, AuthorizationResponse, CredentialOfferRequest, CredentialRequest,
-    CredentialResponse, CredentialResponseType, DeferredCredentialRequest,
-    DeferredCredentialResponse, Error, Format, OfferType, ProofClaims, Result, TokenGrantType,
-    TokenRequest, TokenResponse,
+    CredentialResponseType, DeferredCredentialRequest, DeferredCredentialResponse, Error, Format,
+    OfferType, ProofClaims, Result, TokenGrantType, TokenRequest, TokenResponse,
 };
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
@@ -165,7 +164,7 @@ impl Wallet {
             }
         });
         let request: CredentialRequest = serde_json::from_value(value).expect("request is valid");
-        let mut response: CredentialResponse =
+        let mut response =
             oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &self.provider).await?;
 
         // fetch credential if response is deferred
