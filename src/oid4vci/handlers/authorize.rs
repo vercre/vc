@@ -72,15 +72,15 @@ use tracing::instrument;
 
 use crate::core::generate;
 use crate::oid4vci::endpoint::Request;
-use crate::oid4vci::state::{Authorization, AuthorizedItem, Expire, ItemType, Stage, State};
-use crate::openid::issuer::{
+use crate::oid4vci::issuer::{
     AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    Claim, CredentialAuthorization, Issuer, Metadata, ProfileClaims, Provider, RequestObject,
-    Subject,
+    Claim, CredentialAuthorization, Issuer, ProfileClaims, RequestObject,
 };
+use crate::oid4vci::provider::{Metadata, Provider, Subject};
+use crate::oid4vci::state::{Authorization, AuthorizedItem, Expire, ItemType, Stage, State};
+use crate::oid4vci::{Error, Result};
 use crate::openid::oauth::GrantType;
 use crate::openid::provider::StateStore;
-use crate::openid::{Error, Result};
 
 /// Authorization request handler.
 ///

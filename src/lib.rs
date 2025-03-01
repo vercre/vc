@@ -25,7 +25,7 @@ pub mod w3c_vc;
 
 /// Re-export top-level provider traits and types
 pub mod provider {
-    pub use crate::openid::provider::{Result, StateStore};
+    pub use crate::openid::provider::StateStore;
 }
 
 /// Re-export DID resolution

@@ -17,14 +17,15 @@ use tracing::instrument;
 
 use crate::core::{Kind, generate};
 use crate::oid4vci::endpoint::Request;
-use crate::oid4vci::state::{Authorized, Deferrance, Expire, Stage, State};
-use crate::openid::issuer::{
+use crate::oid4vci::issuer::{
     CredentialConfiguration, CredentialDefinition, CredentialDisplay, CredentialIssuance,
     CredentialRequest, CredentialResponse, CredentialResponseType, Dataset, Format, Issuer,
-    Metadata, MultipleProofs, Proof, ProofClaims, Provider, SingleProof, Subject,
+    MultipleProofs, Proof, ProofClaims, SingleProof,
 };
+use crate::oid4vci::provider::{Metadata, Provider, Subject};
+use crate::oid4vci::state::{Authorized, Deferrance, Expire, Stage, State};
+use crate::oid4vci::{Error, Result};
 use crate::openid::provider::StateStore;
-use crate::openid::{Error, Result};
 use crate::status::issuer::Status;
 use crate::verify_key;
 use crate::w3c_vc::model::types::{LangString, LangValue};

@@ -162,10 +162,12 @@
 //! [JWT VC Presentation Profile]: (https://identity.foundation/jwt-vc-presentation-profile)
 
 mod create_request;
+mod error;
 mod metadata;
 mod request_object;
 mod response;
 pub mod state;
+pub mod verifier;
 
 /// Re-export provider traits and types.
 pub mod provider {
@@ -174,11 +176,11 @@ pub mod provider {
         Algorithm, PublicKey, PublicKeyJwk, Receiver, SharedSecret, Signer,
     };
 
-    pub use crate::openid::issuer::{Client, Format, Server};
-    pub use crate::openid::provider::{Result, StateStore};
-    pub use crate::openid::verifier::VpFormat;
+    pub use crate::oid4vci::issuer::{Client, Format, Server};
+    pub use crate::oid4vp::verifier::VpFormat;
     #[allow(clippy::module_name_repetitions)]
-    pub use crate::openid::verifier::{Metadata, Provider, Verifier, Wallet};
+    pub use crate::oid4vp::verifier::{Metadata, Provider, Verifier, Wallet};
+    pub use crate::openid::provider::{Result, StateStore};
 }
 
 /// Proofs
@@ -197,8 +199,7 @@ pub use crate::dif_exch::{
     Claims, Constraints, DescriptorMap, Field, Filter, FilterValue, InputDescriptor, PathNested,
     PresentationSubmission,
 };
-pub use crate::openid::Result;
-pub use crate::openid::verifier::{
+pub use crate::oid4vp::verifier::{
     ClientIdScheme, CreateRequestRequest, CreateRequestResponse, DeviceFlow, MetadataRequest,
     MetadataResponse, RequestObject, RequestObjectRequest, RequestObjectResponse,
     RequestObjectType, ResponseRequest, ResponseResponse, ResponseType,
@@ -209,3 +210,9 @@ pub use crate::w3c_vc::model::VerifiablePresentation;
 pub mod status {
     pub use crate::status::verifier::*;
 }
+
+pub use error::Error;
+
+/// Result type for `OpenID` for Verifiable Credential Issuance and Verifiable
+/// Presentations.
+pub type Result<T, E = Error> = std::result::Result<T, E>;

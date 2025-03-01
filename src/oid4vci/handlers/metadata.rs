@@ -26,10 +26,9 @@
 use tracing::instrument;
 
 use crate::oid4vci::endpoint::Request;
-use crate::openid::issuer::{Metadata, MetadataRequest, MetadataResponse, Provider};
-use crate::openid::{Error, Result};
-
-// use crate::shell;
+use crate::oid4vci::issuer::{MetadataRequest, MetadataResponse};
+use crate::oid4vci::provider::{Metadata, Provider};
+use crate::oid4vci::{Error, Result};
 
 /// Metadata request handler.
 ///

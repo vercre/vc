@@ -18,11 +18,11 @@ use credibil_infosec::jose::JwsBuilder;
 use tracing::instrument;
 
 use super::state::State;
-use crate::openid::provider::StateStore;
-use crate::openid::verifier::{
+use crate::oid4vp::verifier::{
     Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType,
 };
-use crate::openid::{Error, Result};
+use crate::oid4vp::{Error, Result};
+use crate::openid::provider::StateStore;
 use crate::w3c_vc::proof::Type;
 
 /// Endpoint for the Wallet to request the Verifier's Request Object when

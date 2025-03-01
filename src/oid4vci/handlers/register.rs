@@ -2,11 +2,12 @@
 
 use tracing::instrument;
 
-use crate::oid4vci::state::State;
 use crate::oid4vci::endpoint::Request;
-use crate::openid::issuer::{Provider, RegistrationRequest, RegistrationResponse};
+use crate::oid4vci::issuer::{RegistrationRequest, RegistrationResponse};
+use crate::oid4vci::provider::Provider;
+use crate::oid4vci::state::State;
+use crate::oid4vci::{Error, Result};
 use crate::openid::provider::StateStore;
-use crate::openid::{Error, Result};
 
 /// Registration request handler.
 ///

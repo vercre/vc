@@ -88,23 +88,12 @@
 //! [OpenID Connect]: (https://openid.net/specs/openid-connect-core-1_0.html)
 //! [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
 
-mod handlers;
-pub mod state;
 pub mod endpoint;
-
-/// Re-export provider traits and types.
-pub mod provider {
-    pub use credibil_did::{DidResolver, Document};
-    pub use credibil_infosec::jose::jwk::PublicKeyJwk;
-    pub use credibil_infosec::{Algorithm, PublicKey, Receiver, SharedSecret, Signer};
-
-    pub use crate::openid::issuer::{
-        ClaimDefinition, Client, Dataset, Issuer, Metadata, Provider, Server, Subject,
-    };
-    pub use crate::openid::oauth::GrantType;
-    pub use crate::openid::provider::{Result, StateStore};
-    pub use crate::status::issuer::Status;
-}
+mod error;
+mod handlers;
+pub mod issuer;
+pub mod provider;
+pub mod state;
 
 /// Status
 pub mod status {
@@ -123,24 +112,16 @@ pub mod pkce {
     pub use crate::core::pkce::{code_challenge, code_verifier};
 }
 
+pub use error::Error;
+
 /// Re-export types
-pub use crate::openid::issuer::{
-    AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
-    AuthorizationResponse, AuthorizedDetail, Claim, ClaimDefinition, CreateOfferRequest,
-    CreateOfferResponse, CredentialAuthorization, CredentialConfiguration, CredentialDefinition,
-    CredentialDisplay, CredentialIssuance, CredentialOffer, CredentialOfferRequest,
-    CredentialOfferResponse, CredentialRequest, CredentialResponse, CredentialResponseType,
-    DeferredCredentialRequest, DeferredCredentialResponse, Display, Format, Grants, Image, Issuer,
-    MetadataRequest, MetadataResponse, NotificationEvent, NotificationRequest,
-    NotificationResponse, OAuthServerRequest, OAuthServerResponse, OfferType,
-    PreAuthorizedCodeGrant, ProfileClaims, ProfileIsoMdl, ProfileSdJwt, ProfileW3c, Proof,
-    ProofClaims, PushedAuthorizationRequest, PushedAuthorizationResponse, RegistrationRequest,
-    RegistrationResponse, RequestObject, SendType, Server, SingleProof, TokenGrantType,
-    TokenRequest, TokenResponse, TxCode, ValueType,
-};
+pub use crate::oid4vci::issuer::*;
 pub use crate::openid::oauth::GrantType;
-pub use crate::openid::{Error, Result};
 pub use crate::w3c_vc::model::{
     Bitstring, CredentialStatus, CredentialStatusType, CredentialSubject, StatusMessage,
     StatusPurpose, VerifiableCredential,
 };
+
+/// Result type for `OpenID` for Verifiable Credential Issuance and Verifiable
+/// Presentations.
+pub type Result<T, E = Error> = std::result::Result<T, E>;

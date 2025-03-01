@@ -8,7 +8,7 @@ use credibil_vc::oid4vci;
 use credibil_vc::oid4vci::state::{
     Authorization, AuthorizedItem, Expire, ItemType, Offer, Stage, State,
 };
-use credibil_vc::openid::issuer::{
+use credibil_vc::oid4vci::issuer::{
     AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization, CredentialDefinition,
     Format, ProfileW3c, TokenRequest, TokenResponse,
 };

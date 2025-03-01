@@ -8,8 +8,8 @@ use std::fmt::Debug;
 
 use serde::Serialize;
 
-use crate::openid::Result;
-use crate::openid::issuer::Provider;
+use crate::oid4vci::Result;
+use crate::oid4vci::provider::Provider;
 
 /// Handle incoming messages.
 ///

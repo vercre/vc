@@ -8,7 +8,7 @@ use chrono::{DateTime, Utc};
 use credibil_did::{DidResolver, Document};
 use credibil_infosec::{self, Algorithm, PublicKey, Receiver, SharedSecret, Signer};
 use credibil_vc::openid::provider::{Result, StateStore};
-use credibil_vc::openid::verifier::{Metadata, Provider, Verifier, Wallet};
+use credibil_vc::oid4vp::verifier::{Metadata, Provider, Verifier, Wallet};
 pub use keystore::Keystore;
 use serde::Serialize;
 use serde::de::DeserializeOwned;

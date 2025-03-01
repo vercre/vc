@@ -7,8 +7,8 @@
 
 use tracing::instrument;
 
-use crate::openid::verifier::{Metadata, MetadataRequest, MetadataResponse, Provider};
-use crate::openid::{Error, Result};
+use crate::oid4vp::verifier::{Metadata, MetadataRequest, MetadataResponse, Provider};
+use crate::oid4vp::{Error, Result};
 
 /// Endpoint for Wallets to request Verifier (Client) metadata.
 ///

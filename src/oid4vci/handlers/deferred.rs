@@ -12,12 +12,13 @@ use tracing::instrument;
 
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::handlers::credential::credential;
-use crate::oid4vci::state::{Stage, State};
-use crate::openid::issuer::{
-    CredentialResponseType, DeferredCredentialRequest, DeferredCredentialResponse, Provider,
+use crate::oid4vci::issuer::{
+    CredentialResponseType, DeferredCredentialRequest, DeferredCredentialResponse,
 };
+use crate::oid4vci::provider::Provider;
+use crate::oid4vci::state::{Stage, State};
+use crate::oid4vci::{Error, Result};
 use crate::openid::provider::StateStore;
-use crate::openid::{Error, Result};
 
 /// Deferred credential request handler.
 ///

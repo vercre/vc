@@ -7,12 +7,12 @@ use std::sync::LazyLock;
 use chrono::Utc;
 use credibil_vc::core::Kind;
 use credibil_vc::dif_exch::PresentationDefinition;
-use credibil_vc::openid::provider::StateStore;
-use credibil_vc::openid::verifier::{
-    ClientIdScheme, RequestObject, ResponseRequest, ResponseType, Verifier,
-};
 use credibil_vc::oid4vp;
 use credibil_vc::oid4vp::state::{Expire, State};
+use credibil_vc::oid4vp::verifier::{
+    ClientIdScheme, RequestObject, ResponseRequest, ResponseType, Verifier,
+};
+use credibil_vc::openid::provider::StateStore;
 use serde_json::{Value, json};
 
 const CLIENT_ID: &str = "http://credibil.io";

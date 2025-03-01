@@ -9,7 +9,7 @@ use chrono::Utc;
 use credibil_infosec::jose::JwsBuilder;
 use credibil_vc::oid4vci;
 use credibil_vc::oid4vci::state::{Authorized, Deferrance, Expire, Stage, State, Token};
-use credibil_vc::openid::issuer::{
+use credibil_vc::oid4vci::issuer::{
     CredentialRequest, CredentialResponseType, DeferredCredentialRequest, ProofClaims,
 };
 use credibil_vc::openid::provider::StateStore;

@@ -1,6 +1,6 @@
 ---
-source: src/openid/issuer.rs
-assertion_line: 2609
+source: src/oid4vci/issuer.rs
+assertion_line: 2606
 expression: "&default"
 ---
 - Address.Country

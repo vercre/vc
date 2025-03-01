@@ -12,12 +12,11 @@ use tracing::instrument;
 use crate::core::generate;
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::handlers::authorize;
+use crate::oid4vci::issuer::{PushedAuthorizationRequest, PushedAuthorizationResponse};
+use crate::oid4vci::provider::{Metadata, Provider};
 use crate::oid4vci::state::{PushedAuthorization, Stage, State};
-use crate::openid::issuer::{
-    Metadata, Provider, PushedAuthorizationRequest, PushedAuthorizationResponse,
-};
+use crate::oid4vci::{Error, Result};
 use crate::openid::provider::StateStore;
-use crate::openid::{Error, Result};
 
 /// Endpoint for the Wallet to push an Authorization Request when using Pushed
 /// Authorization Requests.

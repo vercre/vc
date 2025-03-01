@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 
-use crate::openid::issuer::{
+use crate::oid4vci::issuer::{
     AuthorizationDetail, CredentialOffer, CredentialRequest, RequestObject,
 };
 use crate::openid::oauth::CodeChallengeMethod;

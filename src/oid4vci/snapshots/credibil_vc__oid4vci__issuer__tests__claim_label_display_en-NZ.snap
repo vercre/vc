@@ -1,6 +1,6 @@
 ---
-source: src/openid/issuer.rs
-assertion_line: 2605
+source: src/oid4vci/issuer.rs
+assertion_line: 2602
 expression: "&claims"
 ---
 - Address.Country

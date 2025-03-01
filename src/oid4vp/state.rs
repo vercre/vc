@@ -5,7 +5,7 @@ use chrono::{DateTime, TimeDelta, Utc};
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
-use crate::openid::verifier::RequestObject;
+use crate::oid4vp::verifier::RequestObject;
 
 /// The duration for which a state item is valid.
 pub enum Expire {

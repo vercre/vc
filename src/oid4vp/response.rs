@@ -27,9 +27,9 @@ use tracing::instrument;
 
 use super::state::State;
 use crate::core::Kind;
+use crate::oid4vp::verifier::{Provider, ResponseRequest, ResponseResponse};
+use crate::oid4vp::{Error, Result};
 use crate::openid::provider::StateStore;
-use crate::openid::verifier::{Provider, ResponseRequest, ResponseResponse};
-use crate::openid::{Error, Result};
 use crate::w3c_vc;
 use crate::w3c_vc::model::VerifiableCredential;
 use crate::w3c_vc::proof::{Payload, Verify};

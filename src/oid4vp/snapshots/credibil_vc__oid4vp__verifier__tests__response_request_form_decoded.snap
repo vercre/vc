@@ -1,6 +1,6 @@
 ---
-source: src/openid/verifier.rs
-assertion_line: 785
+source: src/oid4vp/verifier.rs
+assertion_line: 784
 expression: "&req"
 ---
 vp_token:

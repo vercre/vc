@@ -21,14 +21,15 @@ use tracing::instrument;
 
 use crate::core::{generate, pkce};
 use crate::oid4vci::endpoint::Request;
-use crate::oid4vci::state::{Authorized, AuthorizedItem, Expire, ItemType, Stage, State, Token};
-use crate::openid::issuer::{
-    AuthorizedDetail, CredentialAuthorization, Issuer, Metadata, ProfileClaims, Provider,
-    TokenGrantType, TokenRequest, TokenResponse, TokenType,
+use crate::oid4vci::issuer::{
+    AuthorizedDetail, CredentialAuthorization, Issuer, ProfileClaims, TokenGrantType, TokenRequest,
+    TokenResponse, TokenType,
 };
+use crate::oid4vci::provider::{Metadata, Provider};
+use crate::oid4vci::state::{Authorized, AuthorizedItem, Expire, ItemType, Stage, State, Token};
+use crate::oid4vci::{Error, Result};
 use crate::openid::oauth::GrantType;
 use crate::openid::provider::StateStore;
-use crate::openid::{Error, Result};
 
 /// Token request handler.
 ///

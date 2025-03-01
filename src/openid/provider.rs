@@ -23,9 +23,3 @@ pub trait StateStore: Send + Sync {
     /// Remove data using the key provided.
     fn purge(&self, key: &str) -> impl Future<Output = Result<()>> + Send;
 }
-
-// /// `State` is used to persist server state between issuance or presentation
-// steps. pub trait State: Serialize + DeserializeOwned + Send + Sync {
-//     /// The time when the state entry should expire.
-//     fn expires_at(&self) -> DateTime<Utc>;
-// }

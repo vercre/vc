@@ -136,31 +136,6 @@ pub enum Error {
     /// Credential.
     #[error(r#"{{"error": "invalid_transaction_id", "error_description": "{0}"}}"#)]
     InvalidTransactionId(String),
-
-    /// The Wallet does not support any of the formats requested by the
-    /// Verifier, such as those included in the `vp_formats` registration
-    /// parameter.
-    #[error(r#"{{"error": "vp_formats_not_supported", "error_description": "{0}"}}"#)]
-    VpFormatsNotSupported(String),
-
-    /// The Presentation Definition URL cannot be reached.
-    #[error(r#"{{"error": "invalid_presentation_definition_uri", "error_description": "{0}"}}"#)]
-    InvalidPresentationDefinitionUri(String),
-
-    /// The Presentation Definition URL can be reached, but the specified
-    /// `presentation_definition` cannot be found at the URL.
-    #[error(
-        r#"{{"error": "invalid_presentation_definition_reference", "error_description": "{0}"}}"#
-    )]
-    InvalidPresentationDefinitionReference(String),
-
-    /// The Wallet appears to be unavailable and therefore unable to respond to
-    /// the request.
-    /// Use when the User Agent cannot invoke the Wallet and another component
-    /// receives the request while the End-User wishes to continue the journey
-    /// on the Verifier website.
-    #[error(r#"{{"error": "wallet_unavailable", "error_description": "{0}"}}"#)]
-    WalletUnavailable(String),
 }
 
 /// Error response for `OpenID` for Verifiable Credentials.

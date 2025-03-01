@@ -3,8 +3,8 @@
 mod utils;
 
 // use providers::wallet_provider::holder_provider::CLIENT_ID;
-use credibil_vc::openid::verifier::MetadataRequest;
 use credibil_vc::oid4vp;
+use credibil_vc::oid4vp::verifier::MetadataRequest;
 use insta::assert_yaml_snapshot as assert_snapshot;
 
 #[tokio::test]

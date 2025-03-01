@@ -15,7 +15,7 @@ use serde::de::{self, Deserializer, Visitor};
 use serde::ser::{SerializeMap, Serializer};
 use serde::{Deserialize, Serialize};
 
-use super::oauth::{OAuthClient, OAuthServer};
+use crate::openid::oauth::{OAuthClient, OAuthServer};
 use super::provider::{Result, StateStore};
 use crate::core::{Kind, urlencode};
 use crate::dif_exch::{InputDescriptor, PresentationDefinition, PresentationSubmission};

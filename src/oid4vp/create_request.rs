@@ -52,12 +52,12 @@ use uuid::Uuid;
 use super::state::{Expire, State};
 use crate::core::{Kind, generate};
 use crate::dif_exch::{ClaimFormat, PresentationDefinition};
-use crate::openid::provider::StateStore;
-use crate::openid::verifier::{
+use crate::oid4vp::verifier::{
     ClientIdScheme, CreateRequestRequest, CreateRequestResponse, DeviceFlow, Metadata, Provider,
     RequestObject, ResponseType,
 };
-use crate::openid::{Error, Result};
+use crate::oid4vp::{Error, Result};
+use crate::openid::provider::StateStore;
 
 // TODO: request supported Client Identifier schemes from the Wallet
 // TODO: add support for other Client Identifier schemes
