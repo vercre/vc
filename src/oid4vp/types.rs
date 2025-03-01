@@ -10,7 +10,7 @@ pub use request::*;
 pub use response::*;
 use serde::{Deserialize, Serialize};
 
-use crate::openid::oauth::{OAuthClient, OAuthServer};
+use crate::oauth::{OAuthClient, OAuthServer};
 
 /// Request to retrieve the Verifier's  client metadata.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]

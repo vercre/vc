@@ -71,6 +71,7 @@ use chrono::Utc;
 use tracing::instrument;
 
 use crate::core::generate;
+use crate::oauth::GrantType;
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
 use crate::oid4vci::state::{AuthorizedItem, Expire, ItemType, Offer, Stage, State};
@@ -80,7 +81,6 @@ use crate::oid4vci::types::{
     PreAuthorizedCodeGrant, SendType, Server, TxCode,
 };
 use crate::oid4vci::{Error, Result};
-use crate::openid::oauth::GrantType;
 
 /// Invoke request handler generates and returns a Credential Offer.
 ///

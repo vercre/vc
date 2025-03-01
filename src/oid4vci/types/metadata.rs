@@ -1,13 +1,12 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
 
-use anyhow::anyhow;
+use anyhow::{Result, anyhow};
 use serde::{Deserialize, Serialize};
 
 use crate::core::strings::title_case;
+use crate::oauth::{OAuthClient, OAuthServer};
 use crate::oid4vci::types::credential::{Claim, Format};
-use crate::openid::oauth::{OAuthClient, OAuthServer};
-use crate::openid::provider::Result;
 
 /// Request to retrieve the Credential Issuer's configuration.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]

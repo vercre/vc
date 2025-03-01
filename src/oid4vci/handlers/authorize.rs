@@ -71,6 +71,7 @@ use chrono::Utc;
 use tracing::instrument;
 
 use crate::core::generate;
+use crate::oauth::GrantType;
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
 use crate::oid4vci::state::{Authorization, AuthorizedItem, Expire, ItemType, Stage, State};
@@ -79,7 +80,6 @@ use crate::oid4vci::types::{
     Claim, CredentialAuthorization, Issuer, ProfileClaims, RequestObject,
 };
 use crate::oid4vci::{Error, Result};
-use crate::openid::oauth::GrantType;
 
 /// Authorization request handler.
 ///

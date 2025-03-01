@@ -6,10 +6,10 @@ use std::collections::HashMap;
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 
+use crate::oauth::CodeChallengeMethod;
 use crate::oid4vci::types::{
     AuthorizationDetail, CredentialOffer, CredentialRequest, RequestObject,
 };
-use crate::openid::oauth::CodeChallengeMethod;
 use crate::w3c_vc::model::VerifiableCredential;
 
 type CredentialIdentifier = String;

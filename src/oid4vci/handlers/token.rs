@@ -20,6 +20,7 @@ use chrono::Utc;
 use tracing::instrument;
 
 use crate::core::{generate, pkce};
+use crate::oauth::GrantType;
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore};
 use crate::oid4vci::state::{Authorized, AuthorizedItem, Expire, ItemType, Stage, State, Token};
@@ -28,7 +29,6 @@ use crate::oid4vci::types::{
     TokenResponse, TokenType,
 };
 use crate::oid4vci::{Error, Result};
-use crate::openid::oauth::GrantType;
 
 /// Token request handler.
 ///

@@ -5,9 +5,8 @@ use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
 
 use crate::core::urlencode;
+use crate::oauth;
 use crate::oid4vci::types::{Format, ProfileClaims};
-use crate::openid::oauth;
-use crate::openid::provider::Result;
 
 /// Grant Types the Credential Issuer's Authorization Server is prepared to
 /// process for this credential offer.
@@ -501,8 +500,8 @@ mod tests {
 
     use super::*;
     use crate::core::urlencode;
+    use crate::oauth;
     use crate::oid4vci::types::{Claim, CredentialDefinition, ProfileW3c};
-    use crate::openid::oauth;
 
     #[test]
     fn authorization_configuration_id() {

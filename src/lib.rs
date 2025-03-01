@@ -19,14 +19,9 @@ pub mod oid4vp;
 pub mod core;
 pub mod dif_exch;
 mod iso_mdl;
-pub mod openid;
+pub mod oauth;
 pub mod status;
 pub mod w3c_vc;
-
-/// Re-export top-level provider traits and types
-pub mod provider {
-    pub use crate::openid::provider::StateStore;
-}
 
 /// Re-export DID resolution
 pub mod did {

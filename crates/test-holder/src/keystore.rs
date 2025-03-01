@@ -1,6 +1,6 @@
+use anyhow::Result;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use credibil_infosec::jose::jwa::Algorithm;
-use credibil_vc::openid::provider::Result;
 use ed25519_dalek::Signer;
 
 const HOLDER_DID: &str = "did:key:z6Mkj8Jr1rg3YjVWWhg7ahEYJibqhjBgZt1pDCbT4Lv7D4HX";

@@ -1,7 +1,6 @@
-use anyhow::anyhow;
+use anyhow::{Result, anyhow};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use credibil_infosec::jose::jwa::Algorithm;
-use credibil_vc::openid::provider::Result;
 use ed25519_dalek::{SecretKey, Signer, SigningKey};
 
 #[derive(Default, Clone, Debug)]

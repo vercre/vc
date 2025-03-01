@@ -1,7 +1,7 @@
 pub mod keystore;
 
+use anyhow::Result;
 use credibil_infosec::{Algorithm, Signer};
-use credibil_vc::openid::provider::Result;
 use keystore::Keystore;
 
 #[derive(Clone, Debug)]

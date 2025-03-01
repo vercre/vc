@@ -7,8 +7,8 @@ use qrcode::QrCode;
 use serde::{Deserialize, Serialize};
 
 use crate::core::urlencode;
+use crate::oauth::GrantType;
 use crate::oid4vci::types::{AuthorizationCodeGrant, Grants, PreAuthorizedCodeGrant};
-use crate::openid::oauth::GrantType;
 
 /// Request a Credential Offer for a Credential Issuer.
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]

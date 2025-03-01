@@ -8,7 +8,6 @@ use serde_json::{Map, Value};
 
 use crate::core::Kind;
 use crate::oid4vci::types::{ClaimDefinition, CredentialDefinition};
-use crate::openid::provider::Result;
 use crate::w3c_vc::model::VerifiableCredential;
 
 /// The user information returned by the Subject trait.
