@@ -165,7 +165,7 @@ mod create_request;
 mod metadata;
 mod request_object;
 mod response;
-mod state;
+pub mod state;
 
 /// Re-export provider traits and types.
 pub mod provider {

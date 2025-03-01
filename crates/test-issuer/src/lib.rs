@@ -1,8 +1,10 @@
 pub mod keystore;
-pub mod resolver;
-pub mod state;
 pub mod store;
 
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+
+use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use credibil_did::{DidResolver, Document};
 use credibil_infosec::{Algorithm, Signer};
@@ -21,11 +23,11 @@ pub const REDIRECT_URI: &str = "http://localhost:3000/callback";
 
 #[derive(Default, Clone, Debug)]
 pub struct ProviderImpl {
-    pub client: store::ClientStore,
-    pub issuer: store::IssuerStore,
-    pub server: store::ServerStore,
-    pub subject: store::DatasetStore,
-    pub state: state::Store,
+    client: store::ClientStore,
+    issuer: store::IssuerStore,
+    server: store::ServerStore,
+    subject: store::DatasetStore,
+    state: Arc<Mutex<HashMap<String, Vec<u8>>>>,
 }
 
 impl ProviderImpl {
@@ -36,7 +38,7 @@ impl ProviderImpl {
             issuer: store::IssuerStore::new(),
             server: store::ServerStore::new(),
             subject: store::DatasetStore::new(),
-            state: state::Store::new(),
+            state: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 }
@@ -75,22 +77,29 @@ impl Subject for ProviderImpl {
 }
 
 impl StateStore for ProviderImpl {
-    async fn put(&self, key: &str, state: impl Serialize, dt: DateTime<Utc>) -> Result<()> {
-        self.state.put(key, state, dt)
+    async fn put(&self, key: &str, state: impl Serialize, _dt: DateTime<Utc>) -> Result<()> {
+        let state = serde_json::to_vec(&state)?;
+        self.state.lock().expect("should lock").insert(key.to_string(), state);
+        Ok(())
     }
 
     async fn get<T: DeserializeOwned>(&self, key: &str) -> Result<T> {
-        self.state.get(key)
+        let Some(state) = self.state.lock().expect("should lock").get(key).cloned() else {
+            return Err(anyhow!("state not found for key: {key}"));
+        };
+        Ok(serde_json::from_slice(&state)?)
     }
 
     async fn purge(&self, key: &str) -> Result<()> {
-        self.state.purge(key)
+        self.state.lock().expect("should lock").remove(key);
+        Ok(())
     }
 }
 
 impl DidResolver for ProviderImpl {
-    async fn resolve(&self, url: &str) -> anyhow::Result<Document> {
-        resolver::resolve_did(url).await
+    async fn resolve(&self, _url: &str) -> anyhow::Result<Document> {
+        serde_json::from_slice(include_bytes!("../data/did-web.json"))
+            .map_err(|e| anyhow!("issue deserializing document: {e}"))
     }
 }
 

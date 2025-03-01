@@ -1,7 +1,10 @@
 //! Tests for the token endpoint.
 
+mod utils;
+
 use chrono::Utc;
 use credibil_vc::core::pkce;
+use credibil_vc::issuer;
 use credibil_vc::issuer::state::{
     Authorization, AuthorizedItem, Expire, ItemType, Offer, Stage, State,
 };
@@ -10,14 +13,13 @@ use credibil_vc::openid::issuer::{
     Format, ProfileW3c,
 };
 use credibil_vc::openid::provider::StateStore;
-use credibil_vc::{issuer, snapshot};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use test_issuer::{CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
 #[tokio::test]
 async fn pre_authorized() {
-    // test_utils::init_tracer();
+    utils::init_tracer();
     snapshot!("");
     let provider = test_issuer::ProviderImpl::new();
 
@@ -82,7 +84,7 @@ async fn pre_authorized() {
 
 #[tokio::test]
 async fn authorized() {
-    // test_utils::init_tracer();
+    utils::init_tracer();
     snapshot!("");
     let provider = test_issuer::ProviderImpl::new();
 
@@ -149,7 +151,7 @@ async fn authorized() {
 
 #[tokio::test]
 async fn authorization_details() {
-    // test_utils::init_tracer();
+    utils::init_tracer();
     snapshot!("");
     let provider = test_issuer::ProviderImpl::new();
 

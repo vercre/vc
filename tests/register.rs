@@ -1,17 +1,19 @@
 //! Tests for the `register` endpoint.
 
+mod utils;
+
 use chrono::Utc;
+use credibil_vc::issuer;
 use credibil_vc::issuer::state::{Expire, Stage, State, Token};
 use credibil_vc::openid::issuer::RegistrationRequest;
 use credibil_vc::openid::provider::StateStore;
-use credibil_vc::{issuer, snapshot};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use test_issuer::{CLIENT_ID, CREDENTIAL_ISSUER};
 
 #[tokio::test]
 async fn registration_ok() {
-    // test_utils::init_tracer();
+    utils::init_tracer();
     snapshot!("");
     let provider = test_issuer::ProviderImpl::new();
 

@@ -1,18 +1,17 @@
 use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use credibil_infosec::jose::jwa::Algorithm;
+use credibil_vc::openid::provider::Result;
 use ed25519_dalek::{SecretKey, Signer, SigningKey};
 
-use crate::openid::provider::Result;
-
 #[derive(Default, Clone, Debug)]
-pub struct VerifierKeystore;
+pub struct Keystore;
 
 const VERIFIER_DID: &str = "did:web:demo.credibil.io";
 const VERIFIER_VERIFY_KEY: &str = "key-0";
 const VERIFIER_SECRET: &str = "cCxmHfFfIJvP74oNKjAuRC3zYoDMo0pFsAs19yKMowY";
 
-impl VerifierKeystore {
+impl Keystore {
     pub fn try_sign(msg: &[u8]) -> Result<Vec<u8>> {
         let decoded = Base64UrlUnpadded::decode_vec(VERIFIER_SECRET)?;
         let secret_key: SecretKey =

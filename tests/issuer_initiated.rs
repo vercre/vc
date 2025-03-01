@@ -6,7 +6,6 @@ mod utils;
 mod wallet;
 
 use credibil_vc::issuer::{self, Format, ProfileW3c, SendType};
-use credibil_vc::{snapshot, test_utils};
 use rstest::rstest;
 use serde_json::json;
 use test_issuer::{CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER, ProviderImpl};
@@ -17,7 +16,7 @@ use utils::{Issuance, provider};
 #[case(Issuance::Immediate)]
 #[case(Issuance::Deferred)]
 async fn issuance(provider: ProviderImpl, #[case] issue: Issuance) {
-    test_utils::init_tracer();
+    utils::init_tracer();
     snapshot!("issuer:{issue}");
 
     let subject_id = match issue {
@@ -50,7 +49,7 @@ async fn issuance(provider: ProviderImpl, #[case] issue: Issuance) {
 #[rstest]
 #[case(Format::JwtVcJson(ProfileW3c::default()))]
 async fn format(provider: ProviderImpl, #[case] credential_format: Format) {
-    test_utils::init_tracer();
+    utils::init_tracer();
     snapshot!("issuer:{credential_format}");
 
     let value = json!({
@@ -77,7 +76,7 @@ async fn format(provider: ProviderImpl, #[case] credential_format: Format) {
 // Authorization Code flow
 #[rstest]
 async fn authorization(provider: ProviderImpl) {
-    test_utils::init_tracer();
+    utils::init_tracer();
     snapshot!("issuer:authorization");
 
     let value = json!({
@@ -105,7 +104,7 @@ async fn authorization(provider: ProviderImpl) {
 #[case(SendType::ByRef)]
 #[case(SendType::ByVal)]
 async fn offer_type(provider: ProviderImpl, #[case] send_type: SendType) {
-    test_utils::init_tracer();
+    utils::init_tracer();
     snapshot!("issuer:authorization:{send_type:?}");
 
     let value = json!({

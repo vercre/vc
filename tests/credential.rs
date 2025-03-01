@@ -1,22 +1,24 @@
 //! Tests for the `credential` endpoint.
 
+mod utils;
+
 use std::collections::HashMap;
 
 use assert_let_bind::assert_let;
 use chrono::Utc;
 use credibil_infosec::jose::jws::JwsBuilder;
+use credibil_vc::issuer;
 use credibil_vc::issuer::state::{Authorized, Expire, Stage, State, Token};
 use credibil_vc::openid::issuer::{CredentialResponseType, ProofClaims};
 use credibil_vc::openid::provider::StateStore;
 use credibil_vc::w3c_vc::proof::{self, Payload, Type, Verify};
-use credibil_vc::{issuer, snapshot};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use test_issuer::{CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
 #[tokio::test]
 async fn identifier() {
-    // test_utils::init_tracer();
+    utils::init_tracer();
     snapshot!("");
     let provider = test_issuer::ProviderImpl::new();
 
@@ -105,7 +107,7 @@ async fn identifier() {
 #[tokio::test]
 #[ignore]
 async fn format() {
-    // test_utils::init_tracer();
+    utils::init_tracer();
     snapshot!("");
     let provider = test_issuer::ProviderImpl::new();
 
@@ -201,7 +203,7 @@ async fn format() {
 #[tokio::test]
 #[ignore]
 async fn iso_mdl() {
-    // test_utils::init_tracer();
+    utils::init_tracer();
     snapshot!("");
     let provider = test_issuer::ProviderImpl::new();
 

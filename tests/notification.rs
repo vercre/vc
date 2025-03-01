@@ -1,18 +1,20 @@
 //! Tests for the notification endpoint.
 
+mod utils;
+
 use assert_let_bind::assert_let;
 use chrono::Utc;
+use credibil_vc::issuer;
 use credibil_vc::issuer::state::{Credential, Expire, Stage, State};
 use credibil_vc::openid::issuer::{NotificationEvent, NotificationRequest};
 use credibil_vc::openid::provider::StateStore;
 use credibil_vc::w3c_vc::model::VerifiableCredential;
-use credibil_vc::{issuer, snapshot};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use test_issuer::{CREDENTIAL_ISSUER, NORMAL_USER};
 
 #[tokio::test]
 async fn notification_ok() {
-    // test_utils::init_tracer();
+    utils::init_tracer();
     snapshot!("");
     let provider = test_issuer::ProviderImpl::new();
 

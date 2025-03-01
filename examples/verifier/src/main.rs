@@ -1,10 +1,8 @@
-//! # Verifiable Credential Provider
+//! # Verifiable Credential ProviderImpl
 //!
-//! This is a simple Verifiable Credential Provider (VCP) that implements the
+//! This is a simple Verifiable Credential ProviderImpl (VCP) that implements the
 //! [Verifiable Credential HTTP API](
 //! https://identity.foundation/verifiable-credential/spec/#http-api).
-
-mod provider;
 
 use std::collections::HashMap;
 
@@ -21,13 +19,12 @@ use credibil_vc::verifier::{
 };
 use serde::Serialize;
 use serde_json::json;
+use test_verifier::ProviderImpl;
 use tokio::net::TcpListener;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
-
-use crate::provider::Provider;
 
 #[allow(clippy::needless_return)]
 #[tokio::main]
@@ -39,12 +36,12 @@ async fn main() {
 
     let router = Router::new()
         .route("/create_request", post(create_request))
-        .route("/request/:object_id", get(request_object))
+        .route("/request/{object_id}", get(request_object))
         .route("/callback", get(response))
         .route("/post", post(response))
         .layer(TraceLayer::new_for_http())
         .layer(cors)
-        .with_state(Provider::new());
+        .with_state(ProviderImpl::new());
 
     let listener = TcpListener::bind("0.0.0.0:8080").await.expect("should bind");
     tracing::info!("listening on {}", listener.local_addr().expect("local_addr should be set"));
@@ -54,7 +51,7 @@ async fn main() {
 // Generate Authorization Request endpoint
 #[axum::debug_handler]
 async fn create_request(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Json(mut request): Json<CreateRequestRequest>,
 ) -> AxResult<CreateRequestResponse> {
     request.client_id = format!("http://{host}");
@@ -64,7 +61,7 @@ async fn create_request(
 // Retrieve Authorization Request Object endpoint
 #[axum::debug_handler]
 async fn request_object(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Path(object_id): Path<String>,
 ) -> AxResult<RequestObjectResponse> {
     let request = RequestObjectRequest {
@@ -77,7 +74,7 @@ async fn request_object(
 // Wallet Authorization response endpoint
 #[axum::debug_handler]
 async fn response(
-    State(provider): State<Provider>, Form(request): Form<HashMap<String, String>>,
+    State(provider): State<ProviderImpl>, Form(request): Form<HashMap<String, String>>,
 ) -> impl IntoResponse {
     let Ok(req) = ResponseRequest::form_decode(&request) else {
         tracing::error!("unable to turn HashMap {request:?} into ResponseRequest");

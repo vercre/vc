@@ -32,27 +32,3 @@ async fn process(provider: impl Provider, req: &MetadataRequest) -> Result<Metad
             .map_err(|e| Error::ServerError(format!("issue getting metadata: {e}")))?,
     })
 }
-
-#[cfg(test)]
-mod tests {
-    use insta::assert_yaml_snapshot as assert_snapshot;
-
-    // use providers::wallet_provider::holder_provider::CLIENT_ID;
-    use super::*;
-    use crate::test_utils;
-    use crate::test_utils::verifier::Provider;
-
-    #[tokio::test]
-    async fn metadata_ok() {
-        test_utils::init_tracer();
-        let provider = Provider::new();
-
-        let request = MetadataRequest {
-            client_id: "http://localhost:8080".into(),
-        };
-        let response = metadata(provider, &request).await.expect("response is ok");
-        assert_snapshot!("response", response, {
-            ".vp_formats" => insta::sorted_redaction()
-        });
-    }
-}

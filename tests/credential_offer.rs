@@ -1,15 +1,16 @@
 //! Test the `credential_offer` endpoint.
 
+mod utils;
+
 use credibil_vc::issuer::{self, CredentialOfferRequest};
 use credibil_vc::openid::issuer::{CreateOfferRequest, OfferType, SendType};
 use credibil_vc::openid::oauth::GrantType;
-use credibil_vc::snapshot;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use test_issuer::{CREDENTIAL_ISSUER, NORMAL_USER};
 
 #[tokio::test]
 async fn request_jwt() {
-    // test_utils::init_tracer();
+    utils::init_tracer();
     snapshot!("");
     let provider = test_issuer::ProviderImpl::new();
 

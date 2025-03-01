@@ -60,6 +60,7 @@ insta.workspace = true
 rstest = "0.24.0"
 test-holder.workspace = true
 test-issuer.workspace = true
+test-verifier.workspace = true
 tokio.workspace = true
 
 # -----------------------------------------------------------------------------
@@ -113,6 +114,7 @@ serde = { version = "1.0.218", features = ["derive"] }
 serde_json = { version = "1.0.139", features = ["alloc"] }
 test-holder = { path = "crates/test-holder" }
 test-issuer = { path = "crates/test-issuer" }
+test-verifier = { path = "crates/test-verifier" }
 tokio = { version = "1.43.0", features = ["macros", "rt-multi-thread"] }
 tower-http = { version = "0.6.2", features = ["cors", "set-header", "trace"] }
 tracing = "0.1.41"

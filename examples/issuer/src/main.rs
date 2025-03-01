@@ -2,8 +2,6 @@
 //!
 //! This example demonstrates how to use the Verifiable Credential Issuer (VCI)
 
-mod provider;
-
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
@@ -26,6 +24,7 @@ use credibil_vc::urlencode;
 use oauth2::CsrfToken;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use test_issuer::ProviderImpl;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};
@@ -33,8 +32,6 @@ use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
-
-use crate::provider::Provider;
 
 static AUTH_REQUESTS: LazyLock<RwLock<HashMap<String, AuthorizationRequest>>> =
     LazyLock::new(|| RwLock::new(HashMap::new()));
@@ -51,7 +48,7 @@ async fn main() {
 
     let router = Router::new()
         .route("/create_offer", post(create_offer))
-        .route("/credential_offer/:offer_id", get(credential_offer))
+        .route("/credential_offer/{offer_id}", get(credential_offer))
         .route("/.well-known/openid-credential-issuer", get(metadata))
         .route("/.well-known/oauth-authorization-server", get(oauth_server))
         .route("/auth", get(authorize))
@@ -67,7 +64,7 @@ async fn main() {
             header::CACHE_CONTROL,
             HeaderValue::from_static("no-cache, no-store"),
         ))
-        .with_state(Provider::new());
+        .with_state(ProviderImpl::new());
 
     let listener = TcpListener::bind("0.0.0.0:8080").await.expect("should bind");
     tracing::info!("listening on {}", listener.local_addr().expect("should have addr"));
@@ -77,7 +74,7 @@ async fn main() {
 // Credential Offer endpoint
 #[axum::debug_handler]
 async fn create_offer(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Json(mut req): Json<CreateOfferRequest>,
 ) -> AxResult<CreateOfferResponse> {
     req.credential_issuer = format!("http://{host}");
@@ -87,7 +84,7 @@ async fn create_offer(
 // Retrieve Authorization Request Object endpoint
 #[axum::debug_handler]
 async fn credential_offer(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Path(offer_id): Path<String>,
 ) -> AxResult<CredentialOfferResponse> {
     let request = CredentialOfferRequest {
@@ -101,7 +98,7 @@ async fn credential_offer(
 // TODO: override default  Cache-Control header to allow caching
 #[axum::debug_handler]
 async fn metadata(
-    headers: HeaderMap, State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    headers: HeaderMap, State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
 ) -> AxResult<MetadataResponse> {
     let req = MetadataRequest {
         credential_issuer: format!("http://{host}"),
@@ -116,7 +113,7 @@ async fn metadata(
 // OAuth Server metadata endpoint
 #[axum::debug_handler]
 async fn oauth_server(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
 ) -> AxResult<OAuthServerResponse> {
     let req = OAuthServerRequest {
         credential_issuer: format!("http://{host}"),
@@ -134,7 +131,7 @@ async fn oauth_server(
 /// redirection URI using the "application/x-www-form-urlencoded" format.
 #[axum::debug_handler]
 async fn authorize(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Form(req): Form<AuthorizationRequest>,
 ) -> impl IntoResponse {
     let AuthorizationRequest::Object(mut object) = req.clone() else {
@@ -196,7 +193,7 @@ async fn authorize(
 /// redirection URI using the "application/x-www-form-urlencoded" format.
 #[axum::debug_handler]
 async fn par(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Form(mut req): Form<PushedAuthorizationRequest>,
 ) -> impl IntoResponse {
     let object = &req.request;
@@ -292,7 +289,7 @@ async fn handle_login(
 /// Communication with the Notification Endpoint MUST utilize TLS.
 #[axum::debug_handler]
 async fn notification(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(mut req): Json<NotificationRequest>,
 ) -> AxResult<NotificationResponse> {
@@ -316,7 +313,7 @@ async fn notification(
 /// [RFC2616]: (https://www.rfc-editor.org/rfc/rfc2616)
 #[axum::debug_handler]
 async fn token(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Form(req): Form<HashMap<String, String>>,
 ) -> impl IntoResponse {
     let Ok(mut tr) = TokenRequest::form_decode(&req) else {
@@ -338,7 +335,7 @@ async fn token(
 // Credential endpoint
 #[axum::debug_handler]
 async fn credential(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>, Json(mut req): Json<CredentialRequest>,
 ) -> AxResult<CredentialResponse> {
     req.credential_issuer = format!("http://{host}");
@@ -349,7 +346,7 @@ async fn credential(
 // Deferred endpoint
 #[axum::debug_handler]
 async fn deferred_credential(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(mut req): Json<DeferredCredentialRequest>,
 ) -> AxResult<DeferredCredentialResponse> {

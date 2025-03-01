@@ -1,9 +1,11 @@
 //! Tests for the `authorize` endpoint.
 
+mod utils;
+
 use base64ct::{Base64UrlUnpadded, Encoding};
+use credibil_vc::issuer;
 use credibil_vc::issuer::state::State;
 use credibil_vc::openid::provider::StateStore;
-use credibil_vc::{issuer, snapshot};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use rstest::rstest;
 use serde_json::{Value, json};
@@ -20,7 +22,7 @@ use test_issuer::{CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 #[should_panic(expected = "ok")]
 #[case::response_type_err("response_type_err", response_type_err)]
 async fn authorize_tests(#[case] name: &str, #[case] value: fn() -> Value) {
-    // test_utils::init_tracer();
+    utils::init_tracer();
     snapshot!("");
     let provider = test_issuer::ProviderImpl::new();
 

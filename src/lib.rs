@@ -17,13 +17,11 @@ pub mod issuer;
 pub mod verifier;
 
 pub mod core;
-mod dif_exch;
+pub mod dif_exch;
 mod iso_mdl;
 pub mod openid;
 pub mod status;
 pub mod w3c_vc;
-
-pub mod test_utils;
 
 /// Re-export top-level provider traits and types
 pub mod provider {

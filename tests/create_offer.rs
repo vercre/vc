@@ -1,17 +1,19 @@
 //! Tests for `create_offer` endpoint.
 
+mod utils;
+
 use assert_let_bind::assert_let;
+use credibil_vc::issuer;
 use credibil_vc::issuer::state::{Stage, State};
 use credibil_vc::openid::issuer::{OfferType, SendType};
 use credibil_vc::openid::provider::StateStore;
-use credibil_vc::{issuer, snapshot};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use test_issuer::{CREDENTIAL_ISSUER, NORMAL_USER};
 
 #[tokio::test]
 async fn pre_authorized() {
-    // test_utils::init_tracer();
+    utils::init_tracer();
     snapshot!("");
     let provider = test_issuer::ProviderImpl::new();
 
