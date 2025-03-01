@@ -2,30 +2,29 @@
 //!
 //! This example demonstrates how to use the Verifiable Credential Issuer (VCI)
 
-mod provider;
-
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use axum::extract::{Path, State};
-use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
+use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum::{Form, Json, Router};
+use axum_extra::TypedHeader;
 use axum_extra::headers::authorization::Bearer;
 use axum_extra::headers::{Authorization, Host};
-use axum_extra::TypedHeader;
-use credibil_vc::urlencode;
-use credibil_vc::issuer::{
-    self, AuthorizationRequest, CreateOfferRequest, CreateOfferResponse,
-    CredentialOfferRequest, CredentialOfferResponse, CredentialRequest, CredentialResponse,
-    DeferredCredentialRequest, DeferredCredentialResponse, MetadataRequest, MetadataResponse,
-    NotificationRequest, NotificationResponse, OAuthServerRequest, OAuthServerResponse,
-    PushedAuthorizationRequest, PushedAuthorizationResponse, TokenRequest, TokenResponse,
+use credibil_vc::oid4vci::{
+    self, AuthorizationRequest, CreateOfferRequest, CreateOfferResponse, CredentialOfferRequest,
+    CredentialOfferResponse, CredentialRequest, CredentialResponse, DeferredCredentialRequest,
+    DeferredCredentialResponse, MetadataRequest, MetadataResponse, NotificationRequest,
+    NotificationResponse, OAuthServerRequest, OAuthServerResponse, PushedAuthorizationRequest,
+    PushedAuthorizationResponse, TokenRequest, TokenResponse,
 };
+use credibil_vc::urlencode;
 use oauth2::CsrfToken;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use test_issuer::ProviderImpl;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};
@@ -33,8 +32,6 @@ use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
-
-use crate::provider::Provider;
 
 static AUTH_REQUESTS: LazyLock<RwLock<HashMap<String, AuthorizationRequest>>> =
     LazyLock::new(|| RwLock::new(HashMap::new()));
@@ -51,7 +48,7 @@ async fn main() {
 
     let router = Router::new()
         .route("/create_offer", post(create_offer))
-        .route("/credential_offer/:offer_id", get(credential_offer))
+        .route("/credential_offer/{offer_id}", get(credential_offer))
         .route("/.well-known/openid-credential-issuer", get(metadata))
         .route("/.well-known/oauth-authorization-server", get(oauth_server))
         .route("/auth", get(authorize))
@@ -67,7 +64,7 @@ async fn main() {
             header::CACHE_CONTROL,
             HeaderValue::from_static("no-cache, no-store"),
         ))
-        .with_state(Provider::new());
+        .with_state(ProviderImpl::new());
 
     let listener = TcpListener::bind("0.0.0.0:8080").await.expect("should bind");
     tracing::info!("listening on {}", listener.local_addr().expect("should have addr"));
@@ -77,31 +74,31 @@ async fn main() {
 // Credential Offer endpoint
 #[axum::debug_handler]
 async fn create_offer(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Json(mut req): Json<CreateOfferRequest>,
 ) -> AxResult<CreateOfferResponse> {
     req.credential_issuer = format!("http://{host}");
-    issuer::create_offer(provider, req).await.into()
+    oid4vci::endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
 }
 
 // Retrieve Authorization Request Object endpoint
 #[axum::debug_handler]
 async fn credential_offer(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Path(offer_id): Path<String>,
 ) -> AxResult<CredentialOfferResponse> {
     let request = CredentialOfferRequest {
         credential_issuer: format!("http://{host}"),
         id: offer_id,
     };
-    issuer::credential_offer(provider, request).await.into()
+    oid4vci::endpoint::handle(&format!("http://{host}"), request, &provider).await.into()
 }
 
 // Metadata endpoint
 // TODO: override default  Cache-Control header to allow caching
 #[axum::debug_handler]
 async fn metadata(
-    headers: HeaderMap, State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    headers: HeaderMap, State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
 ) -> AxResult<MetadataResponse> {
     let req = MetadataRequest {
         credential_issuer: format!("http://{host}"),
@@ -110,20 +107,20 @@ async fn metadata(
             .and_then(|v| v.to_str().ok())
             .map(ToString::to_string),
     };
-    issuer::metadata(provider.clone(), req).await.into()
+    oid4vci::endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
 }
 
 // OAuth Server metadata endpoint
 #[axum::debug_handler]
 async fn oauth_server(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
 ) -> AxResult<OAuthServerResponse> {
     let req = OAuthServerRequest {
         credential_issuer: format!("http://{host}"),
         // Issuer should be derived from path component if necessary
         issuer: None,
     };
-    issuer::oauth_server(provider.clone(), req).await.into()
+    oid4vci::endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
 }
 
 /// Authorize endpoint
@@ -134,7 +131,7 @@ async fn oauth_server(
 /// redirection URI using the "application/x-www-form-urlencoded" format.
 #[axum::debug_handler]
 async fn authorize(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Form(req): Form<AuthorizationRequest>,
 ) -> impl IntoResponse {
     let AuthorizationRequest::Object(mut object) = req.clone() else {
@@ -177,7 +174,7 @@ async fn authorize(
             .into_response();
     };
 
-    match issuer::authorize(provider, req).await {
+    match oid4vci::endpoint::handle(&format!("http://{host}"), req, &provider).await {
         Ok(v) => (StatusCode::FOUND, Redirect::to(&format!("{redirect_uri}?code={}", v.code)))
             .into_response(),
         Err(e) => {
@@ -196,7 +193,7 @@ async fn authorize(
 /// redirection URI using the "application/x-www-form-urlencoded" format.
 #[axum::debug_handler]
 async fn par(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Form(mut req): Form<PushedAuthorizationRequest>,
 ) -> impl IntoResponse {
     let object = &req.request;
@@ -232,8 +229,11 @@ async fn par(
     // process request
     req.request.credential_issuer = format!("http://{host}");
 
+    // let axresponse: AxResult<PushedAuthorizationResponse> =
+    //     oid4vci::par(provider, req).await.into();
+
     let axresponse: AxResult<PushedAuthorizationResponse> =
-        issuer::par(provider, req).await.into();
+        oid4vci::endpoint::handle(&format!("http://{host}"), req, &provider).await.into();
     axresponse.into_response()
 }
 
@@ -293,13 +293,13 @@ async fn handle_login(
 /// Communication with the Notification Endpoint MUST utilize TLS.
 #[axum::debug_handler]
 async fn notification(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(mut req): Json<NotificationRequest>,
 ) -> AxResult<NotificationResponse> {
     req.credential_issuer = format!("http://{host}");
     req.access_token = auth.token().to_string();
-    issuer::notification(provider.clone(), req).await.into()
+    oid4vci::endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
 }
 
 /// Token endpoint
@@ -317,7 +317,7 @@ async fn notification(
 /// [RFC2616]: (https://www.rfc-editor.org/rfc/rfc2616)
 #[axum::debug_handler]
 async fn token(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Form(req): Form<HashMap<String, String>>,
 ) -> impl IntoResponse {
     let Ok(mut tr) = TokenRequest::form_decode(&req) else {
@@ -326,31 +326,32 @@ async fn token(
             .into_response();
     };
     tr.credential_issuer = format!("http://{host}");
-    let response: AxResult<TokenResponse> = match issuer::token(provider.clone(), tr).await {
-        Ok(v) => Ok(v).into(),
-        Err(e) => {
-            tracing::error!("error getting token: {e}");
-            Err(e).into()
-        }
-    };
+    let response: AxResult<TokenResponse> =
+        match oid4vci::endpoint::handle(&format!("http://{host}"), tr, &provider).await {
+            Ok(v) => Ok(v).into(),
+            Err(e) => {
+                tracing::error!("error getting token: {e}");
+                Err(e).into()
+            }
+        };
     response.into_response()
 }
 
 // Credential endpoint
 #[axum::debug_handler]
 async fn credential(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>, Json(mut req): Json<CredentialRequest>,
 ) -> AxResult<CredentialResponse> {
     req.credential_issuer = format!("http://{host}");
     req.access_token = auth.token().to_string();
-    issuer::credential(provider.clone(), req).await.into()
+    oid4vci::endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
 }
 
 // Deferred endpoint
 #[axum::debug_handler]
 async fn deferred_credential(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(mut req): Json<DeferredCredentialRequest>,
 ) -> AxResult<DeferredCredentialResponse> {
@@ -358,7 +359,7 @@ async fn deferred_credential(
     req.access_token = auth.0.token().to_string();
 
     #[allow(clippy::large_futures)]
-    issuer::deferred(provider.clone(), req).await.into()
+    oid4vci::endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
 }
 
 // ----------------------------------------------------------------------------
@@ -366,7 +367,7 @@ async fn deferred_credential(
 // ----------------------------------------------------------------------------
 
 /// Wrapper for `axum::Response`
-pub struct AxResult<T>(issuer::Result<T>);
+pub struct AxResult<T>(oid4vci::Result<T>);
 
 impl<T> IntoResponse for AxResult<T>
 where
@@ -381,8 +382,8 @@ where
     }
 }
 
-impl<T> From<issuer::Result<T>> for AxResult<T> {
-    fn from(val: issuer::Result<T>) -> Self {
+impl<T> From<oid4vci::Result<T>> for AxResult<T> {
+    fn from(val: oid4vci::Result<T>) -> Self {
         Self(val)
     }
 }

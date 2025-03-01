@@ -1,0 +1,30 @@
+---
+source: src/oid4vci/types/token.rs
+assertion_line: 324
+expression: "&req"
+---
+credential_issuer: "https://example.com"
+client_id: "1234"
+grant_type: "urn:ietf:params:oauth:grant-type:pre-authorized_code"
+pre-authorized_code: WQHhDmQ3ZygxyOPlBjunlA
+tx_code: "111222"
+authorization_details:
+  - type: openid_credential
+    credential_configuration_id: EmployeeID_JWT
+    credential_definition:
+      type:
+        - VerifiableCredential
+        - EmployeeIDCredential
+      credentialSubject:
+        address:
+          country: {}
+          locality: {}
+          region: {}
+          street_address: {}
+        email: {}
+        family_name: {}
+        given_name: {}
+    locations:
+      - "https://example.com"
+client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
+client_assertion: Ezie91o7DuPsA2PCLOtRUg

@@ -11,24 +11,17 @@
 //! * `verifier` - Enables the verifier API.
 
 #[cfg(feature = "issuer")]
-pub mod issuer;
+pub mod oid4vci;
 
 #[cfg(feature = "verifier")]
-pub mod verifier;
+pub mod oid4vp;
 
-mod core;
-mod dif_exch;
+pub mod core;
+pub mod dif_exch;
 mod iso_mdl;
-mod openid;
-mod status;
-mod w3c_vc;
-
-pub mod test_utils;
-
-/// Re-export top-level provider traits and types
-pub mod provider {
-    pub use crate::openid::provider::{StateStore, Result};
-}
+pub mod oauth;
+pub mod status;
+pub mod w3c_vc;
 
 /// Re-export DID resolution
 pub mod did {

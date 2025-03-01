@@ -145,4 +145,3 @@ pub async fn credential(
 
     Ok(jwt)
 }
-

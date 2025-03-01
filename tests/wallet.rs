@@ -4,24 +4,23 @@
 use base64ct::{Base64UrlUnpadded, Encoding};
 use chrono::Utc;
 use credibil_infosec::jose::JwsBuilder;
-use credibil_vc::issuer::proof::{self, Payload, Type, Verify};
-use credibil_vc::issuer::{
-    self, AuthorizationResponse, CredentialOfferRequest, CredentialResponseType,
-    DeferredCredentialRequest, DeferredCredentialResponse, Error, Format, OfferType, ProofClaims,
-    Result, TokenGrantType, TokenRequest, TokenResponse,
+use credibil_vc::oid4vci::proof::{self, Payload, Type, Verify};
+use credibil_vc::oid4vci::{
+    self, AuthorizationRequest, AuthorizationResponse, CredentialOfferRequest, CredentialRequest,
+    CredentialResponseType, DeferredCredentialRequest, DeferredCredentialResponse, Error, Format,
+    OfferType, ProofClaims, Result, TokenGrantType, TokenRequest, TokenResponse,
 };
-use credibil_vc::test_utils::holder;
-use credibil_vc::test_utils::issuer::{Provider, CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use sha2::{Digest, Sha256};
+use test_issuer::{CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER, ProviderImpl};
 
 pub const CODE_VERIFIER: &str = "ABCDEF12345";
 pub const REDIRECT_URI: &str = "http://localhost:3000/callback";
 
 #[derive(Default)]
 pub struct Wallet {
-    pub provider: Provider,
+    pub provider: ProviderImpl,
     pub format: Format,
     pub tx_code: Option<String>,
 }
@@ -53,7 +52,8 @@ impl Wallet {
                     id: id.to_string(),
                 };
 
-                let offer_resp = issuer::credential_offer(self.provider.clone(), request).await?;
+                let offer_resp =
+                    oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &self.provider).await?;
                 offer_resp.credential_offer
             }
         };
@@ -110,8 +110,13 @@ impl Wallet {
             "subject_id": NORMAL_USER,
             "wallet_issuer": CREDENTIAL_ISSUER
         });
-        let request = serde_json::from_value(value).expect("request is valid");
-        issuer::authorize(self.provider.clone(), request).await
+        // let request = serde_json::from_value(value).expect("request is valid");
+        // oid4vci::authorize(self.provider.clone(), request).await
+
+        let request: AuthorizationRequest =
+            serde_json::from_value(value).expect("should deserialize");
+
+        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &self.provider).await
     }
 
     async fn token(&self, grant_type: TokenGrantType) -> Result<TokenResponse> {
@@ -121,8 +126,7 @@ impl Wallet {
             grant_type,
             ..TokenRequest::default()
         };
-
-        issuer::token(self.provider.clone(), token_req).await
+        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, token_req, &self.provider).await
     }
 
     async fn credential(&self, token_resp: TokenResponse) -> Result<()> {
@@ -135,7 +139,7 @@ impl Wallet {
         let jws = JwsBuilder::new()
             .jwt_type(Type::Openid4VciProofJwt)
             .payload(claims)
-            .add_signer(&holder::Provider)
+            .add_signer(&test_holder::ProviderImpl)
             .build()
             .await
             .map_err(|e| Error::ServerError(format!("{e}")))?;
@@ -159,8 +163,9 @@ impl Wallet {
                 "jwt": jwt
             }
         });
-        let request = serde_json::from_value(value).expect("request is valid");
-        let mut response = issuer::credential(self.provider.clone(), request).await?;
+        let request: CredentialRequest = serde_json::from_value(value).expect("request is valid");
+        let mut response =
+            oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &self.provider).await?;
 
         // fetch credential if response is deferred
         if let CredentialResponseType::TransactionId(transaction_id) = &response.response {
@@ -199,6 +204,6 @@ impl Wallet {
             access_token: tkn_resp.access_token,
             transaction_id,
         };
-        issuer::deferred(self.provider.clone(), request).await
+        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &self.provider).await
     }
 }

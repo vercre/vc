@@ -1,7 +1,0 @@
----
-source: src/issuer/par.rs
-assertion_line: 134
-expression: response
----
-request_uri: "[request_uri]"
-expires_in: 600

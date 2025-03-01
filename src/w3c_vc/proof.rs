@@ -36,8 +36,8 @@ use std::fmt::Display;
 
 use anyhow::bail;
 use credibil_did::DidResolver;
-use credibil_infosec::jose::{jws, jwt};
 use credibil_infosec::Signer;
+use credibil_infosec::jose::{jws, jwt};
 use serde::{Deserialize, Serialize};
 
 use super::model::{VerifiableCredential, VerifiablePresentation};

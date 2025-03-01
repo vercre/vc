@@ -36,9 +36,7 @@ pub trait Status: Send + Sync {
 ///
 /// Will return a specific `ValidationError` if the status list is not resolved
 /// or processing the status list fails for the given `CredentialStatus`.
-pub fn validate(
-    _resolver: &impl Status, _status: &CredentialStatus,
-) -> Result<bool, Error> {
+pub fn validate(_resolver: &impl Status, _status: &CredentialStatus) -> Result<bool, Error> {
     // The following process, or one generating the exact output, MUST be followed
     // when validating a verifiable credential that is contained in a
     // BitstringStatusListCredential. The algorithm takes a status list verifiable

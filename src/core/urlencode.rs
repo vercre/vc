@@ -3,11 +3,10 @@
 mod error;
 mod ser;
 
-use percent_encoding::percent_decode_str;
-pub use ser::{to_string, Serializer};
-use serde::de::DeserializeOwned;
-
 use error::{Error, Result};
+use percent_encoding::percent_decode_str;
+pub use ser::{Serializer, to_string};
+use serde::de::DeserializeOwned;
 
 /// Deserializes a url-encoded string to a value.
 ///

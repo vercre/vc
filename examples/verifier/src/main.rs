@@ -1,10 +1,8 @@
-//! # Verifiable Credential Provider
+//! # Verifiable Credential ProviderImpl
 //!
-//! This is a simple Verifiable Credential Provider (VCP) that implements the
+//! This is a simple Verifiable Credential ProviderImpl (VCP) that implements the
 //! [Verifiable Credential HTTP API](
 //! https://identity.foundation/verifiable-credential/spec/#http-api).
-
-mod provider;
 
 use std::collections::HashMap;
 
@@ -13,21 +11,20 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Form, Json, Router};
-use axum_extra::headers::Host;
 use axum_extra::TypedHeader;
-use credibil_vc::verifier::{
+use axum_extra::headers::Host;
+use credibil_vc::oid4vp::{
     self, CreateRequestRequest, CreateRequestResponse, RequestObjectRequest, RequestObjectResponse,
     ResponseRequest, ResponseResponse,
 };
 use serde::Serialize;
 use serde_json::json;
+use test_verifier::ProviderImpl;
 use tokio::net::TcpListener;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
-
-use crate::provider::Provider;
 
 #[allow(clippy::needless_return)]
 #[tokio::main]
@@ -39,12 +36,12 @@ async fn main() {
 
     let router = Router::new()
         .route("/create_request", post(create_request))
-        .route("/request/:object_id", get(request_object))
+        .route("/request/{object_id}", get(request_object))
         .route("/callback", get(response))
         .route("/post", post(response))
         .layer(TraceLayer::new_for_http())
         .layer(cors)
-        .with_state(Provider::new());
+        .with_state(ProviderImpl::new());
 
     let listener = TcpListener::bind("0.0.0.0:8080").await.expect("should bind");
     tracing::info!("listening on {}", listener.local_addr().expect("local_addr should be set"));
@@ -54,44 +51,45 @@ async fn main() {
 // Generate Authorization Request endpoint
 #[axum::debug_handler]
 async fn create_request(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Json(mut request): Json<CreateRequestRequest>,
 ) -> AxResult<CreateRequestResponse> {
     request.client_id = format!("http://{host}");
-    verifier::create_request(provider, &request).await.into()
+    oid4vp::endpoint::handle(&format!("http://{host}"), request, &provider).await.into()
 }
 
 // Retrieve Authorization Request Object endpoint
 #[axum::debug_handler]
 async fn request_object(
-    State(provider): State<Provider>, TypedHeader(host): TypedHeader<Host>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Path(object_id): Path<String>,
 ) -> AxResult<RequestObjectResponse> {
     let request = RequestObjectRequest {
         client_id: format!("http://{host}"),
         id: object_id,
     };
-    verifier::request_object(provider, &request).await.into()
+    oid4vp::endpoint::handle(&format!("http://{host}"), request, &provider).await.into()
 }
 
 // Wallet Authorization response endpoint
 #[axum::debug_handler]
 async fn response(
-    State(provider): State<Provider>, Form(request): Form<HashMap<String, String>>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
+    Form(request): Form<HashMap<String, String>>,
 ) -> impl IntoResponse {
     let Ok(req) = ResponseRequest::form_decode(&request) else {
         tracing::error!("unable to turn HashMap {request:?} into ResponseRequest");
         return (StatusCode::BAD_REQUEST, "unable to turn request into ResponseRequest")
             .into_response();
     };
-    let response: AxResult<ResponseResponse> = match verifier::response(provider, &req).await
-    {
-        Ok(r) => Ok(r).into(),
-        Err(e) => {
-            tracing::error!("error getting response: {e}");
-            Err(e).into()
-        }
-    };
+    let response: AxResult<ResponseResponse> =
+        match oid4vp::endpoint::handle(&format!("http://{host}"), req, &provider).await {
+            Ok(r) => Ok(r).into(),
+            Err(e) => {
+                tracing::error!("error getting response: {e}");
+                Err(e).into()
+            }
+        };
     response.into_response()
 }
 
@@ -100,7 +98,7 @@ async fn response(
 // ----------------------------------------------------------------------------
 
 /// Axum response wrapper
-pub struct AxResult<T>(verifier::Result<T>);
+pub struct AxResult<T>(oid4vp::Result<T>);
 
 impl<T> IntoResponse for AxResult<T>
 where
@@ -115,8 +113,8 @@ where
     }
 }
 
-impl<T> From<verifier::Result<T>> for AxResult<T> {
-    fn from(val: verifier::Result<T>) -> Self {
+impl<T> From<oid4vp::Result<T>> for AxResult<T> {
+    fn from(val: oid4vp::Result<T>) -> Self {
         Self(val)
     }
 }

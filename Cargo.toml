@@ -14,12 +14,13 @@ rust-version.workspace = true
 version.workspace = true
 
 [lib]
-# crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib", "rlib"]
 
 [lints]
 workspace = true
 
 [features]
+default = ["issuer", "verifier"]
 issuer = []
 verifier = []
 wasm = ["fastrand/js"]
@@ -57,15 +58,21 @@ assert_let_bind.workspace = true
 async-std = { version = "1.13.0", features = ["attributes"] }
 insta.workspace = true
 rstest = "0.24.0"
+test-holder.workspace = true
+test-issuer.workspace = true
+test-verifier.workspace = true
 tokio.workspace = true
 
+# -----------------------------------------------
+# Workspace
+# -----------------------------------------------
 [workspace]
 members = [
     "crates/*",
     "examples/issuer",
     "examples/verifier",
 ]
-resolver = "2"
+resolver = "3"
 
 [workspace.package]
 authors = ["Credibil"]
@@ -98,19 +105,21 @@ axum = { version = "0.8.1", features = ["macros"] }
 axum-extra = { version = "0.10.0", features = ["typed-header"] }
 base64ct = { version = "1.6.0", features = ["std"] }
 chrono = { version = "0.4.39", features = ["serde"] }
+credibil-did = "0.1.2"
+credibil-infosec = "0.1.1"
+credibil-vc = { path = "." }
 derive_builder = "0.20.2"
 insta = { version = "1.42.1", features = ["redactions", "yaml"] }
 serde = { version = "1.0.218", features = ["derive"] }
 serde_json = { version = "1.0.139", features = ["alloc"] }
-test-utils = { path = "crates/test-utils" }
+test-holder = { path = "crates/test-holder" }
+test-issuer = { path = "crates/test-issuer" }
+test-verifier = { path = "crates/test-verifier" }
 tokio = { version = "1.43.0", features = ["macros", "rt-multi-thread"] }
 tower-http = { version = "0.6.2", features = ["cors", "set-header", "trace"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter", "fmt"] }
 uuid = { version = "1.14.0", features = ["fast-rng", "v4"] }
-credibil-did = "0.1.2"
-credibil-infosec = "0.1.1"
-credibil-vc = { path = "." }
 
 [profile.release]
 # Optimize for small code size

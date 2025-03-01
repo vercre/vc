@@ -13,15 +13,14 @@ mod mso;
 use anyhow::anyhow;
 use base64ct::{Base64UrlUnpadded as Base64, Encoding};
 use ciborium::cbor;
-use coset::{iana, CoseSign1Builder, HeaderBuilder};
+use coset::{CoseSign1Builder, HeaderBuilder, iana};
 use credibil_infosec::cose::{CoseKey, Tag24};
 use credibil_infosec::{Algorithm, Curve, KeyType, Signer};
-use rand::{rng, Rng};
-use serde_json::{Map, Value};
-use sha2::{Digest, Sha256};
-
 use mdoc::{IssuerSigned, IssuerSignedItem};
 use mso::{DigestIdGenerator, MobileSecurityObject};
+use rand::{Rng, rng};
+use serde_json::{Map, Value};
+use sha2::{Digest, Sha256};
 
 /// Convert a Credential Dataset to a base64url-encoded, CBOR-encoded, ISO mDL
 /// `IssuerSigned` object.
@@ -102,11 +101,11 @@ pub async fn to_credential(
 mod tests {
     use credibil_infosec::cose::cbor;
     use serde_json::json;
-    use crate::test_utils::issuer::Provider;
-
-    use super::*;
-    use super::mso::DigestAlgorithm;
+    use test_issuer::ProviderImpl;
     use to_credential;
+
+    use super::mso::DigestAlgorithm;
+    use super::*;
 
     #[tokio::test]
     async fn roundtrip() {
@@ -120,7 +119,7 @@ mod tests {
 
         // generate mdl credential
         let dataset = serde_json::from_value(dataset).unwrap();
-        let provider = Provider::new();
+        let provider = ProviderImpl::new();
         let mdl = to_credential(dataset, provider).await.unwrap();
         // println!("{}", mdl);
 
