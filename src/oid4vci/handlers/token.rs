@@ -21,7 +21,7 @@ use tracing::instrument;
 
 use crate::core::{generate, pkce};
 use crate::oid4vci::endpoint::Request;
-use crate::oid4vci::provider::{Metadata, Provider};
+use crate::oid4vci::provider::{Metadata, Provider, StateStore};
 use crate::oid4vci::state::{Authorized, AuthorizedItem, Expire, ItemType, Stage, State, Token};
 use crate::oid4vci::types::{
     AuthorizedDetail, CredentialAuthorization, Issuer, ProfileClaims, TokenGrantType, TokenRequest,
@@ -29,7 +29,6 @@ use crate::oid4vci::types::{
 };
 use crate::oid4vci::{Error, Result};
 use crate::openid::oauth::GrantType;
-use crate::openid::provider::StateStore;
 
 /// Token request handler.
 ///

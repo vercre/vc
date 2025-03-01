@@ -17,11 +17,10 @@
 use tracing::instrument;
 
 use crate::oid4vci::endpoint::Request;
-use crate::oid4vci::provider::Provider;
+use crate::oid4vci::provider::{Provider, StateStore};
 use crate::oid4vci::state::{Stage, State};
 use crate::oid4vci::types::{CredentialOfferRequest, CredentialOfferResponse};
 use crate::oid4vci::{Error, Result};
-use crate::openid::provider::StateStore;
 
 /// Endpoint for the Wallet to request the Issuer's Credential Offer when
 /// engaged in a cross-device flow.

@@ -49,15 +49,16 @@ use credibil_infosec::Algorithm;
 use tracing::instrument;
 use uuid::Uuid;
 
-use super::state::{Expire, State};
 use crate::core::{Kind, generate};
 use crate::dif_exch::{ClaimFormat, PresentationDefinition};
-use crate::oid4vp::verifier::{
-    ClientIdScheme, CreateRequestRequest, CreateRequestResponse, DeviceFlow, Metadata, Provider,
-    RequestObject, ResponseType,
+use crate::oid4vp::endpoint::Request;
+use crate::oid4vp::provider::{Metadata, Provider, StateStore};
+use crate::oid4vp::state::{Expire, State};
+use crate::oid4vp::types::{
+    ClientIdScheme, CreateRequestRequest, CreateRequestResponse, DeviceFlow, RequestObject,
+    ResponseType,
 };
 use crate::oid4vp::{Error, Result};
-use crate::openid::provider::StateStore;
 
 // TODO: request supported Client Identifier schemes from the Wallet
 // TODO: add support for other Client Identifier schemes
@@ -89,10 +90,20 @@ use crate::openid::provider::StateStore;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn create_request(
-    provider: impl Provider, request: &CreateRequestRequest,
+    provider: impl Provider, request: CreateRequestRequest,
 ) -> Result<CreateRequestResponse> {
-    verify(request).await?;
-    process(provider, request).await
+    verify(&request).await?;
+    process(provider, &request).await
+}
+
+impl Request for CreateRequestRequest {
+    type Response = CreateRequestResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        create_request(provider.clone(), self)
+    }
 }
 
 #[allow(clippy::unused_async)]

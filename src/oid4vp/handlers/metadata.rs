@@ -7,7 +7,9 @@
 
 use tracing::instrument;
 
-use crate::oid4vp::verifier::{Metadata, MetadataRequest, MetadataResponse, Provider};
+use crate::oid4vp::endpoint::Request;
+use crate::oid4vp::provider::{Metadata, Provider};
+use crate::oid4vp::types::{MetadataRequest, MetadataResponse};
 use crate::oid4vp::{Error, Result};
 
 /// Endpoint for Wallets to request Verifier (Client) metadata.
@@ -18,9 +20,19 @@ use crate::oid4vp::{Error, Result};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn metadata(
-    provider: impl Provider, request: &MetadataRequest,
+    provider: impl Provider, request: MetadataRequest,
 ) -> Result<MetadataResponse> {
-    process(provider, request).await
+    process(provider, &request).await
+}
+
+impl Request for MetadataRequest {
+    type Response = MetadataResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        metadata(provider.clone(), self)
+    }
 }
 
 async fn process(provider: impl Provider, req: &MetadataRequest) -> Result<MetadataResponse> {

@@ -161,49 +161,24 @@
 //! [OpenID4VP]: (https://openid.net/specs/openid-4-verifiable-presentations-1_0.html)
 //! [JWT VC Presentation Profile]: (https://identity.foundation/jwt-vc-presentation-profile)
 
-mod create_request;
+pub mod endpoint;
 mod error;
-mod metadata;
-mod request_object;
-mod response;
+mod handlers;
+pub mod provider;
 pub mod state;
-pub mod verifier;
-
-/// Re-export provider traits and types.
-pub mod provider {
-    pub use credibil_did::{DidResolver, Document};
-    pub use credibil_infosec::{
-        Algorithm, PublicKey, PublicKeyJwk, Receiver, SharedSecret, Signer,
-    };
-
-    pub use crate::oid4vci::types::{Client, Format, Server};
-    pub use crate::oid4vp::verifier::VpFormat;
-    #[allow(clippy::module_name_repetitions)]
-    pub use crate::oid4vp::verifier::{Metadata, Provider, Verifier, Wallet};
-    pub use crate::openid::provider::{Result, StateStore};
-}
+pub mod types;
 
 /// Proofs
 pub mod proof {
     pub use crate::w3c_vc::proof::{Payload, W3cFormat, create};
 }
 
-// Endpoints
-pub use create_request::create_request;
-pub use metadata::metadata;
-pub use request_object::request_object;
-pub use response::response;
-
 // Re-export types
 pub use crate::dif_exch::{
     Claims, Constraints, DescriptorMap, Field, Filter, FilterValue, InputDescriptor, PathNested,
     PresentationSubmission,
 };
-pub use crate::oid4vp::verifier::{
-    ClientIdScheme, CreateRequestRequest, CreateRequestResponse, DeviceFlow, MetadataRequest,
-    MetadataResponse, RequestObject, RequestObjectRequest, RequestObjectResponse,
-    RequestObjectType, ResponseRequest, ResponseResponse, ResponseType,
-};
+pub use crate::oid4vp::types::*;
 pub use crate::w3c_vc::model::VerifiablePresentation;
 
 /// Re-export status traits and types.

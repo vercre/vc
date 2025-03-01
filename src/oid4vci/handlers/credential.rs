@@ -17,7 +17,7 @@ use tracing::instrument;
 
 use crate::core::{Kind, generate};
 use crate::oid4vci::endpoint::Request;
-use crate::oid4vci::provider::{Metadata, Provider, Subject};
+use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
 use crate::oid4vci::state::{Authorized, Deferrance, Expire, Stage, State};
 use crate::oid4vci::types::{
     CredentialConfiguration, CredentialDefinition, CredentialDisplay, CredentialIssuance,
@@ -25,7 +25,6 @@ use crate::oid4vci::types::{
     MultipleProofs, Proof, ProofClaims, SingleProof,
 };
 use crate::oid4vci::{Error, Result};
-use crate::openid::provider::StateStore;
 use crate::status::issuer::Status;
 use crate::verify_key;
 use crate::w3c_vc::model::types::{LangString, LangValue};

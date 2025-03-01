@@ -25,11 +25,12 @@ use serde_json::Value;
 use serde_json_path::JsonPath;
 use tracing::instrument;
 
-use super::state::State;
 use crate::core::Kind;
-use crate::oid4vp::verifier::{Provider, ResponseRequest, ResponseResponse};
+use crate::oid4vp::endpoint::Request;
+use crate::oid4vp::provider::{Provider, StateStore};
+use crate::oid4vp::state::State;
+use crate::oid4vp::types::{ResponseRequest, ResponseResponse};
 use crate::oid4vp::{Error, Result};
-use crate::openid::provider::StateStore;
 use crate::w3c_vc;
 use crate::w3c_vc::model::VerifiableCredential;
 use crate::w3c_vc::proof::{Payload, Verify};
@@ -42,11 +43,21 @@ use crate::w3c_vc::proof::{Payload, Verify};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn response(
-    provider: impl Provider, request: &ResponseRequest,
+    provider: impl Provider, request: ResponseRequest,
 ) -> Result<ResponseResponse> {
     // TODO: handle case where Wallet returns error instead of submission
-    verify(provider.clone(), request).await?;
-    process(provider, request).await
+    verify(provider.clone(), &request).await?;
+    process(provider, &request).await
+}
+
+impl Request for ResponseRequest {
+    type Response = ResponseResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        response(provider.clone(), self)
+    }
 }
 
 // TODO: validate  Verifiable Presentation by format

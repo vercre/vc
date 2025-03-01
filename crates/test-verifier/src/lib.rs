@@ -3,12 +3,12 @@ pub mod keystore;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use anyhow::anyhow;
+use anyhow::{Result, anyhow};
 use chrono::{DateTime, Utc};
 use credibil_did::{DidResolver, Document};
 use credibil_infosec::{self, Algorithm, PublicKey, Receiver, SharedSecret, Signer};
-use credibil_vc::oid4vp::verifier::{Metadata, Provider, Verifier, Wallet};
-use credibil_vc::openid::provider::{Result, StateStore};
+use credibil_vc::oid4vp::provider::{Metadata, Provider, StateStore};
+use credibil_vc::oid4vp::types::{Verifier, Wallet};
 pub use keystore::Keystore;
 use serde::Serialize;
 use serde::de::DeserializeOwned;

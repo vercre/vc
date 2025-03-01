@@ -4,13 +4,12 @@ pub mod store;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use anyhow::anyhow;
+use anyhow::{Result, anyhow};
 use chrono::{DateTime, Utc};
 use credibil_did::{DidResolver, Document};
 use credibil_infosec::{Algorithm, Signer};
-use credibil_vc::oid4vci::provider::{Metadata, Provider, Subject};
+use credibil_vc::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
 use credibil_vc::oid4vci::types::{Client, Dataset, Issuer, Server};
-use credibil_vc::openid::provider::{Result, StateStore};
 use credibil_vc::status::issuer::Status;
 pub use keystore::Keystore;
 use serde::Serialize;

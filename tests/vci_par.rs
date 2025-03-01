@@ -4,9 +4,9 @@ mod utils;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
 use credibil_vc::oid4vci;
+use credibil_vc::oid4vci::provider::StateStore;
 use credibil_vc::oid4vci::state::State;
 use credibil_vc::oid4vci::types::{AuthorizationRequest, PushedAuthorizationRequest};
-use credibil_vc::openid::provider::StateStore;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use sha2::{Digest, Sha256};

@@ -8,11 +8,11 @@ use chrono::Utc;
 use credibil_vc::core::Kind;
 use credibil_vc::dif_exch::PresentationDefinition;
 use credibil_vc::oid4vp;
+use credibil_vc::oid4vp::provider::StateStore;
 use credibil_vc::oid4vp::state::{Expire, State};
-use credibil_vc::oid4vp::verifier::{
+use credibil_vc::oid4vp::types::{
     ClientIdScheme, RequestObject, ResponseRequest, ResponseType, Verifier,
 };
-use credibil_vc::openid::provider::StateStore;
 use serde_json::{Value, json};
 
 const CLIENT_ID: &str = "http://credibil.io";
@@ -64,7 +64,8 @@ async fn send_response() {
     });
 
     let request = serde_json::from_value::<ResponseRequest>(body).expect("should deserialize");
-    let response = oid4vp::response(provider, &request).await.expect("response is ok");
+    let response =
+        oid4vp::endpoint::handle("http://localhost:8080", request, &provider).await.expect("ok");
 
     let redirect = response.redirect_uri.as_ref().expect("has redirect_uri");
     assert_eq!(redirect, "http://localhost:3000/cb");

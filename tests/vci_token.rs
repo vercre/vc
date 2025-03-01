@@ -5,6 +5,7 @@ mod utils;
 use chrono::Utc;
 use credibil_vc::core::pkce;
 use credibil_vc::oid4vci;
+use credibil_vc::oid4vci::provider::StateStore;
 use credibil_vc::oid4vci::state::{
     Authorization, AuthorizedItem, Expire, ItemType, Offer, Stage, State,
 };
@@ -12,7 +13,6 @@ use credibil_vc::oid4vci::types::{
     AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization, CredentialDefinition,
     Format, ProfileW3c, TokenRequest, TokenResponse,
 };
-use credibil_vc::openid::provider::StateStore;
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use test_issuer::{CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};

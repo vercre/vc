@@ -55,7 +55,7 @@ async fn create_request(
     Json(mut request): Json<CreateRequestRequest>,
 ) -> AxResult<CreateRequestResponse> {
     request.client_id = format!("http://{host}");
-    oid4vp::create_request(provider, &request).await.into()
+    oid4vp::endpoint::handle(&format!("http://{host}"), request, &provider).await.into()
 }
 
 // Retrieve Authorization Request Object endpoint
@@ -68,26 +68,28 @@ async fn request_object(
         client_id: format!("http://{host}"),
         id: object_id,
     };
-    oid4vp::request_object(provider, &request).await.into()
+    oid4vp::endpoint::handle(&format!("http://{host}"), request, &provider).await.into()
 }
 
 // Wallet Authorization response endpoint
 #[axum::debug_handler]
 async fn response(
-    State(provider): State<ProviderImpl>, Form(request): Form<HashMap<String, String>>,
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
+    Form(request): Form<HashMap<String, String>>,
 ) -> impl IntoResponse {
     let Ok(req) = ResponseRequest::form_decode(&request) else {
         tracing::error!("unable to turn HashMap {request:?} into ResponseRequest");
         return (StatusCode::BAD_REQUEST, "unable to turn request into ResponseRequest")
             .into_response();
     };
-    let response: AxResult<ResponseResponse> = match oid4vp::response(provider, &req).await {
-        Ok(r) => Ok(r).into(),
-        Err(e) => {
-            tracing::error!("error getting response: {e}");
-            Err(e).into()
-        }
-    };
+    let response: AxResult<ResponseResponse> =
+        match oid4vp::endpoint::handle(&format!("http://{host}"), req, &provider).await {
+            Ok(r) => Ok(r).into(),
+            Err(e) => {
+                tracing::error!("error getting response: {e}");
+                Err(e).into()
+            }
+        };
     response.into_response()
 }
 

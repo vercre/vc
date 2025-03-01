@@ -17,12 +17,11 @@
 use credibil_infosec::jose::JwsBuilder;
 use tracing::instrument;
 
-use super::state::State;
-use crate::oid4vp::verifier::{
-    Provider, RequestObjectRequest, RequestObjectResponse, RequestObjectType,
-};
+use crate::oid4vp::endpoint::Request;
+use crate::oid4vp::provider::{Provider, StateStore};
+use crate::oid4vp::state::State;
+use crate::oid4vp::types::{RequestObjectRequest, RequestObjectResponse, RequestObjectType};
 use crate::oid4vp::{Error, Result};
-use crate::openid::provider::StateStore;
 use crate::w3c_vc::proof::Type;
 
 /// Endpoint for the Wallet to request the Verifier's Request Object when
@@ -34,9 +33,19 @@ use crate::w3c_vc::proof::Type;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn request_object(
-    provider: impl Provider, request: &RequestObjectRequest,
+    provider: impl Provider, request: RequestObjectRequest,
 ) -> Result<RequestObjectResponse> {
-    process(provider, request).await
+    process(provider, &request).await
+}
+
+impl Request for RequestObjectRequest {
+    type Response = RequestObjectResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        request_object(provider.clone(), self)
+    }
 }
 
 async fn process(

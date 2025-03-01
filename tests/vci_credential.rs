@@ -8,11 +8,11 @@ use assert_let_bind::assert_let;
 use chrono::Utc;
 use credibil_infosec::jose::jws::JwsBuilder;
 use credibil_vc::oid4vci;
+use credibil_vc::oid4vci::provider::StateStore;
 use credibil_vc::oid4vci::state::{Authorized, Expire, Stage, State, Token};
 use credibil_vc::oid4vci::types::{
     CredentialRequest, CredentialResponse, CredentialResponseType, ProofClaims,
 };
-use credibil_vc::openid::provider::StateStore;
 use credibil_vc::w3c_vc::proof::{self, Payload, Type, Verify};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;

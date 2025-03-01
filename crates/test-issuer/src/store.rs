@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use anyhow::anyhow;
+use anyhow::{Result, anyhow};
 use credibil_vc::oid4vci::types::{Client, Dataset, Issuer, Server};
-use credibil_vc::openid::provider::Result;
 use serde::Deserialize;
 use serde_json::{Map, Value};
 use uuid::Uuid;
