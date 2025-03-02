@@ -18,7 +18,7 @@ use credibil_vc::oid4vci::{
     CredentialOfferResponse, CredentialRequest, CredentialResponse, DeferredCredentialRequest,
     DeferredCredentialResponse, MetadataRequest, MetadataResponse, NotificationRequest,
     NotificationResponse, OAuthServerRequest, OAuthServerResponse, PushedAuthorizationRequest,
-    PushedAuthorizationResponse, TokenRequest, TokenResponse,
+    PushedAuthorizationResponse, TokenRequest, TokenResponse, endpoint,
 };
 use credibil_vc::urlencode;
 use oauth2::CsrfToken;

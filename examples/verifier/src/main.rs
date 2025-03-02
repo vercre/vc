@@ -15,7 +15,7 @@ use axum_extra::TypedHeader;
 use axum_extra::headers::Host;
 use credibil_vc::oid4vp::{
     self, CreateRequestRequest, CreateRequestResponse, RequestObjectRequest, RequestObjectResponse,
-    ResponseRequest, ResponseResponse,
+    ResponseRequest, ResponseResponse, endpoint,
 };
 use serde::Serialize;
 use serde_json::json;
