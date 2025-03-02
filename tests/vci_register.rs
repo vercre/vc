@@ -3,7 +3,7 @@
 mod utils;
 
 use chrono::Utc;
-use credibil_vc::oid4vci;
+use credibil_vc::oid4vci::endpoint;
 use credibil_vc::oid4vci::provider::StateStore;
 use credibil_vc::oid4vci::state::{Expire, Stage, State, Token};
 use credibil_vc::oid4vci::types::RegistrationRequest;
@@ -53,9 +53,8 @@ async fn registration_ok() {
     request.credential_issuer = CREDENTIAL_ISSUER.to_string();
     request.access_token = access_token.to_string();
 
-    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
-        .await
-        .expect("response is ok");
+    let response =
+        endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("response is ok");
     assert_snapshot!("register:registration_ok:response", response, {
         ".client_id" => "[client_id]",
     });

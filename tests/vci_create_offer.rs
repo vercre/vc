@@ -6,7 +6,7 @@ use assert_let_bind::assert_let;
 use credibil_vc::oid4vci::provider::StateStore;
 use credibil_vc::oid4vci::state::{Stage, State};
 use credibil_vc::oid4vci::types::{OfferType, SendType};
-use credibil_vc::oid4vci::{self, CreateOfferRequest};
+use credibil_vc::oid4vci::{CreateOfferRequest, endpoint};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use test_issuer::{CREDENTIAL_ISSUER, NORMAL_USER};
@@ -27,9 +27,8 @@ async fn pre_authorized() {
         "send_type": SendType::ByVal,
     });
     let request: CreateOfferRequest = serde_json::from_value(value).expect("request is valid");
-    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
-        .await
-        .expect("response is ok");
+    let response =
+        endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("response is ok");
 
     assert_snapshot!("create_offer:pre-authorized:response", &response, {
         ".credential_offer.grants.authorization_code.issuer_state" => "[state]",

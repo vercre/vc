@@ -4,7 +4,7 @@ mod utils;
 
 use assert_let_bind::assert_let;
 use chrono::Utc;
-use credibil_vc::oid4vci;
+use credibil_vc::oid4vci::endpoint;
 use credibil_vc::oid4vci::provider::StateStore;
 use credibil_vc::oid4vci::state::{Credential, Expire, Stage, State};
 use credibil_vc::oid4vci::types::{NotificationEvent, NotificationRequest};
@@ -38,9 +38,8 @@ async fn notification_ok() {
         event: NotificationEvent::CredentialAccepted,
         event_description: Some("Credential accepted".into()),
     };
-    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
-        .await
-        .expect("response is ok");
+    let response =
+        endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("response is ok");
 
     assert_snapshot!("notification:ok:response", response);
     assert_let!(Err(_), StateStore::get::<State>(&provider, notification_id).await);

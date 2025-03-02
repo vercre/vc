@@ -5,7 +5,7 @@
 mod utils;
 mod wallet;
 
-use credibil_vc::oid4vci::{self, CreateOfferRequest, Format, ProfileW3c, SendType};
+use credibil_vc::oid4vci::{CreateOfferRequest, Format, ProfileW3c, SendType, endpoint};
 use rstest::rstest;
 use serde_json::json;
 use test_issuer::{CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER, ProviderImpl};
@@ -33,9 +33,8 @@ async fn issuance(provider: ProviderImpl, #[case] issue: Issuance) {
         "send_type": SendType::ByVal,
     });
     let request: CreateOfferRequest = serde_json::from_value(value).expect("request is valid");
-    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
-        .await
-        .expect("should create offer");
+    let response =
+        endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("should create offer");
 
     let wallet = wallet::Wallet {
         provider,
@@ -62,9 +61,8 @@ async fn format(provider: ProviderImpl, #[case] credential_format: Format) {
         "send_type": SendType::ByVal,
     });
     let request: CreateOfferRequest = serde_json::from_value(value).expect("request is valid");
-    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
-        .await
-        .expect("should create offer");
+    let response =
+        endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("should create offer");
 
     let wallet = wallet::Wallet {
         provider: provider.clone(),
@@ -89,9 +87,8 @@ async fn authorization(provider: ProviderImpl) {
         "send_type": SendType::ByVal,
     });
     let request: CreateOfferRequest = serde_json::from_value(value).expect("request is valid");
-    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
-        .await
-        .expect("should create offer");
+    let response =
+        endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("should create offer");
 
     let wallet = wallet::Wallet {
         provider: provider.clone(),
@@ -119,9 +116,8 @@ async fn offer_type(provider: ProviderImpl, #[case] send_type: SendType) {
         "send_type": send_type,
     });
     let request: CreateOfferRequest = serde_json::from_value(value).expect("request is valid");
-    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
-        .await
-        .expect("should create offer");
+    let response =
+        endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("should create offer");
 
     let wallet = wallet::Wallet {
         provider: provider.clone(),

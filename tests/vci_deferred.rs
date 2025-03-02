@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use assert_let_bind::assert_let;
 use chrono::Utc;
 use credibil_infosec::jose::JwsBuilder;
-use credibil_vc::oid4vci;
+use credibil_vc::oid4vci::endpoint;
 use credibil_vc::oid4vci::provider::StateStore;
 use credibil_vc::oid4vci::state::{Authorized, Deferrance, Expire, Stage, State, Token};
 use credibil_vc::oid4vci::types::{
@@ -91,9 +91,8 @@ async fn deferred_ok() {
         transaction_id: transaction_id.into(),
     };
 
-    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
-        .await
-        .expect("response is valid");
+    let response =
+        endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("response is valid");
     assert_snapshot!("deferred:deferred_ok:response", &response, {
         ".transaction_id" => "[transaction_id]",
         ".credential" => "[credential]",

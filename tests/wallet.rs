@@ -6,9 +6,9 @@ use chrono::Utc;
 use credibil_infosec::jose::JwsBuilder;
 use credibil_vc::oid4vci::proof::{self, Payload, Type, Verify};
 use credibil_vc::oid4vci::{
-    self, AuthorizationRequest, AuthorizationResponse, CredentialOfferRequest, CredentialRequest,
+    AuthorizationRequest, AuthorizationResponse, CredentialOfferRequest, CredentialRequest,
     CredentialResponseType, DeferredCredentialRequest, DeferredCredentialResponse, Error, Format,
-    OfferType, ProofClaims, Result, TokenGrantType, TokenRequest, TokenResponse,
+    OfferType, ProofClaims, Result, TokenGrantType, TokenRequest, TokenResponse, endpoint,
 };
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
@@ -53,7 +53,7 @@ impl Wallet {
                 };
 
                 let offer_resp =
-                    oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &self.provider).await?;
+                    endpoint::handle(CREDENTIAL_ISSUER, request, &self.provider).await?;
                 offer_resp.credential_offer
             }
         };
@@ -116,7 +116,7 @@ impl Wallet {
         let request: AuthorizationRequest =
             serde_json::from_value(value).expect("should deserialize");
 
-        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &self.provider).await
+        endpoint::handle(CREDENTIAL_ISSUER, request, &self.provider).await
     }
 
     async fn token(&self, grant_type: TokenGrantType) -> Result<TokenResponse> {
@@ -126,7 +126,7 @@ impl Wallet {
             grant_type,
             ..TokenRequest::default()
         };
-        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, token_req, &self.provider).await
+        endpoint::handle(CREDENTIAL_ISSUER, token_req, &self.provider).await
     }
 
     async fn credential(&self, token_resp: TokenResponse) -> Result<()> {
@@ -164,8 +164,7 @@ impl Wallet {
             }
         });
         let request: CredentialRequest = serde_json::from_value(value).expect("request is valid");
-        let mut response =
-            oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &self.provider).await?;
+        let mut response = endpoint::handle(CREDENTIAL_ISSUER, request, &self.provider).await?;
 
         // fetch credential if response is deferred
         if let CredentialResponseType::TransactionId(transaction_id) = &response.response {
@@ -204,6 +203,6 @@ impl Wallet {
             access_token: tkn_resp.access_token,
             transaction_id,
         };
-        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &self.provider).await
+        endpoint::handle(CREDENTIAL_ISSUER, request, &self.provider).await
     }
 }

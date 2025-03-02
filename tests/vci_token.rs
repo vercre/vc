@@ -4,7 +4,7 @@ mod utils;
 
 use chrono::Utc;
 use credibil_vc::core::pkce;
-use credibil_vc::oid4vci;
+use credibil_vc::oid4vci::endpoint;
 use credibil_vc::oid4vci::provider::StateStore;
 use credibil_vc::oid4vci::state::{
     Authorization, AuthorizedItem, Expire, ItemType, Offer, Stage, State,
@@ -61,9 +61,7 @@ async fn pre_authorized() {
     let request: TokenRequest = serde_json::from_value(value).expect("request is valid");
 
     let token_resp: TokenResponse =
-        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
-            .await
-            .expect("response is valid");
+        endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("response is valid");
 
     assert_snapshot!("token:pre_authorized:response", &token_resp, {
         ".access_token" => "[access_token]",
@@ -131,9 +129,7 @@ async fn authorized() {
     });
     let request: TokenRequest = serde_json::from_value(value).expect("request is valid");
     let token_resp: TokenResponse =
-        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
-            .await
-            .expect("response is valid");
+        endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("response is valid");
 
     assert_snapshot!("token:authorized:response", &token_resp, {
         ".access_token" => "[access_token]",
@@ -217,9 +213,8 @@ async fn authorization_details() {
         }],
     });
     let request: TokenRequest = serde_json::from_value(value).expect("request is valid");
-    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
-        .await
-        .expect("response is valid");
+    let response =
+        endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("response is valid");
 
     assert_snapshot!("token:authorization_details:response", &response, {
         ".access_token" => "[access_token]",

@@ -5,47 +5,37 @@ mod utils;
 use base64ct::{Base64UrlUnpadded, Encoding};
 use credibil_vc::oid4vci::provider::StateStore;
 use credibil_vc::oid4vci::state::State;
-use credibil_vc::oid4vci::{self, AuthorizationRequest};
+use credibil_vc::oid4vci::{AuthorizationRequest, Error, endpoint};
 use insta::assert_yaml_snapshot as assert_snapshot;
-use rstest::rstest;
-use serde_json::{Value, json};
+use serde_json::json;
 use sha2::{Digest, Sha256};
 use test_issuer::{CLIENT_ID, CREDENTIAL_ISSUER, NORMAL_USER};
 
-#[rstest]
-#[case::configuration_id("configuration_id", configuration_id)]
-#[case::format("format", format_w3c)]
-#[case::scope("scope", scope)]
-#[case::claims("claims", claims)]
-#[should_panic(expected = "ok")]
-#[case::claims_err("claims_err", claims_err)]
-#[should_panic(expected = "ok")]
-#[case::response_type_err("response_type_err", response_type_err)]
-async fn authorize_tests(#[case] name: &str, #[case] value: fn() -> Value) {
+// fn response_type_err() -> Value {
+//     json!({
+//         "credential_issuer": CREDENTIAL_ISSUER,
+//         "response_type": "vp_token",
+//         "client_id": CLIENT_ID,
+//         "redirect_uri": "http://localhost:3000/callback",
+//         "state": "1234",
+//         "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
+//         "code_challenge_method": "S256",
+//         "authorization_details": [{
+//             "type": "openid_credential",
+//             "credential_configuration_id": "EmployeeID_JWT",
+//         }],
+//         "subject_id": NORMAL_USER,
+//         "wallet_issuer": CREDENTIAL_ISSUER
+//     })
+// }
+
+#[tokio::test]
+async fn authorize_configuration_id() {
     utils::init_tracer();
     snapshot!("");
     let provider = test_issuer::ProviderImpl::new();
 
-    // execute request
-    let request: AuthorizationRequest =
-        serde_json::from_value(value()).expect("should deserialize");
-    let response =
-        oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("ok");
-    assert_snapshot!("authorize:configuration_id:response", &response, {
-        ".code" =>"[code]",
-    });
-
-    // check saved state
-    let state = StateStore::get::<State>(&provider, &response.code).await.expect("state exists");
-    assert_snapshot!(format!("authorize:{name}:state"), state, {
-        ".expires_at" => "[expires_at]",
-        ".**.credentialSubject" => insta::sorted_redaction(),
-        ".**.credentialSubject.address" => insta::sorted_redaction(),
-    });
-}
-
-fn configuration_id() -> Value {
-    json!({
+    let value = json!({
         "credential_issuer": CREDENTIAL_ISSUER,
         "response_type": "code",
         "client_id": CLIENT_ID,
@@ -59,11 +49,31 @@ fn configuration_id() -> Value {
         }],
         "subject_id": NORMAL_USER,
         "wallet_issuer": CREDENTIAL_ISSUER
-    })
+    });
+
+    // execute request
+    let request: AuthorizationRequest = serde_json::from_value(value).expect("should deserialize");
+    let response = endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("ok");
+    assert_snapshot!("authorize:configuration_id:response", &response, {
+        ".code" =>"[code]",
+    });
+
+    // check saved state
+    let state = StateStore::get::<State>(&provider, &response.code).await.expect("state exists");
+    assert_snapshot!("authorize:configuration_id:state", state, {
+        ".expires_at" => "[expires_at]",
+        ".**.credentialSubject" => insta::sorted_redaction(),
+        ".**.credentialSubject.address" => insta::sorted_redaction(),
+    });
 }
 
-fn format_w3c() -> Value {
-    json!({
+#[tokio::test]
+async fn authorize_format() {
+    utils::init_tracer();
+    snapshot!("");
+    let provider = test_issuer::ProviderImpl::new();
+
+    let value = json!({
         "credential_issuer": CREDENTIAL_ISSUER,
         "response_type": "code",
         "client_id": CLIENT_ID,
@@ -83,11 +93,31 @@ fn format_w3c() -> Value {
         }],
         "subject_id": NORMAL_USER,
         "wallet_issuer": CREDENTIAL_ISSUER
-    })
+    });
+
+    // execute request
+    let request: AuthorizationRequest = serde_json::from_value(value).expect("should deserialize");
+    let response = endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("ok");
+    assert_snapshot!("authorize:format:response", &response, {
+        ".code" =>"[code]",
+    });
+
+    // check saved state
+    let state = StateStore::get::<State>(&provider, &response.code).await.expect("state exists");
+    assert_snapshot!("authorize:format:state", state, {
+        ".expires_at" => "[expires_at]",
+        ".**.credentialSubject" => insta::sorted_redaction(),
+        ".**.credentialSubject.address" => insta::sorted_redaction(),
+    });
 }
 
-fn scope() -> Value {
-    json!({
+#[tokio::test]
+async fn authorize_scope() {
+    utils::init_tracer();
+    snapshot!("");
+    let provider = test_issuer::ProviderImpl::new();
+
+    let value = json!({
         "credential_issuer": CREDENTIAL_ISSUER,
         "response_type": "code",
         "client_id": CLIENT_ID,
@@ -98,11 +128,31 @@ fn scope() -> Value {
         "scope": "EmployeeIDCredential",
         "subject_id": NORMAL_USER,
         "wallet_issuer": CREDENTIAL_ISSUER
-    })
+    });
+
+    // execute request
+    let request: AuthorizationRequest = serde_json::from_value(value).expect("should deserialize");
+    let response = endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("ok");
+    assert_snapshot!("authorize:scope:response", &response, {
+        ".code" =>"[code]",
+    });
+
+    // check saved state
+    let state = StateStore::get::<State>(&provider, &response.code).await.expect("state exists");
+    assert_snapshot!("authorize:scope:state", state, {
+        ".expires_at" => "[expires_at]",
+        ".**.credentialSubject" => insta::sorted_redaction(),
+        ".**.credentialSubject.address" => insta::sorted_redaction(),
+    });
 }
 
-fn claims() -> Value {
-    json!({
+#[tokio::test]
+async fn authorize_claims() {
+    utils::init_tracer();
+    snapshot!("");
+    let provider = test_issuer::ProviderImpl::new();
+
+    let value = json!({
         "credential_issuer": CREDENTIAL_ISSUER,
         "response_type": "code",
         "client_id": CLIENT_ID,
@@ -127,11 +177,31 @@ fn claims() -> Value {
         }],
         "subject_id": NORMAL_USER,
         "wallet_issuer": CREDENTIAL_ISSUER
-    })
+    });
+
+    // execute request
+    let request: AuthorizationRequest = serde_json::from_value(value).expect("should deserialize");
+    let response = endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("ok");
+    assert_snapshot!("authorize:claims:response", &response, {
+        ".code" =>"[code]",
+    });
+
+    // check saved state
+    let state = StateStore::get::<State>(&provider, &response.code).await.expect("state exists");
+    assert_snapshot!("authorize:claims:state", state, {
+        ".expires_at" => "[expires_at]",
+        ".**.credentialSubject" => insta::sorted_redaction(),
+        ".**.credentialSubject.address" => insta::sorted_redaction(),
+    });
 }
 
-fn claims_err() -> Value {
-    json!({
+#[tokio::test]
+async fn authorize_claims_err() {
+    utils::init_tracer();
+    snapshot!("");
+    let provider = test_issuer::ProviderImpl::new();
+
+    let value = json!({
         "credential_issuer": CREDENTIAL_ISSUER,
         "response_type": "code",
         "client_id": CLIENT_ID,
@@ -156,23 +226,15 @@ fn claims_err() -> Value {
         }],
         "subject_id": NORMAL_USER,
         "wallet_issuer": CREDENTIAL_ISSUER
-    })
-}
+    });
 
-fn response_type_err() -> Value {
-    json!({
-        "credential_issuer": CREDENTIAL_ISSUER,
-        "response_type": "vp_token",
-        "client_id": CLIENT_ID,
-        "redirect_uri": "http://localhost:3000/callback",
-        "state": "1234",
-        "code_challenge": Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")),
-        "code_challenge_method": "S256",
-        "authorization_details": [{
-            "type": "openid_credential",
-            "credential_configuration_id": "EmployeeID_JWT",
-        }],
-        "subject_id": NORMAL_USER,
-        "wallet_issuer": CREDENTIAL_ISSUER
-    })
+    // execute request
+    let request: AuthorizationRequest = serde_json::from_value(value).expect("should deserialize");
+    let Err(Error::InvalidRequest(e)) =
+        endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await
+    else {
+        panic!("no error");
+    };
+
+    assert_eq!(e, "email claim is required");
 }

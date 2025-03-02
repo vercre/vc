@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use assert_let_bind::assert_let;
 use chrono::Utc;
 use credibil_infosec::jose::jws::JwsBuilder;
-use credibil_vc::oid4vci;
+use credibil_vc::oid4vci::endpoint;
 use credibil_vc::oid4vci::provider::StateStore;
 use credibil_vc::oid4vci::state::{Authorized, Expire, Stage, State, Token};
 use credibil_vc::oid4vci::types::{CredentialRequest, CredentialResponseType, ProofClaims};
@@ -72,9 +72,8 @@ async fn identifier() {
     });
     let request: CredentialRequest = serde_json::from_value(value).expect("request is valid");
 
-    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
-        .await
-        .expect("response is valid");
+    let response =
+        endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("response is valid");
     assert_snapshot!("credential:identifier:response", &response, {
         ".credential" => "[credential]",
         ".c_nonce" => "[c_nonce]",
@@ -169,9 +168,8 @@ async fn format() {
         }
     });
     let request: CredentialRequest = serde_json::from_value(value).expect("request is valid");
-    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
-        .await
-        .expect("response is valid");
+    let response =
+        endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("response is valid");
 
     assert_snapshot!("credential:format:response", &response, {
         ".credential" => "[credential]",
@@ -262,9 +260,8 @@ async fn iso_mdl() {
     });
 
     let request: CredentialRequest = serde_json::from_value(value).expect("request is valid");
-    let response = oid4vci::endpoint::handle(CREDENTIAL_ISSUER, request, &provider)
-        .await
-        .expect("response is valid");
+    let response =
+        endpoint::handle(CREDENTIAL_ISSUER, request, &provider).await.expect("response is valid");
     assert_snapshot!("credential:iso_mdl:response", &response, {
         ".credential" => "[credential]",
         ".c_nonce" => "[c_nonce]",

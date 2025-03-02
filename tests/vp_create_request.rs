@@ -3,7 +3,7 @@
 mod utils;
 
 use assert_let_bind::assert_let;
-use credibil_vc::oid4vp;
+use credibil_vc::oid4vp::endpoint;
 use credibil_vc::oid4vp::provider::StateStore;
 use credibil_vc::oid4vp::state::State;
 use credibil_vc::oid4vp::types::CreateRequestRequest;
@@ -37,8 +37,7 @@ async fn same_device() {
         serde_json::from_value::<CreateRequestRequest>(body).expect("should deserialize");
     request.client_id = "http://localhost:8080".into();
 
-    let response =
-        oid4vp::endpoint::handle("http://localhost:8080", request, &provider).await.expect("ok");
+    let response = endpoint::handle("http://localhost:8080", request, &provider).await.expect("ok");
 
     assert_eq!(response.request_uri, None);
     assert_let!(Some(req_obj), &response.request_object);
@@ -85,8 +84,7 @@ async fn cross_device() {
         serde_json::from_value::<CreateRequestRequest>(body).expect("should deserialize");
     request.client_id = "http://localhost:8080".into();
 
-    let response =
-        oid4vp::endpoint::handle("http://localhost:8080", request, &provider).await.expect("ok");
+    let response = endpoint::handle("http://localhost:8080", request, &provider).await.expect("ok");
 
     assert!(response.request_object.is_none());
     assert_let!(Some(req_uri), response.request_uri);
