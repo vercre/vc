@@ -23,29 +23,6 @@ pub enum Error {
     #[error(r#"{{"error": "invalid_request", "error_description": "{0}"}}"#)]
     InvalidRequest(String),
 
-    /// Client authentication failed (e.g., unknown client, no client
-    /// authentication included, or unsupported authentication method).
-    ///
-    /// The client tried to send a Token Request with a Pre-Authorized Code
-    /// without Client ID but the Authorization Server does not support
-    /// anonymous access.
-    ///
-    /// For Verifiable Presentations:
-    ///
-    /// `client_metadata` or `client_metadata_uri` is set, but the Wallet
-    /// recognizes Client Identifier and already knows metadata associated
-    /// with it.
-    ///
-    /// Verifier's pre-registered metadata has been found based on the Client
-    /// Identifier, but `client_metadata` parameter is also set.
-    #[error(r#"{{"error": "invalid_client", "error_description": "{0}"}}"#)]
-    InvalidClient(String),
-
-    /// The client is not authorized to request an authorization code using this
-    /// method.
-    #[error(r#"{{"error": "unauthorized_client", "error_description": "{0}"}}"#)]
-    UnauthorizedClient(String),
-
     /// The authorization server does not support obtaining an authorization
     /// code using this method.
     #[error(r#"{{"error": "unsupported_response_type", "error_description": "{0}"}}"#)]
@@ -55,11 +32,6 @@ pub enum Error {
     /// prevented it from fulfilling the request.
     #[error(r#"{{"error": "server_error", "error_description": "{0}"}}"#)]
     ServerError(String),
-
-    /// The authorization server is unable to handle the request due to
-    /// temporary overloading or maintenance.
-    #[error(r#"{{"error": "temporarily_unavailable", "error_description": "{0}"}}"#)]
-    TemporarilyUnavailable(String),
 
     /// The Wallet does not support any of the formats requested by the
     /// Verifier, such as those included in the `vp_formats` registration
