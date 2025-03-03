@@ -150,15 +150,11 @@ impl Context {
                     ));
                 }
 
-                // code_verifier
+                // verifier matches challenge received in authorization request
                 let Some(verifier) = &code_verifier else {
                     return Err(Error::AccessDenied("`code_verifier` is missing".into()));
                 };
-
-                // code_verifier matches code_challenge
-                let challenge = pkce::code_challenge(verifier);
-
-                if challenge != auth_state.code_challenge {
+                if pkce::code_challenge(verifier) != auth_state.code_challenge {
                     return Err(Error::AccessDenied("`code_verifier` is invalid".into()));
                 }
             }

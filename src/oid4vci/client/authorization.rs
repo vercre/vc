@@ -1,9 +1,12 @@
 //! # Authorization
 
 use crate::oauth::{CodeChallengeMethod, ResponseType};
-use crate::oid4vci::{AuthorizationDetail, AuthorizationRequest, RequestObject};
+use crate::oid4vci::{
+    AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, CredentialAuthorization,
+    Format, ProfileClaims, RequestObject,
+};
 
-/// Build a Credential Offer for a Credential Issuer.
+/// Build an [`AuthorizationRequest`].
 #[derive(Default, Debug)]
 pub struct AuthorizationRequestBuilder {
     credential_issuer: Option<String>,
@@ -75,10 +78,8 @@ impl AuthorizationRequestBuilder {
 
     /// Authorization Details may used to request credentials.
     #[must_use]
-    pub fn authorization_details(
-        mut self, authorization_details: Vec<AuthorizationDetail>,
-    ) -> Self {
-        self.authorization_details = Some(authorization_details);
+    pub fn with_authorization_detail(mut self, authorization_detail: AuthorizationDetail) -> Self {
+        self.authorization_details.get_or_insert_with(Vec::new).push(authorization_detail);
         self
     }
 
@@ -158,5 +159,57 @@ impl AuthorizationRequestBuilder {
             user_hint: self.user_hint,
             issuer_state: self.issuer_state,
         })
+    }
+}
+
+/// Build an [`AuthorizationDetail`].
+#[derive(Default, Debug)]
+pub struct AuthorizationDetailBuilder {
+    credential_configuration_id: String,
+    claims: Option<ProfileClaims>,
+    format: Format,
+}
+
+impl AuthorizationDetailBuilder {
+    /// Create a new `AuthorizationDetailBuilder` with sensible defaults.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Specify the credential configuration ID.
+    #[must_use]
+    pub fn credential_configuration_id(
+        mut self, credential_configuration_id: impl Into<String>,
+    ) -> Self {
+        self.credential_configuration_id = credential_configuration_id.into();
+        self
+    }
+
+    /// Specify the claims to include in the credential.
+    #[must_use]
+    pub fn claims(mut self, claims: ProfileClaims) -> Self {
+        self.claims = Some(claims);
+        self
+    }
+
+    /// Specify the format of the credential.
+    #[must_use]
+    pub fn format(mut self, format: Format) -> Self {
+        self.format = format;
+        self
+    }
+
+    /// Build the `AuthorizationDetail`.
+    #[must_use]
+    pub fn build(self) -> AuthorizationDetail {
+        AuthorizationDetail {
+            type_: AuthorizationDetailType::OpenIdCredential,
+            credential: CredentialAuthorization::ConfigurationId {
+                credential_configuration_id: self.credential_configuration_id,
+                claims: None,
+            },
+            locations: None,
+        }
     }
 }

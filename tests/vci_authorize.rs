@@ -3,13 +3,11 @@
 mod utils;
 
 use base64ct::{Base64UrlUnpadded, Encoding};
-use credibil_vc::oid4vci::client::AuthorizationRequestBuilder;
+use credibil_vc::core::pkce;
+use credibil_vc::oid4vci::client::{AuthorizationDetailBuilder, AuthorizationRequestBuilder};
 use credibil_vc::oid4vci::provider::StateStore;
 use credibil_vc::oid4vci::state::State;
-use credibil_vc::oid4vci::{
-    AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, CredentialAuthorization,
-    Error, endpoint,
-};
+use credibil_vc::oid4vci::{AuthorizationRequest, Error, endpoint};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
 use sha2::{Digest, Sha256};
@@ -21,20 +19,17 @@ async fn authorize_configuration_id() {
     snapshot!("");
     let provider = test_issuer::ProviderImpl::new();
 
+    let verifier = pkce::code_verifier();
+
     let request = AuthorizationRequestBuilder::new()
         .credential_issuer(CREDENTIAL_ISSUER)
         .client_id(CLIENT_ID)
         .redirect_uri("http://localhost:3000/callback")
         .state("1234")
-        .code_challenge(Base64UrlUnpadded::encode_string(&Sha256::digest("ABCDEF12345")))
-        .authorization_details(vec![AuthorizationDetail {
-            type_: AuthorizationDetailType::OpenIdCredential,
-            credential: CredentialAuthorization::ConfigurationId {
-                credential_configuration_id: "EmployeeID_JWT".to_string(),
-                claims: None,
-            },
-            ..AuthorizationDetail::default()
-        }])
+        .code_challenge(pkce::code_challenge(&verifier))
+        .with_authorization_detail(
+            AuthorizationDetailBuilder::new().credential_configuration_id("EmployeeID_JWT").build(),
+        )
         .subject_id(NORMAL_USER)
         .build();
 
@@ -42,14 +37,6 @@ async fn authorize_configuration_id() {
     assert_snapshot!("authorize:configuration_id:response", &response, {
         ".code" =>"[code]",
     });
-
-    // // check saved state
-    // let state = StateStore::get::<State>(&provider, &response.code).await.expect("state exists");
-    // assert_snapshot!("authorize:configuration_id:state", state, {
-    //     ".expires_at" => "[expires_at]",
-    //     ".**.credentialSubject" => insta::sorted_redaction(),
-    //     ".**.credentialSubject.address" => insta::sorted_redaction(),
-    // });
 }
 
 #[tokio::test]
