@@ -8,6 +8,131 @@ use crate::core::urlencode;
 use crate::oauth;
 use crate::oid4vci::types::{Format, ProfileClaims};
 
+/// An Authorization Request type.
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+#[serde(untagged)]
+#[allow(clippy::large_enum_variant)]
+pub enum AuthorizationRequest {
+    /// A URI referencing the authorization request previously stored at the PAR
+    /// endpoint.
+    Uri(RequestUri),
+
+    /// An Authorization Request object.
+    Object(RequestObject),
+}
+
+impl Default for AuthorizationRequest {
+    fn default() -> Self {
+        Self::Object(RequestObject::default())
+    }
+}
+
+impl fmt::Display for AuthorizationRequest {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = urlencode::to_string(self).map_err(|_| fmt::Error)?;
+        write!(f, "{s}")
+    }
+}
+
+impl FromStr for AuthorizationRequest {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.contains('=') && s.contains('&') {
+            Ok(urlencode::from_str(s)?)
+        } else {
+            Ok(Self::Object(serde_json::from_str(s)?))
+        }
+    }
+}
+
+/// `AuthorizationRequest` requires a custom deserializer because the default
+/// deserializer cannot readily distinguish between `RequestObject` and
+/// `RequestUri`.
+impl<'de> de::Deserialize<'de> for AuthorizationRequest {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct RequestVisitor;
+
+        impl<'de> Visitor<'de> for RequestVisitor {
+            type Value = AuthorizationRequest;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("AuthorizationRequest")
+            }
+
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: de::MapAccess<'de>,
+            {
+                let mut obj: RequestObject = RequestObject::default();
+                let mut uri: RequestUri = RequestUri::default();
+
+                while let Some(key) = map.next_key::<String>()? {
+                    match key.as_str() {
+                        // RequestObject
+                        "credential_issuer" => {
+                            obj.credential_issuer = map.next_value::<String>()?;
+                        }
+                        "response_type" => {
+                            obj.response_type = map.next_value::<oauth::ResponseType>()?;
+                        }
+                        "client_id" => obj.client_id = map.next_value::<String>()?,
+                        "redirect_uri" => obj.redirect_uri = Some(map.next_value::<String>()?),
+                        "state" => obj.state = Some(map.next_value::<String>()?),
+                        "code_challenge" => obj.code_challenge = map.next_value::<String>()?,
+                        "code_challenge_method" => {
+                            obj.code_challenge_method =
+                                map.next_value::<oauth::CodeChallengeMethod>()?;
+                        }
+                        "authorization_details" => {
+                            obj.authorization_details =
+                                Some(map.next_value::<Vec<AuthorizationDetail>>()?);
+                        }
+                        "scope" => obj.scope = Some(map.next_value::<String>()?),
+                        "resource" => obj.resource = Some(map.next_value::<String>()?),
+                        "subject_id" => obj.subject_id = map.next_value::<String>()?,
+                        "wallet_issuer" => obj.wallet_issuer = Some(map.next_value::<String>()?),
+                        "user_hint" => obj.user_hint = Some(map.next_value::<String>()?),
+                        "issuer_state" => obj.issuer_state = Some(map.next_value::<String>()?),
+
+                        // RequestUri
+                        "request_uri" => uri.request_uri = map.next_value::<String>()?,
+                        _ => {}
+                    }
+                }
+
+                if uri.request_uri.is_empty() {
+                    Ok(AuthorizationRequest::Object(obj))
+                } else {
+                    Ok(AuthorizationRequest::Uri(uri))
+                }
+            }
+        }
+
+        deserializer.deserialize_map(RequestVisitor)
+    }
+}
+
+/// Authorization Response as defined in [RFC6749].
+///
+/// [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct AuthorizationResponse {
+    /// Authorization code.
+    pub code: String,
+
+    /// Client state. An opaque value used by the client to maintain state
+    /// between the request and callback.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state: Option<String>,
+
+    /// The client's redirection endpoint from the Authorization request.
+    pub redirect_uri: String,
+}
+
 /// Grant Types the Credential Issuer's Authorization Server is prepared to
 /// process for this credential offer.
 ///
@@ -127,114 +252,6 @@ pub struct TxCode {
     pub description: Option<String>,
 }
 
-/// An Authorization Request type.
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
-#[serde(untagged)]
-#[allow(clippy::large_enum_variant)]
-pub enum AuthorizationRequest {
-    /// A URI referencing the authorization request previously stored at the PAR
-    /// endpoint.
-    Uri(RequestUri),
-
-    /// An Authorization Request object.
-    Object(RequestObject),
-}
-
-impl Default for AuthorizationRequest {
-    fn default() -> Self {
-        Self::Object(RequestObject::default())
-    }
-}
-
-impl fmt::Display for AuthorizationRequest {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = urlencode::to_string(self).map_err(|_| fmt::Error)?;
-        write!(f, "{s}")
-    }
-}
-
-impl FromStr for AuthorizationRequest {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.contains('=') && s.contains('&') {
-            Ok(urlencode::from_str(s)?)
-        } else {
-            Ok(Self::Object(serde_json::from_str(s)?))
-        }
-    }
-}
-
-/// `AuthorizationRequest` requires a custom deserializer because the default
-/// deserializer cannot readily distinguish between `RequestObject` and
-/// `RequestUri`.
-impl<'de> de::Deserialize<'de> for AuthorizationRequest {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        struct RequestVisitor;
-
-        impl<'de> Visitor<'de> for RequestVisitor {
-            type Value = AuthorizationRequest;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("AuthorizationRequest")
-            }
-
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-            where
-                A: de::MapAccess<'de>,
-            {
-                let mut obj: RequestObject = RequestObject::default();
-                let mut uri: RequestUri = RequestUri::default();
-
-                while let Some(key) = map.next_key::<String>()? {
-                    match key.as_str() {
-                        // RequestObject
-                        "credential_issuer" => {
-                            obj.credential_issuer = map.next_value::<String>()?;
-                        }
-                        "response_type" => {
-                            obj.response_type = map.next_value::<oauth::ResponseType>()?;
-                        }
-                        "client_id" => obj.client_id = map.next_value::<String>()?,
-                        "redirect_uri" => obj.redirect_uri = Some(map.next_value::<String>()?),
-                        "state" => obj.state = Some(map.next_value::<String>()?),
-                        "code_challenge" => obj.code_challenge = map.next_value::<String>()?,
-                        "code_challenge_method" => {
-                            obj.code_challenge_method =
-                                map.next_value::<oauth::CodeChallengeMethod>()?;
-                        }
-                        "authorization_details" => {
-                            obj.authorization_details =
-                                Some(map.next_value::<Vec<AuthorizationDetail>>()?);
-                        }
-                        "scope" => obj.scope = Some(map.next_value::<String>()?),
-                        "resource" => obj.resource = Some(map.next_value::<String>()?),
-                        "subject_id" => obj.subject_id = map.next_value::<String>()?,
-                        "wallet_issuer" => obj.wallet_issuer = Some(map.next_value::<String>()?),
-                        "user_hint" => obj.user_hint = Some(map.next_value::<String>()?),
-                        "issuer_state" => obj.issuer_state = Some(map.next_value::<String>()?),
-
-                        // RequestUri
-                        "request_uri" => uri.request_uri = map.next_value::<String>()?,
-                        _ => {}
-                    }
-                }
-
-                if uri.request_uri.is_empty() {
-                    Ok(AuthorizationRequest::Object(obj))
-                } else {
-                    Ok(AuthorizationRequest::Uri(uri))
-                }
-            }
-        }
-
-        deserializer.deserialize_map(RequestVisitor)
-    }
-}
-
 /// A URI referencing the authorization request previously stored at the PAR
 /// endpoint.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
@@ -287,6 +304,7 @@ pub struct RequestObject {
 
     /// Credential Issuers MAY support requesting authorization to issue a
     /// credential using OAuth 2.0 scope values.
+    /// 
     /// A scope value and its mapping to a credential type is defined by the
     /// Issuer. A description of scope value semantics or machine readable
     /// definitions could be defined in Issuer metadata. For example,
@@ -428,23 +446,6 @@ impl PartialEq for CredentialAuthorization {
             }
         }
     }
-}
-
-/// Authorization Response as defined in [RFC6749].
-///
-/// [RFC6749]: (https://www.rfc-editor.org/rfc/rfc6749.html)
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct AuthorizationResponse {
-    /// Authorization code.
-    pub code: String,
-
-    /// Client state. An opaque value used by the client to maintain state
-    /// between the request and callback.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub state: Option<String>,
-
-    /// The client's redirection endpoint from the Authorization request.
-    pub redirect_uri: String,
 }
 
 /// Pushed Authorization Request (PAR) response as defined in [RFC9126].
