@@ -25,8 +25,8 @@ use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore};
 use crate::oid4vci::state::{Authorized, AuthorizedItem, Expire, ItemType, Stage, State, Token};
 use crate::oid4vci::types::{
-    AuthorizedDetail, CredentialAuthorization, Issuer, ProfileClaims, TokenGrantType, TokenRequest,
-    TokenResponse, TokenType,
+    AuthorizationCredential, AuthorizationDetail, AuthorizedDetail, Issuer, TokenGrantType,
+    TokenRequest, TokenResponse, TokenType,
 };
 use crate::oid4vci::{Error, Result};
 
@@ -260,13 +260,13 @@ async fn retain_details(
     // filter by requested authorization_details
     let mut retained = vec![];
 
-    for auth_det in req_auth_dets {
+    for detail in req_auth_dets {
         // check requested `authorization_detail` has been previously authorized
         let mut found = false;
         for item in items {
             if let ItemType::AuthorizationDetail(ad) = &item.item {
-                if ad.credential == auth_det.credential {
-                    verify_claims(&issuer, &auth_det.credential)?;
+                if ad.credential == detail.credential {
+                    verify_claims(&issuer, detail)?;
                     retained.push(item.clone());
                     found = true;
                     break;
@@ -285,29 +285,25 @@ async fn retain_details(
 
 // Verify requested claims exist as supported claims and all mandatory claims
 // have been requested.
-fn verify_claims(issuer: &Issuer, credential: &CredentialAuthorization) -> Result<()> {
+fn verify_claims(issuer: &Issuer, detail: &AuthorizationDetail) -> Result<()> {
     // verify requested claims
-    let (config_id, claims) = match credential {
-        CredentialAuthorization::ConfigurationId {
+    let config_id = match &detail.credential {
+        AuthorizationCredential::ConfigurationId {
             credential_configuration_id,
-            claims: profile,
-        } => (credential_configuration_id, profile.as_ref().and_then(ProfileClaims::claims)),
-        CredentialAuthorization::Format(fmt) => {
-            let credential_configuration_id = issuer
-                .credential_configuration_id(fmt)
-                .map_err(|e| Error::ServerError(format!("issuer issue: {e}")))?;
-            (credential_configuration_id, fmt.claims())
-        }
+        } => credential_configuration_id,
+        AuthorizationCredential::Format(fmt) => issuer
+            .credential_configuration_id(fmt)
+            .map_err(|e| Error::ServerError(format!("issuer issue: {e}")))?,
     };
 
     // check claims are supported and include all mandatory claims
-    if let Some(requested) = claims {
+    if let Some(requested) = &detail.claims {
         let config =
             issuer.credential_configurations_supported.get(config_id).ok_or_else(|| {
                 Error::InvalidAuthorizationDetails("invalid `credential_configuration_id`".into())
             })?;
         config
-            .verify_claims(&requested)
+            .verify_claims(requested)
             .map_err(|e| Error::InvalidAuthorizationDetails(e.to_string()))?;
     }
 

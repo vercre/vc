@@ -20,9 +20,9 @@ use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
 use crate::oid4vci::state::{Authorized, Deferrance, Expire, Stage, State};
 use crate::oid4vci::types::{
-    CredentialConfiguration, CredentialDefinition, CredentialDisplay, CredentialIssuance,
-    CredentialRequest, CredentialResponse, CredentialResponseType, Dataset, Format, Issuer,
-    MultipleProofs, Proof, ProofClaims, SingleProof,
+    CredentialConfiguration, CredentialDefinition, CredentialDisplay, CredentialRequest,
+    CredentialResponse, CredentialResponseType, Dataset, Format, Issuer, MultipleProofs, Proof,
+    ProofClaims, RequestBy, SingleProof,
 };
 use crate::oid4vci::{Error, Result};
 use crate::status::issuer::Status;
@@ -191,7 +191,7 @@ impl Context {
     ) -> Result<CredentialResponse> {
         tracing::debug!("credential::process");
 
-        let dataset = self.dataset(provider, &request).await?;
+        let dataset = self.dataset(provider).await?;
 
         // defer issuance as claims are pending (approval)
         if dataset.pending {
@@ -265,10 +265,7 @@ impl Context {
         dataset: Dataset,
     ) -> Result<VerifiableCredential> {
         // credential type
-        let Some(types) = &credential_definition.type_ else {
-            return Err(Error::ServerError("Credential type not set".into()));
-        };
-        let Some(credential_type) = types.get(1) else {
+        let Some(credential_type) = credential_definition.type_.get(1) else {
             return Err(Error::ServerError("Credential type not set".into()));
         };
 
@@ -363,13 +360,8 @@ impl Context {
         };
 
         match &request.credential {
-            CredentialIssuance::Identifier {
-                credential_identifier,
-            } => token.credentials.get(credential_identifier),
-            CredentialIssuance::Format(f) => {
-                let config_id = self.issuer.credential_configuration_id(f).map_err(|e| {
-                    Error::UnsupportedFormat(format!("invalid credential format: {e}"))
-                })?;
+            RequestBy::Identifier(identifier) => token.credentials.get(identifier),
+            RequestBy::ConfigurationId(config_id) => {
                 token.credentials.values().find(|c| &c.credential_configuration_id == config_id)
             }
         }
@@ -378,9 +370,7 @@ impl Context {
     }
 
     // Get credential dataset for the request
-    async fn dataset(
-        &self, provider: &impl Provider, request: &CredentialRequest,
-    ) -> Result<Dataset> {
+    async fn dataset(&self, provider: &impl Provider) -> Result<Dataset> {
         let identifier = &self.authorized.credential_identifier;
 
         // get claims dataset for `credential_identifier`
@@ -394,29 +384,6 @@ impl Context {
         // narrow claimset to those previously authorized
         if let Some(claim_ids) = &self.authorized.claim_ids {
             dataset.claims.retain(|k, _| claim_ids.contains(k));
-        }
-
-        // narrow of claimset from format/credential_definition
-        if let CredentialIssuance::Format(fmt) = &request.credential {
-            let claim_ids = match &fmt {
-                Format::JwtVcJson(w3c) | Format::JwtVcJsonLd(w3c) | Format::LdpVc(w3c) => w3c
-                    .credential_definition
-                    .credential_subject
-                    .as_ref()
-                    .map(|subj| subj.keys().cloned().collect::<Vec<String>>()),
-                Format::IsoMdl(mdl) => mdl
-                    .claims
-                    .as_ref()
-                    .map(|claimset| claimset.keys().cloned().collect::<Vec<String>>()),
-                Format::VcSdJwt(sd_jwt) => sd_jwt
-                    .claims
-                    .as_ref()
-                    .map(|claimset| claimset.keys().cloned().collect::<Vec<String>>()),
-            };
-
-            if let Some(claim_ids) = &claim_ids {
-                dataset.claims.retain(|k, _| claim_ids.contains(k));
-            }
         }
 
         Ok(dataset)

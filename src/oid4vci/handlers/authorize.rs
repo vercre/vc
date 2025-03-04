@@ -33,7 +33,7 @@
 //! "authorization_details":[
 //!     {
 //!         "type": "openid_credential",
-//!         "format": "vc+sd-jwt",
+//!         "format": " dc+sd-jwt",
 //!         "vct": "SD_JWT_VC_example_in_OpenID4VCI"
 //!     }
 //! ]
@@ -76,8 +76,8 @@ use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
 use crate::oid4vci::state::{Authorization, AuthorizedItem, Expire, ItemType, Stage, State};
 use crate::oid4vci::types::{
-    AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, AuthorizationResponse,
-    Claim, CredentialAuthorization, Issuer, ProfileClaims, RequestObject,
+    AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
+    AuthorizationResponse, ClaimsDescription, Issuer, RequestObject,
 };
 use crate::oid4vci::{Error, Result};
 
@@ -140,7 +140,7 @@ pub struct Context {
     pub issuer: Issuer,
     pub auth_dets: HashMap<String, AuthorizationDetail>,
     pub scope_items: HashMap<String, String>,
-    pub claims: Option<HashMap<String, Claim>>,
+    pub claims: Option<Vec<ClaimsDescription>>,
     pub is_par: bool,
 }
 
@@ -285,34 +285,29 @@ impl Context {
         &mut self, authorization_details: &[AuthorizationDetail],
     ) -> Result<()> {
         // check each credential requested is supported by the issuer
-        for auth_det in authorization_details {
-            if auth_det.type_ != AuthorizationDetailType::OpenIdCredential {
+        for detail in authorization_details {
+            if detail.type_ != AuthorizationDetailType::OpenIdCredential {
                 return Err(Error::InvalidAuthorizationDetails(
                     "invalid authorization_details type".into(),
                 ));
             }
 
             // verify requested claims
-            let (config_id, claims) = match &auth_det.credential {
-                CredentialAuthorization::ConfigurationId {
+            let config_id = match &detail.credential {
+                AuthorizationCredential::ConfigurationId {
                     credential_configuration_id,
-                    claims: profile,
-                } => {
-                    (credential_configuration_id, profile.as_ref().and_then(ProfileClaims::claims))
-                }
-                CredentialAuthorization::Format(fmt) => {
-                    let credential_configuration_id =
-                        self.issuer.credential_configuration_id(fmt).map_err(|e| {
-                            Error::ServerError(format!(
-                                "issue getting `credential_configuration_id`: {e}"
-                            ))
-                        })?;
-                    (credential_configuration_id, fmt.claims())
+                } => credential_configuration_id,
+                AuthorizationCredential::Format(fmt) => {
+                    self.issuer.credential_configuration_id(fmt).map_err(|e| {
+                        Error::ServerError(format!(
+                            "issue getting `credential_configuration_id`: {e}"
+                        ))
+                    })?
                 }
             };
 
             // check claims are supported and include all mandatory claims
-            if let Some(requested) = &claims {
+            if let Some(requested) = &detail.claims {
                 let Some(config) = self.issuer.credential_configurations_supported.get(config_id)
                 else {
                     return Err(Error::InvalidAuthorizationDetails(
@@ -324,8 +319,8 @@ impl Context {
                     .map_err(|e| Error::InvalidRequest(e.to_string()))?;
             }
 
-            self.auth_dets.insert(config_id.clone(), auth_det.clone());
-            self.claims = claims;
+            self.auth_dets.insert(config_id.clone(), detail.clone());
+            self.claims.clone_from(&detail.claims);
         }
 
         Ok(())

@@ -4,9 +4,10 @@ use std::str::FromStr;
 use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
 
+use super::ClaimsDescription;
 use crate::core::urlencode;
 use crate::oauth;
-use crate::oid4vci::types::{Format, ProfileClaims};
+use crate::oid4vci::types::Format;
 
 /// An Authorization Request type.
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
@@ -304,7 +305,7 @@ pub struct RequestObject {
 
     /// Credential Issuers MAY support requesting authorization to issue a
     /// credential using OAuth 2.0 scope values.
-    /// 
+    ///
     /// A scope value and its mapping to a credential type is defined by the
     /// Issuer. A description of scope value semantics or machine readable
     /// definitions could be defined in Issuer metadata. For example,
@@ -348,15 +349,6 @@ pub struct RequestObject {
     pub issuer_state: Option<String>,
 }
 
-/// Authorization detail type (we only support `openid_credential`).
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
-pub enum AuthorizationDetailType {
-    /// OpenID Credential authorization detail type.
-    #[default]
-    #[serde(rename = "openid_credential")]
-    OpenIdCredential,
-}
-
 /// Authorization Details is used to convey the details about the Credentials
 /// the Wallet wants to obtain.
 /// See <https://www.rfc-editor.org/rfc/rfc9396.html>
@@ -370,7 +362,7 @@ pub struct AuthorizationDetail {
     /// Identifies credential to authorize for issuance using either
     /// `credential_configuration_id` or a supported credential `format`.
     #[serde(flatten)]
-    pub credential: CredentialAuthorization,
+    pub credential: AuthorizationCredential,
 
     // TODO: integrate locations
     /// If the Credential Issuer metadata contains an `authorization_servers`
@@ -386,23 +378,31 @@ pub struct AuthorizationDetail {
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
     pub locations: Option<Vec<String>>,
+
+    /// Claims is used to define requested claims the Wallet wants to be
+    /// included in the issued Credential.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub claims: Option<Vec<ClaimsDescription>>,
+}
+
+/// Authorization detail type (we only support `openid_credential`).
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub enum AuthorizationDetailType {
+    /// OpenID Credential authorization detail type.
+    #[default]
+    #[serde(rename = "openid_credential")]
+    OpenIdCredential,
 }
 
 /// Means used to identifiy a Credential's type when requesting a Credential.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq)]
 #[serde(untagged)]
-pub enum CredentialAuthorization {
+pub enum AuthorizationCredential {
     /// Identifes the credential to authorize by `credential_configuration_id`.
     ConfigurationId {
         /// The unique identifier of the Credential being requested in the
         /// `credential_configurations_supported` map in  Issuer Metadata.
         credential_configuration_id: String,
-
-        /// A subset of supported claims to authorize for the  issued
-        /// credential.
-        #[serde(flatten)]
-        #[serde(skip_serializing_if = "Option::is_none")]
-        claims: Option<ProfileClaims>,
     },
 
     /// Identifies the credential to authorize using format-specific parameters.
@@ -411,18 +411,17 @@ pub enum CredentialAuthorization {
     Format(Format),
 }
 
-impl Default for CredentialAuthorization {
+impl Default for AuthorizationCredential {
     fn default() -> Self {
         Self::ConfigurationId {
             credential_configuration_id: String::new(),
-            claims: None,
         }
     }
 }
 
-/// `PartialEq` for `CredentialAuthorization` checks for equivalence using
+/// `PartialEq` for `AuthorizationCredential` checks for equivalence using
 /// `credential_configuration_id` or `format`, ecluding claims.
-impl PartialEq for CredentialAuthorization {
+impl PartialEq for AuthorizationCredential {
     fn eq(&self, other: &Self) -> bool {
         match self {
             Self::ConfigurationId {
@@ -494,7 +493,6 @@ pub struct PushedAuthorizationResponse {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
     use std::str::FromStr;
 
     use insta::assert_yaml_snapshot as assert_snapshot;
@@ -502,7 +500,7 @@ mod tests {
     use super::*;
     use crate::core::urlencode;
     use crate::oauth;
-    use crate::oid4vci::types::{Claim, CredentialDefinition, ProfileW3c};
+    use crate::oid4vci::types::{ClaimsDescription, CredentialDefinition, ProfileW3c};
 
     #[test]
     fn authorization_configuration_id() {
@@ -516,18 +514,24 @@ mod tests {
             code_challenge_method: oauth::CodeChallengeMethod::S256,
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                credential: CredentialAuthorization::ConfigurationId {
+                credential: AuthorizationCredential::ConfigurationId {
                     credential_configuration_id: "EmployeeID_JWT".into(),
-                    claims: Some(ProfileClaims::W3c(CredentialDefinition {
-                        credential_subject: Some(HashMap::from([
-                            ("given_name".to_string(), Claim::default()),
-                            ("family_name".to_string(), Claim::default()),
-                            ("email".to_string(), Claim::default()),
-                        ])),
-                        ..CredentialDefinition::default()
-                    })),
                 },
-                ..AuthorizationDetail::default()
+                claims: Some(vec![
+                    ClaimsDescription {
+                        path: vec!["given_name".to_string()],
+                        ..ClaimsDescription::default()
+                    },
+                    ClaimsDescription {
+                        path: vec!["family_name".to_string()],
+                        ..ClaimsDescription::default()
+                    },
+                    ClaimsDescription {
+                        path: vec!["email".to_string()],
+                        ..ClaimsDescription::default()
+                    },
+                ]),
+                locations: None,
             }]),
             subject_id: "1234".into(),
             wallet_issuer: Some("1234".into()),
@@ -563,12 +567,9 @@ mod tests {
             code_challenge_method: oauth::CodeChallengeMethod::S256,
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                credential: CredentialAuthorization::Format(Format::JwtVcJson(ProfileW3c {
+                credential: AuthorizationCredential::Format(Format::JwtVcJson(ProfileW3c {
                     credential_definition: CredentialDefinition {
-                        type_: Some(vec![
-                            "VerifiableCredential".into(),
-                            "EmployeeIDCredential".into(),
-                        ]),
+                        type_: vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()],
                         ..CredentialDefinition::default()
                     },
                 })),

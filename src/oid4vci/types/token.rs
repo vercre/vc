@@ -273,8 +273,7 @@ mod tests {
 
     use super::*;
     use crate::oid4vci::types::{
-        AuthorizationDetailType, Claim, CredentialAuthorization, CredentialDefinition,
-        ProfileClaims,
+        AuthorizationCredential, AuthorizationDetailType, ClaimsDescription,
     };
 
     #[test]
@@ -288,30 +287,59 @@ mod tests {
             },
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                credential: CredentialAuthorization::ConfigurationId {
+                credential: AuthorizationCredential::ConfigurationId {
                     credential_configuration_id: "EmployeeID_JWT".into(),
-                    claims: Some(ProfileClaims::W3c(CredentialDefinition {
-                        context: None,
-                        type_: Some(vec![
-                            "VerifiableCredential".into(),
-                            "EmployeeIDCredential".into(),
-                        ]),
-                        credential_subject: Some(HashMap::from([
-                            ("given_name".to_string(), Claim::default()),
-                            ("family_name".to_string(), Claim::default()),
-                            ("email".to_string(), Claim::default()),
-                            (
-                                "address".to_string(),
-                                Claim::Set(HashMap::from([
-                                    ("street_address".to_string(), Claim::default()),
-                                    ("locality".to_string(), Claim::default()),
-                                    ("region".to_string(), Claim::default()),
-                                    ("country".to_string(), Claim::default()),
-                                ])),
-                            ),
-                        ])),
-                    })),
                 },
+                claims: Some(vec![
+                    ClaimsDescription {
+                        path: vec!["credentialSubject".to_string(), "given_name".to_string()],
+                        ..ClaimsDescription::default()
+                    },
+                    ClaimsDescription {
+                        path: vec!["credentialSubject".to_string(), "family_name".to_string()],
+                        ..ClaimsDescription::default()
+                    },
+                    ClaimsDescription {
+                        path: vec!["credentialSubject".to_string(), "email".to_string()],
+                        ..ClaimsDescription::default()
+                    },
+                    ClaimsDescription {
+                        path: vec!["credentialSubject".to_string(), "address".to_string()],
+                        ..ClaimsDescription::default()
+                    },
+                    ClaimsDescription {
+                        path: vec![
+                            "credentialSubject".to_string(),
+                            "address".into(),
+                            "street_address".to_string(),
+                        ],
+                        ..ClaimsDescription::default()
+                    },
+                    ClaimsDescription {
+                        path: vec![
+                            "credentialSubject".to_string(),
+                            "address".into(),
+                            "locality".to_string(),
+                        ],
+                        ..ClaimsDescription::default()
+                    },
+                    ClaimsDescription {
+                        path: vec![
+                            "credentialSubject".to_string(),
+                            "address".into(),
+                            "region".to_string(),
+                        ],
+                        ..ClaimsDescription::default()
+                    },
+                    ClaimsDescription {
+                        path: vec![
+                            "credentialSubject".to_string(),
+                            "address".into(),
+                            "country".to_string(),
+                        ],
+                        ..ClaimsDescription::default()
+                    },
+                ]),
                 locations: Some(vec!["https://example.com".into()]),
             }]),
             client_assertion: Some(ClientAssertion::JwtBearer {

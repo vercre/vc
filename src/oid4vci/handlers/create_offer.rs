@@ -76,8 +76,8 @@ use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
 use crate::oid4vci::state::{AuthorizedItem, Expire, ItemType, Offer, Stage, State};
 use crate::oid4vci::types::{
-    AuthorizationCodeGrant, AuthorizationDetail, AuthorizationDetailType, CreateOfferRequest,
-    CreateOfferResponse, CredentialAuthorization, CredentialOffer, Grants, Issuer, OfferType,
+    AuthorizationCodeGrant, AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType,
+    CreateOfferRequest, CreateOfferResponse, CredentialOffer, Grants, Issuer, OfferType,
     PreAuthorizedCodeGrant, SendType, Server, TxCode,
 };
 use crate::oid4vci::{Error, Result};
@@ -310,10 +310,10 @@ async fn authorize(
         authorized.push(AuthorizedItem {
             item: ItemType::AuthorizationDetail(AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
-                credential: CredentialAuthorization::ConfigurationId {
+                credential: AuthorizationCredential::ConfigurationId {
                     credential_configuration_id: config_id.clone(),
-                    claims: None,
                 },
+                claims: None,
                 locations: None,
             }),
             credential_configuration_id: config_id.clone(),

@@ -2,8 +2,8 @@
 
 use crate::oauth::{CodeChallengeMethod, ResponseType};
 use crate::oid4vci::{
-    AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest, CredentialAuthorization,
-    Format, ProfileClaims, RequestObject,
+    AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
+    ClaimsDescription, Format, RequestObject,
 };
 
 /// Build an [`AuthorizationRequest`].
@@ -166,7 +166,7 @@ impl AuthorizationRequestBuilder {
 #[derive(Default, Debug)]
 pub struct AuthorizationDetailBuilder {
     credential_configuration_id: String,
-    claims: Option<ProfileClaims>,
+    claims: Option<Vec<ClaimsDescription>>,
     format: Format,
 }
 
@@ -188,7 +188,7 @@ impl AuthorizationDetailBuilder {
 
     /// Specify the claims to include in the credential.
     #[must_use]
-    pub fn claims(mut self, claims: ProfileClaims) -> Self {
+    pub fn claims(mut self, claims: Vec<ClaimsDescription>) -> Self {
         self.claims = Some(claims);
         self
     }
@@ -205,11 +205,11 @@ impl AuthorizationDetailBuilder {
     pub fn build(self) -> AuthorizationDetail {
         AuthorizationDetail {
             type_: AuthorizationDetailType::OpenIdCredential,
-            credential: CredentialAuthorization::ConfigurationId {
+            credential: AuthorizationCredential::ConfigurationId {
                 credential_configuration_id: self.credential_configuration_id,
-                claims: None,
             },
             locations: None,
+            claims: self.claims,
         }
     }
 }

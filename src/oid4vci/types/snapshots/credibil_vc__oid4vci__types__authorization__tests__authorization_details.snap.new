@@ -1,0 +1,14 @@
+---
+source: src/oid4vci/types/authorization.rs
+assertion_line: 549
+expression: object.authorization_details
+---
+- type: openid_credential
+  credential_configuration_id: EmployeeID_JWT
+  claims:
+    - path:
+        - given_name
+    - path:
+        - family_name
+    - path:
+        - email

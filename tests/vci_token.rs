@@ -10,7 +10,7 @@ use credibil_vc::oid4vci::state::{
     Authorization, AuthorizedItem, Expire, ItemType, Offer, Stage, State,
 };
 use credibil_vc::oid4vci::types::{
-    AuthorizationDetail, AuthorizationDetailType, CredentialAuthorization, CredentialDefinition,
+    AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType, CredentialDefinition,
     Format, ProfileW3c, TokenRequest, TokenResponse,
 };
 use insta::assert_yaml_snapshot as assert_snapshot;
@@ -29,10 +29,10 @@ async fn pre_authorized() {
             items: Some(vec![AuthorizedItem {
                 item: ItemType::AuthorizationDetail(AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,
-                    credential: CredentialAuthorization::ConfigurationId {
+                    credential: AuthorizationCredential::ConfigurationId {
                         credential_configuration_id: "EmployeeID_JWT".into(),
-                        claims: None,
                     },
+                    claims: None,
                     locations: None,
                 }),
                 credential_configuration_id: "EmployeeID_JWT".into(),
@@ -99,9 +99,8 @@ async fn authorized() {
             items: vec![AuthorizedItem {
                 item: ItemType::AuthorizationDetail(AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,
-                    credential: CredentialAuthorization::ConfigurationId {
+                    credential: AuthorizationCredential::ConfigurationId {
                         credential_configuration_id: "EmployeeID_JWT".into(),
-                        claims: None,
                     },
                     ..AuthorizationDetail::default()
                 }),
@@ -169,12 +168,12 @@ async fn authorization_details() {
             items: vec![AuthorizedItem {
                 item: ItemType::AuthorizationDetail(AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,
-                    credential: CredentialAuthorization::Format(Format::JwtVcJson(ProfileW3c {
+                    credential: AuthorizationCredential::Format(Format::JwtVcJson(ProfileW3c {
                         credential_definition: CredentialDefinition {
-                            type_: Some(vec![
+                            type_: vec![
                                 "VerifiableCredential".into(),
                                 "EmployeeIDCredential".into(),
-                            ]),
+                            ],
                             ..CredentialDefinition::default()
                         },
                     })),

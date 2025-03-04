@@ -1,13 +1,10 @@
-use std::collections::HashMap;
-use std::fmt::{self, Debug};
+use std::fmt::Debug;
 
 use credibil_infosec::jose::jwk::PublicKeyJwk;
-use serde::de::{self, Deserializer, Visitor};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 use crate::core::Kind;
-use crate::oid4vci::types::{ClaimDefinition, CredentialDefinition};
 use crate::w3c_vc::model::VerifiableCredential;
 
 /// The user information returned by the Subject trait.
@@ -20,182 +17,6 @@ pub struct Dataset {
     /// Specifies whether user information required for the credential subject
     /// is pending.
     pub pending: bool,
-}
-
-/// The `OpenID4VCI` specification defines commonly used [Credential Format
-/// Profiles] to support.  The profiles define Credential format specific
-/// parameters or claims used to support a particular format.
-///
-/// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(tag = "format")]
-pub enum Format {
-    /// A W3C Verifiable Credential.
-    ///
-    /// When this format is specified, Credential Offer, Authorization Details,
-    /// Credential Request, and Credential Issuer metadata, including
-    /// `credential_definition` object, MUST NOT be processed using JSON-LD
-    /// rules.
-    #[serde(rename = "jwt_vc_json")]
-    JwtVcJson(ProfileW3c),
-
-    /// A W3C Verifiable Credential.
-    ///
-    /// When using this format, data MUST NOT be processed using JSON-LD rules.
-    ///
-    /// N.B. The `@context` value in the `credential_definition` object can be
-    /// used by the Wallet to check whether it supports a certain VC. If
-    /// necessary, the Wallet could apply JSON-LD processing to the
-    /// Credential issued.
-    #[serde(rename = "ldp-vc")]
-    LdpVc(ProfileW3c),
-
-    /// A W3C Verifiable Credential.
-    ///
-    /// When using this format, data MUST NOT be processed using JSON-LD rules.
-    ///
-    /// N.B. The `@context` value in the `credential_definition` object can be
-    /// used by the Wallet to check whether it supports a certain VC. If
-    /// necessary, the Wallet could apply JSON-LD processing to the
-    /// Credential issued.
-    #[serde(rename = "jwt_vc_json-ld")]
-    JwtVcJsonLd(ProfileW3c),
-
-    /// ISO mDL.
-    ///
-    /// A Credential Format Profile for Credentials complying with [ISO.18013-5]
-    /// — ISO-compliant driving licence specification.
-    ///
-    /// [ISO.18013-5]: (https://www.iso.org/standard/69084.html)
-    #[serde(rename = "mso_mdoc")]
-    IsoMdl(ProfileIsoMdl),
-
-    /// IETF SD-JWT VC.
-    ///
-    /// A Credential Format Profile for Credentials complying with
-    /// [I-D.ietf-oauth-sd-jwt-vc] — SD-JWT-based Verifiable Credentials for
-    /// selective disclosure.
-    ///
-    /// [I-D.ietf-oauth-sd-jwt-vc]: (https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-01)
-    #[serde(rename = "vc+sd-jwt")]
-    VcSdJwt(ProfileSdJwt),
-}
-
-impl Format {
-    /// Claims for the format profile.
-    #[must_use]
-    pub fn claims(&self) -> Option<HashMap<String, Claim>> {
-        match self {
-            Self::JwtVcJson(w3c) | Self::JwtVcJsonLd(w3c) | Self::LdpVc(w3c) => {
-                w3c.credential_definition.credential_subject.clone()
-            }
-            Self::IsoMdl(iso_mdl) => iso_mdl.claims.clone(),
-            Self::VcSdJwt(sd_jwt) => sd_jwt.claims.clone(),
-        }
-    }
-}
-
-impl Default for Format {
-    fn default() -> Self {
-        Self::JwtVcJson(ProfileW3c::default())
-    }
-}
-
-impl std::fmt::Display for Format {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::JwtVcJson(_) => write!(f, "jwt_vc_json"),
-            Self::LdpVc(_) => write!(f, "ldp_vc"),
-            Self::JwtVcJsonLd(_) => write!(f, "jwt_vc_json-ld"),
-            Self::IsoMdl(_) => write!(f, "mso_mdoc"),
-            Self::VcSdJwt(_) => write!(f, "vc+sd-jwt"),
-        }
-    }
-}
-
-/// Supported [Credential Format Profiles].
-///
-/// [Credential Format Profiles]: (https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-format-profiles)
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub enum ProfileClaims {
-    /// W3C Verifiable Credential profile claims.
-    #[serde(rename = "credential_definition")]
-    W3c(CredentialDefinition),
-
-    /// `ISO.18013-5` (Mobile Driving License) and
-    /// Selective Disclosure JWT ([SD-JWT]) profile claims
-    #[serde(rename = "claims")]
-    Claims(HashMap<String, Claim>),
-}
-
-impl Default for ProfileClaims {
-    fn default() -> Self {
-        Self::W3c(CredentialDefinition::default())
-    }
-}
-
-impl ProfileClaims {
-    /// Claims for the format profile.
-    #[must_use]
-    pub fn claims(&self) -> Option<HashMap<String, Claim>> {
-        match self {
-            Self::W3c(credential_definition) => credential_definition.credential_subject.clone(),
-            Self::Claims(claims) => Some(claims.clone()),
-        }
-    }
-}
-
-/// Credential Format Profile for W3C Verifiable Credentials.
-#[derive(Clone, Default, Debug, Deserialize, Serialize, Eq)]
-pub struct ProfileW3c {
-    /// The Credential's definition.
-    pub credential_definition: CredentialDefinition,
-}
-
-impl PartialEq for ProfileW3c {
-    fn eq(&self, other: &Self) -> bool {
-        self.credential_definition.type_ == other.credential_definition.type_
-    }
-}
-
-/// Credential Format Profile for `ISO.18013-5` (Mobile Driving License)
-/// credentials.
-#[derive(Clone, Default, Debug, Deserialize, Serialize, Eq)]
-pub struct ProfileIsoMdl {
-    /// The Credential type, as defined in [ISO.18013-5].
-    pub doctype: String,
-
-    /// A list of claims to include in the issued credential.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub claims: Option<HashMap<String, Claim>>,
-}
-
-impl PartialEq for ProfileIsoMdl {
-    fn eq(&self, other: &Self) -> bool {
-        self.doctype == other.doctype
-    }
-}
-
-/// Credential Format Profile for Selective Disclosure JWT ([SD-JWT])
-/// credentials.
-///
-/// [SD-JWT]: <https://datatracker.ietf.org/doc/html/draft-ietf-oauth-sd-jwt-vc-04>
-#[derive(Clone, Default, Debug, Deserialize, Serialize, Eq)]
-pub struct ProfileSdJwt {
-    /// The Verifiable Credential type. The `vct` value MUST be a
-    /// case-sensitive String or URI serving as an identifier for
-    /// the type of the SD-JWT VC.
-    pub vct: String,
-
-    /// A list of claims to include in the issued credential.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub claims: Option<HashMap<String, Claim>>,
-}
-
-impl PartialEq for ProfileSdJwt {
-    fn eq(&self, other: &Self) -> bool {
-        self.vct == other.vct
-    }
 }
 
 /// `CredentialRequest` is used by the Client to make a Credential Request to
@@ -219,7 +40,7 @@ pub struct CredentialRequest {
     /// If `credential_identifiers` were returned in the Token
     /// Response, they MUST be used here. Otherwise, they MUST NOT be used.
     #[serde(flatten)]
-    pub credential: CredentialIssuance,
+    pub credential: RequestBy,
 
     /// Wallet's proof of possession of cryptographic key material the issued
     /// Credential will be bound to.
@@ -239,28 +60,23 @@ pub struct CredentialRequest {
 /// Means used to identifiy Credential type and format when requesting a
 /// Credential.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
-#[serde(untagged)]
-pub enum CredentialIssuance {
+pub enum RequestBy {
     /// Credential is requested by `credential_identifier`.
     /// REQUIRED when an Authorization Details of type `openid_credential` was
     /// returned from the Token Response.
-    Identifier {
-        /// Identifies a Credential in the `credential_configurations_supported`
-        /// Credential Issuer metadata, but containing different claim values or
-        /// different subset of the Credential's claims.
-        credential_identifier: String,
-    },
+    #[serde(rename = "credential_identifier")]
+    Identifier(String),
 
-    /// Defines the format and type of of the Credential to be issued.  REQUIRED
-    /// when `credential_identifiers` was not returned from the Token Response.
-    Format(Format),
+    /// Credential is requested by `credential_configuration_id`. This
+    /// identifies the entry in the `credential_configurations_supported`
+    /// Issuer metadata.
+    #[serde(rename = "credential_configuration_id")]
+    ConfigurationId(String),
 }
 
-impl Default for CredentialIssuance {
+impl Default for RequestBy {
     fn default() -> Self {
-        Self::Identifier {
-            credential_identifier: String::new(),
-        }
+        Self::Identifier(String::new())
     }
 }
 
@@ -455,65 +271,6 @@ pub struct DeferredCredentialResponse {
     pub credential_response: CredentialResponse,
 }
 
-/// Claim entry. Either a set of nested `Claim`s or a single `ClaimDefinition`.
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
-#[serde(untagged)]
-pub enum Claim {
-    /// A single claim definition.
-    Entry(ClaimDefinition),
-
-    /// Nested claims.
-    Set(HashMap<String, Claim>),
-}
-
-impl Default for Claim {
-    fn default() -> Self {
-        Self::Entry(ClaimDefinition::default())
-    }
-}
-
-/// `Claim` requires a custom deserializer as JSON claims are always objects.
-/// The A `Claim::Entry` is a single claim definition, while a `Claim::Set` is a
-/// set of nested claims.
-impl<'de> de::Deserialize<'de> for Claim {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        struct ClaimVisitor;
-
-        impl<'de> Visitor<'de> for ClaimVisitor {
-            type Value = Claim;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("Claim")
-            }
-
-            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
-            where
-                A: de::MapAccess<'de>,
-            {
-                let mut entry = ClaimDefinition::default();
-                let mut set = HashMap::<String, Claim>::new();
-
-                while let Some(key) = map.next_key::<String>()? {
-                    match key.as_str() {
-                        "mandatory" => entry.mandatory = Some(map.next_value()?),
-                        "value_type" => entry.value_type = Some(map.next_value()?),
-                        "display" => entry.display = Some(map.next_value()?),
-                        _ => _ = set.insert(key, map.next_value::<Claim>()?),
-                    }
-                }
-
-                // empty claims (e.g. "given_name": {}) will always be an `entry`
-                if set.is_empty() { Ok(Claim::Entry(entry)) } else { Ok(Claim::Set(set)) }
-            }
-        }
-
-        deserializer.deserialize_map(ClaimVisitor)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use insta::assert_yaml_snapshot as assert_snapshot;
@@ -540,9 +297,7 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            credential: CredentialIssuance::Identifier {
-                credential_identifier: "EngineeringDegree2023".into(),
-            },
+            credential: RequestBy::Identifier("EngineeringDegree2023".to_string()),
             proof: Some(Proof::Single {
                 proof_type: SingleProof::Jwt {
                     jwt: "SomeJWT".into(),
@@ -580,12 +335,7 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            credential: CredentialIssuance::Format(Format::JwtVcJson(ProfileW3c {
-                credential_definition: CredentialDefinition {
-                    type_: Some(vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()]),
-                    ..CredentialDefinition::default()
-                },
-            })),
+            credential: RequestBy::ConfigurationId("EmployeeID_JWT".to_string()),
             proof: Some(Proof::Single {
                 proof_type: SingleProof::Jwt {
                     jwt: "SomeJWT".into(),
@@ -619,9 +369,7 @@ mod tests {
         let request = CredentialRequest {
             credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
-            credential: CredentialIssuance::Identifier {
-                credential_identifier: "EngineeringDegree2023".into(),
-            },
+            credential: RequestBy::Identifier("EngineeringDegree2023".to_string()),
             proof: Some(Proof::Multiple(MultipleProofs::Jwt(vec![
                 "SomeJWT1".into(),
                 "SomeJWT2".into(),
