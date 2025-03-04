@@ -6,9 +6,10 @@ use chrono::Utc;
 use credibil_infosec::jose::JwsBuilder;
 use credibil_vc::oid4vci::proof::{self, Payload, Type, Verify};
 use credibil_vc::oid4vci::{
-    AuthorizationRequest, AuthorizationResponse, CredentialOfferRequest, CredentialRequest,
-    CredentialResponseType, DeferredCredentialRequest, DeferredCredentialResponse, Error, Format,
-    OfferType, ProofClaims, Result, TokenGrantType, TokenRequest, TokenResponse, endpoint,
+    AuthorizationRequest, AuthorizationResponse, Credential, CredentialOfferRequest,
+    CredentialRequest, CredentialResponseType, DeferredCredentialRequest,
+    DeferredCredentialResponse, Error, Format, OfferType, ProofClaims, Result, TokenGrantType,
+    TokenRequest, TokenResponse, endpoint,
 };
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
@@ -134,7 +135,7 @@ impl Wallet {
             iss: Some(CLIENT_ID.into()),
             aud: CREDENTIAL_ISSUER.into(),
             iat: Utc::now().timestamp(),
-            nonce: token_resp.c_nonce.clone(),
+            nonce: Some("token_resp.c_nonce".to_string()),
         };
         let jws = JwsBuilder::new()
             .jwt_type(Type::Openid4VciProofJwt)
@@ -167,14 +168,15 @@ impl Wallet {
         let mut response = endpoint::handle(CREDENTIAL_ISSUER, request, &self.provider).await?;
 
         // fetch credential if response is deferred
-        if let CredentialResponseType::TransactionId(transaction_id) = &response.response {
+        if let CredentialResponseType::TransactionId { transaction_id } = &response.response {
             let deferred_resp = self.deferred(token_resp.clone(), transaction_id.clone()).await?;
             response = deferred_resp.credential_response;
         }
 
-        let CredentialResponseType::Credential(credential) = &response.response else {
+        let CredentialResponseType::Credentials { credentials, .. } = &response.response else {
             panic!("expected single credential");
         };
+        let Credential { credential } = credentials.first().expect("should have credential");
 
         // TODO: verify signature
 

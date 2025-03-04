@@ -20,9 +20,9 @@ use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
 use crate::oid4vci::state::{Authorized, Deferrance, Expire, Stage, State};
 use crate::oid4vci::types::{
-    CredentialConfiguration, CredentialDefinition, CredentialDisplay, CredentialRequest,
-    CredentialResponse, CredentialResponseType, Dataset, Format, Issuer, MultipleProofs, Proof,
-    ProofClaims, RequestBy, SingleProof,
+    Credential, CredentialConfiguration, CredentialDefinition, CredentialDisplay,
+    CredentialRequest, CredentialResponse, CredentialResponseType, Dataset, Format, Issuer,
+    MultipleProofs, Proof, ProofClaims, RequestBy, SingleProof,
 };
 use crate::oid4vci::{Error, Result};
 use crate::status::issuer::Status;
@@ -109,14 +109,10 @@ impl Context {
             return Err(Error::AccessDenied("invalid access token state".into()));
         };
 
-        if token_state.c_nonce_expired() {
-            return Err(Error::AccessDenied("c_nonce has expired".into()));
-        }
-
         // TODO: refactor into separate function.
         if let Some(supported_types) = &self.configuration.proof_types_supported {
             let Some(proof) = &request.proof else {
-                return Err(self.invalid_proof(provider, "proof not set").await?);
+                return Err(Error::InvalidProof("proof not set".to_string()));
             };
 
             // TODO: cater for non-JWT proofs - use w3c-vc::decode method
@@ -140,41 +136,34 @@ impl Context {
                     match jws::decode(proof_jwt, verify_key!(provider)).await {
                         Ok(jwt) => jwt,
                         Err(e) => {
-                            return Err(self
-                                .invalid_proof(provider, format!("issue decoding JWT: {e}"))
-                                .await?);
+                            return Err(Error::InvalidProof(format!("issue decoding JWT: {e}")));
                         }
                     };
 
                 // proof type
                 if jwt.header.typ != Type::Openid4VciProofJwt.to_string() {
-                    return Err(self
-                        .invalid_proof(
-                            provider,
-                            format!(
-                                "Proof JWT 'typ' ({}) is not {}",
-                                jwt.header.typ,
-                                Type::Openid4VciProofJwt
-                            ),
-                        )
-                        .await?);
+                    return Err(Error::InvalidProof(format!(
+                        "Proof JWT 'typ' ({}) is not {}",
+                        jwt.header.typ,
+                        Type::Openid4VciProofJwt
+                    )));
                 }
 
                 // previously issued c_nonce
                 if jwt.claims.nonce.as_ref() != Some(&token_state.c_nonce) {
-                    return Err(self
-                        .invalid_proof(provider, "Proof JWT nonce claim is invalid")
-                        .await?);
+                    return Err(Error::InvalidProof(
+                        "Proof JWT nonce claim is invalid".to_string(),
+                    ));
                 }
 
                 // Key ID
                 let Key::KeyId(kid) = &jwt.header.key else {
-                    return Err(self.invalid_proof(provider, "Proof JWT 'kid' is missing").await?);
+                    return Err(Error::InvalidProof("Proof JWT 'kid' is missing".to_string()));
                 };
 
                 // HACK: save extracted DID for later use when issuing credential
                 let Some(did) = kid.split('#').next() else {
-                    return Err(self.invalid_proof(provider, "Proof JWT DID is invalid").await?);
+                    return Err(Error::InvalidProof("Proof JWT DID is invalid".to_string()));
                 };
 
                 // TODO: support multiple DID bindings
@@ -250,8 +239,6 @@ impl Context {
 
         Ok(CredentialResponse {
             response,
-            c_nonce: Some(token_state.c_nonce.clone()),
-            c_nonce_expires_in: Some(token_state.c_nonce_expires_in()),
             notification_id: Some(notification_id),
         })
     }
@@ -315,7 +302,13 @@ impl Context {
         .map_err(|e| {
             Error::ServerError(format!("issue generating `jwt_vc_json` credential: {e}"))
         })?;
-        Ok(CredentialResponseType::Credential(Kind::String(jwt)))
+
+        Ok(CredentialResponseType::Credentials {
+            credentials: vec![Credential {
+                credential: Kind::String(jwt),
+            }],
+            notification_id: None,
+        })
     }
 
     // Generate a `mso_mdoc` format credential.
@@ -325,7 +318,13 @@ impl Context {
         let mdl = crate::iso_mdl::to_credential(dataset.claims, signer).await.map_err(|e| {
             Error::ServerError(format!("issue generating `mso_mdoc` credential: {e}"))
         })?;
-        Ok(CredentialResponseType::Credential(Kind::String(mdl)))
+
+        Ok(CredentialResponseType::Credentials {
+            credentials: vec![Credential {
+                credential: Kind::String(mdl),
+            }],
+            notification_id: None,
+        })
     }
 
     // Defer issuance of the requested credential.
@@ -347,7 +346,9 @@ impl Context {
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
         Ok(CredentialResponse {
-            response: CredentialResponseType::TransactionId(txn_id),
+            response: CredentialResponseType::TransactionId {
+                transaction_id: txn_id,
+            },
             ..CredentialResponse::default()
         })
     }
@@ -387,34 +388,6 @@ impl Context {
         }
 
         Ok(dataset)
-    }
-
-    // Creates, stores, and returns new `c_nonce` and `c_nonce_expires`_in values
-    // for use in `Error::InvalidProof` errors, as per specification.
-    async fn invalid_proof(
-        &self, provider: &impl Provider, hint: impl Into<String> + Send,
-    ) -> Result<Error> {
-        // generate nonce and update token state
-        let c_nonce = generate::nonce();
-        let mut state = self.state.clone();
-        state.expires_at = Utc::now() + Expire::Access.duration();
-
-        let Stage::Validated(mut token_state) = state.stage else {
-            return Err(Error::AccessDenied("invalid access token state".into()));
-        };
-        token_state.c_nonce.clone_from(&c_nonce);
-        token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
-        state.stage = Stage::Validated(token_state.clone());
-
-        StateStore::put(provider, &token_state.access_token, &state, state.expires_at)
-            .await
-            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
-
-        Ok(Error::InvalidProof {
-            hint: hint.into(),
-            c_nonce,
-            c_nonce_expires_in: Expire::Nonce.duration().num_seconds(),
-        })
     }
 }
 

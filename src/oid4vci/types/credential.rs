@@ -196,17 +196,6 @@ pub struct CredentialResponse {
     #[serde(flatten)]
     pub response: CredentialResponseType,
 
-    /// A nonce to be used to create a proof of possession of key material when
-    /// requesting a Credential. When received, the Wallet MUST use this
-    /// value for its subsequent credential requests until the Credential
-    /// Issuer provides a fresh nonce.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub c_nonce: Option<String>,
-
-    /// The lifetime in seconds of the `c_nonce` parameter.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub c_nonce_expires_in: Option<i64>,
-
     /// Identifies an issued Credential when the Wallet calls the Issuer's
     /// Notification endpoint. The `notification_id` is included in the
     /// Notification Request.
@@ -218,27 +207,48 @@ pub struct CredentialResponse {
 
 /// The Credential Response can be Synchronous or Deferred.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "snake_case")]
+#[serde(untagged)]
 pub enum CredentialResponseType {
-    /// Contains issued Credential.It MAY be a string or an object, depending
-    /// on the Credential Format.
-    Credential(Kind<VerifiableCredential>),
-
     /// Contains an array of issued Credentials. The values in the array MAY be
     /// a string or an object, depending on the Credential Format.
-    Credentials(Vec<Kind<VerifiableCredential>>),
+    Credentials {
+        /// An array of one or more issued Credentials
+        credentials: Vec<Credential>,
 
-    /// String identifying a Deferred Issuance transaction. This claim is
+        /// Used to identify one or more of the Credentials returned in the
+        /// response. The `notification_id` is included in the Notification
+        /// Request.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        notification_id: Option<String>,
+    },
+
+    /// String identifying a Deferred Issuance transaction. This parameter is
     /// contained in the response if the Credential Issuer cannot
     /// immediately issue the Credential. The value is subsequently used to
     /// obtain the respective Credential with the Deferred Credential
     /// Endpoint.
-    TransactionId(String),
+    TransactionId {
+        /// The Deferred Issuance transaction identifier.
+        transaction_id: String,
+    },
+}
+
+/// The issued credential
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Credential {
+    /// Contains one issued Credential. It MAY be a string or an object,
+    /// depending on the Credential Format.
+    pub credential: Kind<VerifiableCredential>,
 }
 
 impl Default for CredentialResponseType {
     fn default() -> Self {
-        Self::Credential(Kind::default())
+        Self::Credentials {
+            credentials: vec![Credential {
+                credential: Kind::default(),
+            }],
+            notification_id: None,
+        }
     }
 }
 

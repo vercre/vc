@@ -220,15 +220,6 @@ pub struct TokenResponse {
     /// The lifetime in seconds of the access token.
     pub expires_in: i64,
 
-    /// A nonce to be used by the Wallet to create a proof of possession of key
-    /// material when requesting credentials.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub c_nonce: Option<String>,
-
-    /// Lifetime in seconds of the `c_nonce`.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub c_nonce_expires_in: Option<i64>,
-
     /// REQUIRED when `authorization_details` parameter is used to request
     /// issuance of a certain Credential type. MUST NOT be used otherwise.
     ///

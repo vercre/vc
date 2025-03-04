@@ -194,20 +194,6 @@ pub struct Token {
     pub credentials: HashMap<CredentialIdentifier, Authorized>,
 }
 
-impl Token {
-    /// The number of seconds until the `c_nonce` expires.
-    #[must_use]
-    pub fn c_nonce_expires_in(&self) -> i64 {
-        self.c_nonce_expires_at.signed_duration_since(Utc::now()).num_seconds()
-    }
-
-    /// Determines whether the `c_nonce` has expired.
-    #[must_use]
-    pub fn c_nonce_expired(&self) -> bool {
-        self.c_nonce_expires_in() < 0
-    }
-}
-
 /// Issued Credential state (for Notification endpoint).
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Credential {

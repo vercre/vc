@@ -6,8 +6,6 @@
 
 use std::fmt::Debug;
 
-use serde::Serialize;
-
 use crate::oid4vci::Result;
 use crate::oid4vci::provider::Provider;
 
@@ -32,7 +30,7 @@ pub async fn handle<T>(
 ///
 /// The primary role of this trait is to provide a common interface for
 /// messages so they can be handled by [`handle`] method.
-pub trait Request: Serialize + Clone + Debug + Send + Sync {
+pub trait Request: Clone + Debug + Send + Sync {
     /// The inner reply type specific to the implementing message.
     type Response;
 

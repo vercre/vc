@@ -102,16 +102,20 @@ pub enum Error {
 
     /// Requested credential format is not supported.
     #[error(r#"{{"error": "unsupported_credential_format", "error_description": "{0}"}}"#)]
-    UnsupportedFormat(String),
+    UnsupportedCredentialFormat(String),
 
     /// Credential Request did not contain a proof, or proof was invalid, i.e.
-    /// it was not bound to a Credential Issuer provided `c_nonce`. The
-    /// error response contains new `c_nonce` as well as
-    /// `c_nonce_expires_in` values to be used by the Wallet when creating
-    /// another proof of possession of key material.
+    /// it was not bound to a Credential Issuer provided `c_nonce`.
     #[allow(missing_docs)]
-    #[error(r#"{{"error": "invalid_proof", "error_description": "{hint}", "c_nonce": "{c_nonce}", "c_nonce_expires_in": {c_nonce_expires_in}}}"#)]
-    InvalidProof { hint: String, c_nonce: String, c_nonce_expires_in: i64 },
+    #[error(r#"{{"error": "invalid_proof", "error_description": "{0}"}}"#)]
+    InvalidProof(String),
+
+    /// The proof or proofs parameter in the Credential Request uses an invalid
+    /// nonce: at least one of the key proofs contains an invalid `c_nonce`
+    /// value. The wallet should retrieve a new `c_nonce` value.
+    #[allow(missing_docs)]
+    #[error(r#"{{"error": "invalid_nonce", "error_description": "{0}"}}"#)]
+    InvalidNonce(String),
 
     /// This error occurs when the encryption parameters in the Credential
     /// Request are either invalid or missing. In the latter case, it
@@ -120,6 +124,10 @@ pub enum Error {
     /// contain the necessary encryption parameters.
     #[error(r#"{{"error": "invalid_encryption_parameters", "error_description": "{0}"}}"#)]
     InvalidEncryptionParameters(String),
+
+    /// The Credential Request has not been accepted by the Credential Issuer.
+    #[error(r#"{{"error": "credential_request_denied", "error_description": "{0}"}}"#)]
+    CredentialRequestDenied(String),
 
     /// The Credential issuance is still pending. The error response SHOULD also
     /// contain the interval member, determining the minimum amount of time
@@ -151,14 +159,6 @@ pub struct OidError {
     /// Optional client-state parameter.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub state: Option<String>,
-
-    /// A fresh `c_nonce` to use when retrying Proof submission.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub c_nonce: Option<String>,
-
-    /// The expiry time of the `c_nonce`.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub c_nonce_expires_in: Option<i64>,
 }
 
 impl Serialize for Error {
@@ -216,27 +216,5 @@ mod test {
         let err = Error::InvalidRequest("bad request".into());
         let ser = serde_json::to_value(&err).unwrap();
         assert_eq!(ser, json!({"error":"invalid_request", "error_description": "bad request"}));
-    }
-
-    // Test an InvalidProof error returns c_nonce and c_nonce_expires_in values
-    // in the external response.
-    #[test]
-    fn proof_err() {
-        let err = Error::InvalidProof {
-            hint: "".into(),
-            c_nonce: "c_nonce".into(),
-            c_nonce_expires_in: 10,
-        };
-        let ser: Value = serde_json::from_str(&err.to_string()).unwrap();
-
-        assert_eq!(
-            ser,
-            json!({
-                "error": "invalid_proof",
-                "error_description": "",
-                "c_nonce": "c_nonce",
-                "c_nonce_expires_in": 10,
-            })
-        );
     }
 }

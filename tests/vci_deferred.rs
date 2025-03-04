@@ -11,7 +11,7 @@ use credibil_vc::oid4vci::endpoint;
 use credibil_vc::oid4vci::provider::StateStore;
 use credibil_vc::oid4vci::state::{Authorized, Deferrance, Expire, Stage, State, Token};
 use credibil_vc::oid4vci::types::{
-    CredentialRequest, CredentialResponseType, DeferredCredentialRequest, ProofClaims,
+    Credential, CredentialRequest, CredentialResponseType, DeferredCredentialRequest, ProofClaims,
 };
 use credibil_vc::w3c_vc::proof::{self, Payload, Type, Verify};
 use insta::assert_yaml_snapshot as assert_snapshot;
@@ -104,11 +104,13 @@ async fn deferred_ok() {
     let cred_resp = response.credential_response;
 
     // verify credential
-    let CredentialResponseType::Credential(vc_kind) = &cred_resp.response else {
+    let CredentialResponseType::Credentials { credentials, .. } = &cred_resp.response else {
         panic!("expected a single credential");
     };
+    let Credential { credential } = credentials.first().expect("should have credential");
+
     let Payload::Vc { vc, .. } =
-        proof::verify(Verify::Vc(&vc_kind), provider.clone()).await.expect("should decode")
+        proof::verify(Verify::Vc(&credential), provider.clone()).await.expect("should decode")
     else {
         panic!("should be VC");
     };

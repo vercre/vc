@@ -236,8 +236,6 @@ impl Context {
             access_token,
             token_type: TokenType::Bearer,
             expires_in: Expire::Access.duration().num_seconds(),
-            c_nonce: Some(c_nonce),
-            c_nonce_expires_in: Some(Expire::Nonce.duration().num_seconds()),
             authorization_details,
         })
     }

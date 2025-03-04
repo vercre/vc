@@ -10,7 +10,9 @@ use credibil_infosec::jose::jws::JwsBuilder;
 use credibil_vc::oid4vci::endpoint;
 use credibil_vc::oid4vci::provider::StateStore;
 use credibil_vc::oid4vci::state::{Authorized, Expire, Stage, State, Token};
-use credibil_vc::oid4vci::types::{CredentialRequest, CredentialResponseType, ProofClaims};
+use credibil_vc::oid4vci::types::{
+    Credential, CredentialRequest, CredentialResponseType, ProofClaims,
+};
 use credibil_vc::w3c_vc::proof::{self, Payload, Type, Verify};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
@@ -81,11 +83,13 @@ async fn identifier() {
     });
 
     // verify credential
-    let CredentialResponseType::Credential(vc_kind) = &response.response else {
+    let CredentialResponseType::Credentials { credentials, .. } = &response.response else {
         panic!("expected a single credential");
     };
+    let Credential { credential } = credentials.first().expect("should have credential");
+
     let Payload::Vc { vc, .. } =
-        proof::verify(Verify::Vc(&vc_kind), provider.clone()).await.expect("should decode")
+        proof::verify(Verify::Vc(&credential), provider.clone()).await.expect("should decode")
     else {
         panic!("should be VC");
     };
@@ -177,11 +181,13 @@ async fn format() {
     });
 
     // verify credential
-    let CredentialResponseType::Credential(vc_kind) = &response.response else {
+    let CredentialResponseType::Credentials { credentials, .. } = &response.response else {
         panic!("expected a single credential");
     };
+    let Credential { credential } = credentials.first().expect("should have credential");
+
     let Payload::Vc { vc, .. } =
-        credibil_vc::w3c_vc::proof::verify(Verify::Vc(&vc_kind), provider.clone())
+        credibil_vc::w3c_vc::proof::verify(Verify::Vc(&credential), provider.clone())
             .await
             .expect("should decode")
     else {
@@ -269,11 +275,13 @@ async fn iso_mdl() {
     });
 
     // verify credential
-    let CredentialResponseType::Credential(vc_kind) = &response.response else {
+    let CredentialResponseType::Credentials { credentials, .. } = &response.response else {
         panic!("expected a single credential");
     };
+    let Credential { credential } = credentials.first().expect("should have credential");
+
     let Payload::Vc { vc, .. } =
-        proof::verify(Verify::Vc(&vc_kind), provider.clone()).await.expect("should decode")
+        proof::verify(Verify::Vc(&credential), provider.clone()).await.expect("should decode")
     else {
         panic!("should be VC");
     };

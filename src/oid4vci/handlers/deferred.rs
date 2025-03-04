@@ -72,7 +72,7 @@ async fn process(
     let response = credential(provider.clone(), cred_req).await?;
 
     // is issuance still pending?
-    if let CredentialResponseType::TransactionId(_) = response.response {
+    if let CredentialResponseType::TransactionId { .. } = response.response {
         // TODO: make retry interval configurable
         return Err(Error::IssuancePending(5));
     }
