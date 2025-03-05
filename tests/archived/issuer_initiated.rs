@@ -17,6 +17,7 @@ use utils::{Issuance, provider};
 #[case(Issuance::Deferred)]
 async fn issuance(provider: ProviderImpl, #[case] issue: Issuance) {
     utils::init_tracer();
+    snapshot!("issuer:{issue}");
 
     let subject_id = match issue {
         Issuance::Immediate => NORMAL_USER,
