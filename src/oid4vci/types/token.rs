@@ -3,7 +3,7 @@ use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize};
 
-use crate::oid4vci::types::{AuthorizationDetail, ClientAssertion};
+use crate::oid4vci::types::{AuthorizationCredential, AuthorizationDetail, ClientAssertion};
 
 /// Upon receiving a successful Authorization Response, a Token Request is made
 /// as defined in [RFC6749] with extensions to support the Pre-Authorized Code
@@ -256,6 +256,28 @@ pub struct AuthorizedDetail {
     /// Issuer metadata. The Wallet MUST use these identifiers in Credential
     /// Requests.
     pub credential_identifiers: Vec<String>,
+}
+
+impl From<AuthorizationDetail> for AuthorizedDetail {
+    fn from(authorization_detail: AuthorizationDetail) -> Self {
+        Self {
+            authorization_detail,
+            credential_identifiers: Vec::new(),
+        }
+    }
+}
+
+impl AuthorizedDetail {
+    /// Get the `credential_configuration_id` from the `AuthorizationDetail`
+    /// object.
+    pub fn credential_configuration_id(&self) -> Option<&str> {
+        match &self.authorization_detail.credential {
+            AuthorizationCredential::ConfigurationId {
+                credential_configuration_id,
+            } => Some(credential_configuration_id),
+            _ => None,
+        }
+    }
 }
 
 #[cfg(test)]

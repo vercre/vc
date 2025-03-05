@@ -18,9 +18,9 @@ use tracing::instrument;
 use crate::core::{Kind, generate};
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
-use crate::oid4vci::state::{Authorized, Deferrance, Expire, Stage, State};
+use crate::oid4vci::state::{Deferrance, Expire, Stage, State};
 use crate::oid4vci::types::{
-    Credential, CredentialConfiguration, CredentialDefinition, CredentialDisplay,
+    AuthorizedDetail, Credential, CredentialConfiguration, CredentialDefinition, CredentialDisplay,
     CredentialRequest, CredentialResponse, Dataset, Format, Issuer, MultipleProofs, Proof,
     ProofClaims, RequestBy, ResponseType, SingleProof,
 };
@@ -55,11 +55,13 @@ pub async fn credential(
         ..Context::default()
     };
 
-    // ...authorized credential
-    ctx.authorized = ctx.authorized(&request)?;
+    // authorized credential
+    ctx.authorized = ctx.authorized_detail(&request)?;
 
-    // ...credential configuration
-    let config_id = &ctx.authorized.credential_configuration_id;
+    // credential configuration
+    let Some(config_id) = ctx.authorized.credential_configuration_id() else {
+        return Err(Error::InvalidCredentialRequest("no credential_configuration_id".to_string()));
+    };
     let Some(config) = ctx.issuer.credential_configurations_supported.get(config_id) else {
         return Err(Error::ServerError("credential configuration unable to be found".into()));
     };
@@ -83,7 +85,7 @@ impl Request for CredentialRequest {
 struct Context {
     state: State,
     issuer: Issuer,
-    authorized: Authorized,
+    authorized: AuthorizedDetail,
     configuration: CredentialConfiguration,
     holder_did: String,
 }
@@ -105,9 +107,6 @@ impl Context {
         if self.state.is_expired() {
             return Err(Error::InvalidCredentialRequest("token state expired".into()));
         }
-        let Stage::Validated(token_state) = &self.state.stage else {
-            return Err(Error::AccessDenied("invalid access token state".into()));
-        };
 
         // TODO: refactor into separate function.
         if let Some(supported_types) = &self.configuration.proof_types_supported {
@@ -149,12 +148,13 @@ impl Context {
                     )));
                 }
 
+                // FIXME: check nonce in state
                 // previously issued c_nonce
-                if jwt.claims.nonce.as_ref() != Some(&token_state.c_nonce) {
-                    return Err(Error::InvalidProof(
-                        "Proof JWT nonce claim is invalid".to_string(),
-                    ));
-                }
+                // if jwt.claims.nonce.as_ref() != Some(&token_state.c_nonce) {
+                //     return Err(Error::InvalidProof(
+                //         "Proof JWT nonce claim is invalid".to_string(),
+                //     ));
+                // }
 
                 // Key ID
                 let Key::KeyId(kid) = &jwt.header.key else {
@@ -180,7 +180,7 @@ impl Context {
     ) -> Result<CredentialResponse> {
         tracing::debug!("credential::process");
 
-        let dataset = self.dataset(provider).await?;
+        let dataset = self.dataset(provider, &request).await?;
 
         // defer issuance as claims are pending (approval)
         if dataset.pending {
@@ -216,11 +216,9 @@ impl Context {
         let mut state = self.state.clone();
         state.expires_at = Utc::now() + Expire::Access.duration();
 
-        let Stage::Validated(mut token_state) = state.stage else {
+        let Stage::Validated(token_state) = state.stage else {
             return Err(Error::AccessDenied("invalid access token state".into()));
         };
-        token_state.c_nonce = generate::nonce();
-        token_state.c_nonce_expires_at = Utc::now() + Expire::Nonce.duration();
         state.stage = Stage::Validated(token_state.clone());
 
         StateStore::put(provider, &token_state.access_token, &state, state.expires_at)
@@ -349,37 +347,55 @@ impl Context {
 
     // Get `Authorized` for `credential_identifier` and
     // `credential_configuration_id`.
-    fn authorized(&self, request: &CredentialRequest) -> Result<Authorized> {
+    fn authorized_detail(&self, request: &CredentialRequest) -> Result<AuthorizedDetail> {
         let Stage::Validated(token) = &self.state.stage else {
             return Err(Error::AccessDenied("invalid access token state".into()));
         };
 
         match &request.credential {
-            RequestBy::Identifier(identifier) => token.credentials.get(identifier),
-            RequestBy::ConfigurationId(config_id) => {
-                token.credentials.values().find(|c| &c.credential_configuration_id == config_id)
+            RequestBy::Identifier(ident) => {
+                for ad in &token.details {
+                    if ad.credential_identifiers.contains(ident) {
+                        return Ok(ad.clone());
+                    }
+                }
+            }
+            RequestBy::ConfigurationId(id) => {
+                for ad in &token.details {
+                    if Some(id.as_str()) == ad.credential_configuration_id() {
+                        return Ok(ad.clone());
+                    };
+                }
             }
         }
-        .ok_or_else(|| Error::InvalidCredentialRequest("unauthorized credential requested".into()))
-        .cloned()
+
+        Err(Error::InvalidCredentialRequest("unauthorized credential requested".into()))
     }
 
     // Get credential dataset for the request
-    async fn dataset(&self, provider: &impl Provider) -> Result<Dataset> {
-        let identifier = &self.authorized.credential_identifier;
+    async fn dataset(
+        &self, provider: &impl Provider, request: &CredentialRequest,
+    ) -> Result<Dataset> {
+        let RequestBy::Identifier(identifier) = &request.credential else {
+            return Err(Error::InvalidCredentialRequest(
+                "requesting credentials by `credential_configuration_id` is unsupported"
+                    .to_string(),
+            ));
+        };
 
         // get claims dataset for `credential_identifier`
         let Some(subject_id) = &self.state.subject_id else {
             return Err(Error::AccessDenied("invalid subject id".into()));
         };
-        let mut dataset = Subject::dataset(provider, subject_id, identifier)
+        let dataset = Subject::dataset(provider, subject_id, identifier)
             .await
             .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
 
-        // narrow claimset to those previously authorized
-        if let Some(claim_ids) = &self.authorized.claim_ids {
-            dataset.claims.retain(|k, _| claim_ids.contains(k));
-        }
+        // FIXME: narrow claim set
+        // only include previously requested/authorized claims
+        // if let Some(claims) = &self.authorized.authorization_detail.claims {
+        //     //dataset.claims.retain(|k, _| claims.iter().any(|c|c.path));
+        // }
 
         Ok(dataset)
     }

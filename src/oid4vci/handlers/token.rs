@@ -13,17 +13,15 @@
 
 // TODO: verify `client_assertion` JWT, when set
 
-use std::collections::HashMap;
 use std::fmt::Debug;
 
-use chrono::Utc;
 use tracing::instrument;
 
 use crate::core::{generate, pkce};
 use crate::oauth::GrantType;
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore};
-use crate::oid4vci::state::{Authorized, Expire, Stage, State, Token};
+use crate::oid4vci::state::{Expire, Stage, State, Token};
 use crate::oid4vci::types::{
     AuthorizationCredential, AuthorizationDetail, AuthorizedDetail, Issuer, TokenGrantType,
     TokenRequest, TokenResponse, TokenType,
@@ -191,40 +189,35 @@ impl Context {
     ) -> Result<TokenResponse> {
         tracing::debug!("token::process");
 
-        let (authorized_details, authorized) = match &request.grant_type {
+        // get previously authorized credentials from state
+        let authorized_details = match &request.grant_type {
             TokenGrantType::PreAuthorizedCode { .. } => {
-                let Stage::Offered(auth_state) = &self.state.stage else {
+                let Stage::Offered(offer) = &self.state.stage else {
                     return Err(Error::ServerError("pre-authorized state not set".into()));
                 };
-                let Some(details) = &auth_state.details else {
+                let Some(authorization_details) = &offer.details else {
                     return Err(Error::ServerError("no authorized items".into()));
                 };
-
-                // get the subset of requested credentials from those previously authorized
-                let authorized_details = retain_details(provider, &request, details).await?;
-                let authorized = authorized_credentials(&authorized_details);
-                (authorized_details, authorized)
+                authorization_details
             }
             TokenGrantType::AuthorizationCode { .. } => {
-                let Stage::Authorized(auth_state) = &self.state.stage else {
+                let Stage::Authorized(authorization) = &self.state.stage else {
                     return Err(Error::ServerError("authorization state not set".into()));
                 };
-                let authorized_details = auth_state.details.clone();
-                let authorized = authorized_credentials(&auth_state.details);
-                (authorized_details, authorized)
+                &authorization.details
             }
         };
 
+        // find the subset of requested credentials from those previously authorized
+        let authorized_details = retain(provider, &request, authorized_details).await?;
+
         let access_token = generate::token();
-        let c_nonce = generate::nonce();
 
         // update state
         let mut state = self.state.clone();
         state.stage = Stage::Validated(Token {
             access_token: access_token.clone(),
-            credentials: authorized,
-            c_nonce: c_nonce.clone(),
-            c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
+            details: authorized_details.clone(),
         });
         StateStore::put(provider, &access_token, &state, state.expires_at)
             .await
@@ -240,9 +233,8 @@ impl Context {
     }
 }
 
-// Filter previously authorized DetailItems by requested
-// `authorization_details`.
-async fn retain_details(
+// Filter previously authorized credentials by those requested.
+async fn retain(
     provider: &impl Provider, request: &TokenRequest, details: &[AuthorizedDetail],
 ) -> Result<Vec<AuthorizedDetail>> {
     // no `authorization_details` in request, return all previously authorized
@@ -303,30 +295,4 @@ fn verify_claims(issuer: &Issuer, detail: &AuthorizationDetail) -> Result<()> {
     }
 
     Ok(())
-}
-
-fn authorized_credentials(details: &[AuthorizedDetail]) -> HashMap<String, Authorized> {
-    let mut authorized = HashMap::new();
-
-    for ad in details {
-        for identifier in &ad.credential_identifiers {
-            let AuthorizationCredential::ConfigurationId {
-                credential_configuration_id,
-            } = &ad.authorization_detail.credential
-            else {
-                continue;
-            };
-
-            authorized.insert(
-                identifier.clone(),
-                Authorized {
-                    credential_identifier: identifier.clone(),
-                    credential_configuration_id: credential_configuration_id.clone(),
-                    claim_ids: None,
-                },
-            );
-        }
-    }
-
-    authorized
 }

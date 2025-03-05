@@ -1,7 +1,7 @@
 //! State is used by the library to persist request information between steps
 //! in the issuance process.
 
-use std::collections::HashMap;
+
 
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
@@ -12,7 +12,7 @@ use crate::oid4vci::types::{
 };
 use crate::w3c_vc::model::VerifiableCredential;
 
-type CredentialIdentifier = String;
+
 
 /// State is used to persist request information between issuance steps in the
 /// Credential issuance process.
@@ -90,28 +90,6 @@ pub struct Offer {
     pub tx_code: Option<String>,
 }
 
-/// Holds data used during the issuance of a credential.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Authorized {
-    /// Identifies the dataset associated with the credential to be issued.
-    /// Dataset is unique by issuer not by subject.
-    ///
-    /// For example, the `credential_configuration_id` is `UniversityDegree_JWT`
-    /// and the `credential_identifier` is `EngineeringDegree2023`.
-    pub credential_identifier: String,
-
-    /// Credential's `credential_configuration_id` connecting it with supported
-    /// credential metadata.
-    pub credential_configuration_id: String,
-
-    /// Identifies a subset of claims to use when issuing the associated
-    /// credential. This subset is used in cases where the Wallet has
-    /// requested (and has been authorized for) issuance of a credential
-    /// containing subset of claims.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub claim_ids: Option<Vec<String>>,
-}
-
 /// Authorization state.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[allow(clippy::struct_field_names)]
@@ -151,16 +129,9 @@ pub struct Token {
     #[allow(clippy::struct_field_names)]
     pub access_token: String,
 
-    /// The nonce to be used by the Wallet when creating a proof of possession
-    /// of the key proof.
-    pub c_nonce: String,
-
-    /// Number denoting the lifetime in seconds of the `c_nonce`.
-    pub c_nonce_expires_at: DateTime<Utc>,
-
-    /// Credentials (configuration id and identifier) validated for issuance
-    /// using the accompanying access token.
-    pub credentials: HashMap<CredentialIdentifier, Authorized>,
+    /// A list `authorization_details` entries including credential 
+    /// identifiers.
+    pub details: Vec<AuthorizedDetail>,
 }
 
 /// Issued Credential state (for Notification endpoint).

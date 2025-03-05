@@ -2,16 +2,15 @@
 
 mod utils;
 
-use std::collections::HashMap;
-
 use assert_let_bind::assert_let;
 use chrono::Utc;
 use credibil_infosec::jose::JwsBuilder;
 use credibil_vc::oid4vci::endpoint;
 use credibil_vc::oid4vci::provider::StateStore;
-use credibil_vc::oid4vci::state::{Authorized, Deferrance, Expire, Stage, State, Token};
+use credibil_vc::oid4vci::state::{Deferrance, Expire, Stage, State, Token};
 use credibil_vc::oid4vci::types::{
-    Credential, CredentialRequest, DeferredCredentialRequest, ProofClaims, ResponseType,
+    AuthorizationCredential, AuthorizationDetail, AuthorizedDetail, Credential, CredentialRequest,
+    DeferredCredentialRequest, ProofClaims, ResponseType,
 };
 use credibil_vc::w3c_vc::proof::{self, Payload, Type, Verify};
 use insta::assert_yaml_snapshot as assert_snapshot;
@@ -59,16 +58,15 @@ async fn deferred_ok() {
     let mut state = State {
         stage: Stage::Validated(Token {
             access_token: access_token.into(),
-            credentials: HashMap::from([(
-                "PHLEmployeeID".into(),
-                Authorized {
-                    credential_identifier: "PHLEmployeeID".into(),
-                    credential_configuration_id: "EmployeeID_JWT".into(),
-                    claim_ids: None,
+            details: vec![AuthorizedDetail {
+                authorization_detail: AuthorizationDetail {
+                    credential: AuthorizationCredential::ConfigurationId {
+                        credential_configuration_id: "EmployeeID_JWT".to_string(),
+                    },
+                    ..AuthorizationDetail::default()
                 },
-            )]),
-            c_nonce: c_nonce.into(),
-            c_nonce_expires_at: Utc::now() + Expire::Nonce.duration(),
+                credential_identifiers: vec!["PHLEmployeeID".to_string()],
+            }],
         }),
         subject_id: Some(NORMAL_USER.into()),
         expires_at: Utc::now() + Expire::Authorized.duration(),
