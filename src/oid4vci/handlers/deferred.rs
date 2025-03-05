@@ -14,9 +14,7 @@ use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::handlers::credential::credential;
 use crate::oid4vci::provider::{Provider, StateStore};
 use crate::oid4vci::state::{Stage, State};
-use crate::oid4vci::types::{
-    CredentialResponseType, DeferredCredentialRequest, DeferredCredentialResponse,
-};
+use crate::oid4vci::types::{DeferredCredentialRequest, DeferredCredentialResponse, ResponseType};
 use crate::oid4vci::{Error, Result};
 
 /// Deferred credential request handler.
@@ -72,7 +70,7 @@ async fn process(
     let response = credential(provider.clone(), cred_req).await?;
 
     // is issuance still pending?
-    if let CredentialResponseType::TransactionId { .. } = response.response {
+    if let ResponseType::TransactionId { .. } = response.response {
         // TODO: make retry interval configurable
         return Err(Error::IssuancePending(5));
     }

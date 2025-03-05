@@ -10,9 +10,7 @@ use credibil_infosec::jose::jws::JwsBuilder;
 use credibil_vc::oid4vci::endpoint;
 use credibil_vc::oid4vci::provider::StateStore;
 use credibil_vc::oid4vci::state::{Authorized, Expire, Stage, State, Token};
-use credibil_vc::oid4vci::types::{
-    Credential, CredentialRequest, CredentialResponseType, ProofClaims,
-};
+use credibil_vc::oid4vci::types::{Credential, CredentialRequest, ProofClaims, ResponseType};
 use credibil_vc::w3c_vc::proof::{self, Payload, Type, Verify};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
@@ -83,7 +81,7 @@ async fn identifier() {
     });
 
     // verify credential
-    let CredentialResponseType::Credentials { credentials, .. } = &response.response else {
+    let ResponseType::Credentials { credentials, .. } = &response.response else {
         panic!("expected a single credential");
     };
     let Credential { credential } = credentials.first().expect("should have credential");
@@ -181,7 +179,7 @@ async fn format() {
     });
 
     // verify credential
-    let CredentialResponseType::Credentials { credentials, .. } = &response.response else {
+    let ResponseType::Credentials { credentials, .. } = &response.response else {
         panic!("expected a single credential");
     };
     let Credential { credential } = credentials.first().expect("should have credential");
@@ -275,7 +273,7 @@ async fn iso_mdl() {
     });
 
     // verify credential
-    let CredentialResponseType::Credentials { credentials, .. } = &response.response else {
+    let ResponseType::Credentials { credentials, .. } = &response.response else {
         panic!("expected a single credential");
     };
     let Credential { credential } = credentials.first().expect("should have credential");

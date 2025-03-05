@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::oauth::CodeChallengeMethod;
 use crate::oid4vci::types::{
-    AuthorizationDetail, CredentialOffer, CredentialRequest, RequestObject,
+    AuthorizedDetail, CredentialOffer, CredentialRequest, RequestObject,
 };
 use crate::w3c_vc::model::VerifiableCredential;
 
@@ -82,7 +82,7 @@ pub enum Stage {
 pub struct Offer {
     /// A list of `authorization_details` entries referencing credentials the
     /// Wallet is authorized to request.
-    pub items: Option<Vec<AuthorizedItem>>,
+    pub details: Option<Vec<AuthorizedDetail>>,
 
     /// Transaction code sent to the holder to use (if present)when requesting
     /// an access token.
@@ -131,7 +131,7 @@ pub struct Authorization {
 
     /// A list of authorized `scope` or `authorization_details` entries along
     /// with credential metadata and dataset identifiers.
-    pub items: Vec<AuthorizedItem>,
+    pub details: Vec<AuthorizedDetail>,
 }
 
 /// Pushed Authorization Request state.
@@ -142,37 +142,6 @@ pub struct PushedAuthorization {
 
     /// The time the request URI should expire at.
     pub expires_at: DateTime<Utc>,
-}
-
-/// Authorized `authorization_detail` or `scope` item along with
-/// `credential_configuration_id` and `credential_identifier`s.
-#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct AuthorizedItem {
-    /// Authorized item.
-    #[serde(flatten)]
-    pub item: ItemType,
-
-    /// Credential configuration metadata for the item.
-    pub credential_configuration_id: String,
-
-    /// Authorized credential datasets for the item.
-    pub credential_identifiers: Vec<String>,
-}
-
-/// Authorized item type.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub enum ItemType {
-    /// Authorized item is of type `authorization_detail`
-    AuthorizationDetail(AuthorizationDetail),
-
-    /// Authorized item is of type `scope`
-    Scope(String),
-}
-
-impl Default for ItemType {
-    fn default() -> Self {
-        Self::AuthorizationDetail(AuthorizationDetail::default())
-    }
 }
 
 /// Token state.

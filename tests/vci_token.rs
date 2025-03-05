@@ -6,12 +6,10 @@ use chrono::Utc;
 use credibil_vc::core::pkce;
 use credibil_vc::oid4vci::endpoint;
 use credibil_vc::oid4vci::provider::StateStore;
-use credibil_vc::oid4vci::state::{
-    Authorization, AuthorizedItem, Expire, ItemType, Offer, Stage, State,
-};
+use credibil_vc::oid4vci::state::{Authorization, Expire, Offer, Stage, State};
 use credibil_vc::oid4vci::types::{
-    AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType, CredentialDefinition,
-    Format, ProfileW3c, TokenRequest, TokenResponse,
+    AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType, AuthorizedDetail,
+    TokenRequest, TokenResponse,
 };
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
@@ -26,16 +24,15 @@ async fn pre_authorized() {
     // set up Offered state
     let state = State {
         stage: Stage::Offered(Offer {
-            items: Some(vec![AuthorizedItem {
-                item: ItemType::AuthorizationDetail(AuthorizationDetail {
+            details: Some(vec![AuthorizedDetail {
+                authorization_detail: AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,
                     credential: AuthorizationCredential::ConfigurationId {
                         credential_configuration_id: "EmployeeID_JWT".into(),
                     },
                     claims: None,
                     locations: None,
-                }),
-                credential_configuration_id: "EmployeeID_JWT".into(),
+                },
                 credential_identifiers: vec!["PHLEmployeeID".into()],
             }]),
             tx_code: Some("1234".into()),
@@ -96,15 +93,14 @@ async fn authorized() {
         stage: Stage::Authorized(Authorization {
             code_challenge: pkce::code_challenge(verifier),
             code_challenge_method: "S256".into(),
-            items: vec![AuthorizedItem {
-                item: ItemType::AuthorizationDetail(AuthorizationDetail {
+            details: vec![AuthorizedDetail {
+                authorization_detail: AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,
                     credential: AuthorizationCredential::ConfigurationId {
                         credential_configuration_id: "EmployeeID_JWT".into(),
                     },
                     ..AuthorizationDetail::default()
-                }),
-                credential_configuration_id: "EmployeeID_JWT".into(),
+                },
                 credential_identifiers: vec!["PHLEmployeeID".into()],
             }],
             client_id: CLIENT_ID.into(),
@@ -165,21 +161,14 @@ async fn authorization_details() {
             redirect_uri: Some("https://example.com".into()),
             code_challenge: pkce::code_challenge(verifier),
             code_challenge_method: "S256".into(),
-            items: vec![AuthorizedItem {
-                item: ItemType::AuthorizationDetail(AuthorizationDetail {
+            details: vec![AuthorizedDetail {
+                authorization_detail: AuthorizationDetail {
                     type_: AuthorizationDetailType::OpenIdCredential,
-                    credential: AuthorizationCredential::Format(Format::JwtVcJson(ProfileW3c {
-                        credential_definition: CredentialDefinition {
-                            type_: vec![
-                                "VerifiableCredential".into(),
-                                "EmployeeIDCredential".into(),
-                            ],
-                            ..CredentialDefinition::default()
-                        },
-                    })),
+                    credential: AuthorizationCredential::ConfigurationId {
+                        credential_configuration_id: "EmployeeID_JWT".to_string(),
+                    },
                     ..AuthorizationDetail::default()
-                }),
-                credential_configuration_id: "EmployeeID_JWT".into(),
+                },
                 credential_identifiers: vec!["PHLEmployeeID".into()],
             }],
             ..Authorization::default()

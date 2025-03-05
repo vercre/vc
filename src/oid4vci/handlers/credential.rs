@@ -21,8 +21,8 @@ use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
 use crate::oid4vci::state::{Authorized, Deferrance, Expire, Stage, State};
 use crate::oid4vci::types::{
     Credential, CredentialConfiguration, CredentialDefinition, CredentialDisplay,
-    CredentialRequest, CredentialResponse, CredentialResponseType, Dataset, Format, Issuer,
-    MultipleProofs, Proof, ProofClaims, RequestBy, SingleProof,
+    CredentialRequest, CredentialResponse, Dataset, Format, Issuer, MultipleProofs, Proof,
+    ProofClaims, RequestBy, ResponseType, SingleProof,
 };
 use crate::oid4vci::{Error, Result};
 use crate::status::issuer::Status;
@@ -229,8 +229,7 @@ impl Context {
 
         // create issuance state for notification endpoint
         // TODO: save credential in state !!
-        // state.stage = Stage::Issued(Credential { credential: vc, issuance:
-        // issuance_dt });
+        // state.stage = Stage::Issued(Credential { credential: vc, issuance: issuance_dt });
         let notification_id = generate::notification_id();
 
         StateStore::put(provider, &notification_id, &state, state.expires_at)
@@ -244,9 +243,6 @@ impl Context {
     }
 
     // Generate a W3C Verifiable Credential.
-    // async fn w3c_vc(&self, issuer: String, type_: String,dataset: Map<String, Value>,
-    //     status: Option<Quota<CredentialStatus>>) -> Result<VerifiableCredential> {
-
     async fn w3c_vc(
         &self, provider: &impl Provider, credential_definition: &CredentialDefinition,
         dataset: Dataset,
@@ -288,7 +284,7 @@ impl Context {
     // Generate a `jwt_vc_json` format credential .
     async fn jwt_vc_json(
         &self, vc: VerifiableCredential, signer: impl Signer, issuance_date: DateTime<Utc>,
-    ) -> Result<CredentialResponseType> {
+    ) -> Result<ResponseType> {
         // sign and return JWT
         let jwt = proof::create(
             W3cFormat::JwtVcJson,
@@ -303,7 +299,7 @@ impl Context {
             Error::ServerError(format!("issue generating `jwt_vc_json` credential: {e}"))
         })?;
 
-        Ok(CredentialResponseType::Credentials {
+        Ok(ResponseType::Credentials {
             credentials: vec![Credential {
                 credential: Kind::String(jwt),
             }],
@@ -312,14 +308,12 @@ impl Context {
     }
 
     // Generate a `mso_mdoc` format credential.
-    async fn mso_mdoc(
-        &self, dataset: Dataset, signer: impl Signer,
-    ) -> Result<CredentialResponseType> {
+    async fn mso_mdoc(&self, dataset: Dataset, signer: impl Signer) -> Result<ResponseType> {
         let mdl = crate::iso_mdl::to_credential(dataset.claims, signer).await.map_err(|e| {
             Error::ServerError(format!("issue generating `mso_mdoc` credential: {e}"))
         })?;
 
-        Ok(CredentialResponseType::Credentials {
+        Ok(ResponseType::Credentials {
             credentials: vec![Credential {
                 credential: Kind::String(mdl),
             }],
@@ -346,10 +340,10 @@ impl Context {
             .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
         Ok(CredentialResponse {
-            response: CredentialResponseType::TransactionId {
+            response: ResponseType::TransactionId {
                 transaction_id: txn_id,
             },
-            ..CredentialResponse::default()
+            notification_id: None,
         })
     }
 

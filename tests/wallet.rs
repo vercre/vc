@@ -7,9 +7,9 @@ use credibil_infosec::jose::JwsBuilder;
 use credibil_vc::oid4vci::proof::{self, Payload, Type, Verify};
 use credibil_vc::oid4vci::{
     AuthorizationRequest, AuthorizationResponse, Credential, CredentialOfferRequest,
-    CredentialRequest, CredentialResponseType, DeferredCredentialRequest,
-    DeferredCredentialResponse, Error, Format, OfferType, ProofClaims, Result, TokenGrantType,
-    TokenRequest, TokenResponse, endpoint,
+    CredentialRequest, DeferredCredentialRequest, DeferredCredentialResponse, Error, Format,
+    OfferType, ProofClaims, ResponseType, Result, TokenGrantType, TokenRequest, TokenResponse,
+    endpoint,
 };
 use insta::assert_yaml_snapshot as assert_snapshot;
 use serde_json::json;
@@ -168,12 +168,12 @@ impl Wallet {
         let mut response = endpoint::handle(CREDENTIAL_ISSUER, request, &self.provider).await?;
 
         // fetch credential if response is deferred
-        if let CredentialResponseType::TransactionId { transaction_id } = &response.response {
+        if let ResponseType::TransactionId { transaction_id } = &response.response {
             let deferred_resp = self.deferred(token_resp.clone(), transaction_id.clone()).await?;
             response = deferred_resp.credential_response;
         }
 
-        let CredentialResponseType::Credentials { credentials, .. } = &response.response else {
+        let ResponseType::Credentials { credentials, .. } = &response.response else {
             panic!("expected single credential");
         };
         let Credential { credential } = credentials.first().expect("should have credential");

@@ -23,7 +23,7 @@ use crate::core::{generate, pkce};
 use crate::oauth::GrantType;
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore};
-use crate::oid4vci::state::{Authorized, AuthorizedItem, Expire, ItemType, Stage, State, Token};
+use crate::oid4vci::state::{Authorized, Expire, Stage, State, Token};
 use crate::oid4vci::types::{
     AuthorizationCredential, AuthorizationDetail, AuthorizedDetail, Issuer, TokenGrantType,
     TokenRequest, TokenResponse, TokenType,
@@ -191,27 +191,26 @@ impl Context {
     ) -> Result<TokenResponse> {
         tracing::debug!("token::process");
 
-        let (authorization_details, authorized) = match &request.grant_type {
+        let (authorized_details, authorized) = match &request.grant_type {
             TokenGrantType::PreAuthorizedCode { .. } => {
                 let Stage::Offered(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("pre-authorized state not set".into()));
                 };
-                let Some(auth_items) = &auth_state.items else {
+                let Some(details) = &auth_state.details else {
                     return Err(Error::ServerError("no authorized items".into()));
                 };
 
                 // get the subset of requested credentials from those previously authorized
-                let retained_items = retain_details(provider, &request, auth_items).await?;
-                let authorized_details = authorized_details(&retained_items);
-                let authorized = authorized_credentials(&retained_items);
+                let authorized_details = retain_details(provider, &request, details).await?;
+                let authorized = authorized_credentials(&authorized_details);
                 (authorized_details, authorized)
             }
             TokenGrantType::AuthorizationCode { .. } => {
                 let Stage::Authorized(auth_state) = &self.state.stage else {
                     return Err(Error::ServerError("authorization state not set".into()));
                 };
-                let authorized_details = authorized_details(&auth_state.items);
-                let authorized = authorized_credentials(&auth_state.items);
+                let authorized_details = auth_state.details.clone();
+                let authorized = authorized_credentials(&auth_state.details);
                 (authorized_details, authorized)
             }
         };
@@ -236,7 +235,7 @@ impl Context {
             access_token,
             token_type: TokenType::Bearer,
             expires_in: Expire::Access.duration().num_seconds(),
-            authorization_details,
+            authorization_details: Some(authorized_details),
         })
     }
 }
@@ -244,11 +243,11 @@ impl Context {
 // Filter previously authorized DetailItems by requested
 // `authorization_details`.
 async fn retain_details(
-    provider: &impl Provider, request: &TokenRequest, items: &[AuthorizedItem],
-) -> Result<Vec<AuthorizedItem>> {
+    provider: &impl Provider, request: &TokenRequest, details: &[AuthorizedDetail],
+) -> Result<Vec<AuthorizedDetail>> {
     // no `authorization_details` in request, return all previously authorized
     let Some(req_auth_dets) = request.authorization_details.as_ref() else {
-        return Ok(items.to_vec());
+        return Ok(details.to_vec());
     };
 
     let Ok(issuer) = Metadata::issuer(provider, &request.credential_issuer).await else {
@@ -261,14 +260,12 @@ async fn retain_details(
     for detail in req_auth_dets {
         // check requested `authorization_detail` has been previously authorized
         let mut found = false;
-        for item in items {
-            if let ItemType::AuthorizationDetail(ad) = &item.item {
-                if ad.credential == detail.credential {
-                    verify_claims(&issuer, detail)?;
-                    retained.push(item.clone());
-                    found = true;
-                    break;
-                }
+        for ad in details {
+            if ad.authorization_detail.credential == detail.credential {
+                verify_claims(&issuer, detail)?;
+                retained.push(ad.clone());
+                found = true;
+                break;
             }
         }
 
@@ -308,36 +305,23 @@ fn verify_claims(issuer: &Issuer, detail: &AuthorizationDetail) -> Result<()> {
     Ok(())
 }
 
-fn authorized_details(items: &[AuthorizedItem]) -> Option<Vec<AuthorizedDetail>> {
-    // convert retained detail_items to Authorized token response
-    // + state Authorized
-    let mut authorization_details = vec![];
-
-    for item in items {
-        if let ItemType::AuthorizationDetail(ad) = &item.item {
-            authorization_details.push(AuthorizedDetail {
-                authorization_detail: ad.clone(),
-                credential_identifiers: item.credential_identifiers.clone(),
-            });
-        }
-    }
-
-    if authorization_details.is_empty() {
-        return None;
-    }
-    Some(authorization_details)
-}
-
-fn authorized_credentials(items: &[AuthorizedItem]) -> HashMap<String, Authorized> {
+fn authorized_credentials(details: &[AuthorizedDetail]) -> HashMap<String, Authorized> {
     let mut authorized = HashMap::new();
 
-    for item in items {
-        for identifier in &item.credential_identifiers {
+    for ad in details {
+        for identifier in &ad.credential_identifiers {
+            let AuthorizationCredential::ConfigurationId {
+                credential_configuration_id,
+            } = &ad.authorization_detail.credential
+            else {
+                continue;
+            };
+
             authorized.insert(
                 identifier.clone(),
                 Authorized {
                     credential_identifier: identifier.clone(),
-                    credential_configuration_id: item.credential_configuration_id.clone(),
+                    credential_configuration_id: credential_configuration_id.clone(),
                     claim_ids: None,
                 },
             );

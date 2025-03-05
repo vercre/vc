@@ -74,11 +74,11 @@ use crate::core::generate;
 use crate::oauth::GrantType;
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
-use crate::oid4vci::state::{AuthorizedItem, Expire, ItemType, Offer, Stage, State};
+use crate::oid4vci::state::{Expire, Offer, Stage, State};
 use crate::oid4vci::types::{
     AuthorizationCodeGrant, AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType,
-    CreateOfferRequest, CreateOfferResponse, CredentialOffer, Grants, Issuer, OfferType,
-    PreAuthorizedCodeGrant, SendType, Server, TxCode,
+    AuthorizedDetail, CreateOfferRequest, CreateOfferResponse, CredentialOffer, Grants, Issuer,
+    OfferType, PreAuthorizedCodeGrant, SendType, Server, TxCode,
 };
 use crate::oid4vci::{Error, Result};
 
@@ -199,7 +199,7 @@ impl Context {
                 expires_at: Utc::now() + Expire::Authorized.duration(),
                 subject_id: request.subject_id.clone(),
                 stage: Stage::Offered(Offer {
-                    items: auth_items,
+                    details: auth_items,
                     tx_code: tx_code.clone(),
                 }),
             };
@@ -296,7 +296,7 @@ impl Context {
 /// Authorize requested credentials for the subject.
 async fn authorize(
     provider: &impl Provider, request: &CreateOfferRequest,
-) -> Result<Vec<AuthorizedItem>> {
+) -> Result<Vec<AuthorizedDetail>> {
     // skip authorization if not pre-authorized
 
     let mut authorized = vec![];
@@ -307,16 +307,15 @@ async fn authorize(
             .await
             .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
 
-        authorized.push(AuthorizedItem {
-            item: ItemType::AuthorizationDetail(AuthorizationDetail {
+        authorized.push(AuthorizedDetail {
+            authorization_detail:AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: AuthorizationCredential::ConfigurationId {
                     credential_configuration_id: config_id.clone(),
                 },
                 claims: None,
                 locations: None,
-            }),
-            credential_configuration_id: config_id.clone(),
+            },
             credential_identifiers: identifiers,
         });
     }

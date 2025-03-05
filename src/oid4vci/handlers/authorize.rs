@@ -74,10 +74,10 @@ use crate::core::generate;
 use crate::oauth::GrantType;
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
-use crate::oid4vci::state::{Authorization, AuthorizedItem, Expire, ItemType, Stage, State};
+use crate::oid4vci::state::{Authorization, Expire, Stage, State};
 use crate::oid4vci::types::{
     AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
-    AuthorizationResponse, ClaimsDescription, Issuer, RequestObject,
+    AuthorizationResponse, AuthorizedDetail, Issuer, RequestObject,
 };
 use crate::oid4vci::{Error, Result};
 
@@ -139,8 +139,6 @@ impl Request for AuthorizationRequest {
 pub struct Context {
     pub issuer: Issuer,
     pub auth_dets: HashMap<String, AuthorizationDetail>,
-    pub scope_items: HashMap<String, String>,
-    pub claims: Option<Vec<ClaimsDescription>>,
     pub is_par: bool,
 }
 
@@ -233,7 +231,7 @@ impl Context {
 
         // verify authorization_details
         if let Some(authorization_details) = &request.authorization_details {
-            self.verify_authorization_details(authorization_details)?;
+            self.verify_authorization_details(authorization_details.clone())?;
         }
         // verify scope
         if let Some(scope) = &request.scope {
@@ -282,10 +280,10 @@ impl Context {
     // N.B. has side effect of saving valid `authorization_detail` objects into
     // context for later use.
     fn verify_authorization_details(
-        &mut self, authorization_details: &[AuthorizationDetail],
+        &mut self, authorization_details: Vec<AuthorizationDetail>,
     ) -> Result<()> {
         // check each credential requested is supported by the issuer
-        for detail in authorization_details {
+        for mut detail in authorization_details {
             if detail.type_ != AuthorizationDetailType::OpenIdCredential {
                 return Err(Error::InvalidAuthorizationDetails(
                     "invalid authorization_details type".into(),
@@ -298,11 +296,17 @@ impl Context {
                     credential_configuration_id,
                 } => credential_configuration_id,
                 AuthorizationCredential::Format(fmt) => {
-                    self.issuer.credential_configuration_id(fmt).map_err(|e| {
+                    let config_id = self.issuer.credential_configuration_id(fmt).map_err(|e| {
                         Error::ServerError(format!(
                             "issue getting `credential_configuration_id`: {e}"
                         ))
-                    })?
+                    })?;
+
+                    detail.credential = AuthorizationCredential::ConfigurationId {
+                        credential_configuration_id: config_id.clone(),
+                    };
+
+                    config_id
                 }
             };
 
@@ -320,7 +324,6 @@ impl Context {
             }
 
             self.auth_dets.insert(config_id.clone(), detail.clone());
-            self.claims.clone_from(&detail.claims);
         }
 
         Ok(())
@@ -330,7 +333,7 @@ impl Context {
     // N.B. has side effect of saving valid scope items into context for later use.
     fn verify_scope(&mut self, scope: &str) -> Result<()> {
         if let Some(item) = scope.split_whitespace().next() {
-            let mut scope_map = HashMap::new();
+            // let mut scope_map = HashMap::new();
 
             // find supported configurations that has the requested scope
             for (config_id, cred_cfg) in &self.issuer.credential_configurations_supported {
@@ -341,14 +344,18 @@ impl Context {
 
                 // save scope item + credential_configuration_id
                 if cred_cfg.scope == Some(item.to_string()) {
-                    scope_map.insert(config_id.to_string(), item.to_string());
+                    let detail = AuthorizationDetail {
+                        type_: AuthorizationDetailType::OpenIdCredential,
+                        credential: AuthorizationCredential::ConfigurationId {
+                            credential_configuration_id: config_id.clone(),
+                        },
+                        claims: None,
+                        locations: None,
+                    };
+
+                    self.auth_dets.insert(config_id.clone(), detail);
                 }
             }
-
-            if scope_map.is_empty() {
-                return Err(Error::InvalidScope(format!("scope item {item} is unsupported")));
-            }
-            self.scope_items.extend(scope_map);
         }
 
         Ok(())
@@ -364,34 +371,26 @@ impl Context {
         tracing::debug!("authorize::process");
 
         // authorization_detail
-        let mut authorized_items = vec![];
-        for (config_id, auth_det) in &self.auth_dets {
-            let identifiers = Subject::authorize(provider, &request.subject_id, config_id)
-                .await
-                .map_err(|e| Error::AccessDenied(format!("issue authorizing subject: {e}")))?;
+        let mut details = vec![];
 
-            authorized_items.push(AuthorizedItem {
-                item: ItemType::AuthorizationDetail(auth_det.clone()),
+        for (config_id, mut auth_det) in self.auth_dets.clone() {
+            let identifiers =
+                Subject::authorize(provider, &request.subject_id, &config_id)
+                    .await
+                    .map_err(|e| Error::AccessDenied(format!("issue authorizing subject: {e}")))?;
+
+            auth_det.credential = AuthorizationCredential::ConfigurationId {
                 credential_configuration_id: config_id.clone(),
-                credential_identifiers: identifiers.clone(),
-            });
-        }
+            };
 
-        // scope
-        for (config_id, scope_item) in &self.scope_items {
-            let identifiers = Subject::authorize(provider, &request.subject_id, config_id)
-                .await
-                .map_err(|e| Error::AccessDenied(format!("issue authorizing holder: {e}")))?;
-
-            authorized_items.push(AuthorizedItem {
-                item: ItemType::Scope(scope_item.clone()),
-                credential_configuration_id: config_id.clone(),
+            details.push(AuthorizedDetail {
+                authorization_detail: auth_det.clone(),
                 credential_identifiers: identifiers.clone(),
             });
         }
 
         // return an error if holder is not authorized for any requested credentials
-        if authorized_items.is_empty() {
+        if details.is_empty() {
             return Err(Error::AccessDenied(
                 "holder is not authorized for requested credentials".into(),
             ));
@@ -404,7 +403,7 @@ impl Context {
             stage: Stage::Authorized(Authorization {
                 code_challenge: request.code_challenge,
                 code_challenge_method: request.code_challenge_method,
-                items: authorized_items,
+                details,
                 client_id: request.client_id,
                 redirect_uri: request.redirect_uri.clone(),
             }),

@@ -194,7 +194,7 @@ pub struct CredentialResponseEncryption {
 pub struct CredentialResponse {
     /// The Credential Response can be Synchronous or Deferred.
     #[serde(flatten)]
-    pub response: CredentialResponseType,
+    pub response: ResponseType,
 
     /// Identifies an issued Credential when the Wallet calls the Issuer's
     /// Notification endpoint. The `notification_id` is included in the
@@ -208,7 +208,7 @@ pub struct CredentialResponse {
 /// The Credential Response can be Synchronous or Deferred.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum CredentialResponseType {
+pub enum ResponseType {
     /// Contains an array of issued Credentials. The values in the array MAY be
     /// a string or an object, depending on the Credential Format.
     Credentials {
@@ -233,15 +233,7 @@ pub enum CredentialResponseType {
     },
 }
 
-/// The issued credential
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Credential {
-    /// Contains one issued Credential. It MAY be a string or an object,
-    /// depending on the Credential Format.
-    pub credential: Kind<VerifiableCredential>,
-}
-
-impl Default for CredentialResponseType {
+impl Default for ResponseType {
     fn default() -> Self {
         Self::Credentials {
             credentials: vec![Credential {
@@ -250,6 +242,14 @@ impl Default for CredentialResponseType {
             notification_id: None,
         }
     }
+}
+
+/// The issued credential
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct Credential {
+    /// Contains one issued Credential. It MAY be a string or an object,
+    /// depending on the Credential Format.
+    pub credential: Kind<VerifiableCredential>,
 }
 
 /// An HTTP POST request, which accepts an `acceptance_token` as the only

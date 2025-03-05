@@ -11,7 +11,7 @@ use credibil_vc::oid4vci::endpoint;
 use credibil_vc::oid4vci::provider::StateStore;
 use credibil_vc::oid4vci::state::{Authorized, Deferrance, Expire, Stage, State, Token};
 use credibil_vc::oid4vci::types::{
-    Credential, CredentialRequest, CredentialResponseType, DeferredCredentialRequest, ProofClaims,
+    Credential, CredentialRequest, DeferredCredentialRequest, ProofClaims, ResponseType,
 };
 use credibil_vc::w3c_vc::proof::{self, Payload, Type, Verify};
 use insta::assert_yaml_snapshot as assert_snapshot;
@@ -104,7 +104,7 @@ async fn deferred_ok() {
     let cred_resp = response.credential_response;
 
     // verify credential
-    let CredentialResponseType::Credentials { credentials, .. } = &cred_resp.response else {
+    let ResponseType::Credentials { credentials, .. } = &cred_resp.response else {
         panic!("expected a single credential");
     };
     let Credential { credential } = credentials.first().expect("should have credential");
