@@ -286,8 +286,6 @@ mod tests {
     #[test]
     fn credential_identifier() {
         let json = serde_json::json!({
-            "credential_issuer": "https://example.com",
-            "access_token": "1234",
             "credential_identifier": "EngineeringDegree2023",
             "proof": {
                 "proof_type": "jwt",
@@ -315,47 +313,8 @@ mod tests {
     }
 
     #[test]
-    fn credential_format() {
-        let json = serde_json::json!({
-          "credential_issuer": "https://example.com",
-          "access_token": "1234",
-          "format": "jwt_vc_json",
-          "credential_definition": {
-            "type": [
-              "VerifiableCredential",
-              "EmployeeIDCredential"
-            ],
-          },
-          "proof": {
-            "proof_type": "jwt",
-            "jwt": "SomeJWT"
-          }
-        });
-
-        let deserialized: CredentialRequest =
-            serde_json::from_value(json.clone()).expect("should deserialize from json");
-        assert_snapshot!("credential_format", &deserialized);
-
-        let request = CredentialRequest {
-            access_token: "1234".into(),
-            credential: RequestBy::ConfigurationId("EmployeeID_JWT".to_string()),
-            proof: Some(Proof::Single {
-                proof_type: SingleProof::Jwt {
-                    jwt: "SomeJWT".into(),
-                },
-            }),
-            ..CredentialRequest::default()
-        };
-
-        let serialized = serde_json::to_value(&request).expect("should serialize to string");
-        assert_eq!(json, serialized);
-    }
-
-    #[test]
     fn multiple_proofs() {
         let json = serde_json::json!({
-            "credential_issuer": "https://example.com",
-            "access_token": "1234",
             "credential_identifier": "EngineeringDegree2023",
             "proofs": {
                 "jwt": [
@@ -425,78 +384,113 @@ mod tests {
                 "type": [
                     "VerifiableCredential",
                     "EmployeeIDCredential"
-                ],
-                "credentialSubject": {
-                    "email": {
-                        "mandatory": true,
-                        "value_type": "string",
-                        "display": [
-                            {
-                                "name": "Email",
-                                "locale": "en-NZ"
-                            }
-                        ]
-                    },
-                    "family_name": {
-                        "mandatory": true,
-                        "value_type": "string",
-                        "display": [
-                            {
-                                "name": "Family name",
-                                "locale": "en-NZ"
-                            }
-                        ]
-                    },
-                    "given_name": {
-                        "mandatory": true,
-                        "value_type": "string",
-                        "display": [
-                            {
-                                "name": "Given name",
-                                "locale": "en-NZ"
-                            }
-                        ]
-                    },
-                    "address": {
-                        "street_address": {
-                            "value_type": "string",
-                            "display": [
-                                {
-                                    "name": "Street Address",
-                                    "locale": "en-NZ"
-                                }
-                            ]
-                        },
-                        "locality": {
-                            "value_type": "string",
-                            "display": [
-                                {
-                                    "name": "Locality",
-                                    "locale": "en-NZ"
-                                }
-                            ]
-                        },
-                        "region": {
-                            "value_type": "string",
-                            "display": [
-                                {
-                                    "name": "Region",
-                                    "locale": "en-NZ"
-                                }
-                            ]
-                        },
-                        "country": {
-                            "value_type": "string",
-                            "display": [
-                                {
-                                    "name": "Country",
-                                    "locale": "en-NZ"
-                                }
-                            ]
+                ]
+            },
+            "claims": [
+                {
+                    "path": [
+                        "credentialSubject",
+                        "email"
+                    ],
+                    "mandatory": true,
+                    "display": [
+                        {
+                            "name": "Email",
+                            "locale": "en-NZ"
                         }
-                    }
+                    ]
+                },
+                {
+                    "path": [
+                        "credentialSubject",
+                        "family_name"
+                    ],
+                    "mandatory": true,
+                    "display": [
+                        {
+                            "name": "Family name",
+                            "locale": "en-NZ"
+                        }
+                    ]
+                },
+                {
+                    "path": [
+                        "credentialSubject",
+                        "given_name"
+                    ],
+                    "mandatory": true,
+                    "display": [
+                        {
+                            "name": "Given name",
+                            "locale": "en-NZ"
+                        }
+                    ]
+                },
+                {
+                    "path": [
+                        "credentialSubject",
+                        "address"
+                    ],
+                    "display": [
+                        {
+                            "name": "Residence",
+                            "locale": "en-NZ"
+                        }
+                    ]
+                },
+                {
+                    "path": [
+                        "credentialSubject",
+                        "address",
+                        "street_address"
+                    ],
+                    "display": [
+                        {
+                            "name": "Street Address",
+                            "locale": "en-NZ"
+                        }
+                    ]
+                },
+                {
+                    "path": [
+                        "credentialSubject",
+                        "address",
+                        "locality"
+                    ],
+                    "display": [
+                        {
+                            "name": "Locality",
+                            "locale": "en-NZ"
+                        }
+                    ]
+                },
+                {
+                    "path": [
+                        "credentialSubject",
+                        "address",
+                        "region"
+                    ],
+                    "display": [
+                        {
+                            "name": "Region",
+                            "locale": "en-NZ"
+                        }
+                    ]
+                },
+                {
+                    "path": [
+                        "credentialSubject",
+                        "address",
+                        "country"
+                    ],
+                    "display": [
+                        {
+                            "name": "Country",
+                            "locale": "en-NZ"
+                        }
+                    ]
                 }
-            }
+            ]
         });
 
         let config: CredentialConfiguration =

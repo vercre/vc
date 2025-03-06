@@ -320,7 +320,7 @@ async fn token(
     State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Form(req): Form<HashMap<String, String>>,
 ) -> impl IntoResponse {
-    let Ok( tr) = TokenRequest::form_decode(&req) else {
+    let Ok(tr) = TokenRequest::form_decode(&req) else {
         tracing::error!("unable to turn HashMap {req:?} into TokenRequest");
         return (StatusCode::BAD_REQUEST, Json(json!({"error": "invalid request"})))
             .into_response();

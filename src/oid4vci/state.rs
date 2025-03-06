@@ -1,18 +1,12 @@
 //! State is used by the library to persist request information between steps
 //! in the issuance process.
 
-
-
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::oauth::CodeChallengeMethod;
-use crate::oid4vci::types::{
-    AuthorizedDetail, CredentialOffer, CredentialRequest, RequestObject,
-};
+use crate::oid4vci::types::{AuthorizedDetail, CredentialOffer, CredentialRequest, RequestObject};
 use crate::w3c_vc::model::VerifiableCredential;
-
-
 
 /// State is used to persist request information between issuance steps in the
 /// Credential issuance process.
@@ -129,7 +123,7 @@ pub struct Token {
     #[allow(clippy::struct_field_names)]
     pub access_token: String,
 
-    /// A list `authorization_details` entries including credential 
+    /// A list `authorization_details` entries including credential
     /// identifiers.
     pub details: Vec<AuthorizedDetail>,
 }
