@@ -17,7 +17,7 @@ pub struct CreateOfferRequestBuilder<C, S, P> {
 /// No credential configuration id is set.
 #[doc(hidden)]
 pub struct NoCredential;
-/// At least one credential configuration id is specifiedset.
+/// At least one credential configuration id is set.
 #[doc(hidden)]
 pub struct Credential(Vec<String>);
 

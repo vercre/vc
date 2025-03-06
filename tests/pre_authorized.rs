@@ -15,6 +15,8 @@ use test_issuer::{
     CLIENT_ID as BOB_CLIENT, CREDENTIAL_ISSUER as ALICE_ISSUER, NORMAL_USER, ProviderImpl,
 };
 
+// Should return a credential when using the pre-authorized code flow and the
+// credential offer to the allet is made by value.
 #[tokio::test]
 async fn offer_by_val() {
     let provider = ProviderImpl::new();
