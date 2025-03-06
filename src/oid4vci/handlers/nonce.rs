@@ -24,7 +24,9 @@ use crate::oid4vci::{Error, Result};
 /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
 /// not available.
 #[instrument(level = "debug", skip(provider))]
-pub async fn nonce(provider: impl Provider, request: NonceRequest) -> Result<NonceResponse> {
+pub async fn nonce(
+    _credential_issuer: &str, provider: impl Provider, request: NonceRequest,
+) -> Result<NonceResponse> {
     process(&provider, request).await
 }
 
@@ -32,9 +34,9 @@ impl Request for NonceRequest {
     type Response = NonceResponse;
 
     fn handle(
-        self, _credential_issuer: &str, provider: &impl Provider,
+        self, credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        nonce(provider.clone(), self)
+        nonce(credential_issuer, provider.clone(), self)
     }
 }
 

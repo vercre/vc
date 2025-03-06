@@ -148,13 +148,13 @@ impl Context {
                     )));
                 }
 
-                // FIXME: check nonce in state
                 // previously issued c_nonce
-                // if jwt.claims.nonce.as_ref() != Some(&token_state.c_nonce) {
-                //     return Err(Error::InvalidProof(
-                //         "Proof JWT nonce claim is invalid".to_string(),
-                //     ));
-                // }
+                let c_nonce = jwt.claims.nonce.as_ref().ok_or_else(|| {
+                    Error::InvalidProof("proof JWT nonce claim is missing".to_string())
+                })?;
+                let _ = StateStore::get::<String>(provider, c_nonce).await.map_err(|e| {
+                    Error::ServerError(format!("proof nonce claim is invalid: {e}"))
+                })?;
 
                 // Key ID
                 let Key::KeyId(kid) = &jwt.header.key else {

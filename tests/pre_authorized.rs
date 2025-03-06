@@ -9,7 +9,9 @@ use credibil_vc::oid4vci::client::{
 };
 use credibil_vc::oid4vci::endpoint;
 use credibil_vc::oid4vci::proof::{self, Payload, Type, Verify};
-use credibil_vc::oid4vci::types::{Credential, ProofClaims, ResponseType, TokenGrantType};
+use credibil_vc::oid4vci::types::{
+    Credential, NonceRequest, ProofClaims, ResponseType, TokenGrantType,
+};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use test_issuer::{
     CLIENT_ID as BOB_CLIENT, CREDENTIAL_ISSUER as ALICE_ISSUER, NORMAL_USER, ProviderImpl,
@@ -49,8 +51,11 @@ async fn offer_by_val() {
         endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should return token");
 
     // --------------------------------------------------
-    // Bob receives the token and requests a credential
+    // Bob receives the token and prepares a proof for a credential request
     // --------------------------------------------------
+    let nonce =
+        endpoint::handle(ALICE_ISSUER, NonceRequest, &provider).await.expect("should return nonce");
+
     // proof of possession of key material
     let jws = JwsBuilder::new()
         .jwt_type(Type::Openid4VciProofJwt)
@@ -58,15 +63,17 @@ async fn offer_by_val() {
             iss: Some(BOB_CLIENT.to_string()),
             aud: ALICE_ISSUER.to_string(),
             iat: Utc::now().timestamp(),
-            // FIXME: get nonce from Nonce endpoint
-            // FIXME: validate nonce in Token endpoint
-            nonce: Some("token_resp.c_nonce".to_string()),
+            nonce: Some(nonce.c_nonce),
         })
         .add_signer(&test_holder::ProviderImpl)
         .build()
         .await
         .expect("builds JWS");
     let jwt = jws.encode().expect("encodes JWS");
+
+    // --------------------------------------------------
+    // Bob requests a credential
+    // --------------------------------------------------
 
     // credential identifier
     let details = &token.authorization_details.expect("should have authorization details");
@@ -80,18 +87,18 @@ async fn offer_by_val() {
     let response =
         endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should return credential");
 
-    // extract issued credential
+    // --------------------------------------------------
+    // Bob extracts and verifies the received credential
+    // --------------------------------------------------
     let ResponseType::Credentials { credentials, .. } = &response.response else {
         panic!("expected single credential");
     };
     let Credential { credential } = credentials.first().expect("should have credential");
 
-    // FIXME: verify signature
-
-    // verify the credential is as expected
+    // verify the credential proof
     let Ok(Payload::Vc { vc, .. }) = proof::verify(Verify::Vc(credential), provider.clone()).await
     else {
-        panic!("should be VC");
+        panic!("should be valid VC");
     };
 
     assert_snapshot!("offer_by_val", vc, {

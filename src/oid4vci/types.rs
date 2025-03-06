@@ -83,10 +83,7 @@ pub struct NotificationResponse {}
 /// A request for a nonce is made by sending an empty request to the Issuer's
 /// Nonce endpoint (`nonce_endpoint` Credential Issuer Metadata).
 #[derive(Clone, Debug, Default)]
-pub struct NonceRequest {
-    /// The Credential Issuer from which the nonce is requested.
-    pub credential_issuer: String,
-}
+pub struct NonceRequest;
 
 /// Used by the Issuer to return a new nonce.
 ///
