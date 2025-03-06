@@ -4,7 +4,6 @@ mod utils;
 
 use std::collections::HashMap;
 
-use chrono::Utc;
 use credibil_infosec::jose::JwsBuilder;
 use credibil_vc::OneMany;
 use credibil_vc::oid4vci::endpoint;
@@ -60,12 +59,12 @@ async fn offer_val() {
     // proof of possession of key material
     let jws = JwsBuilder::new()
         .jwt_type(Type::Openid4VciProofJwt)
-        .payload(ProofClaims {
-            iss: Some(BOB_CLIENT.to_string()),
-            aud: ALICE_ISSUER.to_string(),
-            iat: Utc::now().timestamp(),
-            nonce: Some(nonce.c_nonce),
-        })
+        .payload(
+            ProofClaims::new()
+                .client_id(BOB_CLIENT)
+                .credential_issuer(ALICE_ISSUER)
+                .nonce(nonce.c_nonce),
+        )
         .add_signer(&test_holder::ProviderImpl)
         .build()
         .await
@@ -192,12 +191,12 @@ async fn two_datasets() {
         // proof of possession of key material
         let jws = JwsBuilder::new()
             .jwt_type(Type::Openid4VciProofJwt)
-            .payload(ProofClaims {
-                iss: Some(BOB_CLIENT.to_string()),
-                aud: ALICE_ISSUER.to_string(),
-                iat: Utc::now().timestamp(),
-                nonce: Some(nonce.c_nonce),
-            })
+            .payload(
+                ProofClaims::new()
+                    .client_id(BOB_CLIENT)
+                    .credential_issuer(ALICE_ISSUER)
+                    .nonce(nonce.c_nonce),
+            )
             .add_signer(&test_holder::ProviderImpl)
             .build()
             .await

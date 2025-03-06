@@ -141,19 +141,18 @@ impl Context {
 
                 // proof type
                 if jwt.header.typ != Type::Openid4VciProofJwt.to_string() {
-                    return Err(Error::InvalidProof(format!(
-                        "Proof JWT 'typ' ({}) is not {}",
-                        jwt.header.typ,
-                        Type::Openid4VciProofJwt
-                    )));
+                    return Err(Error::InvalidProof("invalid proof type".to_string()));
                 }
 
                 // previously issued c_nonce
                 let c_nonce = jwt.claims.nonce.as_ref().ok_or_else(|| {
                     Error::InvalidProof("proof JWT nonce claim is missing".to_string())
                 })?;
-                let _ = StateStore::get::<String>(provider, c_nonce).await.map_err(|e| {
+                StateStore::get::<String>(provider, c_nonce).await.map_err(|e| {
                     Error::ServerError(format!("proof nonce claim is invalid: {e}"))
+                })?;
+                StateStore::purge(provider, c_nonce).await.map_err(|e| {
+                    Error::ServerError(format!("could not purge nonce from state: {e}"))
                 })?;
 
                 // Key ID

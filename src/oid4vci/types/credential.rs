@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 
+use chrono::Utc;
 use credibil_infosec::jose::jwk::PublicKeyJwk;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
@@ -156,6 +157,38 @@ pub struct ProofClaims {
     /// A server-provided `c_nonce`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub nonce: Option<String>,
+}
+
+impl ProofClaims {
+    /// Create a new `ProofClaims` instance.
+    #[must_use]
+    pub fn new() -> Self {
+        Self {
+            iat: Utc::now().timestamp(),
+            ..Self::default()
+        }
+    }
+
+    /// Set the `client_id` of the Client making the Credential request.
+    #[must_use]
+    pub fn client_id(mut self, client_id: impl Into<String>) -> Self {
+        self.iss = Some(client_id.into());
+        self
+    }
+
+    /// Set the Credential Issuer Identifier.
+    #[must_use]
+    pub fn credential_issuer(mut self, credential_issuer: impl Into<String>) -> Self {
+        self.aud = credential_issuer.into();
+        self
+    }
+
+    /// Set the server-provided `c_nonce`.
+    #[must_use]
+    pub fn nonce(mut self, nonce: impl Into<String>) -> Self {
+        self.nonce = Some(nonce.into());
+        self
+    }
 }
 
 /// Contains information about whether the Credential Issuer supports encryption
