@@ -81,7 +81,7 @@ struct Context<'a> {
     state: State,
 }
 
-impl<'a> Context<'a> {
+impl Context<'_> {
     // Verify the token request.
     async fn verify(&self, provider: &impl Provider, request: &TokenRequest) -> Result<()> {
         tracing::debug!("token::verify");

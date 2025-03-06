@@ -1,22 +1,54 @@
 //! # Token Request Builder
 
-use crate::oid4vci::types::{AuthorizationDetail, TokenGrantType, TokenRequest};
+use crate::oid4vci::types::{AuthorizationDetail, ClientAssertion, TokenGrantType, TokenRequest};
 
 /// Build a Token Request.
-#[derive(Default, Debug)]
-pub struct TokenRequestBuilder {
+#[derive(Debug)]
+pub struct TokenRequestBuilder<G> {
     client_id: Option<String>,
-    grant_type: Option<TokenGrantType>,
+    grant_type: G,
     authorization_details: Option<Vec<AuthorizationDetail>>,
+    client_assertion: Option<ClientAssertion>,
 }
 
-impl TokenRequestBuilder {
+impl Default for TokenRequestBuilder<NoGrant> {
+    fn default() -> Self {
+        Self {
+            client_id: None,
+            grant_type: NoGrant,
+            authorization_details: None,
+            client_assertion: None,
+        }
+    }
+}
+
+/// No credential configuration id is set.
+#[doc(hidden)]
+pub struct NoGrant;
+/// At least one credential configuration id is specifiedset.
+#[doc(hidden)]
+pub struct Grant(TokenGrantType);
+
+impl TokenRequestBuilder<NoGrant> {
     /// Create a new `CreateOfferRequestBuilder`.
     #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Specify a grant to include in the offer.
+    #[must_use]
+    pub fn grant_type(self, grant_type: TokenGrantType) -> TokenRequestBuilder<Grant> {
+        TokenRequestBuilder {
+            client_id: self.client_id,
+            grant_type: Grant(grant_type),
+            authorization_details: self.authorization_details,
+            client_assertion: self.client_assertion,
+        }
+    }
+}
+
+impl<G> TokenRequestBuilder<G> {
     /// Specify the Wallet's Client ID.
     ///
     /// This is required if the client is not authenticating with the
@@ -28,13 +60,6 @@ impl TokenRequestBuilder {
         self
     }
 
-    /// Specify a grant to include in the offer.
-    #[must_use]
-    pub fn grant_type(mut self, grant_type: TokenGrantType) -> Self {
-        self.grant_type = Some(grant_type);
-        self
-    }
-
     /// Specify Authorization Details when needing to request a specific
     /// credential configuration.
     #[must_use]
@@ -42,22 +67,17 @@ impl TokenRequestBuilder {
         self.authorization_details.get_or_insert_with(Vec::new).push(authorization_detail);
         self
     }
+}
 
+impl TokenRequestBuilder<Grant> {
     /// Build the Create Offer request.
     #[must_use]
     pub fn build(self) -> TokenRequest {
-        let Some(grant_type) = self.grant_type else {
-            // FIXME: use typestate pattern to enforce required fields
-            panic!("grant_type is required");
-        };
-
-        let request = TokenRequest {
+        TokenRequest {
             client_id: self.client_id,
-            grant_type,
+            grant_type: self.grant_type.0,
             authorization_details: self.authorization_details,
-            ..TokenRequest::default()
-        };
-
-        request
+            client_assertion: self.client_assertion,
+        }
     }
 }

@@ -2,10 +2,8 @@
 
 use core::panic;
 
-
 use crate::oid4vci::types::{
-     CredentialRequest, CredentialResponseEncryption, MultipleProofs, Proof,
-    RequestBy, SingleProof,
+    CredentialRequest, CredentialResponseEncryption, MultipleProofs, Proof, RequestBy, SingleProof,
 };
 // use crate::w3c_vc::proof::integrity::Proof;
 
@@ -95,13 +93,11 @@ impl CredentialRequestBuilder {
             Some(Proof::Multiple(MultipleProofs::Jwt(proofs)))
         };
 
-        let  request = CredentialRequest {
+        CredentialRequest {
             credential,
             proof,
             credential_response_encryption: self.response_encryption,
             access_token: self.access_token.unwrap_or_default(),
-        };
-
-        request
+        }
     }
 }
