@@ -1,7 +1,7 @@
 //! # Authorization
 
 use crate::oauth::{CodeChallengeMethod, ResponseType};
-use crate::oid4vci::{
+use crate::oid4vci::types::{
     AuthorizationCredential, AuthorizationDetail, AuthorizationDetailType, AuthorizationRequest,
     ClaimsDescription, Format, RequestObject,
 };

@@ -6,8 +6,8 @@
 
 use std::fmt::Debug;
 
-use crate::oid4vci::Result;
 use crate::oid4vci::provider::Provider;
+use crate::oid4vci::{Error, Result};
 
 /// Handle incoming messages.
 ///
@@ -44,12 +44,16 @@ pub trait Request: Clone + Debug + Send + Sync {
     /// Validation undertaken here is common to all messages, with message-
     /// specific validation performed by the message's handler.
     fn validate(
-        &self, _credential_issuer: &str, _provider: &impl Provider,
+        &self, credential_issuer: &str, _provider: &impl Provider,
     ) -> impl Future<Output = Result<()>> + Send {
         async {
             // if !tenant_gate.active(credential_issuer)? {
             //     return Err(Error::Unauthorized("tenant not active"));
             // }
+            // `credential_issuer` required
+            if credential_issuer.is_empty() {
+                return Err(Error::InvalidRequest("no `credential_issuer` specified".into()));
+            }
 
             // // validate the message schema during development
             // #[cfg(debug_assertions)]

@@ -115,13 +115,13 @@ pub mod pkce {
 
 pub use error::Error;
 
-pub use crate::oauth::GrantType;
+
 /// Re-export types
-pub use crate::oid4vci::types::*;
-pub use crate::w3c_vc::model::{
-    Bitstring, CredentialStatus, CredentialStatusType, CredentialSubject, StatusMessage,
-    StatusPurpose, VerifiableCredential,
-};
+// pub use crate::oid4vci::types::*;
+// pub use crate::w3c_vc::model::{
+//     Bitstring, CredentialStatus, CredentialStatusType, CredentialSubject, StatusMessage,
+//     StatusPurpose, VerifiableCredential,
+// };
 
 /// Result type for `OpenID` for Verifiable Credential Issuance and Verifiable
 /// Presentations.

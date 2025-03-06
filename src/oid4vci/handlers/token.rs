@@ -35,7 +35,9 @@ use crate::oid4vci::{Error, Result};
 /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
 /// not available.
 #[instrument(level = "debug", skip(provider))]
-pub async fn token(provider: impl Provider, request: TokenRequest) -> Result<TokenResponse> {
+pub async fn token(
+    credential_issuer: &str, provider: impl Provider, request: TokenRequest,
+) -> Result<TokenResponse> {
     // restore state
     let state_key = match &request.grant_type {
         TokenGrantType::AuthorizationCode { code, .. } => code,
@@ -54,7 +56,10 @@ pub async fn token(provider: impl Provider, request: TokenRequest) -> Result<Tok
         .await
         .map_err(|e| Error::ServerError(format!("issue purging authorizaiton state: {e}")))?;
 
-    let ctx = Context { state };
+    let ctx = Context {
+        credential_issuer,
+        state,
+    };
 
     ctx.verify(&provider, &request).await?;
     ctx.process(&provider, request).await
@@ -64,18 +69,19 @@ impl Request for TokenRequest {
     type Response = TokenResponse;
 
     fn handle(
-        self, _credential_issuer: &str, provider: &impl Provider,
+        self, credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        token(provider.clone(), self)
+        token(credential_issuer, provider.clone(), self)
     }
 }
 
 #[derive(Debug)]
-struct Context {
+struct Context<'a> {
+    credential_issuer: &'a str,
     state: State,
 }
 
-impl Context {
+impl<'a> Context<'a> {
     // Verify the token request.
     async fn verify(&self, provider: &impl Provider, request: &TokenRequest) -> Result<()> {
         tracing::debug!("token::verify");
@@ -85,7 +91,7 @@ impl Context {
         }
 
         // TODO: support optional authorization issuers
-        let Ok(server) = Metadata::server(provider, &request.credential_issuer, None).await else {
+        let Ok(server) = Metadata::server(provider, self.credential_issuer, None).await else {
             return Err(Error::InvalidRequest("unknown authorization server".into()));
         };
         let Some(grant_types_supported) = &server.oauth.grant_types_supported else {
@@ -209,7 +215,7 @@ impl Context {
         };
 
         // find the subset of requested credentials from those previously authorized
-        let authorized_details = retain(provider, &request, authorized_details).await?;
+        let authorized_details = self.retain(provider, &request, authorized_details).await?;
 
         let access_token = generate::token();
 
@@ -231,43 +237,45 @@ impl Context {
             authorization_details: Some(authorized_details),
         })
     }
-}
 
-// Filter previously authorized credentials by those requested.
-async fn retain(
-    provider: &impl Provider, request: &TokenRequest, details: &[AuthorizedDetail],
-) -> Result<Vec<AuthorizedDetail>> {
-    // no `authorization_details` in request, return all previously authorized
-    let Some(req_auth_dets) = request.authorization_details.as_ref() else {
-        return Ok(details.to_vec());
-    };
+    // Filter previously authorized credentials by those requested.
+    async fn retain(
+        &self, provider: &impl Provider, request: &TokenRequest, details: &[AuthorizedDetail],
+    ) -> Result<Vec<AuthorizedDetail>> {
+        // no `authorization_details` in request, return all previously authorized
+        let Some(req_auth_dets) = request.authorization_details.as_ref() else {
+            return Ok(details.to_vec());
+        };
 
-    let Ok(issuer) = Metadata::issuer(provider, &request.credential_issuer).await else {
-        return Err(Error::InvalidRequest("unknown authorization server".into()));
-    };
+        let Ok(issuer) = Metadata::issuer(provider, self.credential_issuer).await else {
+            return Err(Error::InvalidRequest("unknown authorization server".into()));
+        };
 
-    // filter by requested authorization_details
-    let mut retained = vec![];
+        // filter by requested authorization_details
+        let mut retained = vec![];
 
-    for detail in req_auth_dets {
-        // check requested `authorization_detail` has been previously authorized
-        let mut found = false;
-        for ad in details {
-            if ad.authorization_detail.credential == detail.credential {
-                verify_claims(&issuer, detail)?;
-                retained.push(ad.clone());
-                found = true;
-                break;
+        for detail in req_auth_dets {
+            // check requested `authorization_detail` has been previously authorized
+            let mut found = false;
+            for ad in details {
+                if ad.authorization_detail.credential == detail.credential {
+                    verify_claims(&issuer, detail)?;
+                    retained.push(ad.clone());
+                    found = true;
+                    break;
+                }
+            }
+
+            if !found {
+                // we're here if requested `authorization_detail` has not been authorized
+                return Err(Error::AccessDenied(
+                    "requested credential has not been authorized".into(),
+                ));
             }
         }
 
-        if !found {
-            // we're here if requested `authorization_detail` has not been authorized
-            return Err(Error::AccessDenied("requested credential has not been authorized".into()));
-        }
+        Ok(retained)
     }
-
-    Ok(retained)
 }
 
 // Verify requested claims exist as supported claims and all mandatory claims

@@ -90,15 +90,15 @@ use crate::oid4vci::{Error, Result};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn create_offer(
-    provider: impl Provider, request: CreateOfferRequest,
+    credential_issuer: &str, provider: impl Provider, request: CreateOfferRequest,
 ) -> Result<CreateOfferResponse> {
-    let issuer = Metadata::issuer(&provider, &request.credential_issuer)
+    let issuer = Metadata::issuer(&provider, credential_issuer)
         .await
         .map_err(|e| Error::ServerError(format!("issue getting issuer metadata: {e}")))?;
 
     // TODO: determine how to select correct server?
     // select `authorization_server`, if specified
-    let server = Metadata::server(&provider, &request.credential_issuer, None)
+    let server = Metadata::server(&provider, credential_issuer, None)
         .await
         .map_err(|e| Error::ServerError(format!("issue getting issuer metadata: {e}")))?;
 
@@ -112,9 +112,9 @@ impl Request for CreateOfferRequest {
     type Response = CreateOfferResponse;
 
     fn handle(
-        self, _credential_issuer: &str, provider: &impl Provider,
+        self, credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        create_offer(provider.clone(), self)
+        create_offer(credential_issuer, provider.clone(), self)
     }
 }
 
@@ -127,11 +127,6 @@ pub struct Context {
 impl Context {
     fn verify(&self, request: &CreateOfferRequest) -> Result<()> {
         tracing::debug!("create_offer::verify");
-
-        // `credential_issuer` required
-        if request.credential_issuer.is_empty() {
-            return Err(Error::InvalidRequest("no `credential_issuer` specified".into()));
-        }
 
         // credentials required
         if request.credential_configuration_ids.is_empty() {
@@ -230,7 +225,7 @@ impl Context {
             Ok(CreateOfferResponse {
                 offer_type: OfferType::Uri(format!(
                     "{}/credential_offer/{uri_token}",
-                    request.credential_issuer
+                    self.issuer.credential_issuer,
                 )),
                 tx_code,
             })
@@ -286,7 +281,7 @@ impl Context {
         };
 
         CredentialOffer {
-            credential_issuer: request.credential_issuer.clone(),
+            credential_issuer: self.issuer.credential_issuer.clone(),
             credential_configuration_ids: request.credential_configuration_ids.clone(),
             grants,
         }
@@ -308,7 +303,7 @@ async fn authorize(
             .map_err(|e| Error::ServerError(format!("issue authorizing holder: {e}")))?;
 
         authorized.push(AuthorizedDetail {
-            authorization_detail:AuthorizationDetail {
+            authorization_detail: AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: AuthorizationCredential::ConfigurationId {
                     credential_configuration_id: config_id.clone(),

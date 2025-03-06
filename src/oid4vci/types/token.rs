@@ -13,11 +13,6 @@ use crate::oid4vci::types::{AuthorizationCredential, AuthorizationDetail, Client
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(default)]
 pub struct TokenRequest {
-    /// The URL of the Credential Issuer the Wallet can use obtain offered
-    /// Credentials.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub credential_issuer: String,
-
     /// OAuth 2.0 Client ID used by the Wallet.
     ///
     /// REQUIRED if the client is not authenticating with the authorization
@@ -53,14 +48,15 @@ impl TokenRequest {
     /// use in an HTML form post.
     ///
     /// # Errors
+    ///
     /// Will return an error if any of the object-type fields cannot be
     /// serialized to JSON and URL-encoded. (`authorization_details` and
     /// `client_assertion`).
     pub fn form_encode(&self) -> anyhow::Result<HashMap<String, String>> {
         let mut map = HashMap::new();
-        if !self.credential_issuer.is_empty() {
-            map.insert("credential_issuer".into(), self.credential_issuer.clone());
-        }
+        // if !self.credential_issuer.is_empty() {
+        //     map.insert("credential_issuer".into(), self.credential_issuer.clone());
+        // }
         if let Some(client_id) = &self.client_id {
             map.insert("client_id".into(), client_id.clone());
         }
@@ -113,9 +109,9 @@ impl TokenRequest {
     /// `client_assertion`).
     pub fn form_decode(map: &HashMap<String, String>) -> anyhow::Result<Self> {
         let mut req = Self::default();
-        if let Some(credential_issuer) = map.get("credential_issuer") {
-            req.credential_issuer.clone_from(credential_issuer);
-        }
+        // if let Some(credential_issuer) = map.get("credential_issuer") {
+        //     req.credential_issuer.clone_from(credential_issuer);
+        // }
         if let Some(client_id) = map.get("client_id") {
             req.client_id = Some(client_id.clone());
         }
@@ -270,12 +266,13 @@ impl From<AuthorizationDetail> for AuthorizedDetail {
 impl AuthorizedDetail {
     /// Get the `credential_configuration_id` from the `AuthorizationDetail`
     /// object.
+    #[must_use]
     pub fn credential_configuration_id(&self) -> Option<&str> {
         match &self.authorization_detail.credential {
             AuthorizationCredential::ConfigurationId {
                 credential_configuration_id,
-            } => Some(credential_configuration_id),
-            _ => None,
+            } => Some(credential_configuration_id.as_str()),
+            AuthorizationCredential::Format(_) => None,
         }
     }
 }
@@ -292,7 +289,7 @@ mod tests {
     #[test]
     fn token_request_form_encoding() {
         let request = TokenRequest {
-            credential_issuer: "https://example.com".into(),
+            // credential_issuer: "https://example.com".into(),
             client_id: Some("1234".into()),
             grant_type: TokenGrantType::PreAuthorizedCode {
                 pre_authorized_code: "WQHhDmQ3ZygxyOPlBjunlA".into(),

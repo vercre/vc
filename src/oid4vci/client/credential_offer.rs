@@ -1,32 +1,29 @@
 //! # Create Offer Builder
 
 use crate::oauth::GrantType;
-use crate::oid4vci::{CreateOfferRequest, SendType};
+use crate::oid4vci::types::{CreateOfferRequest, SendType};
 
 /// Build a Credential Offer for a Credential Issuer.
 #[derive(Default, Debug)]
 pub struct CreateOfferRequestBuilder {
-    credential_issuer: Option<String>,
     subject_id: Option<String>,
     credential_configuration_ids: Vec<String>,
     grant_types: Vec<GrantType>,
-    tx_code_required: bool,
-    send_type: SendType,
+    tx_code: bool,
+    by_ref: bool,
 }
 
 impl CreateOfferRequestBuilder {
     /// Create a new `CreateOfferRequestBuilder`.
     #[must_use]
     pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Specify the (previously authenticated) Holder for the Issuer to use
-    /// when authorizing credential issuance.
-    #[must_use]
-    pub fn credential_issuer(mut self, credential_issuer: impl Into<String>) -> Self {
-        self.credential_issuer = Some(credential_issuer.into());
-        self
+        Self {
+            subject_id: None,
+            credential_configuration_ids: Vec::new(),
+            grant_types: vec![GrantType::PreAuthorizedCode],
+            tx_code: true,
+            by_ref: false,
+        }
     }
 
     /// Specify the (previously authenticated) Holder for the Issuer to use
@@ -55,28 +52,29 @@ impl CreateOfferRequestBuilder {
     /// Specify whether a Transaction Code (PIN) is required by the `token`
     /// endpoint during the Pre-Authorized Code Flow.
     #[must_use]
-    pub const fn tx_code_required(mut self, tx_code_required: bool) -> Self {
-        self.tx_code_required = tx_code_required;
+    pub const fn use_tx_code(mut self, tx_code_required: bool) -> Self {
+        self.tx_code = tx_code_required;
         self
     }
 
     /// Specify whether Credential Offer should be an object or a URI.
     #[must_use]
-    pub const fn send_type(mut self, send_type: SendType) -> Self {
-        self.send_type = send_type;
+    pub const fn by_ref(mut self, by_ref: bool) -> Self {
+        self.by_ref = by_ref;
         self
     }
 
     /// Build the Create Offer request.
     #[must_use]
     pub fn build(self) -> CreateOfferRequest {
+        let send_type = if self.by_ref { SendType::ByRef } else { SendType::ByVal };
+
         let mut request = CreateOfferRequest {
-            credential_issuer: self.credential_issuer.unwrap_or_default(),
             subject_id: self.subject_id,
             credential_configuration_ids: self.credential_configuration_ids,
             grant_types: None,
-            tx_code_required: self.tx_code_required,
-            send_type: self.send_type,
+            tx_code_required: self.tx_code,
+            send_type,
         };
 
         if !self.grant_types.is_empty() {

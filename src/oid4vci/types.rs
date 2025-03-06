@@ -15,6 +15,8 @@ pub use metadata::*;
 use serde::{Deserialize, Serialize};
 pub use token::*;
 
+pub use crate::oauth::GrantType;
+
 /// Used by the Wallet to notify the Credential Issuer of certain events for
 /// issued Credentials. These events enable the Credential Issuer to take
 /// subsequent actions after issuance.

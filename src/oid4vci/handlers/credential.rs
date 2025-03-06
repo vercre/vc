@@ -39,12 +39,12 @@ use crate::w3c_vc::proof::{self, Payload, Type, W3cFormat};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn credential(
-    provider: impl Provider, request: CredentialRequest,
+    credential_issuer: &str, provider: impl Provider, request: CredentialRequest,
 ) -> Result<CredentialResponse> {
     let Ok(state) = StateStore::get::<State>(&provider, &request.access_token).await else {
         return Err(Error::AccessDenied("invalid access token".into()));
     };
-    let issuer = Metadata::issuer(&provider, &request.credential_issuer)
+    let issuer = Metadata::issuer(&provider, credential_issuer)
         .await
         .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
 
@@ -75,9 +75,9 @@ impl Request for CredentialRequest {
     type Response = CredentialResponse;
 
     fn handle(
-        self, _credential_issuer: &str, provider: &impl Provider,
+        self, credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        credential(provider.clone(), self)
+        credential(credential_issuer, provider.clone(), self)
     }
 }
 
@@ -364,7 +364,7 @@ impl Context {
                 for ad in &token.details {
                     if Some(id.as_str()) == ad.credential_configuration_id() {
                         return Ok(ad.clone());
-                    };
+                    }
                 }
             }
         }

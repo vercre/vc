@@ -13,13 +13,14 @@ use axum::{Form, Json, Router};
 use axum_extra::TypedHeader;
 use axum_extra::headers::authorization::Bearer;
 use axum_extra::headers::{Authorization, Host};
-use credibil_vc::oid4vci::{
-    self, AuthorizationRequest, CreateOfferRequest, CreateOfferResponse, CredentialOfferRequest,
+use credibil_vc::oid4vci::types::{
+    AuthorizationRequest, CreateOfferRequest, CreateOfferResponse, CredentialOfferRequest,
     CredentialOfferResponse, CredentialRequest, CredentialResponse, DeferredCredentialRequest,
     DeferredCredentialResponse, MetadataRequest, MetadataResponse, NotificationRequest,
     NotificationResponse, OAuthServerRequest, OAuthServerResponse, PushedAuthorizationRequest,
-    PushedAuthorizationResponse, TokenRequest, TokenResponse, endpoint,
+    PushedAuthorizationResponse, TokenRequest, TokenResponse,
 };
+use credibil_vc::oid4vci::{self, endpoint};
 use credibil_vc::urlencode;
 use oauth2::CsrfToken;
 use serde::{Deserialize, Serialize};
@@ -75,9 +76,8 @@ async fn main() {
 #[axum::debug_handler]
 async fn create_offer(
     State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
-    Json(mut req): Json<CreateOfferRequest>,
+    Json(req): Json<CreateOfferRequest>,
 ) -> AxResult<CreateOfferResponse> {
-    req.credential_issuer = format!("http://{host}");
     endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
 }
 
@@ -320,12 +320,12 @@ async fn token(
     State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Form(req): Form<HashMap<String, String>>,
 ) -> impl IntoResponse {
-    let Ok(mut tr) = TokenRequest::form_decode(&req) else {
+    let Ok( tr) = TokenRequest::form_decode(&req) else {
         tracing::error!("unable to turn HashMap {req:?} into TokenRequest");
         return (StatusCode::BAD_REQUEST, Json(json!({"error": "invalid request"})))
             .into_response();
     };
-    tr.credential_issuer = format!("http://{host}");
+
     let response: AxResult<TokenResponse> =
         match endpoint::handle(&format!("http://{host}"), tr, &provider).await {
             Ok(v) => Ok(v).into(),
@@ -343,7 +343,6 @@ async fn credential(
     State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>, Json(mut req): Json<CredentialRequest>,
 ) -> AxResult<CredentialResponse> {
-    req.credential_issuer = format!("http://{host}");
     req.access_token = auth.token().to_string();
     endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
 }
@@ -355,7 +354,6 @@ async fn deferred_credential(
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(mut req): Json<DeferredCredentialRequest>,
 ) -> AxResult<DeferredCredentialResponse> {
-    req.credential_issuer = format!("http://{host}");
     req.access_token = auth.0.token().to_string();
 
     #[allow(clippy::large_futures)]

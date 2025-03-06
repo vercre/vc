@@ -25,23 +25,23 @@ use crate::oid4vci::{Error, Result};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn deferred(
-    provider: impl Provider, request: DeferredCredentialRequest,
+    credential_issuer: &str, provider: impl Provider, request: DeferredCredentialRequest,
 ) -> Result<DeferredCredentialResponse> {
-    process(&provider, request).await
+    process(credential_issuer, &provider, request).await
 }
 
 impl Request for DeferredCredentialRequest {
     type Response = DeferredCredentialResponse;
 
     fn handle(
-        self, _credential_issuer: &str, provider: &impl Provider,
+        self, credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        deferred(provider.clone(), self)
+        deferred(credential_issuer, provider.clone(), self)
     }
 }
 
 async fn process(
-    provider: &impl Provider, request: DeferredCredentialRequest,
+    credential_issuer: &str, provider: &impl Provider, request: DeferredCredentialRequest,
 ) -> Result<DeferredCredentialResponse> {
     tracing::debug!("deferred::process");
 
@@ -64,10 +64,9 @@ async fn process(
 
     // make credential request
     let mut cred_req = deferred_state.credential_request;
-    cred_req.credential_issuer.clone_from(&request.credential_issuer);
     cred_req.access_token.clone_from(&request.access_token);
 
-    let response = credential(provider.clone(), cred_req).await?;
+    let response = credential(credential_issuer,provider.clone(), cred_req).await?;
 
     // is issuance still pending?
     if let ResponseType::TransactionId { .. } = response.response {

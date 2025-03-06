@@ -5,7 +5,8 @@
 mod utils;
 mod wallet;
 
-use credibil_vc::oid4vci::{CreateOfferRequest, Format, ProfileW3c, SendType, endpoint};
+use credibil_vc::oid4vci::endpoint;
+use credibil_vc::oid4vci::types::{CreateOfferRequest, Format, ProfileW3c, SendType};
 use rstest::rstest;
 use serde_json::json;
 use test_issuer::{CREDENTIAL_ISSUER, NORMAL_USER, PENDING_USER, ProviderImpl};
@@ -17,7 +18,6 @@ use utils::{Issuance, provider};
 #[case(Issuance::Deferred)]
 async fn issuance(provider: ProviderImpl, #[case] issue: Issuance) {
     utils::init_tracer();
-    snapshot!("issuer:{issue}");
 
     let subject_id = match issue {
         Issuance::Immediate => NORMAL_USER,

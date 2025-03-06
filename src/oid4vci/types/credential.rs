@@ -24,16 +24,6 @@ pub struct Dataset {
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(default)]
 pub struct CredentialRequest {
-    /// The URL of the Credential Issuer the Wallet can use obtain offered
-    /// Credentials.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub credential_issuer: String,
-
-    /// A previously issued Access Token, as extracted from the Authorization
-    /// header of the Credential Request.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub access_token: String,
-
     /// Identifies the credential requested for issuance using either a
     /// `credential_identifier` or a supported format.
     ///
@@ -55,6 +45,11 @@ pub struct CredentialRequest {
     /// If not present.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_response_encryption: Option<CredentialResponseEncryption>,
+
+    /// A previously issued Access Token, as extracted from the Authorization
+    /// header of the Credential Request.
+    #[serde(skip)]
+    pub access_token: String,
 }
 
 /// Means used to identifiy Credential type and format when requesting a
@@ -305,7 +300,6 @@ mod tests {
         assert_snapshot!("credential_identifier", &deserialized);
 
         let request = CredentialRequest {
-            credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
             credential: RequestBy::Identifier("EngineeringDegree2023".to_string()),
             proof: Some(Proof::Single {
@@ -343,7 +337,6 @@ mod tests {
         assert_snapshot!("credential_format", &deserialized);
 
         let request = CredentialRequest {
-            credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
             credential: RequestBy::ConfigurationId("EmployeeID_JWT".to_string()),
             proof: Some(Proof::Single {
@@ -377,7 +370,6 @@ mod tests {
         assert_snapshot!("multiple_proofs", &deserialized);
 
         let request = CredentialRequest {
-            credential_issuer: "https://example.com".into(),
             access_token: "1234".into(),
             credential: RequestBy::Identifier("EngineeringDegree2023".to_string()),
             proof: Some(Proof::Multiple(MultipleProofs::Jwt(vec![

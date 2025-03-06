@@ -13,11 +13,6 @@ use crate::oid4vci::types::{AuthorizationCodeGrant, Grants, PreAuthorizedCodeGra
 /// Request a Credential Offer for a Credential Issuer.
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
 pub struct CreateOfferRequest {
-    /// The URL of the Credential Issuer the Wallet can use obtain offered
-    /// Credentials.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub credential_issuer: String,
-
     /// Identifies the (previously authenticated) Holder in order that Issuer
     /// can authorize credential issuance.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -104,6 +99,28 @@ pub enum OfferType {
     /// `CredentialOffer` object can be retrieved.
     #[serde(rename = "credential_offer_uri")]
     Uri(String),
+}
+
+impl OfferType {
+    /// Convenience method for extracting a Credential Offer object from an
+    /// offer type if it exists.
+    #[must_use]
+    pub const fn as_object(&self) -> Option<&CredentialOffer> {
+        match self {
+            Self::Object(offer) => Some(offer),
+            Self::Uri(_) => None,
+        }
+    }
+
+    /// Convenience method for extracting a Credential Offer URI from an offer
+    /// type if it exists.
+    #[must_use]
+    pub fn as_uri(&self) -> Option<&str> {
+        match self {
+            Self::Uri(uri) => Some(uri.as_str()),
+            Self::Object(_) => None,
+        }
+    }
 }
 
 /// A Credential Offer object that can be sent to a Wallet as an HTTP GET

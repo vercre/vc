@@ -332,10 +332,9 @@ impl Context {
     // Verify Credentials requested in `scope` are supported.
     // N.B. has side effect of saving valid scope items into context for later use.
     fn verify_scope(&mut self, scope: &str) -> Result<()> {
-        if let Some(item) = scope.split_whitespace().next() {
-            // let mut scope_map = HashMap::new();
-
-            // find supported configurations that has the requested scope
+        if let Some(scope_item) = scope.split_whitespace().next() {
+            // find supported configuration with the requested scope
+            let mut found = false;
             for (config_id, cred_cfg) in &self.issuer.credential_configurations_supported {
                 // `authorization_details` credential request takes precedence `scope` request
                 if self.auth_dets.contains_key(config_id) {
@@ -343,7 +342,7 @@ impl Context {
                 }
 
                 // save scope item + credential_configuration_id
-                if cred_cfg.scope == Some(item.to_string()) {
+                if cred_cfg.scope == Some(scope_item.to_string()) {
                     let detail = AuthorizationDetail {
                         type_: AuthorizationDetailType::OpenIdCredential,
                         credential: AuthorizationCredential::ConfigurationId {
@@ -354,7 +353,12 @@ impl Context {
                     };
 
                     self.auth_dets.insert(config_id.clone(), detail);
+                    found = true;
+                    break;
                 }
+            }
+            if !found {
+                return Err(Error::InvalidScope("invalid scope".into()));
             }
         }
 
