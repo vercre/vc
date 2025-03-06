@@ -16,9 +16,18 @@
         "PHLDeveloper": {
             "configuration_id": "Developer_JWT",
             "claims": {
-                "given_name": "Normal",
-                "family_name": "Person",
+                "name": "A. Developer",
+                "role": "Lead",
                 "proficiency": "3"
+            },
+            "pending": false
+        },
+        "OpenSourceDeveloper": {
+            "configuration_id": "Developer_JWT",
+            "claims": {
+                "name": "A. Mazing",
+                "role": "Hacker",
+                "proficiency": "2"
             },
             "pending": false
         },

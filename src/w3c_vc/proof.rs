@@ -41,7 +41,7 @@ use credibil_infosec::jose::{jws, jwt};
 use serde::{Deserialize, Serialize};
 
 use super::model::{VerifiableCredential, VerifiablePresentation};
-use crate::core::{Kind, Quota};
+use crate::core::{Kind, OneMany};
 use crate::verify_key;
 
 /// Credential format options for the resulting proof.
@@ -167,7 +167,7 @@ pub async fn verify(proof: Verify<'_>, resolver: impl DidResolver) -> anyhow::Re
                 }
                 Kind::Object(vp) => {
                     // TODO: Implement embedded proof verification
-                    let Some(Quota::One(proof)) = &vp.proof else {
+                    let Some(OneMany::One(proof)) = &vp.proof else {
                         bail!("invalid VerifiablePresentation proof")
                     };
                     let challenge = proof.challenge.clone().unwrap_or_default();

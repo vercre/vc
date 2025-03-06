@@ -2,8 +2,11 @@
 
 mod utils;
 
+use std::collections::HashMap;
+
 use chrono::Utc;
 use credibil_infosec::jose::JwsBuilder;
+use credibil_vc::OneMany;
 use credibil_vc::oid4vci::client::{
     CreateOfferRequestBuilder, CredentialRequestBuilder, TokenRequestBuilder,
 };
@@ -139,4 +142,102 @@ async fn offer_ref() {
     let grants = offer.grants.expect("should have grant");
     let pre_auth_grant = grants.pre_authorized_code.expect("should have pre-authorized code grant");
     assert_eq!(pre_auth_grant.pre_authorized_code.len(), 43);
+}
+
+// Should return two credential datasets for a single coredential
+// configuration id.
+#[tokio::test]
+async fn two_datasets() {
+    let provider = ProviderImpl::new();
+
+    // --------------------------------------------------
+    // Alice creates a credential offer for Bob
+    // --------------------------------------------------
+    let request = CreateOfferRequestBuilder::new()
+        .subject_id(NORMAL_USER)
+        .with_credential("Developer_JWT")
+        .build();
+    let response =
+        endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should create offer");
+
+    // --------------------------------------------------
+    // Bob receives the offer and requests a token
+    // --------------------------------------------------
+    let offer = response.offer_type.as_object().expect("should have offer").clone();
+    let grants = offer.grants.expect("should have grant");
+    let pre_auth_grant = grants.pre_authorized_code.expect("should have pre-authorized code grant");
+
+    let request = TokenRequestBuilder::new()
+        .client_id(BOB_CLIENT)
+        .grant_type(TokenGrantType::PreAuthorizedCode {
+            pre_authorized_code: pre_auth_grant.pre_authorized_code,
+            tx_code: response.tx_code.clone(),
+        })
+        .build();
+    let token =
+        endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should return token");
+
+    // --------------------------------------------------
+    // Bob receives the token and prepares 2 credential requests
+    // --------------------------------------------------
+    let details = &token.authorization_details.expect("should have authorization details");
+    let expected = HashMap::from([
+        ("OpenSourceDeveloper", vec!["A. Mazing", "Hacker"]),
+        ("PHLDeveloper", vec!["A. Developer", "Lead"]),
+    ]);
+
+    for identifier in &details[0].credential_identifiers {
+        let nonce = endpoint::handle(ALICE_ISSUER, NonceRequest, &provider)
+            .await
+            .expect("should return nonce");
+
+        // proof of possession of key material
+        let jws = JwsBuilder::new()
+            .jwt_type(Type::Openid4VciProofJwt)
+            .payload(ProofClaims {
+                iss: Some(BOB_CLIENT.to_string()),
+                aud: ALICE_ISSUER.to_string(),
+                iat: Utc::now().timestamp(),
+                nonce: Some(nonce.c_nonce),
+            })
+            .add_signer(&test_holder::ProviderImpl)
+            .build()
+            .await
+            .expect("builds JWS");
+        let jwt = jws.encode().expect("encodes JWS");
+
+        // --------------------------------------------------
+        // Bob requests a credential
+        // --------------------------------------------------
+        let request = CredentialRequestBuilder::new()
+            .credential_identifier(identifier)
+            .with_proof(jwt)
+            .access_token(&token.access_token)
+            .build();
+        let response = endpoint::handle(ALICE_ISSUER, request, &provider)
+            .await
+            .expect("should return credential");
+
+        // --------------------------------------------------
+        // Bob extracts and verifies the received credential
+        // --------------------------------------------------
+        let ResponseType::Credentials { credentials, .. } = &response.response else {
+            panic!("expected single credential");
+        };
+        let Credential { credential } = credentials.first().expect("should have credential");
+
+        // verify the credential proof
+        let Ok(Payload::Vc { vc, .. }) =
+            proof::verify(Verify::Vc(credential), provider.clone()).await
+        else {
+            panic!("should be valid VC");
+        };
+
+        // validate the credential
+        let OneMany::One(subject) = vc.credential_subject else {
+            panic!("should have single subject");
+        };
+        assert_eq!(subject.claims["name"], expected[identifier.as_str()][0]);
+        assert_eq!(subject.claims["role"], expected[identifier.as_str()][1]);
+    }
 }
