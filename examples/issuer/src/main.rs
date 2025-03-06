@@ -87,9 +87,7 @@ async fn credential_offer(
     State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Path(offer_id): Path<String>,
 ) -> AxResult<CredentialOfferResponse> {
-    let request = CredentialOfferRequest {
-        id: offer_id,
-    };
+    let request = CredentialOfferRequest { id: offer_id };
     endpoint::handle(&format!("http://{host}"), request, &provider).await.into()
 }
 

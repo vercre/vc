@@ -143,10 +143,12 @@ impl Default for MultipleProofs {
 pub struct ProofClaims {
     /// The `client_id` of the Client making the Credential request.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub iss: Option<String>,
+    #[serde(rename = "iss")]
+    pub client_id: Option<String>,
 
     /// The Credential Issuer Identifier.
-    pub aud: String,
+    #[serde(rename = "aud")]
+    pub credential_issuer: String,
 
     /// The time at which the proof was issued, as
     /// [RFC7519](https://www.rfc-editor.org/rfc/rfc7519) `NumericDate`.
@@ -172,14 +174,14 @@ impl ProofClaims {
     /// Set the `client_id` of the Client making the Credential request.
     #[must_use]
     pub fn client_id(mut self, client_id: impl Into<String>) -> Self {
-        self.iss = Some(client_id.into());
+        self.client_id = Some(client_id.into());
         self
     }
 
     /// Set the Credential Issuer Identifier.
     #[must_use]
     pub fn credential_issuer(mut self, credential_issuer: impl Into<String>) -> Self {
-        self.aud = credential_issuer.into();
+        self.credential_issuer = credential_issuer.into();
         self
     }
 

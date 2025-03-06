@@ -6,6 +6,14 @@ use crate::oid4vci::types::{
     ClaimsDescription, Format, RequestObject,
 };
 
+impl AuthorizationRequest {
+    /// Create a new `AuthorizationRequestBuilder`.
+    #[must_use]
+    pub fn builder() -> AuthorizationRequestBuilder {
+        AuthorizationRequestBuilder::new()
+    }
+}
+
 /// Build an [`AuthorizationRequest`].
 #[derive(Default, Debug)]
 pub struct AuthorizationRequestBuilder {
@@ -162,6 +170,14 @@ impl AuthorizationRequestBuilder {
     }
 }
 
+impl AuthorizationDetail {
+    /// Create a new `AuthorizationDetailBuilder`.
+    #[must_use]
+    pub fn builder() -> AuthorizationDetailBuilder {
+        AuthorizationDetailBuilder::new()
+    }
+}
+
 /// Build an [`AuthorizationDetail`].
 #[derive(Default, Debug)]
 pub struct AuthorizationDetailBuilder {
@@ -179,10 +195,8 @@ impl AuthorizationDetailBuilder {
 
     /// Specify the credential configuration ID.
     #[must_use]
-    pub fn credential_configuration_id(
-        mut self, credential_configuration_id: impl Into<String>,
-    ) -> Self {
-        self.credential_configuration_id = credential_configuration_id.into();
+    pub fn configuration_id(mut self, configuration_id: impl Into<String>) -> Self {
+        self.credential_configuration_id = configuration_id.into();
         self
     }
 
