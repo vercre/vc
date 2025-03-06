@@ -2,6 +2,14 @@
 
 use crate::oid4vci::types::{AuthorizationDetail, ClientAssertion, TokenGrantType, TokenRequest};
 
+impl TokenRequest {
+    /// Create a new `TokenRequestBuilder`.
+    #[must_use]
+    pub fn builder() -> TokenRequestBuilder<NoGrant> {
+        TokenRequestBuilder::new()
+    }
+}
+
 /// Build a Token Request.
 #[derive(Debug)]
 pub struct TokenRequestBuilder<G> {

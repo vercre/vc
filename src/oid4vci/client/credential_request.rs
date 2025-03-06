@@ -3,7 +3,14 @@
 use crate::oid4vci::types::{
     CredentialRequest, CredentialResponseEncryption, MultipleProofs, Proof, RequestBy, SingleProof,
 };
-// use crate::w3c_vc::proof::integrity::Proof;
+
+impl CredentialRequest {
+    /// Create a new `CredentialRequestBuilder`.
+    #[must_use]
+    pub fn builder() -> CredentialRequestBuilder<NoCredential, NoProofs> {
+        CredentialRequestBuilder::new()
+    }
+}
 
 /// Build a Credential Offer for a Credential Issuer.
 #[derive(Debug)]

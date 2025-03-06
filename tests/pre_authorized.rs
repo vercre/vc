@@ -7,13 +7,11 @@ use std::collections::HashMap;
 use chrono::Utc;
 use credibil_infosec::jose::JwsBuilder;
 use credibil_vc::OneMany;
-use credibil_vc::oid4vci::client::{
-    CreateOfferRequestBuilder, CredentialRequestBuilder, TokenRequestBuilder,
-};
 use credibil_vc::oid4vci::endpoint;
 use credibil_vc::oid4vci::proof::{self, Payload, Type, Verify};
 use credibil_vc::oid4vci::types::{
-    Credential, CredentialOfferRequest, NonceRequest, ProofClaims, ResponseType, TokenGrantType,
+    CreateOfferRequest, Credential, CredentialOfferRequest, CredentialRequest, NonceRequest,
+    ProofClaims, ResponseType, TokenGrantType, TokenRequest,
 };
 use insta::assert_yaml_snapshot as assert_snapshot;
 use test_issuer::{
@@ -29,7 +27,7 @@ async fn offer_val() {
     // --------------------------------------------------
     // Alice creates a credential offer for Bob
     // --------------------------------------------------
-    let request = CreateOfferRequestBuilder::new()
+    let request = CreateOfferRequest::builder()
         .subject_id(NORMAL_USER)
         .with_credential("EmployeeID_JWT")
         .build();
@@ -43,7 +41,7 @@ async fn offer_val() {
     let grants = offer.grants.expect("should have grant");
     let pre_auth_grant = grants.pre_authorized_code.expect("should have pre-authorized code grant");
 
-    let request = TokenRequestBuilder::new()
+    let request = TokenRequest::builder()
         .client_id(BOB_CLIENT)
         .grant_type(TokenGrantType::PreAuthorizedCode {
             pre_authorized_code: pre_auth_grant.pre_authorized_code,
@@ -78,7 +76,7 @@ async fn offer_val() {
     // Bob requests a credential
     // --------------------------------------------------
     let details = &token.authorization_details.expect("should have authorization details");
-    let request = CredentialRequestBuilder::new()
+    let request = CredentialRequest::builder()
         .credential_identifier(&details[0].credential_identifiers[0])
         .with_proof(jwt)
         .access_token(token.access_token)
@@ -115,7 +113,7 @@ async fn offer_ref() {
     // --------------------------------------------------
     // Alice creates a credential offer for Bob
     // --------------------------------------------------
-    let request = CreateOfferRequestBuilder::new()
+    let request = CreateOfferRequest::builder()
         .subject_id(NORMAL_USER)
         .with_credential("EmployeeID_JWT")
         .by_ref(true)
@@ -153,7 +151,7 @@ async fn two_datasets() {
     // --------------------------------------------------
     // Alice creates a credential offer for Bob
     // --------------------------------------------------
-    let request = CreateOfferRequestBuilder::new()
+    let request = CreateOfferRequest::builder()
         .subject_id(NORMAL_USER)
         .with_credential("Developer_JWT")
         .build();
@@ -167,7 +165,7 @@ async fn two_datasets() {
     let grants = offer.grants.expect("should have grant");
     let pre_auth_grant = grants.pre_authorized_code.expect("should have pre-authorized code grant");
 
-    let request = TokenRequestBuilder::new()
+    let request = TokenRequest::builder()
         .client_id(BOB_CLIENT)
         .grant_type(TokenGrantType::PreAuthorizedCode {
             pre_authorized_code: pre_auth_grant.pre_authorized_code,
@@ -209,7 +207,7 @@ async fn two_datasets() {
         // --------------------------------------------------
         // Bob requests a credential
         // --------------------------------------------------
-        let request = CredentialRequestBuilder::new()
+        let request = CredentialRequest::builder()
             .credential_identifier(identifier)
             .with_proof(jwt)
             .access_token(&token.access_token)
@@ -233,7 +231,7 @@ async fn two_datasets() {
             panic!("should be valid VC");
         };
 
-        // validate the credential
+        // validate the credential subject
         let OneMany::One(subject) = vc.credential_subject else {
             panic!("should have single subject");
         };

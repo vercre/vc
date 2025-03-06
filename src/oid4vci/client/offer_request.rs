@@ -3,6 +3,14 @@
 use crate::oauth::GrantType;
 use crate::oid4vci::types::{CreateOfferRequest, SendType};
 
+impl CreateOfferRequest {
+    /// Create a new `CreateOfferRequestBuilder`.
+    #[must_use]
+    pub fn builder() -> CreateOfferRequestBuilder<NoCredential, NoSubjectId, PreAuthorized> {
+        CreateOfferRequestBuilder::new()
+    }
+}
+
 /// Build a Credential Offer for a Credential Issuer.
 #[derive(Default, Debug)]
 pub struct CreateOfferRequestBuilder<C, S, P> {
