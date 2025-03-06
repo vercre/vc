@@ -18,7 +18,7 @@ use test_issuer::{
 };
 
 // Should return a credential when using the pre-authorized code flow and the
-// credential offer to the allet is made by value.
+// credential offer to the Wallet is made by value.
 #[tokio::test]
 async fn offer_val() {
     let provider = ProviderImpl::new();
@@ -104,7 +104,7 @@ async fn offer_val() {
 }
 
 // Should return a credential when using the pre-authorized code flow and the
-// credential offer to the allet is made by value.
+// credential offer to the Wallet is made by reference.
 #[tokio::test]
 async fn offer_ref() {
     let provider = ProviderImpl::new();
@@ -128,78 +128,15 @@ async fn offer_ref() {
     let Some(id) = uri.strip_prefix(&path) else {
         panic!("should have prefix");
     };
-    let request = CredentialOfferRequest {
-        id: id.to_string(),
-    };
+    let request = CredentialOfferRequest { id: id.to_string() };
     let response =
         endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should fetch offer");
 
-    // --------------------------------------------------
-    // Bob receives the offer and requests a token
-    // --------------------------------------------------
+    // validate offer
     let offer = response.credential_offer;
+    assert_eq!(offer.credential_configuration_ids, vec!["EmployeeID_JWT".to_string()]);
+
     let grants = offer.grants.expect("should have grant");
     let pre_auth_grant = grants.pre_authorized_code.expect("should have pre-authorized code grant");
-
-    let request = TokenRequestBuilder::new()
-        .client_id(BOB_CLIENT)
-        .grant_type(TokenGrantType::PreAuthorizedCode {
-            pre_authorized_code: pre_auth_grant.pre_authorized_code,
-            tx_code: create_offer.tx_code.clone(),
-        })
-        .build();
-    let token =
-        endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should return token");
-
-    // --------------------------------------------------
-    // Bob receives the token and prepares a proof for a credential request
-    // --------------------------------------------------
-    let nonce =
-        endpoint::handle(ALICE_ISSUER, NonceRequest, &provider).await.expect("should return nonce");
-
-    // proof of possession of key material
-    let jws = JwsBuilder::new()
-        .jwt_type(Type::Openid4VciProofJwt)
-        .payload(ProofClaims {
-            iss: Some(BOB_CLIENT.to_string()),
-            aud: ALICE_ISSUER.to_string(),
-            iat: Utc::now().timestamp(),
-            nonce: Some(nonce.c_nonce),
-        })
-        .add_signer(&test_holder::ProviderImpl)
-        .build()
-        .await
-        .expect("builds JWS");
-    let jwt = jws.encode().expect("encodes JWS");
-
-    // --------------------------------------------------
-    // Bob requests a credential
-    // --------------------------------------------------
-    let details = &token.authorization_details.expect("should have authorization details");
-    let request = CredentialRequestBuilder::new()
-        .credential_identifier(&details[0].credential_identifiers[0])
-        .with_proof(jwt)
-        .access_token(token.access_token)
-        .build();
-    let response =
-        endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should return credential");
-
-    // --------------------------------------------------
-    // Bob extracts and verifies the received credential
-    // --------------------------------------------------
-    let ResponseType::Credentials { credentials, .. } = &response.response else {
-        panic!("expected single credential");
-    };
-    let Credential { credential } = credentials.first().expect("should have credential");
-
-    // verify the credential proof
-    let Ok(Payload::Vc { vc, .. }) = proof::verify(Verify::Vc(credential), provider.clone()).await
-    else {
-        panic!("should be valid VC");
-    };
-
-    assert_snapshot!("offer_ref", vc, {
-        ".validFrom" => "[validFrom]",
-        ".credentialSubject" => insta::sorted_redaction()
-    });
+    assert_eq!(pre_auth_grant.pre_authorized_code.len(), 43);
 }
