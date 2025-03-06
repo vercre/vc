@@ -127,11 +127,6 @@ impl OfferType {
 /// request.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CredentialOffer {
-    /// The URL of the Credential Issuer, the Wallet is requested to obtain one
-    /// or more Credentials from.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub credential_issuer: String,
-
     /// Credentials offered to the Wallet.
     /// A list of names identifying entries in the
     /// `credential_configurations_supported` `HashMap` in the Credential
@@ -227,10 +222,6 @@ impl CredentialOffer {
 /// to the Offer. The URI has the form `credential_issuer/credential_offer/id`.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CredentialOfferRequest {
-    /// The URL of the Credential Issuer the Wallet can use obtain the
-    /// Credential Offer.
-    pub credential_issuer: String,
-
     /// The unique identifier for the the previously generated Credential Offer.
     pub id: String,
 }
@@ -250,7 +241,6 @@ mod tests {
     #[test]
     fn credential_offer() {
         let offer = CredentialOffer {
-            credential_issuer: "https://example.com".into(),
             credential_configuration_ids: vec!["UniversityDegree_JWT".into()],
             grants: None,
         };

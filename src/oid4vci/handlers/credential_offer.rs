@@ -31,7 +31,7 @@ use crate::oid4vci::{Error, Result};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn credential_offer(
-    provider: impl Provider, request: CredentialOfferRequest,
+    credential_issuer: &str, provider: impl Provider, request: CredentialOfferRequest,
 ) -> Result<CredentialOfferResponse> {
     process(&provider, request).await
 }
@@ -40,9 +40,9 @@ impl Request for CredentialOfferRequest {
     type Response = CredentialOfferResponse;
 
     fn handle(
-        self, _credential_issuer: &str, provider: &impl Provider,
+        self, credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        credential_offer(provider.clone(), self)
+        credential_offer(credential_issuer, provider.clone(), self)
     }
 }
 
@@ -66,11 +66,6 @@ async fn process(
     let Stage::Pending(credential_offer) = state.stage.clone() else {
         return Err(Error::InvalidRequest("no credential offer found".into()));
     };
-
-    // verify client_id (perhaps should use 'verify' method?)
-    if credential_offer.credential_issuer != request.credential_issuer {
-        return Err(Error::InvalidRequest("credential_issuer mismatch".into()));
-    }
 
     Ok(CredentialOfferResponse { credential_offer })
 }

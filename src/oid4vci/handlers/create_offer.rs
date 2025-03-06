@@ -281,7 +281,6 @@ impl Context {
         };
 
         CredentialOffer {
-            credential_issuer: self.issuer.credential_issuer.clone(),
             credential_configuration_ids: request.credential_configuration_ids.clone(),
             grants,
         }

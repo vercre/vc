@@ -25,7 +25,7 @@ use crate::oid4vci::{Error, Result};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn nonce(
-    _credential_issuer: &str, provider: impl Provider, request: NonceRequest,
+    credential_issuer: &str, provider: impl Provider, request: NonceRequest,
 ) -> Result<NonceResponse> {
     process(&provider, request).await
 }
