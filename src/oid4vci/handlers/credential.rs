@@ -39,12 +39,14 @@ use crate::w3c_vc::proof::{self, Payload, Type, W3cFormat};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn credential(
-    credential_issuer: &str, provider: impl Provider, request: CredentialRequest,
+    credential_issuer: &str, provider: &impl Provider, request: CredentialRequest,
 ) -> Result<CredentialResponse> {
-    let Ok(state) = StateStore::get::<State>(&provider, &request.access_token).await else {
+    tracing::debug!("credential");
+
+    let Ok(state) = StateStore::get::<State>(provider, &request.access_token).await else {
         return Err(Error::AccessDenied("invalid access token".into()));
     };
-    let issuer = Metadata::issuer(&provider, credential_issuer)
+    let issuer = Metadata::issuer(provider, credential_issuer)
         .await
         .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
 
@@ -56,7 +58,7 @@ pub async fn credential(
     };
 
     // authorized credential
-    ctx.authorized = ctx.authorized_detail(&request)?;
+    ctx.authorized = request.authorized_detail(&ctx)?;
 
     // credential configuration
     let Some(config_id) = ctx.authorized.credential_configuration_id() else {
@@ -67,8 +69,17 @@ pub async fn credential(
     };
     ctx.configuration = config.clone();
 
-    ctx.verify(&provider, &request).await?;
-    ctx.process(&provider, request).await
+    request.verify(provider, &mut ctx).await?;
+
+    let dataset = ctx.dataset(provider, &request).await?;
+
+    // defer issuance as claims are pending (approval)
+    if dataset.pending {
+        return ctx.defer_response(provider, request).await;
+    }
+
+    // issue VC
+    ctx.issue_response(provider, dataset).await
 }
 
 impl Request for CredentialRequest {
@@ -77,7 +88,7 @@ impl Request for CredentialRequest {
     fn handle(
         self, credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        credential(credential_issuer, provider.clone(), self)
+        credential(credential_issuer, provider, self)
     }
 }
 
@@ -90,7 +101,7 @@ struct Context {
     holder_did: String,
 }
 
-impl Context {
+impl CredentialRequest {
     // TODO: check this list for compliance
     // To validate a key proof, ensure that:
     //   - the header parameter does not contain a private key
@@ -99,18 +110,16 @@ impl Context {
     //     acceptable window (see Section 11.5).
 
     // Verify the credential request
-    async fn verify(
-        &mut self, provider: &impl Provider, request: &CredentialRequest,
-    ) -> Result<()> {
+    async fn verify(&self, provider: &impl Provider, ctx: &mut Context) -> Result<()> {
         tracing::debug!("credential::verify");
 
-        if self.state.is_expired() {
+        if ctx.state.is_expired() {
             return Err(Error::InvalidCredentialRequest("token state expired".into()));
         }
 
         // TODO: refactor into separate function.
-        if let Some(supported_types) = &self.configuration.proof_types_supported {
-            let Some(proof) = &request.proof else {
+        if let Some(supported_types) = &ctx.configuration.proof_types_supported {
+            let Some(proof) = &self.proof else {
                 return Err(Error::InvalidProof("proof not set".to_string()));
             };
 
@@ -166,30 +175,42 @@ impl Context {
                 };
 
                 // TODO: support multiple DID bindings
-                self.holder_did = did.into();
+                ctx.holder_did = did.into();
             }
         }
 
         Ok(())
     }
 
-    // Process the credential request.
-    async fn process(
-        &self, provider: &impl Provider, request: CredentialRequest,
-    ) -> Result<CredentialResponse> {
-        tracing::debug!("credential::process");
+    // Get `Authorized` for `credential_identifier` and
+    // `credential_configuration_id`.
+    fn authorized_detail(&self, ctx: &Context) -> Result<AuthorizedDetail> {
+        let Stage::Validated(token) = &ctx.state.stage else {
+            return Err(Error::AccessDenied("invalid access token state".into()));
+        };
 
-        let dataset = self.dataset(provider, &request).await?;
-
-        // defer issuance as claims are pending (approval)
-        if dataset.pending {
-            return self.defer_response(provider, request).await;
+        match &self.credential {
+            RequestBy::Identifier(ident) => {
+                for ad in &token.details {
+                    if ad.credential_identifiers.contains(ident) {
+                        return Ok(ad.clone());
+                    }
+                }
+            }
+            RequestBy::ConfigurationId(id) => {
+                for ad in &token.details {
+                    if Some(id.as_str()) == ad.credential_configuration_id() {
+                        return Ok(ad.clone());
+                    }
+                }
+            }
         }
 
-        // issue VC
-        self.issue_response(provider, dataset).await
+        Err(Error::InvalidCredentialRequest("unauthorized credential requested".into()))
     }
+}
 
+impl Context {
     // Issue the requested credential.
     async fn issue_response(
         &self, provider: &impl Provider, dataset: Dataset,
@@ -344,33 +365,6 @@ impl Context {
         })
     }
 
-    // Get `Authorized` for `credential_identifier` and
-    // `credential_configuration_id`.
-    fn authorized_detail(&self, request: &CredentialRequest) -> Result<AuthorizedDetail> {
-        let Stage::Validated(token) = &self.state.stage else {
-            return Err(Error::AccessDenied("invalid access token state".into()));
-        };
-
-        match &request.credential {
-            RequestBy::Identifier(ident) => {
-                for ad in &token.details {
-                    if ad.credential_identifiers.contains(ident) {
-                        return Ok(ad.clone());
-                    }
-                }
-            }
-            RequestBy::ConfigurationId(id) => {
-                for ad in &token.details {
-                    if Some(id.as_str()) == ad.credential_configuration_id() {
-                        return Ok(ad.clone());
-                    }
-                }
-            }
-        }
-
-        Err(Error::InvalidCredentialRequest("unauthorized credential requested".into()))
-    }
-
     // Get credential dataset for the request
     async fn dataset(
         &self, provider: &impl Provider, request: &CredentialRequest,
@@ -386,15 +380,14 @@ impl Context {
         let Some(subject_id) = &self.state.subject_id else {
             return Err(Error::AccessDenied("invalid subject id".into()));
         };
-        let dataset = Subject::dataset(provider, subject_id, identifier)
+        let mut dataset = Subject::dataset(provider, subject_id, identifier)
             .await
             .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
 
-        // FIXME: narrow claim set
         // only include previously requested/authorized claims
-        // if let Some(claims) = &self.authorized.authorization_detail.claims {
-        //     //dataset.claims.retain(|k, _| claims.iter().any(|c|c.path));
-        // }
+        if let Some(claims) = &self.authorized.authorization_detail.claims {
+            dataset.claims.retain(|k, _| claims.iter().any(|c| c.path.contains(k)));
+        }
 
         Ok(dataset)
     }

@@ -121,16 +121,13 @@ mod tests {
         let dataset = serde_json::from_value(dataset).unwrap();
         let provider = ProviderImpl::new();
         let mdl = to_credential(dataset, provider).await.unwrap();
-        // println!("{}", mdl);
 
         // check credential deserializes back into original mdoc/mso structures
         let mdoc_bytes = Base64::decode_vec(&mdl).expect("should decode");
         let mdoc: IssuerSigned = cbor::from_slice(&mdoc_bytes).expect("should deserialize");
-        println!("{:?}", mdoc);
 
         let mso_bytes = mdoc.issuer_auth.0.payload.expect("should have payload");
         let mso: MobileSecurityObject = cbor::from_slice(&mso_bytes).expect("should deserialize");
-        println!("{:?}", mso);
 
         assert_eq!(mso.digest_algorithm, DigestAlgorithm::Sha256);
         assert_eq!(mso.device_key_info.device_key.kty, KeyType::Okp);

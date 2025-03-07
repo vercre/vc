@@ -14,6 +14,14 @@ impl AuthorizationRequest {
     }
 }
 
+impl AuthorizationDetail {
+    /// Create a new `AuthorizationDetailBuilder`.
+    #[must_use]
+    pub fn builder() -> AuthorizationDetailBuilder<NoCredential> {
+        AuthorizationDetailBuilder::new()
+    }
+}
+
 /// Build an [`AuthorizationRequest`].
 #[derive(Default, Debug)]
 pub struct AuthorizationRequestBuilder {
@@ -170,23 +178,30 @@ impl AuthorizationRequestBuilder {
     }
 }
 
-impl AuthorizationDetail {
-    /// Create a new `AuthorizationDetailBuilder`.
-    #[must_use]
-    pub fn builder() -> AuthorizationDetailBuilder {
-        AuthorizationDetailBuilder::new()
+/// Build an [`AuthorizationDetail`].
+#[derive(Debug)]
+pub struct AuthorizationDetailBuilder<C> {
+    credential: C,
+    claims: Option<Vec<ClaimsDescription>>,
+}
+
+impl Default for AuthorizationDetailBuilder<NoCredential> {
+    fn default() -> Self {
+        Self {
+            credential: NoCredential,
+            claims: None,
+        }
     }
 }
 
-/// Build an [`AuthorizationDetail`].
-#[derive(Default, Debug)]
-pub struct AuthorizationDetailBuilder {
-    credential_configuration_id: String,
-    claims: Option<Vec<ClaimsDescription>>,
-    format: Format,
-}
+/// No credential configuration id is set.
+#[doc(hidden)]
+pub struct NoCredential;
+/// A credential identifier id is set.
+#[doc(hidden)]
+pub struct Credential(AuthorizationCredential);
 
-impl AuthorizationDetailBuilder {
+impl AuthorizationDetailBuilder<NoCredential> {
     /// Create a new `AuthorizationDetailBuilder` with sensible defaults.
     #[must_use]
     pub fn new() -> Self {
@@ -195,35 +210,49 @@ impl AuthorizationDetailBuilder {
 
     /// Specify the credential configuration ID.
     #[must_use]
-    pub fn configuration_id(mut self, configuration_id: impl Into<String>) -> Self {
-        self.credential_configuration_id = configuration_id.into();
-        self
-    }
-
-    /// Specify the claims to include in the credential.
-    #[must_use]
-    pub fn claims(mut self, claims: Vec<ClaimsDescription>) -> Self {
-        self.claims = Some(claims);
-        self
+    pub fn configuration_id(
+        self, configuration_id: impl Into<String>,
+    ) -> AuthorizationDetailBuilder<Credential> {
+        AuthorizationDetailBuilder {
+            credential: Credential(AuthorizationCredential::ConfigurationId {
+                credential_configuration_id: configuration_id.into(),
+            }),
+            claims: self.claims,
+        }
     }
 
     /// Specify the format of the credential.
     #[must_use]
-    pub fn format(mut self, format: Format) -> Self {
-        self.format = format;
+    pub fn format(self, format: Format) -> AuthorizationDetailBuilder<Credential> {
+        AuthorizationDetailBuilder {
+            credential: Credential(AuthorizationCredential::Format(format)),
+            claims: self.claims,
+        }
+    }
+}
+
+impl<C> AuthorizationDetailBuilder<C> {
+    /// Specify the claims to include in the credential.
+    #[must_use]
+    pub fn with_claim(mut self, path: &[&str]) -> Self {
+        let cd = ClaimsDescription {
+            path: path.iter().map(ToString::to_string).collect::<Vec<String>>(),
+            ..ClaimsDescription::default()
+        };
+        self.claims.get_or_insert_with(Vec::new).push(cd);
         self
     }
+}
 
+impl AuthorizationDetailBuilder<Credential> {
     /// Build the `AuthorizationDetail`.
     #[must_use]
     pub fn build(self) -> AuthorizationDetail {
         AuthorizationDetail {
             type_: AuthorizationDetailType::OpenIdCredential,
-            credential: AuthorizationCredential::ConfigurationId {
-                credential_configuration_id: self.credential_configuration_id,
-            },
-            locations: None,
+            credential: self.credential.0,
             claims: self.claims,
+            locations: None,
         }
     }
 }

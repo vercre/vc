@@ -2904,9 +2904,13 @@ dependencies = [
  "credibil-infosec",
  "credibil-vc",
  "ed25519-dalek",
+ "multibase",
+ "rand 0.8.5",
  "serde",
  "serde_json",
+ "sha2 0.10.8",
  "uuid",
+ "x25519-dalek",
 ]
 
 [[package]]

@@ -1,6 +1,6 @@
 ---
 source: tests/pre_authorized.rs
-assertion_line: 103
+assertion_line: 432
 expression: vc
 ---
 "@context":
@@ -18,10 +18,6 @@ description:
   "@language": en-NZ
 issuer: "http://credibil.io"
 credentialSubject:
-  address:
-    locality: Wellington
-    street_address: 123 Fake St
-  email: normal.user@example.com
   family_name: Person
   given_name: Normal
   id: "[id]"

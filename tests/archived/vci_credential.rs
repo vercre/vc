@@ -249,7 +249,6 @@ async fn iso_mdl() {
         .await
         .expect("jws should build");
     let jwt = jws.encode().expect("should encode");
-    println!("jwt: {}", jwt);
 
     let value = json!({
         "credential_issuer": CREDENTIAL_ISSUER,

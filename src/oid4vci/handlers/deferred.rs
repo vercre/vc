@@ -66,7 +66,7 @@ async fn process(
     let mut cred_req = deferred_state.credential_request;
     cred_req.access_token.clone_from(&request.access_token);
 
-    let response = credential(credential_issuer, provider.clone(), cred_req).await?;
+    let response = credential(credential_issuer, provider, cred_req).await?;
 
     // is issuance still pending?
     if let ResponseType::TransactionId { .. } = response.response {

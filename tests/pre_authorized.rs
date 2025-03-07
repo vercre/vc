@@ -3,6 +3,7 @@
 mod utils;
 
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 use credibil_infosec::jose::JwsBuilder;
 use credibil_vc::OneMany;
@@ -13,9 +14,11 @@ use credibil_vc::oid4vci::types::{
     NonceRequest, ProofClaims, ResponseType, TokenGrantType, TokenRequest,
 };
 use insta::assert_yaml_snapshot as assert_snapshot;
-use test_issuer::{
-    CLIENT_ID as BOB_CLIENT, CREDENTIAL_ISSUER as ALICE_ISSUER, NORMAL_USER, ProviderImpl,
-};
+use test_holder::CLIENT_ID as BOB_CLIENT;
+use test_holder::keystore::{self, Keyring};
+use test_issuer::{CREDENTIAL_ISSUER as ALICE_ISSUER, NORMAL_USER, ProviderImpl};
+
+static BOB_KEYRING: LazyLock<Keyring> = LazyLock::new(|| keystore::new_keyring());
 
 // Should return a credential when using the pre-authorized code flow and the
 // credential offer to the Wallet is made by value.
@@ -65,7 +68,7 @@ async fn offer_val() {
                 .credential_issuer(ALICE_ISSUER)
                 .nonce(nonce.c_nonce),
         )
-        .add_signer(&test_holder::ProviderImpl)
+        .add_signer(&*BOB_KEYRING)
         .build()
         .await
         .expect("builds JWS");
@@ -99,7 +102,8 @@ async fn offer_val() {
 
     assert_snapshot!("offer_val", vc, {
         ".validFrom" => "[validFrom]",
-        ".credentialSubject" => insta::sorted_redaction()
+        ".credentialSubject" => insta::sorted_redaction(),
+        ".credentialSubject.id" => "[id]"
     });
 }
 
@@ -197,7 +201,7 @@ async fn two_datasets() {
                     .credential_issuer(ALICE_ISSUER)
                     .nonce(nonce.c_nonce),
             )
-            .add_signer(&test_holder::ProviderImpl)
+            .add_signer(&*BOB_KEYRING)
             .build()
             .await
             .expect("builds JWS");
@@ -239,10 +243,10 @@ async fn two_datasets() {
     }
 }
 
-// Should return a single credential dataset when 2 are available and filtered
-// by the token request.
+// Should return a single credential when two are offered and only one is
+// requested in the token request.
 #[tokio::test]
-async fn fewer_credentials() {
+async fn reduce_credentials() {
     let provider = ProviderImpl::new();
 
     // --------------------------------------------------
@@ -300,7 +304,7 @@ async fn fewer_credentials() {
                 .credential_issuer(ALICE_ISSUER)
                 .nonce(nonce.c_nonce),
         )
-        .add_signer(&test_holder::ProviderImpl)
+        .add_signer(&*BOB_KEYRING)
         .build()
         .await
         .expect("builds JWS");
@@ -337,4 +341,97 @@ async fn fewer_credentials() {
     };
     assert_eq!(subject.claims["given_name"], "Normal");
     assert_eq!(subject.claims["family_name"], "Person");
+}
+
+// Should return fewer claims when requested in token request.
+#[tokio::test]
+async fn reduce_claims() {
+    let provider = ProviderImpl::new();
+
+    // --------------------------------------------------
+    // Alice creates a credential offer for Bob
+    // --------------------------------------------------
+    let request = CreateOfferRequest::builder()
+        .subject_id(NORMAL_USER)
+        .with_credential("EmployeeID_JWT")
+        .build();
+    let response =
+        endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should create offer");
+
+    // --------------------------------------------------
+    // Bob receives the offer and requests a token
+    // --------------------------------------------------
+    let offer = response.offer_type.as_object().expect("should have offer").clone();
+    let grants = offer.grants.expect("should have grant");
+    let pre_auth_grant = grants.pre_authorized_code.expect("should have pre-authorized code grant");
+
+    let request = TokenRequest::builder()
+        .client_id(BOB_CLIENT)
+        .grant_type(TokenGrantType::PreAuthorizedCode {
+            pre_authorized_code: pre_auth_grant.pre_authorized_code,
+            tx_code: response.tx_code.clone(),
+        })
+        .with_authorization_detail(
+            AuthorizationDetail::builder()
+                .configuration_id("EmployeeID_JWT")
+                .with_claim(&vec!["credentialSubject", "given_name"])
+                .with_claim(&vec!["credentialSubject", "family_name"])
+                .build(),
+        )
+        .build();
+    let token =
+        endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should return token");
+
+    // --------------------------------------------------
+    // Bob receives the token and prepares a proof for a credential request
+    // --------------------------------------------------
+    let nonce =
+        endpoint::handle(ALICE_ISSUER, NonceRequest, &provider).await.expect("should return nonce");
+
+    // proof of possession of key material
+    let jws = JwsBuilder::new()
+        .jwt_type(Type::Openid4VciProofJwt)
+        .payload(
+            ProofClaims::new()
+                .client_id(BOB_CLIENT)
+                .credential_issuer(ALICE_ISSUER)
+                .nonce(nonce.c_nonce),
+        )
+        .add_signer(&*BOB_KEYRING)
+        .build()
+        .await
+        .expect("builds JWS");
+    let jwt = jws.encode().expect("encodes JWS");
+
+    // --------------------------------------------------
+    // Bob requests a credential
+    // --------------------------------------------------
+    let details = &token.authorization_details.expect("should have authorization details");
+    let request = CredentialRequest::builder()
+        .credential_identifier(&details[0].credential_identifiers[0])
+        .with_proof(jwt)
+        .access_token(token.access_token)
+        .build();
+    let response =
+        endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should return credential");
+
+    // --------------------------------------------------
+    // Bob extracts and verifies the received credential
+    // --------------------------------------------------
+    let ResponseType::Credentials { credentials, .. } = &response.response else {
+        panic!("expected single credential");
+    };
+    let Credential { credential } = credentials.first().expect("should have credential");
+
+    // verify the credential proof
+    let Ok(Payload::Vc { vc, .. }) = proof::verify(Verify::Vc(credential), provider.clone()).await
+    else {
+        panic!("should be valid VC");
+    };
+
+    assert_snapshot!("reduce_claims", vc, {
+        ".validFrom" => "[validFrom]",
+        ".credentialSubject" => insta::sorted_redaction(),
+        ".credentialSubject.id" => "[id]"
+    });
 }

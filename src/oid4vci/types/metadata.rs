@@ -180,6 +180,19 @@ impl Issuer {
     /// # Errors
     ///
     /// TODO: add error handling
+    pub fn credential_configuration(
+        &self, credential_configuration_id: &str,
+    ) -> Result<&CredentialConfiguration> {
+        self.credential_configurations_supported
+            .get(credential_configuration_id)
+            .ok_or_else(|| anyhow!("Credential Configuration not found"))
+    }
+
+    /// Returns the `credential_configuration_id` for a given format.
+    ///
+    /// # Errors
+    ///
+    /// TODO: add error handling
     pub fn credential_configuration_id(&self, fmt: &Format) -> Result<&String> {
         self.credential_configurations_supported
             .iter()

@@ -55,7 +55,6 @@
                         "credentialSubject",
                         "email"
                     ],
-                    "mandatory": true,
                     "display": [
                         {
                             "name": "Email",
