@@ -25,10 +25,11 @@
 
 use tracing::instrument;
 
+use crate::oid4vci::Result;
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider};
 use crate::oid4vci::types::{MetadataRequest, MetadataResponse};
-use crate::oid4vci::{Error, Result};
+use crate::server;
 
 /// Metadata request handler.
 ///
@@ -59,6 +60,6 @@ async fn process(provider: &impl Provider, request: MetadataRequest) -> Result<M
     // TODO: add languages to request
     let credential_issuer = Metadata::issuer(provider, &request.credential_issuer)
         .await
-        .map_err(|e| Error::ServerError(format!("issue getting metadata: {e}")))?;
+        .map_err(|e| server!("issue getting metadata: {e}"))?;
     Ok(MetadataResponse { credential_issuer })
 }

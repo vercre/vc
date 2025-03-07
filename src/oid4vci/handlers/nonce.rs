@@ -11,11 +11,12 @@ use chrono::Utc;
 use tracing::instrument;
 
 use crate::core::generate;
+use crate::oid4vci::Result;
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Provider, StateStore};
 use crate::oid4vci::state::Expire;
 use crate::oid4vci::types::{NonceRequest, NonceResponse};
-use crate::oid4vci::{Error, Result};
+use crate::server;
 
 /// Notification request handler.
 ///
@@ -50,7 +51,7 @@ async fn process(provider: &impl Provider, _: NonceRequest) -> Result<NonceRespo
 
     StateStore::put(provider, &c_nonce, &c_nonce, expire_at)
         .await
-        .map_err(|e| Error::ServerError(format!("failed to purge state: {e}")))?;
+        .map_err(|e| server!("failed to purge state: {e}"))?;
 
     Ok(NonceResponse { c_nonce })
 }

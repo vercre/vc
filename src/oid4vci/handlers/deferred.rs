@@ -16,6 +16,7 @@ use crate::oid4vci::provider::{Provider, StateStore};
 use crate::oid4vci::state::{Stage, State};
 use crate::oid4vci::types::{DeferredCredentialRequest, DeferredCredentialResponse, ResponseType};
 use crate::oid4vci::{Error, Result};
+use crate::{invalid, server};
 
 /// Deferred credential request handler.
 ///
@@ -50,17 +51,17 @@ async fn process(
         return Err(Error::InvalidTransactionId("deferred state not found".into()));
     };
     if state.is_expired() {
-        return Err(Error::InvalidRequest("state expired".into()));
+        return Err(invalid!("state expired"));
     }
 
     let Stage::Deferred(deferred_state) = state.stage else {
-        return Err(Error::ServerError("Deferred state not found.".into()));
+        return Err(server!("Deferred state not found."));
     };
 
     // remove deferred state item
     StateStore::purge(provider, &request.transaction_id)
         .await
-        .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
+        .map_err(|e| server!("issue purging state: {e}"))?;
 
     // make credential request
     let mut cred_req = deferred_state.credential_request;

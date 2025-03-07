@@ -16,11 +16,12 @@
 
 use tracing::instrument;
 
+use crate::oid4vci::Result;
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Provider, StateStore};
 use crate::oid4vci::state::{Stage, State};
 use crate::oid4vci::types::{CredentialOfferRequest, CredentialOfferResponse};
-use crate::oid4vci::{Error, Result};
+use crate::{invalid, server};
 
 /// Endpoint for the Wallet to request the Issuer's Credential Offer when
 /// engaged in a cross-device flow.
@@ -54,17 +55,17 @@ async fn process(
     // retrieve and then purge Credential Offer from state
     let state = StateStore::get::<State>(provider, &request.id)
         .await
-        .map_err(|e| Error::ServerError(format!("issue fetching state: {e}")))?;
+        .map_err(|e| server!("issue fetching state: {e}"))?;
     StateStore::purge(provider, &request.id)
         .await
-        .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
+        .map_err(|e| server!("issue purging state: {e}"))?;
 
     if state.is_expired() {
-        return Err(Error::InvalidRequest("state expired".into()));
+        return Err(invalid!("state expired"));
     }
 
     let Stage::Pending(credential_offer) = state.stage.clone() else {
-        return Err(Error::InvalidRequest("no credential offer found".into()));
+        return Err(invalid!("no credential offer found"));
     };
 
     Ok(CredentialOfferResponse { credential_offer })

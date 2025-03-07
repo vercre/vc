@@ -1,5 +1,5 @@
 ---
-source: tests/pre_authorized.rs
+source: tests/pre_authorized_flow.rs
 assertion_line: 432
 expression: vc
 ---

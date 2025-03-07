@@ -16,6 +16,7 @@ use crate::oid4vci::provider::{Metadata, Provider, StateStore};
 use crate::oid4vci::state::{PushedAuthorization, Stage, State};
 use crate::oid4vci::types::{PushedAuthorizationRequest, PushedAuthorizationResponse};
 use crate::oid4vci::{Error, Result};
+use crate::server;
 
 /// Endpoint for the Wallet to push an Authorization Request when using Pushed
 /// Authorization Requests.
@@ -87,7 +88,7 @@ async fn process(
     };
     StateStore::put(provider, &request_uri, &state, state.expires_at)
         .await
-        .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
+        .map_err(|e| server!("issue saving state: {e}"))?;
 
     Ok(PushedAuthorizationResponse {
         request_uri,

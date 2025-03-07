@@ -1,4 +1,4 @@
-//! Pre-Authorized Code Flow
+//! Pre-Authorized Code Flow Tests
 
 mod utils;
 

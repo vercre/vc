@@ -143,8 +143,8 @@ impl Wallet {
             .add_signer(&test_holder::ProviderImpl)
             .build()
             .await
-            .map_err(|e| Error::ServerError(format!("{e}")))?;
-        let jwt = jws.encode().map_err(|e| Error::ServerError(format!("{e}")))?;
+            .map_err(|e| server!("{e}"))?;
+        let jwt = jws.encode().map_err(|e| server!("{e}"))?;
 
         // FIXME: two paths: credential_identifier or format/type
         let Some(auth_dets) = &token_resp.authorization_details else {

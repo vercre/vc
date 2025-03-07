@@ -1,4 +1,4 @@
-//! # `OpenID` Errors
+//! # `OpenID4VCI` Errors
 //!
 //! This module defines errors for `OpenID` for Verifiable Credential Issuance
 //! and Verifiable Presentations.
@@ -149,16 +149,11 @@ pub enum Error {
 /// Error response for `OpenID` for Verifiable Credentials.
 #[allow(clippy::module_name_repetitions)]
 #[derive(Deserialize, Serialize)]
-pub struct OidError {
-    /// Error code.
-    pub error: String,
-
-    /// Error description.
-    pub error_description: String,
-
-    /// Optional client-state parameter.
+struct OidError {
+    error: String,
+    error_description: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub state: Option<String>,
+    state: Option<String>,
 }
 
 impl Serialize for Error {
@@ -188,6 +183,33 @@ impl Error {
     }
 }
 
+/// Construct an `Error::ServerError` error from a string or existing error
+/// value.
+#[macro_export]
+macro_rules! invalid {
+    ($fmt:expr, $($arg:tt)*) => {
+        $crate::oid4vci::Error::InvalidRequest(format!($fmt, $($arg)*))
+    };
+     ($err:expr $(,)?) => {
+        $crate::oid4vci::Error::InvalidRequest(format!($err))
+    };
+}
+
+/// Construct an `Error::ServerError` error from a string or existing error
+/// value.
+#[macro_export]
+macro_rules! server {
+    ($fmt:expr, $($arg:tt)*) => {
+        $crate::oid4vci::Error::ServerError(format!($fmt, $($arg)*))
+    };
+    // ($msg:literal $(,)?) => {
+    //     $crate::oid4vci::Error::ServerError($msg.into())
+    // };
+     ($err:expr $(,)?) => {
+        $crate::oid4vci::Error::ServerError(format!($err))
+    };
+}
+
 #[cfg(test)]
 mod test {
     use serde_json::{Value, json};
@@ -197,7 +219,7 @@ mod test {
     // Test that error details are retuned as json.
     #[test]
     fn err_json() {
-        let err = Error::InvalidRequest("bad request".into());
+        let err = invalid!("bad request");
         let ser: Value = serde_json::from_str(&err.to_string()).unwrap();
         assert_eq!(ser, json!({"error":"invalid_request", "error_description": "bad request"}));
     }
@@ -205,7 +227,7 @@ mod test {
     // Test that the error details are returned as an http query string.
     #[test]
     fn err_querystring() {
-        let err = Error::InvalidRequest("Invalid request description".into());
+        let err = invalid!("Invalid request description");
         let ser = urlencode::to_string(&err).unwrap();
         assert_eq!(ser, "error=invalid_request&error_description=Invalid%20request%20description");
     }
@@ -213,7 +235,7 @@ mod test {
     // Test that the error details are returned as an http query string.
     #[test]
     fn err_serialize() {
-        let err = Error::InvalidRequest("bad request".into());
+        let err = invalid!("bad request");
         let ser = serde_json::to_value(&err).unwrap();
         assert_eq!(ser, json!({"error":"invalid_request", "error_description": "bad request"}));
     }

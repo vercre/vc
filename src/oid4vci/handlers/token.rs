@@ -27,6 +27,7 @@ use crate::oid4vci::types::{
     TokenRequest, TokenResponse, TokenType,
 };
 use crate::oid4vci::{Error, Result};
+use crate::{invalid, server};
 
 /// Token request handler.
 ///
@@ -55,7 +56,7 @@ pub async fn token(
     // authorization code is one-time use
     StateStore::purge(provider, auth_code)
         .await
-        .map_err(|e| Error::ServerError(format!("issue purging authorizaiton state: {e}")))?;
+        .map_err(|e| server!("issue purging authorizaiton state: {e}"))?;
 
     let ctx = Context {
         credential_issuer,
@@ -68,16 +69,16 @@ pub async fn token(
     let authorized_details = match &request.grant_type {
         TokenGrantType::PreAuthorizedCode { .. } => {
             let Stage::Offered(offer) = &state.stage else {
-                return Err(Error::ServerError("pre-authorized state not set".into()));
+                return Err(server!("pre-authorized state not set"));
             };
             let Some(authorization_details) = &offer.details else {
-                return Err(Error::ServerError("no authorized items".into()));
+                return Err(server!("no authorized items"));
             };
             authorization_details
         }
         TokenGrantType::AuthorizationCode { .. } => {
             let Stage::Authorized(authorization) = &state.stage else {
-                return Err(Error::ServerError("authorization state not set".into()));
+                return Err(server!("authorization state not set"));
             };
             &authorization.details
         }
@@ -95,7 +96,7 @@ pub async fn token(
     });
     StateStore::put(provider, &access_token, &state, state.expires_at)
         .await
-        .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
+        .map_err(|e| server!("issue saving state: {e}"))?;
 
     // return response
     Ok(TokenResponse {
@@ -128,22 +129,22 @@ impl TokenRequest {
         tracing::debug!("token::verify");
 
         if ctx.state.is_expired() {
-            return Err(Error::InvalidRequest("authorization state expired".into()));
+            return Err(invalid!("authorization state expired"));
         }
 
         // TODO: support optional authorization issuers
         let Ok(server) = Metadata::server(provider, ctx.credential_issuer, None).await else {
-            return Err(Error::InvalidRequest("unknown authorization server".into()));
+            return Err(invalid!("unknown authorization server"));
         };
         let Some(grant_types_supported) = &server.oauth.grant_types_supported else {
-            return Err(Error::ServerError("authorization server grant types not set".into()));
+            return Err(server!("authorization server grant types not set"));
         };
 
         // grant_type
         match &self.grant_type {
             TokenGrantType::PreAuthorizedCode { tx_code, .. } => {
                 let Stage::Offered(auth_state) = &ctx.state.stage else {
-                    return Err(Error::ServerError("pre-authorized state not set".into()));
+                    return Err(server!("pre-authorized state not set"));
                 };
                 // grant_type supported?
                 if !grant_types_supported.contains(&GrantType::PreAuthorizedCode) {
@@ -169,7 +170,7 @@ impl TokenRequest {
                 ..
             } => {
                 let Stage::Authorized(auth_state) = &ctx.state.stage else {
-                    return Err(Error::ServerError("authorization state not set".into()));
+                    return Err(server!("authorization state not set"));
                 };
 
                 // grant_type supported?
@@ -179,7 +180,7 @@ impl TokenRequest {
 
                 // client_id is the same as the one used to obtain the authorization code
                 if self.client_id.is_none() {
-                    return Err(Error::InvalidRequest("`client_id` is missing".into()));
+                    return Err(invalid!("`client_id` is missing"));
                 }
                 if self.client_id.as_ref() != Some(&auth_state.client_id) {
                     return Err(Error::InvalidClient(
@@ -215,13 +216,13 @@ impl TokenRequest {
                 if let Some(server_scopes) = &server.oauth.scopes_supported {
                     let scopes: Vec<&str> = client_scope.split_whitespace().collect();
                     if !scopes.iter().all(|s| server_scopes.contains(&(*s).to_string())) {
-                        return Err(Error::InvalidRequest("client scope not supported".into()));
+                        return Err(invalid!("client scope not supported"));
                     }
                 } else {
-                    return Err(Error::InvalidRequest("server supported scopes not set".into()));
+                    return Err(invalid!("server supported scopes not set"));
                 }
             } else {
-                return Err(Error::InvalidRequest("client scope not set".into()));
+                return Err(invalid!("client scope not set"));
             }
         }
 
@@ -240,7 +241,7 @@ impl TokenRequest {
         };
 
         let Ok(issuer) = Metadata::issuer(provider, ctx.credential_issuer).await else {
-            return Err(Error::InvalidRequest("unknown authorization server".into()));
+            return Err(invalid!("unknown authorization server"));
         };
 
         // filter by requested authorization_details
@@ -288,9 +289,9 @@ fn verify_claims(issuer: &Issuer, detail: &AuthorizationDetail) -> Result<()> {
         AuthorizationCredential::ConfigurationId {
             credential_configuration_id,
         } => credential_configuration_id,
-        AuthorizationCredential::Format(fmt) => issuer
-            .credential_configuration_id(fmt)
-            .map_err(|e| Error::ServerError(format!("issuer issue: {e}")))?,
+        AuthorizationCredential::Format(fmt) => {
+            issuer.credential_configuration_id(fmt).map_err(|e| server!("issuer issue: {e}"))?
+        }
     };
     let config = issuer.credential_configuration(config_id).map_err(|e| {
         Error::InvalidAuthorizationDetails(format!("unknown credential configuration: {e}"))

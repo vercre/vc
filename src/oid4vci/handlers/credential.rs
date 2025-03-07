@@ -26,10 +26,10 @@ use crate::oid4vci::types::{
 };
 use crate::oid4vci::{Error, Result};
 use crate::status::issuer::Status;
-use crate::verify_key;
 use crate::w3c_vc::model::types::{LangString, LangValue};
 use crate::w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use crate::w3c_vc::proof::{self, Payload, Type, W3cFormat};
+use crate::{server, verify_key};
 
 /// Credential request handler.
 ///
@@ -48,7 +48,7 @@ pub async fn credential(
     };
     let issuer = Metadata::issuer(provider, credential_issuer)
         .await
-        .map_err(|e| Error::ServerError(format!("metadata issue: {e}")))?;
+        .map_err(|e| server!("metadata issue: {e}"))?;
 
     // create a request context with data accessed more than once
     let mut ctx = Context {
@@ -65,7 +65,7 @@ pub async fn credential(
         return Err(Error::InvalidCredentialRequest("no credential_configuration_id".to_string()));
     };
     let Some(config) = ctx.issuer.credential_configurations_supported.get(config_id) else {
-        return Err(Error::ServerError("credential configuration unable to be found".into()));
+        return Err(server!("credential configuration unable to be found"));
     };
     ctx.configuration = config.clone();
 
@@ -157,12 +157,12 @@ impl CredentialRequest {
                 let c_nonce = jwt.claims.nonce.as_ref().ok_or_else(|| {
                     Error::InvalidProof("proof JWT nonce claim is missing".to_string())
                 })?;
-                StateStore::get::<String>(provider, c_nonce).await.map_err(|e| {
-                    Error::ServerError(format!("proof nonce claim is invalid: {e}"))
-                })?;
-                StateStore::purge(provider, c_nonce).await.map_err(|e| {
-                    Error::ServerError(format!("could not purge nonce from state: {e}"))
-                })?;
+                StateStore::get::<String>(provider, c_nonce)
+                    .await
+                    .map_err(|e| server!("proof nonce claim is invalid: {e}"))?;
+                StateStore::purge(provider, c_nonce)
+                    .await
+                    .map_err(|e| server!("could not purge nonce from state: {e}"))?;
 
                 // Key ID
                 let Key::KeyId(kid) = &jwt.header.key else {
@@ -243,7 +243,7 @@ impl Context {
 
         StateStore::put(provider, &token_state.access_token, &state, state.expires_at)
             .await
-            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
+            .map_err(|e| server!("issue saving state: {e}"))?;
 
         // create issuance state for notification endpoint
         // TODO: save credential in state !!
@@ -252,7 +252,7 @@ impl Context {
 
         StateStore::put(provider, &notification_id, &state, state.expires_at)
             .await
-            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
+            .map_err(|e| server!("issue saving state: {e}"))?;
 
         Ok(CredentialResponse {
             response,
@@ -267,7 +267,7 @@ impl Context {
     ) -> Result<VerifiableCredential> {
         // credential type
         let Some(credential_type) = credential_definition.type_.get(1) else {
-            return Err(Error::ServerError("Credential type not set".into()));
+            return Err(server!("Credential type not set"));
         };
 
         // credential's status lookup information
@@ -276,7 +276,7 @@ impl Context {
         };
         let status = Status::status(provider, subject_id, "credential_identifier")
             .await
-            .map_err(|e| Error::ServerError(format!("issue populating credential status: {e}")))?;
+            .map_err(|e| server!("issue populating credential status: {e}"))?;
 
         let credential_issuer = &self.issuer.credential_issuer;
         let (name, description) =
@@ -296,7 +296,7 @@ impl Context {
             })
             .status(status)
             .build()
-            .map_err(|e| Error::ServerError(format!("issue building VC: {e}")))
+            .map_err(|e| server!("issue building VC: {e}"))
     }
 
     // Generate a `jwt_vc_json` format credential .
@@ -313,9 +313,7 @@ impl Context {
             &signer,
         )
         .await
-        .map_err(|e| {
-            Error::ServerError(format!("issue generating `jwt_vc_json` credential: {e}"))
-        })?;
+        .map_err(|e| server!("issue generating `jwt_vc_json` credential: {e}"))?;
 
         Ok(ResponseType::Credentials {
             credentials: vec![Credential {
@@ -327,9 +325,9 @@ impl Context {
 
     // Generate a `mso_mdoc` format credential.
     async fn mso_mdoc(&self, dataset: Dataset, signer: impl Signer) -> Result<ResponseType> {
-        let mdl = crate::iso_mdl::to_credential(dataset.claims, signer).await.map_err(|e| {
-            Error::ServerError(format!("issue generating `mso_mdoc` credential: {e}"))
-        })?;
+        let mdl = crate::iso_mdl::to_credential(dataset.claims, signer)
+            .await
+            .map_err(|e| server!("issue generating `mso_mdoc` credential: {e}"))?;
 
         Ok(ResponseType::Credentials {
             credentials: vec![Credential {
@@ -355,7 +353,7 @@ impl Context {
         };
         StateStore::put(provider, &txn_id, &state, state.expires_at)
             .await
-            .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
+            .map_err(|e| server!("issue saving state: {e}"))?;
 
         Ok(CredentialResponse {
             response: ResponseType::TransactionId {
@@ -382,7 +380,7 @@ impl Context {
         };
         let mut dataset = Subject::dataset(provider, subject_id, identifier)
             .await
-            .map_err(|e| Error::ServerError(format!("issue populating claims: {e}")))?;
+            .map_err(|e| server!("issue populating claims: {e}"))?;
 
         // only include previously requested/authorized claims
         if let Some(claims) = &self.authorized.authorization_detail.claims {

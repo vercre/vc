@@ -80,6 +80,7 @@ use crate::oid4vci::types::{
     AuthorizationResponse, AuthorizedDetail, Issuer, RequestObject,
 };
 use crate::oid4vci::{Error, Result};
+use crate::{invalid, server};
 
 /// Authorization request handler.
 ///
@@ -99,13 +100,13 @@ pub async fn authorize(
             is_par = true;
             let state: State = StateStore::get(&provider, &uri.request_uri)
                 .await
-                .map_err(|e| Error::ServerError(format!("state issue: {e}")))?;
+                .map_err(|e| server!("state issue: {e}"))?;
             let Stage::PushedAuthorization(par) = &state.stage else {
-                return Err(Error::InvalidRequest("invalid state".into()));
+                return Err(invalid!("invalid state"));
             };
 
             if par.expires_at < Utc::now() {
-                return Err(Error::InvalidRequest("`request_uri` has expired".into()));
+                return Err(invalid!("`request_uri` has expired"));
             }
             par.request.clone()
         }
@@ -113,7 +114,7 @@ pub async fn authorize(
 
     // get issuer metadata
     let Ok(issuer) = Metadata::issuer(&provider, &request.credential_issuer).await else {
-        return Err(Error::InvalidRequest("invalid `credential_issuer`".into()));
+        return Err(invalid!("invalid `credential_issuer`"));
     };
 
     let mut ctx = Context {
@@ -154,16 +155,14 @@ impl Context {
         };
         // TODO: support authorization issuers
         let Ok(server) = Metadata::server(provider, &request.credential_issuer, None).await else {
-            return Err(Error::InvalidRequest("invalid `credential_issuer`".into()));
+            return Err(invalid!("invalid `credential_issuer`"));
         };
 
         // If the server requires pushed authorization requests, the request
         // must be a PAR.
         if let Some(must_be_par) = server.oauth.require_pushed_authorization_requests {
             if must_be_par && !self.is_par {
-                return Err(Error::InvalidRequest(
-                    "pushed authorization request is required".into(),
-                ));
+                return Err(invalid!("pushed authorization request is required"));
             }
         }
 
@@ -179,13 +178,13 @@ impl Context {
             if let Some(server_scopes) = &server.oauth.scopes_supported {
                 let scopes: Vec<&str> = client_scope.split_whitespace().collect();
                 if !scopes.iter().all(|s| server_scopes.contains(&(*s).to_string())) {
-                    return Err(Error::InvalidRequest("client scope not supported".into()));
+                    return Err(invalid!("client scope not supported"));
                 }
             } else {
-                return Err(Error::InvalidRequest("server supported scopes not set".into()));
+                return Err(invalid!("server supported scopes not set"));
             }
         } else {
-            return Err(Error::InvalidRequest("client scope not set".into()));
+            return Err(invalid!("client scope not set"));
         }
 
         // 'authorization_code' grant_type allowed (client and server)?
@@ -197,36 +196,32 @@ impl Context {
         }
         let server_grant_types = server.oauth.grant_types_supported.unwrap_or_default();
         if !server_grant_types.contains(&GrantType::AuthorizationCode) {
-            return Err(Error::InvalidRequest(
-                "authorization_code grant not supported by server".into(),
-            ));
+            return Err(invalid!("authorization_code grant not supported by server"));
         }
 
         // is holder identified (authenticated)?
         if request.subject_id.is_empty() {
-            return Err(Error::InvalidRequest("missing holder subject".into()));
+            return Err(invalid!("missing holder subject"));
         }
 
         // does offer `subject_id`  match request `subject_id`?
         if let Some(issuer_state) = &request.issuer_state {
             let state: State = StateStore::get(provider, issuer_state)
                 .await
-                .map_err(|e| Error::ServerError(format!("issue getting state: {e}")))?;
+                .map_err(|e| server!("issue getting state: {e}"))?;
 
             if state.is_expired() {
-                return Err(Error::InvalidRequest("issuer state expired".into()));
+                return Err(invalid!("issuer state expired"));
             }
 
             if state.subject_id.as_ref() != Some(&request.subject_id) {
-                return Err(Error::InvalidRequest(
-                    "request `subject_id` does not match offer".into(),
-                ));
+                return Err(invalid!("request `subject_id` does not match offer"));
             }
         }
 
         // has a credential been requested?
         if request.authorization_details.is_none() && request.scope.is_none() {
-            return Err(Error::InvalidRequest("no credentials requested".into()));
+            return Err(invalid!("no credentials requested"));
         }
 
         // verify authorization_details
@@ -240,13 +235,13 @@ impl Context {
 
         // redirect_uri
         let Some(redirect_uri) = &request.redirect_uri else {
-            return Err(Error::InvalidRequest("no `redirect_uri` specified".into()));
+            return Err(invalid!("no `redirect_uri` specified"));
         };
         let Some(redirect_uris) = client.oauth.redirect_uris else {
-            return Err(Error::ServerError("`redirect_uri`s not set for client".into()));
+            return Err(server!("`redirect_uri`s not set for client"));
         };
         if !redirect_uris.contains(redirect_uri) {
-            return Err(Error::InvalidRequest("`redirect_uri` is not registered".into()));
+            return Err(invalid!("`redirect_uri` is not registered"));
         }
 
         // response_type
@@ -265,12 +260,10 @@ impl Context {
         // N.B. while optional in the spec, we require it
         let challenge_methods = server.oauth.code_challenge_methods_supported.unwrap_or_default();
         if !challenge_methods.contains(&request.code_challenge_method) {
-            return Err(Error::InvalidRequest("unsupported `code_challenge_method`".into()));
+            return Err(invalid!("unsupported `code_challenge_method`"));
         }
         if request.code_challenge.len() < 43 || request.code_challenge.len() > 128 {
-            return Err(Error::InvalidRequest(
-                "code_challenge must be between 43 and 128 characters".into(),
-            ));
+            return Err(invalid!("code_challenge must be between 43 and 128 characters"));
         }
 
         Ok(())
@@ -296,11 +289,10 @@ impl Context {
                     credential_configuration_id,
                 } => credential_configuration_id,
                 AuthorizationCredential::Format(fmt) => {
-                    let config_id = self.issuer.credential_configuration_id(fmt).map_err(|e| {
-                        Error::ServerError(format!(
-                            "issue getting `credential_configuration_id`: {e}"
-                        ))
-                    })?;
+                    let config_id = self
+                        .issuer
+                        .credential_configuration_id(fmt)
+                        .map_err(|e| server!("issue getting `credential_configuration_id`: {e}"))?;
 
                     detail.credential = AuthorizationCredential::ConfigurationId {
                         credential_configuration_id: config_id.clone(),
@@ -318,9 +310,7 @@ impl Context {
                         "invalid credential_configuration_id".into(),
                     ));
                 };
-                config
-                    .verify_claims(requested)
-                    .map_err(|e| Error::InvalidRequest(e.to_string()))?;
+                config.verify_claims(requested).map_err(|e| invalid!("{e}"))?;
             }
 
             self.auth_dets.insert(config_id.clone(), detail.clone());
@@ -416,13 +406,13 @@ impl Context {
         let code = generate::auth_code();
         StateStore::put(provider, &code, &state, state.expires_at)
             .await
-            .map_err(|e| Error::ServerError(format!("issue saving authorization state: {e}")))?;
+            .map_err(|e| server!("issue saving authorization state: {e}"))?;
 
         // remove offer state
         if let Some(issuer_state) = &request.issuer_state {
             StateStore::purge(provider, issuer_state)
                 .await
-                .map_err(|e| Error::ServerError(format!("issue purging offer state: {e}")))?;
+                .map_err(|e| server!("issue purging offer state: {e}"))?;
         }
 
         Ok(AuthorizationResponse {

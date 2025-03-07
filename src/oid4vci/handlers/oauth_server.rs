@@ -18,10 +18,11 @@
 
 use tracing::instrument;
 
+use crate::oid4vci::Result;
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider};
 use crate::oid4vci::types::{OAuthServerRequest, OAuthServerResponse};
-use crate::oid4vci::{Error, Result};
+use crate::server;
 
 /// OAuth server metadata request handler.
 ///
@@ -54,9 +55,7 @@ async fn process(
     let auth_server =
         Metadata::server(provider, &request.credential_issuer, request.issuer.as_deref())
             .await
-            .map_err(|e| {
-                Error::ServerError(format!("issue getting authorization server metadata: {e}"))
-            })?;
+            .map_err(|e| server!("issue getting authorization server metadata: {e}"))?;
     Ok(OAuthServerResponse {
         authorization_server: auth_server,
     })

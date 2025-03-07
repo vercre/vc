@@ -26,6 +26,7 @@ use crate::oid4vci::provider::{Provider, StateStore};
 use crate::oid4vci::state::{Stage, State};
 use crate::oid4vci::types::{NotificationRequest, NotificationResponse};
 use crate::oid4vci::{Error, Result};
+use crate::server;
 
 /// Notification request handler.
 ///
@@ -61,12 +62,12 @@ async fn process(
         return Err(Error::AccessDenied("invalid access token".into()));
     };
     let Stage::Issued(credential) = state.stage else {
-        return Err(Error::ServerError("issued state not found".into()));
+        return Err(server!("issued state not found"));
     };
 
     StateStore::purge(provider, &request.notification_id)
         .await
-        .map_err(|e| Error::ServerError(format!("failed to purge state: {e}")))?;
+        .map_err(|e| server!("failed to purge state: {e}"))?;
 
     tracing::info!(
         "notification: {:#?}, {:#?} for credential: {:#?}",

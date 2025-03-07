@@ -1,6 +1,6 @@
 ---
-source: tests/pre_authorized.rs
-assertion_line: 103
+source: tests/deferred_issuance.rs
+assertion_line: 101
 expression: vc
 ---
 "@context":

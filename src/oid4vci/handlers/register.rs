@@ -2,11 +2,12 @@
 
 use tracing::instrument;
 
+use crate::oid4vci::Result;
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Provider, StateStore};
 use crate::oid4vci::state::State;
 use crate::oid4vci::types::{RegistrationRequest, RegistrationResponse};
-use crate::oid4vci::{Error, Result};
+use crate::server;
 
 /// Registration request handler.
 ///
@@ -38,7 +39,7 @@ async fn verify(provider: &impl Provider, request: &RegistrationRequest) -> Resu
     // verify state is still accessible (has not expired)
     match StateStore::get::<State>(provider, &request.access_token).await {
         Ok(_) => Ok(()),
-        Err(e) => Err(Error::ServerError(format!("State not found: {e}"))),
+        Err(e) => Err(server!("State not found: {e}")),
     }
 }
 
@@ -48,7 +49,7 @@ async fn process(
     tracing::debug!("register::process");
 
     let Ok(client_meta) = provider.register(&request.client_metadata).await else {
-        return Err(Error::ServerError("Registration failed".into()));
+        return Err(server!("Registration failed"));
     };
 
     Ok(RegistrationResponse {
