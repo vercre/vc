@@ -12,7 +12,7 @@ axum.workspace = true
 axum-extra.workspace = true
 chrono.workspace = true
 credibil-vc = { workspace = true, features = ["issuer"] }
-oauth2 = { version = "4.4.2" }
+oauth2 = { version = "5.0.0" }
 serde.workspace = true
 serde_json.workspace = true
 test-issuer.workspace = true

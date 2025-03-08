@@ -3,7 +3,7 @@ use base64ct::{Base64UrlUnpadded, Encoding};
 use credibil_infosec::{Algorithm, Signer};
 use ed25519_dalek::{Signer as _, SigningKey};
 use multibase::Base;
-use rand::rngs::OsRng;
+use rand_core::OsRng;
 
 const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
 // const X25519_CODEC: [u8; 2] = [0xec, 0x01];

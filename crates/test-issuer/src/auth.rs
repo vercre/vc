@@ -8,7 +8,7 @@ use credibil_did::{DidOperator, DidResolver, DidWeb, KeyPurpose};
 use credibil_infosec::{Algorithm, Curve, KeyType, PublicKeyJwk, Signer};
 use credibil_vc::core::generate;
 use ed25519_dalek::{Signer as _, SigningKey};
-use rand::rngs::OsRng;
+use rand_core::OsRng;
 
 static DID_STORE: LazyLock<Arc<Mutex<HashMap<String, Document>>>> =
     LazyLock::new(|| Arc::new(Mutex::new(HashMap::new())));
