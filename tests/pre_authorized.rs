@@ -44,7 +44,7 @@ async fn offer_val() {
     let pre_auth_grant = grants.pre_authorized_code.expect("should have pre-authorized code grant");
 
     let request = TokenRequest::builder()
-        .client_id(BOB_CLIENT)
+        // .client_id(BOB_CLIENT)
         .grant_type(TokenGrantType::PreAuthorizedCode {
             pre_authorized_code: pre_auth_grant.pre_authorized_code,
             tx_code: response.tx_code.clone(),
@@ -169,7 +169,7 @@ async fn two_datasets() {
     let pre_auth_grant = grants.pre_authorized_code.expect("should have pre-authorized code grant");
 
     let request = TokenRequest::builder()
-        .client_id(BOB_CLIENT)
+        // .client_id(BOB_CLIENT)
         .grant_type(TokenGrantType::PreAuthorizedCode {
             pre_authorized_code: pre_auth_grant.pre_authorized_code,
             tx_code: response.tx_code.clone(),
@@ -272,7 +272,7 @@ async fn reduce_credentials() {
     let pre_auth_grant = grants.pre_authorized_code.expect("should have pre-authorized code grant");
 
     let request = TokenRequest::builder()
-        .client_id(BOB_CLIENT)
+        // .client_id(BOB_CLIENT)
         .grant_type(TokenGrantType::PreAuthorizedCode {
             pre_authorized_code: pre_auth_grant.pre_authorized_code,
             tx_code: response.tx_code.clone(),
@@ -366,7 +366,7 @@ async fn reduce_claims() {
     let pre_auth_grant = grants.pre_authorized_code.expect("should have pre-authorized code grant");
 
     let request = TokenRequest::builder()
-        .client_id(BOB_CLIENT)
+        // .client_id(BOB_CLIENT)
         .grant_type(TokenGrantType::PreAuthorizedCode {
             pre_authorized_code: pre_auth_grant.pre_authorized_code,
             tx_code: response.tx_code.clone(),

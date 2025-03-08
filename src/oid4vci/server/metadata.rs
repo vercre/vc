@@ -31,7 +31,7 @@ use crate::server;
 /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
 /// not available.
 #[instrument(level = "debug", skip(provider))]
-pub async fn oauth_server(
+pub async fn metadata(
     provider: impl Provider, request: OAuthServerRequest,
 ) -> Result<OAuthServerResponse> {
     process(&provider, request).await
@@ -43,7 +43,7 @@ impl Request for OAuthServerRequest {
     fn handle(
         self, _credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        oauth_server(provider.clone(), self)
+        metadata(provider.clone(), self)
     }
 }
 

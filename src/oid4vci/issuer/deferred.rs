@@ -11,7 +11,7 @@
 use tracing::instrument;
 
 use crate::oid4vci::endpoint::Request;
-use crate::oid4vci::handlers::credential::credential;
+use crate::oid4vci::issuer::credential::credential;
 use crate::oid4vci::provider::{Provider, StateStore};
 use crate::oid4vci::state::{Stage, State};
 use crate::oid4vci::types::{DeferredCredentialRequest, DeferredCredentialResponse, ResponseType};

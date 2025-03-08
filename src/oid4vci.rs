@@ -90,11 +90,13 @@
 
 pub mod client;
 pub mod endpoint;
-mod error;
-mod handlers;
 pub mod provider;
-pub mod state;
 pub mod types;
+
+mod error;
+mod issuer;
+mod server;
+mod state;
 
 /// Status
 pub mod status {

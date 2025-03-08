@@ -152,8 +152,8 @@ pub enum Expire {
     Authorized,
     /// Access state expiration.
     Access,
-    /// Nonce state expiration.
-    Nonce,
+    // /// Nonce state expiration.
+    // Nonce,
 }
 
 impl Expire {
@@ -163,7 +163,7 @@ impl Expire {
         match self {
             Self::Authorized => TimeDelta::try_minutes(5).unwrap_or_default(),
             Self::Access => TimeDelta::try_minutes(15).unwrap_or_default(),
-            Self::Nonce => TimeDelta::try_minutes(10).unwrap_or_default(),
+            // Self::Nonce => TimeDelta::try_minutes(10).unwrap_or_default(),
         }
     }
 }

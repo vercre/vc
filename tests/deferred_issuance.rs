@@ -14,7 +14,7 @@ use credibil_vc::oid4vci::types::{
 use insta::assert_yaml_snapshot as assert_snapshot;
 use test_holder::CLIENT_ID as BOB_CLIENT;
 use test_holder::keystore::{self, Keyring};
-use test_issuer::{CREDENTIAL_ISSUER as ALICE_ISSUER, NORMAL_USER, ProviderImpl};
+use test_issuer::{CREDENTIAL_ISSUER as ALICE_ISSUER, NORMAL_USER, ProviderImpl}; //PENDING_USER,
 
 static BOB_KEYRING: LazyLock<Keyring> = LazyLock::new(keystore::new_keyring);
 
@@ -42,7 +42,7 @@ async fn deferred() {
     let pre_auth_grant = grants.pre_authorized_code.expect("should have pre-authorized code grant");
 
     let request = TokenRequest::builder()
-        .client_id(BOB_CLIENT)
+        // .client_id(BOB_CLIENT)
         .grant_type(TokenGrantType::PreAuthorizedCode {
             pre_authorized_code: pre_auth_grant.pre_authorized_code,
             tx_code: response.tx_code.clone(),

@@ -164,14 +164,6 @@ pub struct Issuer {
     /// value is a Credential object containing metadata about specific
     /// credential.
     pub credential_configurations_supported: HashMap<String, CredentialConfiguration>,
-    //
-    // // TODO: Ddo we want to support this??
-    // /// The Client ID provided by the Issuer when a Wallet is not pre-registered.
-    // /// with the Authorization Server.
-    // ///
-    // /// <https://identity.foundation/jwt-vc-issuance-profile/#using-of-public_client_id-as-a-client_id>
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub public_client_id: Option<String>,
 }
 
 impl Issuer {
