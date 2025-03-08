@@ -623,8 +623,6 @@ dependencies = [
 [[package]]
 name = "credibil-did"
 version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef532f7512f40b69c5ec4ca9b8e3aeb1a311deffb389a3f64f1ce1cd21055de1"
 dependencies = [
  "anyhow",
  "base64ct",
@@ -2924,9 +2922,13 @@ dependencies = [
  "credibil-infosec",
  "credibil-vc",
  "ed25519-dalek",
+ "fastrand",
+ "multibase",
+ "rand 0.8.5",
  "serde",
  "serde_json",
  "uuid",
+ "x25519-dalek",
 ]
 
 [[package]]

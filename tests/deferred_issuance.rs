@@ -16,7 +16,7 @@ use test_holder::CLIENT_ID as BOB_CLIENT;
 use test_holder::keystore::{self, Keyring};
 use test_issuer::{CREDENTIAL_ISSUER as ALICE_ISSUER, NORMAL_USER, ProviderImpl};
 
-static BOB_KEYRING: LazyLock<Keyring> = LazyLock::new(|| keystore::new_keyring());
+static BOB_KEYRING: LazyLock<Keyring> = LazyLock::new(keystore::new_keyring);
 
 // Should return a credential when using the pre-authorized code flow and the
 // credential offer to the Wallet is made by value.
