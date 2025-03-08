@@ -11,7 +11,7 @@ const ED25519_CODEC: [u8; 2] = [0xed, 0x01];
 #[derive(Default, Clone, Debug)]
 pub struct Keyring {
     pub did: String,
-    pub public_key: String,
+    // pub public_key: String,
     pub secret_key: String,
 }
 
@@ -24,26 +24,26 @@ pub fn new_keyring() -> Keyring {
     multi_bytes.extend_from_slice(&verifying_key.to_bytes());
     let verifying_multi = multibase::encode(Base::Base58Btc, &multi_bytes);
 
-    // public key (X25519)
-    let public_key = verifying_key.to_montgomery();
+    // // public key (X25519)
+    // let public_key = verifying_key.to_montgomery();
 
     Keyring {
         did: format!("did:key:{verifying_multi}"),
-        public_key: Base64UrlUnpadded::encode_string(public_key.as_bytes()),
+        // public_key: Base64UrlUnpadded::encode_string(public_key.as_bytes()),
         secret_key: Base64UrlUnpadded::encode_string(signing_key.as_bytes()),
     }
 }
 
 impl Keyring {
-    pub fn did(&self) -> String {
-        self.did.clone()
-    }
+    // pub fn did(&self) -> String {
+    //     self.did.clone()
+    // }
 
-    pub fn public_key(&self) -> x25519_dalek::PublicKey {
-        let public_bytes: [u8; 32] =
-            Base64UrlUnpadded::decode_vec(&self.public_key).unwrap().try_into().unwrap();
-        x25519_dalek::PublicKey::from(public_bytes)
-    }
+    // pub fn public_key(&self) -> x25519_dalek::PublicKey {
+    //     let public_bytes: [u8; 32] =
+    //         Base64UrlUnpadded::decode_vec(&self.public_key).unwrap().try_into().unwrap();
+    //     x25519_dalek::PublicKey::from(public_bytes)
+    // }
 }
 
 impl Signer for Keyring {

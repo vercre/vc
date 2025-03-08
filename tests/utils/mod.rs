@@ -1,11 +1,12 @@
 #![allow(missing_docs)]
 #![allow(dead_code)]
 
+pub mod issuer;
+pub mod wallet;
+
 use std::fmt::Display;
 use std::sync::Once;
 
-use rstest::fixture;
-use test_issuer::ProviderImpl;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
@@ -48,11 +49,6 @@ pub fn init_tracer() {
         let subscriber = FmtSubscriber::builder().with_max_level(Level::ERROR).finish();
         tracing::subscriber::set_global_default(subscriber).expect("subscriber set");
     });
-}
-
-#[fixture]
-pub fn provider() -> ProviderImpl {
-    ProviderImpl::new()
 }
 
 /// Issuance variants

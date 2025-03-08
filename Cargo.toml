@@ -57,11 +57,12 @@ uuid.workspace = true
 assert_let_bind.workspace = true
 async-std = { version = "1.13.0", features = ["attributes"] }
 insta.workspace = true
+multibase = "0.9"
+rand_core = "0.6.0"
 rstest = "0.25.0"
-test-holder.workspace = true
-test-issuer.workspace = true
 test-verifier.workspace = true
 tokio.workspace = true
+x25519-dalek = { version = "2.0.1", features = ["static_secrets"] }
 
 # -----------------------------------------------
 # Workspace
@@ -114,8 +115,6 @@ insta = { version = "1.42.2", features = ["redactions", "yaml"] }
 rand = "0.9.0"
 serde = { version = "1.0.218", features = ["derive"] }
 serde_json = { version = "1.0.140", features = ["alloc"] }
-test-holder = { path = "crates/test-holder" }
-test-issuer = { path = "crates/test-issuer" }
 test-verifier = { path = "crates/test-verifier" }
 tokio = { version = "1.44.0", features = ["macros", "rt-multi-thread"] }
 tower-http = { version = "0.6.2", features = ["cors", "set-header", "trace"] }

@@ -13,15 +13,11 @@ use rand_core::OsRng;
 static DID_STORE: LazyLock<Arc<Mutex<HashMap<String, Document>>>> =
     LazyLock::new(|| Arc::new(Mutex::new(HashMap::new())));
 
-pub fn new_keyring() -> Keyring {
-    Keyring::new()
-}
-
 #[derive(Clone, Debug)]
 pub struct Keyring {
     pub url: String,
     pub verifying_key: ed25519_dalek::VerifyingKey,
-    pub public_key: x25519_dalek::PublicKey,
+    // pub public_key: x25519_dalek::PublicKey,
     pub signing_key: SigningKey,
 }
 
@@ -30,14 +26,14 @@ impl Keyring {
         // generate key pair
         let signing_key = SigningKey::generate(&mut OsRng);
         let verifying_key = signing_key.verifying_key();
-        let public_key = x25519_dalek::PublicKey::from(verifying_key.to_montgomery().to_bytes());
+        // let public_key = x25519_dalek::PublicKey::from(verifying_key.to_montgomery().to_bytes());
 
-        let url = format!("https://demo.credibil.io/{}", generate::uri_token());
+        let url = format!("https://credibil.io/{}", generate::uri_token());
 
         let keyring = Self {
             url: url.clone(),
             verifying_key,
-            public_key,
+            // public_key,
             signing_key,
         };
 
@@ -50,9 +46,9 @@ impl Keyring {
         keyring
     }
 
-    pub fn public_key(&self) -> x25519_dalek::PublicKey {
-        self.public_key.clone()
-    }
+    // pub fn public_key(&self) -> x25519_dalek::PublicKey {
+    //     self.public_key.clone()
+    // }
 }
 
 impl Signer for Keyring {

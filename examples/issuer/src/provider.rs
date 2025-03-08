@@ -15,13 +15,8 @@ use credibil_vc::status::issuer::Status;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 
-use crate::auth::Keyring;
-use crate::store::{ClientStore, DatasetStore, IssuerStore, ServerStore};
-
-pub const CREDENTIAL_ISSUER: &str = "http://credibil.io";
-pub const NORMAL_USER: &str = "normal_user";
-pub const PENDING_USER: &str = "pending_user";
-pub const REDIRECT_URI: &str = "http://localhost:3000/callback";
+use crate::provider::auth::Keyring;
+use crate::provider::store::{ClientStore, DatasetStore, IssuerStore, ServerStore};
 
 #[derive(Clone, Debug)]
 pub struct ProviderImpl {

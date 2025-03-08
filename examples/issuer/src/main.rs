@@ -2,6 +2,8 @@
 //!
 //! This example demonstrates how to use the Verifiable Credential Issuer (VCI)
 
+mod provider;
+
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
@@ -25,7 +27,6 @@ use credibil_vc::urlencode;
 use oauth2::CsrfToken;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use test_issuer::ProviderImpl;
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 use tower_http::cors::{Any, CorsLayer};
@@ -33,6 +34,8 @@ use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
+
+use self::provider::ProviderImpl;
 
 static AUTH_REQUESTS: LazyLock<RwLock<HashMap<String, AuthorizationRequest>>> =
     LazyLock::new(|| RwLock::new(HashMap::new()));
