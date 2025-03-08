@@ -42,7 +42,7 @@ impl ProviderImpl {
             server: ServerStore::new(),
             subject: DatasetStore::new(),
             state: Arc::new(Mutex::new(HashMap::new())),
-            keyring: auth::new_keyring(),
+            keyring: Keyring::new(),
         }
     }
 }

@@ -13,16 +13,16 @@ use rand::rngs::OsRng;
 static DID_STORE: LazyLock<Arc<Mutex<HashMap<String, Document>>>> =
     LazyLock::new(|| Arc::new(Mutex::new(HashMap::new())));
 
+pub fn new_keyring() -> Keyring {
+    Keyring::new()
+}
+
 #[derive(Clone, Debug)]
 pub struct Keyring {
     pub url: String,
     pub verifying_key: ed25519_dalek::VerifyingKey,
     pub public_key: x25519_dalek::PublicKey,
     pub signing_key: SigningKey,
-}
-
-pub fn new_keyring() -> Keyring {
-    Keyring::new()
 }
 
 impl Keyring {
