@@ -53,20 +53,13 @@ async fn process(
     if state.is_expired() {
         return Err(invalid!("state expired"));
     }
-
     let Stage::Deferred(deferred_state) = state.stage else {
         return Err(server!("Deferred state not found."));
     };
 
-    // remove deferred state item
-    StateStore::purge(provider, &request.transaction_id)
-        .await
-        .map_err(|e| server!("issue purging state: {e}"))?;
-
     // make credential request
     let mut cred_req = deferred_state.credential_request;
     cred_req.access_token.clone_from(&request.access_token);
-
     let response = credential(credential_issuer, provider, cred_req).await?;
 
     // is issuance still pending?
@@ -75,7 +68,10 @@ async fn process(
         return Err(Error::IssuancePending(5));
     }
 
-    Ok(DeferredCredentialResponse {
-        credential_response: response,
-    })
+    // remove deferred state item
+    StateStore::purge(provider, &request.transaction_id)
+        .await
+        .map_err(|e| server!("issue purging state: {e}"))?;
+
+    Ok(response)
 }

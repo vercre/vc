@@ -19,7 +19,7 @@ use super::auth::Keyring;
 
 pub const CREDENTIAL_ISSUER: &str = "http://credibil.io";
 pub const NORMAL_USER: &str = "normal_user";
-// pub const PENDING_USER: &str = "pending_user";
+pub const PENDING_USER: &str = "pending_user";
 // pub const REDIRECT_URI: &str = "http://localhost:3000/callback";
 
 #[derive(Clone, Debug)]

@@ -8,14 +8,14 @@ use credibil_infosec::jose::JwsBuilder;
 use credibil_vc::oid4vci::endpoint;
 use credibil_vc::oid4vci::proof::{self, Payload, Type, Verify};
 use credibil_vc::oid4vci::types::{
-    CreateOfferRequest, Credential, CredentialRequest, NonceRequest, ProofClaims, ResponseType,
-    TokenGrantType, TokenRequest,
+    CreateOfferRequest, Credential, CredentialRequest, DeferredCredentialRequest, NonceRequest,
+    ProofClaims, ResponseType, TokenGrantType, TokenRequest,
 };
 use insta::assert_yaml_snapshot as assert_snapshot;
-use utils::issuer::{CREDENTIAL_ISSUER as ALICE_ISSUER, NORMAL_USER, ProviderImpl};
-use utils::wallet::{self, CLIENT_ID as BOB_CLIENT, Keyring}; //PENDING_USER,
+use utils::issuer::{CREDENTIAL_ISSUER as ALICE_ISSUER, PENDING_USER, ProviderImpl};
+use utils::wallet::{self, CLIENT_ID as BOB_CLIENT, Keyring};
 
-static BOB_KEYRING: LazyLock<Keyring> = LazyLock::new(wallet::new_keyring);
+static BOB_KEYRING: LazyLock<Keyring> = LazyLock::new(wallet::keyring);
 
 // Should return a credential when using the pre-authorized code flow and the
 // credential offer to the Wallet is made by value.
@@ -27,7 +27,7 @@ async fn deferred() {
     // Alice creates a credential offer for Bob
     // --------------------------------------------------
     let request = CreateOfferRequest::builder()
-        .subject_id(NORMAL_USER)
+        .subject_id(PENDING_USER)
         .with_credential("EmployeeID_JWT")
         .build();
     let response =
@@ -41,7 +41,6 @@ async fn deferred() {
     let pre_auth_grant = grants.pre_authorized_code.expect("should have pre-authorized code grant");
 
     let request = TokenRequest::builder()
-        // .client_id(BOB_CLIENT)
         .grant_type(TokenGrantType::PreAuthorizedCode {
             pre_authorized_code: pre_auth_grant.pre_authorized_code,
             tx_code: response.tx_code.clone(),
@@ -72,14 +71,28 @@ async fn deferred() {
     let jwt = jws.encode().expect("encodes JWS");
 
     // --------------------------------------------------
-    // Bob requests a credential
+    // Bob requests a credential and receives a deferred response
     // --------------------------------------------------
     let details = &token.authorization_details.expect("should have authorization details");
     let request = CredentialRequest::builder()
         .credential_identifier(&details[0].credential_identifiers[0])
         .with_proof(jwt)
-        .access_token(token.access_token)
+        .access_token(&token.access_token)
         .build();
+    let response =
+        endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should return credential");
+
+    // --------------------------------------------------
+    // Bob waits for a brief period and then retrieves the credential
+    // --------------------------------------------------
+    let ResponseType::TransactionId { transaction_id } = &response.response else {
+        panic!("expected transaction_id");
+    };
+
+    let request = DeferredCredentialRequest {
+        access_token: token.access_token.into(),
+        transaction_id: transaction_id.clone(),
+    };
     let response =
         endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should return credential");
 
@@ -89,6 +102,7 @@ async fn deferred() {
     let ResponseType::Credentials { credentials, .. } = &response.response else {
         panic!("expected single credential");
     };
+
     let Credential { credential } = credentials.first().expect("should have credential");
 
     // verify the credential proof
@@ -97,7 +111,7 @@ async fn deferred() {
         panic!("should be valid VC");
     };
 
-    assert_snapshot!("offer_val", vc, {
+    assert_snapshot!("issued", vc, {
         ".validFrom" => "[validFrom]",
         ".credentialSubject" => insta::sorted_redaction(),
         ".credentialSubject.id" => "[id]"

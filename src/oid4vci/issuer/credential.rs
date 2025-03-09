@@ -78,6 +78,13 @@ pub async fn credential(
         return ctx.defer_response(provider, request).await;
     }
 
+    // delete nonces
+    for nonce in &ctx.nonces {
+        StateStore::purge(provider, nonce)
+            .await
+            .map_err(|e| server!("issue deleting nonce: {e}"))?;
+    }
+
     // issue VC
     ctx.issue_response(provider, dataset).await
 }
@@ -99,6 +106,7 @@ struct Context {
     authorized: AuthorizedDetail,
     configuration: CredentialConfiguration,
     holder_did: String,
+    nonces: Vec<String>,
 }
 
 impl CredentialRequest {
@@ -160,9 +168,9 @@ impl CredentialRequest {
                 StateStore::get::<String>(provider, c_nonce)
                     .await
                     .map_err(|e| server!("proof nonce claim is invalid: {e}"))?;
-                StateStore::purge(provider, c_nonce)
-                    .await
-                    .map_err(|e| server!("could not purge nonce from state: {e}"))?;
+
+                // save nonce for deletion when not defering issuance
+                ctx.nonces.push(c_nonce.clone());
 
                 // Key ID
                 let Key::KeyId(kid) = &jwt.header.key else {

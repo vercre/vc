@@ -287,29 +287,19 @@ pub struct Credential {
 /// the HTTP header.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct DeferredCredentialRequest {
-    /// The URL of the Credential Issuer the Wallet can use obtain offered
-    /// Credentials.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub credential_issuer: String,
-
-    /// A previously issued Access Token, as extracted from the Authorization
-    /// header of the Batch Credential Request.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub access_token: String,
-
     /// Identifies a Deferred Issuance transaction from an earlier Credential
     /// Request.
     pub transaction_id: String,
+
+    /// A previously issued Access Token, as extracted from the Authorization
+    /// header of the Batch Credential Request.
+    #[serde(skip)]
+    pub access_token: String,
 }
 
 /// The Deferred Credential Response uses the same format and credential
 /// parameters defined for a Credential Response.
-#[derive(Debug, Deserialize, Serialize)]
-pub struct DeferredCredentialResponse {
-    /// The Credential Response object.
-    #[serde(flatten)]
-    pub credential_response: CredentialResponse,
-}
+pub type DeferredCredentialResponse = CredentialResponse;
 
 #[cfg(test)]
 mod tests {

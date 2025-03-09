@@ -17,7 +17,7 @@ use insta::assert_yaml_snapshot as assert_snapshot;
 use utils::issuer::{CREDENTIAL_ISSUER as ALICE_ISSUER, NORMAL_USER, ProviderImpl};
 use utils::wallet::{self, CLIENT_ID as BOB_CLIENT, Keyring};
 
-static BOB_KEYRING: LazyLock<Keyring> = LazyLock::new(|| wallet::new_keyring());
+static BOB_KEYRING: LazyLock<Keyring> = LazyLock::new(wallet::keyring);
 
 // Should return a credential when using the pre-authorized code flow and the
 // credential offer to the Wallet is made by value.
