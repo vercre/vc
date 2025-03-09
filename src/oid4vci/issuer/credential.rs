@@ -138,11 +138,13 @@ impl CredentialRequest {
 
             // extract proof JWT(s) from request
             let proof_jwts = match proof {
-                Proof::Single { proof_type } => match proof_type {
+                Proof::Single(proof_type) => match proof_type {
                     SingleProof::Jwt { jwt } => &vec![jwt.clone()],
+                    SingleProof::Attestation { .. } => todo!(),
                 },
                 Proof::Multiple(proofs_type) => match proofs_type {
                     MultipleProofs::Jwt(proof_jwts) => proof_jwts,
+                    MultipleProofs::Attestation(_) => todo!(),
                 },
             };
 

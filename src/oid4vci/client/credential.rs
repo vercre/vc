@@ -158,11 +158,9 @@ impl CredentialRequestBuilder<Credential, Token, Proofs> {
     #[must_use]
     pub fn build(self) -> CredentialRequest {
         let proof = if self.proofs.0.len() == 1 {
-            Some(Proof::Single {
-                proof_type: SingleProof::Jwt {
-                    jwt: self.proofs.0[0].clone(),
-                },
-            })
+            Some(Proof::Single(SingleProof::Jwt {
+                jwt: self.proofs.0[0].clone(),
+            }))
         } else {
             Some(Proof::Multiple(MultipleProofs::Jwt(self.proofs.0)))
         };

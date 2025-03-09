@@ -82,12 +82,14 @@ impl Default for RequestBy {
 pub enum Proof {
     /// A single proof of possession of the cryptographic key material to which
     /// the issued Credential instance will be bound to.
+    // #[serde(rename = "proof")]
+    // Single {
+    //     /// The proof type used by the wallet
+    //     #[serde(flatten)]
+    //     proof_type: SingleProof,
+    // },
     #[serde(rename = "proof")]
-    Single {
-        /// The proof type used by the wallet
-        #[serde(flatten)]
-        proof_type: SingleProof,
-    },
+    Single(SingleProof),
 
     /// One or more proof of possessions of the cryptographic key material to
     /// which the issued Credential instances will be bound to.
@@ -97,9 +99,10 @@ pub enum Proof {
 
 impl Default for Proof {
     fn default() -> Self {
-        Self::Single {
-            proof_type: SingleProof::default(),
-        }
+        // Self::Single {
+        //     proof_type: SingleProof::default(),
+        // }
+        Self::Single(SingleProof::default())
     }
 }
 
@@ -114,6 +117,21 @@ pub enum SingleProof {
         /// The JWT containing the Wallet's proof of possession of key material.
         jwt: String,
     },
+
+    /// A JWT containg a key attestation without using a proof of possession
+    /// of the key material that is being attested.
+    #[serde(rename = "attestation")]
+    Attestation {
+        /// The JWT containing the Wallet's proof of possession of key material.
+        attestation: String,
+    },
+    //
+    // /// A W3C Verifiable Presentation object signed using the Data Integrity Proof.
+    // #[serde(rename = "ldp_vp")]
+    // LdpVp {
+    //     /// The JWT containing the Wallet's proof of possession of key material.
+    //     ldp_vp: String,
+    // },
 }
 
 impl Default for SingleProof {
@@ -126,9 +144,14 @@ impl Default for SingleProof {
 /// the Wallet to which the issued Credential instance will be bound.
 #[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
 pub enum MultipleProofs {
-    /// The JWT containing the Wallet's proof of possession of key material.
+    /// JWTs containing the Wallet's proof of possession of key material.
     #[serde(rename = "jwt")]
     Jwt(Vec<String>),
+
+    /// JWTs containg a key attestation without using a proof of possession
+    /// of the key material that is being attested.
+    #[serde(rename = "attestation")]
+    Attestation(Vec<String>),
 }
 
 impl Default for MultipleProofs {
@@ -325,11 +348,9 @@ mod tests {
         let request = CredentialRequest {
             access_token: "1234".to_string(),
             credential: RequestBy::Identifier("EngineeringDegree2023".to_string()),
-            proof: Some(Proof::Single {
-                proof_type: SingleProof::Jwt {
-                    jwt: "SomeJWT".to_string(),
-                },
-            }),
+            proof: Some(Proof::Single(SingleProof::Jwt {
+                jwt: "SomeJWT".to_string(),
+            })),
             ..CredentialRequest::default()
         };
 
