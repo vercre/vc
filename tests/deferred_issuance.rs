@@ -13,10 +13,9 @@ use credibil_vc::oid4vci::types::{
 };
 use insta::assert_yaml_snapshot as assert_snapshot;
 use utils::issuer::{CREDENTIAL_ISSUER as ALICE_ISSUER, NORMAL_USER, ProviderImpl};
-use utils::wallet::CLIENT_ID as BOB_CLIENT;
-use utils::wallet::keystore::{self, Keyring}; //PENDING_USER,
+use utils::wallet::{self, CLIENT_ID as BOB_CLIENT, Keyring}; //PENDING_USER,
 
-static BOB_KEYRING: LazyLock<Keyring> = LazyLock::new(keystore::new_keyring);
+static BOB_KEYRING: LazyLock<Keyring> = LazyLock::new(wallet::new_keyring);
 
 // Should return a credential when using the pre-authorized code flow and the
 // credential offer to the Wallet is made by value.

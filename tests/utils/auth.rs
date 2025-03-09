@@ -4,7 +4,7 @@ use std::sync::{Arc, LazyLock, Mutex};
 use anyhow::{Result, anyhow};
 use base64ct::{Base64UrlUnpadded, Encoding};
 use credibil_did::document::{CreateOptions, Document};
-use credibil_did::{DidOperator, DidResolver, DidWeb, KeyPurpose};
+use credibil_did::{DidKey, DidOperator, DidResolver, DidWeb, KeyPurpose};
 use credibil_infosec::{Algorithm, Curve, KeyType, PublicKeyJwk, Signer};
 use credibil_vc::core::generate;
 use ed25519_dalek::{Signer as _, SigningKey};
@@ -15,14 +15,27 @@ static DID_STORE: LazyLock<Arc<Mutex<HashMap<String, Document>>>> =
 
 #[derive(Clone, Debug)]
 pub struct Keyring {
-    pub url: String,
-    pub verifying_key: ed25519_dalek::VerifyingKey,
-    // pub public_key: x25519_dalek::PublicKey,
-    pub signing_key: SigningKey,
+    url: String,
+    signing_key: SigningKey,
+    verifying_key: ed25519_dalek::VerifyingKey,
+    // public_key: x25519_dalek::PublicKey,
+}
+
+pub enum DidMethod {
+    Key,
+    Web,
 }
 
 impl Keyring {
-    pub fn new() -> Self {
+    pub fn did_web() -> Self {
+        Self::new(DidMethod::Web)
+    }
+
+    pub fn did_key() -> Self {
+        Self::new(DidMethod::Web)
+    }
+
+    pub fn new(method: DidMethod) -> Self {
         // generate key pair
         let signing_key = SigningKey::generate(&mut OsRng);
         let verifying_key = signing_key.verifying_key();
@@ -32,23 +45,23 @@ impl Keyring {
 
         let keyring = Self {
             url: url.clone(),
-            verifying_key,
-            // public_key,
             signing_key,
+            verifying_key,
         };
 
         // generate did:web document
         let mut options = CreateOptions::default();
         options.enable_encryption_key_derivation = true;
-        let document = DidWeb::create(&url, &keyring, options).expect("should create");
+
+        let document = match method {
+            DidMethod::Key => DidKey::create(&keyring, options).expect("should create"),
+            DidMethod::Web => DidWeb::create(&url, &keyring, options).expect("should create"),
+        };
+
         DID_STORE.lock().expect("should lock").insert(url, document);
 
         keyring
     }
-
-    // pub fn public_key(&self) -> x25519_dalek::PublicKey {
-    //     self.public_key.clone()
-    // }
 }
 
 impl Signer for Keyring {

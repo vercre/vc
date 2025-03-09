@@ -1,4 +1,3 @@
-pub mod auth;
 pub mod store;
 
 use std::collections::HashMap;
@@ -15,8 +14,8 @@ use credibil_vc::status::issuer::Status;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 
-use self::auth::Keyring;
 use self::store::{ClientStore, DatasetStore, IssuerStore, ServerStore};
+use super::auth::Keyring;
 
 pub const CREDENTIAL_ISSUER: &str = "http://credibil.io";
 pub const NORMAL_USER: &str = "normal_user";
@@ -42,7 +41,7 @@ impl ProviderImpl {
             server: ServerStore::new(),
             subject: DatasetStore::new(),
             state: Arc::new(Mutex::new(HashMap::new())),
-            keyring: Keyring::new(),
+            keyring: Keyring::did_web(),
         }
     }
 }

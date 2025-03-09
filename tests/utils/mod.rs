@@ -1,6 +1,7 @@
 #![allow(missing_docs)]
 #![allow(dead_code)]
 
+mod auth;
 pub mod issuer;
 pub mod wallet;
 

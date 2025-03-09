@@ -1,5 +1,5 @@
 //! # Credential Issuer
-//! 
+//!
 //! API for credential issuance.
 
 pub mod create_offer;

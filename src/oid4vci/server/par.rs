@@ -10,9 +10,9 @@ use chrono::{Duration, Utc};
 use tracing::instrument;
 
 use crate::core::generate;
-use crate::oid4vci::server::authorize;
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore};
+use crate::oid4vci::server::authorize;
 use crate::oid4vci::state::{PushedAuthorization, Stage, State};
 use crate::oid4vci::types::{PushedAuthorizationRequest, PushedAuthorizationResponse};
 use crate::oid4vci::{Error, Result};
