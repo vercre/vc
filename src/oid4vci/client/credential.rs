@@ -8,7 +8,7 @@ use crate::oid4vci::types::{
 impl CredentialRequest {
     /// Create a new `CredentialRequestBuilder`.
     #[must_use]
-    pub fn builder() -> CredentialRequestBuilder<NoCredential, NoProofs> {
+    pub fn builder() -> CredentialRequestBuilder<NoCredential, NoToken, NoProofs> {
         CredentialRequestBuilder::new()
     }
 }
@@ -16,27 +16,27 @@ impl CredentialRequest {
 impl NotificationRequest {
     /// Create a new `NotificationRequest`.
     #[must_use]
-    pub fn builder() -> NotificationRequestBuilder<NoNotification, NoAccessToken> {
+    pub fn builder() -> NotificationRequestBuilder<NoNotification, NoToken> {
         NotificationRequestBuilder::new()
     }
 }
 
 /// Build a Credential Offer for a Credential Issuer.
 #[derive(Debug)]
-pub struct CredentialRequestBuilder<C, P> {
+pub struct CredentialRequestBuilder<C, A, P> {
     credential: C,
     proofs: P,
     response_encryption: Option<CredentialResponseEncryption>,
-    access_token: Option<String>,
+    access_token: A,
 }
 
-impl Default for CredentialRequestBuilder<NoCredential, NoProofs> {
+impl Default for CredentialRequestBuilder<NoCredential, NoToken, NoProofs> {
     fn default() -> Self {
         Self {
             credential: NoCredential,
             proofs: NoProofs,
             response_encryption: None,
-            access_token: None,
+            access_token: NoToken,
         }
     }
 }
@@ -48,6 +48,13 @@ pub struct NoCredential;
 #[doc(hidden)]
 pub struct Credential(RequestBy);
 
+/// No access token is set.
+#[doc(hidden)]
+pub struct NoToken;
+/// Access token is set.
+#[doc(hidden)]
+pub struct Token(String);
+
 /// No proof of possession of key material is set.
 #[doc(hidden)]
 pub struct NoProofs;
@@ -55,7 +62,7 @@ pub struct NoProofs;
 #[doc(hidden)]
 pub struct Proofs(Vec<String>);
 
-impl CredentialRequestBuilder<NoCredential, NoProofs> {
+impl CredentialRequestBuilder<NoCredential, NoToken, NoProofs> {
     /// Create a new `CreateOfferRequestBuilder`.
     #[must_use]
     pub fn new() -> Self {
@@ -63,13 +70,13 @@ impl CredentialRequestBuilder<NoCredential, NoProofs> {
     }
 }
 
-impl<P> CredentialRequestBuilder<NoCredential, P> {
+impl<A, P> CredentialRequestBuilder<NoCredential, A, P> {
     /// Specify only when credential Authorization Details was returned in the
     /// Token Response.
     #[must_use]
     pub fn credential_identifier(
         self, credential_identifier: impl Into<String>,
-    ) -> CredentialRequestBuilder<Credential, P> {
+    ) -> CredentialRequestBuilder<Credential, A, P> {
         CredentialRequestBuilder {
             credential: Credential(RequestBy::Identifier(credential_identifier.into())),
             proofs: self.proofs,
@@ -83,7 +90,7 @@ impl<P> CredentialRequestBuilder<NoCredential, P> {
     #[must_use]
     pub fn credential_configuration_id(
         self, credential_configuration_id: impl Into<String>,
-    ) -> CredentialRequestBuilder<Credential, P> {
+    ) -> CredentialRequestBuilder<Credential, A, P> {
         CredentialRequestBuilder {
             credential: Credential(RequestBy::ConfigurationId(credential_configuration_id.into())),
             proofs: self.proofs,
@@ -93,11 +100,29 @@ impl<P> CredentialRequestBuilder<NoCredential, P> {
     }
 }
 
-impl<C> CredentialRequestBuilder<C, NoProofs> {
+impl<N, P> CredentialRequestBuilder<N, NoToken, P> {
     /// Specify the (previously authenticated) Holder for the Issuer to use
     /// when authorizing credential issuance.
     #[must_use]
-    pub fn with_proof(self, proof_jwt: impl Into<String>) -> CredentialRequestBuilder<C, Proofs> {
+    pub fn access_token(
+        self, access_token: impl Into<String>,
+    ) -> CredentialRequestBuilder<N, Token, P> {
+        CredentialRequestBuilder {
+            credential: self.credential,
+            proofs: self.proofs,
+            response_encryption: self.response_encryption,
+            access_token: Token(access_token.into()),
+        }
+    }
+}
+
+impl<C, A> CredentialRequestBuilder<C, A, NoProofs> {
+    /// Specify the (previously authenticated) Holder for the Issuer to use
+    /// when authorizing credential issuance.
+    #[must_use]
+    pub fn with_proof(
+        self, proof_jwt: impl Into<String>,
+    ) -> CredentialRequestBuilder<C, A, Proofs> {
         CredentialRequestBuilder {
             credential: self.credential,
             proofs: Proofs(vec![proof_jwt.into()]),
@@ -107,7 +132,7 @@ impl<C> CredentialRequestBuilder<C, NoProofs> {
     }
 }
 
-impl<C> CredentialRequestBuilder<C, Proofs> {
+impl<C, A> CredentialRequestBuilder<C, A, Proofs> {
     /// Specify the (previously authenticated) Holder for the Issuer to use
     /// when authorizing credential issuance.
     #[must_use]
@@ -117,7 +142,7 @@ impl<C> CredentialRequestBuilder<C, Proofs> {
     }
 }
 
-impl<C, P> CredentialRequestBuilder<C, P> {
+impl<C, A, P> CredentialRequestBuilder<C, A, P> {
     /// Specify when the credential response is to be encrypted.
     #[must_use]
     pub fn response_encryption(
@@ -126,16 +151,9 @@ impl<C, P> CredentialRequestBuilder<C, P> {
         self.response_encryption = Some(response_encryption);
         self
     }
-
-    /// Specify the access token to use for this credential request.
-    #[must_use]
-    pub fn access_token(mut self, access_token: impl Into<String>) -> Self {
-        self.access_token = Some(access_token.into());
-        self
-    }
 }
 
-impl CredentialRequestBuilder<Credential, Proofs> {
+impl CredentialRequestBuilder<Credential, Token, Proofs> {
     /// Build the Create Offer request.
     #[must_use]
     pub fn build(self) -> CredentialRequest {
@@ -153,7 +171,7 @@ impl CredentialRequestBuilder<Credential, Proofs> {
             credential: self.credential.0,
             proof,
             credential_response_encryption: self.response_encryption,
-            access_token: self.access_token.unwrap_or_default(),
+            access_token: self.access_token.0,
         }
     }
 }
@@ -167,13 +185,13 @@ pub struct NotificationRequestBuilder<N, A> {
     access_token: A,
 }
 
-impl Default for NotificationRequestBuilder<NoNotification, NoAccessToken> {
+impl Default for NotificationRequestBuilder<NoNotification, NoToken> {
     fn default() -> Self {
         Self {
             notification_id: NoNotification,
             event: NotificationEvent::CredentialAccepted,
             event_description: None,
-            access_token: NoAccessToken,
+            access_token: NoToken,
         }
     }
 }
@@ -185,14 +203,7 @@ pub struct NoNotification;
 #[doc(hidden)]
 pub struct Notification(String);
 
-/// No access token is set.
-#[doc(hidden)]
-pub struct NoAccessToken;
-/// Access token is set.
-#[doc(hidden)]
-pub struct AccessToken(String);
-
-impl NotificationRequestBuilder<NoNotification, NoAccessToken> {
+impl NotificationRequestBuilder<NoNotification, NoToken> {
     /// Create a new `CreateOfferRequestBuilder`.
     #[must_use]
     pub fn new() -> Self {
@@ -216,18 +227,18 @@ impl<A> NotificationRequestBuilder<NoNotification, A> {
     }
 }
 
-impl<N> NotificationRequestBuilder<N, NoAccessToken> {
+impl<N> NotificationRequestBuilder<N, NoToken> {
     /// Specify the (previously authenticated) Holder for the Issuer to use
     /// when authorizing credential issuance.
     #[must_use]
     pub fn access_token(
         self, access_token: impl Into<String>,
-    ) -> NotificationRequestBuilder<N, AccessToken> {
+    ) -> NotificationRequestBuilder<N, Token> {
         NotificationRequestBuilder {
             notification_id: self.notification_id,
             event: self.event,
             event_description: self.event_description,
-            access_token: AccessToken(access_token.into()),
+            access_token: Token(access_token.into()),
         }
     }
 }
@@ -235,7 +246,7 @@ impl<N> NotificationRequestBuilder<N, NoAccessToken> {
 impl<N, A> NotificationRequestBuilder<N, A> {
     /// Specify when the credential response is to be encrypted.
     #[must_use]
-    pub fn event(mut self, event: NotificationEvent) -> Self {
+    pub const fn event(mut self, event: NotificationEvent) -> Self {
         self.event = event;
         self
     }
@@ -248,7 +259,7 @@ impl<N, A> NotificationRequestBuilder<N, A> {
     }
 }
 
-impl NotificationRequestBuilder<Notification, AccessToken> {
+impl NotificationRequestBuilder<Notification, Token> {
     /// Build the Notification request.
     #[must_use]
     pub fn build(self) -> NotificationRequest {
