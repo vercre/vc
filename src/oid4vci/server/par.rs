@@ -55,7 +55,7 @@ async fn verify(provider: &impl Provider, request: &PushedAuthorizationRequest) 
 
     // verify the pushed RequestObject using `/authorize` endpoint logic
     let Ok(issuer) = Metadata::issuer(provider, &req_obj.credential_issuer).await else {
-        return Err(Error::InvalidClient("invalid `credential_issuer`".into()));
+        return Err(Error::InvalidClient("invalid `credential_issuer`".to_string()));
     };
     let mut ctx = authorize::Context {
         issuer,

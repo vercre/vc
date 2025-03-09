@@ -29,7 +29,7 @@ async fn request_jwt() {
         client_id: format!("{VERIFIER_ID}/post"),
         state: Some(state_key.to_string()),
         nonce: nonce.to_string(),
-        response_mode: Some("direct_post".into()),
+        response_mode: Some("direct_post".to_string()),
         response_uri: Some(format!("{VERIFIER_ID}/post")),
         presentation_definition: Kind::Object(PresentationDefinition::default()),
         client_id_scheme: Some(ClientIdScheme::RedirectUri),

@@ -446,8 +446,8 @@ impl VcBuilder {
         let mut builder: Self = Self::default();
 
         // set some sensibile defaults
-        builder.vc.context.push(Kind::String("https://www.w3.org/2018/credentials/v1".into()));
-        builder.vc.type_ = OneMany::One("VerifiableCredential".into());
+        builder.vc.context.push(Kind::String("https://www.w3.org/2018/credentials/v1".to_string()));
+        builder.vc.type_ = OneMany::One("VerifiableCredential".to_string());
 
         builder
     }
@@ -700,8 +700,10 @@ mod tests {
                 ..Issuer::default()
             },
         };
-        issuer.extra =
-            Some(HashMap::from([("name".into(), Value::String("Example University".into()))]));
+        issuer.extra = Some(HashMap::from([(
+            "name".to_string(),
+            Value::String("Example University".to_string()),
+        )]));
         vc.issuer = Kind::Object(issuer);
 
         // serialize
@@ -724,18 +726,18 @@ mod tests {
 
         VerifiableCredential {
             context: vec![
-                Kind::String("https://www.w3.org/2018/credentials/v1".into()),
-                Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()),
+                Kind::String("https://www.w3.org/2018/credentials/v1".to_string()),
+                Kind::String("https://www.w3.org/2018/credentials/examples/v1".to_string()),
             ],
             type_: OneMany::Many(vec![
-                "VerifiableCredential".into(),
-                "EmployeeIDCredential".into(),
+                "VerifiableCredential".to_string(),
+                "EmployeeIDCredential".to_string(),
             ]),
-            issuer: Kind::String("https://example.com/issuers/14".into()),
-            id: Some("https://example.com/credentials/3732".into()),
+            issuer: Kind::String("https://example.com/issuers/14".to_string()),
+            id: Some("https://example.com/credentials/3732".to_string()),
             valid_from: Some(Utc.with_ymd_and_hms(2023, 11, 20, 23, 21, 55).unwrap()),
             credential_subject: OneMany::One(CredentialSubject {
-                id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into()),
+                id: Some("did:example:ebfeb1f712ebc6f1c276e12ec21".to_string()),
                 claims: json!({"employeeId": "1234567890"})
                     .as_object()
                     .map_or_else(Map::default, Clone::clone),

@@ -78,7 +78,7 @@ impl ClientStore {
 
         // Local verifier client for use when running end to end tests
         let mut local = client.clone();
-        local.oauth.client_id = "http://localhost:8080".into();
+        local.oauth.client_id = "http://localhost:8080".to_string();
 
         Self {
             clients: Arc::new(Mutex::new(HashMap::from([

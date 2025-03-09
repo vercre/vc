@@ -48,7 +48,7 @@ async fn process(
 
     // retrieve deferred credential request from state
     let Ok(state) = StateStore::get::<State>(provider, &request.transaction_id).await else {
-        return Err(Error::InvalidTransactionId("deferred state not found".into()));
+        return Err(Error::InvalidTransactionId("deferred state not found".to_string()));
     };
     if state.is_expired() {
         return Err(invalid!("state expired"));

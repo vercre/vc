@@ -111,7 +111,7 @@ async fn verify(request: &CreateRequestRequest) -> Result<()> {
     tracing::debug!("create_request::verify");
 
     if request.input_descriptors.is_empty() {
-        return Err(Error::InvalidRequest("no credentials specified".into()));
+        return Err(Error::InvalidRequest("no credentials specified".to_string()));
     }
     Ok(())
 }
@@ -131,14 +131,14 @@ async fn process(
         id: Uuid::new_v4().to_string(),
         purpose: Some(request.purpose.clone()),
         input_descriptors: request.input_descriptors.clone(),
-        format: Some(HashMap::from([("jwt_vc".into(), fmt)])),
+        format: Some(HashMap::from([("jwt_vc".to_string(), fmt)])),
         name: None,
     };
     let uri_token = generate::uri_token();
 
     // get client metadata
     let Ok(verifier_meta) = Metadata::verifier(&provider, &request.client_id).await else {
-        return Err(Error::InvalidRequest("invalid client_id".into()));
+        return Err(Error::InvalidRequest("invalid client_id".to_string()));
     };
 
     let mut req_obj = RequestObject {
@@ -156,7 +156,7 @@ async fn process(
     // Response Mode "direct_post" is RECOMMENDED for cross-device flows.
     // TODO: replace hard-coded endpoints with Provider-set values
     if request.device_flow == DeviceFlow::CrossDevice {
-        req_obj.response_mode = Some("direct_post".into());
+        req_obj.response_mode = Some("direct_post".to_string());
         req_obj.client_id = format!("{}/post", request.client_id);
         req_obj.response_uri = Some(format!("{}/post", request.client_id));
         response.request_uri = Some(format!("{}/request/{uri_token}", request.client_id));

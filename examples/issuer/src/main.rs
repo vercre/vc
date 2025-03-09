@@ -297,7 +297,6 @@ async fn notification(
     TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
     Json(mut req): Json<NotificationRequest>,
 ) -> AxResult<NotificationResponse> {
-    req.credential_issuer = format!("http://{host}");
     req.access_token = auth.token().to_string();
     endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
 }

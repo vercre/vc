@@ -203,9 +203,9 @@ pub enum Type {
 impl From<Type> for String {
     fn from(t: Type) -> Self {
         match t {
-            Type::Jwt => "jwt".into(),
-            Type::Openid4VciProofJwt => "openid4vci-proof+jwt".into(),
-            Type::OauthAuthzReqJwt => "oauth-authz-req+jwt".into(),
+            Type::Jwt => "jwt".to_string(),
+            Type::Openid4VciProofJwt => "openid4vci-proof+jwt".to_string(),
+            Type::OauthAuthzReqJwt => "oauth-authz-req+jwt".to_string(),
         }
     }
 }

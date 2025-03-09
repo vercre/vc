@@ -505,17 +505,17 @@ mod tests {
     #[test]
     fn authorization_configuration_id() {
         let request = AuthorizationRequest::Object(RequestObject {
-            credential_issuer: "https://example.com".into(),
+            credential_issuer: "https://example.com".to_string(),
             response_type: oauth::ResponseType::Code,
-            client_id: "1234".into(),
-            redirect_uri: Some("http://localhost:3000/callback".into()),
-            state: Some("1234".into()),
-            code_challenge: "1234".into(),
+            client_id: "1234".to_string(),
+            redirect_uri: Some("http://localhost:3000/callback".to_string()),
+            state: Some("1234".to_string()),
+            code_challenge: "1234".to_string(),
             code_challenge_method: oauth::CodeChallengeMethod::S256,
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: AuthorizationCredential::ConfigurationId {
-                    credential_configuration_id: "EmployeeID_JWT".into(),
+                    credential_configuration_id: "EmployeeID_JWT".to_string(),
                 },
                 claims: Some(vec![
                     ClaimsDescription {
@@ -533,8 +533,8 @@ mod tests {
                 ]),
                 locations: None,
             }]),
-            subject_id: "1234".into(),
-            wallet_issuer: Some("1234".into()),
+            subject_id: "1234".to_string(),
+            wallet_issuer: Some("1234".to_string()),
 
             ..RequestObject::default()
         });
@@ -558,26 +558,29 @@ mod tests {
     #[test]
     fn authorization_format() {
         let request = AuthorizationRequest::Object(RequestObject {
-            credential_issuer: "https://example.com".into(),
+            credential_issuer: "https://example.com".to_string(),
             response_type: oauth::ResponseType::Code,
-            client_id: "1234".into(),
-            redirect_uri: Some("http://localhost:3000/callback".into()),
-            state: Some("1234".into()),
-            code_challenge: "1234".into(),
+            client_id: "1234".to_string(),
+            redirect_uri: Some("http://localhost:3000/callback".to_string()),
+            state: Some("1234".to_string()),
+            code_challenge: "1234".to_string(),
             code_challenge_method: oauth::CodeChallengeMethod::S256,
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: AuthorizationCredential::Format(Format::JwtVcJson(ProfileW3c {
                     credential_definition: CredentialDefinition {
-                        type_: vec!["VerifiableCredential".into(), "EmployeeIDCredential".into()],
+                        type_: vec![
+                            "VerifiableCredential".to_string(),
+                            "EmployeeIDCredential".to_string(),
+                        ],
                         ..CredentialDefinition::default()
                     },
                 })),
 
                 ..AuthorizationDetail::default()
             }]),
-            subject_id: "1234".into(),
-            wallet_issuer: Some("1234".into()),
+            subject_id: "1234".to_string(),
+            wallet_issuer: Some("1234".to_string()),
 
             ..RequestObject::default()
         });

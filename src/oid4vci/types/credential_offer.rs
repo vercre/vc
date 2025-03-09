@@ -241,7 +241,7 @@ mod tests {
     #[test]
     fn credential_offer() {
         let offer = CredentialOffer {
-            credential_configuration_ids: vec!["UniversityDegree_JWT".into()],
+            credential_configuration_ids: vec!["UniversityDegree_JWT".to_string()],
             grants: None,
         };
 

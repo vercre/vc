@@ -118,7 +118,7 @@ mod test {
     // Test that error details are retuned as json.
     #[test]
     fn err_json() {
-        let err = Error::InvalidRequest("bad request".into());
+        let err = Error::InvalidRequest("bad request".to_string());
         let ser: Value = serde_json::from_str(&err.to_string()).unwrap();
         assert_eq!(ser, json!({"error":"invalid_request", "error_description": "bad request"}));
     }
@@ -126,7 +126,7 @@ mod test {
     // Test that the error details are returned as an http query string.
     #[test]
     fn err_querystring() {
-        let err = Error::InvalidRequest("Invalid request description".into());
+        let err = Error::InvalidRequest("Invalid request description".to_string());
         let ser = urlencode::to_string(&err).unwrap();
         assert_eq!(ser, "error=invalid_request&error_description=Invalid%20request%20description");
     }
@@ -134,7 +134,7 @@ mod test {
     // Test that the error details are returned as an http query string.
     #[test]
     fn err_serialize() {
-        let err = Error::InvalidRequest("bad request".into());
+        let err = Error::InvalidRequest("bad request".to_string());
         let ser = serde_json::to_value(&err).unwrap();
         assert_eq!(ser, json!({"error":"invalid_request", "error_description": "bad request"}));
     }

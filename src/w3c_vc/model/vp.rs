@@ -104,8 +104,8 @@ impl VpBuilder {
 
         // sensibile defaults
         builder.vp.id = Some(format!("urn:uuid:{}", Uuid::new_v4()));
-        builder.vp.context.push(Kind::String("https://www.w3.org/2018/credentials/v1".into()));
-        builder.vp.type_ = OneMany::One("VerifiablePresentation".into());
+        builder.vp.context.push(Kind::String("https://www.w3.org/2018/credentials/v1".to_string()));
+        builder.vp.type_ = OneMany::One("VerifiablePresentation".to_string());
         builder
     }
 
@@ -230,11 +230,13 @@ mod tests {
 
     fn base_vp() -> anyhow::Result<VerifiablePresentation> {
         let mut subj = CredentialSubject::default();
-        subj.id = Some("did:example:ebfeb1f712ebc6f1c276e12ec21".into());
+        subj.id = Some("did:example:ebfeb1f712ebc6f1c276e12ec21".to_string());
         subj.claims = json!({"employeeID": "1234567890"}).as_object().unwrap().clone();
 
         let vc = VerifiableCredential::builder()
-            .add_context(Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()))
+            .add_context(Kind::String(
+                "https://www.w3.org/2018/credentials/examples/v1".to_string(),
+            ))
             .id("https://example.com/credentials/3732")
             .add_type("EmployeeIDCredential")
             .issuer("https://example.com/issuers/14")
@@ -242,7 +244,9 @@ mod tests {
             .build()?;
 
         VerifiablePresentation::builder()
-            .add_context(Kind::String("https://www.w3.org/2018/credentials/examples/v1".into()))
+            .add_context(Kind::String(
+                "https://www.w3.org/2018/credentials/examples/v1".to_string(),
+            ))
             .add_type("EmployeeIDCredential")
             .add_credential(Kind::Object(vc))
             .build()

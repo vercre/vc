@@ -200,7 +200,7 @@ impl CreateOfferRequest {
         for cred_id in &self.credential_configuration_ids {
             if !ctx.issuer.credential_configurations_supported.contains_key(cred_id) {
                 return Err(Error::UnsupportedCredentialType(
-                    "requested credential is unsupported".into(),
+                    "requested credential is unsupported".to_string(),
                 ));
             }
         }
@@ -211,7 +211,9 @@ impl CreateOfferRequest {
             if let Some(supported_grants) = &ctx.server.oauth.grant_types_supported {
                 for gt in grant_types {
                     if !supported_grants.contains(gt) {
-                        return Err(Error::UnsupportedGrantType("unsupported grant type".into()));
+                        return Err(Error::UnsupportedGrantType(
+                            "unsupported grant type".to_string(),
+                        ));
                     }
                 }
             }
@@ -243,9 +245,9 @@ impl CreateOfferRequest {
         if grant_types.contains(&GrantType::PreAuthorizedCode) {
             let tx_code_def = if self.tx_code_required {
                 Some(TxCode {
-                    input_mode: Some("numeric".into()),
+                    input_mode: Some("numeric".to_string()),
                     length: Some(6),
-                    description: Some("Please provide the one-time code received".into()),
+                    description: Some("Please provide the one-time code received".to_string()),
                 })
             } else {
                 None

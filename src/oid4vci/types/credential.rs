@@ -323,11 +323,11 @@ mod tests {
         assert_snapshot!("credential_identifier", &deserialized);
 
         let request = CredentialRequest {
-            access_token: "1234".into(),
+            access_token: "1234".to_string(),
             credential: RequestBy::Identifier("EngineeringDegree2023".to_string()),
             proof: Some(Proof::Single {
                 proof_type: SingleProof::Jwt {
-                    jwt: "SomeJWT".into(),
+                    jwt: "SomeJWT".to_string(),
                 },
             }),
             ..CredentialRequest::default()
@@ -354,11 +354,11 @@ mod tests {
         assert_snapshot!("multiple_proofs", &deserialized);
 
         let request = CredentialRequest {
-            access_token: "1234".into(),
+            access_token: "1234".to_string(),
             credential: RequestBy::Identifier("EngineeringDegree2023".to_string()),
             proof: Some(Proof::Multiple(MultipleProofs::Jwt(vec![
-                "SomeJWT1".into(),
-                "SomeJWT2".into(),
+                "SomeJWT1".to_string(),
+                "SomeJWT2".to_string(),
             ]))),
             ..CredentialRequest::default()
         };

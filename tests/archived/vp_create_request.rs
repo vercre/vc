@@ -35,7 +35,7 @@ async fn same_device() {
 
     let mut request: CreateRequestRequest =
         serde_json::from_value::<CreateRequestRequest>(body).expect("should deserialize");
-    request.client_id = "http://localhost:8080".into();
+    request.client_id = "http://localhost:8080".to_string();
 
     let response = endpoint::handle("http://localhost:8080", request, &provider).await.expect("ok");
 
@@ -82,7 +82,7 @@ async fn cross_device() {
 
     let mut request =
         serde_json::from_value::<CreateRequestRequest>(body).expect("should deserialize");
-    request.client_id = "http://localhost:8080".into();
+    request.client_id = "http://localhost:8080".to_string();
 
     let response = endpoint::handle("http://localhost:8080", request, &provider).await.expect("ok");
 

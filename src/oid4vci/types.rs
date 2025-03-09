@@ -22,16 +22,6 @@ pub use crate::oauth::GrantType;
 /// subsequent actions after issuance.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct NotificationRequest {
-    /// The Credential Issuer for which the notification is intended.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub credential_issuer: String,
-
-    /// A previously issued Access Token, as extracted from the Authorization
-    /// header of the Credential Request. Used to grant access to register a
-    /// client.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub access_token: String,
-
     /// The `notification_id` received in the Credential Response or Deferred
     /// Credential Response. It is used to identify an issuance flow that
     /// contained one or more Credentials with the same Credential
@@ -49,6 +39,12 @@ pub struct NotificationRequest {
     /// outside the set %x20-21 / %x23-5B / %x5D-7E.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub event_description: Option<String>,
+
+    /// A previously issued Access Token, as extracted from the Authorization
+    /// header of the Credential Request. Used to grant access to register a
+    /// client.
+    #[serde(skip)]
+    pub access_token: String,
 }
 
 /// Used by the Credential Issuer to notify the Wallet of certain events for
@@ -78,7 +74,7 @@ pub enum NotificationEvent {
 ///
 /// Use of the HTTP status code 204 (No Content) is RECOMMENDED.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct NotificationResponse {}
+pub struct NotificationResponse;
 
 /// A request for a nonce is made by sending an empty request to the Issuer's
 /// Nonce endpoint (`nonce_endpoint` Credential Issuer Metadata).

@@ -47,7 +47,7 @@ macro_rules! snapshot{
 /// Panics if the tracing subscriber cannot be set.
 pub fn init_tracer() {
     INIT.call_once(|| {
-        let subscriber = FmtSubscriber::builder().with_max_level(Level::ERROR).finish();
+        let subscriber = FmtSubscriber::builder().with_max_level(Level::INFO).finish();
         tracing::subscriber::set_global_default(subscriber).expect("subscriber set");
     });
 }

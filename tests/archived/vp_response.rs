@@ -34,7 +34,7 @@ async fn send_response() {
         scope: None,
         state: Some(state_key.clone()),
         nonce: nonce.clone(),
-        response_mode: Some("direct_post.jwt".into()),
+        response_mode: Some("direct_post.jwt".to_string()),
         response_uri: Some(format!("{CLIENT_ID}/direct_post.jwt")),
         presentation_definition: Kind::Object(pres_def.clone()),
         client_id_scheme: Some(ClientIdScheme::Did),

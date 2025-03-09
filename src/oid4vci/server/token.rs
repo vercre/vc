@@ -51,7 +51,7 @@ pub async fn token(
 
     // RFC 6749 requires a particular error here
     let Ok(state) = StateStore::get::<State>(provider, auth_code).await else {
-        return Err(Error::InvalidGrant("authorization code is invalid".into()));
+        return Err(Error::InvalidGrant("authorization code is invalid".to_string()));
     };
     // authorization code is one-time use
     StateStore::purge(provider, auth_code)
@@ -148,7 +148,7 @@ impl TokenRequest {
                 };
                 // grant_type supported?
                 if !grant_types_supported.contains(&GrantType::PreAuthorizedCode) {
-                    return Err(Error::InvalidGrant("unsupported `grant_type`".into()));
+                    return Err(Error::InvalidGrant("unsupported `grant_type`".to_string()));
                 }
 
                 // anonymous access allowed?
@@ -156,12 +156,14 @@ impl TokenRequest {
                     || self.client_id.as_ref().is_some_and(String::is_empty))
                     && !server.pre_authorized_grant_anonymous_access_supported
                 {
-                    return Err(Error::InvalidClient("anonymous access is not supported".into()));
+                    return Err(Error::InvalidClient(
+                        "anonymous access is not supported".to_string(),
+                    ));
                 }
 
                 // tx_code (PIN)
                 if tx_code != &auth_state.tx_code {
-                    return Err(Error::InvalidGrant("invalid `tx_code` provided".into()));
+                    return Err(Error::InvalidGrant("invalid `tx_code` provided".to_string()));
                 }
             }
             TokenGrantType::AuthorizationCode {
@@ -175,7 +177,7 @@ impl TokenRequest {
 
                 // grant_type supported?
                 if !grant_types_supported.contains(&GrantType::AuthorizationCode) {
-                    return Err(Error::InvalidGrant("unsupported `grant_type`".into()));
+                    return Err(Error::InvalidGrant("unsupported `grant_type`".to_string()));
                 }
 
                 // client_id is the same as the one used to obtain the authorization code
@@ -184,7 +186,7 @@ impl TokenRequest {
                 }
                 if self.client_id.as_ref() != Some(&auth_state.client_id) {
                     return Err(Error::InvalidClient(
-                        "`client_id` differs from authorized one".into(),
+                        "`client_id` differs from authorized one".to_string(),
                     ));
                 }
 
@@ -192,16 +194,16 @@ impl TokenRequest {
                 // i.e. either 'None' or 'Some(redirect_uri)'
                 if redirect_uri != &auth_state.redirect_uri {
                     return Err(Error::InvalidGrant(
-                        "`redirect_uri` differs from authorized one".into(),
+                        "`redirect_uri` differs from authorized one".to_string(),
                     ));
                 }
 
                 // verifier matches challenge received in authorization request
                 let Some(verifier) = &code_verifier else {
-                    return Err(Error::AccessDenied("`code_verifier` is missing".into()));
+                    return Err(Error::AccessDenied("`code_verifier` is missing".to_string()));
                 };
                 if pkce::code_challenge(verifier) != auth_state.code_challenge {
-                    return Err(Error::AccessDenied("`code_verifier` is invalid".into()));
+                    return Err(Error::AccessDenied("`code_verifier` is invalid".to_string()));
                 }
             }
         }
@@ -209,7 +211,7 @@ impl TokenRequest {
         if let Some(client_id) = &self.client_id {
             // client metadata
             let Ok(client) = Metadata::client(provider, client_id).await else {
-                return Err(Error::InvalidClient("invalid `client_id`".into()));
+                return Err(Error::InvalidClient("invalid `client_id`".to_string()));
             };
             // Client and server must support the same scopes.
             if let Some(client_scope) = &client.oauth.scope {
@@ -268,7 +270,7 @@ impl TokenRequest {
             if !found {
                 // we're here if requested `authorization_detail` has not been authorized
                 return Err(Error::AccessDenied(
-                    "requested credential has not been authorized".into(),
+                    "requested credential has not been authorized".to_string(),
                 ));
             }
         }

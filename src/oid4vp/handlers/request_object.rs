@@ -61,7 +61,7 @@ async fn process(
 
     // verify client_id (perhaps should use 'verify' method?)
     if req_obj.client_id != format!("{}/post", request.client_id) {
-        return Err(Error::InvalidRequest("client ID mismatch".into()));
+        return Err(Error::InvalidRequest("client ID mismatch".to_string()));
     }
 
     let jws = JwsBuilder::new()

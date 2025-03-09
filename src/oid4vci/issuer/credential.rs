@@ -44,7 +44,7 @@ pub async fn credential(
     tracing::debug!("credential");
 
     let Ok(state) = StateStore::get::<State>(provider, &request.access_token).await else {
-        return Err(Error::AccessDenied("invalid access token".into()));
+        return Err(Error::AccessDenied("invalid access token".to_string()));
     };
     let issuer = Metadata::issuer(provider, credential_issuer)
         .await
@@ -75,7 +75,7 @@ pub async fn credential(
 
     // defer issuance as claims are pending (approval)
     if dataset.pending {
-        return ctx.defer_response(provider, request).await;
+        return ctx.defer(provider, request).await;
     }
 
     // delete nonces
@@ -86,7 +86,7 @@ pub async fn credential(
     }
 
     // issue VC
-    ctx.issue_response(provider, dataset).await
+    ctx.issue(provider, dataset).await
 }
 
 impl Request for CredentialRequest {
@@ -122,7 +122,7 @@ impl CredentialRequest {
         tracing::debug!("credential::verify");
 
         if ctx.state.is_expired() {
-            return Err(Error::InvalidCredentialRequest("token state expired".into()));
+            return Err(Error::InvalidCredentialRequest("token state expired".to_string()));
         }
 
         // TODO: refactor into separate function.
@@ -133,7 +133,7 @@ impl CredentialRequest {
 
             // TODO: cater for non-JWT proofs - use w3c-vc::decode method
             let _ = supported_types.get("jwt").ok_or_else(|| {
-                Error::InvalidCredentialRequest("proof type not supported".into())
+                Error::InvalidCredentialRequest("proof type not supported".to_string())
             })?;
 
             // extract proof JWT(s) from request
@@ -194,7 +194,7 @@ impl CredentialRequest {
     // `credential_configuration_id`.
     fn authorized_detail(&self, ctx: &Context) -> Result<AuthorizedDetail> {
         let Stage::Validated(token) = &ctx.state.stage else {
-            return Err(Error::AccessDenied("invalid access token state".into()));
+            return Err(Error::AccessDenied("invalid access token state".to_string()));
         };
 
         match &self.credential {
@@ -214,13 +214,13 @@ impl CredentialRequest {
             }
         }
 
-        Err(Error::InvalidCredentialRequest("unauthorized credential requested".into()))
+        Err(Error::InvalidCredentialRequest("unauthorized credential requested".to_string()))
     }
 }
 
 impl Context {
     // Issue the requested credential.
-    async fn issue_response(
+    async fn issue(
         &self, provider: &impl Provider, dataset: Dataset,
     ) -> Result<CredentialResponse> {
         // generate the issuance time stamp
@@ -245,7 +245,7 @@ impl Context {
         state.expires_at = Utc::now() + Expire::Access.duration();
 
         let Stage::Validated(token_state) = state.stage else {
-            return Err(Error::AccessDenied("invalid access token state".into()));
+            return Err(Error::AccessDenied("invalid access token state".to_string()));
         };
         state.stage = Stage::Validated(token_state.clone());
 
@@ -253,9 +253,8 @@ impl Context {
             .await
             .map_err(|e| server!("issue saving state: {e}"))?;
 
-        // create issuance state for notification endpoint
-        // TODO: save credential in state !!
-        // state.stage = Stage::Issued(Credential { credential: vc, issuance: issuance_dt });
+        // TODO: create issuance state for notification endpoint
+        // state.stage = Stage::Issued(credential_configuration_id, credential_identifier);
         let notification_id = generate::notification_id();
 
         StateStore::put(provider, &notification_id, &state, state.expires_at)
@@ -280,7 +279,7 @@ impl Context {
 
         // credential's status lookup information
         let Some(subject_id) = &self.state.subject_id else {
-            return Err(Error::AccessDenied("invalid subject id".into()));
+            return Err(Error::AccessDenied("invalid subject id".to_string()));
         };
         let status = Status::status(provider, subject_id, "credential_identifier")
             .await
@@ -346,7 +345,7 @@ impl Context {
     }
 
     // Defer issuance of the requested credential.
-    async fn defer_response(
+    async fn defer(
         &self, provider: &impl Provider, request: CredentialRequest,
     ) -> Result<CredentialResponse> {
         let txn_id = generate::transaction_id();
@@ -384,7 +383,7 @@ impl Context {
 
         // get claims dataset for `credential_identifier`
         let Some(subject_id) = &self.state.subject_id else {
-            return Err(Error::AccessDenied("invalid subject id".into()));
+            return Err(Error::AccessDenied("invalid subject id".to_string()));
         };
         let mut dataset = Subject::dataset(provider, subject_id, identifier)
             .await

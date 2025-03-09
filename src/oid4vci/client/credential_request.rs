@@ -1,7 +1,8 @@
 //! # Credential Request Builder
 
 use crate::oid4vci::types::{
-    CredentialRequest, CredentialResponseEncryption, MultipleProofs, Proof, RequestBy, SingleProof,
+    CredentialRequest, CredentialResponseEncryption, MultipleProofs, NotificationEvent,
+    NotificationRequest, Proof, RequestBy, SingleProof,
 };
 
 impl CredentialRequest {
@@ -9,6 +10,14 @@ impl CredentialRequest {
     #[must_use]
     pub fn builder() -> CredentialRequestBuilder<NoCredential, NoProofs> {
         CredentialRequestBuilder::new()
+    }
+}
+
+impl NotificationRequest {
+    /// Create a new `NotificationRequest`.
+    #[must_use]
+    pub fn builder() -> NotificationRequestBuilder<NoNotification, NoAccessToken> {
+        NotificationRequestBuilder::new()
     }
 }
 
@@ -145,6 +154,109 @@ impl CredentialRequestBuilder<Credential, Proofs> {
             proof,
             credential_response_encryption: self.response_encryption,
             access_token: self.access_token.unwrap_or_default(),
+        }
+    }
+}
+
+/// Build a [`NotificationRequest`].
+#[derive(Debug)]
+pub struct NotificationRequestBuilder<N, A> {
+    notification_id: N,
+    event: NotificationEvent,
+    event_description: Option<String>,
+    access_token: A,
+}
+
+impl Default for NotificationRequestBuilder<NoNotification, NoAccessToken> {
+    fn default() -> Self {
+        Self {
+            notification_id: NoNotification,
+            event: NotificationEvent::CredentialAccepted,
+            event_description: None,
+            access_token: NoAccessToken,
+        }
+    }
+}
+
+/// No credential configuration id is set.
+#[doc(hidden)]
+pub struct NoNotification;
+/// A credential identifier id is set.
+#[doc(hidden)]
+pub struct Notification(String);
+
+/// No access token is set.
+#[doc(hidden)]
+pub struct NoAccessToken;
+/// Access token is set.
+#[doc(hidden)]
+pub struct AccessToken(String);
+
+impl NotificationRequestBuilder<NoNotification, NoAccessToken> {
+    /// Create a new `CreateOfferRequestBuilder`.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl<A> NotificationRequestBuilder<NoNotification, A> {
+    /// Specify only when credential Authorization Details was returned in the
+    /// Token Response.
+    #[must_use]
+    pub fn notification_id(
+        self, credential_identifier: impl Into<String>,
+    ) -> NotificationRequestBuilder<Notification, A> {
+        NotificationRequestBuilder {
+            notification_id: Notification(credential_identifier.into()),
+            event: self.event,
+            event_description: self.event_description,
+            access_token: self.access_token,
+        }
+    }
+}
+
+impl<N> NotificationRequestBuilder<N, NoAccessToken> {
+    /// Specify the (previously authenticated) Holder for the Issuer to use
+    /// when authorizing credential issuance.
+    #[must_use]
+    pub fn access_token(
+        self, access_token: impl Into<String>,
+    ) -> NotificationRequestBuilder<N, AccessToken> {
+        NotificationRequestBuilder {
+            notification_id: self.notification_id,
+            event: self.event,
+            event_description: self.event_description,
+            access_token: AccessToken(access_token.into()),
+        }
+    }
+}
+
+impl<N, A> NotificationRequestBuilder<N, A> {
+    /// Specify when the credential response is to be encrypted.
+    #[must_use]
+    pub fn event(mut self, event: NotificationEvent) -> Self {
+        self.event = event;
+        self
+    }
+
+    /// Specify the access token to use for this credential request.
+    #[must_use]
+    pub fn event_description(mut self, event_description: impl Into<String>) -> Self {
+        self.event_description = Some(event_description.into());
+        self
+    }
+}
+
+impl NotificationRequestBuilder<Notification, AccessToken> {
+    /// Build the Notification request.
+    #[must_use]
+    pub fn build(self) -> NotificationRequest {
+        NotificationRequest {
+            notification_id: self.notification_id.0,
+            event: self.event,
+            event_description: self.event_description,
+            access_token: self.access_token.0,
         }
     }
 }

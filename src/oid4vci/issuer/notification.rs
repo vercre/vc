@@ -23,10 +23,9 @@ use tracing::instrument;
 
 use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Provider, StateStore};
-use crate::oid4vci::state::{Stage, State};
+use crate::oid4vci::state::State;
 use crate::oid4vci::types::{NotificationRequest, NotificationResponse};
 use crate::oid4vci::{Error, Result};
-use crate::server;
 
 /// Notification request handler.
 ///
@@ -36,45 +35,30 @@ use crate::server;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn notification(
-    provider: impl Provider, request: NotificationRequest,
+    credential_issuer: &str, provider: &impl Provider, request: NotificationRequest,
 ) -> Result<NotificationResponse> {
-    process(&provider, request).await
+    tracing::debug!("notification");
+
+    // verify access token
+    let _ = StateStore::get::<State>(provider, &request.access_token)
+        .await
+        .map_err(|_| Error::AccessDenied("invalid access token".to_string()))?;
+
+    let Ok(_state) = StateStore::get::<State>(provider, &request.notification_id).await else {
+        return Err(Error::AccessDenied("invalid notification id".to_string()));
+    };
+
+    tracing::info!("notification: {:#?}, {:#?}", request.event, request.event_description,);
+
+    Ok(NotificationResponse)
 }
 
 impl Request for NotificationRequest {
     type Response = NotificationResponse;
 
     fn handle(
-        self, _credential_issuer: &str, provider: &impl Provider,
+        self, credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        notification(provider.clone(), self)
+        notification(credential_issuer, provider, self)
     }
-}
-
-#[allow(clippy::unused_async)]
-#[allow(dead_code)]
-async fn process(
-    provider: &impl Provider, request: NotificationRequest,
-) -> Result<NotificationResponse> {
-    tracing::debug!("notification::process");
-
-    let Ok(state) = StateStore::get::<State>(provider, &request.notification_id).await else {
-        return Err(Error::AccessDenied("invalid access token".into()));
-    };
-    let Stage::Issued(credential) = state.stage else {
-        return Err(server!("issued state not found"));
-    };
-
-    StateStore::purge(provider, &request.notification_id)
-        .await
-        .map_err(|e| server!("failed to purge state: {e}"))?;
-
-    tracing::info!(
-        "notification: {:#?}, {:#?} for credential: {:#?}",
-        request.event,
-        request.event_description,
-        credential
-    );
-
-    Ok(NotificationResponse {})
 }

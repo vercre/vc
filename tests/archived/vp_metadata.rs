@@ -13,7 +13,7 @@ async fn metadata_ok() {
     let provider = test_verifier::ProviderImpl::new();
 
     let request = MetadataRequest {
-        client_id: "http://localhost:8080".into(),
+        client_id: "http://localhost:8080".to_string(),
     };
     let response = endpoint::handle("http://localhost:8080", request, &provider).await.expect("ok");
     assert_snapshot!("response", response, {

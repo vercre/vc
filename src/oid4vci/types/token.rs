@@ -55,10 +55,10 @@ impl TokenRequest {
     pub fn form_encode(&self) -> anyhow::Result<HashMap<String, String>> {
         let mut map = HashMap::new();
         // if !self.credential_issuer.is_empty() {
-        //     map.insert("credential_issuer".into(), self.credential_issuer.clone());
+        //     map.insert("credential_issuer".to_string(), self.credential_issuer.clone());
         // }
         if let Some(client_id) = &self.client_id {
-            map.insert("client_id".into(), client_id.clone());
+            map.insert("client_id".to_string(), client_id.clone());
         }
         match &self.grant_type {
             TokenGrantType::AuthorizationCode {
@@ -66,36 +66,39 @@ impl TokenRequest {
                 redirect_uri,
                 code_verifier,
             } => {
-                map.insert("code".into(), code.clone());
+                map.insert("code".to_string(), code.clone());
                 if let Some(redirect_uri) = redirect_uri {
-                    map.insert("redirect_uri".into(), redirect_uri.clone());
+                    map.insert("redirect_uri".to_string(), redirect_uri.clone());
                 }
                 if let Some(code_verifier) = code_verifier {
-                    map.insert("code_verifier".into(), code_verifier.clone());
+                    map.insert("code_verifier".to_string(), code_verifier.clone());
                 }
             }
             TokenGrantType::PreAuthorizedCode {
                 pre_authorized_code,
                 tx_code,
             } => {
-                map.insert("pre-authorized_code".into(), pre_authorized_code.clone());
+                map.insert("pre-authorized_code".to_string(), pre_authorized_code.clone());
                 if let Some(tx_code) = tx_code {
-                    map.insert("tx_code".into(), tx_code.clone());
+                    map.insert("tx_code".to_string(), tx_code.clone());
                 }
             }
         }
         if let Some(authorization_details) = &self.authorization_details {
             let as_json = serde_json::to_string(authorization_details)?;
-            map.insert("authorization_details".into(), urlencoding::encode(&as_json).to_string());
+            map.insert(
+                "authorization_details".to_string(),
+                urlencoding::encode(&as_json).to_string(),
+            );
         }
         if let Some(client_assertion) = &self.client_assertion {
             map.insert(
-                "client_assertion_type".into(),
+                "client_assertion_type".to_string(),
                 urlencoding::encode("urn:ietf:params:oauth:client-assertion-type:jwt-bearer")
                     .into(),
             );
             let ClientAssertion::JwtBearer { client_assertion } = client_assertion;
-            map.insert("client_assertion".into(), client_assertion.clone());
+            map.insert("client_assertion".to_string(), client_assertion.clone());
         }
         Ok(map)
     }
@@ -289,16 +292,16 @@ mod tests {
     #[test]
     fn token_request_form_encoding() {
         let request = TokenRequest {
-            // credential_issuer: "https://example.com".into(),
-            client_id: Some("1234".into()),
+            // credential_issuer: "https://example.com".to_string(),
+            client_id: Some("1234".to_string()),
             grant_type: TokenGrantType::PreAuthorizedCode {
-                pre_authorized_code: "WQHhDmQ3ZygxyOPlBjunlA".into(),
-                tx_code: Some("111222".into()),
+                pre_authorized_code: "WQHhDmQ3ZygxyOPlBjunlA".to_string(),
+                tx_code: Some("111222".to_string()),
             },
             authorization_details: Some(vec![AuthorizationDetail {
                 type_: AuthorizationDetailType::OpenIdCredential,
                 credential: AuthorizationCredential::ConfigurationId {
-                    credential_configuration_id: "EmployeeID_JWT".into(),
+                    credential_configuration_id: "EmployeeID_JWT".to_string(),
                 },
                 claims: Some(vec![
                     ClaimsDescription {
@@ -320,7 +323,7 @@ mod tests {
                     ClaimsDescription {
                         path: vec![
                             "credentialSubject".to_string(),
-                            "address".into(),
+                            "address".to_string(),
                             "street_address".to_string(),
                         ],
                         ..ClaimsDescription::default()
@@ -328,7 +331,7 @@ mod tests {
                     ClaimsDescription {
                         path: vec![
                             "credentialSubject".to_string(),
-                            "address".into(),
+                            "address".to_string(),
                             "locality".to_string(),
                         ],
                         ..ClaimsDescription::default()
@@ -336,7 +339,7 @@ mod tests {
                     ClaimsDescription {
                         path: vec![
                             "credentialSubject".to_string(),
-                            "address".into(),
+                            "address".to_string(),
                             "region".to_string(),
                         ],
                         ..ClaimsDescription::default()
@@ -344,16 +347,16 @@ mod tests {
                     ClaimsDescription {
                         path: vec![
                             "credentialSubject".to_string(),
-                            "address".into(),
+                            "address".to_string(),
                             "country".to_string(),
                         ],
                         ..ClaimsDescription::default()
                     },
                 ]),
-                locations: Some(vec!["https://example.com".into()]),
+                locations: Some(vec!["https://example.com".to_string()]),
             }]),
             client_assertion: Some(ClientAssertion::JwtBearer {
-                client_assertion: "Ezie91o7DuPsA2PCLOtRUg".into(),
+                client_assertion: "Ezie91o7DuPsA2PCLOtRUg".to_string(),
             }),
         };
 

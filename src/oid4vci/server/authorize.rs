@@ -151,7 +151,7 @@ impl Context {
 
         // client and server metadata
         let Ok(client) = Metadata::client(provider, &request.client_id).await else {
-            return Err(Error::InvalidClient("invalid `client_id`".into()));
+            return Err(Error::InvalidClient("invalid `client_id`".to_string()));
         };
         // TODO: support authorization issuers
         let Ok(server) = Metadata::server(provider, &request.credential_issuer, None).await else {
@@ -169,7 +169,7 @@ impl Context {
         // Requested `response_type` must be supported by the authorization server.
         if !server.oauth.response_types_supported.contains(&request.response_type) {
             return Err(Error::UnsupportedResponseType(
-                "`response_type` not supported by server".into(),
+                "`response_type` not supported by server".to_string(),
             ));
         }
 
@@ -191,7 +191,7 @@ impl Context {
         let client_grant_types = client.oauth.grant_types.unwrap_or_default();
         if !client_grant_types.contains(&GrantType::AuthorizationCode) {
             return Err(Error::UnauthorizedClient(
-                "authorization_code grant not supported for client".into(),
+                "authorization_code grant not supported for client".to_string(),
             ));
         }
         let server_grant_types = server.oauth.grant_types_supported.unwrap_or_default();
@@ -247,12 +247,12 @@ impl Context {
         // response_type
         if !client.oauth.response_types.unwrap_or_default().contains(&request.response_type) {
             return Err(Error::UnsupportedResponseType(
-                "`response_type` not supported for client".into(),
+                "`response_type` not supported for client".to_string(),
             ));
         }
         if !server.oauth.response_types_supported.contains(&request.response_type) {
             return Err(Error::UnsupportedResponseType(
-                "`response_type` not supported by server".into(),
+                "`response_type` not supported by server".to_string(),
             ));
         }
 
@@ -279,7 +279,7 @@ impl Context {
         for mut detail in authorization_details {
             if detail.type_ != AuthorizationDetailType::OpenIdCredential {
                 return Err(Error::InvalidAuthorizationDetails(
-                    "invalid authorization_details type".into(),
+                    "invalid authorization_details type".to_string(),
                 ));
             }
 
@@ -307,7 +307,7 @@ impl Context {
                 let Some(config) = self.issuer.credential_configurations_supported.get(config_id)
                 else {
                     return Err(Error::InvalidAuthorizationDetails(
-                        "invalid credential_configuration_id".into(),
+                        "invalid credential_configuration_id".to_string(),
                     ));
                 };
                 config.verify_claims(requested).map_err(|e| invalid!("{e}"))?;
@@ -348,7 +348,7 @@ impl Context {
                 }
             }
             if !found {
-                return Err(Error::InvalidScope("invalid scope".into()));
+                return Err(Error::InvalidScope("invalid scope".to_string()));
             }
         }
 
@@ -386,7 +386,7 @@ impl Context {
         // return an error if holder is not authorized for any requested credentials
         if details.is_empty() {
             return Err(Error::AccessDenied(
-                "holder is not authorized for requested credentials".into(),
+                "holder is not authorized for requested credentials".to_string(),
             ));
         }
 
