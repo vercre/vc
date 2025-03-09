@@ -514,6 +514,5 @@ async fn notify_accepted() {
         .access_token(token.access_token)
         .event_description("Credential accepted")
         .build();
-
-    let _ = endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("response is ok");
+    endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("response is ok");
 }
