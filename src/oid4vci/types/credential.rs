@@ -82,12 +82,6 @@ impl Default for RequestBy {
 pub enum Proof {
     /// A single proof of possession of the cryptographic key material to which
     /// the issued Credential instance will be bound to.
-    // #[serde(rename = "proof")]
-    // Single {
-    //     /// The proof type used by the wallet
-    //     #[serde(flatten)]
-    //     proof_type: SingleProof,
-    // },
     #[serde(rename = "proof")]
     Single(SingleProof),
 
@@ -99,9 +93,6 @@ pub enum Proof {
 
 impl Default for Proof {
     fn default() -> Self {
-        // Self::Single {
-        //     proof_type: SingleProof::default(),
-        // }
         Self::Single(SingleProof::default())
     }
 }

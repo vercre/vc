@@ -105,7 +105,7 @@ struct Context {
     issuer: Issuer,
     authorized: AuthorizedDetail,
     configuration: CredentialConfiguration,
-    holder_did: String,
+    holder_dids: Vec<String>,
     nonces: Vec<String>,
 }
 
@@ -125,7 +125,7 @@ impl CredentialRequest {
             return Err(Error::InvalidCredentialRequest("token state expired".to_string()));
         }
 
-        // TODO: refactor into separate function.
+        // FIXME: refactor into separate function.
         if let Some(supported_types) = &ctx.configuration.proof_types_supported {
             let Some(proof) = &self.proof else {
                 return Err(Error::InvalidProof("proof not set".to_string()));
@@ -179,13 +179,13 @@ impl CredentialRequest {
                     return Err(Error::InvalidProof("Proof JWT 'kid' is missing".to_string()));
                 };
 
-                // HACK: save extracted DID for later use when issuing credential
+                // FIXME: save extracted DID for later use when issuing credential
                 let Some(did) = kid.split('#').next() else {
                     return Err(Error::InvalidProof("Proof JWT DID is invalid".to_string()));
                 };
 
                 // TODO: support multiple DID bindings
-                ctx.holder_did = did.into();
+                ctx.holder_dids.push(did.to_string());
             }
         }
 
@@ -231,8 +231,18 @@ impl Context {
         // determine credential format
         let response = match &self.configuration.format {
             Format::JwtVcJson(w3c) => {
-                let vc = self.w3c_vc(provider, &w3c.credential_definition, dataset).await?;
-                self.jwt_vc_json(vc, provider.clone(), issuance_date).await?
+                let mut vcs = vec![];
+
+                for did in &self.holder_dids {
+                    let subject = CredentialSubject {
+                        id: Some(did.clone()),
+                        claims: dataset.claims.clone(),
+                    };
+
+                    let vc = self.w3c_vc(provider, &w3c.credential_definition, subject).await?;
+                    vcs.push(vc);
+                }
+                self.jwt_vc_json(vcs, provider.clone(), issuance_date).await?
             }
             Format::IsoMdl(_) => self.mso_mdoc(dataset, provider.clone()).await?,
 
@@ -272,7 +282,7 @@ impl Context {
     // Generate a W3C Verifiable Credential.
     async fn w3c_vc(
         &self, provider: &impl Provider, credential_definition: &CredentialDefinition,
-        dataset: Dataset,
+        subject: CredentialSubject,
     ) -> Result<VerifiableCredential> {
         // credential type
         let Some(credential_type) = credential_definition.type_.get(1) else {
@@ -299,10 +309,7 @@ impl Context {
             .add_name(name)
             .add_description(description)
             .issuer(credential_issuer)
-            .add_subject(CredentialSubject {
-                id: Some(self.holder_did.clone()),
-                claims: dataset.claims,
-            })
+            .add_subject(subject)
             .status(status)
             .build()
             .map_err(|e| server!("issue building VC: {e}"))
@@ -310,24 +317,30 @@ impl Context {
 
     // Generate a `jwt_vc_json` format credential .
     async fn jwt_vc_json(
-        &self, vc: VerifiableCredential, signer: impl Signer, issuance_date: DateTime<Utc>,
+        &self, vcs: Vec<VerifiableCredential>, signer: impl Signer, issuance_date: DateTime<Utc>,
     ) -> Result<ResponseType> {
-        // sign and return JWT
-        let jwt = proof::create(
-            W3cFormat::JwtVcJson,
-            Payload::Vc {
-                vc: vc.clone(),
-                issued_at: issuance_date.timestamp(),
-            },
-            &signer,
-        )
-        .await
-        .map_err(|e| server!("issue generating `jwt_vc_json` credential: {e}"))?;
+        // sign and return JWT(s)
+        let mut credentials = vec![];
+
+        for vc in vcs {
+            let jwt = proof::create(
+                W3cFormat::JwtVcJson,
+                Payload::Vc {
+                    vc: vc.clone(),
+                    issued_at: issuance_date.timestamp(),
+                },
+                &signer,
+            )
+            .await
+            .map_err(|e| server!("issue generating `jwt_vc_json` credential: {e}"))?;
+
+            credentials.push(Credential {
+                credential: Kind::String(jwt),
+            });
+        }
 
         Ok(ResponseType::Credentials {
-            credentials: vec![Credential {
-                credential: Kind::String(jwt),
-            }],
+            credentials,
             notification_id: None,
         })
     }

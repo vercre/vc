@@ -16,7 +16,7 @@ use credibil_vc::oid4vci::types::{
 };
 use insta::assert_yaml_snapshot as assert_snapshot;
 use utils::issuer::{CREDENTIAL_ISSUER as ALICE_ISSUER, NORMAL_USER, ProviderImpl};
-use utils::wallet::{self, CLIENT_ID as BOB_CLIENT, Keyring};
+use utils::wallet::{self, Keyring};
 
 static BOB_KEYRING: LazyLock<Keyring> = LazyLock::new(wallet::keyring);
 
@@ -64,7 +64,7 @@ async fn offer_val() {
         .jwt_type(Type::Openid4VciProofJwt)
         .payload(
             ProofClaims::new()
-                .client_id(BOB_CLIENT)
+                // .client_id(BOB_CLIENT)
                 .credential_issuer(ALICE_ISSUER)
                 .nonce(nonce.c_nonce),
         )
@@ -169,7 +169,6 @@ async fn two_datasets() {
     let pre_auth_grant = grants.pre_authorized_code.expect("should have pre-authorized code grant");
 
     let request = TokenRequest::builder()
-        // .client_id(BOB_CLIENT)
         .grant_type(TokenGrantType::PreAuthorizedCode {
             pre_authorized_code: pre_auth_grant.pre_authorized_code,
             tx_code: response.tx_code.clone(),
@@ -195,12 +194,7 @@ async fn two_datasets() {
         // proof of possession of key material
         let jws = JwsBuilder::new()
             .jwt_type(Type::Openid4VciProofJwt)
-            .payload(
-                ProofClaims::new()
-                    .client_id(BOB_CLIENT)
-                    .credential_issuer(ALICE_ISSUER)
-                    .nonce(nonce.c_nonce),
-            )
+            .payload(ProofClaims::new().credential_issuer(ALICE_ISSUER).nonce(nonce.c_nonce))
             .add_signer(&*BOB_KEYRING)
             .build()
             .await
@@ -298,12 +292,7 @@ async fn reduce_credentials() {
     // proof of possession of key material
     let jws = JwsBuilder::new()
         .jwt_type(Type::Openid4VciProofJwt)
-        .payload(
-            ProofClaims::new()
-                .client_id(BOB_CLIENT)
-                .credential_issuer(ALICE_ISSUER)
-                .nonce(nonce.c_nonce),
-        )
+        .payload(ProofClaims::new().credential_issuer(ALICE_ISSUER).nonce(nonce.c_nonce))
         .add_signer(&*BOB_KEYRING)
         .build()
         .await
@@ -366,7 +355,6 @@ async fn reduce_claims() {
     let pre_auth_grant = grants.pre_authorized_code.expect("should have pre-authorized code grant");
 
     let request = TokenRequest::builder()
-        // .client_id(BOB_CLIENT)
         .grant_type(TokenGrantType::PreAuthorizedCode {
             pre_authorized_code: pre_auth_grant.pre_authorized_code,
             tx_code: response.tx_code.clone(),
@@ -391,12 +379,7 @@ async fn reduce_claims() {
     // proof of possession of key material
     let jws = JwsBuilder::new()
         .jwt_type(Type::Openid4VciProofJwt)
-        .payload(
-            ProofClaims::new()
-                .client_id(BOB_CLIENT)
-                .credential_issuer(ALICE_ISSUER)
-                .nonce(nonce.c_nonce),
-        )
+        .payload(ProofClaims::new().credential_issuer(ALICE_ISSUER).nonce(nonce.c_nonce))
         .add_signer(&*BOB_KEYRING)
         .build()
         .await
@@ -477,12 +460,7 @@ async fn notify_accepted() {
     // proof of possession of key material
     let jws = JwsBuilder::new()
         .jwt_type(Type::Openid4VciProofJwt)
-        .payload(
-            ProofClaims::new()
-                .client_id(BOB_CLIENT)
-                .credential_issuer(ALICE_ISSUER)
-                .nonce(nonce.c_nonce),
-        )
+        .payload(ProofClaims::new().credential_issuer(ALICE_ISSUER).nonce(nonce.c_nonce))
         .add_signer(&*BOB_KEYRING)
         .build()
         .await
