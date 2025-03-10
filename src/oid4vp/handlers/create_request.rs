@@ -51,7 +51,7 @@ use uuid::Uuid;
 
 use crate::core::{Kind, generate};
 use crate::dif_exch::{ClaimFormat, PresentationDefinition};
-use crate::oid4vp::endpoint::Handler;
+use crate::oid4vp::endpoint::Request;
 use crate::oid4vp::provider::{Metadata, Provider, StateStore};
 use crate::oid4vp::state::{Expire, State};
 use crate::oid4vp::types::{
@@ -96,7 +96,7 @@ pub async fn create_request(
     process(provider, &request).await
 }
 
-impl Handler for CreateRequestRequest {
+impl Request for CreateRequestRequest {
     type Response = CreateRequestResponse;
 
     fn handle(

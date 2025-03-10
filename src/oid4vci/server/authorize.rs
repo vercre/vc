@@ -72,7 +72,7 @@ use tracing::instrument;
 
 use crate::core::generate;
 use crate::oauth::GrantType;
-use crate::oid4vci::endpoint::Handler;
+use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
 use crate::oid4vci::state::{Authorization, Expire, Stage, State};
 use crate::oid4vci::types::{
@@ -126,7 +126,7 @@ pub async fn authorize(
     ctx.process(&provider, request).await
 }
 
-impl Handler for AuthorizationRequest {
+impl Request for AuthorizationRequest {
     type Response = AuthorizationResponse;
 
     fn handle(

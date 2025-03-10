@@ -19,7 +19,7 @@
 use tracing::instrument;
 
 use crate::oid4vci::Result;
-use crate::oid4vci::endpoint::Handler;
+use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider};
 use crate::oid4vci::types::{OAuthServerRequest, OAuthServerResponse};
 use crate::server;
@@ -37,7 +37,7 @@ pub async fn metadata(
     process(&provider, request).await
 }
 
-impl Handler for OAuthServerRequest {
+impl Request for OAuthServerRequest {
     type Response = OAuthServerResponse;
 
     fn handle(

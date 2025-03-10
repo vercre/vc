@@ -21,7 +21,7 @@
 
 use tracing::instrument;
 
-use crate::oid4vci::endpoint::Handler;
+use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Provider, StateStore};
 use crate::oid4vci::state::State;
 use crate::oid4vci::types::{NotificationRequest, NotificationResponse};
@@ -53,7 +53,7 @@ pub async fn notification(
     Ok(NotificationResponse)
 }
 
-impl Handler for NotificationRequest {
+impl Request for NotificationRequest {
     type Response = NotificationResponse;
 
     fn handle(

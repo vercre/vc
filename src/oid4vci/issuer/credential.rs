@@ -16,7 +16,7 @@ use credibil_infosec::jose::jws::{self, Key};
 use tracing::instrument;
 
 use crate::core::{Kind, generate};
-use crate::oid4vci::endpoint::Handler;
+use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
 use crate::oid4vci::state::{Deferrance, Expire, Stage, State};
 use crate::oid4vci::types::{
@@ -89,7 +89,7 @@ pub async fn credential(
     ctx.issue(provider, dataset).await
 }
 
-impl Handler for CredentialRequest {
+impl Request for CredentialRequest {
     type Response = CredentialResponse;
 
     fn handle(

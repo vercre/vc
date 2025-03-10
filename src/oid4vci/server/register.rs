@@ -3,7 +3,7 @@
 use tracing::instrument;
 
 use crate::oid4vci::Result;
-use crate::oid4vci::endpoint::Handler;
+use crate::oid4vci::endpoint::Request;
 use crate::oid4vci::provider::{Provider, StateStore};
 use crate::oid4vci::state::State;
 use crate::oid4vci::types::{RegistrationRequest, RegistrationResponse};
@@ -23,7 +23,7 @@ pub async fn register(
     process(&provider, request).await
 }
 
-impl Handler for RegistrationRequest {
+impl Request for RegistrationRequest {
     type Response = RegistrationResponse;
 
     fn handle(

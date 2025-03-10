@@ -18,11 +18,10 @@ pub mod oid4vp;
 
 pub mod core;
 pub mod dif_exch;
+mod iso_mdl;
 pub mod oauth;
 pub mod status;
 pub mod w3c_vc;
-
-mod iso_mdl;
 
 /// Re-export DID resolution
 pub mod did {
