@@ -16,7 +16,7 @@ impl CredentialRequest {
 impl NotificationRequest {
     /// Create a new `NotificationRequest`.
     #[must_use]
-    pub fn builder() -> NotificationRequestBuilder<NoNotification, NoToken> {
+    pub fn builder() -> NotificationRequestBuilder<NoNotification> {
         NotificationRequestBuilder::new()
     }
 }
@@ -45,13 +45,6 @@ pub struct NoCredential;
 /// A credential identifier id is set.
 #[doc(hidden)]
 pub struct Credential(RequestBy);
-
-/// No access token is set.
-#[doc(hidden)]
-pub struct NoToken;
-/// Access token is set.
-#[doc(hidden)]
-pub struct Token(String);
 
 /// No proof of possession of key material is set.
 #[doc(hidden)]
@@ -152,20 +145,18 @@ impl CredentialRequestBuilder<Credential, Proofs> {
 
 /// Build a [`NotificationRequest`].
 #[derive(Debug)]
-pub struct NotificationRequestBuilder<N, A> {
+pub struct NotificationRequestBuilder<N> {
     notification_id: N,
     event: NotificationEvent,
     event_description: Option<String>,
-    access_token: A,
 }
 
-impl Default for NotificationRequestBuilder<NoNotification, NoToken> {
+impl Default for NotificationRequestBuilder<NoNotification> {
     fn default() -> Self {
         Self {
             notification_id: NoNotification,
             event: NotificationEvent::CredentialAccepted,
             event_description: None,
-            access_token: NoToken,
         }
     }
 }
@@ -177,7 +168,7 @@ pub struct NoNotification;
 #[doc(hidden)]
 pub struct Notification(String);
 
-impl NotificationRequestBuilder<NoNotification, NoToken> {
+impl NotificationRequestBuilder<NoNotification> {
     /// Create a new `CreateOfferRequestBuilder`.
     #[must_use]
     pub fn new() -> Self {
@@ -185,39 +176,22 @@ impl NotificationRequestBuilder<NoNotification, NoToken> {
     }
 }
 
-impl<A> NotificationRequestBuilder<NoNotification, A> {
+impl NotificationRequestBuilder<NoNotification> {
     /// Specify only when credential Authorization Details was returned in the
     /// Token Response.
     #[must_use]
     pub fn notification_id(
         self, credential_identifier: impl Into<String>,
-    ) -> NotificationRequestBuilder<Notification, A> {
+    ) -> NotificationRequestBuilder<Notification> {
         NotificationRequestBuilder {
             notification_id: Notification(credential_identifier.into()),
             event: self.event,
             event_description: self.event_description,
-            access_token: self.access_token,
         }
     }
 }
 
-impl<N> NotificationRequestBuilder<N, NoToken> {
-    /// Specify the (previously authenticated) Holder for the Issuer to use
-    /// when authorizing credential issuance.
-    #[must_use]
-    pub fn access_token(
-        self, access_token: impl Into<String>,
-    ) -> NotificationRequestBuilder<N, Token> {
-        NotificationRequestBuilder {
-            notification_id: self.notification_id,
-            event: self.event,
-            event_description: self.event_description,
-            access_token: Token(access_token.into()),
-        }
-    }
-}
-
-impl<N, A> NotificationRequestBuilder<N, A> {
+impl<N> NotificationRequestBuilder<N> {
     /// Specify when the credential response is to be encrypted.
     #[must_use]
     pub const fn event(mut self, event: NotificationEvent) -> Self {
@@ -233,7 +207,7 @@ impl<N, A> NotificationRequestBuilder<N, A> {
     }
 }
 
-impl NotificationRequestBuilder<Notification, Token> {
+impl NotificationRequestBuilder<Notification> {
     /// Build the Notification request.
     #[must_use]
     pub fn build(self) -> NotificationRequest {
@@ -241,7 +215,6 @@ impl NotificationRequestBuilder<Notification, Token> {
             notification_id: self.notification_id.0,
             event: self.event,
             event_description: self.event_description,
-            access_token: self.access_token.0,
         }
     }
 }

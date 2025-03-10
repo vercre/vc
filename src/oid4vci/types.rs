@@ -39,12 +39,6 @@ pub struct NotificationRequest {
     /// outside the set %x20-21 / %x23-5B / %x5D-7E.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub event_description: Option<String>,
-
-    /// A previously issued Access Token, as extracted from the Authorization
-    /// header of the Credential Request. Used to grant access to register a
-    /// client.
-    #[serde(skip)]
-    pub access_token: String,
 }
 
 /// Used by the Credential Issuer to notify the Wallet of certain events for

@@ -271,37 +271,6 @@ async fn handle_login(
     (StatusCode::FOUND, Redirect::to(&format!("http://{host}/auth?{qs}"))).into_response()
 }
 
-/// Notification endpoint
-///
-/// This endpoint is used by the Wallet to notify the Credential Issuer of
-/// certain events for issued Credentials. These events enable the Credential
-/// Issuer to take subsequent actions after issuance. The Credential Issuer
-/// needs to return one or more notification_id parameters in the Credential
-/// Response for the Wallet to be able to use this endpoint. Support for this
-/// endpoint is OPTIONAL. The Issuer cannot assume that a notification will be
-/// sent for every issued Credential since the use of this Endpoint is not
-/// mandatory for the Wallet.
-///
-/// The Wallet MUST present to the Notification Endpoint a valid Access Token
-/// issued at the Token Endpoint.
-///
-/// The notification from the Wallet is idempotent. When the Credential Issuer
-/// receives multiple identical calls from the Wallet for the same
-/// notification_id, it returns success. Due to the network errors, there are no
-/// guarantees that a Credential Issuer will receive a notification within a
-/// certain time period or at all.
-///
-/// Communication with the Notification Endpoint MUST utilize TLS.
-#[axum::debug_handler]
-async fn notification(
-    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
-    TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
-    Json(mut req): Json<NotificationRequest>,
-) -> AxResult<NotificationResponse> {
-    req.access_token = auth.token().to_string();
-    endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
-}
-
 /// Token endpoint
 /// RFC 6749: https://tools.ietf.org/html/rfc6749#section-5.1
 ///
@@ -363,6 +332,42 @@ async fn deferred_credential(
 
     #[allow(clippy::large_futures)]
     endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
+}
+
+/// Notification endpoint
+///
+/// This endpoint is used by the Wallet to notify the Credential Issuer of
+/// certain events for issued Credentials. These events enable the Credential
+/// Issuer to take subsequent actions after issuance. The Credential Issuer
+/// needs to return one or more notification_id parameters in the Credential
+/// Response for the Wallet to be able to use this endpoint. Support for this
+/// endpoint is OPTIONAL. The Issuer cannot assume that a notification will be
+/// sent for every issued Credential since the use of this Endpoint is not
+/// mandatory for the Wallet.
+///
+/// The Wallet MUST present to the Notification Endpoint a valid Access Token
+/// issued at the Token Endpoint.
+///
+/// The notification from the Wallet is idempotent. When the Credential Issuer
+/// receives multiple identical calls from the Wallet for the same
+/// notification_id, it returns success. Due to the network errors, there are no
+/// guarantees that a Credential Issuer will receive a notification within a
+/// certain time period or at all.
+///
+/// Communication with the Notification Endpoint MUST utilize TLS.
+#[axum::debug_handler]
+async fn notification(
+    State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
+    TypedHeader(auth): TypedHeader<Authorization<Bearer>>,
+    Json(request): Json<NotificationRequest>,
+) -> AxResult<NotificationResponse> {
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, auth.token().parse().unwrap());
+    let request = endpoint::Request {
+        body: request,
+        headers: Some(headers),
+    };
+    endpoint::handle(&format!("http://{host}"), request, &provider).await.into()
 }
 
 // ----------------------------------------------------------------------------

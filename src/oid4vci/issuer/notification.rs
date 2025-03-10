@@ -19,8 +19,10 @@
 //! no guarantees that a Credential Issuer will receive a notification within a
 //! certain time period or at all.
 
+use http::header::AUTHORIZATION;
 use tracing::instrument;
 
+use crate::invalid;
 use crate::oid4vci::endpoint::{Body, Handler, Request};
 use crate::oid4vci::provider::{Provider, StateStore};
 use crate::oid4vci::state::State;
@@ -35,15 +37,21 @@ use crate::oid4vci::{Error, Result};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 async fn notification(
-    credential_issuer: &str, provider: &impl Provider, request: NotificationRequest,
+    credential_issuer: &str, provider: &impl Provider, request: Request<NotificationRequest>,
 ) -> Result<NotificationResponse> {
     tracing::debug!("notification");
 
+    let Some(headers) = request.headers else {
+        return Err(invalid!("headers not set"));
+    };
+    let access_token = headers[AUTHORIZATION].to_str().map_err(|_| invalid!("no access token"))?;
+
     // verify access token
-    let _ = StateStore::get::<State>(provider, &request.access_token)
+    let _ = StateStore::get::<State>(provider, access_token)
         .await
         .map_err(|_| Error::AccessDenied("invalid access token".to_string()))?;
 
+    let request = request.body;
     let Ok(_state) = StateStore::get::<State>(provider, &request.notification_id).await else {
         return Err(Error::AccessDenied("invalid notification id".to_string()));
     };
@@ -59,7 +67,7 @@ impl Handler for Request<NotificationRequest> {
     fn handle(
         self, credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        notification(credential_issuer, provider, self.body)
+        notification(credential_issuer, provider, self)
     }
 }
 

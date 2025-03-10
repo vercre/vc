@@ -521,8 +521,15 @@ async fn notify_accepted() {
     let request = NotificationRequest::builder()
         .notification_id(notification_id)
         .event(NotificationEvent::CredentialAccepted)
-        .access_token(token.access_token)
         .event_description("Credential accepted")
         .build();
+
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, token.access_token.parse().unwrap());
+    let request = endpoint::Request {
+        body: request,
+        headers: Some(headers),
+    };
+
     endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("response is ok");
 }
