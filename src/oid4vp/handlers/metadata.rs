@@ -7,7 +7,7 @@
 
 use tracing::instrument;
 
-use crate::oid4vp::endpoint::Request;
+use crate::oid4vp::endpoint::Handler;
 use crate::oid4vp::provider::{Metadata, Provider};
 use crate::oid4vp::types::{MetadataRequest, MetadataResponse};
 use crate::oid4vp::{Error, Result};
@@ -25,7 +25,7 @@ pub async fn metadata(
     process(provider, &request).await
 }
 
-impl Request for MetadataRequest {
+impl Handler for MetadataRequest {
     type Response = MetadataResponse;
 
     fn handle(

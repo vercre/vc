@@ -26,7 +26,7 @@ use serde_json_path::JsonPath;
 use tracing::instrument;
 
 use crate::core::Kind;
-use crate::oid4vp::endpoint::Request;
+use crate::oid4vp::endpoint::Handler;
 use crate::oid4vp::provider::{Provider, StateStore};
 use crate::oid4vp::state::State;
 use crate::oid4vp::types::{ResponseRequest, ResponseResponse};
@@ -50,7 +50,7 @@ pub async fn response(
     process(provider, &request).await
 }
 
-impl Request for ResponseRequest {
+impl Handler for ResponseRequest {
     type Response = ResponseResponse;
 
     fn handle(

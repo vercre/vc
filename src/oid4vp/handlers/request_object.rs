@@ -17,7 +17,7 @@
 use credibil_infosec::jose::JwsBuilder;
 use tracing::instrument;
 
-use crate::oid4vp::endpoint::Request;
+use crate::oid4vp::endpoint::Handler;
 use crate::oid4vp::provider::{Provider, StateStore};
 use crate::oid4vp::state::State;
 use crate::oid4vp::types::{RequestObjectRequest, RequestObjectResponse, RequestObjectType};
@@ -38,7 +38,7 @@ pub async fn request_object(
     process(provider, &request).await
 }
 
-impl Request for RequestObjectRequest {
+impl Handler for RequestObjectRequest {
     type Response = RequestObjectResponse;
 
     fn handle(

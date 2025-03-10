@@ -72,7 +72,7 @@ use tracing::instrument;
 
 use crate::core::generate;
 use crate::oauth::GrantType;
-use crate::oid4vci::endpoint::Request;
+use crate::oid4vci::endpoint::Handler;
 use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
 use crate::oid4vci::state::{Expire, Offer, Stage, State};
 use crate::oid4vci::types::{
@@ -177,7 +177,7 @@ pub async fn create_offer(
     }
 }
 
-impl Request for CreateOfferRequest {
+impl Handler for CreateOfferRequest {
     type Response = CreateOfferResponse;
 
     fn handle(
