@@ -46,11 +46,6 @@ pub struct CredentialRequest {
     /// If not present.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub credential_response_encryption: Option<CredentialResponseEncryption>,
-
-    /// A previously issued Access Token, as extracted from the Authorization
-    /// header of the Credential Request.
-    #[serde(skip)]
-    pub access_token: String,
 }
 
 /// Means used to identifiy Credential type and format when requesting a
@@ -337,7 +332,6 @@ mod tests {
         assert_snapshot!("credential_identifier", &deserialized);
 
         let request = CredentialRequest {
-            access_token: "1234".to_string(),
             credential: RequestBy::Identifier("EngineeringDegree2023".to_string()),
             proof: Some(Proof::Single(SingleProof::Jwt {
                 jwt: "SomeJWT".to_string(),
@@ -366,7 +360,6 @@ mod tests {
         assert_snapshot!("multiple_proofs", &deserialized);
 
         let request = CredentialRequest {
-            access_token: "1234".to_string(),
             credential: RequestBy::Identifier("EngineeringDegree2023".to_string()),
             proof: Some(Proof::Multiple(MultipleProofs::Jwt(vec![
                 "SomeJWT1".to_string(),

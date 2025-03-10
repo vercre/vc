@@ -8,7 +8,7 @@ use crate::oid4vci::types::{
 impl CredentialRequest {
     /// Create a new `CredentialRequestBuilder`.
     #[must_use]
-    pub fn builder() -> CredentialRequestBuilder<NoCredential, NoToken, NoProofs> {
+    pub fn builder() -> CredentialRequestBuilder<NoCredential, NoProofs> {
         CredentialRequestBuilder::new()
     }
 }
@@ -23,20 +23,18 @@ impl NotificationRequest {
 
 /// Build a Credential Offer for a Credential Issuer.
 #[derive(Debug)]
-pub struct CredentialRequestBuilder<C, A, P> {
+pub struct CredentialRequestBuilder<C, P> {
     credential: C,
     proofs: P,
     response_encryption: Option<CredentialResponseEncryption>,
-    access_token: A,
 }
 
-impl Default for CredentialRequestBuilder<NoCredential, NoToken, NoProofs> {
+impl Default for CredentialRequestBuilder<NoCredential, NoProofs> {
     fn default() -> Self {
         Self {
             credential: NoCredential,
             proofs: NoProofs,
             response_encryption: None,
-            access_token: NoToken,
         }
     }
 }
@@ -62,7 +60,7 @@ pub struct NoProofs;
 #[doc(hidden)]
 pub struct Proofs(Vec<String>);
 
-impl CredentialRequestBuilder<NoCredential, NoToken, NoProofs> {
+impl CredentialRequestBuilder<NoCredential, NoProofs> {
     /// Create a new `CreateOfferRequestBuilder`.
     #[must_use]
     pub fn new() -> Self {
@@ -70,18 +68,17 @@ impl CredentialRequestBuilder<NoCredential, NoToken, NoProofs> {
     }
 }
 
-impl<A, P> CredentialRequestBuilder<NoCredential, A, P> {
+impl< P> CredentialRequestBuilder<NoCredential, P> {
     /// Specify only when credential Authorization Details was returned in the
     /// Token Response.
     #[must_use]
     pub fn credential_identifier(
         self, credential_identifier: impl Into<String>,
-    ) -> CredentialRequestBuilder<Credential, A, P> {
+    ) -> CredentialRequestBuilder<Credential, P> {
         CredentialRequestBuilder {
             credential: Credential(RequestBy::Identifier(credential_identifier.into())),
             proofs: self.proofs,
             response_encryption: self.response_encryption,
-            access_token: self.access_token,
         }
     }
 
@@ -90,49 +87,29 @@ impl<A, P> CredentialRequestBuilder<NoCredential, A, P> {
     #[must_use]
     pub fn credential_configuration_id(
         self, credential_configuration_id: impl Into<String>,
-    ) -> CredentialRequestBuilder<Credential, A, P> {
+    ) -> CredentialRequestBuilder<Credential, P> {
         CredentialRequestBuilder {
             credential: Credential(RequestBy::ConfigurationId(credential_configuration_id.into())),
             proofs: self.proofs,
             response_encryption: self.response_encryption,
-            access_token: self.access_token,
         }
     }
 }
 
-impl<N, P> CredentialRequestBuilder<N, NoToken, P> {
+impl<C> CredentialRequestBuilder<C, NoProofs> {
     /// Specify the (previously authenticated) Holder for the Issuer to use
     /// when authorizing credential issuance.
     #[must_use]
-    pub fn access_token(
-        self, access_token: impl Into<String>,
-    ) -> CredentialRequestBuilder<N, Token, P> {
-        CredentialRequestBuilder {
-            credential: self.credential,
-            proofs: self.proofs,
-            response_encryption: self.response_encryption,
-            access_token: Token(access_token.into()),
-        }
-    }
-}
-
-impl<C, A> CredentialRequestBuilder<C, A, NoProofs> {
-    /// Specify the (previously authenticated) Holder for the Issuer to use
-    /// when authorizing credential issuance.
-    #[must_use]
-    pub fn with_proof(
-        self, proof_jwt: impl Into<String>,
-    ) -> CredentialRequestBuilder<C, A, Proofs> {
+    pub fn with_proof(self, proof_jwt: impl Into<String>) -> CredentialRequestBuilder<C, Proofs> {
         CredentialRequestBuilder {
             credential: self.credential,
             proofs: Proofs(vec![proof_jwt.into()]),
             response_encryption: self.response_encryption,
-            access_token: self.access_token,
         }
     }
 }
 
-impl<C, A> CredentialRequestBuilder<C, A, Proofs> {
+impl<C> CredentialRequestBuilder<C, Proofs> {
     /// Specify the (previously authenticated) Holder for the Issuer to use
     /// when authorizing credential issuance.
     #[must_use]
@@ -142,7 +119,7 @@ impl<C, A> CredentialRequestBuilder<C, A, Proofs> {
     }
 }
 
-impl<C, A, P> CredentialRequestBuilder<C, A, P> {
+impl<C, P> CredentialRequestBuilder<C, P> {
     /// Specify when the credential response is to be encrypted.
     #[must_use]
     pub fn response_encryption(
@@ -153,7 +130,7 @@ impl<C, A, P> CredentialRequestBuilder<C, A, P> {
     }
 }
 
-impl CredentialRequestBuilder<Credential, Token, Proofs> {
+impl CredentialRequestBuilder<Credential, Proofs> {
     /// Build the Create Offer request.
     #[must_use]
     pub fn build(self) -> CredentialRequest {
@@ -169,7 +146,6 @@ impl CredentialRequestBuilder<Credential, Token, Proofs> {
             credential: self.credential.0,
             proof,
             credential_response_encryption: self.response_encryption,
-            access_token: self.access_token.0,
         }
     }
 }

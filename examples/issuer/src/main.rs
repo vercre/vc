@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use axum::extract::{Path, State};
+use axum::http::header::AUTHORIZATION;
 use axum::http::{HeaderMap, HeaderValue, StatusCode, header};
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
@@ -340,10 +341,15 @@ async fn token(
 #[axum::debug_handler]
 async fn credential(
     State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
-    TypedHeader(auth): TypedHeader<Authorization<Bearer>>, Json(mut req): Json<CredentialRequest>,
+    TypedHeader(auth): TypedHeader<Authorization<Bearer>>, Json(request): Json<CredentialRequest>,
 ) -> AxResult<CredentialResponse> {
-    req.access_token = auth.token().to_string();
-    endpoint::handle(&format!("http://{host}"), req, &provider).await.into()
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, auth.token().parse().unwrap());
+    let request = endpoint::Request {
+        body: request,
+        headers: Some(headers),
+    };
+    endpoint::handle(&format!("http://{host}"), request, &provider).await.into()
 }
 
 // Deferred endpoint

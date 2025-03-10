@@ -6,6 +6,8 @@
 
 use std::fmt::Debug;
 
+use http::HeaderMap;
+
 use crate::invalid;
 use crate::oid4vci::Result;
 use crate::oid4vci::provider::Provider;
@@ -39,7 +41,7 @@ pub struct Request<T: Body> {
     pub body: T,
 
     /// Optional headers associated with this request.
-    pub headers: Option<String>,
+    pub headers: Option<HeaderMap>,
 }
 
 impl<T: Body> From<T> for Request<T> {

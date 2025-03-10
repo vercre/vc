@@ -13,6 +13,7 @@ use credibil_vc::oid4vci::types::{
     CreateOfferRequest, Credential, CredentialRequest, NonceRequest, ProofClaims, ResponseType,
     TokenGrantType, TokenRequest,
 };
+use http::header::{AUTHORIZATION, HeaderMap};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use utils::issuer::{CREDENTIAL_ISSUER as ALICE_ISSUER, NORMAL_USER, ProviderImpl};
 use utils::wallet::{self, Keyring};
@@ -81,8 +82,15 @@ async fn two_proofs() {
         .credential_identifier(&details[0].credential_identifiers[0])
         .with_proof(jws_1.encode().expect("should encode JWS"))
         .with_proof(jws_2.encode().expect("should encode JWS"))
-        .access_token(token.access_token)
         .build();
+
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, token.access_token.parse().unwrap());
+    let request = endpoint::Request {
+        body: request,
+        headers: Some(headers),
+    };
+
     let response =
         endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should return credential");
 

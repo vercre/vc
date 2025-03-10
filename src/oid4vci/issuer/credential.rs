@@ -13,6 +13,7 @@ use std::fmt::Debug;
 use chrono::{DateTime, Utc};
 use credibil_infosec::Signer;
 use credibil_infosec::jose::jws::{self, Key};
+use http::header::AUTHORIZATION;
 use tracing::instrument;
 
 use crate::core::{Kind, generate};
@@ -29,7 +30,7 @@ use crate::status::issuer::Status;
 use crate::w3c_vc::model::types::{LangString, LangValue};
 use crate::w3c_vc::model::{CredentialSubject, VerifiableCredential};
 use crate::w3c_vc::proof::{self, Payload, Type, W3cFormat};
-use crate::{server, verify_key};
+use crate::{invalid, server, verify_key};
 
 /// Credential request handler.
 ///
@@ -39,11 +40,17 @@ use crate::{server, verify_key};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub(crate) async fn credential(
-    credential_issuer: &str, provider: &impl Provider, request: CredentialRequest,
+    credential_issuer: &str, provider: &impl Provider, request: Request<CredentialRequest>,
 ) -> Result<CredentialResponse> {
     tracing::debug!("credential");
 
-    let Ok(state) = StateStore::get::<State>(provider, &request.access_token).await else {
+    // get access token from request headers
+    let Some(headers) = request.headers else {
+        return Err(invalid!("headers not set"));
+    };
+    let access_token = headers[AUTHORIZATION].to_str().map_err(|_| invalid!("no access token"))?;
+
+    let Ok(state) = StateStore::get::<State>(provider, access_token).await else {
         return Err(Error::AccessDenied("invalid access token".to_string()));
     };
     let issuer = Metadata::issuer(provider, credential_issuer)
@@ -56,6 +63,8 @@ pub(crate) async fn credential(
         issuer,
         ..Context::default()
     };
+
+    let request = request.body;
 
     // authorized credential
     ctx.authorized = request.authorized_detail(&ctx)?;
@@ -95,7 +104,7 @@ impl Handler for Request<CredentialRequest> {
     fn handle(
         self, credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        credential(credential_issuer, provider, self.body)
+        credential(credential_issuer, provider, self)
     }
 }
 

@@ -8,6 +8,8 @@
 //! valid for the issuance of the Credential previously requested at the
 //! Credential Endpoint or the Batch Credential Endpoint.
 
+use http::HeaderMap;
+use http::header::AUTHORIZATION;
 use tracing::instrument;
 
 use crate::oid4vci::endpoint::{Body, Handler, Request};
@@ -42,9 +44,13 @@ async fn deferred(
     };
 
     // make credential request
-    let mut cred_req = deferred_state.credential_request;
-    cred_req.access_token.clone_from(&request.access_token);
-    let response = credential(credential_issuer, provider, cred_req).await?;
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, request.access_token.parse().unwrap());
+    let req = Request {
+        body: deferred_state.credential_request,
+        headers: Some(headers),
+    };
+    let response = credential(credential_issuer, provider, req).await?;
 
     // is issuance still pending?
     if let ResponseType::TransactionId { .. } = response.response {

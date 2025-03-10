@@ -14,6 +14,7 @@ use credibil_vc::oid4vci::types::{
     NonceRequest, NotificationEvent, NotificationRequest, ProofClaims, ResponseType,
     TokenGrantType, TokenRequest,
 };
+use http::header::{AUTHORIZATION, HeaderMap};
 use insta::assert_yaml_snapshot as assert_snapshot;
 use utils::issuer::{CREDENTIAL_ISSUER as ALICE_ISSUER, NORMAL_USER, ProviderImpl};
 use utils::wallet::{self, Keyring};
@@ -81,8 +82,15 @@ async fn offer_val() {
     let request = CredentialRequest::builder()
         .credential_identifier(&details[0].credential_identifiers[0])
         .with_proof(jwt)
-        .access_token(token.access_token)
         .build();
+
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, token.access_token.parse().unwrap());
+    let request = endpoint::Request {
+        body: request,
+        headers: Some(headers),
+    };
+
     let response =
         endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should return credential");
 
@@ -204,11 +212,16 @@ async fn two_datasets() {
         // --------------------------------------------------
         // Bob requests a credential
         // --------------------------------------------------
-        let request = CredentialRequest::builder()
-            .credential_identifier(identifier)
-            .with_proof(jwt)
-            .access_token(&token.access_token)
-            .build();
+        let request =
+            CredentialRequest::builder().credential_identifier(identifier).with_proof(jwt).build();
+
+        let mut headers = HeaderMap::new();
+        headers.insert(AUTHORIZATION, token.access_token.parse().unwrap());
+        let request = endpoint::Request {
+            body: request,
+            headers: Some(headers),
+        };
+
         let response = endpoint::handle(ALICE_ISSUER, request, &provider)
             .await
             .expect("should return credential");
@@ -302,11 +315,16 @@ async fn reduce_credentials() {
     // --------------------------------------------------
     // Bob requests the credential
     // --------------------------------------------------
-    let request = CredentialRequest::builder()
-        .credential_identifier(identifier)
-        .with_proof(jwt)
-        .access_token(&token.access_token)
-        .build();
+    let request =
+        CredentialRequest::builder().credential_identifier(identifier).with_proof(jwt).build();
+
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, token.access_token.parse().unwrap());
+    let request = endpoint::Request {
+        body: request,
+        headers: Some(headers),
+    };
+
     let response =
         endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should return credential");
 
@@ -393,8 +411,15 @@ async fn reduce_claims() {
     let request = CredentialRequest::builder()
         .credential_identifier(&details[0].credential_identifiers[0])
         .with_proof(jwt)
-        .access_token(token.access_token)
         .build();
+
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, token.access_token.parse().unwrap());
+    let request = endpoint::Request {
+        body: request,
+        headers: Some(headers),
+    };
+
     let response =
         endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should return credential");
 
@@ -474,8 +499,15 @@ async fn notify_accepted() {
     let request = CredentialRequest::builder()
         .credential_identifier(&details[0].credential_identifiers[0])
         .with_proof(jwt)
-        .access_token(&token.access_token)
         .build();
+
+    let mut headers = HeaderMap::new();
+    headers.insert(AUTHORIZATION, token.access_token.parse().unwrap());
+    let request = endpoint::Request {
+        body: request,
+        headers: Some(headers),
+    };
+
     let response =
         endpoint::handle(ALICE_ISSUER, request, &provider).await.expect("should return credential");
 
