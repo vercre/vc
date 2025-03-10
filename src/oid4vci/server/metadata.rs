@@ -32,14 +32,14 @@ use crate::server;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 async fn metadata(
-    credential_issuer: &str, provider: &impl Provider, request: OAuthServerRequest,
+    issuer: &str, provider: &impl Provider, request: OAuthServerRequest,
 ) -> Result<OAuthServerResponse> {
     tracing::debug!("oauth_server");
 
-    let auth_server =
-        Metadata::server(provider, &request.credential_issuer, request.issuer.as_deref())
-            .await
-            .map_err(|e| server!("issue getting authorization server metadata: {e}"))?;
+    let auth_server = Metadata::server(provider, issuer, request.issuer.as_deref())
+        .await
+        .map_err(|e| server!("issue getting authorization server metadata: {e}"))?;
+
     Ok(OAuthServerResponse {
         authorization_server: auth_server,
     })
@@ -49,9 +49,9 @@ impl Handler for Request<OAuthServerRequest> {
     type Response = OAuthServerResponse;
 
     fn handle(
-        self, credential_issuer: &str, provider: &impl Provider,
+        self, issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        metadata(credential_issuer, provider, self.body)
+        metadata(issuer, provider, self.body)
     }
 }
 

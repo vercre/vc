@@ -97,21 +97,21 @@ struct Context {
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 async fn create_offer(
-    credential_issuer: &str, provider: &impl Provider, request: CreateOfferRequest,
+    issuer: &str, provider: &impl Provider, request: CreateOfferRequest,
 ) -> Result<CreateOfferResponse> {
     tracing::debug!("create_offer");
 
-    let issuer = Metadata::issuer(provider, credential_issuer)
+    let iss = Metadata::issuer(provider, issuer)
         .await
         .map_err(|e| server!("issue getting issuer metadata: {e}"))?;
 
     // TODO: determine how to select correct server?
     // select `authorization_server`, if specified
-    let server = Metadata::server(provider, credential_issuer, None)
+    let server = Metadata::server(provider, issuer, None)
         .await
         .map_err(|e| server!("issue getting server metadata: {e}"))?;
 
-    let ctx = Context { issuer, server };
+    let ctx = Context { issuer: iss, server };
 
     request.verify(&ctx)?;
 
@@ -181,9 +181,9 @@ impl Handler for Request<CreateOfferRequest> {
     type Response = CreateOfferResponse;
 
     fn handle(
-        self, credential_issuer: &str, provider: &impl Provider,
+        self, issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        create_offer(credential_issuer, provider, self.body)
+        create_offer(issuer, provider, self.body)
     }
 }
 

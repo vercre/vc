@@ -39,12 +39,12 @@ use crate::server;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 async fn metadata(
-    credential_issuer: &str, provider: &impl Provider, request: MetadataRequest,
+    issuer: &str, provider: &impl Provider, request: MetadataRequest,
 ) -> Result<MetadataResponse> {
     tracing::debug!("metadata");
 
     // TODO: add languages to request
-    let credential_issuer = Metadata::issuer(provider, credential_issuer)
+    let credential_issuer = Metadata::issuer(provider, issuer)
         .await
         .map_err(|e| server!("issue getting metadata: {e}"))?;
     Ok(MetadataResponse { credential_issuer })
@@ -54,9 +54,9 @@ impl Handler for Request<MetadataRequest> {
     type Response = MetadataResponse;
 
     fn handle(
-        self, credential_issuer: &str, provider: &impl Provider,
+        self, issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        metadata(credential_issuer, provider, self.body)
+        metadata(issuer, provider, self.body)
     }
 }
 

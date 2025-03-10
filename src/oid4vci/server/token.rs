@@ -37,7 +37,7 @@ use crate::{invalid, server};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 async fn token(
-    credential_issuer: &str, provider: &impl Provider, request: TokenRequest,
+    issuer: &str, provider: &impl Provider, request: TokenRequest,
 ) -> Result<TokenResponse> {
     tracing::debug!("token");
 
@@ -59,7 +59,7 @@ async fn token(
         .map_err(|e| server!("issue purging authorizaiton state: {e}"))?;
 
     let ctx = Context {
-        credential_issuer,
+        issuer,
         state: state.clone(),
     };
 
@@ -111,9 +111,9 @@ impl Handler for Request<TokenRequest> {
     type Response = TokenResponse;
 
     fn handle(
-        self, credential_issuer: &str, provider: &impl Provider,
+        self, issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        token(credential_issuer, provider, self.body)
+        token(issuer, provider, self.body)
     }
 }
 
@@ -121,7 +121,7 @@ impl Body for TokenRequest {}
 
 #[derive(Debug)]
 struct Context<'a> {
-    credential_issuer: &'a str,
+    issuer: &'a str,
     state: State,
 }
 
@@ -135,7 +135,7 @@ impl TokenRequest {
         }
 
         // TODO: support optional authorization issuers
-        let Ok(server) = Metadata::server(provider, ctx.credential_issuer, None).await else {
+        let Ok(server) = Metadata::server(provider, ctx.issuer, None).await else {
             return Err(invalid!("unknown authorization server"));
         };
         let Some(grant_types_supported) = &server.oauth.grant_types_supported else {
@@ -244,7 +244,7 @@ impl TokenRequest {
             return Ok(authorized.to_vec());
         };
 
-        let Ok(issuer) = Metadata::issuer(provider, ctx.credential_issuer).await else {
+        let Ok(issuer) = Metadata::issuer(provider, ctx.issuer).await else {
             return Err(invalid!("unknown authorization server"));
         };
 

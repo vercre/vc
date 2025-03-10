@@ -28,7 +28,7 @@ use crate::{invalid, server};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 async fn deferred(
-    credential_issuer: &str, provider: &impl Provider, request: DeferredCredentialRequest,
+    issuer: &str, provider: &impl Provider, request: DeferredCredentialRequest,
 ) -> Result<DeferredCredentialResponse> {
     tracing::debug!("deferred");
 
@@ -50,7 +50,7 @@ async fn deferred(
         body: deferred_state.credential_request,
         headers: Some(headers),
     };
-    let response = credential(credential_issuer, provider, req).await?;
+    let response = credential(issuer, provider, req).await?;
 
     // is issuance still pending?
     if let ResponseType::TransactionId { .. } = response.response {
@@ -70,9 +70,9 @@ impl Handler for Request<DeferredCredentialRequest> {
     type Response = DeferredCredentialResponse;
 
     fn handle(
-        self, credential_issuer: &str, provider: &impl Provider,
+        self, issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        deferred(credential_issuer, provider, self.body)
+        deferred(issuer, provider, self.body)
     }
 }
 

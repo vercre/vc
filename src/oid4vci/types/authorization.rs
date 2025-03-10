@@ -74,9 +74,6 @@ impl<'de> de::Deserialize<'de> for AuthorizationRequest {
                 while let Some(key) = map.next_key::<String>()? {
                     match key.as_str() {
                         // RequestObject
-                        "credential_issuer" => {
-                            obj.credential_issuer = map.next_value::<String>()?;
-                        }
                         "response_type" => {
                             obj.response_type = map.next_value::<oauth::ResponseType>()?;
                         }
@@ -270,11 +267,6 @@ pub struct RequestUri {
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(default)]
 pub struct RequestObject {
-    /// The URL of the Credential Issuer the Wallet can use obtain offered
-    /// Credentials.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub credential_issuer: String,
-
     /// Authorization Server's response type.
     pub response_type: oauth::ResponseType,
 
@@ -505,7 +497,6 @@ mod tests {
     #[test]
     fn authorization_configuration_id() {
         let request = AuthorizationRequest::Object(RequestObject {
-            credential_issuer: "https://example.com".to_string(),
             response_type: oauth::ResponseType::Code,
             client_id: "1234".to_string(),
             redirect_uri: Some("http://localhost:3000/callback".to_string()),
@@ -558,7 +549,6 @@ mod tests {
     #[test]
     fn authorization_format() {
         let request = AuthorizationRequest::Object(RequestObject {
-            credential_issuer: "https://example.com".to_string(),
             response_type: oauth::ResponseType::Code,
             client_id: "1234".to_string(),
             redirect_uri: Some("http://localhost:3000/callback".to_string()),

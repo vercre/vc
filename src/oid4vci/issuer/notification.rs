@@ -37,7 +37,7 @@ use crate::oid4vci::{Error, Result};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 async fn notification(
-    credential_issuer: &str, provider: &impl Provider, request: Request<NotificationRequest>,
+    issuer: &str, provider: &impl Provider, request: Request<NotificationRequest>,
 ) -> Result<NotificationResponse> {
     tracing::debug!("notification");
 
@@ -65,9 +65,9 @@ impl Handler for Request<NotificationRequest> {
     type Response = NotificationResponse;
 
     fn handle(
-        self, credential_issuer: &str, provider: &impl Provider,
+        self, issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        notification(credential_issuer, provider, self)
+        notification(issuer, provider, self)
     }
 }
 

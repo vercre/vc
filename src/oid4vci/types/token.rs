@@ -292,7 +292,6 @@ mod tests {
     #[test]
     fn token_request_form_encoding() {
         let request = TokenRequest {
-            // credential_issuer: "https://example.com".to_string(),
             client_id: Some("1234".to_string()),
             grant_type: TokenGrantType::PreAuthorizedCode {
                 pre_authorized_code: "WQHhDmQ3ZygxyOPlBjunlA".to_string(),

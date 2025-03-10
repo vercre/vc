@@ -90,7 +90,7 @@ use crate::{invalid, server};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 async fn authorize(
-    credential_issuer: &str, provider: &impl Provider, request: AuthorizationRequest,
+    issuer: &str, provider: &impl Provider, request: AuthorizationRequest,
 ) -> Result<AuthorizationResponse> {
     // request object or URI (Pushed Authorization Request)
     let mut is_par = false;
@@ -113,7 +113,7 @@ async fn authorize(
     };
 
     // get issuer metadata
-    let Ok(issuer) = Metadata::issuer(provider, &request.credential_issuer).await else {
+    let Ok(issuer) = Metadata::issuer(provider, issuer).await else {
         return Err(invalid!("invalid `credential_issuer`"));
     };
 
@@ -130,9 +130,9 @@ impl Handler for Request<AuthorizationRequest> {
     type Response = AuthorizationResponse;
 
     fn handle(
-        self, credential_issuer: &str, provider: &impl Provider,
+        self, issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        authorize(credential_issuer, provider, self.body)
+        authorize(issuer, provider, self.body)
     }
 }
 
@@ -156,7 +156,8 @@ impl Context {
             return Err(Error::InvalidClient("invalid `client_id`".to_string()));
         };
         // TODO: support authorization issuers
-        let Ok(server) = Metadata::server(provider, &request.credential_issuer, None).await else {
+        let Ok(server) = Metadata::server(provider, &self.issuer.credential_issuer, None).await
+        else {
             return Err(invalid!("invalid `credential_issuer`"));
         };
 

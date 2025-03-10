@@ -27,11 +27,21 @@ use crate::server;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 async fn par(
-    credential_issuer: &str, provider: &impl Provider, request: PushedAuthorizationRequest,
+    issuer: &str, provider: &impl Provider, request: PushedAuthorizationRequest,
 ) -> Result<PushedAuthorizationResponse> {
     tracing::debug!("par");
 
-    verify(provider, &request).await?;
+    // TODO: authenticate client using client assertion (same as token endpoint)
+
+    // verify the pushed RequestObject using `/authorize` endpoint logic
+    let Ok(issuer) = Metadata::issuer(provider, issuer).await else {
+        return Err(Error::InvalidClient("invalid `credential_issuer`".to_string()));
+    };
+    let mut ctx = authorize::Context {
+        issuer,
+        ..authorize::Context::default()
+    };
+    ctx.verify(provider, &request.request).await?;
 
     // generate a request URI and expiry between 5 - 600 secs
     let request_uri = format!("urn:ietf:params:oauth:request_uri:{}", generate::uri_token());
@@ -60,33 +70,10 @@ impl Handler for Request<PushedAuthorizationRequest> {
     type Response = PushedAuthorizationResponse;
 
     fn handle(
-        self, credential_issuer: &str, provider: &impl Provider,
+        self, issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        par(credential_issuer, provider, self.body)
+        par(issuer, provider, self.body)
     }
 }
 
 impl Body for PushedAuthorizationRequest {}
-
-// Verify the pushed Authorization Request.
-#[allow(clippy::unused_async)]
-async fn verify(provider: &impl Provider, request: &PushedAuthorizationRequest) -> Result<()> {
-    tracing::debug!("par::verify");
-
-    // TODO: authenticate the client in the same way as at the token endpoint
-    //       (client assertion)
-
-    let req_obj = &request.request;
-
-    // verify the pushed RequestObject using `/authorize` endpoint logic
-    let Ok(issuer) = Metadata::issuer(provider, &req_obj.credential_issuer).await else {
-        return Err(Error::InvalidClient("invalid `credential_issuer`".to_string()));
-    };
-    let mut ctx = authorize::Context {
-        issuer,
-        ..authorize::Context::default()
-    };
-    ctx.verify(provider, &request.request).await?;
-
-    Ok(())
-}

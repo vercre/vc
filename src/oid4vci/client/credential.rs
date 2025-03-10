@@ -61,7 +61,7 @@ impl CredentialRequestBuilder<NoCredential, NoProofs> {
     }
 }
 
-impl< P> CredentialRequestBuilder<NoCredential, P> {
+impl<P> CredentialRequestBuilder<NoCredential, P> {
     /// Specify only when credential Authorization Details was returned in the
     /// Token Response.
     #[must_use]

@@ -17,28 +17,26 @@ use crate::server;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 async fn register(
-    credential_issuer: &str, provider: &impl Provider, request: RegistrationRequest,
+    issuer: &str, provider: &impl Provider, request: RegistrationRequest,
 ) -> Result<RegistrationResponse> {
     tracing::debug!("register");
 
     verify(provider, &request).await?;
 
-    let Ok(client_meta) = provider.register(&request.client_metadata).await else {
+    let Ok(client_metadata) = provider.register(&request.client_metadata).await else {
         return Err(server!("Registration failed"));
     };
 
-    Ok(RegistrationResponse {
-        client_metadata: client_meta,
-    })
+    Ok(RegistrationResponse { client_metadata })
 }
 
 impl Handler for Request<RegistrationRequest> {
     type Response = RegistrationResponse;
 
     fn handle(
-        self, credential_issuer: &str, provider: &impl Provider,
+        self, issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        register(credential_issuer, provider, self.body)
+        register(issuer, provider, self.body)
     }
 }
 

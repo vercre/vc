@@ -23,15 +23,15 @@ use crate::oid4vci::provider::Provider;
 /// Implementers should look to the Error type and description for more
 /// information on the reason for failure.
 pub async fn handle<T, U>(
-    owner: &str, request: impl Into<Request<T>>, provider: &impl Provider,
+    issuer: &str, request: impl Into<Request<T>>, provider: &impl Provider,
 ) -> Result<U>
 where
     T: Body,
     Request<T>: Handler<Response = U>,
 {
     let request: Request<T> = request.into();
-    request.validate(owner, provider).await?;
-    request.handle(owner, provider).await
+    request.validate(issuer, provider).await?;
+    request.handle(issuer, provider).await
 }
 
 /// A request to process.
@@ -60,7 +60,7 @@ pub trait Handler: Clone + Debug + Send + Sync {
 
     /// Routes the message to the concrete handler used to process the message.
     fn handle(
-        self, credential_issuer: &str, provider: &impl Provider,
+        self, issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send;
 
     /// Perform initial validation of the message.
@@ -68,14 +68,14 @@ pub trait Handler: Clone + Debug + Send + Sync {
     /// Validation undertaken here is common to all messages, with message-
     /// specific validation performed by the message's handler.
     fn validate(
-        &self, credential_issuer: &str, _provider: &impl Provider,
+        &self, issuer: &str, _provider: &impl Provider,
     ) -> impl Future<Output = Result<()>> + Send {
         async {
-            // if !tenant_gate.active(credential_issuer)? {
+            // if !tenant_gate.active(issuer)? {
             //     return Err(Error::Unauthorized("tenant not active"));
             // }
             // `credential_issuer` required
-            if credential_issuer.is_empty() {
+            if issuer.is_empty() {
                 return Err(invalid!("no `credential_issuer` specified"));
             }
 

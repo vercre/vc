@@ -26,7 +26,7 @@ use crate::server;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 async fn nonce(
-    credential_issuer: &str, provider: &impl Provider, request: NonceRequest,
+    issuer: &str, provider: &impl Provider, request: NonceRequest,
 ) -> Result<NonceResponse> {
     tracing::debug!("nonce");
 
@@ -44,9 +44,9 @@ impl Handler for Request<NonceRequest> {
     type Response = NonceResponse;
 
     fn handle(
-        self, credential_issuer: &str, provider: &impl Provider,
+        self, issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        nonce(credential_issuer, provider, self.body)
+        nonce(issuer, provider, self.body)
     }
 }
 

@@ -116,7 +116,6 @@ async fn oauth_server(
     State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
 ) -> AxResult<OAuthServerResponse> {
     let req = OAuthServerRequest {
-        credential_issuer: format!("http://{host}"),
         // Issuer should be derived from path component if necessary
         issuer: None,
     };
@@ -134,7 +133,7 @@ async fn authorize(
     State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
     Form(req): Form<AuthorizationRequest>,
 ) -> impl IntoResponse {
-    let AuthorizationRequest::Object(mut object) = req.clone() else {
+    let AuthorizationRequest::Object(object) = req.clone() else {
         panic!("should be an object request");
     };
 
@@ -167,8 +166,6 @@ async fn authorize(
     }
 
     // process request
-    object.credential_issuer = format!("http://{host}");
-
     let Some(redirect_uri) = object.redirect_uri.clone() else {
         return (StatusCode::UNAUTHORIZED, Json(json!({"error": "no redirect_uri"})))
             .into_response();
@@ -194,7 +191,7 @@ async fn authorize(
 #[axum::debug_handler]
 async fn par(
     State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
-    Form(mut req): Form<PushedAuthorizationRequest>,
+    Form(req): Form<PushedAuthorizationRequest>,
 ) -> impl IntoResponse {
     let object = &req.request;
 
@@ -227,11 +224,6 @@ async fn par(
     }
 
     // process request
-    req.request.credential_issuer = format!("http://{host}");
-
-    // let axresponse: AxResult<PushedAuthorizationResponse> =
-    //     oid4vci::par(provider, req).await.into();
-
     let axresponse: AxResult<PushedAuthorizationResponse> =
         endpoint::handle(&format!("http://{host}"), req, &provider).await.into();
     axresponse.into_response()

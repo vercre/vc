@@ -40,7 +40,7 @@ use crate::{invalid, server, verify_key};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub(crate) async fn credential(
-    credential_issuer: &str, provider: &impl Provider, request: Request<CredentialRequest>,
+    issuer: &str, provider: &impl Provider, request: Request<CredentialRequest>,
 ) -> Result<CredentialResponse> {
     tracing::debug!("credential");
 
@@ -53,14 +53,13 @@ pub(crate) async fn credential(
     let Ok(state) = StateStore::get::<State>(provider, access_token).await else {
         return Err(Error::AccessDenied("invalid access token".to_string()));
     };
-    let issuer = Metadata::issuer(provider, credential_issuer)
-        .await
-        .map_err(|e| server!("metadata issue: {e}"))?;
+    let iss =
+        Metadata::issuer(provider, issuer).await.map_err(|e| server!("metadata issue: {e}"))?;
 
     // create a request context with data accessed more than once
     let mut ctx = Context {
         state,
-        issuer,
+        issuer: iss,
         ..Context::default()
     };
 
@@ -102,9 +101,9 @@ impl Handler for Request<CredentialRequest> {
     type Response = CredentialResponse;
 
     fn handle(
-        self, credential_issuer: &str, provider: &impl Provider,
+        self, issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        credential(credential_issuer, provider, self)
+        credential(issuer, provider, self)
     }
 }
 

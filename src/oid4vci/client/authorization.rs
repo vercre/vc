@@ -25,7 +25,6 @@ impl AuthorizationDetail {
 /// Build an [`AuthorizationRequest`].
 #[derive(Default, Debug)]
 pub struct AuthorizationRequestBuilder {
-    credential_issuer: Option<String>,
     response_type: ResponseType,
     client_id: String,
     redirect_uri: Option<String>,
@@ -45,13 +44,6 @@ impl AuthorizationRequestBuilder {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
-    }
-
-    /// Specify the URL of the Credential Issuer .
-    #[must_use]
-    pub fn credential_issuer(mut self, credential_issuer: impl Into<String>) -> Self {
-        self.credential_issuer = Some(credential_issuer.into());
-        self
     }
 
     /// Specify the response type for the authorization request.
@@ -160,7 +152,6 @@ impl AuthorizationRequestBuilder {
     #[must_use]
     pub fn build(self) -> AuthorizationRequest {
         AuthorizationRequest::Object(RequestObject {
-            credential_issuer: self.credential_issuer.unwrap_or_default(),
             response_type: self.response_type,
             client_id: self.client_id,
             redirect_uri: self.redirect_uri,

@@ -30,11 +30,6 @@ pub struct MetadataResponse {
 /// configuration.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct OAuthServerRequest {
-    /// The Authorization Server identifier for which the configuration is to be
-    /// returned.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub credential_issuer: String,
-
     /// Authorization issuer identifier.
     ///
     /// This identifier can be obtained from the `authorization_servers`
@@ -55,10 +50,6 @@ pub struct OAuthServerResponse {
 /// The registration request.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct RegistrationRequest {
-    /// The Credential Issuer for which the client is being registered.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub credential_issuer: String,
-
     /// A previously issued Access Token, as extracted from the Authorization
     /// header of the Credential Request. Used to grant access to register a
     /// client.

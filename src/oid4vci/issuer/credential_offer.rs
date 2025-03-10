@@ -32,7 +32,7 @@ use crate::{invalid, server};
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 async fn credential_offer(
-    credential_issuer: &str, provider: &impl Provider, request: CredentialOfferRequest,
+    issuer: &str, provider: &impl Provider, request: CredentialOfferRequest,
 ) -> Result<CredentialOfferResponse> {
     tracing::debug!("credential_offer");
 
@@ -48,7 +48,7 @@ async fn credential_offer(
         return Err(invalid!("state expired"));
     }
 
-    let Stage::Pending(credential_offer) = state.stage.clone() else {
+    let Stage::Pending(credential_offer) = state.stage else {
         return Err(invalid!("no credential offer found"));
     };
 
@@ -59,9 +59,9 @@ impl Handler for Request<CredentialOfferRequest> {
     type Response = CredentialOfferResponse;
 
     fn handle(
-        self, credential_issuer: &str, provider: &impl Provider,
+        self, issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        credential_offer(credential_issuer, provider, self.body)
+        credential_offer(issuer, provider, self.body)
     }
 }
 
