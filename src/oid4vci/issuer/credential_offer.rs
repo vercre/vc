@@ -17,7 +17,7 @@
 use tracing::instrument;
 
 use crate::oid4vci::Result;
-use crate::oid4vci::endpoint::Request;
+use crate::oid4vci::endpoint::Handler;
 use crate::oid4vci::provider::{Provider, StateStore};
 use crate::oid4vci::state::{Stage, State};
 use crate::oid4vci::types::{CredentialOfferRequest, CredentialOfferResponse};
@@ -37,7 +37,7 @@ pub async fn credential_offer(
     process(&provider, request).await
 }
 
-impl Request for CredentialOfferRequest {
+impl Handler for CredentialOfferRequest {
     type Response = CredentialOfferResponse;
 
     fn handle(

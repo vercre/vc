@@ -20,18 +20,33 @@ use crate::oid4vci::provider::Provider;
 ///
 /// Implementers should look to the Error type and description for more
 /// information on the reason for failure.
-pub async fn handle<T>(
-    owner: &str, message: impl Request<Response = T>, provider: &impl Provider,
-) -> Result<T> {
-    message.validate(owner, provider).await?;
-    message.handle(owner, provider).await
+pub async fn handle<T: Handler>(
+    owner: &str, request: impl Into<Request<T>>, provider: &impl Provider,
+) -> Result<T::Response> {
+    let request = request.into();
+    request.body.validate(owner, provider).await?;
+    request.body.handle(owner, provider).await
 }
 
-/// Methods common to all messages.
-///
-/// The primary role of this trait is to provide a common interface for
-/// messages so they can be handled by [`handle`] method.
-pub trait Request: Clone + Debug + Send + Sync {
+/// A request to process.
+#[derive(Clone, Debug)]
+pub struct Request<T: Handler> {
+    /// The request to process.
+    pub body: T,
+
+    /// Optional headers associated with this request.
+    pub headers: Option<http::HeaderMap>,
+}
+
+impl<T: Handler> From<T> for Request<T> {
+    fn from(body: T) -> Self {
+        Self { body, headers: None }
+    }
+}
+
+/// `Handler` is implemented by every `xxxRequest` object in order to provide a
+/// common interface for handling, or processing, the request.
+pub trait Handler: Clone + Debug + Send + Sync {
     /// The inner reply type specific to the implementing message.
     type Response;
 

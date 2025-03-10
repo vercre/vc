@@ -10,7 +10,7 @@
 
 use tracing::instrument;
 
-use crate::oid4vci::endpoint::Request;
+use crate::oid4vci::endpoint::Handler;
 use crate::oid4vci::issuer::credential::credential;
 use crate::oid4vci::provider::{Provider, StateStore};
 use crate::oid4vci::state::{Stage, State};
@@ -31,7 +31,7 @@ pub async fn deferred(
     process(credential_issuer, &provider, request).await
 }
 
-impl Request for DeferredCredentialRequest {
+impl Handler for DeferredCredentialRequest {
     type Response = DeferredCredentialResponse;
 
     fn handle(

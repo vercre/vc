@@ -6,8 +6,6 @@
 
 use std::fmt::Debug;
 
-use serde::Serialize;
-
 use crate::oid4vp::Result;
 use crate::oid4vp::provider::Provider;
 
@@ -22,7 +20,7 @@ use crate::oid4vp::provider::Provider;
 /// Implementers should look to the Error type and description for more
 /// information on the reason for failure.
 pub async fn handle<T>(
-    owner: &str, message: impl Request<Response = T>, provider: &impl Provider,
+    owner: &str, message: impl Handler<Response = T>, provider: &impl Provider,
 ) -> Result<T> {
     message.validate(owner, provider).await?;
     message.handle(owner, provider).await
@@ -32,7 +30,7 @@ pub async fn handle<T>(
 ///
 /// The primary role of this trait is to provide a common interface for
 /// messages so they can be handled by [`handle`] method.
-pub trait Request: Serialize + Clone + Debug + Send + Sync {
+pub trait Handler: Clone + Debug + Send + Sync {
     /// The inner reply type specific to the implementing message.
     type Response;
 
