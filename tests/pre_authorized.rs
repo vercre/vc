@@ -44,7 +44,6 @@ async fn offer_val() {
     let pre_auth_grant = grants.pre_authorized_code.expect("should have pre-authorized code grant");
 
     let request = TokenRequest::builder()
-        // .client_id(BOB_CLIENT)
         .grant_type(TokenGrantType::PreAuthorizedCode {
             pre_authorized_code: pre_auth_grant.pre_authorized_code,
             tx_code: response.tx_code.clone(),
@@ -64,7 +63,6 @@ async fn offer_val() {
         .jwt_type(Type::Openid4VciProofJwt)
         .payload(
             ProofClaims::new()
-                // .client_id(BOB_CLIENT)
                 .credential_issuer(ALICE_ISSUER)
                 .nonce(nonce.c_nonce),
         )
