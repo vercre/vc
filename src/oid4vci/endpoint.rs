@@ -21,10 +21,10 @@ use crate::oid4vci::provider::Provider;
 /// Implementers should look to the Error type and description for more
 /// information on the reason for failure.
 pub async fn handle<T>(
-    owner: &str, message: impl Handler<Response = T>, provider: &impl Provider,
+    owner: &str, request: impl Handler<Response = T>, provider: &impl Provider,
 ) -> Result<T> {
-    message.validate(owner, provider).await?;
-    message.handle(owner, provider).await
+    request.validate(owner, provider).await?;
+    request.handle(owner, provider).await
 }
 
 /// Methods common to all messages.
