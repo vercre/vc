@@ -20,11 +20,32 @@ use crate::oid4vci::provider::Provider;
 ///
 /// Implementers should look to the Error type and description for more
 /// information on the reason for failure.
-pub async fn handle<T>(
-    owner: &str, request: impl Handler<Response = T>, provider: &impl Provider,
-) -> Result<T> {
+pub async fn handle<T, U>(
+    owner: &str, request: impl Into<Request<T>>, provider: &impl Provider,
+) -> Result<U>
+where
+    T: Body,
+    Request<T>: Handler<Response = U>,
+{
+    let request: Request<T> = request.into();
     request.validate(owner, provider).await?;
     request.handle(owner, provider).await
+}
+
+/// A request to process.
+#[derive(Clone, Debug)]
+pub struct Request<T: Body> {
+    /// The request to process.
+    pub body: T,
+
+    /// Optional headers associated with this request.
+    pub headers: Option<String>,
+}
+
+impl<T: Body> From<T> for Request<T> {
+    fn from(body: T) -> Self {
+        Self { body, headers: None }
+    }
 }
 
 /// Methods common to all messages.
@@ -70,4 +91,13 @@ pub trait Handler: Clone + Debug + Send + Sync {
             Ok(())
         }
     }
+}
+
+pub(crate) use seal::Body;
+pub(crate) mod seal {
+    use std::fmt::Debug;
+
+    /// The `Body` trait is used to restrict the types able to be a Request
+    /// body. It is implemented by all `xxxRequest` types.
+    pub trait Body: Clone + Debug + Send + Sync {}
 }

@@ -17,7 +17,7 @@
 use credibil_infosec::jose::JwsBuilder;
 use tracing::instrument;
 
-use crate::oid4vp::endpoint::Handler;
+use crate::oid4vp::endpoint::{Body, Handler, Request};
 use crate::oid4vp::provider::{Provider, StateStore};
 use crate::oid4vp::state::State;
 use crate::oid4vp::types::{RequestObjectRequest, RequestObjectResponse, RequestObjectType};
@@ -33,28 +33,12 @@ use crate::w3c_vc::proof::Type;
 /// not available.
 #[instrument(level = "debug", skip(provider))]
 pub async fn request_object(
-    provider: impl Provider, request: RequestObjectRequest,
+    provider: &impl Provider, request: RequestObjectRequest,
 ) -> Result<RequestObjectResponse> {
-    process(provider, &request).await
-}
-
-impl Handler for RequestObjectRequest {
-    type Response = RequestObjectResponse;
-
-    fn handle(
-        self, _credential_issuer: &str, provider: &impl Provider,
-    ) -> impl Future<Output = Result<Self::Response>> + Send {
-        request_object(provider.clone(), self)
-    }
-}
-
-async fn process(
-    provider: impl Provider, request: &RequestObjectRequest,
-) -> Result<RequestObjectResponse> {
-    tracing::debug!("request_object::process");
+    tracing::debug!("request_object");
 
     // retrieve request object from state
-    let state = StateStore::get::<State>(&provider, &request.id)
+    let state = StateStore::get::<State>(provider, &request.id)
         .await
         .map_err(|e| Error::ServerError(format!("issue fetching state: {e}")))?;
     let req_obj = state.request_object;
@@ -67,7 +51,7 @@ async fn process(
     let jws = JwsBuilder::new()
         .jwt_type(Type::OauthAuthzReqJwt)
         .payload(&req_obj)
-        .add_signer(&provider)
+        .add_signer(provider)
         .build()
         .await
         .map_err(|e| Error::ServerError(format!("issue building jwt: {e}")))?;
@@ -78,3 +62,15 @@ async fn process(
         request_object: RequestObjectType::Jwt(jwt_proof),
     })
 }
+
+impl Handler for Request<RequestObjectRequest> {
+    type Response = RequestObjectResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        request_object(provider, self.body)
+    }
+}
+
+impl Body for RequestObjectRequest {}

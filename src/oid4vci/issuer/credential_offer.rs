@@ -17,7 +17,7 @@
 use tracing::instrument;
 
 use crate::oid4vci::Result;
-use crate::oid4vci::endpoint::Handler;
+use crate::oid4vci::endpoint::{Body, Handler, Request};
 use crate::oid4vci::provider::{Provider, StateStore};
 use crate::oid4vci::state::{Stage, State};
 use crate::oid4vci::types::{CredentialOfferRequest, CredentialOfferResponse};
@@ -31,26 +31,10 @@ use crate::{invalid, server};
 /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
 /// not available.
 #[instrument(level = "debug", skip(provider))]
-pub async fn credential_offer(
-    credential_issuer: &str, provider: impl Provider, request: CredentialOfferRequest,
+async fn credential_offer(
+    credential_issuer: &str, provider: &impl Provider, request: CredentialOfferRequest,
 ) -> Result<CredentialOfferResponse> {
-    process(&provider, request).await
-}
-
-impl Handler for CredentialOfferRequest {
-    type Response = CredentialOfferResponse;
-
-    fn handle(
-        self, credential_issuer: &str, provider: &impl Provider,
-    ) -> impl Future<Output = Result<Self::Response>> + Send {
-        credential_offer(credential_issuer, provider.clone(), self)
-    }
-}
-
-async fn process(
-    provider: &impl Provider, request: CredentialOfferRequest,
-) -> Result<CredentialOfferResponse> {
-    tracing::debug!("credential_offer::process");
+    tracing::debug!("credential_offer");
 
     // retrieve and then purge Credential Offer from state
     let state = StateStore::get::<State>(provider, &request.id)
@@ -70,3 +54,15 @@ async fn process(
 
     Ok(CredentialOfferResponse { credential_offer })
 }
+
+impl Handler for Request<CredentialOfferRequest> {
+    type Response = CredentialOfferResponse;
+
+    fn handle(
+        self, credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        credential_offer(credential_issuer, provider, self.body)
+    }
+}
+
+impl Body for CredentialOfferRequest {}

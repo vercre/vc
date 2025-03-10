@@ -26,7 +26,7 @@
 use tracing::instrument;
 
 use crate::oid4vci::Result;
-use crate::oid4vci::endpoint::Handler;
+use crate::oid4vci::endpoint::{Body, Handler, Request};
 use crate::oid4vci::provider::{Metadata, Provider};
 use crate::oid4vci::types::{MetadataRequest, MetadataResponse};
 use crate::server;
@@ -38,24 +38,10 @@ use crate::server;
 /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
 /// not available.
 #[instrument(level = "debug", skip(provider))]
-pub async fn metadata(
-    provider: impl Provider, request: MetadataRequest,
+async fn metadata(
+    credential_issuer: &str, provider: &impl Provider, request: MetadataRequest,
 ) -> Result<MetadataResponse> {
-    process(&provider, request).await
-}
-
-impl Handler for MetadataRequest {
-    type Response = MetadataResponse;
-
-    fn handle(
-        self, _credential_issuer: &str, provider: &impl Provider,
-    ) -> impl Future<Output = Result<Self::Response>> + Send {
-        metadata(provider.clone(), self)
-    }
-}
-
-async fn process(provider: &impl Provider, request: MetadataRequest) -> Result<MetadataResponse> {
-    tracing::debug!("metadata::process");
+    tracing::debug!("metadata");
 
     // TODO: add languages to request
     let credential_issuer = Metadata::issuer(provider, &request.credential_issuer)
@@ -63,3 +49,15 @@ async fn process(provider: &impl Provider, request: MetadataRequest) -> Result<M
         .map_err(|e| server!("issue getting metadata: {e}"))?;
     Ok(MetadataResponse { credential_issuer })
 }
+
+impl Handler for Request<MetadataRequest> {
+    type Response = MetadataResponse;
+
+    fn handle(
+        self, credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        metadata(credential_issuer, provider, self.body)
+    }
+}
+
+impl Body for MetadataRequest {}

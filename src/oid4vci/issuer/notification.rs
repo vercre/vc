@@ -21,7 +21,7 @@
 
 use tracing::instrument;
 
-use crate::oid4vci::endpoint::Handler;
+use crate::oid4vci::endpoint::{Body, Handler, Request};
 use crate::oid4vci::provider::{Provider, StateStore};
 use crate::oid4vci::state::State;
 use crate::oid4vci::types::{NotificationRequest, NotificationResponse};
@@ -34,7 +34,7 @@ use crate::oid4vci::{Error, Result};
 /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
 /// not available.
 #[instrument(level = "debug", skip(provider))]
-pub async fn notification(
+async fn notification(
     credential_issuer: &str, provider: &impl Provider, request: NotificationRequest,
 ) -> Result<NotificationResponse> {
     tracing::debug!("notification");
@@ -53,12 +53,14 @@ pub async fn notification(
     Ok(NotificationResponse)
 }
 
-impl Handler for NotificationRequest {
+impl Handler for Request<NotificationRequest> {
     type Response = NotificationResponse;
 
     fn handle(
         self, credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        notification(credential_issuer, provider, self)
+        notification(credential_issuer, provider, self.body)
     }
 }
+
+impl Body for NotificationRequest {}

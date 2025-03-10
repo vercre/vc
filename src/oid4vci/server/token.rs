@@ -19,7 +19,7 @@ use tracing::instrument;
 
 use crate::core::{generate, pkce};
 use crate::oauth::GrantType;
-use crate::oid4vci::endpoint::Handler;
+use crate::oid4vci::endpoint::{Body, Handler, Request};
 use crate::oid4vci::provider::{Metadata, Provider, StateStore};
 use crate::oid4vci::state::{Expire, Stage, State, Token};
 use crate::oid4vci::types::{
@@ -36,7 +36,7 @@ use crate::{invalid, server};
 /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
 /// not available.
 #[instrument(level = "debug", skip(provider))]
-pub async fn token(
+async fn token(
     credential_issuer: &str, provider: &impl Provider, request: TokenRequest,
 ) -> Result<TokenResponse> {
     tracing::debug!("token");
@@ -107,15 +107,17 @@ pub async fn token(
     })
 }
 
-impl Handler for TokenRequest {
+impl Handler for Request<TokenRequest> {
     type Response = TokenResponse;
 
     fn handle(
         self, credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        token(credential_issuer, provider, self)
+        token(credential_issuer, provider, self.body)
     }
 }
+
+impl Body for TokenRequest {}
 
 #[derive(Debug)]
 struct Context<'a> {

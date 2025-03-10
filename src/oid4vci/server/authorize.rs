@@ -72,7 +72,7 @@ use tracing::instrument;
 
 use crate::core::generate;
 use crate::oauth::GrantType;
-use crate::oid4vci::endpoint::Handler;
+use crate::oid4vci::endpoint::{Body, Handler, Request};
 use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
 use crate::oid4vci::state::{Authorization, Expire, Stage, State};
 use crate::oid4vci::types::{
@@ -89,8 +89,8 @@ use crate::{invalid, server};
 /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
 /// not available.
 #[instrument(level = "debug", skip(provider))]
-pub async fn authorize(
-    provider: impl Provider, request: AuthorizationRequest,
+async fn authorize(
+    credential_issuer: &str, provider: &impl Provider, request: AuthorizationRequest,
 ) -> Result<AuthorizationResponse> {
     // request object or URI (Pushed Authorization Request)
     let mut is_par = false;
@@ -98,7 +98,7 @@ pub async fn authorize(
         AuthorizationRequest::Object(request) => request,
         AuthorizationRequest::Uri(uri) => {
             is_par = true;
-            let state: State = StateStore::get(&provider, &uri.request_uri)
+            let state: State = StateStore::get(provider, &uri.request_uri)
                 .await
                 .map_err(|e| server!("state issue: {e}"))?;
             let Stage::PushedAuthorization(par) = &state.stage else {
@@ -113,7 +113,7 @@ pub async fn authorize(
     };
 
     // get issuer metadata
-    let Ok(issuer) = Metadata::issuer(&provider, &request.credential_issuer).await else {
+    let Ok(issuer) = Metadata::issuer(provider, &request.credential_issuer).await else {
         return Err(invalid!("invalid `credential_issuer`"));
     };
 
@@ -122,19 +122,21 @@ pub async fn authorize(
         is_par,
         ..Context::default()
     };
-    ctx.verify(&provider, &request).await?;
-    ctx.process(&provider, request).await
+    ctx.verify(provider, &request).await?;
+    ctx.process(provider, request).await
 }
 
-impl Handler for AuthorizationRequest {
+impl Handler for Request<AuthorizationRequest> {
     type Response = AuthorizationResponse;
 
     fn handle(
-        self, _credential_issuer: &str, provider: &impl Provider,
+        self, credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        authorize(provider.clone(), self)
+        authorize(credential_issuer, provider, self.body)
     }
 }
+
+impl Body for AuthorizationRequest {}
 
 #[derive(Debug, Default)]
 pub struct Context {

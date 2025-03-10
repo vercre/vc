@@ -10,7 +10,7 @@
 
 use tracing::instrument;
 
-use crate::oid4vci::endpoint::Handler;
+use crate::oid4vci::endpoint::{Body, Handler, Request};
 use crate::oid4vci::issuer::credential::credential;
 use crate::oid4vci::provider::{Provider, StateStore};
 use crate::oid4vci::state::{Stage, State};
@@ -25,26 +25,10 @@ use crate::{invalid, server};
 /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
 /// not available.
 #[instrument(level = "debug", skip(provider))]
-pub async fn deferred(
-    credential_issuer: &str, provider: impl Provider, request: DeferredCredentialRequest,
-) -> Result<DeferredCredentialResponse> {
-    process(credential_issuer, &provider, request).await
-}
-
-impl Handler for DeferredCredentialRequest {
-    type Response = DeferredCredentialResponse;
-
-    fn handle(
-        self, credential_issuer: &str, provider: &impl Provider,
-    ) -> impl Future<Output = Result<Self::Response>> + Send {
-        deferred(credential_issuer, provider.clone(), self)
-    }
-}
-
-async fn process(
+async fn deferred(
     credential_issuer: &str, provider: &impl Provider, request: DeferredCredentialRequest,
 ) -> Result<DeferredCredentialResponse> {
-    tracing::debug!("deferred::process");
+    tracing::debug!("deferred");
 
     // retrieve deferred credential request from state
     let Ok(state) = StateStore::get::<State>(provider, &request.transaction_id).await else {
@@ -75,3 +59,15 @@ async fn process(
 
     Ok(response)
 }
+
+impl Handler for Request<DeferredCredentialRequest> {
+    type Response = DeferredCredentialResponse;
+
+    fn handle(
+        self, credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        deferred(credential_issuer, provider, self.body)
+    }
+}
+
+impl Body for DeferredCredentialRequest {}

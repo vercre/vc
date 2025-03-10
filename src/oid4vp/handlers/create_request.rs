@@ -51,7 +51,7 @@ use uuid::Uuid;
 
 use crate::core::{Kind, generate};
 use crate::dif_exch::{ClaimFormat, PresentationDefinition};
-use crate::oid4vp::endpoint::Handler;
+use crate::oid4vp::endpoint::{Body, Handler, Request};
 use crate::oid4vp::provider::{Metadata, Provider, StateStore};
 use crate::oid4vp::state::{Expire, State};
 use crate::oid4vp::types::{
@@ -89,37 +89,12 @@ use crate::oid4vp::{Error, Result};
 /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
 /// not available.
 #[instrument(level = "debug", skip(provider))]
-pub async fn create_request(
-    provider: impl Provider, request: CreateRequestRequest,
+async fn create_request(
+    provider: &impl Provider, request: CreateRequestRequest,
 ) -> Result<CreateRequestResponse> {
+    tracing::debug!("create_request");
+
     verify(&request).await?;
-    process(provider, &request).await
-}
-
-impl Handler for CreateRequestRequest {
-    type Response = CreateRequestResponse;
-
-    fn handle(
-        self, _credential_issuer: &str, provider: &impl Provider,
-    ) -> impl Future<Output = Result<Self::Response>> + Send {
-        create_request(provider.clone(), self)
-    }
-}
-
-#[allow(clippy::unused_async)]
-async fn verify(request: &CreateRequestRequest) -> Result<()> {
-    tracing::debug!("create_request::verify");
-
-    if request.input_descriptors.is_empty() {
-        return Err(Error::InvalidRequest("no credentials specified".to_string()));
-    }
-    Ok(())
-}
-
-async fn process(
-    provider: impl Provider, request: &CreateRequestRequest,
-) -> Result<CreateRequestResponse> {
-    tracing::debug!("create_request::process");
 
     // TODO: build dynamically...
     let fmt = ClaimFormat {
@@ -137,7 +112,7 @@ async fn process(
     let uri_token = generate::uri_token();
 
     // get client metadata
-    let Ok(verifier_meta) = Metadata::verifier(&provider, &request.client_id).await else {
+    let Ok(verifier_meta) = Metadata::verifier(provider, &request.client_id).await else {
         return Err(Error::InvalidRequest("invalid client_id".to_string()));
     };
 
@@ -171,9 +146,31 @@ async fn process(
         request_object: req_obj,
     };
 
-    StateStore::put(&provider, &uri_token, &state, state.expires_at)
+    StateStore::put(provider, &uri_token, &state, state.expires_at)
         .await
         .map_err(|e| Error::ServerError(format!("issue saving state: {e}")))?;
 
     Ok(response)
+}
+
+impl Handler for Request<CreateRequestRequest> {
+    type Response = CreateRequestResponse;
+
+    fn handle(
+        self, _credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        create_request(provider, self.body)
+    }
+}
+
+impl Body for CreateRequestRequest {}
+
+#[allow(clippy::unused_async)]
+async fn verify(request: &CreateRequestRequest) -> Result<()> {
+    tracing::debug!("create_request::verify");
+
+    if request.input_descriptors.is_empty() {
+        return Err(Error::InvalidRequest("no credentials specified".to_string()));
+    }
+    Ok(())
 }

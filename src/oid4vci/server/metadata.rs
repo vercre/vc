@@ -19,7 +19,7 @@
 use tracing::instrument;
 
 use crate::oid4vci::Result;
-use crate::oid4vci::endpoint::Handler;
+use crate::oid4vci::endpoint::{Body, Handler, Request};
 use crate::oid4vci::provider::{Metadata, Provider};
 use crate::oid4vci::types::{OAuthServerRequest, OAuthServerResponse};
 use crate::server;
@@ -31,26 +31,10 @@ use crate::server;
 /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
 /// not available.
 #[instrument(level = "debug", skip(provider))]
-pub async fn metadata(
-    provider: impl Provider, request: OAuthServerRequest,
+async fn metadata(
+    credential_issuer: &str, provider: &impl Provider, request: OAuthServerRequest,
 ) -> Result<OAuthServerResponse> {
-    process(&provider, request).await
-}
-
-impl Handler for OAuthServerRequest {
-    type Response = OAuthServerResponse;
-
-    fn handle(
-        self, _credential_issuer: &str, provider: &impl Provider,
-    ) -> impl Future<Output = Result<Self::Response>> + Send {
-        metadata(provider.clone(), self)
-    }
-}
-
-async fn process(
-    provider: &impl Provider, request: OAuthServerRequest,
-) -> Result<OAuthServerResponse> {
-    tracing::debug!("oauth_server::process");
+    tracing::debug!("oauth_server");
 
     let auth_server =
         Metadata::server(provider, &request.credential_issuer, request.issuer.as_deref())
@@ -60,3 +44,15 @@ async fn process(
         authorization_server: auth_server,
     })
 }
+
+impl Handler for Request<OAuthServerRequest> {
+    type Response = OAuthServerResponse;
+
+    fn handle(
+        self, credential_issuer: &str, provider: &impl Provider,
+    ) -> impl Future<Output = Result<Self::Response>> + Send {
+        metadata(credential_issuer, provider, self.body)
+    }
+}
+
+impl Body for OAuthServerRequest {}

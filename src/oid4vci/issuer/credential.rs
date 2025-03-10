@@ -16,7 +16,7 @@ use credibil_infosec::jose::jws::{self, Key};
 use tracing::instrument;
 
 use crate::core::{Kind, generate};
-use crate::oid4vci::endpoint::Handler;
+use crate::oid4vci::endpoint::{Body, Handler, Request};
 use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
 use crate::oid4vci::state::{Deferrance, Expire, Stage, State};
 use crate::oid4vci::types::{
@@ -38,7 +38,7 @@ use crate::{server, verify_key};
 /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
 /// not available.
 #[instrument(level = "debug", skip(provider))]
-pub async fn credential(
+pub(crate) async fn credential(
     credential_issuer: &str, provider: &impl Provider, request: CredentialRequest,
 ) -> Result<CredentialResponse> {
     tracing::debug!("credential");
@@ -89,15 +89,17 @@ pub async fn credential(
     ctx.issue(provider, dataset).await
 }
 
-impl Handler for CredentialRequest {
+impl Handler for Request<CredentialRequest> {
     type Response = CredentialResponse;
 
     fn handle(
         self, credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        credential(credential_issuer, provider, self)
+        credential(credential_issuer, provider, self.body)
     }
 }
+
+impl Body for CredentialRequest {}
 
 #[derive(Debug, Default)]
 struct Context {

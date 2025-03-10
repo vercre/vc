@@ -26,7 +26,7 @@ use serde_json_path::JsonPath;
 use tracing::instrument;
 
 use crate::core::Kind;
-use crate::oid4vp::endpoint::Handler;
+use crate::oid4vp::endpoint::{Body, Handler, Request};
 use crate::oid4vp::provider::{Provider, StateStore};
 use crate::oid4vp::state::State;
 use crate::oid4vp::types::{ResponseRequest, ResponseResponse};
@@ -42,23 +42,42 @@ use crate::w3c_vc::proof::{Payload, Verify};
 /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
 /// not available.
 #[instrument(level = "debug", skip(provider))]
-pub async fn response(
-    provider: impl Provider, request: ResponseRequest,
+async fn response(
+    credential_issuer: &str, provider: &impl Provider, request: ResponseRequest,
 ) -> Result<ResponseResponse> {
+    tracing::debug!("response");
+
     // TODO: handle case where Wallet returns error instead of submission
     verify(provider.clone(), &request).await?;
-    process(provider, &request).await
+
+    // clear state
+    let Some(state_key) = &request.state else {
+        return Err(Error::InvalidRequest("client state not found".to_string()));
+    };
+    StateStore::purge(provider, state_key)
+        .await
+        .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
+
+    Ok(ResponseResponse {
+        // TODO: add response to state using `response_code` so Wallet can fetch full response
+        // TODO: align redirct_uri to spec
+        // redirect_uri: Some(format!("http://localhost:3000/cb#response_code={}", "1234")),
+        redirect_uri: Some("http://localhost:3000/cb".to_string()),
+        response_code: None,
+    })
 }
 
-impl Handler for ResponseRequest {
+impl Handler for Request<ResponseRequest> {
     type Response = ResponseResponse;
 
     fn handle(
-        self, _credential_issuer: &str, provider: &impl Provider,
+        self, credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        response(provider.clone(), self)
+        response(credential_issuer, provider, self.body)
     }
 }
+
+impl Body for ResponseRequest {}
 
 // TODO: validate  Verifiable Presentation by format
 // Check integrity, authenticity, and holder binding of each Presentation
@@ -207,25 +226,4 @@ async fn verify(provider: impl Provider, request: &ResponseRequest) -> Result<()
     // it belongs to (i.e., revocation checks), if applicable.
 
     Ok(())
-}
-
-// Process the authorization request
-async fn process(provider: impl Provider, request: &ResponseRequest) -> Result<ResponseResponse> {
-    tracing::debug!("response::process");
-
-    // clear state
-    let Some(state_key) = &request.state else {
-        return Err(Error::InvalidRequest("client state not found".to_string()));
-    };
-    StateStore::purge(&provider, state_key)
-        .await
-        .map_err(|e| Error::ServerError(format!("issue purging state: {e}")))?;
-
-    Ok(ResponseResponse {
-        // TODO: add response to state using `response_code` so Wallet can fetch full response
-        // TODO: align redirct_uri to spec
-        // redirect_uri: Some(format!("http://localhost:3000/cb#response_code={}", "1234")),
-        redirect_uri: Some("http://localhost:3000/cb".to_string()),
-        response_code: None,
-    })
 }

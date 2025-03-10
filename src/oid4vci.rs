@@ -98,10 +98,9 @@ mod issuer;
 mod server;
 mod state;
 
-/// Status
-pub mod status {
-    pub use crate::status::bitstring::{DEFAULT_TTL, bitstring, credential};
-    pub use crate::status::issuer::*;
+/// PKCE
+pub mod pkce {
+    pub use crate::core::pkce::{code_challenge, code_verifier};
 }
 
 /// Proofs
@@ -110,9 +109,10 @@ pub mod proof {
     pub use crate::w3c_vc::proof::{Payload, Type, Verify, verify};
 }
 
-/// PKCE
-pub mod pkce {
-    pub use crate::core::pkce::{code_challenge, code_verifier};
+/// Status
+pub mod status {
+    pub use crate::status::bitstring::{DEFAULT_TTL, bitstring, credential};
+    pub use crate::status::issuer::*;
 }
 
 pub use error::Error;

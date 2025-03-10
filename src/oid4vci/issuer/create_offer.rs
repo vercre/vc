@@ -72,7 +72,7 @@ use tracing::instrument;
 
 use crate::core::generate;
 use crate::oauth::GrantType;
-use crate::oid4vci::endpoint::Handler;
+use crate::oid4vci::endpoint::{Body, Handler, Request};
 use crate::oid4vci::provider::{Metadata, Provider, StateStore, Subject};
 use crate::oid4vci::state::{Expire, Offer, Stage, State};
 use crate::oid4vci::types::{
@@ -96,7 +96,7 @@ struct Context {
 /// Returns an `OpenID4VP` error if the request is invalid or if the provider is
 /// not available.
 #[instrument(level = "debug", skip(provider))]
-pub async fn create_offer(
+async fn create_offer(
     credential_issuer: &str, provider: &impl Provider, request: CreateOfferRequest,
 ) -> Result<CreateOfferResponse> {
     tracing::debug!("create_offer");
@@ -177,15 +177,17 @@ pub async fn create_offer(
     }
 }
 
-impl Handler for CreateOfferRequest {
+impl Handler for Request<CreateOfferRequest> {
     type Response = CreateOfferResponse;
 
     fn handle(
         self, credential_issuer: &str, provider: &impl Provider,
     ) -> impl Future<Output = Result<Self::Response>> + Send {
-        create_offer(credential_issuer, provider, self)
+        create_offer(credential_issuer, provider, self.body)
     }
 }
+
+impl Body for CreateOfferRequest {}
 
 impl CreateOfferRequest {
     fn verify(&self, ctx: &Context) -> Result<()> {
