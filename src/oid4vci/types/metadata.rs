@@ -10,11 +10,6 @@ use crate::oauth::{OAuthClient, OAuthServer};
 /// Request to retrieve the Credential Issuer's configuration.
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct MetadataRequest {
-    /// The Credential Issuer Identifier for which the configuration is to be
-    /// returned.
-    #[serde(skip_serializing_if = "String::is_empty", default)]
-    pub credential_issuer: String,
-
     /// The language(s) set in HTTP Accept-Language Headers. MUST be values
     /// defined in [RFC3066].
     ///

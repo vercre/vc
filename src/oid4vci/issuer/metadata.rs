@@ -44,7 +44,7 @@ async fn metadata(
     tracing::debug!("metadata");
 
     // TODO: add languages to request
-    let credential_issuer = Metadata::issuer(provider, &request.credential_issuer)
+    let credential_issuer = Metadata::issuer(provider, credential_issuer)
         .await
         .map_err(|e| server!("issue getting metadata: {e}"))?;
     Ok(MetadataResponse { credential_issuer })

@@ -102,7 +102,6 @@ async fn metadata(
     headers: HeaderMap, State(provider): State<ProviderImpl>, TypedHeader(host): TypedHeader<Host>,
 ) -> AxResult<MetadataResponse> {
     let req = MetadataRequest {
-        credential_issuer: format!("http://{host}"),
         languages: headers
             .get("accept-language")
             .and_then(|v| v.to_str().ok())
